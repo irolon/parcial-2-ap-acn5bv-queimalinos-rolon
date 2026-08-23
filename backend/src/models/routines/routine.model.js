@@ -30,8 +30,19 @@ export const ROUTINE_EXERCISE_COLUMNS =
 /** ¿La rutina pertenece a este trainer? */
 export const isOwnedBy = (routine, trainerId) => routine?.trainer_id === trainerId;
 
+/**
+ * Zona horaria del negocio. El VPS corre en UTC, pero el día que ve el alumno
+ * lo define Buenos Aires: sin esto, un domingo 22:30 devuelve 'monday'.
+ */
+export const TIMEZONE = 'America/Argentina/Buenos_Aires';
+
+const weekdayFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: TIMEZONE,
+  weekday: 'long',
+});
+
 /** Nombre del día actual (o de una fecha dada) en el formato del dominio. */
-export const dayName = (date = new Date()) => DAYS[date.getDay()];
+export const dayName = (date = new Date()) => weekdayFormatter.format(date).toLowerCase();
 
 /** Ordena y normaliza los ejercicios embebidos de una rutina. */
 export function mapRoutineExercises(routineExercises = []) {
