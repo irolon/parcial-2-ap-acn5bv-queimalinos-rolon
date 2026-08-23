@@ -39,11 +39,34 @@ export async function findInvitationByToken(token) {
   return data;
 }
 
-/** Marca una invitación como usada (used_at = now). */
-export async function markInvitationUsed(id) {
-  const { error } = await supabase
+/**
+ * Reclama la invitación de forma atómica: la marca como usada SOLO si todavía
+ * estaba libre. El filtro `used_at is null` hace que el chequeo y el marcado
+ * sean la misma operación, así dos requests simultáneas no pueden ganarla las
+ * dos (doble submit del alumno con el wifi lento).
+ *
+ * @returns {Promise<boolean>} true si la reclamó esta llamada, false si ya estaba usada.
+ */
+export async function claimInvitation(id) {
+  const { data, error } = await supabase
     .from(INVITATIONS_TABLE)
     .update({ used_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('used_at', null)
+    .select('id');
+  if (error) throw Errors.internal(error.message);
+  return data.length > 0;
+}
+
+/**
+ * Devuelve la invitación a su estado libre. Se usa como compensación cuando la
+ * creación del alumno falla después de haberla reclamado: no hay transacción
+ * entre tablas, así que la deshacemos a mano para no dejarla quemada.
+ */
+export async function releaseInvitation(id) {
+  const { error } = await supabase
+    .from(INVITATIONS_TABLE)
+    .update({ used_at: null })
     .eq('id', id);
   if (error) throw Errors.internal(error.message);
 }
