@@ -31,15 +31,29 @@ export async function registerFromInvitation({ token, password }) {
   if (isExpired(invitation)) throw Errors.invitationExpired();
 
   const passwordHash = await hashPassword(password);
-  const student = await studentsRepo.createStudent({
-    trainerId: invitation.trainer.id,
-    name: invitation.student_name,
-    email: invitation.student_email,
-    goal: invitation.student_goal,
-    passwordHash,
-  });
 
-  await invitationsRepo.markInvitationUsed(invitation.id);
+  // Reclamar ANTES de crear el alumno. El chequeo de isUsed() de arriba es solo
+  // un atajo para dar un error lindo: el punto de sincronización real es este
+  // UPDATE condicionado. Si acá se crea primero el alumno y se marca después,
+  // dos requests simultáneas pasan las dos y queda un alumno duplicado.
+  const reclamada = await invitationsRepo.claimInvitation(invitation.id);
+  if (!reclamada) throw Errors.invitationUsed();
+
+  let student;
+  try {
+    student = await studentsRepo.createStudent({
+      trainerId: invitation.trainer.id,
+      name: invitation.student_name,
+      email: invitation.student_email,
+      goal: invitation.student_goal,
+      passwordHash,
+    });
+  } catch (err) {
+    // Sin transacción entre tablas: si la creación falla, liberamos la
+    // invitación para que el alumno pueda reintentar en vez de quedar afuera.
+    await invitationsRepo.releaseInvitation(invitation.id);
+    throw err;
+  }
 
   const tokens = await issueTokens(student, 'student');
   return { student, ...tokens };
