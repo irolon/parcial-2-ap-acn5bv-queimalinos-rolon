@@ -1,0 +1,15 @@
+# Las dependencias se instalan DENTRO de la imagen (Linux). Copiar las del host
+# (Windows) rompe cualquier paquete con binarios nativos.
+node_modules
+
+# Secretos: nunca entran a la imagen. Las variables se inyectan en runtime.
+.env
+.env.local
+.env.*.local
+
+# Ruido que no aporta nada a la imagen.
+coverage
+*.log
+npm-debug.log*
+.git
+.gitignore
