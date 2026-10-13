@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 
 const mockRepo = {
   isStudentOfTrainer: jest.fn(),
+  findTemplateById: jest.fn(),
   createRoutine: jest.fn(),
   addRoutineExercises: jest.fn(),
   findRoutinesByTrainer: jest.fn(),
@@ -48,6 +49,47 @@ describe('routines.service', () => {
         code: 'FORBIDDEN',
         statusCode: 403,
       });
+      expect(mockRepo.createRoutine).not.toHaveBeenCalled();
+    });
+
+    it('no consulta plantillas si no viene template_id', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.createRoutine.mockResolvedValue(ROUTINE);
+      mockRepo.addRoutineExercises.mockResolvedValue([]);
+
+      await service.create(TRAINER_ID, BODY);
+
+      expect(mockRepo.findTemplateById).not.toHaveBeenCalled();
+      expect(mockRepo.createRoutine.mock.calls[0][0].template_id).toBeNull();
+    });
+
+    it('crea la rutina con template_id si la plantilla es del trainer', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.findTemplateById.mockResolvedValue({ id: 'tpl-1', trainer_id: TRAINER_ID });
+      mockRepo.createRoutine.mockResolvedValue(ROUTINE);
+      mockRepo.addRoutineExercises.mockResolvedValue([]);
+
+      await service.create(TRAINER_ID, { ...BODY, template_id: 'tpl-1' });
+
+      expect(mockRepo.findTemplateById).toHaveBeenCalledWith('tpl-1');
+      expect(mockRepo.createRoutine.mock.calls[0][0].template_id).toBe('tpl-1');
+    });
+
+    it('lanza NOT_FOUND si la plantilla no existe', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.findTemplateById.mockResolvedValue(null);
+      await expect(
+        service.create(TRAINER_ID, { ...BODY, template_id: 'tpl-x' })
+      ).rejects.toMatchObject({ statusCode: 404 });
+      expect(mockRepo.createRoutine).not.toHaveBeenCalled();
+    });
+
+    it('lanza FORBIDDEN si la plantilla es de otro trainer', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.findTemplateById.mockResolvedValue({ id: 'tpl-2', trainer_id: 'otro' });
+      await expect(
+        service.create(TRAINER_ID, { ...BODY, template_id: 'tpl-2' })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 });
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
     });
   });

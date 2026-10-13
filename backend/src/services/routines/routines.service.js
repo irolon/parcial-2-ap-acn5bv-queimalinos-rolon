@@ -19,11 +19,19 @@ async function getOwnedRoutine(trainerId, routineId, action) {
 
 /**
  * CU-04 — Crea y asigna una rutina a un alumno del trainer, con sus ejercicios.
- * Valida que el alumno le pertenezca y que haya al menos un ejercicio.
+ * Valida que el alumno (y la plantilla, si viene) le pertenezcan al trainer.
  */
 export async function create(trainerId, data) {
   const belongs = await repository.isStudentOfTrainer(data.student_id, trainerId);
   if (!belongs) throw Errors.forbidden('No podés asignarle rutinas a un alumno que no es tuyo');
+
+  if (data.template_id) {
+    const template = await repository.findTemplateById(data.template_id);
+    if (!template) throw Errors.notFound('Plantilla no encontrada');
+    if (!isOwnedBy(template, trainerId)) {
+      throw Errors.forbidden('No podés usar una plantilla que no es tuya');
+    }
+  }
 
   const routine = await repository.createRoutine({
     trainer_id: trainerId,

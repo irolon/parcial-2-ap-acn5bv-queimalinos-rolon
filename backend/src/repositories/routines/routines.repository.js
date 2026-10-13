@@ -8,6 +8,8 @@ import {
   ROUTINE_EXERCISE_COLUMNS,
 } from '../../models/routines/routine.model.js';
 
+const TEMPLATES_TABLE = 'routine_templates';
+
 /** ¿El alumno pertenece a este trainer? */
 export async function isStudentOfTrainer(studentId, trainerId) {
   const { data, error } = await supabase
@@ -18,6 +20,17 @@ export async function isStudentOfTrainer(studentId, trainerId) {
     .maybeSingle();
   if (error) throw Errors.internal(error.message);
   return Boolean(data);
+}
+
+/** Busca una plantilla por id (para validar existencia y ownership). */
+export async function findTemplateById(templateId) {
+  const { data, error } = await supabase
+    .from(TEMPLATES_TABLE)
+    .select('id, trainer_id')
+    .eq('id', templateId)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
 }
 
 /** Crea una rutina (activa) y devuelve la fila. */

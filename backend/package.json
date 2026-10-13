@@ -15,7 +15,8 @@
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "lint": "eslint \"src/**/*.js\" \"tests/**/*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" \"tests/**/*.js\" --fix",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\""
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
+    "db:check-anon": "node src/database/check-anon-access.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
