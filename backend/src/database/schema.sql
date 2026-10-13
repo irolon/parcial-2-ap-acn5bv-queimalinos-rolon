@@ -286,6 +286,7 @@ create table if not exists chat_messages (
 );
 
 create index if not exists idx_chat_messages_student on chat_messages (student_id, created_at);
+create index if not exists idx_chat_messages_session on chat_messages (session_id);
 
 -- ── ai_routine_generations (asistente IA del entrenador) ─────────────────────
 create table if not exists ai_routine_generations (

@@ -78,7 +78,7 @@ Además: FK `routines.template_id → routine_templates(id) on delete set null` 
 
 ### chat_messages
 `id`, `session_id` (FK sessions, **set null**, nullable), `student_id` (FK students, cascade, not null), `role` (CHECK user/assistant), `content` (text not null), `created_at`.
-Índice `(student_id, created_at)`.
+Índices `(student_id, created_at)` y `session_id`.
 **Desvío:** `session_id` nullable para que el chat con la IA no dependa de una sesión activa.
 
 ### ai_routine_generations

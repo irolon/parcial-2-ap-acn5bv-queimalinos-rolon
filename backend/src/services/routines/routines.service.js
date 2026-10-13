@@ -7,6 +7,19 @@ import {
   toRoutineDetail,
 } from '../../models/routines/routine.model.js';
 
+/**
+ * Verifica que cada ejercicio sea global o del trainer. Los inexistentes
+ * también se rechazan con 403, para no revelar qué ids existen.
+ */
+async function assertExercisesAccessible(trainerId, exercises) {
+  const ids = [...new Set(exercises.map((e) => e.exercise_id))];
+  if (ids.length === 0) return;
+  const accessible = new Set(await repository.findAccessibleExerciseIds(ids, trainerId));
+  if (ids.some((id) => !accessible.has(id))) {
+    throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
+  }
+}
+
 /** Verifica que la rutina exista y sea del trainer. */
 async function getOwnedRoutine(trainerId, routineId, action) {
   const routine = await repository.findRoutineById(routineId);
@@ -19,7 +32,8 @@ async function getOwnedRoutine(trainerId, routineId, action) {
 
 /**
  * CU-04 — Crea y asigna una rutina a un alumno del trainer, con sus ejercicios.
- * Valida que el alumno (y la plantilla, si viene) le pertenezcan al trainer.
+ * Valida que el alumno, la plantilla (si viene) y cada ejercicio le pertenezcan
+ * al trainer (los ejercicios también pueden ser globales).
  */
 export async function create(trainerId, data) {
   const belongs = await repository.isStudentOfTrainer(data.student_id, trainerId);
@@ -32,6 +46,8 @@ export async function create(trainerId, data) {
       throw Errors.forbidden('No podés usar una plantilla que no es tuya');
     }
   }
+
+  await assertExercisesAccessible(trainerId, data.exercises);
 
   const routine = await repository.createRoutine({
     trainer_id: trainerId,
@@ -66,9 +82,10 @@ export async function update(trainerId, routineId, fields) {
   return repository.updateRoutine(routineId, fields);
 }
 
-/** Agrega ejercicios a una rutina propia del trainer. */
+/** Agrega ejercicios (globales o propios) a una rutina propia del trainer. */
 export async function addExercises(trainerId, routineId, exercises) {
   await getOwnedRoutine(trainerId, routineId, 'modificar');
+  await assertExercisesAccessible(trainerId, exercises);
   return repository.addRoutineExercises(routineId, exercises);
 }
 

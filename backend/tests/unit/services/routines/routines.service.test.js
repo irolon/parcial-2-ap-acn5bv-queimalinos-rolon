@@ -3,6 +3,7 @@ import { jest } from '@jest/globals';
 const mockRepo = {
   isStudentOfTrainer: jest.fn(),
   findTemplateById: jest.fn(),
+  findAccessibleExerciseIds: jest.fn(),
   createRoutine: jest.fn(),
   addRoutineExercises: jest.fn(),
   findRoutinesByTrainer: jest.fn(),
@@ -29,6 +30,11 @@ const BODY = {
 };
 
 describe('routines.service', () => {
+  // Por defecto todos los ejercicios pedidos son accesibles (globales o propios).
+  beforeEach(() => {
+    mockRepo.findAccessibleExerciseIds.mockImplementation(async (ids) => ids);
+  });
+
   describe('create', () => {
     it('crea la rutina y sus ejercicios si el alumno es del trainer', async () => {
       mockRepo.isStudentOfTrainer.mockResolvedValue(true);
@@ -92,6 +98,31 @@ describe('routines.service', () => {
       ).rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 });
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
     });
+
+    it('valida los ejercicios contra los accesibles del trainer', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.createRoutine.mockResolvedValue(ROUTINE);
+      mockRepo.addRoutineExercises.mockResolvedValue([]);
+
+      await service.create(TRAINER_ID, BODY);
+
+      expect(mockRepo.findAccessibleExerciseIds).toHaveBeenCalledWith(['ex-1'], TRAINER_ID);
+    });
+
+    it('lanza FORBIDDEN si algún ejercicio es privado de otro trainer o no existe', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.findAccessibleExerciseIds.mockResolvedValue(['ex-1']);
+      const body = {
+        ...BODY,
+        exercises: [...BODY.exercises, { exercise_id: 'ex-ajeno', sets: 3, reps: 10 }],
+      };
+      await expect(service.create(TRAINER_ID, body)).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+        statusCode: 403,
+      });
+      expect(mockRepo.createRoutine).not.toHaveBeenCalled();
+      expect(mockRepo.addRoutineExercises).not.toHaveBeenCalled();
+    });
   });
 
   describe('addExercises', () => {
@@ -110,6 +141,16 @@ describe('routines.service', () => {
     it('lanza FORBIDDEN si la rutina es de otro trainer', async () => {
       mockRepo.findRoutineById.mockResolvedValue({ ...ROUTINE, trainer_id: 'otro' });
       await expect(service.addExercises(TRAINER_ID, 'rt-1', [])).rejects.toMatchObject({ statusCode: 403 });
+      expect(mockRepo.addRoutineExercises).not.toHaveBeenCalled();
+    });
+
+    it('lanza FORBIDDEN si algún ejercicio es privado de otro trainer o no existe', async () => {
+      mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
+      mockRepo.findAccessibleExerciseIds.mockResolvedValue([]);
+      await expect(
+        service.addExercises(TRAINER_ID, 'rt-1', [{ exercise_id: 'ex-ajeno', sets: 3, reps: 10 }])
+      ).rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 });
+      expect(mockRepo.findAccessibleExerciseIds).toHaveBeenCalledWith(['ex-ajeno'], TRAINER_ID);
       expect(mockRepo.addRoutineExercises).not.toHaveBeenCalled();
     });
   });

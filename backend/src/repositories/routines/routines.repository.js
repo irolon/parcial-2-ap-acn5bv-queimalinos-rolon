@@ -1,6 +1,7 @@
 import { supabase } from '../../shared/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
+import { EXERCISES_TABLE } from '../../models/exercises/exercise.model.js';
 import {
   ROUTINES_TABLE,
   ROUTINE_EXERCISES_TABLE,
@@ -31,6 +32,20 @@ export async function findTemplateById(templateId) {
     .maybeSingle();
   if (error) throw Errors.internal(error.message);
   return data;
+}
+
+/**
+ * De los ejercicios pedidos, devuelve los ids que el trainer puede usar:
+ * globales o de su biblioteca. Los ajenos o inexistentes quedan afuera.
+ */
+export async function findAccessibleExerciseIds(exerciseIds, trainerId) {
+  const { data, error } = await supabase
+    .from(EXERCISES_TABLE)
+    .select('id')
+    .in('id', exerciseIds)
+    .or(`is_global.eq.true,trainer_id.eq.${trainerId}`);
+  if (error) throw Errors.internal(error.message);
+  return data.map((row) => row.id);
 }
 
 /** Crea una rutina (activa) y devuelve la fila. */
