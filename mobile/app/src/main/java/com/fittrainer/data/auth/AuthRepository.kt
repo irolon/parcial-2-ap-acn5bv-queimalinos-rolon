@@ -3,7 +3,9 @@ package com.fittrainer.data.auth
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.LoginRequest
 import com.fittrainer.data.api.RefreshRequest
+import com.fittrainer.data.api.RegisterStudentRequest
 import com.fittrainer.data.api.UserDto
+import com.fittrainer.data.invitation.toInvitationError
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.session.LogoutResult
@@ -30,17 +32,30 @@ class AuthRepository @Inject constructor(
         } catch (e: Exception) {
             return Result.failure(DataException(e.toLoginError(), e))
         }
-        // El servidor ya respondió: una falla al guardar es del almacenamiento, no de la red.
-        return try {
-            tokenStore.save(
-                AuthState(response.token, response.refreshToken, user, UUID.randomUUID().toString(), clock.millis()),
-            )
-            Result.success(user)
+        return saveSession(response.token, response.refreshToken, user)
+    }
+
+    /** Alta del alumno con el token de su invitación: si sale bien, queda logueado como en el login. */
+    suspend fun registerFromInvitation(token: String, password: String): Result<AuthUser> {
+        val response = try {
+            api.registerStudent(RegisterStudentRequest(token, password))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.failure(DataException(DataError.Unknown, e))
+            return Result.failure(DataException(e.toInvitationError(), e))
         }
+        val student = response.student
+        return saveSession(response.token, response.refreshToken, AuthUser(student.id, student.name, student.email, Role.STUDENT))
+    }
+
+    // El servidor ya respondió: una falla al guardar es del almacenamiento, no de la red.
+    private suspend fun saveSession(accessToken: String, refreshToken: String, user: AuthUser): Result<AuthUser> = try {
+        tokenStore.save(AuthState(accessToken, refreshToken, user, UUID.randomUUID().toString(), clock.millis()))
+        Result.success(user)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(DataException(DataError.Unknown, e))
     }
 
     /**

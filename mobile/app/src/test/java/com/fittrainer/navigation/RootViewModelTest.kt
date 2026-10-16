@@ -1,6 +1,7 @@
 package com.fittrainer.navigation
 
 import com.fittrainer.MainDispatcherRule
+import com.fittrainer.data.TOKEN
 import com.fittrainer.data.authState
 import com.fittrainer.data.session.LogoutResult
 import com.fittrainer.data.session.Session
@@ -26,7 +27,8 @@ class RootViewModelTest {
 
     private val repo = FakeSessionRepository(LogoutResult.Closed)
     // lazy: el ViewModel se crea dentro del test, con Dispatchers.Main ya reemplazado por la regla.
-    private val vm by lazy { RootViewModel(repo) }
+    private val pending = PendingInvitation()
+    private val vm by lazy { RootViewModel(repo, pending) }
 
     // Codex P2 (ronda 3): un logout que no se pudo persistir no termina en silencio.
     @Test fun `signOut Incomplete deja el aviso`() {
@@ -67,5 +69,25 @@ class RootViewModelTest {
         vm.dismissSignOutWarning()
 
         assertNull(vm.signOutWarning.value)
+    }
+
+    // Review Focus 3: deep link con sesión iniciada.
+    @Test fun `deep link con sesion muestra el aviso`() {
+        pending.offer(TOKEN)
+        assertEquals(true, vm.invitationWhileLoggedIn.value)
+    }
+
+    @Test fun `cerrar el aviso descarta el token`() {
+        pending.offer(TOKEN)
+        vm.dismissPendingInvitation()
+        assertEquals(false, vm.invitationWhileLoggedIn.value)
+        assertNull(pending.token.value)
+    }
+
+    @Test fun `deep link sin sesion no muestra aviso y queda para la navegacion`() {
+        repo.session.value = Session.LoggedOut
+        pending.offer(TOKEN)
+        assertEquals(false, vm.invitationWhileLoggedIn.value)
+        assertEquals(TOKEN, vm.pendingInvitation.value)
     }
 }

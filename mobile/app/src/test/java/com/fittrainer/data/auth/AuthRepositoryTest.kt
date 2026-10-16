@@ -4,6 +4,9 @@ import com.fittrainer.data.FakeAuthApi
 import com.fittrainer.data.FakeDataStore
 import com.fittrainer.data.FakeSessionTombstones
 import com.fittrainer.data.FakeTokenStore
+import com.fittrainer.data.TOKEN
+import com.fittrainer.data.apiError
+import com.fittrainer.data.api.RegisterStudentRequest
 import com.fittrainer.data.fixedClock
 import com.fittrainer.data.api.LoginRequest
 import com.fittrainer.data.api.UserDto
@@ -28,6 +31,39 @@ class AuthRepositoryTest {
     private val repo = AuthRepository(api, store, fixedClock())
 
     private fun Result<*>.dataError() = (exceptionOrNull() as DataException).error
+
+    @Test fun `alta ok guarda sesion de alumno con los dos tokens`() = runTest {
+        val result = repo.registerFromInvitation(TOKEN, "Secreta123")
+
+        val expected = AuthUser("s1", "Tomás Rivera", "tomas@test.com", Role.STUDENT)
+        assertEquals(expected, result.getOrNull())
+        val saved = store.current()!!
+        assertEquals("access-s", saved.accessToken)
+        assertEquals("refresh-s", saved.refreshToken)
+        assertEquals(expected, saved.user)
+        assertEquals(listOf(RegisterStudentRequest(TOKEN, "Secreta123")), api.registerCalls)
+    }
+
+    @Test fun `alta con email existente es StudentEmailExists y no guarda`() = runTest {
+        api.registerError = apiError(409, "STUDENT_EMAIL_EXISTS")
+        assertEquals(DataError.StudentEmailExists, repo.registerFromInvitation(TOKEN, "Secreta123").dataError())
+        assertNull(store.current())
+    }
+
+    @Test fun `alta con invitacion usada es InvitationUsed`() = runTest {
+        api.registerError = apiError(410, "INVITATION_ALREADY_USED")
+        assertEquals(DataError.InvitationUsed, repo.registerFromInvitation(TOKEN, "Secreta123").dataError())
+    }
+
+    @Test fun `alta sin red es Offline`() = runTest {
+        api.registerError = IOException("sin red")
+        assertEquals(DataError.Offline, repo.registerFromInvitation(TOKEN, "Secreta123").dataError())
+    }
+
+    @Test fun `alta ok pero falla el guardado es Unknown`() = runTest {
+        store.saveError = IOException("disco lleno")
+        assertEquals(DataError.Unknown, repo.registerFromInvitation(TOKEN, "Secreta123").dataError())
+    }
 
     @Test fun `login ok guarda tokens y usuario`() = runTest {
         val result = repo.login("ana@test.com", "Secreta123")

@@ -5,6 +5,9 @@ import com.fittrainer.data.api.LoginRequest
 import com.fittrainer.data.api.LoginResponse
 import com.fittrainer.data.api.RefreshRequest
 import com.fittrainer.data.api.RefreshResponse
+import com.fittrainer.data.api.RegisterStudentRequest
+import com.fittrainer.data.api.RegisterStudentResponse
+import com.fittrainer.data.api.StudentDto
 import com.fittrainer.data.api.UserDto
 import androidx.datastore.core.DataStore
 import com.fittrainer.data.auth.AuthFile
@@ -50,7 +53,10 @@ class MutableClock(var millis: Long) : Clock() {
     override fun withZone(zone: ZoneId): Clock = this
 }
 
-fun httpError(code: Int) = HttpException(Response.error<Any>(code, "{}".toResponseBody(null)))
+fun httpError(code: Int, body: String = "{}") = HttpException(Response.error<Any>(code, body.toResponseBody(null)))
+
+/** Body de error del backend con [code]. */
+fun apiError(status: Int, code: String) = httpError(status, """{"error":{"code":"$code","message":"x"}}""")
 
 /** TokenStore en memoria. [saveError], [clearError] y [readError] simulan fallas del almacenamiento. */
 class FakeTokenStore(initial: AuthState? = null) : TokenStore {
@@ -160,6 +166,10 @@ class FakeAuthApi : AuthApi {
     /** Códigos que devuelven los próximos logout, en orden; vacío = 204. */
     val logoutCodes = ArrayDeque<Int>()
 
+    var registerResponse = RegisterStudentResponse(StudentDto("s1", "Tomás Rivera", "tomas@test.com"), "access-s", "refresh-s")
+    var registerError: Throwable? = null
+    val registerCalls = mutableListOf<RegisterStudentRequest>()
+
     val loginCalls = mutableListOf<LoginRequest>()
     val refreshCalls = mutableListOf<RefreshRequest>()
     val logoutCalls = mutableListOf<Pair<String, RefreshRequest>>()
@@ -169,6 +179,12 @@ class FakeAuthApi : AuthApi {
         loginGate?.await()
         loginError?.let { throw it }
         return loginResponse
+    }
+
+    override suspend fun registerStudent(body: RegisterStudentRequest): RegisterStudentResponse {
+        registerCalls += body
+        registerError?.let { throw it }
+        return registerResponse
     }
 
     override suspend fun refresh(body: RefreshRequest): RefreshResponse {

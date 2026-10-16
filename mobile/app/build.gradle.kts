@@ -22,6 +22,8 @@ fun env(key: String, default: String): String =
 // Retrofit exige que la base termine en "/"; el .env.example la trae sin barra.
 val apiBaseUrl = env("API_BASE_URL", "http://10.0.2.2:3001/api").trimEnd('/') + "/"
 val apiTimeoutSeconds = env("API_TIMEOUT_SECONDS", "30").toLong()
+// Host de los links de invitación (FRONTEND_URL del backend). Sin dominio propio todavía: localhost en dev.
+val joinLinkHost = env("JOIN_LINK_HOST", "localhost")
 
 android {
     namespace = "com.fittrainer"
@@ -37,6 +39,7 @@ android {
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("long", "API_TIMEOUT_SECONDS", "${apiTimeoutSeconds}L")
+        manifestPlaceholders["joinLinkHost"] = joinLinkHost
     }
 
     buildTypes {
@@ -94,6 +97,11 @@ dependencies {
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    // Modelo incluido en el APK: escanea offline desde la primera vez, sin descargar nada de Play Services.
+    implementation(libs.mlkit.barcode.scanning)
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.androidx.datastore)

@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +43,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     warning: String? = null,
     onDismissWarning: () -> Unit = {},
+    onJoin: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LoginContent(
@@ -51,6 +53,7 @@ fun LoginScreen(
         onSubmit = viewModel::submit,
         warning = warning,
         onDismissWarning = onDismissWarning,
+        onJoin = onJoin,
     )
 }
 
@@ -62,6 +65,7 @@ fun LoginContent(
     onSubmit: () -> Unit,
     warning: String? = null,
     onDismissWarning: () -> Unit = {},
+    onJoin: () -> Unit = {},
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     val controlShape = RoundedCornerShape(FtRadius.control)
@@ -145,5 +149,12 @@ fun LoginContent(
         state.error?.let {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = FtColors.Coral)
         }
+
+        OutlinedButton(
+            onClick = onJoin,
+            enabled = !state.isLoading,
+            shape = controlShape,
+            modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+        ) { Text("Tengo una invitación") }
     }
 }
