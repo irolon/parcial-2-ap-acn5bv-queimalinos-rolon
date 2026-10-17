@@ -4,6 +4,7 @@ import com.fittrainer.BuildConfig
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.FitTrainerApi
 import com.fittrainer.data.api.InvitationApi
+import com.fittrainer.data.api.RoutineApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
 import dagger.Module
@@ -49,6 +50,11 @@ object NetworkModule {
     @Singleton
     fun provideApi(client: OkHttpClient, json: Json): FitTrainerApi =
         retrofit(client, json).create(FitTrainerApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideRoutineApi(client: OkHttpClient, json: Json): RoutineApi =
+        retrofit(client, json).create(RoutineApi::class.java)
 
     // AuthApi tiene que quedar en @AuthClient: en el cliente principal el refresh reentraría al TokenAuthenticator y se trabaría en su Mutex.
     @Provides

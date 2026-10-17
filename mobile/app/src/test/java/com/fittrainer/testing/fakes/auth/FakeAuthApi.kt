@@ -14,8 +14,9 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Response
 
 /**
- * AuthApi falsa. Cada endpoint devuelve su respuesta o lanza su error; [loginGate] demora el login y
- * [onRefresh] corre durante el refresh (p. ej. para cambiar de cuenta mientras está en curso).
+ * AuthApi falsa. Cada endpoint devuelve su respuesta o lanza su error; [loginGate] demora el login,
+ * [logoutGate] la revocación del logout y [onRefresh] corre durante el refresh (p. ej. para cambiar
+ * de cuenta mientras está en curso).
  */
 class FakeAuthApi : AuthApi {
     var loginResponse = LoginResponse(UserDto("u1", "Ana", "ana@test.com", "student"), "access-1", "refresh-1")
@@ -25,6 +26,7 @@ class FakeAuthApi : AuthApi {
     var refreshError: Throwable? = null
     var onRefresh: (suspend () -> Unit)? = null
     var logoutError: Throwable? = null
+    var logoutGate: CompletableDeferred<Unit>? = null
     /** Códigos que devuelven los próximos logout, en orden; vacío = 204. */
     val logoutCodes = ArrayDeque<Int>()
 
@@ -58,6 +60,7 @@ class FakeAuthApi : AuthApi {
 
     override suspend fun logout(bearer: String, body: RefreshRequest): Response<Unit> {
         logoutCalls += bearer to body
+        logoutGate?.await()
         logoutError?.let { throw it }
         val code = logoutCodes.removeFirstOrNull() ?: 204
         return if (code in 200..299) Response.success(code, Unit) else Response.error(code, "{}".toResponseBody(null))

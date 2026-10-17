@@ -3,6 +3,7 @@ package com.fittrainer.data.session
 import com.fittrainer.data.auth.AuthRepository
 import com.fittrainer.data.auth.tokenstore.TokenStore
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.map
 class TokenSessionRepository @Inject constructor(
     private val tokenStore: TokenStore,
     private val authRepository: AuthRepository,
+    private val userDataCleaner: UserDataCleaner,
 ) : SessionRepository {
 
     override val session: Flow<Session> = tokenStore.state.map { state ->
@@ -20,5 +22,29 @@ class TokenSessionRepository @Inject constructor(
         }
     }
 
-    override suspend fun signOut(): LogoutResult = authRepository.logout()
+    /**
+     * Borra los datos locales del usuario que se va y recién después cierra la sesión. El orden importa:
+     * logout() espera la revocación por red y, mientras tanto, puede entrar otra sesión (incluso de la
+     * misma cuenta). Si el borrado viniera después, vaciaría el caché de esa sesión nueva; antes de
+     * cerrar la sesión, en cambio, no puede haber otra. Si el borrado falla, la sesión igual se cierra:
+     * el caché tiene dueño y otro usuario no lo ve.
+     */
+    override suspend fun signOut(): LogoutResult {
+        // Sin sesión legible el dueño es desconocido: se borra todo.
+        val ownerId = try {
+            tokenStore.current()?.user?.id
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+        try {
+            userDataCleaner.clearUserData(ownerId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Sin acción: ver el comentario de la función.
+        }
+        return authRepository.logout()
+    }
 }
