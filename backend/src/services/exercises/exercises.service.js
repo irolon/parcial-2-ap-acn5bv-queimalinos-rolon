@@ -1,10 +1,21 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/exercises/exercises.repository.js';
+import * as studentsRepository from '../../repositories/students/students.repository.js';
 import { isOwnedBy } from '../../models/exercises/exercise.model.js';
 
 /** Lista la biblioteca visible para el trainer (globales + propios). */
 export function list(trainerId, filters) {
   return repository.findExercises({ trainerId, ...filters });
+}
+
+/**
+ * Biblioteca del alumno: globales + los de su entrenador. El trainer sale de la
+ * fila del alumno, nunca del request: no puede ver la biblioteca de otro entrenador.
+ */
+export async function library(studentId) {
+  const student = await studentsRepository.findStudentById(studentId);
+  if (!student) throw Errors.notFound('Alumno no encontrado');
+  return repository.findLibrary(student.trainer_id ?? null);
 }
 
 /** Crea un ejercicio personalizado del trainer (nunca global). */

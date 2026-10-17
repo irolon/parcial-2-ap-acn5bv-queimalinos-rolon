@@ -124,6 +124,7 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | Método | Ruta | Rol | Descripción |
 |--------|------|-----|-------------|
 | GET | `/api/exercises` | trainer | Biblioteca: globales + propios (`muscle_group`, `equipment`, `search`, `include_global`) |
+| GET | `/api/exercises/library` | student | Biblioteca del alumno: globales + los de su entrenador, ordenada por nombre. Solo `id, name, muscle_group, equipment, description, video_url`. Sin filtros (mobile filtra offline) |
 | POST | `/api/exercises` | trainer | Crea ejercicio propio |
 | PATCH | `/api/exercises/:id` | trainer | Edita (solo el dueño) |
 | DELETE | `/api/exercises/:id` | trainer | Elimina (solo el dueño) |
@@ -207,3 +208,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
   - borrado con `DELETE`;
   - el IMC no se calcula en la web: se usa el `bmi` de la respuesta.
 - **Login web:** si el login de un alumno responde `ACCOUNT_DISABLED`, mostrar "Tu entrenador dio de baja tu cuenta". Si el refresh falla (`401`), tratarlo como cierre de sesión: el mensaje aparece en el próximo login.
+
+### Ejercicios (`/exercises`)
+
+- **`GET /exercises/library` (nuevo, solo alumno):** lo usa la biblioteca offline de mobile. El entrenador sale de la ficha del alumno, no del request. Un alumno sin entrenador recibe solo los globales; uno que no existe, 404. **Para la web: nada que hacer**, `GET /exercises` sigue igual y solo para trainer.
