@@ -72,6 +72,10 @@ En una base ya creada, correr antes las migraciones de `src/database/migrations/
 que falten. Después del seed, `src/database/checks/exercises-checks.sql` tiene
 que devolver 0 filas.
 
+> Nota: antes de la migración `2026-10-17-exercises-global-name.sql`, correr
+> `select name, count(*) from exercises where is_global group by name having count(*) > 1;`
+> — tiene que devolver 0 filas antes de la migración 2026-10-17-exercises-global-name.sql.
+
 ## Scripts
 
 | Comando | Descripción |

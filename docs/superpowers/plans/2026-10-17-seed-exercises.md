@@ -7,7 +7,7 @@
 ## Global Constraints
 
 - `CONTRIBUTING.md`: ningún archivo de código (`.js`, `.sql`, tests incluidos) pasa de 200 líneas físicas; capa → módulo → archivo; los tests espejan el árbol de `src/`; lint y tests en verde antes de terminar.
-- **Sin ninguna firma de IA**: los commits NO llevan `Co-Authored-By` ni mención a Claude/IA; nada de "Generated with…". Mensajes en Conventional Commits, en español (ej. `feat(db): …`, `test(exercises): …`).
+- **Sin firma de asistentes**: los commits NO llevan `Co-Authored-By` ni ninguna mención de autoría automática; nada de "Generated with…". Mensajes en Conventional Commits, en español (ej. `feat(db): …`, `test(exercises): …`).
 - Producto en español: nombres y descripciones de ejercicios en español. Códigos de `muscle_group` y `equipment` en inglés.
 - `MUSCLE_GROUPS` (existente, no se toca): `chest, back, shoulders, legs, glutes, biceps, triceps, core, calves, full_body, cardio`.
 - `EQUIPMENT` (nuevo), en este orden: `barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`.
