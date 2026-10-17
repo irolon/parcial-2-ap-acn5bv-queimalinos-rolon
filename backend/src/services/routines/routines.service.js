@@ -5,6 +5,7 @@ import {
   dayName,
   toTodayRoutine,
   toRoutineDetail,
+  toStudentRoutines,
 } from '../../models/routines/routine.model.js';
 
 /**
@@ -93,4 +94,9 @@ export async function addExercises(trainerId, routineId, exercises) {
 export async function today(studentId) {
   const row = await repository.findActiveRoutineForStudentToday(studentId, dayName());
   return toTodayRoutine(row);
+}
+
+/** Rutinas activas del alumno con sus ejercicios (caché offline de mobile). */
+export async function mine(studentId) {
+  return toStudentRoutines(await repository.findActiveRoutinesForStudent(studentId));
 }

@@ -137,6 +137,7 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | PATCH | `/api/routines/:id` | trainer | Edita / desactiva una rutina |
 | POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina |
 | GET | `/api/routines/today` | student | Rutina activa del alumno para hoy |
+| GET | `/api/routines/mine` | student | Rutinas activas del alumno con sus ejercicios (caché offline de mobile) |
 
 ### Autenticación
 
@@ -190,6 +191,11 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **`bmi` se calcula en cada respuesta y no existe en la tabla.** Si la medida no trae altura, se usa la última registrada antes de esa medida. Puede venir `null`.
 - **Nuevos:** `GET /students/:id/metrics` (historial ascendente) y `DELETE /students/:id/metrics/:metricId`. No hay `PATCH`: para corregir, se borra y se vuelve a cargar.
 
+### Rutinas (`/routines`)
+
+- **Nuevo `GET /routines/mine`** (solo alumno): devuelve `{ data: [...] }` con **todas** las rutinas activas del alumno, cada una con `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises` (la misma forma que en `/today`, sin `last_session_kg`), la más nueva primero; `[]` si no tiene. Lo usa la app mobile para guardar la rutina offline y resolver el día en el teléfono: `/today` no distingue "día de descanso" de "sin rutina" y no sirve para un caché que se usa otro día.
+- `GET /routines/today` no cambia.
+
 ### Lo que le toca a la web
 
 - **Panel de alumnos:**
@@ -201,6 +207,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
   - pedirlos al editar, porque sin esos datos los asistentes IA del S4 sugieren cualquier cosa;
   - mostrar `latest_metrics` y `active_routine`, contemplando que vengan en `null`.
 - **Dar de baja o reactivar:** es un `PATCH` con `active: false` o `true`. Pedir confirmación, porque la baja revoca los refresh tokens del alumno (puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`).
+- **Rutinas:** nada. `GET /routines/mine` es solo para mobile.
 - **Medidas:**
   - historial con `GET` (ya viene ordenado para graficar);
   - carga con `POST` (convertir los inputs a número y mandar `recorded_at` con zona);

@@ -11,6 +11,11 @@ import {
 
 const TEMPLATES_TABLE = 'routine_templates';
 
+// Rutina con sus ejercicios embebidos (y los datos del ejercicio para mostrarlo).
+const ROUTINE_WITH_EXERCISES =
+  `${ROUTINE_COLUMNS}, routine_exercises ( ${ROUTINE_EXERCISE_COLUMNS}, ` +
+  `exercise:exercise_id ( id, name, muscle_group, equipment, video_url ) )`;
+
 /** ¿El alumno pertenece a este trainer? */
 export async function isStudentOfTrainer(studentId, trainerId) {
   const { data, error } = await supabase
@@ -105,10 +110,7 @@ export async function findRoutineById(id) {
 export async function findRoutineByIdWithExercises(id) {
   const { data, error } = await supabase
     .from(ROUTINES_TABLE)
-    .select(
-      `${ROUTINE_COLUMNS}, routine_exercises ( ${ROUTINE_EXERCISE_COLUMNS}, ` +
-        `exercise:exercise_id ( id, name, muscle_group, equipment, video_url ) )`
-    )
+    .select(ROUTINE_WITH_EXERCISES)
     .eq('id', id)
     .maybeSingle();
   if (error) throw Errors.internal(error.message);
@@ -131,10 +133,7 @@ export async function updateRoutine(id, fields) {
 export async function findActiveRoutineForStudentToday(studentId, day) {
   const { data, error } = await supabase
     .from(ROUTINES_TABLE)
-    .select(
-      `${ROUTINE_COLUMNS}, routine_exercises ( ${ROUTINE_EXERCISE_COLUMNS}, ` +
-        `exercise:exercise_id ( id, name, muscle_group, equipment, video_url ) )`
-    )
+    .select(ROUTINE_WITH_EXERCISES)
     .eq('student_id', studentId)
     .eq('active', true)
     .contains('days', [day])
@@ -155,6 +154,18 @@ export async function findActiveRoutineSummary(studentId) {
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** Rutinas activas del alumno con sus ejercicios, la más nueva primero (GET /routines/mine). */
+export async function findActiveRoutinesForStudent(studentId) {
+  const { data, error } = await supabase
+    .from(ROUTINES_TABLE)
+    .select(ROUTINE_WITH_EXERCISES)
+    .eq('student_id', studentId)
+    .eq('active', true)
+    .order('created_at', { ascending: false });
   if (error) throw Errors.internal(error.message);
   return data;
 }

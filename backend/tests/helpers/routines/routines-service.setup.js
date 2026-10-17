@@ -17,6 +17,7 @@ export const mockRepo = {
   findRoutineByIdWithExercises: jest.fn(),
   updateRoutine: jest.fn(),
   findActiveRoutineForStudentToday: jest.fn(),
+  findActiveRoutinesForStudent: jest.fn(),
 };
 jest.unstable_mockModule(
   src('repositories/routines/routines.repository.js'),

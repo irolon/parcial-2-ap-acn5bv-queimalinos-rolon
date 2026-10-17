@@ -81,3 +81,18 @@ export function toRoutineDetail(row) {
   const { routine_exercises: re, ...routine } = row;
   return { ...routine, exercises: mapRoutineExercises(re) };
 }
+
+/**
+ * Proyección para GET /routines/mine: las rutinas activas del alumno con sus
+ * ejercicios, para el caché offline de mobile (que resuelve el día en el teléfono).
+ */
+export function toStudentRoutines(rows) {
+  return (rows ?? []).map((row) => ({
+    routine_id: row.id,
+    name: row.name,
+    goal: row.goal,
+    days: row.days,
+    created_at: row.created_at,
+    exercises: mapRoutineExercises(row.routine_exercises),
+  }));
+}
