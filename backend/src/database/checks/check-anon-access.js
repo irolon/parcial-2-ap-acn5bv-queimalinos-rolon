@@ -45,6 +45,8 @@ const TABLES = [
   'ai_routine_generations',
   'appointments',
   'notifications',
+  // Vista (no tabla): con security_invoker hereda el RLS de sessions.
+  'student_last_session',
 ];
 
 const LABEL_WIDTH = 'NO CONCLUYENTE'.length;

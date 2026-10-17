@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/supabase.js';
+import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { TRAINERS_TABLE, TRAINER_PUBLIC_COLUMNS } from '../../models/auth/trainer.model.js';
 import { REFRESH_TOKENS_TABLE } from '../../models/auth/refresh-token.model.js';
@@ -56,5 +56,19 @@ export async function revokeRefreshToken(tokenHash) {
     .from(REFRESH_TOKENS_TABLE)
     .update({ revoked_at: new Date().toISOString() })
     .eq('token_hash', tokenHash);
+  if (error) throw Errors.internal(error.message);
+}
+
+/**
+ * Revoca todos los refresh tokens vigentes de un usuario (baja del alumno).
+ * Ninguno de sus dispositivos puede renovar la sesión después de esto.
+ */
+export async function revokeAllForUser(userId, role) {
+  const { error } = await supabase
+    .from(REFRESH_TOKENS_TABLE)
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('role', role)
+    .is('revoked_at', null);
   if (error) throw Errors.internal(error.message);
 }

@@ -37,7 +37,7 @@ probar. Pero sin RLS hay un agujero real: Supabase publica las tablas de
   RLS queda expuesta a la anon key apenas se crea. Después de cada migración se
   corre `schema-checks.sql` (tiene que devolver cero filas) y
   `npm run db:check-anon`.
-- Verificación: `backend/src/database/schema-checks.sql` (RLS activo, cero
+- Verificación: `backend/src/database/checks/schema-checks.sql` (RLS activo, cero
   políticas) y `npm run db:check-anon` (nada expuesto con la anon key; falla
   con exit 1 ante una tabla expuesta o una respuesta no concluyente: key
   inválida, tabla inexistente, error 5xx o sin respuesta).

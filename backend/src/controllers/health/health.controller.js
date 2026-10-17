@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/supabase.js';
+import { supabase } from '../../config/supabase.js';
 import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 
 const VERSION = '0.1.0';

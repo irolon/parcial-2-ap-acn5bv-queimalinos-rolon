@@ -34,6 +34,11 @@ export const Errors = {
     new AppError(410, 'INVITATION_EXPIRED', 'Esta invitación venció, pedile una nueva a tu profe'),
   invitationUsed: () =>
     new AppError(410, 'INVITATION_ALREADY_USED', 'Esta invitación ya fue utilizada'),
+  accountDisabled: () =>
+    new AppError(401, 'ACCOUNT_DISABLED', 'Tu entrenador dio de baja tu cuenta'),
+  metricNotFound: () => new AppError(404, 'METRIC_NOT_FOUND', 'La medida no existe'),
+  metricIdConflict: () =>
+    new AppError(409, 'METRIC_ID_CONFLICT', 'Ya existe una medida con ese id'),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };

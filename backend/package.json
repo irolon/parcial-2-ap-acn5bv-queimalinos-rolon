@@ -13,10 +13,10 @@
     "test": "cross-env TZ=UTC node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "cross-env TZ=UTC node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "cross-env TZ=UTC node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "lint": "eslint \"src/**/*.js\" \"tests/**/*.js\"",
-    "lint:fix": "eslint \"src/**/*.js\" \"tests/**/*.js\" --fix",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
-    "db:check-anon": "node src/database/check-anon-access.js"
+    "lint": "eslint \"**/*.js\" && node scripts/check-file-length.js",
+    "lint:fix": "eslint \"**/*.js\" --fix",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"scripts/**/*.js\"",
+    "db:check-anon": "node src/database/checks/check-anon-access.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

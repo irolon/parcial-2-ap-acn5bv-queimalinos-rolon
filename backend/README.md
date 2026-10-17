@@ -17,13 +17,12 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `exercises`, `routines`.
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`.
 
 ```
 src/
-├── config/env.js            # carga + validación de variables de entorno
+├── config/                  # env.js (variables de entorno) y supabase.js (cliente service role)
 ├── shared/                  # transversal a todos los módulos
-│   ├── supabase.js          # cliente Supabase (service role)
 │   ├── middlewares/         # authenticate, requireRole, validate, errores
 │   └── utils/               # errors, password (bcrypt), jwt, qr, asyncHandler
 ├── controllers/<modulo>/<modulo>.controller.js
@@ -33,17 +32,26 @@ src/
 ├── validations/<modulo>/<modulo>.validation.js
 ├── routes/<modulo>/<modulo>.routes.js
 ├── database/
-│   ├── schema.sql           # DDL de todas las tablas (Fase 1 + 2)
-│   └── seed.sql             # ejercicios globales iniciales
+│   ├── schema/              # DDL por dominio: 01…07 en orden (ver su README)
+│   ├── migrations/          # cambios de schema con fecha, para bases ya creadas
+│   ├── checks/              # schema-checks.sql y check-anon-access.js
+│   └── seeds/seed.sql       # ejercicios globales iniciales
 ├── app.js                   # arma la app de Express y monta las rutas
 └── server.js                # entrypoint (levanta el server)
 
+scripts/                     # mantenimiento: check-file-length.js (límite de 200 líneas)
+
 tests/                       # TODOS los tests viven acá (fuera de src/)
+├── helpers/<modulo>/        # utilidades compartidas por los tests
 ├── unit/                    # unitarios — espejan la estructura de src/
-│   ├── services/<modulo>/<modulo>.service.test.js
-│   └── models/auth/trainer.model.test.js
+│   ├── services/<modulo>/<modulo>.service.test.js   (o carpeta <modulo>.service/ si se dividió)
+│   ├── models/<modulo>/<entidad>.model.test.js
+│   ├── scripts/lib/         # tests de scripts/lib/ (file-length)
+│   └── validations/<modulo>/
 └── integration/             # end-to-end de endpoints HTTP (Supertest) — pendiente
 ```
+
+> Reglas de tamaño y orden: ver `../CONTRIBUTING.md`.
 
 > Cada módulo nuevo agrega su carpeta `<modulo>/` dentro de cada capa que
 > necesite: `controllers/<modulo>/`, `services/<modulo>/`, etc. El módulo `auth`
@@ -57,8 +65,8 @@ npm install
 ```
 
 Luego, en el **SQL Editor** de Supabase, ejecutar en orden:
-1. `src/database/schema.sql` — crea todas las tablas.
-2. `src/database/seed.sql` — carga los ejercicios globales iniciales.
+1. los archivos de `src/database/schema/` en orden (ver su README) — crean todas las tablas.
+2. `src/database/seeds/seed.sql` — carga los ejercicios globales iniciales.
 
 ## Scripts
 
@@ -68,7 +76,7 @@ Luego, en el **SQL Editor** de Supabase, ejecutar en orden:
 | `npm start` | Producción |
 | `npm test` | Tests (Jest) |
 | `npm run test:coverage` | Tests con cobertura |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint + chequeo de 200 líneas por archivo (`scripts/check-file-length.js`) |
 
 ## Endpoints
 
@@ -91,14 +99,26 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 ### Invitaciones (onboarding) — Fase 1
 | Método | Ruta | Rol | Descripción |
 |--------|------|-----|-------------|
-| POST | `/api/invitations` | trainer | Genera invitación (token, `join_url`, QR base64 y/o link de WhatsApp) |
+| POST | `/api/invitations` | trainer | Genera invitación (token, `join_url`, QR base64 y/o link de WhatsApp). Acepta opcionales `gym_equipment`, `injuries` y `level`, que pasan al alumno en el alta |
 | GET | `/api/invitations/:token` | — | Valida token y devuelve datos precargados |
 
-### Alumnos — Fase 1/2
+### Alumnos y medidas corporales — Fase 1/2
+
 | Método | Ruta | Rol | Descripción |
 |--------|------|-----|-------------|
 | POST | `/api/students` | — | Alta del alumno desde token de invitación |
-| GET | `/api/students` | trainer | Lista alumnos del PT (`active`, `search`, `page`, `limit`) |
+| GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`. Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
+| GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`) y `active_routine` (`{ id, name, days }`) |
+| PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) |
+| GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
+| POST | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Carga una medida. 201 si es nueva, 200 si es un reintento con el mismo `id` |
+| DELETE | `/api/students/:id/metrics/:metricId` | trainer dueño (cualquiera) / alumno (solo las suyas) | Borra una medida. 204 |
+
+Valores válidos: `goal` = `tonify` | `weight_loss` | `hypertrophy` | `strength`; `level` = `beginner` | `intermediate` | `advanced`. Un `:id` o `:metricId` que no es UUID responde 400 `VALIDATION_ERROR`.
+
+Ajeno o inexistente → **403** (no revela qué ids existen).
+
+En el borrado de medidas, una medida inexistente o de otro alumno responde **404** `METRIC_NOT_FOUND`, y un alumno que borra una medida cargada por el entrenador responde **403**.
 
 ### Ejercicios — Fase 2
 | Método | Ruta | Rol | Descripción |
@@ -117,6 +137,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | PATCH | `/api/routines/:id` | trainer | Edita / desactiva una rutina |
 | POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina |
 | GET | `/api/routines/today` | student | Rutina activa del alumno para hoy |
+| GET | `/api/routines/mine` | student | Rutinas activas del alumno con sus ejercicios (caché offline de mobile) |
 
 ### Autenticación
 
@@ -125,7 +146,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 
 ## Notas de implementación (desvíos respecto del DER de Notion)
 
-Estos ajustes fueron necesarios para que el backend funcione. Todos están aplicados en `src/database/schema.sql`.
+Estos ajustes fueron necesarios para que el backend funcione. Todos están aplicados en `src/database/schema/`.
 
 1. **`trainers.password_hash` y `students.password_hash`** — el DER no incluía
    credenciales; el login por email/password las requiere.
@@ -136,3 +157,60 @@ Estos ajustes fueron necesarios para que el backend funcione. Todos están aplic
    (`chest, back, shoulders, legs, glutes, biceps, triceps, core, calves, full_body, cardio`).
 6. **Expiración de invitaciones: 48 hs** (constante `INVITATION_EXPIRY_HOURS`) — CU-01 y el
    Plan dicen 48 hs; el DER/ejemplo de contrato mostraban 72 hs.
+
+## Desvíos respecto del contrato de API (Notion v1.1)
+
+El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que vale es esto.**
+
+### Invitaciones (`/invitations`)
+
+- **`POST /invitations`:** suma tres campos **opcionales**, con las mismas reglas que en `PATCH /students/:id`: `gym_equipment` (lista de hasta 30 textos de 1 a 50 caracteres), `injuries` (texto de hasta 1000) y `level` (`beginner | intermediate | advanced`). `null` cuenta como ausente. Al aceptar la invitación (`POST /students`), se copian al alumno, igual que `goal`.
+- `GET /invitations/:token` **no** los devuelve: lo puede leer cualquiera que tenga el link, y las lesiones son un dato sensible.
+
+### Alumnos (`/students`)
+
+- **`GET /students`:** cada alumno trae `last_session_at` (timestamp, o `null` si nunca entrenó), que sale de la vista `student_last_session`. **Por defecto trae solo los activos**; los dados de baja se piden con `?active=false`.
+- **`GET /students/:id`:** responde `{ data }`, con `latest_metrics` (la última medida con `bmi`, o `null`) y `active_routine` (`{ id, name, days }`, o `null`).
+- **`PATCH /students/:id`:** devuelve la ficha completa en `{ data }`, con la misma forma que el GET.
+- **Baja del alumno** (`active: false`): no se borra nada.
+  - El login del alumno responde `401 ACCOUNT_DISABLED`.
+  - Sus refresh tokens se revocan: su `POST /api/auth/refresh` responde `401 UNAUTHORIZED` ("Refresh token inválido"), no `ACCOUNT_DISABLED`. El access token que tenga dura como mucho `JWT_EXPIRES_IN` (1 h).
+  - Con `active: true` vuelve a entrar con la misma contraseña.
+  - Solo el entrenador da de baja; nada lo hace de forma automática por inactividad.
+
+### Medidas corporales (`/students/:id/metrics`)
+
+- Las rutas siguen el contrato (`/students/:id/metrics`), no `/body-metrics`.
+- **`POST`:**
+  - suma `height_cm`, que hace falta para el IMC;
+  - suma un `id` opcional (UUID generado en el cliente): un reintento con el mismo `id` responde 200 con lo ya guardado, sin duplicar; un `id` ya usado por otro alumno responde 409 `METRIC_ID_CONFLICT`;
+  - las medidas van como **números JSON** (`"80"` como string da 400), son ≥ 0 y `body_fat_pct` ≤ 100;
+  - tiene que venir al menos una;
+  - `recorded_at` es opcional (por defecto, ahora; `null` cuenta como ausente), en ISO 8601 **con zona** (`Z` o `-03:00`), y no puede estar más de 5 minutos en el futuro (se tolera el reloj adelantado del celular);
+  - `recorded_by` lo pone el backend según el rol.
+- **`bmi` se calcula en cada respuesta y no existe en la tabla.** Si la medida no trae altura, se usa la última registrada antes de esa medida. Puede venir `null`.
+- **Nuevos:** `GET /students/:id/metrics` (historial ascendente) y `DELETE /students/:id/metrics/:metricId`. No hay `PATCH`: para corregir, se borra y se vuelve a cargar.
+
+### Rutinas (`/routines`)
+
+- **Nuevo `GET /routines/mine`** (solo alumno): devuelve `{ data: [...] }` con **todas** las rutinas activas del alumno, cada una con `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises` (la misma forma que en `/today`, sin `last_session_kg`), la más nueva primero; `[]` si no tiene. Lo usa la app mobile para guardar la rutina offline y resolver el día en el teléfono: `/today` no distingue "día de descanso" de "sin rutina" y no sirve para un caché que se usa otro día.
+- `GET /routines/today` no cambia.
+
+### Lo que le toca a la web
+
+- **Panel de alumnos:**
+  - mostrar `last_session_at` ("Nunca entrenó" si es `null`);
+  - sumar un filtro o una pestaña "Dados de baja" que pida `?active=false`.
+- **Formulario de invitación:** pedir `gym_equipment`, `injuries` y `level` al crear la invitación (son opcionales, pero sin ellos la IA del S4 arranca sin contexto). Pasan solos al alumno cuando acepta.
+- **Ficha del alumno:**
+  - mostrar y editar `gym_equipment` (lista de textos), `injuries` y `level`;
+  - pedirlos al editar, porque sin esos datos los asistentes IA del S4 sugieren cualquier cosa;
+  - mostrar `latest_metrics` y `active_routine`, contemplando que vengan en `null`.
+- **Dar de baja o reactivar:** es un `PATCH` con `active: false` o `true`. Pedir confirmación, porque la baja revoca los refresh tokens del alumno (puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`).
+- **Rutinas:** nada. `GET /routines/mine` es solo para mobile.
+- **Medidas:**
+  - historial con `GET` (ya viene ordenado para graficar);
+  - carga con `POST` (convertir los inputs a número y mandar `recorded_at` con zona);
+  - borrado con `DELETE`;
+  - el IMC no se calcula en la web: se usa el `bmi` de la respuesta.
+- **Login web:** si el login de un alumno responde `ACCOUNT_DISABLED`, mostrar "Tu entrenador dio de baja tu cuenta". Si el refresh falla (`401`), tratarlo como cierre de sesión: el mensaje aparece en el próximo login.

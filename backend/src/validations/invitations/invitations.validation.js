@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { GOALS, DELIVERY_CHANNELS, includesWhatsapp } from '../../models/invitations/invitation.model.js';
+import { parseStudentContext } from '../students/student-context.validation.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isString = (v) => typeof v === 'string';
@@ -45,6 +46,17 @@ export function validateCreateInvitation(body) {
     normalizedPhone = phone.replace(/\D/g, '') || null;
   }
 
+  // Contexto para los asistentes IA (opcional): el trainer lo carga en el alta
+  // y pasa al alumno al aceptar la invitación. null cuenta como ausente.
+  const context = parseStudentContext(
+    {
+      gym_equipment: body.gym_equipment ?? undefined,
+      injuries: body.injuries ?? undefined,
+      level: body.level ?? undefined,
+    },
+    details
+  );
+
   if (details.length > 0) throw Errors.validation('Error de validación', details);
 
   return {
@@ -53,6 +65,9 @@ export function validateCreateInvitation(body) {
     student_phone: normalizedPhone,
     goal,
     delivery_channel: channel,
+    gym_equipment: context.gym_equipment ?? null,
+    injuries: context.injuries ?? null,
+    level: context.level ?? null,
   };
 }
 

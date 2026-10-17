@@ -1,4 +1,4 @@
-import { dayName } from '../../../../src/models/routines/routine.model.js';
+import { dayName, toStudentRoutines } from '../../../../src/models/routines/routine.model.js';
 
 /**
  * Todo el suite corre con TZ=UTC (ver el script `test` en package.json) para
@@ -19,5 +19,41 @@ describe('routine.model · dayName', () => {
     // El alumno que abre la app un domingo a la noche tiene que ver el domingo.
     const lunesTempranoUTC = new Date('2026-08-24T01:30:00Z');
     expect(dayName(lunesTempranoUTC)).toBe('sunday');
+  });
+});
+
+describe('routine.model · toStudentRoutines', () => {
+  const row = {
+    id: 'rt-1',
+    trainer_id: 'trainer-1',
+    student_id: 'st-1',
+    name: 'Full body',
+    goal: 'strength',
+    days: ['monday', 'thursday'],
+    active: true,
+    created_at: '2026-10-01T10:00:00.123456+00:00',
+    routine_exercises: [
+      { id: 're-2', order_index: 1, sets: 3, reps: 10, exercise: { id: 'ex-2', name: 'Remo' } },
+      { id: 're-1', order_index: 0, sets: 4, reps: 8, exercise: { id: 'ex-1', name: 'Press' } },
+    ],
+  };
+
+  it('proyecta cada rutina con sus ejercicios ordenados y sin datos internos', () => {
+    const [routine] = toStudentRoutines([row]);
+    expect(routine).toMatchObject({
+      routine_id: 'rt-1',
+      name: 'Full body',
+      goal: 'strength',
+      days: ['monday', 'thursday'],
+      created_at: '2026-10-01T10:00:00.123456+00:00',
+    });
+    expect(routine.exercises.map((e) => e.routine_exercise_id)).toEqual(['re-1', 're-2']);
+    expect(routine).not.toHaveProperty('trainer_id');
+    expect(routine).not.toHaveProperty('student_id');
+  });
+
+  it('sin filas devuelve una lista vacía', () => {
+    expect(toStudentRoutines([])).toEqual([]);
+    expect(toStudentRoutines(null)).toEqual([]);
   });
 });

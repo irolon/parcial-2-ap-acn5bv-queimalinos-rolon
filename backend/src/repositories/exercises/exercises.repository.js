@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/supabase.js';
+import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { EXERCISES_TABLE, EXERCISE_COLUMNS } from '../../models/exercises/exercise.model.js';
 

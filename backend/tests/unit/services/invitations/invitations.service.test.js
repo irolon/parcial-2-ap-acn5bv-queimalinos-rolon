@@ -47,6 +47,23 @@ describe('invitations.service', () => {
       expect(mockRepo.createInvitation.mock.calls[0][0].token).toBe(result.token);
     });
 
+    it('guarda en la invitación el contexto para la IA (null si no vino)', async () => {
+      mockRepo.studentEmailExists.mockResolvedValue(false);
+      mockRepo.createInvitation.mockResolvedValue(createdRow);
+
+      await service.createInvitation('trainer-1', {
+        ...BASE_BODY,
+        gym_equipment: ['barbell'],
+        level: 'beginner',
+      });
+
+      expect(mockRepo.createInvitation.mock.calls[0][0]).toMatchObject({
+        studentGymEquipment: ['barbell'],
+        studentInjuries: null,
+        studentLevel: 'beginner',
+      });
+    });
+
     it('con canal "qr" incluye QR pero no link de WhatsApp', async () => {
       mockRepo.studentEmailExists.mockResolvedValue(false);
       mockRepo.createInvitation.mockResolvedValue(createdRow);

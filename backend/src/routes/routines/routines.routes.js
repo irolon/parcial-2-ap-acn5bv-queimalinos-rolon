@@ -17,6 +17,7 @@ router.use(authenticate);
 
 // Rutina del día — solo alumnos. Va antes de cualquier ruta con parámetro.
 router.get('/today', requireRole('student'), routinesController.today);
+router.get('/mine', requireRole('student'), routinesController.mine);
 
 // Gestión de rutinas — solo trainers.
 router.get('/', requireRole('trainer'), validate(validateListQuery, 'query'), routinesController.list);
