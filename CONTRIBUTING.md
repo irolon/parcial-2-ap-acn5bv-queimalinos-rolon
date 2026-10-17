@@ -16,7 +16,7 @@ Este archivo es la fuente de verdad del flujo de trabajo. Si Notion o el tablero
 ## Ramas y releases
 
 - La rama principal es **`master`**. `develop` es la integración y la rama por defecto del repo.
-- `master` representa **las entregas**. Solo recibe una PR de release desde `develop` en cada hito:
+- `master` representa **las entregas**. Solo recibe una PR de release desde `develop` en cada hito. Quien mergea esa PR a `master` crea el tag:
 
   | Hito | Fecha | Tag |
   |---|---|---|
@@ -31,23 +31,24 @@ Este archivo es la fuente de verdad del flujo de trabajo. Si Notion o el tablero
   - `docs/` para cambios que son solo documentación.
 - Nombre de rama en inglés, kebab-case, sin número de tarjeta. Ejemplo: `feature/exercises-library`.
 - **Nadie pushea directo a `develop` ni a `master`.**
-- Se evitan las PRs apiladas. Si una es inevitable, apunta a la rama base, y al mergear la base se le cambia el destino a `develop`.
+- Se evitan las PRs apiladas. Si una es inevitable, apunta a la rama de la PR de la que depende, y al mergear esa PR se le cambia el destino a `develop`.
 
 ## Commits
 
 - Conventional Commits, con tipos `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. Descripción en español.
 - El scope es recomendado, no obligatorio. Valores sugeridos: `backend`, `mobile`, `web`, `db`, `docker` o el módulo (`exercises`, `routines`…).
-- La referencia a la tarjeta va en el título de la PR (`(tarjeta 9)`); en el commit es opcional.
+- La referencia a la tarjeta va en el título de la PR (`(tarjeta 9)`, el número de la tarjeta del tablero del equipo); en el commit es opcional. El cuerpo de la PR linkea esa tarjeta.
 
 ## Pull requests y review
 
 - **Todo entra por PR.** Revisa, aprueba y **mergea el otro**, nunca el autor.
 - Como no hay CI, el revisor:
-  - corre lint y tests de lo afectado, combinado con `develop`;
+  - corre lint y tests de lo afectado, combinado con `develop` (mergea `develop` en una copia local de la rama, sin pushear). Si hay conflictos, el autor actualiza su rama mergeando `develop` en ella;
   - compara contra el spec o la tarjeta y contra las reglas de código;
+  - si el cambio toca Room u otro código instrumentado y el revisor no tiene emulador, el autor corre `connectedDebugAndroidTest` y pega el resultado en la PR;
   - aprueba o pide cambios, y marca cada observación como **bloqueante** o **menor**. Las menores no frenan el merge.
-- La review se responde en **24 h hábiles**. La tarjeta presupuesta unos 30 minutos por PR: el objetivo es que los dos entiendan todo el sistema antes de la defensa.
-- Merge con **merge commit** (no squash ni rebase). La rama se borra después del merge.
+- La review se responde en **24 h hábiles** (lunes a viernes). Responder es hacer la review completa o dejar un comentario diciendo cuándo se hace. La tarjeta presupuesta unos 30 minutos por PR: el objetivo es que los dos entiendan todo el sistema antes de la defensa.
+- Merge con **merge commit** (no squash ni rebase). Quien mergea borra la rama después (hasta que se active el borrado automático).
 - La plantilla de PR está en `.github/pull_request_template.md`: tarjeta y spec, qué hace, cómo se probó y checklist de la DoD.
 
 ## Definition of Done
@@ -74,8 +75,8 @@ Una tarjeta está terminada cuando:
 
 ## Specs y plans
 
-- Cada tarjeta de más de medio día lleva un spec en `docs/superpowers/specs/AAAA-MM-DD-<tema>-design.md`. Si hace falta, también un plan en `docs/superpowers/plans/`.
-- Se commitean en la misma rama que el código. **El spec manda ante cualquier conflicto**, y el revisor compara contra él.
+- Cada tarjeta de más de medio día estimado lleva un spec en `docs/superpowers/specs/AAAA-MM-DD-<tema>-design.md`. Si hace falta, también un plan en `docs/superpowers/plans/`.
+- Se commitean en la misma rama que el código. **El spec manda sobre el plan y la tarjeta**, y el revisor compara contra él. Nunca manda sobre este archivo: las reglas de código no se exceptúan desde un spec.
 
 ## Asistentes de IA
 
