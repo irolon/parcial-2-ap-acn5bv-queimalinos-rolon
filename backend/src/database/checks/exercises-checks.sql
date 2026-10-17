@@ -20,18 +20,18 @@ union all
 select 'global con muscle_group fuera de la lista: ' || coalesce(muscle_group, 'null'), name
 from exercises
 where is_global
-  and muscle_group is distinct from all (array[
+  and (muscle_group is null or muscle_group <> all (array[
     'chest', 'back', 'shoulders', 'legs', 'glutes', 'biceps', 'triceps',
     'core', 'calves', 'full_body', 'cardio'
-  ])
+  ]))
 
 union all
 select 'global con equipment fuera de la lista: ' || coalesce(equipment, 'null'), name
 from exercises
 where is_global
-  and equipment is distinct from all (array[
+  and (equipment is null or equipment <> all (array[
     'barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'band'
-  ])
+  ]))
 
 union all
 select 'global sin video_url', name
