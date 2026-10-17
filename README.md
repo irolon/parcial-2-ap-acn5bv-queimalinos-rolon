@@ -1,5 +1,7 @@
 # FitTrainer
 
+> **Antes de escribir código, leé [`CONTRIBUTING.md`](CONTRIBUTING.md).** Ningún archivo de código pasa de 200 líneas y todo va ordenado capa → módulo → archivo. No es negociable.
+
 Plataforma para personal trainers y sus alumnos · **Web + Android** · Proyecto Final de Analista de Sistemas.
 
 Monorepo con tres clientes/servicios:
