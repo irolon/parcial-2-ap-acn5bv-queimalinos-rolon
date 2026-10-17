@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fittrainer.ui.health.HealthScreen
+import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.today.TodayScreen
@@ -61,6 +62,7 @@ fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit) {
                             onSignOut = onSignOut,
                         )
                         tab.route == STUDENT_TODAY_ROUTE -> TodayScreen()
+                        tab.route == STUDENT_LIBRARY_ROUTE -> LibraryScreen()
                         else -> PlaceholderScreen(tab.label)
                     }
                 }

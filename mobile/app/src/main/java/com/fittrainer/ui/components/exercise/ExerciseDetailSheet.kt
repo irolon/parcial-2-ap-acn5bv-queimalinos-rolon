@@ -1,4 +1,4 @@
-package com.fittrainer.ui.today.components
+package com.fittrainer.ui.components.exercise
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,17 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
-import com.fittrainer.ui.today.formatKg
-import com.fittrainer.ui.today.muscleLabel
 
-/** Detalle del ejercicio. El video es un link externo: solo se ofrece con red. */
+const val VIDEO_NEEDS_CONNECTION = "El video necesita conexión"
+
+/** Detalle del ejercicio. El video es un link externo: con red se abre; sin red, se avisa. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseDetailSheet(exercise: RoutineExercise, canOpenVideo: Boolean, onDismiss: () -> Unit) {
-    val uriHandler = LocalUriHandler.current
+fun ExerciseDetailSheet(detail: ExerciseDetail, canOpenVideo: Boolean, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FtColors.Surface) {
         Column(
             Modifier
@@ -37,33 +35,45 @@ fun ExerciseDetailSheet(exercise: RoutineExercise, canOpenVideo: Boolean, onDism
                 .padding(bottom = Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            Text(exercise.name, style = MaterialTheme.typography.titleLarge, color = FtColors.TextPrimary)
-            val muscle = muscleLabel(exercise.muscleGroup)
+            Text(detail.name, style = MaterialTheme.typography.titleLarge, color = FtColors.TextPrimary)
+            val muscle = muscleLabel(detail.muscleGroup)
             if (muscle.isNotEmpty()) {
                 Text(muscle.uppercase(), style = MaterialTheme.typography.labelMedium, color = FtColors.TextSecondary)
             }
-            DetailLine("Series", exercise.sets?.toString())
-            DetailLine("Repeticiones", exercise.reps?.toString())
-            DetailLine("Peso sugerido", exercise.suggestedKg?.let(::formatKg))
-            DetailLine("Tempo", exercise.tempo)
-            DetailLine("Descanso", exercise.restSeconds?.let { "$it s" })
-            DetailLine("Equipo", exercise.equipment)
-            val notes = exercise.notes
-            if (!notes.isNullOrBlank()) {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                    Text("NOTA DEL ENTRENADOR", style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
-                    Text(notes, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
-                }
-            }
-            val video = exercise.videoUrl
-            if (video != null && canOpenVideo) {
-                OutlinedButton(
-                    // Sin app que abra el link, no se hace nada (no se rompe la pantalla).
-                    onClick = { runCatching { uriHandler.openUri(video) } },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
-                ) { Text("Ver video") }
-            }
+            DetailLine("Series", detail.sets?.toString())
+            DetailLine("Repeticiones", detail.reps?.toString())
+            DetailLine("Peso sugerido", detail.suggestedKg?.let(::formatKg))
+            DetailLine("Tempo", detail.tempo)
+            DetailLine("Descanso", detail.restSeconds?.let { "$it s" })
+            DetailLine("Equipo", detail.equipment)
+            DetailBlock("DESCRIPCIÓN", detail.description)
+            DetailBlock("NOTA DEL ENTRENADOR", detail.notes)
+            VideoAction(detail.videoUrl, canOpenVideo)
         }
+    }
+}
+
+@Composable
+private fun VideoAction(video: String?, canOpenVideo: Boolean) {
+    if (video.isNullOrBlank()) return
+    if (!canOpenVideo) {
+        Text(VIDEO_NEEDS_CONNECTION, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
+        return
+    }
+    val uriHandler = LocalUriHandler.current
+    OutlinedButton(
+        // Sin app que abra el link, no se hace nada (no se rompe la pantalla).
+        onClick = { runCatching { uriHandler.openUri(video) } },
+        modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+    ) { Text("Ver video") }
+}
+
+@Composable
+private fun DetailBlock(label: String, text: String?) {
+    if (text.isNullOrBlank()) return
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
     }
 }
 

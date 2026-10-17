@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 class TokenSessionRepository @Inject constructor(
     private val tokenStore: TokenStore,
     private val authRepository: AuthRepository,
-    private val userDataCleaner: UserDataCleaner,
+    private val userDataCleaners: Set<@JvmSuppressWildcards UserDataCleaner>,
 ) : SessionRepository {
 
     override val session: Flow<Session> = tokenStore.state.map { state ->
@@ -27,7 +27,7 @@ class TokenSessionRepository @Inject constructor(
      * logout() espera la revocación por red y, mientras tanto, puede entrar otra sesión (incluso de la
      * misma cuenta). Si el borrado viniera después, vaciaría el caché de esa sesión nueva; antes de
      * cerrar la sesión, en cambio, no puede haber otra. Si el borrado falla, la sesión igual se cierra:
-     * el caché tiene dueño y otro usuario no lo ve.
+     * el caché tiene dueño y otro usuario no lo ve. Si algún borrado falla, los demás igual se hacen.
      */
     override suspend fun signOut(): LogoutResult {
         // Sin sesión legible el dueño es desconocido: se borra todo.
@@ -38,12 +38,15 @@ class TokenSessionRepository @Inject constructor(
         } catch (e: Exception) {
             null
         }
-        try {
-            userDataCleaner.clearUserData(ownerId)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Sin acción: ver el comentario de la función.
+        // Cada caché por separado: si uno falla, los demás igual se borran.
+        userDataCleaners.forEach { cleaner ->
+            try {
+                cleaner.clearUserData(ownerId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Sin acción: ver el comentario de la función.
+            }
         }
         return authRepository.logout()
     }

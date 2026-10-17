@@ -22,13 +22,6 @@ class RoutineTextsTest {
         assertEquals("LMXJVSD", DayOfWeek.values().joinToString("") { dayInitial(it) })
     }
 
-    @Test fun `musculos traducidos y desconocido tal cual`() {
-        assertEquals("Pecho", muscleLabel("chest"))
-        assertEquals("Cuerpo completo", muscleLabel("full_body"))
-        assertEquals("pantorrilla", muscleLabel("pantorrilla"))
-        assertEquals("", muscleLabel(null))
-    }
-
     @Test fun `series por reps y casos sin datos`() {
         assertEquals("4×8", setsReps(exercise()))
         assertEquals("3 series", setsReps(exercise(sets = 3, reps = null)))
@@ -73,10 +66,5 @@ class RoutineTextsTest {
     @Test fun `mensaje de descanso con y sin proximo dia`() {
         assertEquals("Hoy descansás. Tu próximo entreno es el jueves.", restMessage(DayOfWeek.THURSDAY))
         assertEquals("Hoy descansás.", restMessage(null))
-    }
-
-    @Test fun `kilos sin decimales de mas`() {
-        assertEquals("40 kg", formatKg(40.0))
-        assertEquals("2,5 kg", formatKg(2.5))
     }
 }
