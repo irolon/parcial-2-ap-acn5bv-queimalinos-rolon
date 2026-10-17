@@ -14,10 +14,14 @@ import com.fittrainer.ui.login.LoginScreen
 @Composable
 fun AppNavHost(viewModel: RootViewModel = hiltViewModel()) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    val signOutWarning by viewModel.signOutWarning.collectAsStateWithLifecycle()
     when (session) {
         null -> Box(Modifier.fillMaxSize()) // leyendo la sesión guardada
-        Session.LoggedOut -> LoginScreen()
-        Session.Student -> RoleShell(tabs = StudentTabs, onSignOut = viewModel::signOut)
-        Session.Trainer -> RoleShell(tabs = TrainerTabs, onSignOut = viewModel::signOut)
+        Session.LoggedOut -> LoginScreen(
+            warning = signOutWarning,
+            onDismissWarning = viewModel::dismissSignOutWarning,
+        )
+        is Session.Student -> RoleShell(tabs = StudentTabs, onSignOut = viewModel::signOut)
+        is Session.Trainer -> RoleShell(tabs = TrainerTabs, onSignOut = viewModel::signOut)
     }
 }
