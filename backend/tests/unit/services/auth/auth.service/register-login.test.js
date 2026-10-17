@@ -1,42 +1,11 @@
-import { jest } from '@jest/globals';
-
-// ── Mock del repository (capa de datos) ──────────────────────────────────────
-// La ruta debe resolver al MISMO archivo que importa el service, para que el
-// mock aplique (ESM resuelve por path absoluto).
-const mockRepo = {
-  createTrainer: jest.fn(),
-  findTrainerByEmailWithHash: jest.fn(),
-  saveRefreshToken: jest.fn(),
-  findRefreshToken: jest.fn(),
-  revokeRefreshToken: jest.fn(),
-};
-jest.unstable_mockModule(
-  '../../../../src/repositories/auth/auth.repository.js',
-  () => mockRepo
-);
-
-// El login también consulta el repo de students (login role-agnóstico).
-const mockStudentsRepo = {
-  findStudentByEmailWithHash: jest.fn().mockResolvedValue(null),
-};
-jest.unstable_mockModule(
-  '../../../../src/repositories/students/students.repository.js',
-  () => mockStudentsRepo
-);
-
-// Imports dinámicos (obligatorio con ESM + unstable_mockModule).
-const authService = await import('../../../../src/services/auth/auth.service.js');
-const { hashPassword } = await import('../../../../src/shared/utils/password.js');
-const { verifyAccessToken, hashToken } = await import('../../../../src/shared/utils/jwt.js');
-
-const TRAINER = {
-  id: 'trainer-uuid-1',
-  name: 'Ignacio Rolon',
-  email: 'ignacio@fittrainer.app',
-  specialty: 'Fuerza',
-  avatar_url: null,
-  created_at: '2026-06-20T10:00:00Z',
-};
+import {
+  mockRepo,
+  mockStudentsRepo,
+  authService,
+  hashPassword,
+  verifyAccessToken,
+  TRAINER,
+} from '../../../../helpers/auth/auth-service.setup.js';
 
 describe('auth.service', () => {
   describe('register', () => {
@@ -117,50 +86,6 @@ describe('auth.service', () => {
       await expect(
         authService.login({ email: 'ignacio@fittrainer.app', password: 'MalaPass9' })
       ).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' });
-    });
-  });
-
-  describe('refresh', () => {
-    it('emite un nuevo access token con un refresh válido', async () => {
-      mockRepo.findRefreshToken.mockResolvedValue({
-        id: 'rt-1',
-        user_id: TRAINER.id,
-        role: 'trainer',
-        expires_at: new Date(Date.now() + 86_400_000).toISOString(),
-        revoked_at: null,
-      });
-
-      const result = await authService.refresh({ refresh_token: 'algun-token' });
-      expect(verifyAccessToken(result.token).sub).toBe(TRAINER.id);
-      // Busca por el HASH del token, no por el token en claro.
-      expect(mockRepo.findRefreshToken).toHaveBeenCalledWith(hashToken('algun-token'));
-    });
-
-    it('rechaza un refresh token inexistente', async () => {
-      mockRepo.findRefreshToken.mockResolvedValue(null);
-      await expect(authService.refresh({ refresh_token: 'x' })).rejects.toMatchObject({
-        statusCode: 401,
-      });
-    });
-
-    it('rechaza un refresh token expirado', async () => {
-      mockRepo.findRefreshToken.mockResolvedValue({
-        user_id: TRAINER.id,
-        role: 'trainer',
-        expires_at: new Date(Date.now() - 1000).toISOString(),
-        revoked_at: null,
-      });
-      await expect(authService.refresh({ refresh_token: 'x' })).rejects.toMatchObject({
-        statusCode: 401,
-      });
-    });
-  });
-
-  describe('logout', () => {
-    it('revoca el refresh token por su hash', async () => {
-      mockRepo.revokeRefreshToken.mockResolvedValue();
-      await authService.logout({ refresh_token: 'algun-token' });
-      expect(mockRepo.revokeRefreshToken).toHaveBeenCalledWith(hashToken('algun-token'));
     });
   });
 });
