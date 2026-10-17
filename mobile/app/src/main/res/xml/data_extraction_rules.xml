@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+: el keyset y la sesión cifrada no viajan a la nube ni a otro equipo.
+     La clave maestra del Keystore no se copia, así que en destino serían ilegibles. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="fittrainer_auth_keyset.xml" />
+        <exclude domain="file" path="datastore/auth.pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="fittrainer_auth_keyset.xml" />
+        <exclude domain="file" path="datastore/auth.pb" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API <= 30: mismas exclusiones que data_extraction_rules.xml. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="fittrainer_auth_keyset.xml" />
+    <exclude domain="file" path="datastore/auth.pb" />
+</full-backup-content>
