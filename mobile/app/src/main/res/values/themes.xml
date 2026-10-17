@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema de ventana: solo el fondo oscuro mientras arranca Compose. -->
+    <style name="Theme.FitTrainer" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF0B0D0C</item>
+    </style>
+</resources>
