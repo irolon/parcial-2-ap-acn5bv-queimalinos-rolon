@@ -1,0 +1,51 @@
+# Entorno de DESARROLLO local de FitTrainer.
+#
+#   docker compose up --build
+#
+# Levanta la API en http://localhost:3001 con hot reload: el código se monta por
+# volumen, así que editar un archivo recarga el server sin rebuildear la imagen.
+#
+# No hay servicio de base de datos: los datos viven en Supabase (remoto). Las
+# credenciales salen de backend/.env — copiá backend/.env.example y completalo.
+
+services:
+  api:
+    container_name: fittrainer-api
+    build:
+      context: ./backend
+      target: dev
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+      # Docker Desktop en Windows/macOS no propaga los eventos de filesystem a
+      # través del bind mount. Sin polling, nodemon no se entera de los cambios
+      # y el hot reload no funciona.
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      # El puerto del host es configurable: si ya tenés algo ocupando el 3001,
+      # `API_PORT=3002 docker compose up` lo publica en otro lado sin editar
+      # este archivo. Adentro del contenedor siempre es 3001.
+      - "${API_PORT:-3001}:3001"
+    volumes:
+      # El código, para el hot reload.
+      - ./backend:/app
+      # Volumen anónimo que PROTEGE las dependencias de la imagen: sin esto, el
+      # bind mount de arriba tapa /app/node_modules con las del host (Windows).
+      - /app/node_modules
+    healthcheck:
+      # Se usa node en vez de curl/wget: la imagen alpine no trae curl y así no
+      # dependemos de qué flags soporta el wget de busybox.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
