@@ -15,7 +15,10 @@ class TokenSessionRepositoryTest {
     private val api = FakeAuthApi()
     private val store = FakeTokenStore()
     private val cleaner = FakeCleaner()
-    private val repo = TokenSessionRepository(store, AuthRepository(api, store, fixedClock()), cleaner)
+    private val other = FakeCleaner()
+    private val repo = TokenSessionRepository(
+        store, AuthRepository(api, store, fixedClock()), setOf(cleaner, other),
+    )
 
     @Test fun `sin sesion guardada es LoggedOut`() = runTest {
         assertEquals(Session.LoggedOut, repo.session.first())
@@ -45,6 +48,13 @@ class TokenSessionRepositoryTest {
         assertEquals(1, cleaner.calls)
     }
 
+    @Test fun `signOut borra los datos de todos los caches`() = runTest {
+        store.save(authState())
+        repo.signOut()
+        assertEquals(1, cleaner.calls)
+        assertEquals(1, other.calls)
+    }
+
     // Codex P2: el borrado queda atado al usuario que se va, no a quien esté logueado cuando termina.
     @Test fun `signOut borra solo los datos del usuario que cierra sesion`() = runTest {
         store.save(authState())
@@ -56,6 +66,15 @@ class TokenSessionRepositoryTest {
         store.save(authState())
         cleaner.error = IllegalStateException("disco")
         assertEquals(LogoutResult.Closed, repo.signOut())
+        assertEquals(Session.LoggedOut, repo.session.first())
+    }
+
+    // Review Focus 5: un caché que no se pudo borrar no deja a los demás con datos del que se fue.
+    @Test fun `si un borrado falla los demas igual se borran`() = runTest {
+        store.save(authState())
+        cleaner.error = IllegalStateException("disco")
+        assertEquals(LogoutResult.Closed, repo.signOut())
+        assertEquals(1, other.calls)
         assertEquals(Session.LoggedOut, repo.session.first())
     }
 

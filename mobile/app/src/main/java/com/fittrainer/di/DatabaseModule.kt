@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
+import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.routine.RoutineDao
 import dagger.Module
 import dagger.Provides
@@ -28,6 +29,9 @@ object DatabaseModule {
 
     @Provides
     fun provideRoutineDao(db: FitTrainerDatabase): RoutineDao = db.routineDao()
+
+    @Provides
+    fun provideLibraryDao(db: FitTrainerDatabase): LibraryDao = db.libraryDao()
 
     @Provides
     @Singleton

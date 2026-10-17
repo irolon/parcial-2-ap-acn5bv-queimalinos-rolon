@@ -2,6 +2,8 @@ package com.fittrainer.ui.today
 
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineExercise
+import com.fittrainer.ui.components.exercise.ExerciseDetail
+import com.fittrainer.ui.components.exercise.muscleLabel
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlin.math.roundToInt
@@ -33,20 +35,6 @@ private val DAY_INITIALS = mapOf(
 
 private val MONTHS = listOf("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
 
-private val MUSCLES = mapOf(
-    "chest" to "Pecho",
-    "back" to "Espalda",
-    "shoulders" to "Hombros",
-    "legs" to "Piernas",
-    "glutes" to "Glúteos",
-    "biceps" to "Bíceps",
-    "triceps" to "Tríceps",
-    "core" to "Core",
-    "calves" to "Gemelos",
-    "full_body" to "Cuerpo completo",
-    "cardio" to "Cardio",
-)
-
 fun dayName(day: DayOfWeek): String = DAY_NAMES.getValue(day)
 
 fun dayInitial(day: DayOfWeek): String = DAY_INITIALS.getValue(day)
@@ -54,8 +42,6 @@ fun dayInitial(day: DayOfWeek): String = DAY_INITIALS.getValue(day)
 /** "SÁBADO · 17 OCT". Sin Locale: el resultado no depende del idioma del teléfono. */
 fun headerDate(date: LocalDate): String =
     "${dayName(date.dayOfWeek).uppercase()} · ${date.dayOfMonth} ${MONTHS[date.monthValue - 1]}"
-
-fun muscleLabel(raw: String?): String = raw?.let { MUSCLES[it] ?: it }.orEmpty()
 
 /** "4×8"; sin reps, "3 series"; sin series, "12 reps"; sin nada, "". */
 fun setsReps(exercise: RoutineExercise): String {
@@ -95,8 +81,17 @@ fun heroSummary(routine: Routine): String = listOf(
 fun restMessage(nextDay: DayOfWeek?): String =
     nextDay?.let { "Hoy descansás. Tu próximo entreno es el ${dayName(it)}." } ?: "Hoy descansás."
 
-/** 40.0 → "40 kg"; 2.5 → "2,5 kg" (coma decimal). */
-fun formatKg(kg: Double): String =
-    if (kg % 1.0 == 0.0) "${kg.toInt()} kg" else "${kg.toString().replace('.', ',')} kg"
-
 private fun plural(n: Int, one: String, many: String) = "$n ${if (n == 1) one else many}"
+
+fun RoutineExercise.toDetail() = ExerciseDetail(
+    name = name,
+    muscleGroup = muscleGroup,
+    equipment = equipment,
+    videoUrl = videoUrl,
+    sets = sets,
+    reps = reps,
+    suggestedKg = suggestedKg,
+    tempo = tempo,
+    restSeconds = restSeconds,
+    notes = notes,
+)

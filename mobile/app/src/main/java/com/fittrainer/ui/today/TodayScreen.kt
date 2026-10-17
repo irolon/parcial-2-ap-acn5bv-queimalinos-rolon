@@ -20,16 +20,16 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.data.routine.TodayContent
+import com.fittrainer.ui.components.NoticeBanner
+import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
+import com.fittrainer.ui.components.exercise.ExerciseRow
+import com.fittrainer.ui.components.exercise.SectionLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
-import com.fittrainer.ui.today.components.ExerciseDetailSheet
-import com.fittrainer.ui.today.components.ExerciseRow
 import com.fittrainer.ui.today.components.NeverSyncedState
 import com.fittrainer.ui.today.components.NoRoutineState
-import com.fittrainer.ui.today.components.NoticeBanner
 import com.fittrainer.ui.today.components.RestState
 import com.fittrainer.ui.today.components.RoutineHeroCard
-import com.fittrainer.ui.today.components.SectionLabel
 import com.fittrainer.ui.today.components.TodayHeader
 import com.fittrainer.ui.today.components.WeekStrip
 
@@ -65,7 +65,7 @@ fun TodayBody(state: TodayUiState, onRefresh: () -> Unit, onDismissNotice: () ->
         }
     }
     selected?.let { exercise ->
-        ExerciseDetailSheet(exercise, canOpenVideo = !state.isOffline, onDismiss = { selected = null })
+        ExerciseDetailSheet(exercise.toDetail(), canOpenVideo = !state.isOffline, onDismiss = { selected = null })
     }
 }
 
@@ -77,7 +77,7 @@ private fun LazyListScope.todayItems(state: TodayUiState, onExerciseClick: (Rout
             item { RoutineHeroCard(content.routine) }
             item { SectionLabel("PLAN DE HOY", content.routine.exercises.size.toString()) }
             items(content.routine.exercises, key = { it.id }) { exercise ->
-                ExerciseRow(exercise, onClick = { onExerciseClick(exercise) })
+                ExerciseRow(exercise.name, exerciseSubtitle(exercise), onClick = { onExerciseClick(exercise) })
             }
         }
         is TodayContent.Rest -> {

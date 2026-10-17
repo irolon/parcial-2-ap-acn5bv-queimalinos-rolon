@@ -1,4 +1,4 @@
-package com.fittrainer.ui.today.components
+package com.fittrainer.ui.components.exercise
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,10 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
-import com.fittrainer.ui.today.exerciseSubtitle
 
 @Composable
 fun SectionLabel(title: String, trailing: String) {
@@ -32,7 +30,7 @@ fun SectionLabel(title: String, trailing: String) {
 }
 
 @Composable
-fun ExerciseRow(exercise: RoutineExercise, onClick: () -> Unit) {
+fun ExerciseRow(title: String, subtitle: String, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -45,8 +43,7 @@ fun ExerciseRow(exercise: RoutineExercise, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            Text(exercise.name, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary)
-            val subtitle = exerciseSubtitle(exercise)
+            Text(title, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary)
             if (subtitle.isNotEmpty()) {
                 Text(subtitle, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
             }

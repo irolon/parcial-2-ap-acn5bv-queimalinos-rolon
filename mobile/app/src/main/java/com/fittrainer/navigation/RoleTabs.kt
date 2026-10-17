@@ -16,12 +16,13 @@ data class Tab(val route: String, val label: String, val icon: ImageVector, val 
 
 const val HEALTH_ROUTE = "health"
 const val STUDENT_TODAY_ROUTE = "student/today"
+const val STUDENT_LIBRARY_ROUTE = "student/routines"
 
 /** Guía Mobile p.5 — app del alumno. */
 val StudentTabs = listOf(
     Tab(STUDENT_TODAY_ROUTE, "Hoy", Icons.Filled.DateRange),
     Tab("student/progress", "Progreso", Icons.Filled.Star),
-    Tab("student/routines", "Mis rutinas", Icons.AutoMirrored.Filled.List),
+    Tab(STUDENT_LIBRARY_ROUTE, "Mis rutinas", Icons.AutoMirrored.Filled.List),
     Tab("student/profile", "Perfil", Icons.Filled.Person, isAccountMenu = true),
 )
 
