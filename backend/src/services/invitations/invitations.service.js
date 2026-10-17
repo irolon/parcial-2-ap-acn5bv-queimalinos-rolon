@@ -45,6 +45,9 @@ export async function createInvitation(trainerId, data) {
     studentPhone: data.student_phone,
     studentGoal: data.goal,
     deliveryChannel: data.delivery_channel,
+    studentGymEquipment: data.gym_equipment ?? null,
+    studentInjuries: data.injuries ?? null,
+    studentLevel: data.level ?? null,
     expiresAt: expiryISO(),
   });
 

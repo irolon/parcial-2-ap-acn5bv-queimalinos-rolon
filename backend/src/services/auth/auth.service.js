@@ -61,6 +61,9 @@ async function authenticateUser(password, row, toPublic, role) {
   if (!row.password_hash) throw Errors.invalidCredentials();
   const ok = await verifyPassword(password, row.password_hash);
   if (!ok) throw Errors.invalidCredentials();
+  // La contraseña se verifica ANTES: con una incorrecta sigue saliendo
+  // INVALID_CREDENTIALS, así no se revela que la cuenta existe y está de baja.
+  if (role === 'student' && row.active === false) throw Errors.accountDisabled();
 
   const user = toPublic(row); // descarta password_hash vía el modelo
   const tokens = await issueTokens(user, role);
@@ -72,6 +75,12 @@ export async function refresh({ refresh_token }) {
   const stored = await repository.findRefreshToken(hashToken(refresh_token));
   if (!stored) throw Errors.unauthorized('Refresh token inválido');
   if (!isActive(stored)) throw Errors.unauthorized('Refresh token expirado');
+  // Segunda barrera: la baja revoca los refresh tokens, pero si quedó alguno
+  // vivo, un alumno inactivo igual no renueva.
+  if (stored.role === 'student') {
+    const student = await studentsRepository.findStudentById(stored.user_id);
+    if (!student || !student.active) throw Errors.accountDisabled();
+  }
 
   const token = signAccessToken({ sub: stored.user_id, role: stored.role });
   return { token, expires_in: env.JWT_EXPIRES_IN };

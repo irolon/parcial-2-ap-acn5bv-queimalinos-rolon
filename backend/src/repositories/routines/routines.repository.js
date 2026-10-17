@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/supabase.js';
+import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 import { EXERCISES_TABLE } from '../../models/exercises/exercise.model.js';
@@ -138,6 +138,20 @@ export async function findActiveRoutineForStudentToday(studentId, day) {
     .eq('student_id', studentId)
     .eq('active', true)
     .contains('days', [day])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** Rutina activa más reciente del alumno, sin ejercicios (active_routine de la ficha). */
+export async function findActiveRoutineSummary(studentId) {
+  const { data, error } = await supabase
+    .from(ROUTINES_TABLE)
+    .select('id, name, days')
+    .eq('student_id', studentId)
+    .eq('active', true)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();

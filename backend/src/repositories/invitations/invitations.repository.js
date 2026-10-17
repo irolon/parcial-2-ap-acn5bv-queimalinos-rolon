@@ -1,11 +1,14 @@
-import { supabase } from '../../shared/supabase.js';
+import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { INVITATIONS_TABLE } from '../../models/invitations/invitation.model.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 
 // Datos del trainer embebidos en la invitación (para los datos precargados).
+// El contexto para la IA se lee para copiarlo al alumno en el alta; la
+// proyección pública (toPublicInvitation) no lo expone.
 const INVITATION_WITH_TRAINER =
   'id, token, student_name, student_email, student_goal, expires_at, used_at, ' +
+  'student_gym_equipment, student_injuries, student_level, ' +
   'trainer:trainer_id (id, name, specialty, avatar_url)';
 
 /** Crea una invitación y devuelve id, token y expiración. */
@@ -20,6 +23,9 @@ export async function createInvitation(data) {
       student_phone: data.studentPhone,
       student_goal: data.studentGoal,
       delivery_channel: data.deliveryChannel,
+      student_gym_equipment: data.studentGymEquipment,
+      student_injuries: data.studentInjuries,
+      student_level: data.studentLevel,
       expires_at: data.expiresAt,
     })
     .select('id, token, expires_at')

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { env } from '../config/env.js';
+import { env } from './env.js';
 
 /**
  * Cliente de Supabase con la SERVICE ROLE key.

@@ -15,3 +15,15 @@ export const registerFromInvitation = asyncHandler(async (req, res) => {
   const result = await studentsService.registerFromInvitation(req.body);
   res.status(201).json(result);
 });
+
+/** GET /students/:id — ficha completa (trainer dueño o el propio alumno). */
+export const getById = asyncHandler(async (req, res) => {
+  const data = await studentsService.getById(req.user, req.params.id);
+  res.json({ data });
+});
+
+/** PATCH /students/:id — edita o da de baja al alumno (solo trainer dueño). */
+export const update = asyncHandler(async (req, res) => {
+  const data = await studentsService.update(req.user, req.params.id, req.body);
+  res.json({ data });
+});
