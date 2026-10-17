@@ -1,12 +1,15 @@
 import { supabase } from '../../shared/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
+import { EXERCISES_TABLE } from '../../models/exercises/exercise.model.js';
 import {
   ROUTINES_TABLE,
   ROUTINE_EXERCISES_TABLE,
   ROUTINE_COLUMNS,
   ROUTINE_EXERCISE_COLUMNS,
 } from '../../models/routines/routine.model.js';
+
+const TEMPLATES_TABLE = 'routine_templates';
 
 /** ¿El alumno pertenece a este trainer? */
 export async function isStudentOfTrainer(studentId, trainerId) {
@@ -18,6 +21,31 @@ export async function isStudentOfTrainer(studentId, trainerId) {
     .maybeSingle();
   if (error) throw Errors.internal(error.message);
   return Boolean(data);
+}
+
+/** Busca una plantilla por id (para validar existencia y ownership). */
+export async function findTemplateById(templateId) {
+  const { data, error } = await supabase
+    .from(TEMPLATES_TABLE)
+    .select('id, trainer_id')
+    .eq('id', templateId)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/**
+ * De los ejercicios pedidos, devuelve los ids que el trainer puede usar:
+ * globales o de su biblioteca. Los ajenos o inexistentes quedan afuera.
+ */
+export async function findAccessibleExerciseIds(exerciseIds, trainerId) {
+  const { data, error } = await supabase
+    .from(EXERCISES_TABLE)
+    .select('id')
+    .in('id', exerciseIds)
+    .or(`is_global.eq.true,trainer_id.eq.${trainerId}`);
+  if (error) throw Errors.internal(error.message);
+  return data.map((row) => row.id);
 }
 
 /** Crea una rutina (activa) y devuelve la fila. */

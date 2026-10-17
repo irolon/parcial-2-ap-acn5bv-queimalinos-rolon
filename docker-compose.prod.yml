@@ -1,0 +1,46 @@
+# Entorno de PRODUCCIÓN (VPS) de FitTrainer.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Diferencias con el de desarrollo:
+#   · target prod  → npm ci --omit=dev, corre como usuario `node`, sin nodemon
+#   · sin volumen de código → la imagen es inmutable; para actualizar, rebuild
+#   · NODE_ENV=production
+#   · logs rotados: sin esto, en un VPS chico el disco se llena en semanas
+#
+# Se usa en la tarjeta 25 (S7) al montar el VPS. Queda listo desde ahora para no
+# improvisarlo en noviembre.
+
+services:
+  api:
+    container_name: fittrainer-api
+    build:
+      context: ./backend
+      target: prod
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      # Solo loopback: nginx hace de reverse proxy y termina el TLS. Publicar
+      # 0.0.0.0:3001 dejaría la API expuesta a internet sin HTTPS.
+      - "127.0.0.1:3001:3001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

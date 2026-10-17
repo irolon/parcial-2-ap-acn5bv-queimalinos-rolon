@@ -28,13 +28,46 @@ desarrollo) vive en el tablero de Notion del proyecto.
 
 > DB en Supabase (proyecto **Fit-Trainer**): schema + seed aplicados, conexión verificada.
 
-## Arranque rápido (backend)
+## Arranque rápido — Docker (recomendado)
+
+Único requisito: **Docker Desktop**. No hace falta instalar Node.
+
+```bash
+cp backend/.env.example backend/.env   # completar con credenciales de Supabase
+docker compose up --build              # API en http://localhost:3001
+```
+
+Verificar que levantó:
+
+```bash
+curl http://localhost:3001/health
+```
+
+El código se monta por volumen: editás un archivo y el server recarga solo, sin
+rebuildear. Solo hay que volver a buildear si cambian `package.json` o el
+`Dockerfile`.
+
+**¿El puerto 3001 ya está ocupado?** Publicalo en otro sin editar nada:
+
+```bash
+API_PORT=3002 docker compose up --build
+```
+
+| Archivo | Para qué |
+|---------|----------|
+| `docker-compose.yml` | Desarrollo: hot reload, código montado |
+| `docker-compose.prod.yml` | VPS: sin volúmenes, `NODE_ENV=production`, logs rotados |
+
+> **Mobile:** el emulador de Android **no** llega a la API por `localhost` —
+> tiene que ser **`10.0.2.2`**. Está explicado en `mobile/.env.example`.
+
+### Sin Docker
 
 ```bash
 cd backend
-cp .env.example .env   # completar con credenciales de Supabase
+cp .env.example .env
 npm install
 npm run dev            # API en http://localhost:3001
 ```
 
-Ver `backend/README.md` para el detalle.
+Ver `backend/README.md` para el detalle de la arquitectura y los endpoints.

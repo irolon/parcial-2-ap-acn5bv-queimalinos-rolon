@@ -3,7 +3,8 @@ import { jest } from '@jest/globals';
 // Mocks de las dependencias del service.
 const mockInvitationsRepo = {
   findInvitationByToken: jest.fn(),
-  markInvitationUsed: jest.fn(),
+  claimInvitation: jest.fn(),
+  releaseInvitation: jest.fn(),
 };
 const mockStudentsRepo = {
   createStudent: jest.fn(),
@@ -63,8 +64,9 @@ describe('students.service — list', () => {
 });
 
 describe('students.service — registerFromInvitation', () => {
-  it('crea el alumno, marca la invitación usada y devuelve tokens', async () => {
+  it('crea el alumno, reclama la invitación y devuelve tokens', async () => {
     mockInvitationsRepo.findInvitationByToken.mockResolvedValue(VALID_INVITATION);
+    mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
     mockStudentsRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
     mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
 
@@ -83,8 +85,8 @@ describe('students.service — registerFromInvitation', () => {
     expect(createArg.passwordHash).toBeDefined();
     expect(createArg.passwordHash).not.toBe('Password1'); // hasheada
 
-    // Se marca la invitación como usada y se emiten tokens con rol student.
-    expect(mockInvitationsRepo.markInvitationUsed).toHaveBeenCalledWith('inv-1');
+    // Se reclama la invitación y se emiten tokens con rol student.
+    expect(mockInvitationsRepo.claimInvitation).toHaveBeenCalledWith('inv-1');
     expect(mockIssueTokens).toHaveBeenCalledWith(CREATED_STUDENT, 'student');
   });
 
@@ -115,5 +117,52 @@ describe('students.service — registerFromInvitation', () => {
     await expect(
       service.registerFromInvitation({ token: 'x', password: 'Password1' })
     ).rejects.toMatchObject({ code: 'INVITATION_EXPIRED', statusCode: 410 });
+  });
+it('con dos registros simultáneos del mismo token crea un solo alumno', async () => {
+    // Las dos requests leen la invitación antes de que ninguna la marque:
+    // esa es exactamente la ventana de la condición de carrera (doble submit
+    // del alumno cuando el wifi está lento).
+    mockInvitationsRepo.findInvitationByToken.mockResolvedValue(VALID_INVITATION);
+
+    // Simula el UPDATE ... WHERE used_at IS NULL de Postgres: la gana una sola.
+    let reclamada = false;
+    mockInvitationsRepo.claimInvitation.mockImplementation(async () => {
+      if (reclamada) return false;
+      reclamada = true;
+      return true;
+    });
+
+    mockStudentsRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
+    mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
+
+    const resultados = await Promise.allSettled([
+      service.registerFromInvitation({ token: 'tok', password: 'Password1' }),
+      service.registerFromInvitation({ token: 'tok', password: 'Password1' }),
+    ]);
+
+    const cumplidas = resultados.filter((r) => r.status === 'fulfilled');
+    const rechazadas = resultados.filter((r) => r.status === 'rejected');
+
+    expect(cumplidas).toHaveLength(1);
+    expect(rechazadas).toHaveLength(1);
+    expect(rechazadas[0].reason).toMatchObject({ code: 'INVITATION_ALREADY_USED' });
+
+    // Lo que importa: un solo alumno en la base.
+    expect(mockStudentsRepo.createStudent).toHaveBeenCalledTimes(1);
+  });
+
+  it('libera la invitación si falla la creación del alumno', async () => {
+    // Reclamar antes de crear evita alumnos duplicados, pero si la creación
+    // falla la invitación no puede quedar quemada: el alumno no podría
+    // registrarse nunca más y el PT tendría que emitir otra.
+    mockInvitationsRepo.findInvitationByToken.mockResolvedValue(VALID_INVITATION);
+    mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
+    mockStudentsRepo.createStudent.mockRejectedValue(new Error('la base se cayó'));
+
+    await expect(
+      service.registerFromInvitation({ token: 'tok', password: 'Password1' })
+    ).rejects.toThrow('la base se cayó');
+
+    expect(mockInvitationsRepo.releaseInvitation).toHaveBeenCalledWith('inv-1');
   });
 });
