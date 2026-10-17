@@ -1,8 +1,8 @@
 package com.fittrainer.data.auth
 
-import com.fittrainer.data.FakeTokenStore
+import com.fittrainer.testing.fakes.auth.FakeTokenStore
 import com.fittrainer.data.api.AuthApi
-import com.fittrainer.data.authState
+import com.fittrainer.testing.fakes.auth.authState
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers

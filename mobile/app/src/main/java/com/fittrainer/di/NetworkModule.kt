@@ -3,6 +3,8 @@ package com.fittrainer.di
 import com.fittrainer.BuildConfig
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.FitTrainerApi
+import com.fittrainer.data.api.InvitationApi
+import com.fittrainer.data.api.RoutineApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
 import dagger.Module
@@ -15,7 +17,6 @@ import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
@@ -50,11 +51,22 @@ object NetworkModule {
     fun provideApi(client: OkHttpClient, json: Json): FitTrainerApi =
         retrofit(client, json).create(FitTrainerApi::class.java)
 
+    @Provides
+    @Singleton
+    fun provideRoutineApi(client: OkHttpClient, json: Json): RoutineApi =
+        retrofit(client, json).create(RoutineApi::class.java)
+
     // AuthApi tiene que quedar en @AuthClient: en el cliente principal el refresh reentraría al TokenAuthenticator y se trabaría en su Mutex.
     @Provides
     @Singleton
     fun provideAuthApi(@AuthClient client: OkHttpClient, json: Json): AuthApi =
         retrofit(client, json).create(AuthApi::class.java)
+
+    // Pública: va por el cliente sin Bearer, como AuthApi.
+    @Provides
+    @Singleton
+    fun provideInvitationApi(@AuthClient client: OkHttpClient, json: Json): InvitationApi =
+        retrofit(client, json).create(InvitationApi::class.java)
 
     private fun client(configure: OkHttpClient.Builder.() -> Unit = {}): OkHttpClient = OkHttpClient.Builder()
         // Conexión corta: sin red falla rápido y el caché de Room se muestra enseguida.
@@ -63,14 +75,8 @@ object NetworkModule {
         .writeTimeout(BuildConfig.API_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .apply(configure)
         .apply {
-            // Último interceptor: ve el Bearer ya agregado, pero nunca lo imprime.
-            if (BuildConfig.DEBUG) {
-                addInterceptor(
-                    HttpLoggingInterceptor()
-                        .setLevel(HttpLoggingInterceptor.Level.BASIC)
-                        .apply { redactHeader("Authorization") }
-                )
-            }
+            // Último interceptor: ve el Bearer ya agregado, pero nunca lo imprime (ni el token de invitación).
+            if (BuildConfig.DEBUG) addInterceptor(httpLogging())
         }
         .build()
 

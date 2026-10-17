@@ -2,6 +2,7 @@ package com.fittrainer.data.auth
 
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.RefreshRequest
+import com.fittrainer.data.auth.tokenstore.TokenStore
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.runBlocking

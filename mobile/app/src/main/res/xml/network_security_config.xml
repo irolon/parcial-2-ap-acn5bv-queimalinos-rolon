@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- HTTP en claro SOLO contra el host del emulador (10.0.2.2). Todo lo demás exige HTTPS. -->
+<!-- HTTP en claro SOLO contra la PC de desarrollo: 10.0.2.2 desde el emulador y localhost desde un
+     celular por USB con `adb reverse tcp:3001 tcp:3001`. Todo lo demás exige HTTPS. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false" />
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
     </domain-config>
 </network-security-config>

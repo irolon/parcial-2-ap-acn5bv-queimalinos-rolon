@@ -1,12 +1,12 @@
 package com.fittrainer.ui.login
 
-import com.fittrainer.MainDispatcherRule
-import com.fittrainer.data.FakeAuthApi
-import com.fittrainer.data.FakeTokenStore
-import com.fittrainer.data.fixedClock
+import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.testing.fakes.auth.FakeAuthApi
+import com.fittrainer.testing.fakes.auth.FakeTokenStore
+import com.fittrainer.testing.fakes.auth.fixedClock
 import com.fittrainer.data.api.LoginRequest
 import com.fittrainer.data.auth.AuthRepository
-import com.fittrainer.data.httpError
+import com.fittrainer.testing.fakes.auth.httpError
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest

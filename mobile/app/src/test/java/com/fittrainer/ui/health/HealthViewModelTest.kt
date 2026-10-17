@@ -1,8 +1,8 @@
 package com.fittrainer.ui.health
 
-import com.fittrainer.MainDispatcherRule
-import com.fittrainer.data.FakeHealthApi
-import com.fittrainer.data.FakeHealthDao
+import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.testing.fakes.FakeHealthApi
+import com.fittrainer.testing.fakes.FakeHealthDao
 import com.fittrainer.data.db.HealthSnapshotEntity
 import com.fittrainer.data.repository.HealthRepository
 import java.io.IOException

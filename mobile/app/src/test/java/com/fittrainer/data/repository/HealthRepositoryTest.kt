@@ -1,7 +1,7 @@
 package com.fittrainer.data.repository
 
-import com.fittrainer.data.FakeHealthApi
-import com.fittrainer.data.FakeHealthDao
+import com.fittrainer.testing.fakes.FakeHealthApi
+import com.fittrainer.testing.fakes.FakeHealthDao
 import com.fittrainer.data.db.HealthSnapshotEntity
 import java.io.IOException
 import java.time.Clock

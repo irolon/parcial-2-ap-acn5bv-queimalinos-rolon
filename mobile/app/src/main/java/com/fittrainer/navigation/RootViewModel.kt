@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class RootViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
+    private val pending: PendingInvitation,
 ) : ViewModel() {
 
     val session: StateFlow<Session?> =
@@ -41,6 +42,18 @@ class RootViewModel @Inject constructor(
             session.collect { if (it is Session.Student || it is Session.Trainer) lastSignOut.value = null }
         }
     }
+
+    /** Token de un deep link pendiente; sin sesión lo consume LoggedOutNavHost. */
+    val pendingInvitation: StateFlow<String?> = pending.token
+
+    /** Llegó una invitación con una sesión iniciada: no se cierra sola, se avisa. */
+    val invitationWhileLoggedIn: StateFlow<Boolean> = combine(pending.token, session) { token, session ->
+        token != null && (session is Session.Student || session is Session.Trainer)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun consumePendingInvitation() = pending.consume()
+
+    fun dismissPendingInvitation() = pending.consume()
 
     fun signOut() {
         viewModelScope.launch {

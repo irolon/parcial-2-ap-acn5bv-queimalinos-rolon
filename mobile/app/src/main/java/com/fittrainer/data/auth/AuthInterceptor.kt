@@ -1,5 +1,6 @@
 package com.fittrainer.data.auth
 
+import com.fittrainer.data.auth.tokenstore.TokenStore
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor

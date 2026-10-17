@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import com.fittrainer.data.auth.AuthCrypto
-import com.fittrainer.data.auth.DataStoreTokenStore
 import com.fittrainer.data.auth.EncryptedAuthSerializer
 import com.fittrainer.data.auth.SharedPrefsSessionTombstones
-import com.fittrainer.data.auth.TokenStore
+import com.fittrainer.data.auth.tokenstore.DataStoreTokenStore
+import com.fittrainer.data.auth.tokenstore.TokenStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
