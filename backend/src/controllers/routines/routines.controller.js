@@ -36,3 +36,9 @@ export const today = asyncHandler(async (req, res) => {
   const data = await routinesService.today(req.user.id);
   res.json({ data });
 });
+
+/** GET /routines/mine — rutinas activas del alumno con sus ejercicios (solo alumnos). */
+export const mine = asyncHandler(async (req, res) => {
+  const data = await routinesService.mine(req.user.id);
+  res.json({ data });
+});
