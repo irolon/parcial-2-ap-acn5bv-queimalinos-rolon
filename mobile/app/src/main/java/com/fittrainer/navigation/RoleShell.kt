@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
+import com.fittrainer.ui.today.TodayScreen
 
 /** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → Estado del servidor. */
 @Composable
@@ -53,14 +54,14 @@ fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit) {
         ) {
             tabs.forEach { tab ->
                 composable(tab.route) {
-                    if (tab.isAccountMenu) {
-                        AccountMenuScreen(
+                    when {
+                        tab.isAccountMenu -> AccountMenuScreen(
                             title = tab.label,
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
                             onSignOut = onSignOut,
                         )
-                    } else {
-                        PlaceholderScreen(tab.label)
+                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen()
+                        else -> PlaceholderScreen(tab.label)
                     }
                 }
             }

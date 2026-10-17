@@ -54,6 +54,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // Los esquemas exportados de Room alimentan los tests de migración (MigrationTestHelper).
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -119,4 +124,5 @@ dependencies {
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.room.testing)
 }

@@ -3,13 +3,11 @@ package com.fittrainer.data.repository
 import com.fittrainer.data.api.FitTrainerApi
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.HealthSnapshotEntity
-import java.io.IOException
 import java.time.Clock
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import retrofit2.HttpException
 
 /**
  * Patrón offline-first: la UI observa Room; refresh() trae de la API y escribe en Room.
@@ -39,11 +37,5 @@ class HealthRepository @Inject constructor(
         throw e
     } catch (e: Exception) {
         Result.failure(DataException(e.toDataError(), e))
-    }
-
-    private fun Exception.toDataError(): DataError = when (this) {
-        is IOException -> DataError.Offline
-        is HttpException -> DataError.Http(code())
-        else -> DataError.Unknown
     }
 }
