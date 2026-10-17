@@ -12,7 +12,10 @@ import * as exercisesController from '../../controllers/exercises/exercises.cont
 
 const router = Router();
 
-// Toda la biblioteca de ejercicios es de uso del trainer.
+// Biblioteca del alumno — va antes del guard de trainer: esta ruta responde y la cadena termina acá.
+router.get('/library', authenticate, requireRole('student'), exercisesController.library);
+
+// El resto de la biblioteca de ejercicios es de uso del trainer.
 router.use(authenticate, requireRole('trainer'));
 
 router.get('/', validate(validateListQuery, 'query'), exercisesController.list);

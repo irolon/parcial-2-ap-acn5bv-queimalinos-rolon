@@ -1,6 +1,10 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
-import { EXERCISES_TABLE, EXERCISE_COLUMNS } from '../../models/exercises/exercise.model.js';
+import {
+  EXERCISES_TABLE,
+  EXERCISE_COLUMNS,
+  LIBRARY_COLUMNS,
+} from '../../models/exercises/exercise.model.js';
 
 /**
  * Lista ejercicios visibles para un trainer: los globales + los propios
@@ -17,6 +21,21 @@ export async function findExercises({ trainerId, muscleGroup, equipment, search,
   if (muscleGroup) query = query.eq('muscle_group', muscleGroup);
   if (equipment) query = query.eq('equipment', equipment);
   if (search) query = query.ilike('name', `%${search}%`);
+
+  const { data, error } = await query.order('name');
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/**
+ * Biblioteca de un alumno: los globales + los del entrenador (solo los globales si
+ * trainerId es null). Solo columnas públicas, ordenada por nombre.
+ */
+export async function findLibrary(trainerId) {
+  let query = supabase.from(EXERCISES_TABLE).select(LIBRARY_COLUMNS);
+  query = trainerId
+    ? query.or(`is_global.eq.true,trainer_id.eq.${trainerId}`)
+    : query.eq('is_global', true);
 
   const { data, error } = await query.order('name');
   if (error) throw Errors.internal(error.message);

@@ -1,22 +1,10 @@
-import { jest } from '@jest/globals';
-
-const mockRepo = {
-  findExercises: jest.fn(),
-  findExerciseById: jest.fn(),
-  createExercise: jest.fn(),
-  updateExercise: jest.fn(),
-  deleteExercise: jest.fn(),
-};
-jest.unstable_mockModule(
-  '../../../../src/repositories/exercises/exercises.repository.js',
-  () => mockRepo
-);
-
-const service = await import('../../../../src/services/exercises/exercises.service.js');
-
-const TRAINER_ID = 'trainer-1';
-const OWN_EXERCISE = { id: 'ex-1', trainer_id: TRAINER_ID, name: 'Press banca', is_global: false };
-const GLOBAL_EXERCISE = { id: 'ex-2', trainer_id: null, name: 'Sentadilla', is_global: true };
+import {
+  mockRepo,
+  service,
+  TRAINER_ID,
+  OWN_EXERCISE,
+  GLOBAL_EXERCISE,
+} from '../../../../helpers/exercises/exercises-service.setup.js';
 
 describe('exercises.service', () => {
   describe('list', () => {

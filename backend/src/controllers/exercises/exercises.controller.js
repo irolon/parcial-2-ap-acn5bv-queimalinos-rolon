@@ -7,6 +7,12 @@ export const list = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
+/** GET /exercises/library — biblioteca del alumno (globales + los de su entrenador). */
+export const library = asyncHandler(async (req, res) => {
+  const data = await exercisesService.library(req.user.id);
+  res.json({ data });
+});
+
 /** POST /exercises — crea un ejercicio propio. 201 → { data } */
 export const create = asyncHandler(async (req, res) => {
   const data = await exercisesService.create(req.user.id, req.body);

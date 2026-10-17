@@ -25,5 +25,8 @@ export const MUSCLE_GROUPS = [
 export const EXERCISE_COLUMNS =
   'id, trainer_id, name, muscle_group, equipment, description, video_url, is_global';
 
+/** Columnas que ve el alumno en la biblioteca (sin trainer_id ni is_global). */
+export const LIBRARY_COLUMNS = 'id, name, muscle_group, equipment, description, video_url';
+
 /** ¿El ejercicio pertenece a este trainer? (los globales tienen trainer_id null). */
 export const isOwnedBy = (exercise, trainerId) => exercise?.trainer_id === trainerId;
