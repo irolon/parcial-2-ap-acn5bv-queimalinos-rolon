@@ -19,6 +19,8 @@ El schema de FitTrainer está repartido por dominio en siete archivos SQL.
 - Todos se pueden volver a correr: usan `if not exists` y los `alter` van en
   bloques idempotentes.
 - Después, `../checks/schema-checks.sql` tiene que devolver 0 filas.
+- Luego se carga el seed `../seeds/exercises.sql`, y `../checks/exercises-checks.sql`
+  tiene que devolver 0 filas.
 
 ## Cambios nuevos
 

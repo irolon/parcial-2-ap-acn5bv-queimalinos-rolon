@@ -23,6 +23,8 @@ create table if not exists exercises (
 
 create index if not exists idx_exercises_trainer on exercises (trainer_id);
 create index if not exists idx_exercises_muscle on exercises (muscle_group);
+-- Un nombre no se repite entre los globales; hace idempotente el seed (on conflict).
+create unique index if not exists uq_exercises_global_name on exercises (name) where is_global;
 
 -- ── routines (Fase 2) ────────────────────────────────────────────────────────
 create table if not exists routines (
