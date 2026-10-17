@@ -1,6 +1,6 @@
 -- ============================================================================
 -- FitTrainer — Seed de datos iniciales
--- Ejecutar DESPUÉS de schema.sql en el SQL Editor de Supabase.
+-- Ejecutar DESPUÉS de database/schema/ (01 a 07) en el SQL Editor de Supabase.
 -- ============================================================================
 
 -- ── Ejercicios globales (is_global = true, trainer_id = null) ─────────────────

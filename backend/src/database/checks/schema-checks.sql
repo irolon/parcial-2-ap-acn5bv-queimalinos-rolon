@@ -55,4 +55,30 @@ where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = v.tbl
     and column_name = v.col and is_nullable = 'NO'
+)
+
+union all
+select 'falta la columna body_metrics.recorded_by'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'body_metrics'
+    and column_name = 'recorded_by'
+)
+
+union all
+select 'falta la vista student_last_session'
+where to_regclass('public.student_last_session') is null
+
+union all
+select 'la vista student_last_session debería tener security_invoker = true'
+from pg_class
+where oid = to_regclass('public.student_last_session')
+  and not coalesce('security_invoker=true' = any (reloptions), false)
+
+union all
+select 'falta la columna invitations.' || c
+from (values ('student_gym_equipment'), ('student_injuries'), ('student_level')) v (c)
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'invitations' and column_name = v.c
 );
