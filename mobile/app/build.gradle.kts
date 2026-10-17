@@ -60,6 +60,10 @@ android {
     }
 }
 
+// Ningún build pasa si un archivo supera las 200 líneas (tarea en el build.gradle.kts raíz).
+tasks.named("preBuild") { dependsOn(":checkFileLength") }
+tasks.named("check") { dependsOn(":checkFileLength") }
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
