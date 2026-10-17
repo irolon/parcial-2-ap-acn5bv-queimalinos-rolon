@@ -1,9 +1,14 @@
-package com.fittrainer.data.auth
+package com.fittrainer.data.auth.tokenstore
 
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.fittrainer.data.auth.AuthCrypto
+import com.fittrainer.data.auth.AuthState
+import com.fittrainer.data.auth.AuthUser
+import com.fittrainer.data.auth.EncryptedAuthSerializer
+import com.fittrainer.data.auth.SharedPrefsSessionTombstones
 import com.fittrainer.data.session.Role
 import java.io.File
 import java.util.UUID

@@ -1,11 +1,9 @@
 package com.fittrainer.ui.join
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -21,11 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,14 +42,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fittrainer.data.invitation.Invitation
+import com.fittrainer.ui.join.components.MessageBlock
+import com.fittrainer.ui.join.components.PrefilledCard
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.FtRadius
 import com.fittrainer.ui.theme.Spacing
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-
-private val EXPIRES_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm")
 
 @Composable
 fun ConfirmInvitationScreen(onClose: () -> Unit, viewModel: ConfirmInvitationViewModel = hiltViewModel()) {
@@ -149,56 +142,4 @@ private fun ReadyContent(
     }
 
     state.submitError?.let { MessageBlock(it, onRetry = onSubmit, onLogin = onLogin) }
-}
-
-@Composable
-private fun PrefilledCard(invitation: Invitation) {
-    val expires = invitation.expiresAt.atZone(ZoneId.systemDefault()).format(EXPIRES_FORMAT)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(FtColors.Card, RoundedCornerShape(FtRadius.card))
-            .border(1.dp, FtColors.Border, RoundedCornerShape(FtRadius.card))
-            .padding(Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-    ) {
-        Text("PRECARGADO", style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
-        DataRow("Nombre", invitation.studentName)
-        HorizontalDivider(color = FtColors.Border)
-        DataRow("Email", invitation.studentEmail)
-        HorizontalDivider(color = FtColors.Border)
-        DataRow("Objetivo", goalLabel(invitation.goal))
-        HorizontalDivider(color = FtColors.Border)
-        DataRow("Vence", expires)
-    }
-}
-
-@Composable
-private fun DataRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = FtColors.TextSecondary)
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
-    }
-}
-
-/** Mensaje de error con la acción que corresponde: reintentar o ir al login. */
-@Composable
-private fun MessageBlock(message: InvitationMessage, onRetry: () -> Unit, onLogin: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        Text(message.text, style = MaterialTheme.typography.bodyMedium, color = FtColors.Coral)
-        if (message.canRetry) {
-            OutlinedButton(
-                onClick = onRetry,
-                shape = RoundedCornerShape(FtRadius.control),
-                modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
-            ) { Text("Reintentar") }
-        }
-        if (message.offerLogin) {
-            OutlinedButton(
-                onClick = onLogin,
-                shape = RoundedCornerShape(FtRadius.control),
-                modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
-            ) { Text("Iniciar sesión") }
-        }
-    }
 }

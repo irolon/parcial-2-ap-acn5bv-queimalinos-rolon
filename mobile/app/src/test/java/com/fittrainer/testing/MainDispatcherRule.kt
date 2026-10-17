@@ -1,4 +1,4 @@
-package com.fittrainer
+package com.fittrainer.testing
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.TestDispatcher

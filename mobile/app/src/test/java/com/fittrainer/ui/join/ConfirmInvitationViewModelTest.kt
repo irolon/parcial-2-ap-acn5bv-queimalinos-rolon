@@ -1,15 +1,15 @@
 package com.fittrainer.ui.join
 
 import androidx.lifecycle.SavedStateHandle
-import com.fittrainer.MainDispatcherRule
-import com.fittrainer.data.FakeAuthApi
-import com.fittrainer.data.FakeInvitationApi
-import com.fittrainer.data.FakeTokenStore
-import com.fittrainer.data.TOKEN
-import com.fittrainer.data.apiError
+import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.testing.fakes.auth.FakeAuthApi
+import com.fittrainer.testing.fakes.FakeInvitationApi
+import com.fittrainer.testing.fakes.auth.FakeTokenStore
+import com.fittrainer.testing.fakes.TOKEN
+import com.fittrainer.testing.fakes.auth.apiError
 import com.fittrainer.data.api.RegisterStudentRequest
 import com.fittrainer.data.auth.AuthRepository
-import com.fittrainer.data.fixedClock
+import com.fittrainer.testing.fakes.auth.fixedClock
 import com.fittrainer.data.invitation.InvitationRepository
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred

@@ -1,8 +1,8 @@
 package com.fittrainer.navigation
 
-import com.fittrainer.MainDispatcherRule
-import com.fittrainer.data.TOKEN
-import com.fittrainer.data.authState
+import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.testing.fakes.TOKEN
+import com.fittrainer.testing.fakes.auth.authState
 import com.fittrainer.data.session.LogoutResult
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository

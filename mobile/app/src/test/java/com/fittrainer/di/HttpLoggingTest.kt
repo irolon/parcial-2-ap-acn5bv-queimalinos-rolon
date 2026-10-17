@@ -1,6 +1,6 @@
 package com.fittrainer.di
 
-import com.fittrainer.data.TOKEN
+import com.fittrainer.testing.fakes.TOKEN
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request

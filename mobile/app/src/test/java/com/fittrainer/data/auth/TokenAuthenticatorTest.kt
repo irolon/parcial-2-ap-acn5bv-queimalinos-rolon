@@ -1,9 +1,9 @@
 package com.fittrainer.data.auth
 
-import com.fittrainer.data.FakeAuthApi
-import com.fittrainer.data.FakeTokenStore
-import com.fittrainer.data.authState
-import com.fittrainer.data.httpError
+import com.fittrainer.testing.fakes.auth.FakeAuthApi
+import com.fittrainer.testing.fakes.auth.FakeTokenStore
+import com.fittrainer.testing.fakes.auth.authState
+import com.fittrainer.testing.fakes.auth.httpError
 import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import okhttp3.Protocol

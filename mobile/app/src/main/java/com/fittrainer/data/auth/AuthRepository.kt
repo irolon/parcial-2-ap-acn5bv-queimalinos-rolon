@@ -5,6 +5,7 @@ import com.fittrainer.data.api.LoginRequest
 import com.fittrainer.data.api.RefreshRequest
 import com.fittrainer.data.api.RegisterStudentRequest
 import com.fittrainer.data.api.UserDto
+import com.fittrainer.data.auth.tokenstore.TokenStore
 import com.fittrainer.data.invitation.toInvitationError
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException

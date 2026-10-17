@@ -1,6 +1,6 @@
 package com.fittrainer.ui.join
 
-import com.fittrainer.data.TOKEN
+import com.fittrainer.testing.fakes.TOKEN
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

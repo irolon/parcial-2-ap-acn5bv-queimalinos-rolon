@@ -1,13 +1,6 @@
 package com.fittrainer.ui.join
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -21,8 +14,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,19 +33,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fittrainer.ui.join.components.CameraAccess
+import com.fittrainer.ui.join.components.QrScanner
+import com.fittrainer.ui.join.components.PasteLink
+import com.fittrainer.ui.join.components.appSettingsIntent
+import com.fittrainer.ui.join.components.findActivity
+import com.fittrainer.ui.join.components.hasCameraPermission
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.FtRadius
 import com.fittrainer.ui.theme.Spacing
-
-private enum class CameraAccess { NotAsked, Granted, Denied, PermanentlyDenied }
 
 @Composable
 fun JoinScreen(onBack: () -> Unit, onToken: (String) -> Unit, viewModel: JoinViewModel = hiltViewModel()) {
@@ -158,44 +149,3 @@ fun JoinScreen(onBack: () -> Unit, onToken: (String) -> Unit, viewModel: JoinVie
         )
     }
 }
-
-@Composable
-private fun PasteLink(link: String, error: String?, onLinkChange: (String) -> Unit, onSubmit: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        Text("O PEGÁ EL LINK DE LA INVITACIÓN", style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
-        OutlinedTextField(
-            value = link,
-            onValueChange = onLinkChange,
-            singleLine = true,
-            isError = error != null,
-            supportingText = if (error != null) {
-                { Text(error) }
-            } else {
-                null
-            },
-            placeholder = { Text("https://…/join?token=…") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = { onSubmit() }),
-            shape = RoundedCornerShape(FtRadius.control),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedButton(
-            onClick = onSubmit,
-            enabled = link.isNotBlank(),
-            shape = RoundedCornerShape(FtRadius.control),
-            modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
-        ) { Text("Continuar") }
-    }
-}
-
-private fun Context.hasCameraPermission() =
-    ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-
-private fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
-
-private fun appSettingsIntent(context: Context) =
-    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))

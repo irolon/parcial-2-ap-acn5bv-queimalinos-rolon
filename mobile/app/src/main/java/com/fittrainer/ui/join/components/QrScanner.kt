@@ -1,4 +1,4 @@
-package com.fittrainer.ui.join
+package com.fittrainer.ui.join.components
 
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector

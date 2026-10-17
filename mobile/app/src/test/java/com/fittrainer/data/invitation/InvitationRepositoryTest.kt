@@ -1,10 +1,10 @@
 package com.fittrainer.data.invitation
 
-import com.fittrainer.data.FakeInvitationApi
-import com.fittrainer.data.TOKEN
-import com.fittrainer.data.apiError
-import com.fittrainer.data.httpError
-import com.fittrainer.data.invitationDto
+import com.fittrainer.testing.fakes.FakeInvitationApi
+import com.fittrainer.testing.fakes.TOKEN
+import com.fittrainer.testing.fakes.auth.apiError
+import com.fittrainer.testing.fakes.auth.httpError
+import com.fittrainer.testing.fakes.invitationDto
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
 import java.io.IOException

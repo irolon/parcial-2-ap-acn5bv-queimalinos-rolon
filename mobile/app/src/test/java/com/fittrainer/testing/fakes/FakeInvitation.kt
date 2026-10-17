@@ -1,4 +1,4 @@
-package com.fittrainer.data
+package com.fittrainer.testing.fakes
 
 import com.fittrainer.data.api.InvitationApi
 import com.fittrainer.data.api.InvitationDto

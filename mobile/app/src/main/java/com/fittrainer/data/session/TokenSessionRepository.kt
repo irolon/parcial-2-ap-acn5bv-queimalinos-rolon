@@ -1,7 +1,7 @@
 package com.fittrainer.data.session
 
 import com.fittrainer.data.auth.AuthRepository
-import com.fittrainer.data.auth.TokenStore
+import com.fittrainer.data.auth.tokenstore.TokenStore
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

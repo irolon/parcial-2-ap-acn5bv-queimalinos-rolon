@@ -1,11 +1,11 @@
 package com.fittrainer.data.invitation
 
-import com.fittrainer.data.FakeTokenStore
-import com.fittrainer.data.TOKEN
+import com.fittrainer.testing.fakes.auth.FakeTokenStore
+import com.fittrainer.testing.fakes.TOKEN
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.InvitationApi
 import com.fittrainer.data.auth.AuthRepository
-import com.fittrainer.data.fixedClock
+import com.fittrainer.testing.fakes.auth.fixedClock
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
