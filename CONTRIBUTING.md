@@ -1,6 +1,6 @@
 # Cómo trabajamos en FitTrainer
 
-Este archivo es la fuente de verdad del flujo de trabajo. Si Notion o el tablero dicen otra cosa, **manda este archivo**.
+Este archivo es la fuente de verdad del flujo de trabajo. La documentación del proyecto vive en `docs/` (vault de Obsidian); Notion quedó de solo lectura. Si `docs/` o el tablero dicen otra cosa sobre cómo trabajamos, **manda este archivo**.
 
 ## Índice
 
@@ -63,7 +63,7 @@ Una tarjeta está terminada cuando:
    - web: `npm run lint` y tests, cuando exista.
 4. Cumple las [reglas de código](#reglas-de-código) (200 líneas; capa → módulo → archivo).
 5. Se probó a mano el flujo completo de punta a punta.
-6. Si cambió el contrato de la API o el schema, está actualizado en Notion.
+6. Si cambió el contrato de la API o el schema, está actualizado en `docs/`, en la misma PR.
 
 ## Bloqueos y ritual semanal
 
