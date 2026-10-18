@@ -16,6 +16,16 @@ describe('Input', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Email inválido');
   });
 
+  it('estilos por defecto según el prototipo', () => {
+    render(<Input label="Email" />);
+    expect(screen.getByLabelText('Email')).toHaveClass('rounded-md', 'bg-ink1', 'border-ink3');
+  });
+
+  it('con error usa borde hot', () => {
+    render(<Input label="Email" error="x" />);
+    expect(screen.getByLabelText('Email')).toHaveClass('border-hot');
+  });
+
   it('sin error no hay aria-describedby ni alerta', () => {
     render(<Input label="Email" />);
     expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-describedby');

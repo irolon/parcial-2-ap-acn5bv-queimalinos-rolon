@@ -9,7 +9,7 @@ export default function Input({ label, error, id, className = '', ...rest }) {
     <div className={className}>
       <label
         htmlFor={inputId}
-        className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-ink6"
+        className="mb-1.5 block font-mono text-[9px] uppercase tracking-[1px] text-ink6"
       >
         {label}
       </label>
@@ -17,8 +17,8 @@ export default function Input({ label, error, id, className = '', ...rest }) {
         id={inputId}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`h-[46px] w-full rounded-lg border bg-ink2 px-3.5 font-body text-sm text-bone0 outline-none placeholder:text-ink5 focus:border-accentText ${
-          error ? 'border-hot' : 'border-ink4'
+        className={`h-[46px] w-full rounded-md border bg-ink1 px-3.5 font-body text-sm text-bone0 outline-none placeholder:text-ink5 focus:border-accentText ${
+          error ? 'border-hot' : 'border-ink3'
         }`}
         {...rest}
       />
