@@ -1,3 +1,6 @@
+---
+tags: [plan]
+---
 # Límite de 200 líneas y orden (tanda mobile) — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -278,3 +281,9 @@ tasks.named("check") { dependsOn(rootProject.tasks.named("checkFileLength")) }
 - [ ] **Step 6: Commit (Igna):** `git add mobile/build.gradle.kts mobile/app/build.gradle.kts && git commit -m "chore(mobile): el build falla si un .kt/.kts pasa de 200 líneas"`
 
   Además, cuando se mergee la rama de la tarjeta 7, hay que sacar el "(pendiente: lo agrega la tanda de mobile)" de `CONTRIBUTING.md`. Ese archivo no existe en esta rama.
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
