@@ -20,6 +20,7 @@
   --color-accent: #2952d9;
   --color-accentDim: #1b3aa8;
   --color-accentText: #5e7de2;
+  --color-accentInk: #ffffff; /* texto sobre fondo accent */
 
   /* Semánticos */
   --color-hot: #ff5c3a;
@@ -32,7 +33,7 @@
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Radios del prototipo: 99, 18, 14, 12, 10 y 8 px */
+  /* Radios del prototipo (99, 18, 14, 12, 10 y 8 px); pisan los nombres por defecto de Tailwind */
   --radius-pill: 99px;
   --radius-2xl: 18px;
   --radius-xl: 14px;
