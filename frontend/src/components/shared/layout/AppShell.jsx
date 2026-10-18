@@ -1,12 +1,13 @@
 import { Outlet, useMatches } from 'react-router';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useDrawer } from '@/hooks/shared/useDrawer';
+import { ROLES } from '@/routes/routeTable';
 import MobileDrawer from './MobileDrawer';
 import StudentSidebar from './StudentSidebar';
 import Topbar from './Topbar';
 import TrainerSidebar from './TrainerSidebar';
 
-const SIDEBARS = { trainer: TrainerSidebar, student: StudentSidebar };
+const SIDEBARS = { [ROLES.TRAINER]: TrainerSidebar, [ROLES.STUDENT]: StudentSidebar };
 
 /**
  * Layout de las rutas privadas.

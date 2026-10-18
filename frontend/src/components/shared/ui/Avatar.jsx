@@ -13,15 +13,16 @@ export function getInitials(name = '') {
     .slice(0, 2);
 }
 
-export default function Avatar({ name = '', size = 40, tone, online = false, className = '' }) {
+export default function Avatar({ name = '', size = 40, tone, online = false, decorative = false, className = '' }) {
   return (
     <div
       className={`relative flex shrink-0 items-center justify-center rounded-full font-display font-bold ${
         TONES[tone] ?? TONES.neutral
       } ${className}`}
       style={{ width: size, height: size, fontSize: size * 0.34 }}
-      aria-label={name}
-      role="img"
+      aria-label={decorative ? undefined : name}
+      aria-hidden={decorative ? 'true' : undefined}
+      role={decorative ? undefined : 'img'}
     >
       <span aria-hidden="true">{getInitials(name)}</span>
       {online && (

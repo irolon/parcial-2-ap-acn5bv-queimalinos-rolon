@@ -1,5 +1,6 @@
 import { Bell, Menu, Search } from 'lucide-react';
 import Avatar from '@/components/shared/ui/Avatar';
+import { ROLES } from '@/routes/routeTable';
 import { FOCUS_RING } from './compact';
 
 const iconBox =
@@ -52,7 +53,7 @@ export default function Topbar({ title, subtitle, role, user, menuOpen, onMenu, 
           <p className="mt-0.5 truncate font-mono text-[10px] tracking-[0.5px] text-ink6">{subtitle}</p>
         )}
       </div>
-      {role === 'trainer' ? (
+      {role === ROLES.TRAINER ? (
         <TrainerActions />
       ) : (
         <Avatar name={user?.name ?? ''} size={36} tone="accent" />

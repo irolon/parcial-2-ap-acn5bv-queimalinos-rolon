@@ -7,6 +7,15 @@ export const SESSION_STORAGE_KEY = 'fittrainer.session';
 
 const EMPTY_SESSION = { user: null, token: null, refreshToken: null };
 
+const isNetworkError = (err) => err?.status === 0 || err?.code === 'NETWORK_ERROR';
+
+// Sin conexión con el servidor no se sabe si la sesión sigue válida: se pasa a
+// `anonymous` y se descarta el access, pero `user` y `refreshToken` quedan guardados
+// para reintentar en la próxima carga.
+function keepSessionOffline(set) {
+  set({ token: null, status: 'anonymous' });
+}
+
 /**
  * Sesión de la web.
  * - `status`: `idle` (sin chequear) → `loading` (restore en curso) → `authenticated` | `anonymous`.
@@ -55,8 +64,9 @@ export const useAuthStore = create(
         try {
           const { token } = await authApi.refresh(refreshToken);
           set({ token, status: 'authenticated' });
-        } catch {
-          set({ ...EMPTY_SESSION, status: 'anonymous' });
+        } catch (err) {
+          if (isNetworkError(err)) keepSessionOffline(set);
+          else set({ ...EMPTY_SESSION, status: 'anonymous' });
         }
       },
     }),
@@ -81,7 +91,8 @@ configureClient({
   getToken: () => useAuthStore.getState().token,
   refreshSession: renewAccessToken,
   // Si la renovación falla, el status pasa a `anonymous` y el router manda a /login.
-  onAuthFailure: () => {
-    useAuthStore.getState().logout();
+  onAuthFailure: (err) => {
+    if (isNetworkError(err)) keepSessionOffline(useAuthStore.setState);
+    else useAuthStore.getState().logout();
   },
 });

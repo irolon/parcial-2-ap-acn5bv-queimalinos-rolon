@@ -8,7 +8,7 @@ export default function UserBlock({ user, onLogout }) {
   return (
     <div className="border-t border-ink3 p-3">
       <div className="mb-2.5 flex items-center gap-2.5 md:max-lg:justify-center">
-        <Avatar name={user?.name ?? ''} size={32} />
+        <Avatar name={user?.name ?? ''} size={32} decorative />
         <div className={`min-w-0 flex-1 ${COMPACT_HIDDEN}`}>
           <p className="truncate font-display text-xs font-semibold text-bone0">{user?.name}</p>
           <p className="truncate font-mono text-[10px] text-ink6">{user?.email}</p>

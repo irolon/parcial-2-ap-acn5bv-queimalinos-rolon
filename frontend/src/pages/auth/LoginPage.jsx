@@ -4,8 +4,10 @@ import BrandMark from '@/components/shared/ui/BrandMark';
 import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import Input from '@/components/shared/ui/Input';
+import { homeFor } from '@/routes/routeTable';
 import { toLoginErrors } from './loginErrors';
 
+const UNKNOWN_ROLE_MESSAGE = 'No pudimos iniciar sesión con esa cuenta';
 const NO_ERRORS = { form: null, fields: {} };
 
 /**
@@ -14,6 +16,7 @@ const NO_ERRORS = { form: null, fields: {} };
  */
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
+  const logout = useAuthStore((s) => s.logout);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState(NO_ERRORS);
 
@@ -23,7 +26,16 @@ export default function LoginPage() {
     setErrors(NO_ERRORS);
     setSubmitting(true);
     try {
-      await login({ email: String(data.get('email')).trim(), password: String(data.get('password')) });
+      const user = await login({
+        email: String(data.get('email')).trim(),
+        password: String(data.get('password')),
+      });
+      if (!homeFor(user?.role)) {
+        // Rol sin pantalla de inicio: no se deja una sesión que el guard no sabe ubicar.
+        await logout();
+        setErrors({ form: UNKNOWN_ROLE_MESSAGE, fields: {} });
+        setSubmitting(false);
+      }
     } catch (error) {
       setErrors(toLoginErrors(error));
       setSubmitting(false);

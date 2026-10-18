@@ -93,7 +93,9 @@ describe('redirecciones por rol', () => {
   it('una ruta inexistente muestra el 404', async () => {
     setSession(null);
     renderRoute('/no-existe');
-    expect(await screen.findByText('No encontramos esta página')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'No encontramos esta página' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/');
   });
 });

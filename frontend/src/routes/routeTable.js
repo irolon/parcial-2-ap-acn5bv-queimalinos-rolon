@@ -9,6 +9,8 @@ import {
   User,
 } from 'lucide-react';
 
+export const ROLES = { TRAINER: 'trainer', STUDENT: 'student' };
+
 // Ítems del sidebar en el orden y con los íconos del prototipo. `path` es relativo a `base`.
 export const TRAINER_NAV = {
   base: '/pt',
@@ -34,7 +36,7 @@ export const STUDENT_NAV = {
   ],
 };
 
-const NAV_BY_ROLE = { trainer: TRAINER_NAV, student: STUDENT_NAV };
+const NAV_BY_ROLE = { [ROLES.TRAINER]: TRAINER_NAV, [ROLES.STUDENT]: STUDENT_NAV };
 
 /** Home de cada rol (`null` si el rol no es conocido). */
 export function homeFor(role) {

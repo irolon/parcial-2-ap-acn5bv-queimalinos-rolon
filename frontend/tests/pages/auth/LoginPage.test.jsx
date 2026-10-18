@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { STUDENT, renderRoute, setSession } from '../../helpers/routes/renderRoute';
@@ -75,5 +76,24 @@ describe('LoginPage', () => {
     expect(button).toHaveAttribute('aria-busy', 'true');
     answer(jsonResponse(200, { user: STUDENT, token: 'a', refresh_token: 'r', expires_in: '1h' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Hoy' })).toBeInTheDocument();
+  });
+
+  it('con un rol sin home cierra la sesión y muestra el error general', async () => {
+    stubFetch(async (url) =>
+      url.endsWith('/auth/logout')
+        ? jsonResponse(204)
+        : jsonResponse(200, {
+            user: { ...STUDENT, role: 'admin' },
+            token: 'a',
+            refresh_token: 'r',
+            expires_in: '1h',
+          }),
+    );
+    const { pathname } = renderRoute('/login');
+    await submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos iniciar sesión con esa cuenta');
+    expect(pathname()).toBe('/login');
+    expect(useAuthStore.getState()).toMatchObject({ user: null, token: null, status: 'anonymous' });
+    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeEnabled();
   });
 });

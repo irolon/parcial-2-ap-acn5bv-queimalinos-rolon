@@ -159,5 +159,5 @@ Ninguna carpeta pasa de 10 archivos y ningún archivo de 200 líneas.
 ## 5. Fuera de alcance
 - Registro del entrenador, alta del alumno por QR y pantallas reales: tarjetas 5, 7 en adelante.
 - Docker del frontend: lo hace Igna en el S7.
-- Cambios de backend. Para el backend quedan anotados: `expires_in` llega como texto, falta `GET /auth/me`, y el refresh no rota.
+- Cambios de backend. Para el backend quedan anotados: `expires_in` llega como texto, falta `GET /auth/me`, el refresh no rota, y el logout con el access vencido no revoca el refresh en el servidor (el endpoint exige `authenticate`).
 - Tema claro y soporte de navegadores viejos.

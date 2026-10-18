@@ -4,7 +4,7 @@ import LoginPage from '@/pages/auth/LoginPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
-import { STUDENT_NAV, TRAINER_NAV } from './routeTable';
+import { ROLES, STUDENT_NAV, TRAINER_NAV } from './routeTable';
 
 // Cada ítem del sidebar es una página "Próximamente" hasta que llegue su tarjeta.
 // `handle` lleva el título y subtítulo que muestra la topbar.
@@ -32,7 +32,7 @@ function roleSection(role, nav) {
 export const routes = [
   { path: '/', element: <RootRedirect /> },
   { element: <GuestOnly />, children: [{ path: '/login', element: <LoginPage /> }] },
-  roleSection('trainer', TRAINER_NAV),
-  roleSection('student', STUDENT_NAV),
+  roleSection(ROLES.TRAINER, TRAINER_NAV),
+  roleSection(ROLES.STUDENT, STUDENT_NAV),
   { path: '*', element: <NotFoundPage /> },
 ];

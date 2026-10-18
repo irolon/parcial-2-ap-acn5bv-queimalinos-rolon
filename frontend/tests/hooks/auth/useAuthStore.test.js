@@ -88,6 +88,21 @@ describe('useAuthStore: restore', () => {
     expect(savedSession()).toEqual({ user: null, refreshToken: null });
   });
 
+  it('sin conexión queda anonymous pero conserva user y refresh guardados', async () => {
+    await seedSavedSession();
+    stubFetch(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    await state().restore();
+    expect(state()).toMatchObject({
+      user: USER,
+      token: null,
+      refreshToken: 'refresh-1',
+      status: 'anonymous',
+    });
+    expect(savedSession()).toEqual({ user: USER, refreshToken: 'refresh-1' });
+  });
+
   it('sin sesión guardada queda anonymous sin llamar a la API', async () => {
     const fetchMock = stubFetch(async () => jsonResponse(200, {}));
     await state().restore();
@@ -118,5 +133,26 @@ describe('useAuthStore + client', () => {
     await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
     await vi.waitFor(() => expect(state().status).toBe('anonymous'));
     expect(state()).toMatchObject({ user: null, token: null, refreshToken: null });
+  });
+
+  it('si la renovación falla por red, conserva user y refresh y no hace logout', async () => {
+    const fetchMock = stubFetch(async (url) => {
+      if (url.endsWith('/auth/refresh')) throw new TypeError('Failed to fetch');
+      return errorResponse(401, 'UNAUTHORIZED');
+    });
+    await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
+    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
+    expect(state()).toMatchObject({ user: USER, token: null, refreshToken: 'refresh-1' });
+    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh']);
+  });
+
+  it('si la renovación da 401, pide /students, /auth/refresh y /auth/logout una sola vez cada uno', async () => {
+    const fetchMock = stubFetch(async (url) =>
+      url.endsWith('/auth/logout') ? jsonResponse(204) : errorResponse(401, 'UNAUTHORIZED'),
+    );
+    await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
+    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
+    await vi.waitFor(() => expect(calls(fetchMock)).toHaveLength(3));
+    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh', '/auth/logout']);
   });
 });

@@ -29,8 +29,8 @@ let hooks = { ...defaultHooks };
 let refreshing = null;
 
 /**
- * Registra cómo leer el token, cómo renovar la sesión y qué hacer si la renovación falla.
- * @param {{ getToken?: () => string|null, refreshSession?: () => Promise<unknown>, onAuthFailure?: () => void }} next
+ * Registra cómo leer el token, cómo renovar la sesión y qué hacer si la renovación falla (recibe el error).
+ * @param {{ getToken?: () => string|null, refreshSession?: () => Promise<unknown>, onAuthFailure?: (err: unknown) => void }} next
  */
 export function configureClient(next) {
   hooks = { ...defaultHooks, ...next };
@@ -43,7 +43,7 @@ function sharedRefresh() {
     refreshing = Promise.resolve()
       .then(() => hooks.refreshSession())
       .catch((err) => {
-        hooks.onAuthFailure();
+        hooks.onAuthFailure(err);
         throw err;
       })
       .finally(() => {
