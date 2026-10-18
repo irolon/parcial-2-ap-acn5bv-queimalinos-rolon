@@ -34,8 +34,8 @@ src/
 ├── database/
 │   ├── schema/              # DDL por dominio: 01…07 en orden (ver su README)
 │   ├── migrations/          # cambios de schema con fecha, para bases ya creadas
-│   ├── checks/              # schema-checks.sql y check-anon-access.js
-│   └── seeds/seed.sql       # ejercicios globales iniciales
+│   ├── checks/              # schema-checks.sql, exercises-checks.sql y check-anon-access.js
+│   └── seeds/exercises.sql  # 50 ejercicios globales iniciales (con video)
 ├── app.js                   # arma la app de Express y monta las rutas
 └── server.js                # entrypoint (levanta el server)
 
@@ -66,7 +66,15 @@ npm install
 
 Luego, en el **SQL Editor** de Supabase, ejecutar en orden:
 1. los archivos de `src/database/schema/` en orden (ver su README) — crean todas las tablas.
-2. `src/database/seeds/seed.sql` — carga los ejercicios globales iniciales.
+2. `src/database/seeds/exercises.sql` — carga los 50 ejercicios globales (re-ejecutable).
+
+En una base ya creada, correr antes las migraciones de `src/database/migrations/`
+que falten. Después del seed, `src/database/checks/exercises-checks.sql` tiene
+que devolver 0 filas.
+
+> Nota: antes de la migración `2026-10-17-exercises-global-name.sql`, correr
+> `select name, count(*) from exercises where is_global group by name having count(*) > 1;`
+> — tiene que devolver 0 filas antes de la migración 2026-10-17-exercises-global-name.sql.
 
 ## Scripts
 
