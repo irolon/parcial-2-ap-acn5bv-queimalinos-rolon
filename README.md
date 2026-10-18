@@ -9,13 +9,13 @@ Monorepo con tres clientes/servicios:
 | Carpeta | Qué es | Stack |
 |---------|--------|-------|
 | `backend/` | API REST (monolito modular) | Node.js + Express + Supabase/PostgreSQL |
-| `frontend/` | Dashboard web (ambos roles) | React + Vite + Tailwind *(pendiente)* |
-| `mobile/` | App Android nativa (ambos roles) | Kotlin / JAVA *(pendiente)* |
+| `frontend/` | Dashboard web (ambos roles) | React + Vite + Tailwind |
+| `mobile/` | App Android nativa (ambos roles) | Kotlin / Jetpack Compose |
 
 La documentación completa (arquitectura, contratos de API, modelo de datos, plan de
-desarrollo) vive en el tablero de Notion del proyecto.
+desarrollo, guía de setup) vive en [`docs/`](docs/inicio.md), que se abre como vault de Obsidian.
 
-**🔗 Tablero de seguimiento (Trello / Kanban):** https://trello.com/b/OPDghdCH/fittrainer-parcial-2-administraci%C3%B3n-de-proyectos
+**Tablero de seguimiento del equipo (Trello):** https://trello.com/b/yBj0xE8S
 
 ## Estado (backend)
 
@@ -26,50 +26,47 @@ desarrollo) vive en el tablero de Notion del proyecto.
 - [x] **Fase 2 — Alumnos:** listado del PT (`GET /students`).
 - [ ] Fase 2 — Plantillas de rutina reutilizables (HU-07).
 - [ ] Fase 3 — Sesiones, tracking y progreso.
-- [ ] **Frontend web** y **mobile** (todo lo de arriba es backend).
+- [ ] **Frontend web** y **mobile** en desarrollo (todo lo de arriba es backend).
 
 > DB en Supabase (proyecto **Fit-Trainer**): schema + seed aplicados, conexión verificada.
 
-## Arranque rápido — Docker (recomendado)
+## Arranque rápido (backend)
 
-Único requisito: **Docker Desktop**. No hace falta instalar Node.
+Necesitás **Node 22** (`node -v`; hay un `.nvmrc`) y las claves del proyecto de Supabase
+compartido, que te pasa el equipo por privado.
 
 ```bash
-cp backend/.env.example backend/.env   # completar con credenciales de Supabase
+cp backend/.env.example backend/.env   # completar SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY y JWT_SECRET
+cd backend
+npm install
+npm run dev                            # API en http://localhost:3001
+```
+
+Verificar que levantó (en otra terminal):
+
+```bash
+curl http://localhost:3001/health      # {"status":"ok",...}
+curl http://localhost:3001/health/db   # {"db":"connected",...}
+```
+
+La guía completa (cómo generar el `JWT_SECRET`, base nueva, usuarios de prueba, conectar
+la web y el emulador, problemas frecuentes) está en
+[`docs/proceso/setup-tecnico.md`](docs/proceso/setup-tecnico.md).
+
+> **Mobile:** el emulador de Android **no** llega a la API por `localhost` —
+> tiene que ser **`10.0.2.2`**. Está explicado en `mobile/.env.example`.
+
+### Docker (opcional)
+
+Alternativa si no querés instalar Node. Lo mantiene Igna y se retoma en el S7.
+
+```bash
 docker compose up --build              # API en http://localhost:3001
-```
-
-Verificar que levantó:
-
-```bash
-curl http://localhost:3001/health
-```
-
-El código se monta por volumen: editás un archivo y el server recarga solo, sin
-rebuildear. Solo hay que volver a buildear si cambian `package.json` o el
-`Dockerfile`.
-
-**¿El puerto 3001 ya está ocupado?** Publicalo en otro sin editar nada:
-
-```bash
-API_PORT=3002 docker compose up --build
 ```
 
 | Archivo | Para qué |
 |---------|----------|
 | `docker-compose.yml` | Desarrollo: hot reload, código montado |
 | `docker-compose.prod.yml` | VPS: sin volúmenes, `NODE_ENV=production`, logs rotados |
-
-> **Mobile:** el emulador de Android **no** llega a la API por `localhost` —
-> tiene que ser **`10.0.2.2`**. Está explicado en `mobile/.env.example`.
-
-### Sin Docker
-
-```bash
-cd backend
-cp .env.example .env
-npm install
-npm run dev            # API en http://localhost:3001
-```
 
 Ver `backend/README.md` para el detalle de la arquitectura y los endpoints.

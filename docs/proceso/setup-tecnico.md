@@ -4,482 +4,305 @@ aliases: [README Técnico — Guía de Setup y Desarrollo]
 notion: https://app.notion.com/p/33c5ffbef7b5818285b1cab269d991ba
 notion_editado: 2026-06-20
 migrado: 2026-10-17
+actualizado: 2026-10-18
 tags: [proceso]
 ---
 
 # README Técnico — Guía de Setup y Desarrollo
 
-Guía completa para levantar el proyecto FitTrainer desde cero, tanto en local como en producción. Cualquier integrante del equipo debería poder tener el entorno corriendo en menos de 30 minutos siguiendo esta guía.
+Cómo levantar el backend de FitTrainer en tu máquina y conectarle la web y el emulador de Android. Esta guía es la fuente oficial del setup: si algo cambia, se cambia acá.
 
-> **Stack:** Node.js + Express · React + Vite · Kotlin + Jetpack Compose (Android nativo) · Supabase · Docker · n8n
+> **Stack:** Node.js + Express · Supabase (PostgreSQL) · React + Vite · Kotlin + Jetpack Compose
 
 ---
 
 ## 1. Prerrequisitos
 
-Instalá todo esto antes de arrancar. Verificá las versiones mínimas.
-
-| Herramienta | Versión mínima | Verificar con |
+| Herramienta | Versión | Verificar con |
 |---|---|---|
-| Node.js | 20.x LTS | `node -v` |
-| npm | 10.x | `npm -v` |
-| Docker Desktop | 24.x | `docker -v` |
-| Git | 2.x | `git -v` |
-| JDK | 17+ | `java -version` |
-| Android Studio | Hedgehog+ | Para emulador Android |
+| Node.js | 22 LTS (mínimo 20.19) | `node -v` |
+| npm | el que trae Node | `npm -v` |
+| Git | 2.x | `git --version` |
 
-**Cuentas necesarias:**
-
-- Cuenta en [Supabase](https://supabase.com) (plan free es suficiente)
-- Android Studio con un emulador (AVD) o un dispositivo físico para pruebas
-- Acceso al repositorio en GitHub
+- El repo trae un `.nvmrc` con `22`: si usás nvm, corré `nvm use` en la raíz.
+- Necesitás acceso al repositorio en GitHub y las claves del proyecto de Supabase compartido (sección 3).
+- Una cuenta de [Supabase](https://supabase.com) solo hace falta si vas a armar tu propia base (sección 6).
+- Para el mobile: Android Studio con un emulador (AVD). Está en la sección 9.
 
 ---
 
-## 2. Estructura del repositorio
+## 2. Clonar el repo
 
-```javascript
-fittrainer/
-├── backend/                  # Node.js + Express
-│   ├── src/
-│   │   ├── modules/
-│   │   │   ├── auth/
-│   │   │   ├── students/
-│   │   │   ├── exercises/
-│   │   │   ├── routines/
-│   │   │   ├── sessions/
-│   │   │   ├── progress/
-│   │   │   ├── agenda/
-│   │   │   └── notifications/
-│   │   ├── shared/
-│   │   │   ├── middlewares/
-│   │   │   │   ├── auth.middleware.js
-│   │   │   │   ├── role.middleware.js
-│   │   │   │   └── validation.middleware.js
-│   │   │   ├── utils/
-│   │   │   └── supabase.js
-│   │   └── app.js
-│   ├── .env.example
-│   ├── Dockerfile
-│   └── package.json
-├── frontend/                 # React + Vite (dashboard del PT)
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── store/
-│   │   └── main.jsx
-│   ├── .env.example
-│   └── package.json
-├── mobile/                   # Android nativo — Kotlin + Jetpack Compose (alumno y PT)
-│   ├── app/src/main/java/com/fittrainer/
-│   │   ├── data/             # repositorios + Retrofit/Supabase-kt + Room (cache offline)
-│   │   ├── ui/               # pantallas Compose por feature
-│   │   ├── navigation/       # Navigation Compose
-│   │   └── di/               # inyección de dependencias (Hilt)
-│   ├── build.gradle.kts
-│   └── local.properties.example
-├── docker-compose.yml        # Entorno local completo
-├── docker-compose.prod.yml   # Producción
-└── README.md
+```bash
+git clone https://github.com/irolon/parcial-2-ap-acn5bv-queimalinos-rolon.git
+cd parcial-2-ap-acn5bv-queimalinos-rolon
+git checkout develop
 ```
+
 
 ---
 
-## 3. Variables de entorno
+## 3. Variables de entorno del backend
 
-### 3.1 Backend (`backend/.env`)
-
-```bash
-# ── Servidor ────────────────────────────────
-PORT=3001
-NODE_ENV=development
-
-# ── Supabase ────────────────────────────────
-# Encontrás estos valores en: Supabase Dashboard → Settings → API
-SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-# ── JWT ─────────────────────────────────────
-# El JWT_SECRET lo usás para firmar tokens propios (si no usás solo Supabase Auth)
-JWT_SECRET=un-secreto-largo-y-aleatorio-minimo-32-chars
-JWT_EXPIRES_IN=1h
-JWT_REFRESH_EXPIRES_IN=30d
-
-# ── n8n (chat IA) ───────────────────────────
-N8N_WEBHOOK_URL=https://tu-n8n.dominio.com/webhook/fittrainer-chat
-N8N_WEBHOOK_SECRET=secreto-compartido-con-n8n
-
-# ── Push notifications ──────────────────────
-# Firebase Cloud Messaging (notificaciones push a la app Android)
-FCM_SERVER_KEY=tu_fcm_server_key
-
-# ── CORS ────────────────────────────────────
-FRONTEND_URL=http://localhost:5173
-```
-
-### 3.2 Frontend (`frontend/.env`)
+Los dos usamos el **proyecto de Supabase de desarrollo compartido**: ya tiene el schema, el seed de ejercicios y los usuarios de prueba. Las claves **se piden por privado al equipo** y nunca se commitean (`.env` está en `.gitignore`).
 
 ```bash
-# Todas las variables de Vite deben empezar con VITE_
-VITE_API_URL=http://localhost:3001/api
-VITE_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### 3.3 Mobile (`mobile/local.properties`)
-
-```bash
-# Se exponen a la app vía BuildConfig en build.gradle.kts
-API_URL=http://10.0.2.2:3001/api
-# 10.0.2.2 es el alias del host desde el emulador Android (equivale a localhost)
-SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-> ⚠️ **Nunca commitees archivos `.env` al repositorio.** Solo commitear `.env.example` con los nombres de las variables sin valores reales.
-
----
-
-## 4. Setup inicial (primera vez)
-
-### Paso 1 — Clonar el repo
-
-```bash
-git clone https://github.com/tu-usuario/fittrainer.git
-cd fittrainer
-```
-
-### Paso 2 — Crear el proyecto en Supabase
-
-1. Ir a [supabase.com](http://supabase.com) → New project
-2. Nombre: `fittrainer-dev` · Región: South America (São Paulo)
-3. Guardar la contraseña de la DB en algún lugar seguro
-4. Una vez creado, ir a **Settings → API** y copiar:
-    - `Project URL` → `SUPABASE_URL`
-    - `anon public` key → `SUPABASE_ANON_KEY`
-    - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY`
-
-### Paso 3 — Ejecutar el schema SQL
-
-1. En el dashboard de Supabase ir a **SQL Editor**
-2. Copiar y ejecutar el contenido del archivo `backend/src/database/schema.sql` (ver página [[arquitectura/modelo-de-datos|🗄️ Modelo de datos (DER)]])
-3. Verificar que las 12 tablas se crearon correctamente en **Table Editor**
-
-### Paso 4 — Configurar variables de entorno
-
-```bash
-# Backend
 cp backend/.env.example backend/.env
-# Editar con los valores reales de Supabase
-
-# Frontend
-cp frontend/.env.example frontend/.env
-
-# Mobile
-cp mobile/local.properties.example mobile/local.properties
-# Cambiar API_URL (usá 10.0.2.2 para el emulador Android)
 ```
 
-### Paso 5 — Instalar dependencias
+En PowerShell: `Copy-Item backend/.env.example backend/.env`.
+
+Completá `backend/.env`:
+
+| Variable | ¿Obligatoria? | Qué es |
+|---|---|---|
+| `SUPABASE_URL` | **Sí** | URL del proyecto (Settings → API) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Sí** | Clave `service_role`. Solo del backend, nunca en el front ni en el mobile |
+| `JWT_SECRET` | **Sí** | Secreto para firmar los tokens. Mínimo 32 caracteres |
+| `SUPABASE_ANON_KEY` | No | Clave `anon`. Solo la usa `npm run db:check-anon` |
+| `PORT` | No | Puerto del server. Por defecto `3001` |
+| `NODE_ENV` | No | Por defecto `development` |
+| `JWT_EXPIRES_IN` | No | Vida del access token. Por defecto `1h` |
+| `JWT_REFRESH_EXPIRES_IN` | No | Vida del refresh token. Por defecto `30d` |
+| `FRONTEND_URL` | No | Único origen que acepta el CORS. Por defecto `http://localhost:5173` |
+| `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` | No | Chat IA. Se usan en fases posteriores; dejalas vacías |
+
+Para generar un `JWT_SECRET`:
 
 ```bash
-# Backend
-cd backend && npm install
-
-# Frontend
-cd ../frontend && npm install
-
-# Mobile — abrir la carpeta mobile/ en Android Studio
-# y sincronizar Gradle (descarga las dependencias automáticamente)
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
+
+Cada uno puede tener su propio `JWT_SECRET`: solo firma tokens de tu server local.
+
+> Nunca pegues claves en el chat de un asistente, en un issue ni en un commit. Si se filtra una, avisá al equipo para rotarla.
 
 ---
 
-## 5. Levantar el entorno de desarrollo
-
-### Opción A — Con Docker (recomendado)
-
-Un solo comando levanta backend + base de datos local:
-
-```bash
-# Desde la raíz del proyecto
-docker-compose up --build
-```
-
-Servicios que levanta:
-
-- Backend API → `http://localhost:3001`
-- Supabase local (opcional, si usás supabase CLI) → `http://localhost:54321`
-
-### Opción B — Sin Docker (más rápido para desarrollo)
-
-Abrir 3 terminales:
-
-**Terminal 1 — Backend:**
+## 4. Instalar y levantar
 
 ```bash
 cd backend
+npm install
 npm run dev
-# Corre con nodemon, se reinicia automáticamente al guardar
-# API disponible en http://localhost:3001
 ```
 
-**Terminal 2 — Frontend web:**
+`npm run dev` usa nodemon: se reinicia solo al guardar. Si todo está bien, ves:
+
+```
+🚀 FitTrainer API escuchando en http://localhost:3001 [development]
+```
+
+Si falta una variable, el server no arranca y dice `❌ Variables de entorno inválidas:` con el detalle (ver sección 12).
+
+---
+
+## 5. Verificar que funciona
+
+Con el server corriendo, en otra terminal:
+
+```bash
+curl http://localhost:3001/health
+# {"status":"ok","timestamp":"...","version":"0.1.0"}
+
+curl http://localhost:3001/health/db
+# {"db":"connected","latency_ms":...}
+```
+
+- `/health` solo dice que el server está vivo.
+- `/health/db` consulta Supabase. Si da **503** con `{"db":"error",...}`, las claves están mal o el proyecto está pausado.
+
+Login con un usuario de prueba (pedí la contraseña al equipo):
+
+```bash
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"profe.card8@test.com","password":"LA_CONTRASEÑA"}'
+# {"user":{...,"role":"trainer"},"token":"...","refresh_token":"...","expires_in":"1h"}
+```
+
+En PowerShell, `curl` es un alias de otro comando: usá `curl.exe`, o `Invoke-RestMethod`. Además, las comillas del JSON dan problemas; lo más simple es correr los `curl` desde Git Bash.
+
+Tests y lint (en `backend/`):
+
+```bash
+npm test
+npm run lint
+```
+
+`npm test` no necesita el `.env`: usa valores de prueba. `npm run lint` corre ESLint y el chequeo de 200 líneas por archivo.
+
+---
+
+## 6. Armar una base de Supabase nueva (solo si no usás la compartida)
+
+1. Creá el proyecto en [supabase.com](https://supabase.com) y copiá las claves de **Settings → API** al `backend/.env`.
+2. En el **SQL Editor**, ejecutá en orden los archivos de `backend/src/database/schema/`: `01` a `07` (el detalle está en su README).
+3. Ejecutá `backend/src/database/checks/schema-checks.sql`. Tiene que devolver **0 filas**.
+4. Ejecutá `backend/src/database/seeds/exercises.sql` (50 ejercicios globales; se puede re-ejecutar).
+5. Ejecutá `backend/src/database/checks/exercises-checks.sql`. Tiene que devolver **0 filas**.
+6. Las migraciones de `backend/src/database/migrations/` se aplican **solo en bases que ya existían** antes de esos cambios. En una base nueva, el schema ya las incluye.
+
+Antes de aplicar `2026-10-17-exercises-global-name.sql` en una base vieja, esta consulta tiene que devolver 0 filas:
+
+```sql
+select name, count(*) from exercises where is_global group by name having count(*) > 1;
+```
+
+Todas las tablas tienen RLS activado sin políticas: el backend entra con la `service_role` y valida permisos en los services ([[adr/0001-autorizacion-en-services-rls-deny-all|ADR 0001]]). No hace falta tocar RLS para desarrollar. Más sobre las tablas: [[arquitectura/modelo-de-datos|Modelo de datos (DER)]].
+
+---
+
+## 7. Usuarios de prueba
+
+La base compartida tiene dos:
+
+| Rol | Email |
+|---|---|
+| Entrenador | `profe.card8@test.com` |
+| Alumna | `alumna.card8@test.com` |
+
+La contraseña **no está en el repo** (es público): pedísela al equipo.
+
+En una base nueva, se crean así (la contraseña pide 8 caracteres, una mayúscula y un número).
+
+**1. El entrenador**, con `POST /api/auth/register`:
+
+```bash
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Profe Prueba","email":"profe@test.com","password":"UnaClave123"}'
+# 201: { "trainer": {...}, "token": "...", "refresh_token": "..." }
+```
+
+**2. El alumno**, en dos pasos. Primero el entrenador crea la invitación, con el `token` del paso anterior:
+
+```bash
+curl -X POST http://localhost:3001/api/invitations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN_DEL_ENTRENADOR" \
+  -d '{"student_name":"Alumna Prueba","student_email":"alumna@test.com","goal":"tonify","delivery_channel":"qr"}'
+# 201: { "data": { "token": "...", "join_url": "...", ... } }
+```
+
+Campos de la invitación: `student_name`, `student_email`, `goal` (`tonify`, `weight_loss`, `hypertrophy` o `strength`) y `delivery_channel` (`whatsapp`, `qr` o `both`). Con `whatsapp` o `both` también hace falta `student_phone`. Opcionales: `gym_equipment`, `injuries`, `level`.
+
+Después el alumno la acepta con `POST /api/students`, usando el `token` de la invitación (vale 48 hs):
+
+```bash
+curl -X POST http://localhost:3001/api/students \
+  -H "Content-Type: application/json" \
+  -d '{"token":"TOKEN_DE_LA_INVITACION","password":"OtraClave123"}'
+```
+
+El alumno ya puede entrar con `POST /api/auth/login`.
+
+---
+
+## 8. Conectar la web (`frontend/`)
+
+El dashboard web (React + Vite) vive en `frontend/`. Si todavía no lo ves en tu rama, hacé `git pull` de `develop`: entró con la PR #19.
 
 ```bash
 cd frontend
+npm install
+cp .env.example .env
 npm run dev
-# Dashboard del PT disponible en http://localhost:5173
 ```
 
-**Mobile (Android Studio):**
-
-```bash
-# Abrir la carpeta mobile/ en Android Studio, elegir un emulador
-# o dispositivo y presionar Run (▶). Por línea de comandos:
-cd mobile
-./gradlew installDebug
-```
-
-### Verificar que todo funciona
-
-Antes de arrancar a desarrollar, verificar estos endpoints:
-
-```bash
-# Health check del backend
-curl http://localhost:3001/health
-# Respuesta esperada: {"status": "ok", "timestamp": "..."}
-
-# Verificar conexión con Supabase
-curl http://localhost:3001/health/db
-# Respuesta esperada: {"db": "connected"}
-```
+- Corre en **http://localhost:5173** (el puerto está fijo: si está ocupado, Vite falla en vez de cambiarlo).
+- `VITE_API_URL` apunta a la API. Por defecto `http://localhost:3001/api`, que es lo que necesitás.
+- Todo lo que va en el `.env` del front es público: nunca pongas la `service_role` ni el `JWT_SECRET`.
+- **CORS:** el backend acepta un solo origen, `FRONTEND_URL` (por defecto `http://localhost:5173`). Si corrés la web en otro puerto, cambiá `FRONTEND_URL` en `backend/.env` y reiniciá el backend.
+- Tests y lint del front: `npm test` y `npm run lint`.
 
 ---
 
-## 6. Scripts disponibles
+## 9. Conectar el mobile (emulador de Android)
 
-### Backend
+Abrí `mobile/` en Android Studio, copiá `mobile/.env.example` a `mobile/.env` y revisá `API_BASE_URL`:
 
-| Script | Comando | Descripción |
+| Dónde corre la app | `API_BASE_URL` | Antes |
 |---|---|---|
-| Desarrollo | `npm run dev` | Nodemon + hot reload |
-| Producción | `npm start` | Node.js directo |
-| Tests | `npm test` | Jest |
-| Tests watch | `npm run test:watch` | Jest en modo watch |
-| Tests coverage | `npm run test:coverage` | Reporte de cobertura |
-| Lint | `npm run lint` | ESLint |
-| Lint fix | `npm run lint:fix` | ESLint con autofix |
+| Emulador de Android Studio | `http://10.0.2.2:3001/api` | nada |
+| Celular físico por USB | `http://localhost:3001/api` | `adb reverse tcp:3001 tcp:3001` |
 
-### Frontend
-
-| Script | Comando | Descripción |
-|---|---|---|
-| Desarrollo | `npm run dev` | Vite dev server |
-| Build | `npm run build` | Build de producción |
-| Preview | `npm run preview` | Preview del build |
-| Lint | `npm run lint` | ESLint |
-
-### Mobile
-
-| Script | Comando | Descripción |
-|---|---|---|
-| Compilar e instalar | `./gradlew installDebug` | Build + deploy al emulador/dispositivo |
-| Tests | `./gradlew test` | Unit tests (JUnit) |
-| Build APK (debug) | `./gradlew assembleDebug` | APK para testing |
-| Build APK (release) | `./gradlew assembleRelease` | APK de producción |
+- En el emulador, `localhost` es el emulador mismo, no tu PC. `10.0.2.2` es el alias de tu PC.
+- Con HTTP, la app solo permite esos dos hosts (`network_security_config.xml`). **La IP de tu PC por wifi no funciona**: tendría que ser HTTPS.
+- Con el backend corriendo y el `.env` en su lugar, la app le pega sin cambiar nada más.
+- `JOIN_LINK_HOST` va con el host de `FRONTEND_URL`, sin puerto (`localhost`).
 
 ---
 
-## 7. Flujo de trabajo con Git
+## 10. Docker (opcional)
 
-### Branches
-
-```javascript
-main          → producción, solo merges desde develop
-develop       → integración, base para features
-feature/xxx   → una feature nueva (ej: feature/auth-qr)
-fix/xxx       → corrección de bug (ej: fix/timer-crash)
-```
-
-### Convención de commits (Conventional Commits)
+El camino recomendado es el backend nativo de las secciones anteriores. Docker queda como opción: lo mantiene Igna y se retoma en el S7 (deploy).
 
 ```bash
-feat: agrega pantalla de sesión activa
-fix: corrige timer que no se detiene al finalizar serie
-docs: actualiza README con instrucciones de Android Studio
-refactor: extrae lógica de progreso a service separado
-test: agrega tests de integración para POST /sessions
-chore: actualiza dependencias de seguridad
+# Desde la raíz, con backend/.env completo
+docker compose up --build
 ```
 
-### Flujo típico
-
-```bash
-# 1. Crear branch desde develop
-git checkout develop
-git pull origin develop
-git checkout -b feature/nombre-de-la-feature
-
-# 2. Desarrollar y commitear
-git add .
-git commit -m "feat: descripción del cambio"
-
-# 3. Push y Pull Request
-git push origin feature/nombre-de-la-feature
-# Crear PR en GitHub hacia develop
-# Requiere revisión del otro integrante antes de mergear
-```
+La API queda en `http://localhost:3001`. Si el puerto está ocupado: `API_PORT=3002 docker compose up --build`. Los archivos son `docker-compose.yml` (desarrollo) y `docker-compose.prod.yml` (VPS).
 
 ---
 
-## 8. Testing
+## 11. Scripts del backend
 
-### Correr los tests
+Todos se corren desde `backend/`.
 
-```bash
-cd backend
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Nodemon con hot reload |
+| `npm start` | Node directo (producción) |
+| `npm test` | Tests (Jest) |
+| `npm run test:watch` | Jest en modo watch |
+| `npm run test:coverage` | Tests con cobertura |
+| `npm run lint` | ESLint + chequeo de 200 líneas por archivo |
+| `npm run lint:fix` | ESLint con autofix |
+| `npm run format` | Prettier sobre `src`, `tests` y `scripts` |
+| `npm run db:check-anon` | Verifica que la clave `anon` no vea filas por la API pública (lee `SUPABASE_URL` y `SUPABASE_ANON_KEY` del `.env`) |
 
-# Todos los tests
-npm test
-
-# Un archivo específico
-npm test -- sessions.service.test.js
-
-# Con coverage
-npm run test:coverage
-```
-
-### Estructura de tests
-
-```javascript
-backend/src/
-├── modules/
-│   ├── auth/
-│   │   ├── auth.service.js
-│   │   └── auth.service.test.js   ← tests al lado del módulo
-│   └── sessions/
-│       ├── sessions.service.js
-│       └── sessions.service.test.js
-└── __tests__/
-    └── integration/
-        ├── auth.integration.test.js
-        └── sessions.integration.test.js
-```
-
-### Antes de hacer un PR
-
-```bash
-# Checklist mínimo:
-npm test          # todos los tests pasan
-npm run lint      # cero errores de lint
-# Probar manualmente el flujo que modificaste
-```
+Antes de abrir una PR: `npm test` y `npm run lint` en verde, y probar a mano lo que tocaste. Reglas de código y ramas: ver `CONTRIBUTING.md`.
 
 ---
 
-## 9. Deploy a producción (VPS)
+## 12. Problemas frecuentes
 
-### Requisitos del servidor
+> [!note]- ❌ El server dice "Variables de entorno inválidas"
+> Falta una variable obligatoria: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` o `JWT_SECRET`. El mensaje dice cuál (`Falta la variable de entorno ...`). Revisá que el archivo se llame `backend/.env` (no `.env.example`) y que no tenga espacios en los valores.
 
-- Ubuntu 22.04 LTS
-- 2 vCPU · 4 GB RAM mínimo
-- Docker + Docker Compose instalados
-- Dominio apuntando al VPS (A record)
+> [!note]- ❌ "JWT_SECRET debe tener al menos 32 caracteres"
+> Generá uno con el comando de la sección 3.
 
-### Primer deploy
-
-```bash
-# En el servidor
-git clone https://github.com/tu-usuario/fittrainer.git
-cd fittrainer
-
-# Configurar variables de entorno de producción
-cp backend/.env.example backend/.env
-# Editar con los valores reales
-
-# Levantar con Docker Compose de producción
-docker-compose -f docker-compose.prod.yml up -d --build
-
-# Verificar que los contenedores están corriendo
-docker-compose -f docker-compose.prod.yml ps
-```
-
-### Actualizar en producción
-
-```bash
-# El GitHub Actions lo hace automáticamente al mergear a main
-# Para deploy manual:
-git pull origin main
-docker-compose -f docker-compose.prod.yml up -d --build
-```
-
-### Ver logs en producción
-
-```bash
-# Todos los logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Solo el backend
-docker-compose -f docker-compose.prod.yml logs -f backend
-```
-
----
-
-## 10. Solución de problemas frecuentes
-
-> [!note]- ❌ El emulador Android no se conecta a la API
-> El emulador no puede usar `localhost` para conectarse al host. Usá tu IP local:
->
+> [!note]- ❌ El puerto 3001 ya está en uso
 > ```bash
-> # Ver tu IP local
-> ipconfig  # Windows
-> ifconfig  # Mac/Linux
->
-> # Actualizar mobile/local.properties
-> API_URL=http://10.0.2.2:3001/api
+> netstat -ano | findstr :3001   # Windows
+> lsof -i :3001                  # Mac/Linux
 > ```
+> Cerrá el proceso, o cambiá `PORT` en `backend/.env`. Si lo cambiás, ajustá también `VITE_API_URL` y `API_BASE_URL`.
 
-> [!note]- ❌ Error "Invalid JWT" en el backend
-> Verificar que `SUPABASE_SERVICE_ROLE_KEY` en el `.env` del backend sea el correcto. Es el key de `service_role`, no el `anon`.
+> [!note]- ❌ `/health/db` responde 503
+> Las claves de Supabase están mal, o el proyecto está pausado (el plan gratis pausa por inactividad). Revisá `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`: la `service_role`, no la `anon`.
 
-> [!note]- ❌ La cámara (escaneo de QR) no funciona en el emulador
-> ```bash
-> cd mobile
-> ./gradlew --refresh-dependencies
-> # Verificá el permiso CAMERA en AndroidManifest.xml y la cámara virtual del AVD (Settings → Camera → Webcam0)
-> ```
+> [!note]- ❌ La web da error de CORS
+> La web tiene que correr en el origen de `FRONTEND_URL`. Si no está en `http://localhost:5173`, cambiá `FRONTEND_URL` en `backend/.env` y reiniciá el backend.
 
-> [!note]- ❌ Docker: puerto 3001 ya en uso
-> ```bash
-> # Ver qué proceso usa el puerto
-> lsof -i :3001        # Mac/Linux
-> netstat -ano | findstr :3001  # Windows
->
-> # Matar el proceso o cambiar el puerto en .env
-> ```
+> [!note]- ❌ El emulador dice "Connection refused"
+> Estás usando `localhost`. En el emulador va `http://10.0.2.2:3001/api`.
 
-> [!note]- ❌ Supabase RLS bloquea queries que deberían funcionar
-> Durante desarrollo podés deshabilitar RLS temporalmente en una tabla:
->
-> ```sql
-> -- En el SQL Editor de Supabase (solo en proyecto de dev)
-> ALTER TABLE nombre_tabla DISABLE ROW LEVEL SECURITY;
-> -- Acordate de re-habilitarla antes de mergear
-> ```
+> [!note]- ❌ La app en un celular por wifi no conecta
+> Con HTTP no funciona: la app corta cualquier host que no sea `10.0.2.2` o `localhost`. Conectá el celular por USB y corré `adb reverse tcp:3001 tcp:3001`.
+
+> [!note]- ❌ `npm install` o el server fallan por la versión de Node
+> Usá Node 22 (`nvm use`). El mínimo es 20.19.
 
 ---
 
-## 11. Contacto del equipo
+## 13. Contacto del equipo
 
-| Integrante | Rol principal | GitHub |
-|---|---|---|
-| Ignacio Rolon | Backend + Frontend web | @ignaciorolon |
-| Pablo Queimaliños | Mobile (Kotlin / Jetpack Compose) | @pqueimalinos |
+Quién hace qué está en [[producto/equipo|Descripción del equipo]]. El tablero del equipo: https://trello.com/b/yBj0xE8S
 
 ---
 
-> **Última actualización:** Junio 2026 · FitTrainer — Proyecto Final de Analista de Sistemas
+> **Última actualización:** 18/10/2026 · FitTrainer — Proyecto Final de Analista de Sistemas

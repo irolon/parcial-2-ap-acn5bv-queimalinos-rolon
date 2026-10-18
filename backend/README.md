@@ -59,22 +59,8 @@ tests/                       # TODOS los tests viven acá (fuera de src/)
 
 ## Setup
 
-```bash
-cp .env.example .env     # completar con credenciales de Supabase + JWT_SECRET
-npm install
-```
-
-Luego, en el **SQL Editor** de Supabase, ejecutar en orden:
-1. los archivos de `src/database/schema/` en orden (ver su README) — crean todas las tablas.
-2. `src/database/seeds/exercises.sql` — carga los 50 ejercicios globales (re-ejecutable).
-
-En una base ya creada, correr antes las migraciones de `src/database/migrations/`
-que falten. Después del seed, `src/database/checks/exercises-checks.sql` tiene
-que devolver 0 filas.
-
-> Nota: antes de la migración `2026-10-17-exercises-global-name.sql`, correr
-> `select name, count(*) from exercises where is_global group by name having count(*) > 1;`
-> — tiene que devolver 0 filas antes de la migración 2026-10-17-exercises-global-name.sql.
+Los pasos para levantar el backend (variables de entorno, base de datos, usuarios de prueba)
+están en la guía: [`docs/proceso/setup-tecnico.md`](../docs/proceso/setup-tecnico.md).
 
 ## Scripts
 
@@ -83,8 +69,12 @@ que devolver 0 filas.
 | `npm run dev` | Dev con nodemon (hot reload) |
 | `npm start` | Producción |
 | `npm test` | Tests (Jest) |
+| `npm run test:watch` | Tests en modo watch |
 | `npm run test:coverage` | Tests con cobertura |
 | `npm run lint` | ESLint + chequeo de 200 líneas por archivo (`scripts/check-file-length.js`) |
+| `npm run lint:fix` | ESLint con autofix |
+| `npm run format` | Prettier sobre `src`, `tests` y `scripts` |
+| `npm run db:check-anon` | Verifica que la clave `anon` no vea filas por la API pública |
 
 ## Endpoints
 

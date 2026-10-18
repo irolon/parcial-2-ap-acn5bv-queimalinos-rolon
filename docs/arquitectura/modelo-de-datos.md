@@ -9,7 +9,7 @@ tags: [arquitectura]
 
 # Modelo de datos (DER)
 
-Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema.sql (19 tablas: estas 18 + refresh_tokens). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
+Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07) (19 tablas: estas 18 + refresh_tokens). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
 
 ---
 
