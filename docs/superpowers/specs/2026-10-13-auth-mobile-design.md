@@ -1,3 +1,7 @@
+---
+tags: [spec]
+tarjeta: 5
+---
 # Spec — Auth en mobile + almacenamiento seguro del JWT
 
 - **Tarjeta:** "5 · Auth en mobile + almacenamiento seguro del JWT" (tablero personal de Igna) → tarjeta de equipo https://trello.com/c/u1ip0fCJ
@@ -226,3 +230,14 @@ data class AuthUser(id: String, name: String, email: String, role: Role)
 - Refresh proactivo antes de que venza el token.
 - UI que muestre la renovación del token.
 - Rotación del refresh token (es del backend).
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
+- [[superpowers/plans/2026-10-13-auth-mobile|Plan]]
+- [[superpowers/specs/2026-10-13-esqueleto-android-design|Depende de: esqueleto Android]]
+- [[arquitectura/contratos-api|Contratos de API]]
+- [[arquitectura/adrs|ADRs]]
+- [[producto/requerimientos-no-funcionales|Requerimientos no funcionales]]

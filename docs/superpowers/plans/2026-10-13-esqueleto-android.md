@@ -1,3 +1,7 @@
+---
+tags: [plan]
+tarjeta: 3
+---
 # Esqueleto Android — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -2071,3 +2075,10 @@ Recorrido y capturas esperadas:
 - [ ] **Step 5: reporte**
 
 Anotar en el reporte: resultado de cada paso, rutas de las capturas, versiones de dependencias que se hayan tenido que ajustar. Apagar el backend y el emulador si los levantó la tarea.
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
+- [[superpowers/specs/2026-10-13-esqueleto-android-design|Spec]]
