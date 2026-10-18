@@ -90,7 +90,9 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 ### POST /auth/logout
 
-Revoca el refresh token. Requiere auth. **204 No Content**
+Revoca el refresh token. **No requiere** access token: alcanza con el `refresh_token` del body, así el logout funciona aunque el access haya vencido. **204 No Content**
+
+**Body:** `{ "refresh_token": "string" }`
 
 ---
 

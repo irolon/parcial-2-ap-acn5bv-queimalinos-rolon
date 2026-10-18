@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
-import { authenticate } from '../../shared/middlewares/auth.middleware.js';
 import {
   validateRegister,
   validateLogin,
@@ -13,6 +12,8 @@ const router = Router();
 router.post('/register', validate(validateRegister), authController.register);
 router.post('/login', validate(validateLogin), authController.login);
 router.post('/refresh', validate(validateRefresh), authController.refresh);
-router.post('/logout', authenticate, validate(validateRefresh), authController.logout);
+// Sin authenticate: se revoca con el refresh token del body, y así el logout
+// funciona aunque el access token ya haya vencido.
+router.post('/logout', validate(validateRefresh), authController.logout);
 
 export default router;
