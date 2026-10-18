@@ -6,6 +6,7 @@ import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.routine.RoutineDao
+import com.fittrainer.data.db.workout.WorkoutDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,6 +33,9 @@ object DatabaseModule {
 
     @Provides
     fun provideLibraryDao(db: FitTrainerDatabase): LibraryDao = db.libraryDao()
+
+    @Provides
+    fun provideWorkoutDao(db: FitTrainerDatabase): WorkoutDao = db.workoutDao()
 
     @Provides
     @Singleton

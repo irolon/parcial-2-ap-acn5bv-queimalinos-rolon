@@ -46,9 +46,9 @@ fun OfflineIndicator(text: String) {
 }
 
 @Composable
-fun NoticeBanner(message: String, onDismiss: () -> Unit) {
+fun NoticeBanner(message: String, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .background(FtColors.Elevated, MaterialTheme.shapes.medium)
             .padding(start = Spacing.md),

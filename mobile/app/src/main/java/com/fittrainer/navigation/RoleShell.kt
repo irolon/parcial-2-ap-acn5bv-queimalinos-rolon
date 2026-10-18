@@ -8,8 +8,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,17 +26,47 @@ import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.today.TodayScreen
+import com.fittrainer.ui.workout.WorkoutEntryViewModel
+import com.fittrainer.ui.workout.WorkoutScreen
+import com.fittrainer.ui.workout.components.ActiveWorkoutSignOutDialog
+import com.fittrainer.ui.workout.components.SignOutFailedDialog
 
 /** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → Estado del servidor. */
 @Composable
-fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit) {
+fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit, entry: WorkoutEntryViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
 
+    val openRequested by entry.openRequests.collectAsStateWithLifecycle()
+    val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
+    LaunchedEffect(openRequested) {
+        if (openRequested) {
+            if (isStudent && entry.hasActiveNow()) navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true }
+            entry.consumeOpenRequest()
+        }
+    }
+    var confirmSignOut by remember { mutableStateOf(false) }
+    val guardedSignOut: () -> Unit = {
+        if (isStudent) {
+            entry.requestSignOut(onNoActive = onSignOut, onActive = { confirmSignOut = true })
+        } else {
+            onSignOut()
+        }
+    }
+    if (confirmSignOut) {
+        ActiveWorkoutSignOutDialog(
+            onFinishAndSignOut = { confirmSignOut = false; entry.finishActive(onSignOut) },
+            onCancel = { confirmSignOut = false },
+        )
+    }
+    // finishActive corre en esta instancia (no en la de Hoy): si falla, el aviso se muestra acá.
+    val entryError by entry.error.collectAsStateWithLifecycle()
+    entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            if (currentRoute != WORKOUT_ROUTE) NavigationBar {
                 tabs.forEach { tab ->
                     NavigationBarItem(
                         selected = currentRoute == tab.route,
@@ -59,9 +95,11 @@ fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit) {
                         tab.isAccountMenu -> AccountMenuScreen(
                             title = tab.label,
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
-                            onSignOut = onSignOut,
+                            onSignOut = guardedSignOut,
                         )
-                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen()
+                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
+                            onOpenWorkout = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } },
+                        )
                         tab.route == STUDENT_LIBRARY_ROUTE -> LibraryScreen()
                         else -> PlaceholderScreen(tab.label)
                     }
@@ -69,6 +107,9 @@ fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit) {
             }
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
+            }
+            composable(WORKOUT_ROUTE) {
+                WorkoutScreen(onExit = { navController.popBackStack(STUDENT_TODAY_ROUTE, inclusive = false) })
             }
         }
     }
