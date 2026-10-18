@@ -39,7 +39,6 @@ cd parcial-2-ap-acn5bv-queimalinos-rolon
 git checkout develop
 ```
 
-
 ---
 
 ## 3. Variables de entorno del backend
@@ -121,7 +120,11 @@ curl -X POST http://localhost:3001/api/auth/login \
 # {"user":{...,"role":"trainer"},"token":"...","refresh_token":"...","expires_in":"1h"}
 ```
 
-En PowerShell, `curl` es un alias de otro comando: usá `curl.exe`, o `Invoke-RestMethod`. Además, las comillas del JSON dan problemas; lo más simple es correr los `curl` desde Git Bash.
+Los `curl` de esta guía son para Git Bash, macOS y Linux. En PowerShell, `curl` es un alias de otro comando; el login se hace así:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:3001/api/auth/login -ContentType 'application/json' -Body '{"email":"profe.card8@test.com","password":"LA_CONTRASEÑA"}'
+```
 
 Tests y lint (en `backend/`):
 
@@ -201,7 +204,7 @@ El alumno ya puede entrar con `POST /api/auth/login`.
 
 ## 8. Conectar la web (`frontend/`)
 
-El dashboard web (React + Vite) vive en `frontend/`. Si todavía no lo ves en tu rama, hacé `git pull` de `develop`: entró con la PR #19.
+El dashboard web (React + Vite) vive en `frontend/`. La web está en la PR #19; hasta que se mergee, usá la rama `feature/web-skeleton`.
 
 ```bash
 cd frontend
