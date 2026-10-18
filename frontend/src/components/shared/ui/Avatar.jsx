@@ -1,4 +1,5 @@
 const TONES = {
+  accent: 'bg-accent text-accentInk',
   hot: 'bg-hot/20 text-hot',
   neutral: 'bg-ink3 text-bone0',
 };

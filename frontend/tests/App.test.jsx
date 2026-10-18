@@ -1,10 +1,17 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
 import App from '@/App.jsx';
+import { useAuthStore } from '@/hooks/auth/useAuthStore';
+import { resetAuthStore } from './helpers/auth/authStore';
+
+beforeEach(() => resetAuthStore());
+afterEach(() => window.history.replaceState(null, '', '/'));
 
 describe('App', () => {
-  it('muestra el nombre de la marca', () => {
+  it('al iniciar corre restore() y, sin sesión guardada, muestra el login', async () => {
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'FitTrainer' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
+    expect(useAuthStore.getState().status).toBe('anonymous');
+    expect(window.location.pathname).toBe('/login');
   });
 });
