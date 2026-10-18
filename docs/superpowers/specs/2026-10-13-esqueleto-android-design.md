@@ -1,3 +1,7 @@
+---
+tags: [spec]
+tarjeta: 3
+---
 # Spec — Esqueleto Android (Compose, Hilt, Retrofit, Room)
 
 - **Tarjeta:** "3 · Esqueleto Android — Compose, Hilt, Retrofit y Room" (tablero personal de Igna) → tarjeta de equipo [S0] Esqueleto de la app Android (https://trello.com/c/LJGX3ICe)
@@ -169,3 +173,13 @@ Solo tokens; los componentes (botones, tarjetas, chips) se construyen en las tar
 - Logo e ícono de la app con el Manual de Marca (se usa el ícono por defecto).
 - `mobile/.env.example` (llega con el PR #3).
 - CI para Android.
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
+- [[superpowers/plans/2026-10-13-esqueleto-android|Plan]]
+- [[arquitectura/adrs|ADRs]]
+- [[proceso/setup-tecnico|Setup técnico]]
+- [[diseno/mockups|Mockups]]

@@ -1,3 +1,7 @@
+---
+tags: [spec]
+tarjeta: 6
+---
 # Spec — Escaneo de QR y alta del alumno en mobile
 
 - **Tarjeta:** "6 · Escaneo de QR y alta del alumno en mobile" (tablero personal de Igna) → tarjeta de equipo https://trello.com/c/jxIQkSLS
@@ -217,3 +221,13 @@ Claude prepara todo y lee los resultados con `adb`. Igna escanea con el celular.
 - Que el entrenador genere invitaciones desde mobile.
 - Prueba con la web de Pablo generando el QR: se hace cuando exista esa pantalla.
 - Recuperar contraseña.
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
+- [[superpowers/plans/2026-10-15-onboarding-qr|Plan]]
+- [[superpowers/specs/2026-10-13-auth-mobile-design|Depende de: auth mobile]]
+- [[producto/casos-de-uso|Casos de uso (CU-01, CU-02)]]
+- [[arquitectura/contratos-api|Contratos de API]]

@@ -35,3 +35,6 @@ Thumbs.db
 mobile/.gradle/
 mobile/app/build/
 mobile/local.properties
+
+# Obsidian (config local del vault en docs/)
+.obsidian/

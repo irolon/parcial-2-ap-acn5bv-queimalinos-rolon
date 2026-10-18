@@ -19,3 +19,10 @@ data class TodayUiState(
     /** Hay una rutina (o un día de descanso de una rutina) en pantalla. */
     val showsRoutine: Boolean get() = content is TodayContent.Training || content is TodayContent.Rest
 }
+
+/**
+ * Con una sesión abierta y Hoy sin rutina para entrenar (descanso, sin rutina, sin datos o cargando) igual
+ * tiene que haber cómo volver (spec §3: aunque sea de otra rutina o de otro día). En Training lo hace el hero.
+ */
+fun showsActiveWorkoutCard(content: TodayContent?, workoutActive: Boolean): Boolean =
+    workoutActive && content !is TodayContent.Training

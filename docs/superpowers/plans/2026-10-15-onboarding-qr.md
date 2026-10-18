@@ -1,3 +1,7 @@
+---
+tags: [plan]
+tarjeta: 6
+---
 # Onboarding por QR en mobile Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -2190,3 +2194,10 @@ git commit -m "chore(mobile): config para probar en celular físico por USB"
 | §5 dependencias | 4 |
 | §6 tests unitarios e integración | 1, 2, 3, 4, 6 |
 | §6 punta a punta | 7 |
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
+- [[superpowers/specs/2026-10-15-onboarding-qr-design|Spec]]
