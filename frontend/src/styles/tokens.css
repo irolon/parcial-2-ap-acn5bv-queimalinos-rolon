@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Inks (fondos y texto sobre oscuro) */
+  --color-ink0: #0b0d0c;
+  --color-ink1: #111413;
+  --color-ink2: #181c1b;
+  --color-ink3: #232927;
+  --color-ink4: #2f3634;
+  --color-ink5: #485150;
+  --color-ink6: #8c9593;
+
+  /* Bone (contraste claro) */
+  --color-bone0: #f5f2ec;
+  --color-bone1: #ece7de;
+  --color-bone2: #d9d3c6;
+  --color-bone3: #b5ae9d;
+
+  /* Acento de marca */
+  --color-accent: #2952d9;
+  --color-accentDim: #1b3aa8;
+  --color-accentText: #5e7de2;
+
+  /* Semánticos */
+  --color-hot: #ff5c3a;
+  --color-cool: #36c6ff;
+  --color-good: #4ae290;
+  --color-warn: #ffb020;
+
+  /* Tipografías */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Radios del prototipo: 99, 18, 14, 12, 10 y 8 px */
+  --radius-pill: 99px;
+  --radius-2xl: 18px;
+  --radius-xl: 14px;
+  --radius-lg: 12px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+
+  /* Sin sombras */
+  --shadow-*: initial;
+}

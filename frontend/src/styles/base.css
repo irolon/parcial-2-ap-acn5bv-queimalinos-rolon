@@ -1,0 +1,19 @@
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-ink0);
+    color: var(--color-bone0);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+}
