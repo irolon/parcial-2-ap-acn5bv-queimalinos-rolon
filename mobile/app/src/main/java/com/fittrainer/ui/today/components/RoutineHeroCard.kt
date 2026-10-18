@@ -23,9 +23,9 @@ import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.today.heroSummary
 
-/** Un solo CTA. "Empezar" queda deshabilitado hasta que exista el registro de sesiones (S3). */
+/** CTA único: "Empezar", o "Continuar sesión" si hay una abierta. Sin ejercicios no se puede empezar. */
 @Composable
-fun RoutineHeroCard(routine: Routine) {
+fun RoutineHeroCard(routine: Routine, workoutActive: Boolean, onStart: () -> Unit) {
     val shape = MaterialTheme.shapes.large
     Column(
         Modifier
@@ -38,18 +38,13 @@ fun RoutineHeroCard(routine: Routine) {
         Text(routine.name, style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
         Text(heroSummary(routine), style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
         Button(
-            onClick = {},
-            enabled = false,
+            onClick = onStart,
+            enabled = workoutActive || routine.exercises.isNotEmpty(),
             modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget).padding(top = Spacing.sm),
         ) {
             Icon(Icons.Filled.PlayArrow, contentDescription = null)
             Spacer(Modifier.width(Spacing.sm))
-            Text("Empezar")
+            Text(if (workoutActive) "Continuar sesión" else "Empezar")
         }
-        Text(
-            "Disponible con el registro de sesiones",
-            style = MaterialTheme.typography.bodySmall,
-            color = FtColors.TextSecondary,
-        )
     }
 }
