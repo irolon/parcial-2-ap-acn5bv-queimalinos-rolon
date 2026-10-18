@@ -1,0 +1,6 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <!-- Mancuerna simple -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M2,10h2V8h3v8H4v-2H2V10zM17,8h3v2h2v4h-2v2h-3V8zM8,11h8v2H8V11z" />
+</vector>

@@ -1,3 +1,7 @@
+---
+tags: [plan]
+tarjeta: 5
+---
 # Auth en mobile Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -1946,3 +1950,10 @@ Usar `scratchpad/e2e/ui.sh` (`shot NAME`, `tap "Texto"`). El texto se escribe co
 
 - Parar el backend (matar todo el árbol de nodemon con `taskkill //PID <pid> //T //F`) y el emulador.
 - Actualizar en `AGENTS.md` (local, no se commitea) la regla de sesión: "el JWT va cifrado con DataStore + Tink (clave en el Android Keystore)" en lugar de EncryptedSharedPreferences.
+
+---
+
+## Relacionado
+
+- [[tarjetas|Índice de tarjetas]]
+- [[superpowers/specs/2026-10-13-auth-mobile-design|Spec]]

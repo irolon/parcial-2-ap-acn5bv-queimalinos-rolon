@@ -60,6 +60,24 @@ class FitTrainerDatabaseMigrationTest {
         }
     }
 
+    @Test fun migra3a4ConservandoLosDatos() {
+        helper.createDatabase(DB, 3).apply {
+            execSQL("INSERT INTO routines (id, name, goal, days, createdAt) VALUES ('rt-1', 'Rutina', NULL, 'monday', 1)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(DB, 4, true)
+
+        db.query("SELECT name FROM routines WHERE id = 'rt-1'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Rutina", it.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM workout_sessions").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(0, it.getInt(0))
+        }
+    }
+
     // La base real (la del DatabaseModule, sin borrado destructivo) abre una v1 existente.
     @Test fun laBaseRealAbreUnaV1Existente() {
         helper.createDatabase(DB, 1).close()

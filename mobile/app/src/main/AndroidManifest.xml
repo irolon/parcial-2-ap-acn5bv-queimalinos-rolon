@@ -4,6 +4,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Sesión activa (tarjeta 10): timer de descanso con el celular bloqueado. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Sin cámara igual se puede pegar el link: no la exige para instalar. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -40,5 +46,14 @@
                 <data android:pathPrefix="/join" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".ui.workout.service.WorkoutService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Timer de descanso entre series de una sesión de entrenamiento" />
+        </service>
     </application>
 </manifest>

@@ -18,6 +18,9 @@ const val HEALTH_ROUTE = "health"
 const val STUDENT_TODAY_ROUTE = "student/today"
 const val STUDENT_LIBRARY_ROUTE = "student/routines"
 
+/** Sesión activa: pantalla completa, sin la barra de pestañas. */
+const val WORKOUT_ROUTE = "student/workout"
+
 /** Guía Mobile p.5 — app del alumno. */
 val StudentTabs = listOf(
     Tab(STUDENT_TODAY_ROUTE, "Hoy", Icons.Filled.DateRange),
