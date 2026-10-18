@@ -11,6 +11,23 @@ const invalid = (body) =>
     expect.objectContaining({ code: 'VALIDATION_ERROR', statusCode: 400 })
   );
 
+describe('invitations.validation — objetivo opcional', () => {
+  it('conserva el goal válido', () => {
+    expect(validateCreateInvitation(BASE).goal).toBe('hypertrophy');
+  });
+
+  it('sin goal queda en null', () => {
+    const { goal, ...sinGoal } = BASE;
+    expect(validateCreateInvitation(sinGoal).goal).toBeNull();
+  });
+
+  it('goal null explícito queda en null', () => {
+    expect(validateCreateInvitation({ ...BASE, goal: null }).goal).toBeNull();
+  });
+
+  it('rechaza un goal fuera del enum', () => invalid({ goal: 'flexibility' }));
+});
+
 describe('invitations.validation — contexto para la IA (opcional)', () => {
   it('acepta gym_equipment, injuries y level y los sanea', () => {
     const out = validateCreateInvitation({

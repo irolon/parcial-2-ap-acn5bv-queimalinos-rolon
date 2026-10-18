@@ -43,7 +43,7 @@ export async function createInvitation(trainerId, data) {
     studentName: data.student_name,
     studentEmail: data.student_email,
     studentPhone: data.student_phone,
-    studentGoal: data.goal,
+    studentGoal: data.goal ?? null,
     deliveryChannel: data.delivery_channel,
     studentGymEquipment: data.gym_equipment ?? null,
     studentInjuries: data.injuries ?? null,
