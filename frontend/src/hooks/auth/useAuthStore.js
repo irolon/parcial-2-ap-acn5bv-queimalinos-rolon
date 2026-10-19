@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import * as authApi from '@/api/auth/auth.api';
+import * as studentsApi from '@/api/students/students.api';
 import { configureClient } from '@/api/shared/client';
 
 export const SESSION_STORAGE_KEY = 'fittrainer.session';
@@ -14,6 +15,11 @@ const isNetworkError = (err) => err?.status === 0 || err?.code === 'NETWORK_ERRO
 // para reintentar en la próxima carga.
 function keepSessionOffline(set) {
   set({ token: null, status: 'anonymous' });
+}
+
+function saveSession(set, user, token, refreshToken) {
+  set({ user, token, refreshToken, status: 'authenticated' });
+  return user;
 }
 
 /**
@@ -30,17 +36,21 @@ export const useAuthStore = create(
       async login(credentials) {
         try {
           const data = await authApi.login(credentials);
-          set({
-            user: data.user,
-            token: data.token,
-            refreshToken: data.refresh_token,
-            status: 'authenticated',
-          });
-          return data.user;
+          return saveSession(set, data.user, data.token, data.refresh_token);
         } catch (err) {
           set({ ...EMPTY_SESSION, status: 'anonymous' });
           throw err;
         }
+      },
+
+      async register(data) {
+        const { trainer, token, refresh_token: refreshToken } = await authApi.register(data);
+        return saveSession(set, { ...trainer, role: 'trainer' }, token, refreshToken);
+      },
+
+      async joinFromInvitation(data) {
+        const { student, token, refresh_token: refreshToken } = await studentsApi.joinFromInvitation(data);
+        return saveSession(set, { ...student, role: 'student' }, token, refreshToken);
       },
 
       async logout() {

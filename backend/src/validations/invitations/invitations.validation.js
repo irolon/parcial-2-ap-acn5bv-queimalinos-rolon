@@ -20,7 +20,8 @@ export function validateCreateInvitation(body) {
   if (!isString(email) || !EMAIL_RE.test((email || '').trim())) {
     details.push({ field: 'student_email', message: 'Email con formato inválido' });
   }
-  if (!GOALS.includes(goal)) {
+  // El objetivo es opcional: ausente o null cuenta como "sin objetivo".
+  if (goal != null && !GOALS.includes(goal)) {
     details.push({ field: 'goal', message: `goal debe ser uno de: ${GOALS.join(', ')}` });
   }
   if (!DELIVERY_CHANNELS.includes(channel)) {
@@ -63,7 +64,7 @@ export function validateCreateInvitation(body) {
     student_name: name,
     student_email: email.toLowerCase(),
     student_phone: normalizedPhone,
-    goal,
+    goal: goal ?? null,
     delivery_channel: channel,
     gym_equipment: context.gym_equipment ?? null,
     injuries: context.injuries ?? null,

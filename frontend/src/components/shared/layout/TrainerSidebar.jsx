@@ -1,12 +1,12 @@
 import { QrCode } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import Button from '@/components/shared/ui/Button';
-import { TRAINER_NAV } from '@/routes/routeTable';
+import { NEW_STUDENT, TRAINER_NAV } from '@/routes/routeTable';
 import SidebarFrame, { roleSubtitle } from './SidebarFrame';
 import { COMPACT_HIDDEN, COMPACT_SR_ONLY } from './compact';
 
-// Hasta que exista la pantalla del QR, "Generar QR" lleva a Alumnos.
-const INVITE_PATH = '/pt/alumnos';
+// "Generar QR" lleva a la pantalla de nuevo alumno.
+const INVITE_PATH = NEW_STUDENT.path;
 
 function InviteCard({ onNavigate }) {
   const navigate = useNavigate();

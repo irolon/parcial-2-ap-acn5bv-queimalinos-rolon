@@ -36,6 +36,13 @@ export const STUDENT_NAV = {
   ],
 };
 
+// Páginas del entrenador fuera del menú (la topbar toma título y subtítulo de acá).
+export const NEW_STUDENT = {
+  path: '/pt/alumnos/nuevo',
+  title: 'Invitar alumno',
+  subtitle: 'ALUMNOS › NUEVO · GENERÁ QR Y COMPARTILO POR WHATSAPP',
+};
+
 const NAV_BY_ROLE = { [ROLES.TRAINER]: TRAINER_NAV, [ROLES.STUDENT]: STUDENT_NAV };
 
 /** Home de cada rol (`null` si el rol no es conocido). */

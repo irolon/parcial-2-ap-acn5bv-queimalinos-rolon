@@ -64,6 +64,18 @@ describe('invitations.service', () => {
       });
     });
 
+    it('guarda student_goal en null si la invitación no trae objetivo', async () => {
+      mockRepo.studentEmailExists.mockResolvedValue(false);
+      mockRepo.createInvitation.mockResolvedValue(createdRow);
+
+      await service.createInvitation('trainer-1', { ...BASE_BODY, goal: null });
+      expect(mockRepo.createInvitation.mock.calls.at(-1)[0].studentGoal).toBeNull();
+
+      const { goal, ...sinGoal } = BASE_BODY;
+      await service.createInvitation('trainer-1', sinGoal);
+      expect(mockRepo.createInvitation.mock.calls.at(-1)[0].studentGoal).toBeNull();
+    });
+
     it('con canal "qr" incluye QR pero no link de WhatsApp', async () => {
       mockRepo.studentEmailExists.mockResolvedValue(false);
       mockRepo.createInvitation.mockResolvedValue(createdRow);

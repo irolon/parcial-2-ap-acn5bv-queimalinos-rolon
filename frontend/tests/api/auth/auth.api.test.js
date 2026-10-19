@@ -27,6 +27,21 @@ describe('auth.api', () => {
     expect(init.headers.Authorization).toBeUndefined();
   });
 
+  it('register hace POST /auth/register con los datos, sin Bearer, y no renueva ante 401', async () => {
+    const form = { name: 'Pablo', email: 'a@b.com', password: 'x12345678', specialty: 'Fuerza' };
+    const payload = { trainer: { id: 't-1' }, token: 't', refresh_token: 'r' };
+    const fetchMock = stubFetch(async () => jsonResponse(201, payload));
+    await expect(authApi.register(form)).resolves.toEqual(payload);
+    const [[path, init]] = calls(fetchMock);
+    expect(path).toBe('/auth/register');
+    expect(init.method).toBe('POST');
+    expect(bodyOf(init)).toEqual(form);
+    expect(init.headers.Authorization).toBeUndefined();
+    stubFetch(async () => errorResponse(401, 'UNAUTHORIZED'));
+    await expect(authApi.register(form)).rejects.toMatchObject({ status: 401 });
+    expect(refreshSession).not.toHaveBeenCalled();
+  });
+
   it('refresh hace POST /auth/refresh con refresh_token', async () => {
     const fetchMock = stubFetch(async () => jsonResponse(200, { token: 'nuevo', expires_in: '1h' }));
     await expect(authApi.refresh('r-1')).resolves.toEqual({ token: 'nuevo', expires_in: '1h' });
