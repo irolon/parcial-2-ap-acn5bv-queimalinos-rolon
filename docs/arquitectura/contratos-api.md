@@ -109,10 +109,15 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
   "student_name": "string (requerido, 2–100 chars)",
   "student_email": "string (requerido)",
   "student_phone": "string (opcional, requerido si delivery_channel incluye whatsapp)",
-  "goal": "tonify | weight_loss | hypertrophy | strength",
-  "delivery_channel": "whatsapp | qr | both"
+  "goal": "tonify | weight_loss | hypertrophy | strength (opcional)",
+  "delivery_channel": "whatsapp | qr | both",
+  "level": "beginner | intermediate | advanced (opcional)",
+  "gym_equipment": ["string (opcional, hasta 30 ítems de 1–50 chars)"],
+  "injuries": "string (opcional, hasta 1000 chars)"
 }
 ```
+
+> `goal`, `level`, `gym_equipment` e `injuries` son opcionales: si faltan o vienen en `null`, se guardan como `null` (el alumno queda sin objetivo/contexto). Si vienen, deben cumplir las reglas de arriba; `injuries` con solo espacios se guarda como `null`, y los textos de `gym_equipment` se recortan. El contexto pasa al alumno cuando acepta la invitación.
 
 **201 Created**
 
@@ -139,6 +144,8 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
 Valida un token y retorna los datos precargados. Público.
 
 **200 OK** — `{ trainer, student_name, student_email, goal, expires_at }`
+
+`goal` puede ser `null` si el PT no lo cargó al invitar.
 
 **Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`
 

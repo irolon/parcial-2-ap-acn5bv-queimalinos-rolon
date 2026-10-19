@@ -333,3 +333,12 @@ Originalmente la gamificación (logros, rachas, badges) estaba planeada como fun
 - ➖ Sumar lógica de detección de logros (cron job o trigger post-sesión).
 - ➖ Diseño UX adicional: pantalla dedicada en la app del alumno + visibilidad en el panel del PT.
 - ➖ Riesgo de gamificación mal calibrada — desafíos demasiado fáciles aburren, demasiado difíciles desmotivan. Iterar con feedback.
+
+---
+
+## ADR del repo
+
+Decisiones registradas como archivos en `docs/adr/` (numeración propia, distinta de la de arriba):
+
+- **0001** — Autorización en la capa Service, RLS deny-all en la base: [[adr/0001-autorizacion-en-services-rls-deny-all]].
+- **0002** — Sesión de la web: access token en memoria, refresh y user en `localStorage`: [[adr/0002-sesion-web]].

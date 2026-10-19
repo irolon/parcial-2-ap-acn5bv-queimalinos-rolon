@@ -1,3 +1,10 @@
+---
+title: ADR 0002 — Sesión de la web
+aliases: [ADR 0002 — Sesión de la web, Sesión web]
+creado: 2026-10-18
+tags: [arquitectura, adr]
+---
+
 # ADR 0002 — Sesión de la web: access en memoria, refresh en localStorage
 
 - **Estado:** aceptado
