@@ -31,4 +31,14 @@ describe('Input', () => {
     expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-describedby');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('el hint queda asociado y se suma al error en aria-describedby', () => {
+    const { rerender } = render(<Input label="Teléfono" id="tel" hint="Con código de país" />);
+    const input = screen.getByLabelText('Teléfono');
+    expect(input).toHaveAttribute('aria-describedby', 'tel-hint');
+    expect(input).toHaveAccessibleDescription('Con código de país');
+    rerender(<Input label="Teléfono" id="tel" hint="Con código de país" error="Teléfono inválido" />);
+    expect(input).toHaveAttribute('aria-describedby', 'tel-error tel-hint');
+    expect(input).toHaveAccessibleDescription('Teléfono inválido Con código de país');
+  });
 });

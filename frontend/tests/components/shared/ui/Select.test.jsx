@@ -41,4 +41,9 @@ describe('Select', () => {
     expect(select).not.toHaveAttribute('aria-describedby');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('muestra el hint asociado vía aria-describedby', () => {
+    render(<Select label="Nivel" options={OPTIONS} hint="Opcional" />);
+    expect(screen.getByLabelText('Nivel')).toHaveAccessibleDescription('Opcional');
+  });
 });

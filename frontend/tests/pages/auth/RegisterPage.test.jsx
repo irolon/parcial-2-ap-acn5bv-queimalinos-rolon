@@ -40,7 +40,9 @@ async function submit({ specialty = '', password = 'Secreta123' } = {}) {
 describe('RegisterPage', () => {
   it('muestra la regla de contraseña y el link al login', async () => {
     renderRoute('/registro');
-    expect(await screen.findByText(/8 caracteres o más, con una mayúscula y un número/)).toBeVisible();
+    expect(await screen.findByLabelText('Contraseña')).toHaveAccessibleDescription(
+      '8 caracteres o más, con una mayúscula y un número',
+    );
     expect(screen.getByRole('link', { name: 'Ingresá' })).toHaveAttribute('href', '/login');
   });
 
@@ -96,7 +98,7 @@ describe('RegisterPage', () => {
       'El nombre debe tener entre 2 y 100 caracteres',
     );
     expect(screen.getByLabelText('Contraseña')).toHaveAccessibleDescription(
-      'La contraseña debe tener una mayúscula',
+      'La contraseña debe tener una mayúscula 8 caracteres o más, con una mayúscula y un número',
     );
   });
 

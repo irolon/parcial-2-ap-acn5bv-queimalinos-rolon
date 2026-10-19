@@ -66,18 +66,14 @@ export default function RegisterPage() {
               placeholder="vos@ejemplo.com"
               error={errors.fields.email}
             />
-            <div>
-              <Input
-                label="Contraseña"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                error={errors.fields.password}
-              />
-              <p className="mt-1.5 font-mono text-[10px] text-ink6">
-                8 caracteres o más, con una mayúscula y un número
-              </p>
-            </div>
+            <Input
+              label="Contraseña"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              hint="8 caracteres o más, con una mayúscula y un número"
+              error={errors.fields.password}
+            />
             <Input
               label="Especialidad (opcional)"
               name="specialty"
