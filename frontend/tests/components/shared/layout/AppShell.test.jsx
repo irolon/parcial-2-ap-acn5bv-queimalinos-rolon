@@ -44,12 +44,12 @@ describe('AppShell: sidebar del entrenador', () => {
     );
   });
 
-  it('tiene la tarjeta INVITAR: "Generar QR" lleva a Alumnos', async () => {
+  it('tiene la tarjeta INVITAR: "Generar QR" lleva a Nuevo alumno', async () => {
     const { pathname } = renderRoute('/pt/dashboard');
     const sidebar = await screen.findByTestId('sidebar-fixed');
     expect(within(sidebar).getByText('INVITAR')).toBeInTheDocument();
     await userEvent.click(within(sidebar).getByRole('button', { name: 'Generar QR' }));
-    expect(pathname()).toBe('/pt/alumnos');
+    expect(pathname()).toBe('/pt/alumnos/nuevo');
   });
 
   it('la topbar tiene título, subtítulo, búsqueda visual con ⌘K y campana', async () => {

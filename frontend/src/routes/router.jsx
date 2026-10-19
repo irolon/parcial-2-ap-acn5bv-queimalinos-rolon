@@ -2,14 +2,15 @@ import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
-import { ROLES, STUDENT_NAV, TRAINER_NAV } from './routeTable';
+import { NEW_STUDENT, ROLES, STUDENT_NAV, TRAINER_NAV } from './routeTable';
 
-// Cada ítem del sidebar es una página "Próximamente" hasta que llegue su tarjeta.
-// `handle` lleva el título y subtítulo que muestra la topbar.
-function roleSection(role, nav) {
+// Cada ítem del sidebar es una página "Próximamente" hasta que llegue su tarjeta;
+// `pages` suma las páginas reales de la sección. `handle` lleva el título y subtítulo de la topbar.
+function roleSection(role, nav, pages = []) {
   return {
     path: nav.base,
     element: <RequireRole role={role} />,
@@ -23,6 +24,7 @@ function roleSection(role, nav) {
             handle: { title: item.label, subtitle: item.subtitle },
             element: <PlaceholderPage title={item.label} />,
           })),
+          ...pages,
         ],
       },
     ],
@@ -39,7 +41,13 @@ export const routes = [
       { path: '/registro', element: <RegisterPage /> },
     ],
   },
-  roleSection(ROLES.TRAINER, TRAINER_NAV),
+  roleSection(ROLES.TRAINER, TRAINER_NAV, [
+    {
+      path: NEW_STUDENT.path,
+      handle: { title: NEW_STUDENT.title, subtitle: NEW_STUDENT.subtitle },
+      element: <NewStudentPage />,
+    },
+  ]),
   roleSection(ROLES.STUDENT, STUDENT_NAV),
   { path: '*', element: <NotFoundPage /> },
 ];
