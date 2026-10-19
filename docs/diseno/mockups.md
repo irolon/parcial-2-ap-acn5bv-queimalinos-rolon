@@ -1,54 +1,60 @@
 ---
-title: Mockups y wireframes (Google Stitch)
-aliases: [Mockups y wireframes (Google Stitch)]
-notion: https://app.notion.com/p/33c5ffbef7b581e9a2c0f6cdd3ed2dcc
-notion_editado: 2026-04-08
-migrado: 2026-10-17
+title: Prototipos y guías de diseño
+aliases: [Prototipos y guías de diseño, Mockups y wireframes]
+actualizado: 2026-10-18
 tags: [diseno]
 ---
 
-# Mockups y wireframes (Google Stitch)
+# Prototipos y guías de diseño
 
-Mockups y wireframes de las pantallas principales de FitTrainer, diseñados en Google Stitch.
+Prototipos navegables (web y mobile), Guía Web, Guía Mobile y Manual de Marca de FitTrainer. Son la **única fuente de diseño** del proyecto. El proyecto viejo de Google Stitch quedó obsoleto y no se usa más.
 
----
+## Archivos
 
-## Herramienta utilizada
+Los archivos están en el repo, en `docs/design/` (ver su `README.md`), y en Drive: https://drive.google.com/drive/folders/1wmOpqW5-BReFH-MJ0LRg3AC6BKjyrUUV
 
-**Google Stitch** — herramienta de diseño de interfaces con IA generativa.
+- `prototipo-web.html` y `prototipo-mobile.html`: se abren con doble clic en el navegador y sirven para la defensa.
+- `guia-web.pdf`, `guia-mobile.pdf` y `manual-de-marca.pdf`.
+- `prototype-src/`: código fuente de los prototipos. `tokens.jsx` tiene los valores exactos de color, tipografía y radios.
 
-> Acceder al proyecto completo: [https://stitch.withgoogle.com/projects/16045478123485245155](https://stitch.withgoogle.com/projects/16045478123485245155)
+## Pantallas
 
----
-
-## Pantallas documentadas
-
-### App web (Personal Trainer)
+### Web: 11 pantallas (5 alumno · 6 entrenador)
 
 | Pantalla | Descripción |
 |---|---|
-| Login / Registro | Acceso del PT a la plataforma web |
-| Dashboard principal | Vista general de alumnos activos, alertas y actividad reciente |
-| Panel de alumnos | Lista de alumnos con foto, objetivo, última sesión y estado |
-| Perfil del alumno | Datos físicos, métricas corporales y rutina activa |
-| Crear rutina | Formulario con ejercicios, series, reps, descanso y días asignados |
-| Biblioteca de ejercicios | Listado filtrable por músculo y equipamiento |
-| Vista de progreso | Gráficos de progresión de carga y evolución de medidas |
-| Generación de QR | Formulario de nuevo alumno + QR descargable |
+| Alumno · Hoy / Rutina del día | Rutina de hoy con el plan de ejercicios, racha semanal, nota del entrenador y próximo turno |
+| Alumno · Sesión activa | Registro de peso y reps por serie durante el entrenamiento |
+| Alumno · Mi progreso | Gráficos de cargas y medidas |
+| Alumno · Asistente IA | Chat para dudas de técnica y sustituciones de ejercicios |
+| Alumno · Mi perfil | Datos personales |
+| Entrenador · Dashboard | Alumnos activos, sesiones, adherencia, alertas de inactividad y actividad reciente |
+| Entrenador · Panel de alumnos | Lista de alumnos |
+| Entrenador · Perfil del alumno | Ficha con métricas y rutina activa |
+| Entrenador · Crear rutina | Tabla editable de ejercicios con biblioteca lateral |
+| Entrenador · Generar QR | Invitación de un alumno nuevo por QR |
+| Entrenador · Agenda | Agenda semanal de turnos |
 
-### App mobile (Alumno)
+### Mobile: 11 pantallas (6 alumno · 5 entrenador)
 
 | Pantalla | Descripción |
 |---|---|
-| Onboarding QR | Escaneo del QR + confirmación de datos + elección de contraseña |
-| Home | Rutina del día con ejercicios, series y peso sugerido |
-| Sesión activa | Pantalla de entrenamiento con registro de pesos/reps por serie |
-| Timer de descanso | Countdown entre series con opción de skip |
-| Chat IA | Pantalla de chat para consultar reemplazos de ejercicios |
-| Historial | Lista de sesiones pasadas con detalle por sesión |
-| Progreso | Gráficos de curva de cargas y evolución de peso corporal |
-| Registro de medidas | Formulario de peso y medidas corporales |
+| Alumno · Onboarding por QR | Alta del alumno escaneando el QR del entrenador |
+| Alumno · Rutina del día | Pestaña Hoy: rutina, racha y nota del entrenador |
+| Alumno · Sesión activa | Registro de series con cifras grandes |
+| Alumno · Timer de descanso | Cuenta regresiva entre series |
+| Alumno · Progreso | Evolución de cargas y medidas |
+| Alumno · Asistente IA | Chat con el asistente durante el entrenamiento |
+| Entrenador · Dashboard | Pestaña Inicio: alumnos activos, sesiones de hoy, adherencia y alumnos en riesgo |
+| Entrenador · Alumnos | Lista de alumnos |
+| Entrenador · Perfil del alumno | Ficha de cada alumno |
+| Entrenador · Mensajes | Mensajería con alumnos |
+| Entrenador · Generar QR | Invitación por QR desde el celular |
 
----
+## Lo que el diseño dice distinto de lo decidido
 
-> Los mockups fueron realizados en Google Stitch y están disponibles en el link de arriba. Para la defensa se pueden mostrar directamente desde la herramienta o exportar las pantallas como imágenes.
+Ante una diferencia, mandan las decisiones del proyecto (ver `docs/design/README.md`):
+
+- **Mobile:** Kotlin + Jetpack Compose, en una sola app que ramifica por rol ([[arquitectura/adrs|ADR-003]]). La guía mobile habla de React Native y de dos apps.
+- **API:** nombres en inglés, como el backend. Los mockups usan español.
+- **Editor de rutinas:** es una tabla editable, no drag & drop.

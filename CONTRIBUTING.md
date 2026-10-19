@@ -92,7 +92,7 @@ Dos reglas, **no negociables**, para todo el repo (backend, web y mobile) y para
 
 - Se cuentan **líneas físicas, todo incluido**: blancos, comentarios e imports. Es el número que muestra el editor.
 - Entra todo el código escrito a mano, **tests incluidos**: `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.cjs`, `.kt`, `.kts` y `.sql`.
-- No entran: `.md`, lockfiles, generados (`node_modules/`, `build/`, `dist/`, `coverage/`), XML de recursos de Android y JSON de configuración.
+- No entran: `.md`, lockfiles, generados (`node_modules/`, `build/`, `dist/`, `coverage/`), XML de recursos de Android, JSON de configuración y `docs/design/` (prototipos de referencia, no es código del producto).
 - **Si un archivo se pasa, se refactoriza o se divide.** Lo que se divide va **junto, en una carpeta con el nombre de lo dividido**, nunca suelto al lado del resto.
 - Sin excepciones. Un caso que de verdad no se pueda dividir se discute entre Igna y Pablo y se anota acá **antes** de commitearlo.
 

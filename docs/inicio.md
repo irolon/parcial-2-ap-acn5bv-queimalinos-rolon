@@ -73,7 +73,7 @@ FitTrainer es una plataforma con dos clientes — una aplicación web y una apli
 - [[proceso/setup-tecnico|README Técnico — Guía de Setup y Desarrollo]]
 
 ### Diseño
-- [[diseno/mockups|Mockups y wireframes (Google Stitch)]]
+- [[diseno/mockups|Prototipos y guías de diseño]]
 
 ### Specs y planes por tarjeta
 - [[tarjetas|Tarjetas]]: diseño (`superpowers/specs/`) y plan de implementación (`superpowers/plans/`) de cada tarjeta de Trello.
