@@ -12,6 +12,16 @@ export function login({ email, password }) {
   });
 }
 
+/** POST /auth/register → `{ trainer, token, refresh_token }` (201). */
+export function register({ name, email, password, specialty }) {
+  return request('/auth/register', {
+    method: 'POST',
+    body: { name, email, password, specialty },
+    auth: false,
+    refresh: false,
+  });
+}
+
 /** POST /auth/refresh → `{ token, expires_in }` (el refresh no rota). */
 export function refresh(refreshToken) {
   return request('/auth/refresh', {
