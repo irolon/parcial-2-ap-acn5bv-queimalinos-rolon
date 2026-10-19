@@ -11,7 +11,7 @@ data class Invitation(
     val trainerName: String,
     val studentName: String,
     val studentEmail: String,
-    val goal: String,
+    val goal: String?,
     val expiresAt: Instant,
 )
 

@@ -13,7 +13,8 @@ data class InvitationDto(
     val trainer: InvitationTrainerDto,
     @SerialName("student_name") val studentName: String,
     @SerialName("student_email") val studentEmail: String,
-    val goal: String,
+    // Opcional desde la web: el backend manda null o no lo manda.
+    val goal: String? = null,
     @SerialName("expires_at") val expiresAt: String,
 )
 

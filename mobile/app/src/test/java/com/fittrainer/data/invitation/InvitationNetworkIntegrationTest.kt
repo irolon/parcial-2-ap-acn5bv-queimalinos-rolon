@@ -55,6 +55,21 @@ class InvitationNetworkIntegrationTest {
         assertNull(request.getHeader("Authorization"))
     }
 
+    @Test fun `GET invitations acepta una invitacion sin objetivo`() = runTest {
+        // Desde la web el objetivo es opcional: el backend manda null (o puede omitirlo).
+        for (goal in listOf("\"goal\":null,", "")) {
+            server.enqueue(
+                MockResponse().setBody(
+                    """{"trainer":{"id":"t1","name":"Laura"},"student_name":"Tomás","student_email":"t@test.com",
+                       $goal"expires_at":"2026-10-17T12:00:00+00:00"}""",
+                ),
+            )
+            val result = InvitationRepository(retrofit.create(InvitationApi::class.java)).get(TOKEN)
+
+            assertNull(result.getOrThrow().goal)
+        }
+    }
+
     @Test fun `POST students manda token y password y guarda la sesion`() = runTest {
         server.enqueue(
             MockResponse().setResponseCode(201).setBody(

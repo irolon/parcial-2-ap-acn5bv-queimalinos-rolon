@@ -19,8 +19,9 @@ fun invitationMessage(error: Throwable?): InvitationMessage = when ((error as? D
     else -> InvitationMessage("No se pudo completar el alta", true, false)
 }
 
-/** Etiquetas de los objetivos del backend (models/invitations GOALS). */
-fun goalLabel(goal: String): String = when (goal) {
+/** Etiquetas de los objetivos del backend (models/invitations GOALS). El objetivo es opcional. */
+fun goalLabel(goal: String?): String = when (goal) {
+    null -> "Sin definir"
     "tonify" -> "Tonificar"
     "weight_loss" -> "Bajar de peso"
     "hypertrophy" -> "Ganar masa muscular"
