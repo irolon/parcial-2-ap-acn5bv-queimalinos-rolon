@@ -3,6 +3,7 @@ import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
+import JoinPage from '@/pages/students/JoinPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
@@ -39,6 +40,7 @@ export const routes = [
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/registro', element: <RegisterPage /> },
+      { path: '/join', element: <JoinPage /> },
     ],
   },
   roleSection(ROLES.TRAINER, TRAINER_NAV, [
