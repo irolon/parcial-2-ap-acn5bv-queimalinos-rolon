@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
@@ -31,7 +32,13 @@ function roleSection(role, nav) {
 /** Árbol de rutas; lo usan `createBrowserRouter` (App) y `createMemoryRouter` (tests). */
 export const routes = [
   { path: '/', element: <RootRedirect /> },
-  { element: <GuestOnly />, children: [{ path: '/login', element: <LoginPage /> }] },
+  {
+    element: <GuestOnly />,
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/registro', element: <RegisterPage /> },
+    ],
+  },
   roleSection(ROLES.TRAINER, TRAINER_NAV),
   roleSection(ROLES.STUDENT, STUDENT_NAV),
   { path: '*', element: <NotFoundPage /> },

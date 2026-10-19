@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import BrandMark from '@/components/shared/ui/BrandMark';
 import Button from '@/components/shared/ui/Button';
@@ -84,6 +85,12 @@ export default function LoginPage() {
             </Button>
           </form>
         </Card>
+        <p className="mt-5 text-center font-body text-sm text-ink6">
+          ¿No tenés cuenta?{' '}
+          <Link to="/registro" className="text-accentText hover:underline">
+            Registrate
+          </Link>
+        </p>
       </div>
     </main>
   );
