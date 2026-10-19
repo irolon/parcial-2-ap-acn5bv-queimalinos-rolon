@@ -6,6 +6,17 @@ const ZAP_PATH =
 
 export const LOGO_SIZE = 44;
 
+/** Espera a que el logo esté decodificado, para que el QR ya lo tenga dibujado al exportarlo. */
+export async function whenLogoReady() {
+  const image = new Image();
+  image.src = brandLogoDataUrl();
+  try {
+    await image.decode?.();
+  } catch {
+    // Si no decodifica, se exporta igual con lo que haya.
+  }
+}
+
 /**
  * Logo de marca como SVG en data URI, para dibujarlo en el centro del QR:
  * cuadrado accent con borde bone de 4 px y el rayo, como el prototipo.

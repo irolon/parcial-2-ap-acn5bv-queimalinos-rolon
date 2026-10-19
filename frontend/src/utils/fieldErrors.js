@@ -17,7 +17,7 @@ const DEFAULT_MESSAGES = {
  */
 export function fieldErrorsFrom(error, { fields: known, fieldCodes = {}, messages = {}, fallback }) {
   const code = error?.code;
-  const byCode = fieldCodes[code];
+  const byCode = Object.hasOwn(fieldCodes, code) ? fieldCodes[code] : undefined;
   if (byCode) return { form: null, fields: { [byCode.field]: byCode.message } };
 
   const fields = {};
@@ -27,6 +27,8 @@ export function fieldErrorsFrom(error, { fields: known, fieldCodes = {}, message
     }
     if (Object.keys(fields).length > 0) return { form: null, fields };
   }
-  const form = messages[code] ?? DEFAULT_MESSAGES[code] ?? error?.message ?? fallback;
+  const form = (Object.hasOwn(messages, code) ? messages[code] : undefined) ??
+    (Object.hasOwn(DEFAULT_MESSAGES, code) ? DEFAULT_MESSAGES[code] : undefined) ??
+    error?.message ?? fallback;
   return { form, fields };
 }

@@ -5,13 +5,13 @@ import userEvent from '@testing-library/user-event';
 export const PAGE_PATH = '/pt/alumnos/nuevo';
 export const QR_PNG = 'data:image/png;base64,UVI=';
 
-/** Respuesta de `POST /invitations` que vence en 48 h (y un poco). */
+/** Respuesta de `POST /invitations` que vence en 48 h (menos un minuto). */
 export function invitationResponse(overrides = {}) {
   return {
     invitation_id: 'inv-1',
     token: '7a2k9x',
     join_url: 'http://localhost:5173/join?token=7a2k9x',
-    expires_at: new Date(Date.now() + 48 * 3600_000 + 60_000).toISOString(),
+    expires_at: new Date(Date.now() + 48 * 3600_000 - 60_000).toISOString(),
     whatsapp_share_url: 'https://wa.me/5491112345678?text=hola',
     ...overrides,
   };

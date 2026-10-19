@@ -5,11 +5,12 @@ const NOW = Date.parse('2026-10-18T12:00:00Z');
 const at = (hours) => new Date(NOW + hours * 3600_000).toISOString();
 
 describe('shareFormat', () => {
-  it('hoursLeft redondea hacia abajo con mínimo 1', () => {
+  it('hoursLeft redondea hacia arriba y es null si ya venció', () => {
     expect(hoursLeft(at(48), NOW)).toBe(48);
-    expect(hoursLeft(at(47.9), NOW)).toBe(47);
+    expect(hoursLeft(at(47.9), NOW)).toBe(48);
     expect(hoursLeft(at(0.2), NOW)).toBe(1);
-    expect(hoursLeft(at(-3), NOW)).toBe(1);
+    expect(hoursLeft(at(0), NOW)).toBeNull();
+    expect(hoursLeft(at(-3), NOW)).toBeNull();
     expect(hoursLeft('no es fecha', NOW)).toBeNull();
   });
 

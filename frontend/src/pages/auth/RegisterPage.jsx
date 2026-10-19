@@ -5,9 +5,9 @@ import BrandMark from '@/components/shared/ui/BrandMark';
 import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import Input from '@/components/shared/ui/Input';
+import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import { toRegisterErrors } from './registerErrors';
 
-const NO_ERRORS = { form: null, fields: {} };
 
 /**
  * Alta de entrenadores. Si sale bien queda con la sesión iniciada y el guard
@@ -16,13 +16,13 @@ const NO_ERRORS = { form: null, fields: {} };
 export default function RegisterPage() {
   const register = useAuthStore((s) => s.register);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState(NO_ERRORS);
+  const [errors, setErrors] = useState(NO_FIELD_ERRORS);
 
   async function handleSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const specialty = String(data.get('specialty')).trim();
-    setErrors(NO_ERRORS);
+    setErrors(NO_FIELD_ERRORS);
     setSubmitting(true);
     try {
       await register({

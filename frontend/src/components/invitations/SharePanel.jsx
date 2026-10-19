@@ -3,6 +3,7 @@ import { QrCode } from 'lucide-react';
 import EmptyState from '@/components/shared/states/EmptyState';
 import Button from '@/components/shared/ui/Button';
 import { downloadCanvasPng } from '@/utils/download';
+import { whenLogoReady } from './brandLogo';
 import InvitationQr from './InvitationQr';
 import ShareActions from './ShareActions';
 import StudentSteps from './StudentSteps';
@@ -28,12 +29,15 @@ function GeneratedQr({ invitation, studentName, onReset }) {
         {firstName(studentName)}, abrí con la cámara
       </p>
       <p className="relative mt-1 text-center font-mono text-[10px] tracking-[0.5px] text-ink6">
-        {hours ? `VÁLIDO ${hours}H` : 'VÁLIDO'}
+        {hours ? `VÁLIDO ${hours}H` : 'VENCIDA'}
       </p>
       <ShareActions
         joinUrl={invitation.join_url}
         whatsappUrl={invitation.whatsapp_share_url}
-        onDownload={() => downloadCanvasPng(canvasRef.current, qrFileName(studentName))}
+        onDownload={async () => {
+          await whenLogoReady();
+          downloadCanvasPng(canvasRef.current, qrFileName(studentName));
+        }}
       />
       <Button variant="dark" full onClick={onReset} className="relative mt-2">
         Generar otro

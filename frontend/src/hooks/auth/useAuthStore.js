@@ -36,13 +36,7 @@ export const useAuthStore = create(
       async login(credentials) {
         try {
           const data = await authApi.login(credentials);
-          set({
-            user: data.user,
-            token: data.token,
-            refreshToken: data.refresh_token,
-            status: 'authenticated',
-          });
-          return data.user;
+          return saveSession(set, data.user, data.token, data.refresh_token);
         } catch (err) {
           set({ ...EMPTY_SESSION, status: 'anonymous' });
           throw err;

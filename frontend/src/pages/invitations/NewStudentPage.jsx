@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createInvitation } from '@/api/invitations/invitations.api';
 import SharePanel from '@/components/invitations/SharePanel';
 import StudentForm from '@/components/invitations/StudentForm';
@@ -14,6 +14,15 @@ export default function NewStudentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [generated, setGenerated] = useState(null);
   const [formKey, setFormKey] = useState(0);
+  const formRef = useRef(null);
+  const focusForm = useRef(false);
+
+  // Tras "Generar otro" el formulario se remonta: el foco vuelve a su primer campo.
+  useEffect(() => {
+    if (!focusForm.current) return;
+    focusForm.current = false;
+    formRef.current?.querySelector('input[name="student_name"]')?.focus();
+  }, [formKey]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -38,11 +47,12 @@ export default function NewStudentPage() {
   function reset() {
     setGenerated(null);
     setErrors(NO_FIELD_ERRORS);
+    focusForm.current = true;
     setFormKey((key) => key + 1);
   }
 
   return (
-    <div className="mx-auto grid max-w-[960px] grid-cols-1 gap-7 lg:grid-cols-2">
+    <div ref={formRef} className="mx-auto grid max-w-[960px] grid-cols-1 gap-7 lg:grid-cols-2">
       <StudentForm
         key={formKey}
         errors={errors}

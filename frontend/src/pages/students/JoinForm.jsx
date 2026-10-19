@@ -46,7 +46,7 @@ export default function JoinForm({ invitation, token, onFatal }) {
     <Card padding={24}>
       <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
         <dl className="flex flex-col gap-3 rounded-md border border-ink2 bg-ink0 p-3.5">
-          <ReadOnly label="Tu entrenador" value={invitation.trainer?.name} />
+          <ReadOnly label="Tu entrenador" value={invitation.trainer?.name || '—'} />
           <ReadOnly label="Nombre" value={invitation.student_name} />
           <ReadOnly label="Email" value={invitation.student_email} />
         </dl>

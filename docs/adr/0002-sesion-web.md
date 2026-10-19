@@ -33,8 +33,10 @@ La decisión ya está implementada desde el esqueleto de la web (PR #19):
    access nuevo (`status`: `idle` → `loading` → `authenticated` | `anonymous`).
 4. **Renovación automática:** el cliente de API, ante un 401 `UNAUTHORIZED`,
    renueva la sesión una vez y reintenta la llamada. Varias llamadas que fallan
-   a la vez comparten la misma renovación. Las rutas de `/auth/*` no renuevan,
-   para no entrar en bucle.
+   a la vez comparten la misma renovación. Las llamadas que no deben
+   renovar (los endpoints de `/auth/*` y los públicos de invitación y alta de
+   alumno) se hacen con la opción por llamada `refresh: false`, para no entrar
+   en bucle.
 5. **Si la renovación falla** con un error real (refresh vencido o inválido), se
    hace logout y el router manda a `/login`.
 6. **Si el servidor no responde** (error de red), la sesión no se descarta: se

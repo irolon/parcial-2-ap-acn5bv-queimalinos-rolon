@@ -5,11 +5,11 @@ import BrandMark from '@/components/shared/ui/BrandMark';
 import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import Input from '@/components/shared/ui/Input';
+import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import { homeFor } from '@/routes/routeTable';
 import { toLoginErrors } from './loginErrors';
 
 const UNKNOWN_ROLE_MESSAGE = 'No pudimos iniciar sesión con esa cuenta';
-const NO_ERRORS = { form: null, fields: {} };
 
 /**
  * Login de entrenadores y alumnos. Si sale bien, el guard de `/login`
@@ -19,12 +19,12 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState(NO_ERRORS);
+  const [errors, setErrors] = useState(NO_FIELD_ERRORS);
 
   async function handleSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setErrors(NO_ERRORS);
+    setErrors(NO_FIELD_ERRORS);
     setSubmitting(true);
     try {
       const user = await login({

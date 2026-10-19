@@ -66,6 +66,17 @@ describe('NewStudentPage: compartir', () => {
     expect(page().getByRole('button', { name: 'Copiar link' })).toBeInTheDocument();
   });
 
+  it('si no se puede copiar, avisa "No se pudo copiar, copialo a mano" por 2 s', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+    await generate(user);
+    await user.click(page().getByRole('button', { name: 'Copiar link' }));
+    expect(page().getByText('No se pudo copiar, copialo a mano')).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2000));
+    expect(page().getByRole('button', { name: 'Copiar link' })).toBeInTheDocument();
+  });
+
   it('WhatsApp abre whatsapp_share_url en una pestaña nueva sin opener', async () => {
     const open = vi.fn();
     vi.stubGlobal('open', open);
@@ -95,6 +106,19 @@ describe('NewStudentPage: compartir', () => {
     expect(clicks).toEqual([{ href: QR_PNG, download: 'invitacion-tomas-rivera.png' }]);
   });
 
+  it('Descargar espera a que el logo esté listo antes de exportar el PNG', async () => {
+    let release;
+    HTMLImageElement.prototype.decode = () => new Promise((resolve) => { release = resolve; });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const user = userEvent.setup();
+    await generate(user);
+    await user.click(page().getByRole('button', { name: 'Descargar' }));
+    expect(HTMLCanvasElement.prototype.toDataURL).not.toHaveBeenCalled();
+    await act(async () => release());
+    expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
+    delete HTMLImageElement.prototype.decode;
+  });
+
   it('Generar otro limpia el formulario y vuelve al estado vacío', async () => {
     const user = userEvent.setup();
     await generate(user);
@@ -103,5 +127,6 @@ describe('NewStudentPage: compartir', () => {
     expect(page().getByLabelText('Nombre y apellido')).toHaveValue('');
     expect(page().getByLabelText('Email')).toHaveValue('');
     expect(page().getByLabelText('Teléfono')).toHaveValue('+54 ');
+    expect(page().getByLabelText('Nombre y apellido')).toHaveFocus();
   });
 });

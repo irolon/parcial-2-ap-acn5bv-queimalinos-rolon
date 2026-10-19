@@ -2,24 +2,26 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Download, Send } from 'lucide-react';
 import Button from '@/components/shared/ui/Button';
 
-const COPIED_MS = 2000;
+const FEEDBACK_MS = 2000;
+const COPY_FAILED = 'No se pudo copiar, copialo a mano';
 
 /** Link real con "Copiar link", y los botones WhatsApp y Descargar. */
 export default function ShareActions({ joinUrl, whatsappUrl, onDownload }) {
-  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState(null); // null | 'ok' | 'error'
   const timer = useRef(null);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
   async function copyLink() {
+    let result = 'ok';
     try {
       await navigator.clipboard.writeText(joinUrl);
     } catch {
-      return;
+      result = 'error';
     }
-    setCopied(true);
+    setFeedback(result);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), COPIED_MS);
+    timer.current = setTimeout(() => setFeedback(null), FEEDBACK_MS);
   }
 
   // Pestaña nueva sin acceso a esta ventana (equivale a rel="noopener noreferrer").
@@ -38,8 +40,10 @@ export default function ShareActions({ joinUrl, whatsappUrl, onDownload }) {
           {joinUrl}
         </span>
         <Button variant="ghost" size="sm" onClick={copyLink}>
-          {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-          <span aria-live="polite">{copied ? '¡Copiado!' : 'Copiar link'}</span>
+          {feedback === 'ok' ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+          <span aria-live="polite">
+            {feedback === 'ok' ? '¡Copiado!' : feedback === 'error' ? COPY_FAILED : 'Copiar link'}
+          </span>
         </Button>
       </div>
       <div className="flex gap-2">

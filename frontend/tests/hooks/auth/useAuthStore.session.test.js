@@ -33,6 +33,7 @@ describe('useAuthStore: register', () => {
     await expect(state().register({ email: 'pt@fit.com' })).rejects.toMatchObject({ code: 'EMAIL_ALREADY_EXISTS' });
     expect(state()).toMatchObject({ user: null, token: null, refreshToken: null });
     expect(state().status).not.toBe('authenticated');
+    expect(localStorage.getItem('fittrainer.session')).toBeNull();
   });
 });
 
@@ -57,5 +58,6 @@ describe('useAuthStore: joinFromInvitation', () => {
     });
     expect(state()).toMatchObject({ user: null, token: null, refreshToken: null });
     expect(state().status).not.toBe('authenticated');
+    expect(localStorage.getItem('fittrainer.session')).toBeNull();
   });
 });
