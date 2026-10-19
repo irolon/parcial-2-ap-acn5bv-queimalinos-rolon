@@ -20,7 +20,7 @@ Cómo levantar el backend de FitTrainer en tu máquina y conectarle la web y el 
 
 | Herramienta | Versión | Verificar con |
 |---|---|---|
-| Node.js | 22 LTS (mínimo 20.19) | `node -v` |
+| Node.js | 22 LTS (el backend pide 20 o más; la web, 20.19 o más) | `node -v` |
 | npm | el que trae Node | `npm -v` |
 | Git | 2.x | `git --version` |
 
@@ -204,7 +204,7 @@ El alumno ya puede entrar con `POST /api/auth/login`.
 
 ## 8. Conectar la web (`frontend/`)
 
-El dashboard web (React + Vite) vive en `frontend/`. La web está en la PR #19; hasta que se mergee, usá la rama `feature/web-skeleton`.
+El dashboard web (React + Vite) vive en `frontend/`.
 
 ```bash
 cd frontend
@@ -283,7 +283,7 @@ Antes de abrir una PR: `npm test` y `npm run lint` en verde, y probar a mano lo 
 > netstat -ano | findstr :3001   # Windows
 > lsof -i :3001                  # Mac/Linux
 > ```
-> Cerrá el proceso, o cambiá `PORT` en `backend/.env`. Si lo cambiás, ajustá también `VITE_API_URL` y `API_BASE_URL`.
+> Cerrá el proceso, o cambiá `PORT` en `backend/.env`. Si lo cambiás, ajustá también `VITE_API_URL` (web), `API_BASE_URL` (mobile) y el puerto de `adb reverse tcp:<puerto> tcp:<puerto>` si usás un celular físico. `FRONTEND_URL` no cambia: es el origen de la web, no el de la API.
 
 > [!note]- ❌ `/health/db` responde 503
 > Las claves de Supabase están mal, o el proyecto está pausado (el plan gratis pausa por inactividad). Revisá `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`: la `service_role`, no la `anon`.
@@ -298,7 +298,7 @@ Antes de abrir una PR: `npm test` y `npm run lint` en verde, y probar a mano lo 
 > Con HTTP no funciona: la app corta cualquier host que no sea `10.0.2.2` o `localhost`. Conectá el celular por USB y corré `adb reverse tcp:3001 tcp:3001`.
 
 > [!note]- ❌ `npm install` o el server fallan por la versión de Node
-> Usá Node 22 (`nvm use`). El mínimo es 20.19.
+> Usá Node 22 (`nvm use`). El backend funciona desde Node 20, pero la web (Vite 8) necesita 20.19 o más.
 
 ---
 
