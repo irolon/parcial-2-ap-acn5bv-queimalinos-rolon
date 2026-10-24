@@ -123,9 +123,9 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 |--------|------|-----|-------------|
 | GET | `/api/exercises` | trainer | Biblioteca: globales + propios (`muscle_group`, `equipment`, `search`, `include_global`) |
 | GET | `/api/exercises/library` | student | Biblioteca del alumno: globales + los de su entrenador, ordenada por nombre. Solo `id, name, muscle_group, equipment, description, video_url`. Sin filtros (mobile filtra offline) |
-| POST | `/api/exercises` | trainer | Crea ejercicio propio |
-| PATCH | `/api/exercises/:id` | trainer | Edita (solo el dueño) |
-| DELETE | `/api/exercises/:id` | trainer | Elimina (solo el dueño) |
+| POST | `/api/exercises` | trainer | Crea ejercicio propio (valida equipamiento, URL de video y descripción) |
+| PATCH | `/api/exercises/:id` | trainer | Edita (solo el dueño; valida equipamiento, URL de video y descripción) |
+| DELETE | `/api/exercises/:id` | trainer | Elimina (solo el dueño); 409 `EXERCISE_IN_USE` si está en uso |
 
 ### Rutinas — Fase 2
 | Método | Ruta | Rol | Descripción |

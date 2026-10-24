@@ -200,11 +200,43 @@ Agrega medición corporal.
 
 ### GET /exercises
 
-Biblioteca disponible. Query: `muscle_group`, `equipment`, `search`, `include_global`.
+Biblioteca disponible (solo trainer). Query: `muscle_group`, `equipment`, `search`, `include_global`.
+
+**200 OK** — `{ data: [...] }`, ordenada por nombre. Cada ejercicio: `id`, `trainer_id` (null en los globales), `name`, `muscle_group`, `equipment`, `description`, `video_url`, `is_global`.
 
 ### POST /exercises
 
-Crea ejercicio personalizado (solo trainer).
+Crea ejercicio personalizado (solo trainer). Body:
+
+- `name` (obligatorio): entre 2 y 120 caracteres.
+- `muscle_group` (obligatorio): `chest` | `back` | `shoulders` | `legs` | `glutes` | `biceps` | `triceps` | `core` | `calves` | `full_body` | `cardio`.
+- `equipment` (opcional): `barbell` | `dumbbell` | `machine` | `cable` | `bodyweight` | `kettlebell` | `band`.
+- `description` (opcional): hasta 1000 caracteres.
+- `video_url` (opcional): link `http://` o `https://` de hasta 500 caracteres.
+
+Los tres opcionales aceptan `null` o texto vacío (quedan en `null`).
+
+**201 Created** — el ejercicio creado.
+
+### PATCH /exercises/:id
+
+Edita un ejercicio propio (solo el dueño). Mismos campos y reglas que el POST, todos opcionales, con al menos uno. Enviar `null` en `equipment`, `description` o `video_url` borra el valor. Los globales no se pueden editar.
+
+**200 OK** — el ejercicio actualizado. **403** si no es del trainer o es global; **404** si no existe.
+
+### DELETE /exercises/:id
+
+Elimina un ejercicio propio. **204 No Content**. **403** si no es del trainer o es global; **404** si no existe; **409 `EXERCISE_IN_USE`** si está en una rutina o en el historial de un alumno ("No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno").
+
+### Errores de validación (POST y PATCH)
+
+400 `VALIDATION_ERROR` con `details[{ field, message }]`:
+
+- `name`: "El nombre debe tener entre 2 y 120 caracteres".
+- `muscle_group` y `equipment`: "Debe ser uno de: ...".
+- `video_url`: "El video debe ser un link que empiece con http:// o https:// (máximo 500 caracteres)".
+- `description`: "La descripción puede tener hasta 1000 caracteres".
+- Un campo que no es texto (ni `null`): "<campo> debe ser texto".
 
 ---
 

@@ -54,7 +54,7 @@ El entrenador explora la biblioteca (50 globales + los suyos), la filtra al inst
 - `equipment`: uno de `EQUIPMENT` o `null` (POST y PATCH); si no, 400 con `field: 'equipment'`.
 - `video_url`: URL válida que empieza con `http://` o `https://`, hasta 500 caracteres; si no, 400 con `field: 'video_url'`.
 - `description`: hasta 1000 caracteres; si no, 400 con `field: 'description'`.
-- `DELETE /exercises/:id` de un ejercicio referenciado (`23503`, clave foránea): **409 `CONFLICT`** "No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno". Hoy es un 500.
+- `DELETE /exercises/:id` de un ejercicio referenciado (`23503`, clave foránea): **409 `EXERCISE_IN_USE`** "No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno". Hoy es un 500.
 - La base de dev no tiene datos que violen las reglas nuevas (50 globales con equipamiento de la lista, URLs https, descripción máx. 143).
 - `/exercises/library` (mobile) no cambia.
 
@@ -62,7 +62,7 @@ El entrenador explora la biblioteca (50 globales + los suyos), la filtra al inst
 - `roleSection` hoy mapea todos los ítems del nav a `PlaceholderPage`. Se cambia para que un ítem pueda tener su página real (mapa `path → elemento`), sin duplicar la ruta, y `/pt/biblioteca` usa la página nueva.
 
 ## 3. Estructura (orientativa)
-- Backend: `validations/exercises/exercises.validation.js`, `services/exercises/exercises.service.js` (409), `shared/utils/errors.js` (`conflict` si no existe), tests espejados.
+- Backend: `validations/exercises/exercises.validation.js`, `services/exercises/exercises.service.js` (409), `shared/utils/errors.js` (`exerciseInUse`), tests espejados.
 - Web:
   - `api/exercises/exercises.api.js` (`list`, `create`, `update`, `remove`).
   - `hooks/exercises/` (consulta, mutaciones, filtrado).
