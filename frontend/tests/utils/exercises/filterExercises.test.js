@@ -4,7 +4,7 @@ import {
   effectiveMuscle,
   filterExercises,
   muscleGroupsIn,
-} from '@/hooks/exercises/filterExercises';
+} from '@/utils/exercises/filterExercises';
 import { LIBRARY, exercise } from '../../helpers/exercises/fixtures';
 
 const names = (list) => list.map((e) => e.name);

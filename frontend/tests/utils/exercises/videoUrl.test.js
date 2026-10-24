@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeVideoUrl, thumbnailUrl, youTubeId } from '@/components/exercises/videoUrl';
+import { isSafeVideoUrl, thumbnailUrl, youTubeId } from '@/utils/exercises/videoUrl';
 
 const ID = 'uEtiwYaT3d0';
 

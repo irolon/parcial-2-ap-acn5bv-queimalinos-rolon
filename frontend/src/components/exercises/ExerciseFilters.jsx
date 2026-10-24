@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 import Select from '@/components/shared/ui/Select';
-import { ALL } from '@/hooks/exercises/filterExercises';
-import { EQUIPMENT_OPTIONS, muscleLabel } from './exerciseOptions';
+import { ALL } from '@/utils/exercises/filterExercises';
+import { EQUIPMENT_OPTIONS, muscleLabel } from '@/utils/exercises/exerciseOptions';
 
 const EQUIPMENT_FILTER_OPTIONS = [{ value: '', label: 'Todo el equipamiento' }, ...EQUIPMENT_OPTIONS.slice(1)];
 const ORIGINS = [

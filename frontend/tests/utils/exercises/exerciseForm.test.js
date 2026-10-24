@@ -4,7 +4,7 @@ import {
   formDefaults,
   toExerciseErrors,
   validateExerciseBody,
-} from '@/components/exercises/exerciseForm';
+} from '@/utils/exercises/exerciseForm';
 
 const form = (values) => {
   const data = new FormData();

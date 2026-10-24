@@ -1,16 +1,27 @@
-import { useState } from 'react';
-import Button from '@/components/shared/ui/Button';
-import Dialog from '@/components/shared/ui/Dialog';
-import Input from '@/components/shared/ui/Input';
-import Select from '@/components/shared/ui/Select';
-import Textarea from '@/components/shared/ui/Textarea';
-import { useCreateExercise, useUpdateExercise } from '@/hooks/exercises/useExercises';
-import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
-import { EQUIPMENT_OPTIONS, MUSCLE_OPTIONS } from '../exerciseOptions';
-import { buildExerciseBody, formDefaults, toExerciseErrors, validateExerciseBody } from '../exerciseForm';
+import { useState } from "react";
+import Button from "@/components/shared/ui/Button";
+import Dialog from "@/components/shared/ui/Dialog";
+import Input from "@/components/shared/ui/Input";
+import Select from "@/components/shared/ui/Select";
+import Textarea from "@/components/shared/ui/Textarea";
+import {
+  useCreateExercise,
+  useUpdateExercise,
+} from "@/hooks/exercises/useExercises";
+import { NO_FIELD_ERRORS } from "@/utils/fieldErrors";
+import {
+  EQUIPMENT_OPTIONS,
+  MUSCLE_OPTIONS,
+} from "@/utils/exercises/exerciseOptions";
+import {
+  buildExerciseBody,
+  formDefaults,
+  toExerciseErrors,
+  validateExerciseBody,
+} from "@/utils/exercises/exerciseForm";
 
-const FORM_ID = 'exercise-form';
-const MUSCLE_PLACEHOLDER = { value: '', label: 'Elegí un grupo' };
+const FORM_ID = "exercise-form";
+const MUSCLE_PLACEHOLDER = { value: "", label: "Elegí un grupo" };
 
 /**
  * Modal para crear (`exercise` ausente) o editar un ejercicio propio. Formulario no controlado:
@@ -36,7 +47,9 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
     }
     setErrors(NO_FIELD_ERRORS);
     try {
-      await (editing ? update.mutateAsync({ id: exercise.id, body }) : create.mutateAsync(body));
+      await (editing
+        ? update.mutateAsync({ id: exercise.id, body })
+        : create.mutateAsync(body));
       onClose();
     } catch (error) {
       setErrors(toExerciseErrors(error));
@@ -47,7 +60,7 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
     <Dialog
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title={editing ? 'Editar ejercicio' : 'Nuevo ejercicio'}
+      title={editing ? "Editar ejercicio" : "Nuevo ejercicio"}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={saving}>
@@ -59,7 +72,12 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
         </>
       }
     >
-      <form id={FORM_ID} noValidate onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+      <form
+        id={FORM_ID}
+        noValidate
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-3.5"
+      >
         {errors.form && (
           <p
             role="alert"
@@ -68,11 +86,19 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
             {errors.form}
           </p>
         )}
-        <Input label="Nombre" name="name" autoComplete="off" defaultValue={defaults.name} error={fields.name} />
+        <Input
+          label="Nombre"
+          name="name"
+          autoComplete="off"
+          defaultValue={defaults.name}
+          error={fields.name}
+        />
         <Select
           label="Grupo muscular"
           name="muscle_group"
-          options={editing ? MUSCLE_OPTIONS : [MUSCLE_PLACEHOLDER, ...MUSCLE_OPTIONS]}
+          options={
+            editing ? MUSCLE_OPTIONS : [MUSCLE_PLACEHOLDER, ...MUSCLE_OPTIONS]
+          }
           defaultValue={defaults.muscle_group}
           error={fields.muscle_group}
         />

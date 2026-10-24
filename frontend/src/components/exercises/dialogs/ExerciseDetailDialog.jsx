@@ -3,8 +3,8 @@ import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Pill from '@/components/shared/ui/Pill';
 import ExerciseThumb from '../ExerciseThumb';
-import { equipmentLabel, muscleLabel } from '../exerciseOptions';
-import { isSafeVideoUrl } from '../videoUrl';
+import { equipmentLabel, muscleLabel } from '@/utils/exercises/exerciseOptions';
+import { isSafeVideoUrl } from '@/utils/exercises/videoUrl';
 
 const LABEL = 'font-mono text-[11px] uppercase tracking-[1px] text-ink6';
 

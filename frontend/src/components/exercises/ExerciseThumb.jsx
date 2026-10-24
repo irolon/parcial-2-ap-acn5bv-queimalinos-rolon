@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Video } from 'lucide-react';
-import { thumbnailUrl } from './videoUrl';
+import { thumbnailUrl } from '@/utils/exercises/videoUrl';
 
 const STRIPES =
   'repeating-linear-gradient(135deg, var(--color-ink2) 0 8px, var(--color-ink3) 8px 16px)';

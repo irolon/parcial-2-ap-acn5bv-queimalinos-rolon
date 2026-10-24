@@ -18,7 +18,7 @@ El entrenador explora la biblioteca (50 globales + los suyos), la filtra al inst
 
 ### Datos y filtrado
 - Una sola consulta con React Query: `GET /exercises` (sin query params) trae globales + propios; todo el filtrado es en el cliente, sin requests por tecla.
-- La consulta y la función de filtrado viven en `hooks/exercises/` y no dependen de la página, para que la tarjeta 9 (editor de rutinas) arme su panel lateral sobre lo mismo. El panel no se construye acá.
+- La consulta vive en `hooks/exercises/` y la función de filtrado en `utils/exercises/`; ninguna depende de la página, para que la tarjeta 9 (editor de rutinas) arme su panel lateral sobre lo mismo. El panel no se construye acá.
 - Filtros combinables:
   - **Grupo muscular:** chips de selección única, "Todos" + solo los grupos que tienen al menos un ejercicio, en el orden de `MUSCLE_GROUPS`. Si el grupo elegido deja de tener ejercicios, vuelve a "Todos" (igual que mobile).
   - **Equipamiento:** `<Select>` con "Todo el equipamiento" + los 7 valores.
@@ -65,8 +65,9 @@ El entrenador explora la biblioteca (50 globales + los suyos), la filtra al inst
 - Backend: `validations/exercises/exercises.validation.js`, `services/exercises/exercises.service.js` (409), `shared/utils/errors.js` (`exerciseInUse`), tests espejados.
 - Web:
   - `api/exercises/exercises.api.js` (`list`, `create`, `update`, `remove`).
-  - `hooks/exercises/` (consulta, mutaciones, filtrado).
-  - `components/exercises/` (opciones y etiquetas, filtros, tarjeta, grilla, detalle, formulario, confirmación de borrado, miniatura).
+  - `hooks/exercises/` (consulta y mutaciones).
+  - `utils/exercises/` (funciones puras: opciones y etiquetas, formulario, URL de video, filtrado).
+  - `components/exercises/` (filtros, tarjeta, grilla, detalle, formulario, confirmación de borrado, miniatura).
   - `pages/exercises/ExerciseLibraryPage.jsx`.
   - `components/shared/ui/Dialog.jsx`, `Textarea.jsx`.
   - `routes/` (router).

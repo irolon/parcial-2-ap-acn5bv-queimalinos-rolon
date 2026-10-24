@@ -13,7 +13,7 @@ import {
   INITIAL_FILTERS,
   filterExercises,
   muscleGroupsIn,
-} from '@/hooks/exercises/filterExercises';
+} from '@/utils/exercises/filterExercises';
 import { useExercisesQuery } from '@/hooks/exercises/useExercises';
 
 /** Biblioteca de ejercicios del entrenador: globales + propios, con filtros en el cliente. */

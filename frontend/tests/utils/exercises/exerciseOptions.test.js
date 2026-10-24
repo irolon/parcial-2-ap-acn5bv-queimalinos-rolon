@@ -6,7 +6,7 @@ import {
   MUSCLE_OPTIONS,
   equipmentLabel,
   muscleLabel,
-} from '@/components/exercises/exerciseOptions';
+} from '@/utils/exercises/exerciseOptions';
 
 describe('exerciseOptions', () => {
   it('muscleLabel traduce o devuelve el código', () => {

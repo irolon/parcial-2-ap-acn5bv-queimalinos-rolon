@@ -1,7 +1,7 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import Pill from '@/components/shared/ui/Pill';
 import ExerciseThumb from './ExerciseThumb';
-import { equipmentLabel, muscleLabel } from './exerciseOptions';
+import { equipmentLabel, muscleLabel } from '@/utils/exercises/exerciseOptions';
 
 const ACTION =
   'cursor-pointer rounded-md p-1.5 text-ink6 hover:bg-white/[0.06] hover:text-bone0 focus-visible:outline-2 focus-visible:outline-accentText';

@@ -1,4 +1,4 @@
-import { MUSCLE_GROUPS } from '@/components/exercises/exerciseOptions';
+import { MUSCLE_GROUPS } from './exerciseOptions';
 
 export const ALL = 'all';
 
