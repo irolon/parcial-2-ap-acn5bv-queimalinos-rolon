@@ -60,6 +60,7 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
   return (
     <Dialog
       open={open}
+      dismissible={!saving}
       onOpenChange={(next) => !next && onClose()}
       title={editing ? 'Editar ejercicio' : 'Nuevo ejercicio'}
       footer={

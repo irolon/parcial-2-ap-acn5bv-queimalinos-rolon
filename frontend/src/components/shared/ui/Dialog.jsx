@@ -1,11 +1,14 @@
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 
-/** Modal accesible (Radix). Sin `description` no se asocia ningún aria-describedby. */
-export default function Dialog({ open, onOpenChange, title, description, children, footer }) {
+/**
+ * Modal accesible (Radix). Sin `description` no se asocia ningún aria-describedby.
+ * Con `dismissible={false}` no se cierra (Esc, overlay ni X) y la X se ve deshabilitada.
+ */
+export default function Dialog({ open, onOpenChange, title, description, children, footer, dismissible = true }) {
   const contentProps = description ? {} : { 'aria-describedby': undefined };
   return (
-    <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
+    <RadixDialog.Root open={open} onOpenChange={(next) => (dismissible || next) && onOpenChange(next)}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
         <RadixDialog.Content
@@ -25,7 +28,8 @@ export default function Dialog({ open, onOpenChange, title, description, childre
             </div>
             <RadixDialog.Close
               aria-label="Cerrar"
-              className="shrink-0 cursor-pointer rounded-md p-1 text-ink6 hover:text-bone0 focus-visible:outline-2 focus-visible:outline-accentText"
+              disabled={!dismissible}
+              className="shrink-0 cursor-pointer rounded-md p-1 text-ink6 hover:text-bone0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-ink6 focus-visible:outline-2 focus-visible:outline-accentText"
             >
               <X size={18} aria-hidden="true" />
             </RadixDialog.Close>

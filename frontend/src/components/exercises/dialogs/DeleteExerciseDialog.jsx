@@ -22,6 +22,7 @@ export default function DeleteExerciseDialog({ exercise, onClose }) {
   return (
     <Dialog
       open
+      dismissible={!remove.isPending}
       onOpenChange={(next) => !next && onClose()}
       title={`¿Borrar «${exercise.name}»?`}
       footer={
