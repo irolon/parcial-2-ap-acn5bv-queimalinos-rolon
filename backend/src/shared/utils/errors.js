@@ -26,6 +26,7 @@ export const Errors = {
   notFound: (message = 'Recurso no encontrado') => new AppError(404, 'NOT_FOUND', message),
   routineExerciseNotFound: () =>
     new AppError(404, 'ROUTINE_EXERCISE_NOT_FOUND', 'El ejercicio no es parte de esta rutina'),
+  templateNotFound: () => new AppError(404, 'TEMPLATE_NOT_FOUND', 'Plantilla no encontrada'),
   emailExists: () =>
     new AppError(409, 'EMAIL_ALREADY_EXISTS', 'Ya existe una cuenta con ese email'),
   studentEmailExists: () =>
