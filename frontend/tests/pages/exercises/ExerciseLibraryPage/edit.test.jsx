@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../helpers/auth/authStore';
-import { LIBRARY } from '../../helpers/exercises/fixtures';
-import { PAGE_PATH, page, stubLibrary } from '../../helpers/exercises/library';
-import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
-import { bodyOf, calls, jsonResponse } from '../../helpers/shared/fetchMock';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { LIBRARY } from '../../../helpers/exercises/fixtures';
+import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { bodyOf, calls, jsonResponse } from '../../../helpers/shared/fetchMock';
 
 const field = (label) => within(screen.getByRole('dialog')).getByLabelText(label);
 

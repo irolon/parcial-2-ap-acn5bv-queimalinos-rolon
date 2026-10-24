@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../helpers/auth/authStore';
-import { LIBRARY, exercise } from '../../helpers/exercises/fixtures';
-import { PAGE_PATH, page, stubLibrary } from '../../helpers/exercises/library';
-import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
-import { calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { LIBRARY, exercise } from '../../../helpers/exercises/fixtures';
+import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 beforeEach(() => {
   resetAuthStore();

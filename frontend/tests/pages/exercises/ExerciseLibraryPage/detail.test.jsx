@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../helpers/auth/authStore';
-import { LIBRARY, exercise } from '../../helpers/exercises/fixtures';
-import { PAGE_PATH, page, stubLibrary } from '../../helpers/exercises/library';
-import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
-import { calls, errorResponse, jsonResponse } from '../../helpers/shared/fetchMock';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { LIBRARY, exercise } from '../../../helpers/exercises/fixtures';
+import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 
 const IN_USE = 'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno';
 const gets = (fetchMock) => calls(fetchMock).filter(([, init]) => (init?.method ?? 'GET') === 'GET');
