@@ -4,8 +4,8 @@ import EmptyState from './EmptyState';
 
 const isEmpty = (data) => data == null || (Array.isArray(data) && data.length === 0);
 
-export default function QueryState({ query, empty = {}, errorMessage, children }) {
-  if (query.isPending) return <LoadingState />;
+export default function QueryState({ query, empty = {}, errorMessage, loading, children }) {
+  if (query.isPending) return loading ?? <LoadingState />;
   if (query.isError) {
     return <ErrorState message={errorMessage ?? query.error?.message} onRetry={() => query.refetch()} />;
   }

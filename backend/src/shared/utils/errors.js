@@ -49,6 +49,12 @@ export const Errors = {
   metricNotFound: () => new AppError(404, 'METRIC_NOT_FOUND', 'La medida no existe'),
   metricIdConflict: () =>
     new AppError(409, 'METRIC_ID_CONFLICT', 'Ya existe una medida con ese id'),
+  exerciseInUse: () =>
+    new AppError(
+      409,
+      'EXERCISE_IN_USE',
+      'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno'
+    ),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };

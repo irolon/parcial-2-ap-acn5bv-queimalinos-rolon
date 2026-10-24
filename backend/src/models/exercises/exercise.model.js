@@ -21,7 +21,7 @@ export const MUSCLE_GROUPS = [
   'cardio',
 ];
 
-/** Códigos de equipamiento de la biblioteca global (los usa la IA para sustituciones; la API todavía no los exige). */
+/** Códigos de equipamiento de la biblioteca global (los usa la IA para sustituciones; la API los valida en POST/PATCH). */
 export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'band'];
 
 /** Columnas que se exponen de un ejercicio. */

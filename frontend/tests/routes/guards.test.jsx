@@ -45,10 +45,10 @@ describe('guard de rutas privadas', () => {
 
   it('con su rol deja pasar y muestra la página', async () => {
     setSession(TRAINER);
-    const { pathname } = renderRoute('/pt/biblioteca');
-    expect(await heading('Biblioteca')).toBeInTheDocument();
+    const { pathname } = renderRoute('/pt/agenda');
+    expect(await heading('Agenda')).toBeInTheDocument();
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/biblioteca');
+    expect(pathname()).toBe('/pt/agenda');
   });
 
   it.each(['loading', 'idle'])('con status %s muestra el skeleton', async (status) => {
