@@ -216,7 +216,17 @@ Rutinas del trainer. Query: `student_id`, `active`.
 
 ### POST /routines
 
-Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goal`, `days`, `exercises[]`.
+Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goal`, `days`, `exercises[]`. Cada ejercicio cumple los límites de abajo. Si falla la inserción de los ejercicios, la rutina no queda creada.
+
+**Límites de un ejercicio** (rutina y plantilla): `exercise_id` uuid (global o del trainer, si no 403); `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional.
+
+### PATCH /routines/:id/exercises/:routineExerciseId
+
+Personaliza un ejercicio de una rutina asignada (trainer dueño). Body: `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` (al menos uno; `null` borra los opcionales). **200 OK** devuelve la rutina completa (forma de `GET /routines/:id`). Un `routineExerciseId` que no es de esa rutina → 404 `ROUTINE_EXERCISE_NOT_FOUND`.
+
+### DELETE /routines/:id/exercises/:routineExerciseId
+
+Quita un ejercicio de la rutina. **204**. Se permite borrar el último (la rutina queda vacía). Mismo 404 que el PATCH.
 
 ### GET /routines/today
 
@@ -228,13 +238,28 @@ Rutina activa del alumno para hoy. Solo alumnos.
 
 ## Módulo: Plantillas de rutinas
 
+Solo trainer (`Authorization: Bearer <token>`). Una plantilla replica una rutina; instanciarla **copia** su contenido (ver ADR 0003). Una plantilla inexistente o de otro trainer → **404 `TEMPLATE_NOT_FOUND`**.
+
+**Forma de `structure`:**
+
+```json
+{
+  "version": 1,
+  "days": ["monday", "thursday"],
+  "exercises": [
+    { "exercise_id": "uuid", "sets": 4, "reps": 8, "rest_seconds": 90,
+      "suggested_kg": 60, "tempo": "3-1-1", "notes": "...", "order": 0 }
+  ]
+}
+```
+
+`days`: al menos 1, valores de `monday..sunday`, sin repetidos. `exercises`: de 1 a 50, con los límites de un ejercicio (ver `POST /routines`). `frequency_per_week` se deriva de `days.length` y no se acepta en el body; `generated_by_ai` es siempre `false` desde estos endpoints.
+
 ### GET /routine-templates
 
-Lista plantillas del trainer (manuales y generadas por IA).
+Lista las plantillas del trainer, más nuevas primero (manuales y generadas por IA). Sin `structure`; suma `days` y `exercise_count`.
 
-**Headers:** `Authorization: Bearer <token>` (rol: trainer)
-
-**Query:** `goal`, `level`, `generated_by_ai`
+**Query:** `goal`, `level`, `generated_by_ai` (`true|false`)
 
 **200 OK**
 
@@ -248,21 +273,43 @@ Lista plantillas del trainer (manuales y generadas por IA).
       "level": "intermediate",
       "frequency_per_week": 4,
       "generated_by_ai": true,
-      "created_at": "2026-04-08T10:00:00Z"
+      "created_at": "2026-04-08T10:00:00Z",
+      "days": ["monday", "tuesday", "thursday", "friday"],
+      "exercise_count": 6
     }
   ]
 }
 ```
 
+### GET /routine-templates/:id
+
+Plantilla con `structure`; cada ejercicio suma `exercise: { id, name, muscle_group, equipment, video_url }`.
+
 ### POST /routine-templates
 
-Guarda una rutina como plantilla reutilizable.
+Crea una plantilla. **Body:** `{ "name": "2-120", "goal": "tonify|weight_loss|hypertrophy|strength", "level": "beginner|intermediate|advanced|null (opcional)", "structure": {...} }`. Cada `exercise_id` debe ser global o del trainer (si no, 403). **201** → `{ data }`.
+
+### POST /routine-templates/from-routine
+
+Guarda una rutina propia como plantilla (copia `goal`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "level": "opcional" }`. Rutina inexistente → 404; ajena → 403. **201** → `{ data }`.
+
+### PATCH /routine-templates/:id
+
+Edita `name`, `goal`, `level` y/o `structure` (al menos uno). `structure` se reemplaza entera y recalcula `frequency_per_week`. No afecta las rutinas ya asignadas.
+
+### DELETE /routine-templates/:id
+
+**204.** Las rutinas que salieron de la plantilla quedan con `template_id = null`.
 
 ### POST /routine-templates/:id/instantiate
 
-Crea una rutina concreta a partir de una plantilla, asignándola a un alumno.
+Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda como origen; la rutina nueva convive con las otras activas del alumno).
 
-**Body:** `{ "student_id": "uuid", "customizations": {...} }`
+**Body:** `{ "student_id": "uuid", "name": "2-120 (opcional)", "days": ["monday", "..."] (opcional, >= 1, sin repetidos) }`. Por defecto usa `name` y `days` de la plantilla.
+
+**201 Created** → `{ data }` con la rutina en la forma de `GET /routines/:id`.
+
+**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible, con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
 
 ---
 
@@ -538,7 +585,8 @@ Marca como leída. **204 No Content**
 ---
 
 > **Nota:** Esta es la versión 1.1 del contrato (Abril 2026). Cambios respecto a v1.0:
-> - Añadidos endpoints de plantillas de rutinas (`/routine-templates`).
+> - Añadidos endpoints de plantillas de rutinas (`/routine-templates`: CRUD, `from-routine` e `instantiate` como copia, sin `customizations`).
+> - Añadidos `PATCH` y `DELETE /routines/:id/exercises/:routineExerciseId`.
 > - Añadido módulo completo de Asistente IA del entrenador (`/trainer-ai/*`).
 > - Añadido módulo completo de Gamificación (`/students/:id/achievements`, `/streak`, `/challenges`).
 > - Modificado `POST /invitations` para soportar canal `whatsapp | qr | both`.

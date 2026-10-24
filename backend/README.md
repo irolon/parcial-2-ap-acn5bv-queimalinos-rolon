@@ -135,8 +135,23 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | GET | `/api/routines/:id` | trainer | Detalle de la rutina con sus ejercicios |
 | PATCH | `/api/routines/:id` | trainer | Edita / desactiva una rutina |
 | POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina |
+| PATCH | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Edita un ejercicio de la rutina (`sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes`; al menos uno). Devuelve la rutina completa |
+| DELETE | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Quita un ejercicio de la rutina. 204 |
 | GET | `/api/routines/today` | student | Rutina activa del alumno para hoy |
 | GET | `/api/routines/mine` | student | Rutinas activas del alumno con sus ejercicios (caché offline de mobile) |
+
+### Plantillas de rutina — Fase 2
+| Método | Ruta | Rol | Descripción |
+|--------|------|-----|-------------|
+| GET | `/api/routine-templates` | trainer | Lista las plantillas propias (`goal`, `level`, `generated_by_ai`), sin `structure`, con `days` y `exercise_count` |
+| GET | `/api/routine-templates/:id` | trainer | Plantilla con `structure` y los datos de cada ejercicio |
+| POST | `/api/routine-templates` | trainer | Crea una plantilla (`name`, `goal`, `level?`, `structure`). 201 |
+| POST | `/api/routine-templates/from-routine` | trainer | Guarda una rutina propia como plantilla (`routine_id`, `name?`, `level?`). 201 |
+| PATCH | `/api/routine-templates/:id` | trainer | Edita `name`, `goal`, `level` o `structure` (al menos uno) |
+| DELETE | `/api/routine-templates/:id` | trainer | Borra la plantilla; sus rutinas quedan con `template_id = null`. 204 |
+| POST | `/api/routine-templates/:id/instantiate` | trainer | Crea una rutina **copia** para un alumno (`student_id`, `name?`, `days?`). 201. Ver [ADR 0003](../docs/adr/0003-plantillas-se-copian.md) |
+
+Plantilla ajena o inexistente → 404 `TEMPLATE_NOT_FOUND`. `instantiate` responde 409 `TEMPLATE_EXERCISES_UNAVAILABLE` si algún ejercicio ya no está disponible.
 
 ### Autenticación
 

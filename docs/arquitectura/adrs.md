@@ -342,3 +342,4 @@ Decisiones registradas como archivos en `docs/adr/` (numeración propia, distint
 
 - **0001** — Autorización en la capa Service, RLS deny-all en la base: [[adr/0001-autorizacion-en-services-rls-deny-all]].
 - **0002** — Sesión de la web: access token en memoria, refresh y user en `localStorage`: [[adr/0002-sesion-web]].
+- **0003** — Las plantillas de rutina se copian al asignarlas (no son referencia viva): [[adr/0003-plantillas-se-copian]].
