@@ -36,3 +36,9 @@ export const remove = asyncHandler(async (req, res) => {
   await templatesService.remove(req.user.id, req.params.id);
   res.status(204).end();
 });
+
+/** POST /routine-templates/:id/instantiate — crea una rutina copia para un alumno. 201 → { data } */
+export const instantiate = asyncHandler(async (req, res) => {
+  const data = await templatesService.instantiate(req.user.id, req.params.id, req.body);
+  res.status(201).json({ data });
+});

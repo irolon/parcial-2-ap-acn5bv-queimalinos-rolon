@@ -4,6 +4,7 @@ import {
   validateFromRoutine,
   validateListQuery,
   validateIdParam,
+  validateInstantiate,
 } from '../../../../src/validations/routine-templates/routine-templates.validation.js';
 
 const UUID = '3f1c2b9a-1d2e-4f5a-8b7c-9d0e1f2a3b4c';
@@ -128,6 +129,24 @@ describe('routine-templates.validation', () => {
         'level',
         'generated_by_ai',
       ]);
+    });
+  });
+
+  describe('validateInstantiate', () => {
+    it('acepta solo student_id y opcionales name y days', () => {
+      expect(validateInstantiate({ student_id: UUID })).toEqual({ student_id: UUID });
+      expect(validateInstantiate({ student_id: UUID, name: ' Rutina ', days: ['monday', 'friday'] })).toEqual({
+        student_id: UUID,
+        name: 'Rutina',
+        days: ['monday', 'friday'],
+      });
+    });
+
+    it('rechaza student_id inválido, name corto y days inválidos', () => {
+      expect(fields(validateInstantiate, { student_id: 'x', name: 'a' })).toEqual(['student_id', 'name']);
+      expect(fields(validateInstantiate, { student_id: UUID, days: ['monday', 'monday'] })).toEqual(['days']);
+      expect(fields(validateInstantiate, { student_id: UUID, days: [] })).toEqual(['days']);
+      expect(fields(validateInstantiate, { student_id: UUID, days: ['funday'] })).toEqual(['days']);
     });
   });
 

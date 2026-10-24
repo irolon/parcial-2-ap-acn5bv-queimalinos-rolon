@@ -6,6 +6,7 @@ import {
   validateCreateTemplate,
   validateUpdateTemplate,
   validateFromRoutine,
+  validateInstantiate,
   validateListQuery,
   validateIdParam,
 } from '../../validations/routine-templates/routine-templates.validation.js';
@@ -26,6 +27,12 @@ router.patch(
   validate(validateIdParam, 'params'),
   validate(validateUpdateTemplate),
   controller.update
+);
+router.post(
+  '/:id/instantiate',
+  validate(validateIdParam, 'params'),
+  validate(validateInstantiate),
+  controller.instantiate
 );
 router.delete('/:id', validate(validateIdParam, 'params'), controller.remove);
 

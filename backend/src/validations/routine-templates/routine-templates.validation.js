@@ -1,6 +1,9 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { ROUTINE_GOALS, DAYS } from '../../models/routines/routine.model.js';
-import { TEMPLATE_LEVELS, STRUCTURE_VERSION } from '../../models/routine-templates/routine-template.model.js';
+import {
+  TEMPLATE_LEVELS,
+  STRUCTURE_VERSION,
+} from '../../models/routine-templates/routine-template.model.js';
 import { isUuid, validateExerciseItem } from '../routines/routine-exercise.validation.js';
 
 const MAX_EXERCISES = 50;
@@ -104,12 +107,39 @@ export function validateUpdateTemplate(body) {
 export function validateFromRoutine(body) {
   const details = [];
   const out = {};
-  if (!isUuid(body.routine_id)) details.push({ field: 'routine_id', message: 'routine_id inválido' });
+  if (!isUuid(body.routine_id))
+    details.push({ field: 'routine_id', message: 'routine_id inválido' });
   else out.routine_id = body.routine_id;
   if (body.name !== undefined) out.name = validateName(body.name, details);
   if (body.level !== undefined) {
     if (!isValidLevel(body.level)) details.push({ field: 'level', message: levelMessage });
     else out.level = body.level;
+  }
+  if (details.length > 0) fail(details);
+  return out;
+}
+
+/** Body de POST /routine-templates/:id/instantiate. */
+export function validateInstantiate(body) {
+  const details = [];
+  const out = {};
+  if (!isUuid(body.student_id))
+    details.push({ field: 'student_id', message: 'student_id inválido' });
+  else out.student_id = body.student_id;
+  if (body.name !== undefined) out.name = validateName(body.name, details);
+  if (body.days !== undefined) {
+    const { days } = body;
+    if (
+      !Array.isArray(days) ||
+      days.length === 0 ||
+      !days.every((d) => DAYS.includes(d)) ||
+      new Set(days).size !== days.length
+    ) {
+      details.push({
+        field: 'days',
+        message: `days debe ser un arreglo no vacío, sin repetidos, de: ${DAYS.join(', ')}`,
+      });
+    } else out.days = days;
   }
   if (details.length > 0) fail(details);
   return out;
@@ -124,12 +154,16 @@ export function validateListQuery(query) {
     else out.goal = query.goal;
   }
   if (query.level !== undefined) {
-    if (!TEMPLATE_LEVELS.includes(query.level)) details.push({ field: 'level', message: levelMessage });
+    if (!TEMPLATE_LEVELS.includes(query.level))
+      details.push({ field: 'level', message: levelMessage });
     else out.level = query.level;
   }
   if (query.generated_by_ai !== undefined) {
     if (!['true', 'false'].includes(query.generated_by_ai)) {
-      details.push({ field: 'generated_by_ai', message: "generated_by_ai debe ser 'true' o 'false'" });
+      details.push({
+        field: 'generated_by_ai',
+        message: "generated_by_ai debe ser 'true' o 'false'",
+      });
     } else out.generatedByAi = query.generated_by_ai === 'true';
   }
   if (details.length > 0) fail(details);

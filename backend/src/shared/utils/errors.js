@@ -27,6 +27,13 @@ export const Errors = {
   routineExerciseNotFound: () =>
     new AppError(404, 'ROUTINE_EXERCISE_NOT_FOUND', 'El ejercicio no es parte de esta rutina'),
   templateNotFound: () => new AppError(404, 'TEMPLATE_NOT_FOUND', 'Plantilla no encontrada'),
+  templateExercisesUnavailable: (missingIds) =>
+    new AppError(
+      409,
+      'TEMPLATE_EXERCISES_UNAVAILABLE',
+      'La plantilla tiene ejercicios que ya no están disponibles',
+      missingIds.map((id) => ({ field: 'exercise_id', message: id }))
+    ),
   emailExists: () =>
     new AppError(409, 'EMAIL_ALREADY_EXISTS', 'Ya existe una cuenta con ese email'),
   studentEmailExists: () =>
