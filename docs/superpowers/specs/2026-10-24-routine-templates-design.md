@@ -35,7 +35,7 @@ Que el entrenador guarde rutinas como plantillas y cree rutinas nuevas a partir 
 - `frequency_per_week`: **se deriva** de `structure.days.length`; no se acepta en el body.
 - `generated_by_ai`: siempre `false` desde estos endpoints (lo usará el S4).
 - `structure.days`: al menos 1, valores de `DAYS`, sin repetidos.
-- `structure.exercises`: 1 a **50**; cada uno con las reglas de los ejercicios de una rutina (`exercise_id` uuid; `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional, por defecto la posición).
+- `structure.exercises`: 1 a **50**; cada uno con las reglas de los ejercicios de una rutina (`exercise_id` uuid; `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional). **Orden:** se ordena estable por `order` explícito (sin `order` = su posición) y se renumera 0..n-1 (`normalizeExerciseOrder`); nunca hay órdenes repetidos. Lo usan la structure de plantillas y `POST /routines` / `POST /routines/:id/exercises`.
 - Cada `exercise_id` tiene que ser global o del entrenador (`findAccessibleExerciseIds`); si no, 403 como en `POST /routines` (no se revela si existe).
 
 ### Endpoints (`/api/routine-templates`, solo trainer)
@@ -49,7 +49,9 @@ Que el entrenador guarde rutinas como plantillas y cree rutinas nuevas a partir 
 | DELETE | `/:id` | 204. Las rutinas que salieron de ella quedan con `template_id = null` (FK existente). |
 | POST | `/:id/instantiate` | `{ student_id, name?, days? }` → 201 con la rutina creada en la forma de `GET /routines/:id`. |
 
-- Plantilla inexistente o de otro entrenador → **404 `TEMPLATE_NOT_FOUND`** (no se revelan ids). Rutina ajena en `from-routine` → 403 como el resto de `routines`; alumno ajeno al instanciar → 403.
+- Plantilla inexistente o de otro entrenador → **404 `TEMPLATE_NOT_FOUND`** (no se revelan ids); también en `POST /routines` con `template_id`.
+- **Structure incompleta** (la columna es `jsonb default '{}'`; una plantilla de seed o IA puede no tener `days`/`exercises`): `GET /:id` y el listado la toleran (`[]`) para poder corregirla con PATCH; `instantiate` responde **409 `TEMPLATE_STRUCTURE_INVALID`** con los `details` de la validación, antes de chequear ejercicios.
+- **Errores de `from-routine`:** si la structure armada desde la rutina no valida, el 400 se re-emite con `field: 'routine_id'` y mensajes en términos de la rutina ("El ejercicio 3 de la rutina: ...", "La rutina tiene que tener entre 1 y 50 ejercicios", "Los días de la rutina: ..."). Rutina ajena en `from-routine` → 403 como el resto de `routines`; alumno ajeno al instanciar → 403.
 
 ### Instanciar = copia (ADR 0003)
 - Crea una `routine` (`template_id` de origen, `name`/`days` de la plantilla salvo que vengan en el body, `goal` de la plantilla, activa) y una fila de `routine_exercises` por ejercicio de `structure`.
@@ -60,7 +62,7 @@ Que el entrenador guarde rutinas como plantillas y cree rutinas nuevas a partir 
 
 ### Personalizar una rutina asignada
 - `PATCH /routines/:id/exercises/:routineExerciseId` (trainer dueño): `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` (al menos uno; mismas reglas que arriba; `null` borra los opcionales). Devuelve la rutina completa (forma de `GET /routines/:id`).
-- `DELETE /routines/:id/exercises/:routineExerciseId` → 204. Si es el último ejercicio de la rutina, se permite (la rutina queda vacía; la tarjeta 9 decide la UX).
+- `DELETE /routines/:id/exercises/:routineExerciseId` → 204. Si es el único ejercicio de la rutina → **409 `ROUTINE_NEEDS_EXERCISE`** ("La rutina tiene que tener al menos un ejercicio"): una rutina nunca queda vacía, como `POST /routines`, que exige ≥ 1. (Decisión cambiada en la review de la PR #26.)
 - Un `routineExerciseId` que no es de esa rutina → 404 `ROUTINE_EXERCISE_NOT_FOUND`.
 
 ### Fuera de alcance

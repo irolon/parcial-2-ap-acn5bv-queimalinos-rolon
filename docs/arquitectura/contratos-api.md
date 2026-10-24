@@ -248,9 +248,11 @@ Rutinas del trainer. Query: `student_id`, `active`.
 
 ### POST /routines
 
-Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goal`, `days`, `exercises[]`. Cada ejercicio cumple los límites de abajo. Si falla la inserción de los ejercicios, la rutina no queda creada.
+Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goal`, `days`, `exercises[]`. Cada ejercicio cumple los límites de abajo. Si falla la inserción de los ejercicios, la rutina no queda creada. Un `template_id` de otro trainer o inexistente → **404 `TEMPLATE_NOT_FOUND`** (igual que el módulo de plantillas; no se revela qué ids existen).
 
 **Límites de un ejercicio** (rutina y plantilla): `exercise_id` uuid (global o del trainer, si no 403); `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional.
+
+**Orden:** los ejercicios se ordenan de forma estable por `order` (los que no lo traen usan su posición) y se **renumeran 0..n-1**: nunca quedan órdenes repetidos. En `POST /routines/:id/exercises` la renumeración es sobre la lista nueva, y el orden queda tal cual se guarda (puede coincidir con el de ejercicios ya existentes de la rutina).
 
 `POST /routines`, `POST /routines/:id/exercises` y `PATCH /routines/:id` aplican estos límites por ejercicio (antes un valor inválido se guardaba como `null`; ahora es 400). `days` (en `POST /routines` y `PATCH /routines/:id`) es un arreglo no vacío de `monday..sunday` y **rechaza días repetidos** con 400.
 
@@ -260,7 +262,7 @@ Personaliza un ejercicio de una rutina asignada (trainer dueño). Body: `sets`, 
 
 ### DELETE /routines/:id/exercises/:routineExerciseId
 
-Quita un ejercicio de la rutina. **204**. Se permite borrar el último (la rutina queda vacía). Mismo 404 que el PATCH.
+Quita un ejercicio de la rutina. **204**. Mismo 404 que el PATCH. Si es el único ejercicio de la rutina → **409 `ROUTINE_NEEDS_EXERCISE`** ("La rutina tiene que tener al menos un ejercicio").
 
 ### GET /routines/today
 
@@ -317,7 +319,7 @@ Lista las plantillas del trainer, más nuevas primero (manuales y generadas por 
 
 ### GET /routine-templates/:id
 
-Plantilla con `structure`; cada ejercicio suma `exercise: { id, name, muscle_group, equipment, video_url }`.
+Plantilla con `structure` (si la guardada está incompleta, `days`/`exercises` ausentes se devuelven como `[]` para poder corregirla con PATCH); cada ejercicio suma `exercise: { id, name, muscle_group, equipment, video_url }`.
 
 ### POST /routine-templates
 
@@ -325,7 +327,7 @@ Crea una plantilla. **Body:** `{ "name": "2-120", "goal": "tonify|weight_loss|hy
 
 ### POST /routine-templates/from-routine
 
-Guarda una rutina propia como plantilla (copia `goal`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "goal": "opcional (pisa el de la rutina)", "level": "opcional" }`. Rutina inexistente → 404; ajena → 403. **400** si la rutina no tiene objetivo y el body no trae `goal` (`field: "goal"`, "Elegí un objetivo para la plantilla"), o si la rutina rompe las reglas de una plantilla: `days` vacíos o inválidos, 0 o más de 50 ejercicios, o límites por ejercicio. **201** → `{ data }`.
+Guarda una rutina propia como plantilla (copia `goal`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "goal": "opcional (pisa el de la rutina)", "level": "opcional" }`. Rutina inexistente → 404; ajena → 403. **400** si la rutina no tiene objetivo y el body no trae `goal` (`field: "goal"`, "Elegí un objetivo para la plantilla"), o si la rutina rompe las reglas de una plantilla (`days` vacíos o inválidos, 0 o más de 50 ejercicios, o límites por ejercicio). Estos errores se informan en términos de la rutina, con `field: "routine_id"` y mensajes como "El ejercicio 3 de la rutina: notes debe tener como máximo 500 caracteres", "La rutina tiene que tener entre 1 y 50 ejercicios" o "Los días de la rutina: ...". **201** → `{ data }`.
 
 ### PATCH /routine-templates/:id
 
@@ -343,7 +345,7 @@ Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda
 
 **201 Created** → `{ data }` con la rutina en la forma de `GET /routines/:id`.
 
-**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible, con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
+**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_STRUCTURE_INVALID`** ("La plantilla está incompleta: editala antes de asignarla") si la `structure` guardada no pasa la validación de plantillas (p. ej. cargada por seed o IA sin `days`/`exercises`), con los `details` de la validación; se chequea antes que los ejercicios; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible, con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
 
 ---
 
