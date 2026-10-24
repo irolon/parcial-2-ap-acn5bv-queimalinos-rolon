@@ -1,9 +1,7 @@
-import { Link } from 'react-router';
-import { User } from 'lucide-react';
-import EmptyState from '@/components/shared/states/EmptyState';
 import QueryState from '@/components/shared/states/QueryState';
 import Card from '@/components/shared/ui/Card';
 import Stat from '@/components/shared/ui/Stat';
+import FirstInvitationCta from '@/components/students/FirstInvitationCta';
 import InactivityAlerts from '@/components/students/InactivityAlerts';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
 import { INACTIVITY_DAYS, activityStatus } from '@/utils/students/activity';
@@ -20,31 +18,11 @@ function Indicators({ students, now }) {
   );
 }
 
-function FirstInvitation() {
-  return (
-    <Card>
-      <EmptyState
-        icon={User}
-        title="Todavía no tenés alumnos"
-        text="Invitá a tu primer alumno para empezar a seguir su actividad."
-      />
-      <div className="flex justify-center pb-6">
-        <Link
-          to="/pt/alumnos/nuevo"
-          className="inline-flex h-11 items-center rounded-lg bg-accent px-[18px] font-display text-sm font-semibold text-accentInk hover:bg-accentDim"
-        >
-          Generá tu primera invitación
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
 /** Resumen del entrenador: indicadores de actividad y alertas de inactividad. */
 export default function DashboardPage() {
   const query = useStudentsQuery({ active: true });
   const now = new Date();
-  if (query.isSuccess && query.data.length === 0) return <FirstInvitation />;
+  if (query.isSuccess && query.data.length === 0) return <FirstInvitationCta />;
   return (
     <QueryState query={query}>
       {(students) => (

@@ -28,6 +28,6 @@ describe('rutas de alumnos', () => {
 
   it('/pt/alumnos renderiza el panel', () => {
     renderRoute('/pt/alumnos');
-    expect(screen.getByRole('heading', { name: 'Alumnos', level: 2 })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Alumnos', level: 1 })).toBeVisible();
   });
 });
