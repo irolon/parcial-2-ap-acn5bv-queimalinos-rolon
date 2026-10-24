@@ -51,6 +51,12 @@ describe('validateExerciseBody', () => {
   });
 });
 
+describe('validateExerciseBody: video sin host', () => {
+  it.each(['https://', 'http://'])('rechaza %s como el backend', (url) => {
+    expect(validateExerciseBody({ ...valid, video_url: url }).video_url).toBeDefined();
+  });
+});
+
 describe('formDefaults', () => {
   it('arranca vacío al crear', () => {
     expect(formDefaults()).toEqual({ name: '', muscle_group: '', equipment: '', description: '', video_url: '' });

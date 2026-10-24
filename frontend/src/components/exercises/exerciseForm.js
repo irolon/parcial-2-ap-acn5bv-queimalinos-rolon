@@ -8,6 +8,16 @@ const VIDEO_ERROR = 'El video debe ser un link que empiece con http:// o https:/
 const DESCRIPTION_ERROR = 'La descripción puede tener hasta 1000 caracteres';
 const MUSCLE_ERROR = 'Elegí un grupo muscular';
 
+/** Igual que el backend: http(s), hasta 500 caracteres y con host. */
+function isValidVideoUrl(value) {
+  if (value.length > 500 || !/^https?:\/\//i.test(value)) return false;
+  try {
+    return new URL(value).hostname !== '';
+  } catch {
+    return false;
+  }
+}
+
 const text = (data, name) => String(data.get(name) ?? '').trim();
 const orNull = (value) => value || null;
 
@@ -27,7 +37,7 @@ export function validateExerciseBody(body) {
   const errors = {};
   if (body.name.length < 2 || body.name.length > 120) errors.name = NAME_ERROR;
   if (!body.muscle_group) errors.muscle_group = MUSCLE_ERROR;
-  if (body.video_url && (!/^https?:\/\//i.test(body.video_url) || body.video_url.length > 500)) {
+  if (body.video_url && !isValidVideoUrl(body.video_url)) {
     errors.video_url = VIDEO_ERROR;
   }
   if (body.description && body.description.length > 1000) errors.description = DESCRIPTION_ERROR;
