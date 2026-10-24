@@ -27,14 +27,18 @@ export async function countRoutineExercises(routineId) {
   return count ?? 0;
 }
 
-/** Actualiza campos de un ejercicio de rutina (sets, reps, descanso, kg, tempo, notas). */
-export async function updateRoutineExercise(routineExerciseId, fields) {
+/**
+ * Actualiza campos de un ejercicio de rutina (sets, reps, descanso, kg, tempo, notas).
+ * Filtra también por rutina; devuelve null si ya no existe.
+ */
+export async function updateRoutineExercise(routineId, routineExerciseId, fields) {
   const { data, error } = await supabase
     .from(ROUTINE_EXERCISES_TABLE)
     .update(fields)
+    .eq('routine_id', routineId)
     .eq('id', routineExerciseId)
     .select(ROUTINE_EXERCISE_COLUMNS)
-    .single();
+    .maybeSingle();
   if (error) throw Errors.internal(error.message);
   return data;
 }

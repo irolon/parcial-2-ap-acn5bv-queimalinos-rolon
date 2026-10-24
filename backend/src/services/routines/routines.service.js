@@ -125,7 +125,12 @@ async function assertRoutineExercise(trainerId, routineId, routineExerciseId, ac
 /** Edita un ejercicio de una rutina propia y devuelve el detalle recargado. */
 export async function updateExercise(trainerId, routineId, routineExerciseId, fields) {
   await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
-  await routineExercisesRepo.updateRoutineExercise(routineExerciseId, fields);
+  const updated = await routineExercisesRepo.updateRoutineExercise(
+    routineId,
+    routineExerciseId,
+    fields
+  );
+  if (!updated) throw Errors.routineExerciseNotFound(); // lo borraron entre el chequeo y el update
   return toRoutineDetail(await repository.findRoutineByIdWithExercises(routineId));
 }
 

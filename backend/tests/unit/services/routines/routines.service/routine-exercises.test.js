@@ -38,13 +38,25 @@ describe('routines.service — ejercicios de una rutina asignada', () => {
   it('updateExercise actualiza y devuelve el detalle recargado', async () => {
     mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
     mockRoutineExercisesRepo.findRoutineExercise.mockResolvedValue({ id: 're-1' });
+    mockRoutineExercisesRepo.updateRoutineExercise.mockResolvedValue({ id: 're-1', sets: 5 });
     mockRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, routine_exercises: [] });
 
     const result = await service.updateExercise(TRAINER_ID, 'rt-1', 're-1', { sets: 5 });
 
-    expect(mockRoutineExercisesRepo.updateRoutineExercise).toHaveBeenCalledWith('re-1', { sets: 5 });
+    expect(mockRoutineExercisesRepo.updateRoutineExercise).toHaveBeenCalledWith('rt-1', 're-1', { sets: 5 });
     expect(result).toMatchObject({ id: 'rt-1', exercises: [] });
     expect(result.routine_exercises).toBeUndefined();
+  });
+
+  it('updateExercise: si lo borraron en el medio (repo devuelve null) responde 404, no 500', async () => {
+    mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
+    mockRoutineExercisesRepo.findRoutineExercise.mockResolvedValue({ id: 're-1' });
+    mockRoutineExercisesRepo.updateRoutineExercise.mockResolvedValue(null);
+    await expect(service.updateExercise(TRAINER_ID, 'rt-1', 're-1', { sets: 5 })).rejects.toMatchObject({
+      statusCode: 404,
+      code: 'ROUTINE_EXERCISE_NOT_FOUND',
+    });
+    expect(mockRepo.findRoutineByIdWithExercises).not.toHaveBeenCalled();
   });
 
   it('removeExercise no borra el último ejercicio: 409 ROUTINE_NEEDS_EXERCISE', async () => {
