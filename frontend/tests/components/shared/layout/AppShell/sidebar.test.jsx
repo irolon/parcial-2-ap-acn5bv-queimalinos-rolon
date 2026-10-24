@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
-import { STUDENT, TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { resetAuthStore } from '../../../../helpers/auth/authStore';
+import { jsonResponse, stubFetch } from '../../../../helpers/shared/fetchMock';
+import { STUDENT, TRAINER, renderRoute, setSession } from '../../../../helpers/routes/renderRoute';
 
 beforeEach(() => resetAuthStore());
 
