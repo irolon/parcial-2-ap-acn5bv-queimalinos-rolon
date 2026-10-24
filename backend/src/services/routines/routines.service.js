@@ -10,16 +10,23 @@ import {
 } from '../../models/routines/routine.model.js';
 
 /**
- * Verifica que cada ejercicio sea global o del trainer. Los inexistentes
- * también se rechazan con 403, para no revelar qué ids existen.
+ * Ids (sin repetir y en el orden recibido) que no son globales ni del trainer.
+ * Los inexistentes también cuentan como faltantes: así nunca se revela qué ids existen.
  */
+export async function findMissingExerciseIds(trainerId, ids) {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+  const accessible = new Set(await repository.findAccessibleExerciseIds(unique, trainerId));
+  return unique.filter((id) => !accessible.has(id));
+}
+
+/** Lanza 403 si algún ejercicio no es global ni del trainer. */
 async function assertExercisesAccessible(trainerId, exercises) {
-  const ids = [...new Set(exercises.map((e) => e.exercise_id))];
-  if (ids.length === 0) return;
-  const accessible = new Set(await repository.findAccessibleExerciseIds(ids, trainerId));
-  if (ids.some((id) => !accessible.has(id))) {
-    throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
-  }
+  const missing = await findMissingExerciseIds(
+    trainerId,
+    exercises.map((e) => e.exercise_id)
+  );
+  if (missing.length > 0) throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
 }
 
 /** Verifica que la rutina exista y sea del trainer. */

@@ -1,6 +1,7 @@
 import {
   mockRepo,
   mockRoutinesRepo,
+  mockRoutinesService,
   service,
   TRAINER_ID,
 } from '../../../../helpers/routine-templates/routine-templates-service.setup.js';
@@ -21,7 +22,7 @@ const ROUTINE = {
 
 describe('routine-templates.service (createFromRoutine)', () => {
   beforeEach(() => {
-    mockRoutinesRepo.findAccessibleExerciseIds.mockImplementation(async (ids) => ids);
+    mockRoutinesService.findMissingExerciseIds.mockResolvedValue([]);
     mockRepo.createTemplate.mockImplementation(async (f) => ({ id: 'tp-1', ...f }));
   });
 

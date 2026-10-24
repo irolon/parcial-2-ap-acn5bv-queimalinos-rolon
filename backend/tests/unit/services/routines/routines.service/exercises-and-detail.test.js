@@ -11,6 +11,21 @@ describe('routines.service', () => {
     mockRepo.findAccessibleExerciseIds.mockImplementation(async (ids) => ids);
   });
 
+  describe('findMissingExerciseIds', () => {
+    it('devuelve los que faltan, en orden y sin repetir', async () => {
+      mockRepo.findAccessibleExerciseIds.mockResolvedValue(['ex-1']);
+      const missing = await service.findMissingExerciseIds(TRAINER_ID, ['ex-3', 'ex-1', 'ex-2', 'ex-3']);
+      expect(missing).toEqual(['ex-3', 'ex-2']);
+      expect(mockRepo.findAccessibleExerciseIds).toHaveBeenCalledWith(['ex-3', 'ex-1', 'ex-2'], TRAINER_ID);
+    });
+
+    it('sin ids no consulta la base', async () => {
+      mockRepo.findAccessibleExerciseIds.mockClear();
+      expect(await service.findMissingExerciseIds(TRAINER_ID, [])).toEqual([]);
+      expect(mockRepo.findAccessibleExerciseIds).not.toHaveBeenCalled();
+    });
+  });
+
   describe('addExercises', () => {
     it('agrega ejercicios a una rutina propia', async () => {
       mockRepo.findRoutineById.mockResolvedValue(ROUTINE);

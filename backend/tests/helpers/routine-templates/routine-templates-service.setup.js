@@ -20,7 +20,6 @@ jest.unstable_mockModule(
 );
 
 export const mockRoutinesRepo = {
-  findAccessibleExerciseIds: jest.fn(),
   findRoutineByIdWithExercises: jest.fn(),
   isStudentOfTrainer: jest.fn(),
 };
@@ -29,7 +28,10 @@ jest.unstable_mockModule(
   () => mockRoutinesRepo
 );
 
-export const mockRoutinesService = { createWithExercises: jest.fn() };
+export const mockRoutinesService = {
+  createWithExercises: jest.fn(),
+  findMissingExerciseIds: jest.fn(),
+};
 jest.unstable_mockModule(
   src('services/routines/routines.service.js'),
   () => mockRoutinesService

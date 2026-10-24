@@ -1,6 +1,6 @@
 import {
   mockRepo,
-  mockRoutinesRepo,
+  mockRoutinesService,
   service,
   TRAINER_ID,
   STRUCTURE,
@@ -9,7 +9,7 @@ import {
 
 describe('routine-templates.service (CRUD)', () => {
   beforeEach(() => {
-    mockRoutinesRepo.findAccessibleExerciseIds.mockImplementation(async (ids) => ids);
+    mockRoutinesService.findMissingExerciseIds.mockResolvedValue([]);
     mockRepo.createTemplate.mockImplementation(async (f) => ({ id: 'tp-1', ...f }));
     mockRepo.updateTemplate.mockImplementation(async (id, f) => ({ ...TEMPLATE, ...f }));
   });
@@ -39,7 +39,7 @@ describe('routine-templates.service (CRUD)', () => {
     });
 
     it('lanza 403 si algún ejercicio no es accesible', async () => {
-      mockRoutinesRepo.findAccessibleExerciseIds.mockResolvedValue([]);
+      mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-1']);
       await expect(
         service.create(TRAINER_ID, { name: 'F', goal: 'strength', structure: STRUCTURE })
       ).rejects.toMatchObject({ statusCode: 403, message: 'No podés usar ejercicios que no son tuyos' });
@@ -89,7 +89,7 @@ describe('routine-templates.service (CRUD)', () => {
       mockRepo.findTemplateById.mockResolvedValue(TEMPLATE);
       await service.update(TRAINER_ID, 'tp-1', { name: 'Nuevo' });
       expect(mockRepo.updateTemplate).toHaveBeenCalledWith('tp-1', { name: 'Nuevo' });
-      expect(mockRoutinesRepo.findAccessibleExerciseIds).not.toHaveBeenCalled();
+      expect(mockRoutinesService.findMissingExerciseIds).not.toHaveBeenCalled();
     });
 
     it('404 si la plantilla es ajena', async () => {
@@ -102,7 +102,7 @@ describe('routine-templates.service (CRUD)', () => {
 
     it('403 si structure incluye ejercicios no accesibles', async () => {
       mockRepo.findTemplateById.mockResolvedValue(TEMPLATE);
-      mockRoutinesRepo.findAccessibleExerciseIds.mockResolvedValue([]);
+      mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-1']);
       await expect(service.update(TRAINER_ID, 'tp-1', { structure: STRUCTURE })).rejects.toMatchObject({
         statusCode: 403,
       });

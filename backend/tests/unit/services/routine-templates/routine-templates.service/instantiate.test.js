@@ -14,7 +14,7 @@ describe('routine-templates.service (instantiate)', () => {
   beforeEach(() => {
     mockRepo.findTemplateById.mockResolvedValue(TEMPLATE);
     mockRoutinesRepo.isStudentOfTrainer.mockResolvedValue(true);
-    mockRoutinesRepo.findAccessibleExerciseIds.mockImplementation(async (ids) => ids);
+    mockRoutinesService.findMissingExerciseIds.mockResolvedValue([]);
     mockRoutinesService.createWithExercises.mockResolvedValue({ id: 'rt-9' });
     mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue(DETAIL_ROW);
   });
@@ -41,7 +41,7 @@ describe('routine-templates.service (instantiate)', () => {
   });
 
   it('409 con los ids faltantes si algún ejercicio ya no está disponible', async () => {
-    mockRoutinesRepo.findAccessibleExerciseIds.mockResolvedValue([]);
+    mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-1']);
     await expect(service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' })).rejects.toMatchObject({
       statusCode: 409,
       code: 'TEMPLATE_EXERCISES_UNAVAILABLE',

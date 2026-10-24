@@ -1,6 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routine-templates/routine-templates.repository.js';
-import { createWithExercises } from '../routines/routines.service.js';
+import { createWithExercises, findMissingExerciseIds } from '../routines/routines.service.js';
 import * as routinesRepository from '../../repositories/routines/routines.repository.js';
 import { isOwnedBy, toRoutineDetail } from '../../models/routines/routine.model.js';
 import { assertValidStructure } from '../../validations/routine-templates/routine-templates.validation.js';
@@ -10,17 +10,10 @@ import {
   templateExerciseIds,
 } from '../../models/routine-templates/routine-template.model.js';
 
-/**
- * Verifica que cada ejercicio de la structure sea global o del trainer. Los
- * inexistentes también dan 403, para no revelar qué ids existen.
- */
+/** Lanza 403 si algún ejercicio de la structure no es global ni del trainer. */
 async function assertExercisesAccessible(trainerId, structure) {
-  const ids = templateExerciseIds(structure);
-  if (ids.length === 0) return;
-  const accessible = new Set(await routinesRepository.findAccessibleExerciseIds(ids, trainerId));
-  if (ids.some((id) => !accessible.has(id))) {
-    throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
-  }
+  const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure));
+  if (missing.length > 0) throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
 }
 
 /** Plantilla propia; 404 si no existe o es de otro trainer (no revela su existencia). */
@@ -114,9 +107,7 @@ export async function instantiate(trainerId, templateId, data) {
 
   // Los ejercicios pudieron borrarse desde que se guardó la plantilla.
   const { structure } = template;
-  const ids = templateExerciseIds(structure);
-  const accessible = new Set(await routinesRepository.findAccessibleExerciseIds(ids, trainerId));
-  const missing = ids.filter((id) => !accessible.has(id));
+  const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure));
   if (missing.length > 0) throw Errors.templateExercisesUnavailable(missing);
 
   const routine = await createWithExercises(
