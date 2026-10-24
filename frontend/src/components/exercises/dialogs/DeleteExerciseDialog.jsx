@@ -26,7 +26,7 @@ export default function DeleteExerciseDialog({ exercise, onClose }) {
       title={`¿Borrar «${exercise.name}»?`}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={remove.isPending}>
             Cancelar
           </Button>
           <Button variant="danger" onClick={handleDelete} loading={remove.isPending}>

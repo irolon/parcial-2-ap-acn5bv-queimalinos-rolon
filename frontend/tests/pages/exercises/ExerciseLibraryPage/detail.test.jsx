@@ -130,6 +130,21 @@ describe('ExerciseLibraryPage: borrar ejercicio', () => {
     await waitFor(() => expect(gets(fetchMock).length).toBeGreaterThan(before));
   });
 
+  it('Cancelar queda deshabilitado mientras se borra', async () => {
+    let release;
+    const remove = () =>
+      new Promise((resolve) => {
+        release = () => resolve(new Response(null, { status: 204 }));
+      });
+    const { user } = await openPage({ handlers: { remove } });
+    await user.click(page().getByRole('button', { name: 'Borrar Press inclinado con mancuernas' }));
+    await screen.findByRole('dialog');
+    await user.click(dialog().getByRole('button', { name: 'Borrar' }));
+    await waitFor(() => expect(dialog().getByRole('button', { name: 'Cancelar' })).toBeDisabled());
+    release();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
   it('muestra el 409 EXERCISE_IN_USE y deja el diálogo abierto', async () => {
     const remove = () => errorResponse(409, 'EXERCISE_IN_USE', IN_USE);
     const { user } = await openPage({ handlers: { remove } });

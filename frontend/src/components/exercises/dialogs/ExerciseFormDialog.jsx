@@ -50,7 +50,7 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
       title={editing ? 'Editar ejercicio' : 'Nuevo ejercicio'}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
           <Button type="submit" form={FORM_ID} loading={saving}>

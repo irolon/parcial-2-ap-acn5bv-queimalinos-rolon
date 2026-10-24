@@ -106,6 +106,25 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
     await waitFor(() => expect(dialog()).not.toBeInTheDocument());
   });
 
+  it('Cancelar queda deshabilitado mientras se guarda', async () => {
+    let release;
+    await load({
+      handlers: {
+        create: () =>
+          new Promise((resolve) => {
+            release = () => resolve(jsonResponse(201, { data: exercise() }));
+          }),
+      },
+    });
+    const user = userEvent.setup();
+    await openCreate(user);
+    await fillRequired(user);
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled());
+    release();
+    await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+  });
+
   it('un 400 VALIDATION_ERROR muestra el mensaje bajo el campo y deja el modal abierto', async () => {
     await load({
       handlers: {
