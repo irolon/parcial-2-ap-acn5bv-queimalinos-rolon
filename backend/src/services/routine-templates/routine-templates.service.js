@@ -62,15 +62,21 @@ export async function create(trainerId, data) {
   });
 }
 
-/** Guarda una rutina propia como plantilla (copia goal, días y ejercicios). */
+/** Guarda una rutina propia como plantilla (copia goal, días y ejercicios; `goal` del body pisa el de la rutina). */
 export async function createFromRoutine(trainerId, data) {
   const row = await routinesRepository.findRoutineByIdWithExercises(data.routine_id);
   if (!row) throw Errors.notFound('Rutina no encontrada');
   if (!isOwnedBy(row, trainerId)) throw Errors.forbidden('Esta rutina no es tuya');
   const routine = toRoutineDetail(row);
+  const goal = data.goal ?? routine.goal;
+  if (!goal) {
+    throw Errors.validation('Error de validación', [
+      { field: 'goal', message: 'Elegí un objetivo para la plantilla' },
+    ]);
+  }
   return create(trainerId, {
     name: data.name ?? routine.name,
-    goal: routine.goal,
+    goal,
     level: data.level ?? null,
     structure: assertValidStructure(structureFromRoutine(routine)),
   });

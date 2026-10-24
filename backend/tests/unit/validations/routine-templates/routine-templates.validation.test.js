@@ -111,6 +111,13 @@ describe('routine-templates.validation', () => {
       expect(fields(validateFromRoutine, { routine_id: 'x' })).toContain('routine_id');
       expect(fields(validateFromRoutine, { routine_id: UUID, level: 'pro' })).toContain('level');
     });
+    it('goal es opcional pero tiene que ser un objetivo válido', () => {
+      expect(validateFromRoutine({ routine_id: UUID, goal: 'strength' })).toEqual({
+        routine_id: UUID,
+        goal: 'strength',
+      });
+      expect(fields(validateFromRoutine, { routine_id: UUID, goal: 'x' })).toEqual(['goal']);
+    });
   });
 
   describe('validateListQuery', () => {

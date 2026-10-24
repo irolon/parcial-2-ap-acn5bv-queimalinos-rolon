@@ -111,6 +111,10 @@ export function validateFromRoutine(body) {
     details.push({ field: 'routine_id', message: 'routine_id inválido' });
   else out.routine_id = body.routine_id;
   if (body.name !== undefined) out.name = validateName(body.name, details);
+  if (body.goal !== undefined) {
+    if (!ROUTINE_GOALS.includes(body.goal)) details.push({ field: 'goal', message: goalMessage });
+    else out.goal = body.goal;
+  }
   if (body.level !== undefined) {
     if (!isValidLevel(body.level)) details.push({ field: 'level', message: levelMessage });
     else out.level = body.level;

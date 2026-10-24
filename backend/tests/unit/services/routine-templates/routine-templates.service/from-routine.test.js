@@ -52,6 +52,27 @@ describe('routine-templates.service (createFromRoutine)', () => {
     expect(mockRepo.createTemplate.mock.calls[0][0]).toMatchObject({ name: 'Mi plantilla', level: 'advanced' });
   });
 
+  it('400 field goal si la rutina no tiene objetivo y el body no trae uno', async () => {
+    mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, goal: null });
+    await expect(service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' })).rejects.toMatchObject({
+      statusCode: 400,
+      details: [{ field: 'goal', message: 'Elegí un objetivo para la plantilla' }],
+    });
+    expect(mockRepo.createTemplate).not.toHaveBeenCalled();
+  });
+
+  it('usa el goal del body si la rutina no tiene objetivo', async () => {
+    mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, goal: null });
+    await service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1', goal: 'strength' });
+    expect(mockRepo.createTemplate.mock.calls[0][0]).toMatchObject({ goal: 'strength' });
+  });
+
+  it('el goal del body pisa el de la rutina', async () => {
+    mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue(ROUTINE);
+    await service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1', goal: 'strength' });
+    expect(mockRepo.createTemplate.mock.calls[0][0]).toMatchObject({ goal: 'strength' });
+  });
+
   it('deduplica días repetidos y guarda frecuencia 1', async () => {
     mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, days: ['monday', 'monday'] });
     await service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' });
