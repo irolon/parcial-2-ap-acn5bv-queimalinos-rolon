@@ -1,3 +1,4 @@
+// Estas listas deben coincidir con las de backend/src/models/exercises/exercise.model.js (lo verifica un test).
 export const MUSCLE_GROUPS = [
   'chest',
   'back',

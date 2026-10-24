@@ -28,3 +28,11 @@ describe('exerciseOptions', () => {
     expect(EQUIPMENT_OPTIONS.slice(1).map((o) => o.value)).toEqual(EQUIPMENT);
   });
 });
+
+describe('listas del backend', () => {
+  it('MUSCLE_GROUPS y EQUIPMENT son los del modelo del backend, en el mismo orden', async () => {
+    const model = await import('../../../../backend/src/models/exercises/exercise.model.js');
+    expect(MUSCLE_GROUPS).toEqual(model.MUSCLE_GROUPS);
+    expect(EQUIPMENT).toEqual(model.EQUIPMENT);
+  });
+});
