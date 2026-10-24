@@ -35,7 +35,8 @@ Que el entrenador guarde rutinas como plantillas y cree rutinas nuevas a partir 
 - `frequency_per_week`: **se deriva** de `structure.days.length`; no se acepta en el body.
 - `generated_by_ai`: siempre `false` desde estos endpoints (lo usará el S4).
 - `structure.days`: al menos 1, valores de `DAYS`, sin repetidos.
-- `structure.exercises`: 1 a **50**; cada uno con las reglas de los ejercicios de una rutina (`exercise_id` uuid; `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional). **Orden:** se ordena estable por `order` explícito (sin `order` = su posición) y se renumera 0..n-1 (`normalizeExerciseOrder`); nunca hay órdenes repetidos. Lo usan la structure de plantillas y `POST /routines` / `POST /routines/:id/exercises`.
+- `structure.exercises`: 1 a **50**; cada uno con las reglas de los ejercicios de una rutina (`exercise_id` uuid; `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional). **Orden:** se ordena estable por `order` explícito (sin `order` = su posición) y se renumera 0..n-1 (`normalizeExerciseOrder`); nunca hay órdenes repetidos. Lo usan la structure de plantillas y `POST /routines` / `POST /routines/:id/exercises` (en este último los nuevos van después del mayor `order_index` existente).
+- **Limitación conocida:** agregar y borrar ejercicios no son atómicos (dos pedidos simultáneos pueden repetir un orden o dejar la rutina vacía); aceptable sin transacciones.
 - Cada `exercise_id` tiene que ser global o del entrenador (`findAccessibleExerciseIds`); si no, 403 como en `POST /routines` (no se revela si existe).
 
 ### Endpoints (`/api/routine-templates`, solo trainer)

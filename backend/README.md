@@ -134,7 +134,7 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | GET | `/api/routines` | trainer | Lista rutinas (`student_id`, `active`) |
 | GET | `/api/routines/:id` | trainer | Detalle de la rutina con sus ejercicios |
 | PATCH | `/api/routines/:id` | trainer | Edita / desactiva una rutina |
-| POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina |
+| POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina, después de los existentes |
 | PATCH | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Edita un ejercicio de la rutina (`sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes`; al menos uno). Devuelve la rutina completa |
 | DELETE | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Quita un ejercicio de la rutina. 204; 409 `ROUTINE_NEEDS_EXERCISE` si es el último |
 | GET | `/api/routines/today` | student | Rutina activa del alumno para hoy |
