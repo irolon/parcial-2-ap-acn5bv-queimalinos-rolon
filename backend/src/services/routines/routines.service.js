@@ -108,7 +108,7 @@ export async function update(trainerId, routineId, fields) {
   return repository.updateRoutine(routineId, fields);
 }
 
-/** Agrega ejercicios (globales o propios) a una rutina propia del trainer. */
+/** Agrega ejercicios (globales o propios) a una rutina propia del trainer. Precondición: `order` viene normalizado (0..n-1) por la validación. */
 export async function addExercises(trainerId, routineId, exercises) {
   await getOwnedRoutine(trainerId, routineId, 'modificar');
   await assertExercisesAccessible(

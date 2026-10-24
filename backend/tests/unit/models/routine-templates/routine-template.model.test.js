@@ -34,6 +34,12 @@ describe('routine-template.model', () => {
     expect(templateExerciseIds(structure)).toEqual([]);
   });
 
+  it('ignora ítems null o no objeto en exercises', () => {
+    const structure = { exercises: [null, 3, ex('a')] };
+    expect(toTemplateSummary({ id: 't', structure }).exercise_count).toBe(1);
+    expect(templateExerciseIds(structure)).toEqual(['a']);
+  });
+
   it('structureFromRoutine ordena por order_index y lo pasa a order', () => {
     const detail = {
       days: ['monday'],

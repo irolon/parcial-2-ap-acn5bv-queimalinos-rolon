@@ -51,9 +51,9 @@ export async function createRoutine(fields) {
   return data;
 }
 
-/** Inserta ejercicios en una rutina (batch) y los devuelve. */
+/** Inserta ejercicios en una rutina (batch) y los devuelve. Precondición: `order` ya viene normalizado. */
 export async function addRoutineExercises(routineId, exercises) {
-  const rows = exercises.map((e, i) => ({
+  const rows = exercises.map((e) => ({
     routine_id: routineId,
     exercise_id: e.exercise_id,
     sets: e.sets,
@@ -62,7 +62,7 @@ export async function addRoutineExercises(routineId, exercises) {
     suggested_kg: e.suggested_kg,
     tempo: e.tempo,
     notes: e.notes,
-    order_index: e.order ?? i,
+    order_index: e.order,
   }));
   const { data, error } = await supabase
     .from(ROUTINE_EXERCISES_TABLE)

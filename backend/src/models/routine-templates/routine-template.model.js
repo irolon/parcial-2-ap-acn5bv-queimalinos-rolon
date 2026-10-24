@@ -18,8 +18,12 @@ export const TEMPLATE_DETAIL_COLUMNS = `${BASE_COLUMNS}, structure`;
 /** Arreglo `field` de la structure; [] si falta o no es un arreglo (plantillas cargadas por otra vía). */
 const listOf = (structure, field) => (Array.isArray(structure?.[field]) ? structure[field] : []);
 
-/** Ejercicios de una structure, tolerante a structures incompletas. */
-export const structureExercises = (structure) => listOf(structure, 'exercises');
+/** Ejercicios de una structure, tolerante a structures incompletas (ignora ítems que no son objetos). */
+export const structureExercises = (structure) =>
+  listOf(structure, 'exercises').filter((e) => e && typeof e === 'object');
+
+/** Días de una structure; [] si faltan o no son un arreglo. */
+export const structureDays = (structure) => listOf(structure, 'days');
 
 /** Proyección de listado: la plantilla sin structure, con `days` y `exercise_count`. */
 export function toTemplateSummary(row) {
@@ -32,7 +36,7 @@ export function toTemplateSummary(row) {
     frequency_per_week,
     generated_by_ai,
     created_at,
-    days: listOf(structure, 'days'),
+    days: structureDays(structure),
     exercise_count: structureExercises(structure).length,
   };
 }

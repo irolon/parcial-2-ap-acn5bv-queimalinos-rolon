@@ -13,6 +13,7 @@ import {
   structureFromRoutine,
   templateExerciseIds,
   structureExercises,
+  structureDays,
   routineStructureDetails,
 } from '../../models/routine-templates/routine-template.model.js';
 
@@ -48,7 +49,7 @@ export async function getById(trainerId, id) {
     ...e,
     exercise: byId.get(e.exercise_id) ?? null,
   }));
-  return { ...template, structure: { ...template.structure, exercises } };
+  return { ...template, structure: { ...template.structure, days: structureDays(template.structure), exercises } };
 }
 
 /** Crea una plantilla propia; la frecuencia semanal sale de los días. */

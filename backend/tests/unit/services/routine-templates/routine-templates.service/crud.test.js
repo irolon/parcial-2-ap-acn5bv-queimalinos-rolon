@@ -64,6 +64,17 @@ describe('routine-templates.service (CRUD)', () => {
       mockRepo.findExercisesByIds.mockResolvedValue([]);
       const result = await service.getById(TRAINER_ID, 'tp-1');
       expect(result.structure.exercises).toEqual([]);
+      expect(result.structure.days).toEqual([]);
+    });
+
+    it('ignora ítems que no son objetos y días no arreglo', async () => {
+      mockRepo.findTemplateById.mockResolvedValue({
+        ...TEMPLATE,
+        structure: { days: 'monday', exercises: [null, 3] },
+      });
+      mockRepo.findExercisesByIds.mockResolvedValue([]);
+      const result = await service.getById(TRAINER_ID, 'tp-1');
+      expect(result.structure).toMatchObject({ days: [], exercises: [] });
     });
 
     it('deja exercise: null si el ejercicio ya no existe', async () => {
