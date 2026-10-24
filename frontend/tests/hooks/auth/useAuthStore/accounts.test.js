@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
-import { resetAuthStore, savedSession } from '../../helpers/auth/authStore';
+import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
+import { resetAuthStore, savedSession } from '../../../helpers/auth/authStore';
 
 const state = () => useAuthStore.getState();
 const TRAINER = { id: 't-1', email: 'pt@fit.com', name: 'Pablo' };

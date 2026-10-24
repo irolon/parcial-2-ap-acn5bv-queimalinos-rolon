@@ -1,22 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../helpers/auth/authStore';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
 import {
   PAGE_PATH,
   fillAndSubmit,
   invitationResponse,
   page,
   stubCanvas,
-} from '../../helpers/invitations/newStudent';
-import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+} from '../../../helpers/invitations/newStudent';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
 import {
   bodyOf,
   calls,
   errorResponse,
   jsonResponse,
   stubFetch,
-} from '../../helpers/shared/fetchMock';
+} from '../../../helpers/shared/fetchMock';
 
 beforeEach(() => {
   resetAuthStore();

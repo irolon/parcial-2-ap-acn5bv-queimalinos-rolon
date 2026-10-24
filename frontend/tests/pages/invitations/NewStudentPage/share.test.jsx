@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../helpers/auth/authStore';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
 import {
   PAGE_PATH,
   QR_PNG,
@@ -9,9 +9,9 @@ import {
   invitationResponse,
   page,
   stubCanvas,
-} from '../../helpers/invitations/newStudent';
-import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
-import { jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+} from '../../../helpers/invitations/newStudent';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 const INVITATION = invitationResponse();
 

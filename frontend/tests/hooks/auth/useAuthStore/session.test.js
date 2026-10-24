@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { api } from '@/api/shared/client';
-import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 import {
   LOGIN_RESPONSE,
   USER,
   resetAuthStore,
   savedSession,
   seedSavedSession,
-} from '../../helpers/auth/authStore';
+} from '../../../helpers/auth/authStore';
 
 const state = () => useAuthStore.getState();
 
