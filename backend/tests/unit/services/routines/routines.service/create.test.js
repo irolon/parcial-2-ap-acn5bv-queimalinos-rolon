@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import {
   mockRepo,
   mockExercisesRepo,
@@ -117,12 +118,20 @@ describe('routines.service', () => {
         expect(mockExercisesRepo.deleteRoutine).toHaveBeenCalledWith('rt-1');
       });
 
-      it('si la compensación también falla, sale el error original', async () => {
+      it('si la compensación también falla, la loguea y sale el error original', async () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         const original = new Error('insert falló');
+        const compensationError = new Error('delete falló');
         mockRepo.addRoutineExercises.mockRejectedValue(original);
-        mockExercisesRepo.deleteRoutine.mockRejectedValue(new Error('delete falló'));
+        mockExercisesRepo.deleteRoutine.mockRejectedValue(compensationError);
 
         await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
+        expect(errorSpy).toHaveBeenCalledWith(
+          '[ROUTINE COMPENSATION FAILED]',
+          'rt-1',
+          compensationError
+        );
+        errorSpy.mockRestore();
       });
     });
   });

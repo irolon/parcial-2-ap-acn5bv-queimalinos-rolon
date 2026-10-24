@@ -68,6 +68,13 @@ describe('routine-templates.service (instantiate)', () => {
     expect(detail).toMatchObject({ id: 'rt-9', name: 'Fuerza' });
   });
 
+  it('si createWithExercises rechaza, propaga el mismo error sin envolverlo', async () => {
+    const original = new Error('insert falló');
+    mockRoutinesService.createWithExercises.mockRejectedValue(original);
+    await expect(service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' })).rejects.toBe(original);
+    expect(mockRoutinesRepo.findRoutineByIdWithExercises).not.toHaveBeenCalled();
+  });
+
   it('usa name y days del body si vienen', async () => {
     await service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1', name: 'Para Ana', days: ['friday'] });
     expect(mockRoutinesService.createWithExercises.mock.calls[0][0]).toMatchObject({

@@ -35,7 +35,7 @@ async function getOwnedRoutine(trainerId, routineId, action) {
 /**
  * Inserta la rutina y después sus ejercicios. Sin transacción entre tablas: si
  * los ejercicios fallan, se borra la rutina recién creada (compensación) y se
- * re-lanza el error original; si la compensación también falla, se ignora.
+ * re-lanza el error original; si la compensación también falla, se loguea.
  */
 export async function createWithExercises(routineFields, exercises) {
   const routine = await repository.createRoutine(routineFields);
@@ -43,7 +43,9 @@ export async function createWithExercises(routineFields, exercises) {
     const created = await repository.addRoutineExercises(routine.id, exercises);
     return { ...routine, exercises: created };
   } catch (err) {
-    await exercisesRepo.deleteRoutine(routine.id).catch(() => {});
+    await exercisesRepo.deleteRoutine(routine.id).catch((compensationError) => {
+      console.error('[ROUTINE COMPENSATION FAILED]', routine.id, compensationError);
+    });
     throw err;
   }
 }
