@@ -1,3 +1,4 @@
+import { Errors } from '../../../../../src/shared/utils/errors.js';
 import {
   mockRepo,
   mockRoutinesService,
@@ -10,7 +11,7 @@ import {
 
 describe('routine-templates.service (CRUD)', () => {
   beforeEach(() => {
-    mockRoutinesService.findMissingExerciseIds.mockResolvedValue([]);
+    mockRoutinesService.assertExercisesAccessible.mockResolvedValue();
     mockRepo.createTemplate.mockImplementation(async (f) => ({ id: 'tp-1', ...f }));
     mockRepo.updateTemplate.mockImplementation(async (id, f) => ({ ...TEMPLATE, ...f }));
   });
@@ -40,10 +41,11 @@ describe('routine-templates.service (CRUD)', () => {
     });
 
     it('lanza 403 si algún ejercicio no es accesible', async () => {
-      mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-1']);
+      mockRoutinesService.assertExercisesAccessible.mockRejectedValue(Errors.forbidden());
       await expect(
         service.create(TRAINER_ID, { name: 'F', goal: 'strength', structure: STRUCTURE })
-      ).rejects.toMatchObject({ statusCode: 403, message: 'No podés usar ejercicios que no son tuyos' });
+      ).rejects.toMatchObject({ statusCode: 403 });
+      expect(mockRoutinesService.assertExercisesAccessible).toHaveBeenCalledWith(TRAINER_ID, [EX_ID]);
       expect(mockRepo.createTemplate).not.toHaveBeenCalled();
     });
   });
@@ -110,7 +112,7 @@ describe('routine-templates.service (CRUD)', () => {
 
     it('403 si structure incluye ejercicios no accesibles', async () => {
       mockRepo.findTemplateById.mockResolvedValue(TEMPLATE);
-      mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-1']);
+      mockRoutinesService.assertExercisesAccessible.mockRejectedValue(Errors.forbidden());
       await expect(service.update(TRAINER_ID, 'tp-1', { structure: STRUCTURE })).rejects.toMatchObject({
         statusCode: 403,
       });

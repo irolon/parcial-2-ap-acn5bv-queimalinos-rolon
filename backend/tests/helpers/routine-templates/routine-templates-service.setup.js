@@ -31,6 +31,7 @@ jest.unstable_mockModule(
 export const mockRoutinesService = {
   createWithExercises: jest.fn(),
   findMissingExerciseIds: jest.fn(),
+  assertExercisesAccessible: jest.fn(),
 };
 jest.unstable_mockModule(
   src('services/routines/routines.service.js'),

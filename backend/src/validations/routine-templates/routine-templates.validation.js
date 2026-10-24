@@ -59,21 +59,32 @@ function validateName(name, details) {
   return value;
 }
 
-const isValidLevel = (v) => v === null || TEMPLATE_LEVELS.includes(v);
-const levelMessage = `level debe ser null o uno de: ${TEMPLATE_LEVELS.join(', ')}`;
 const goalMessage = `goal debe ser uno de: ${ROUTINE_GOALS.join(', ')}`;
+const levelMessage = `level debe ser null o uno de: ${TEMPLATE_LEVELS.join(', ')}`;
+const GOAL = [ROUTINE_GOALS, 'goal', goalMessage];
+const LEVEL = [[...TEMPLATE_LEVELS, null], 'level', levelMessage];
+
+/**
+ * Si `value` viene (no es undefined), lo valida contra `allowed` y lo guarda en
+ * `out[field]`; si no, agrega el error a `details`.
+ */
+function optionalEnum(value, [allowed, field, message], out, details) {
+  if (value === undefined) return;
+  if (!allowed.includes(value)) details.push({ field, message });
+  else out[field] = value;
+}
 
 /** Body de POST /routine-templates. */
 export function validateCreateTemplate(body) {
   const details = [];
   const name = validateName(body.name, details);
   if (!ROUTINE_GOALS.includes(body.goal)) details.push({ field: 'goal', message: goalMessage });
-  const level = body.level ?? null;
-  if (!isValidLevel(level)) details.push({ field: 'level', message: levelMessage });
+  const opts = { level: null };
+  optionalEnum(body.level, LEVEL, opts, details);
   const structure = validateStructure(body.structure, details);
 
   if (details.length > 0) fail(details);
-  return { name, goal: body.goal, level, structure };
+  return { name, goal: body.goal, level: opts.level, structure };
 }
 
 /** Body de PATCH /routine-templates/:id — al menos un campo. */
@@ -81,14 +92,8 @@ export function validateUpdateTemplate(body) {
   const details = [];
   const out = {};
   if (body.name !== undefined) out.name = validateName(body.name, details);
-  if (body.goal !== undefined) {
-    if (!ROUTINE_GOALS.includes(body.goal)) details.push({ field: 'goal', message: goalMessage });
-    else out.goal = body.goal;
-  }
-  if (body.level !== undefined) {
-    if (!isValidLevel(body.level)) details.push({ field: 'level', message: levelMessage });
-    else out.level = body.level;
-  }
+  optionalEnum(body.goal, GOAL, out, details);
+  optionalEnum(body.level, LEVEL, out, details);
   if (body.structure !== undefined) out.structure = validateStructure(body.structure, details);
 
   if (details.length === 0 && Object.keys(out).length === 0) {
@@ -106,14 +111,8 @@ export function validateFromRoutine(body) {
     details.push({ field: 'routine_id', message: 'routine_id inválido' });
   else out.routine_id = body.routine_id;
   if (body.name !== undefined) out.name = validateName(body.name, details);
-  if (body.goal !== undefined) {
-    if (!ROUTINE_GOALS.includes(body.goal)) details.push({ field: 'goal', message: goalMessage });
-    else out.goal = body.goal;
-  }
-  if (body.level !== undefined) {
-    if (!isValidLevel(body.level)) details.push({ field: 'level', message: levelMessage });
-    else out.level = body.level;
-  }
+  optionalEnum(body.goal, GOAL, out, details);
+  optionalEnum(body.level, LEVEL, out, details);
   if (details.length > 0) fail(details);
   return out;
 }
@@ -137,15 +136,9 @@ export function validateInstantiate(body) {
 export function validateListQuery(query) {
   const details = [];
   const out = {};
-  if (query.goal !== undefined) {
-    if (!ROUTINE_GOALS.includes(query.goal)) details.push({ field: 'goal', message: goalMessage });
-    else out.goal = query.goal;
-  }
-  if (query.level !== undefined) {
-    if (!TEMPLATE_LEVELS.includes(query.level))
-      details.push({ field: 'level', message: levelMessage });
-    else out.level = query.level;
-  }
+  optionalEnum(query.goal, GOAL, out, details);
+  // En el filtro de listado `level` no admite null (la query siempre es texto).
+  optionalEnum(query.level, [TEMPLATE_LEVELS, 'level', levelMessage], out, details);
   if (query.generated_by_ai !== undefined) {
     if (!['true', 'false'].includes(query.generated_by_ai)) {
       details.push({

@@ -22,7 +22,7 @@ const ROUTINE = {
 
 describe('routine-templates.service (createFromRoutine)', () => {
   beforeEach(() => {
-    mockRoutinesService.findMissingExerciseIds.mockResolvedValue([]);
+    mockRoutinesService.assertExercisesAccessible.mockResolvedValue();
     mockRepo.createTemplate.mockImplementation(async (f) => ({ id: 'tp-1', ...f }));
   });
 

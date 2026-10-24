@@ -1,6 +1,10 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routine-templates/routine-templates.repository.js';
-import { createWithExercises, findMissingExerciseIds } from '../routines/routines.service.js';
+import {
+  createWithExercises,
+  findMissingExerciseIds,
+  assertExercisesAccessible,
+} from '../routines/routines.service.js';
 import * as routinesRepository from '../../repositories/routines/routines.repository.js';
 import { isOwnedBy, toRoutineDetail } from '../../models/routines/routine.model.js';
 import { assertValidStructure } from '../../validations/routine-templates/routine-templates.validation.js';
@@ -11,12 +15,6 @@ import {
   structureExercises,
   routineStructureDetails,
 } from '../../models/routine-templates/routine-template.model.js';
-
-/** Lanza 403 si algún ejercicio de la structure no es global ni del trainer. */
-async function assertExercisesAccessible(trainerId, structure) {
-  const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure));
-  if (missing.length > 0) throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
-}
 
 /** Structure saneada; 409 TEMPLATE_STRUCTURE_INVALID (con los detalles) si no pasa la validación. */
 function validStructureOrConflict(structure) {
@@ -55,7 +53,7 @@ export async function getById(trainerId, id) {
 
 /** Crea una plantilla propia; la frecuencia semanal sale de los días. */
 export async function create(trainerId, data) {
-  await assertExercisesAccessible(trainerId, data.structure);
+  await assertExercisesAccessible(trainerId, templateExerciseIds(data.structure));
   return repository.createTemplate({
     trainer_id: trainerId,
     name: data.name,
@@ -104,7 +102,7 @@ export async function update(trainerId, id, fields) {
   await getOwnedTemplate(trainerId, id);
   const changes = { ...fields };
   if (fields.structure) {
-    await assertExercisesAccessible(trainerId, fields.structure);
+    await assertExercisesAccessible(trainerId, templateExerciseIds(fields.structure));
     changes.frequency_per_week = fields.structure.days.length;
   }
   return repository.updateTemplate(id, changes);

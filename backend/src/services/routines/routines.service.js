@@ -21,12 +21,9 @@ export async function findMissingExerciseIds(trainerId, ids) {
   return unique.filter((id) => !accessible.has(id));
 }
 
-/** Lanza 403 si algún ejercicio no es global ni del trainer. */
-async function assertExercisesAccessible(trainerId, exercises) {
-  const missing = await findMissingExerciseIds(
-    trainerId,
-    exercises.map((e) => e.exercise_id)
-  );
+/** Lanza 403 si algún ejercicio (por id) no es global ni del trainer. */
+export async function assertExercisesAccessible(trainerId, exerciseIds) {
+  const missing = await findMissingExerciseIds(trainerId, exerciseIds);
   if (missing.length > 0) throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
 }
 
@@ -73,7 +70,10 @@ export async function create(trainerId, data) {
     if (!template || !isOwnedBy(template, trainerId)) throw Errors.templateNotFound();
   }
 
-  await assertExercisesAccessible(trainerId, data.exercises);
+  await assertExercisesAccessible(
+    trainerId,
+    data.exercises.map((e) => e.exercise_id)
+  );
 
   return createWithExercises(
     {
@@ -111,7 +111,10 @@ export async function update(trainerId, routineId, fields) {
 /** Agrega ejercicios (globales o propios) a una rutina propia del trainer. */
 export async function addExercises(trainerId, routineId, exercises) {
   await getOwnedRoutine(trainerId, routineId, 'modificar');
-  await assertExercisesAccessible(trainerId, exercises);
+  await assertExercisesAccessible(
+    trainerId,
+    exercises.map((e) => e.exercise_id)
+  );
   return repository.addRoutineExercises(routineId, exercises);
 }
 
