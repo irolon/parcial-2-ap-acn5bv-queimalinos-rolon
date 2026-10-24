@@ -19,18 +19,12 @@ export function muscleGroupsIn(exercises) {
   return [...known, ...unknown];
 }
 
-/** Músculo vigente: el filtrado si todavía existe entre los grupos, si no `all`. */
-export function effectiveMuscle(filters, groups) {
-  return groups.includes(filters.muscle) ? filters.muscle : ALL;
-}
-
 /** AND de músculo, equipamiento, origen y búsqueda por nombre; conserva el orden. */
 export function filterExercises(exercises, filters) {
-  const muscle = effectiveMuscle(filters, muscleGroupsIn(exercises));
   const search = normalize(filters.search);
   return exercises.filter(
     (e) =>
-      (muscle === ALL || e.muscle_group === muscle) &&
+      (filters.muscle === ALL || e.muscle_group === filters.muscle) &&
       (!filters.equipment || e.equipment === filters.equipment) &&
       (filters.origin === ALL || (filters.origin === 'own') === !e.is_global) &&
       (!search || normalize(e.name).includes(search)),

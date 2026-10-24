@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   INITIAL_FILTERS,
-  effectiveMuscle,
   filterExercises,
   muscleGroupsIn,
 } from '@/utils/exercises/filterExercises';
@@ -42,13 +41,5 @@ describe('muscleGroupsIn', () => {
   it('deja los desconocidos al final', () => {
     const list = [exercise({ muscle_group: 'yoga' }), exercise({ muscle_group: 'back' })];
     expect(muscleGroupsIn(list)).toEqual(['back', 'yoga']);
-  });
-});
-
-describe('effectiveMuscle', () => {
-  it('cae a "all" si el músculo ya no está disponible', () => {
-    const groups = muscleGroupsIn(LIBRARY);
-    expect(effectiveMuscle({ muscle: 'back' }, groups)).toBe('all');
-    expect(effectiveMuscle({ muscle: 'legs' }, groups)).toBe('legs');
   });
 });
