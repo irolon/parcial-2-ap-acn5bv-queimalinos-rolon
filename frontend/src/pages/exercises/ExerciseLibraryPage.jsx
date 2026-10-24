@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
+import ExerciseFormDialog from '@/components/exercises/ExerciseFormDialog';
 import ExerciseFilters from '@/components/exercises/ExerciseFilters';
 import ExerciseGridSkeleton from '@/components/exercises/ExerciseGridSkeleton';
 import ExerciseResults from '@/components/exercises/ExerciseResults';
@@ -17,10 +18,12 @@ import { useExercisesQuery } from '@/hooks/exercises/useExercises';
 export default function ExerciseLibraryPage() {
   const query = useExercisesQuery();
   const [filters, setFilters] = useState(INITIAL_FILTERS);
-  // Los diálogos (crear, editar, detalle, borrar) se montan sobre este estado en las próximas tarjetas.
-  const [, setDialog] = useState(null);
+  // Un solo diálogo a la vez; `id` cambia en cada apertura para que el formulario arranque limpio.
+  const [dialog, setDialog] = useState(null);
+  const openCount = useRef(0);
 
-  const open = (type) => (exercise) => setDialog({ type, exercise });
+  const open = (type) => (exercise) => setDialog({ type, exercise, id: ++openCount.current });
+  const close = () => setDialog(null);
 
   return (
     <section className="flex flex-col gap-5">
@@ -28,7 +31,7 @@ export default function ExerciseLibraryPage() {
         <p className="font-mono text-[11px] uppercase tracking-[1px] text-ink6">
           {query.data ? `${query.data.length} EJERCICIOS` : ''}
         </p>
-        <Button onClick={() => setDialog({ type: 'create' })}>
+        <Button onClick={() => open('create')()}>
           <Plus size={16} aria-hidden="true" />
           Nuevo ejercicio
         </Button>
@@ -47,7 +50,7 @@ export default function ExerciseLibraryPage() {
               <ExerciseResults
                 items={filterExercises(exercises, current)}
                 ownOnly={filters.origin === 'own' && !exercises.some((e) => !e.is_global)}
-                onCreate={() => setDialog({ type: 'create' })}
+                onCreate={() => open('create')()}
                 onClear={() => setFilters(INITIAL_FILTERS)}
                 onOpen={open('detail')}
                 onEdit={open('edit')}
@@ -57,6 +60,9 @@ export default function ExerciseLibraryPage() {
           );
         }}
       </QueryState>
+      {(dialog?.type === 'create' || dialog?.type === 'edit') && (
+        <ExerciseFormDialog key={dialog.id} open exercise={dialog.exercise} onClose={close} />
+      )}
     </section>
   );
 }

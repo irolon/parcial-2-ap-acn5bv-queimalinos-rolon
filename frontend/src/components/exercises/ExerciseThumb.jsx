@@ -8,15 +8,16 @@ const STRIPES =
 /** Miniatura de YouTube; sin video de YouTube o si falla la imagen, un placeholder rayado. */
 export default function ExerciseThumb({ url }) {
   const src = url ? thumbnailUrl(url) : null;
-  const [failed, setFailed] = useState(false);
+  // Se recuerda la miniatura que falló (no un booleano): si cambia el link, se reintenta.
+  const [failedSrc, setFailedSrc] = useState(null);
 
-  if (src && !failed) {
+  if (src && src !== failedSrc) {
     return (
       <img
         src={src}
         alt=""
         loading="lazy"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         className="aspect-video w-full rounded-lg object-cover"
       />
     );
