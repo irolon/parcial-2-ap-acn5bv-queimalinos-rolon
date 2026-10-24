@@ -37,5 +37,6 @@ class InvitationMessagesTest {
         assertEquals("Ganar masa muscular", goalLabel("hypertrophy"))
         assertEquals("Ganar fuerza", goalLabel("strength"))
         assertEquals("yoga", goalLabel("yoga"))
+        assertEquals("Sin definir", goalLabel(null))
     }
 }
