@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildExerciseBody,
+  changedFields,
+  equipmentOptionsFor,
   formDefaults,
+  initialBody,
   toExerciseErrors,
   validateExerciseBody,
 } from '@/utils/exercises/exerciseForm';
@@ -62,9 +65,38 @@ describe('formDefaults', () => {
     expect(formDefaults()).toEqual({ name: '', muscle_group: '', equipment: '', description: '', video_url: '' });
   });
 
-  it('precarga el ejercicio y descarta un equipamiento desconocido', () => {
-    const defaults = formDefaults({ name: 'X', muscle_group: 'back', equipment: 'trx', description: null, video_url: 'https://a.b' });
-    expect(defaults).toEqual({ name: 'X', muscle_group: 'back', equipment: '', description: '', video_url: 'https://a.b' });
+  it('precarga el ejercicio y conserva un equipamiento desconocido', () => {
+    const defaults = formDefaults({ name: 'X', muscle_group: 'back', equipment: 'TRX', description: null, video_url: 'https://a.b' });
+    expect(defaults).toEqual({ name: 'X', muscle_group: 'back', equipment: 'TRX', description: '', video_url: 'https://a.b' });
+  });
+});
+
+describe('initialBody y changedFields', () => {
+  const exercise = { name: 'X', muscle_group: 'back', equipment: null, description: null, video_url: 'youtube.com/x' };
+
+  it('initialBody es el body del ejercicio sin tocar (vacío → null)', () => {
+    expect(initialBody(exercise)).toEqual({ ...valid, name: 'X', video_url: 'youtube.com/x' });
+  });
+
+  it('changedFields devuelve solo lo que cambió', () => {
+    const initial = initialBody(exercise);
+    expect(changedFields(initial, initial)).toEqual({});
+    expect(changedFields({ ...initial, name: 'Y', video_url: null }, initial)).toEqual({ name: 'Y', video_url: null });
+  });
+});
+
+describe('validateExerciseBody: body parcial', () => {
+  it('valida solo los campos presentes', () => {
+    expect(validateExerciseBody({ name: 'Remo' })).toEqual({});
+    expect(validateExerciseBody({ video_url: 'x' }).video_url).toBeDefined();
+  });
+});
+
+describe('equipmentOptionsFor', () => {
+  it('suma el equipamiento desconocido como opción sin catalogar', () => {
+    const options = equipmentOptionsFor({ equipment: 'TRX' });
+    expect(options.at(-1)).toEqual({ value: 'TRX', label: 'TRX (sin catalogar)' });
+    expect(equipmentOptionsFor({ equipment: 'band' })).toBe(equipmentOptionsFor());
   });
 });
 

@@ -1,5 +1,5 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
-import { EQUIPMENT } from './exerciseOptions';
+import { EQUIPMENT, EQUIPMENT_OPTIONS } from './exerciseOptions';
 import { isValidVideoUrl } from './videoUrl';
 
 export const FIELDS = ['name', 'muscle_group', 'equipment', 'description', 'video_url'];
@@ -9,25 +9,40 @@ const VIDEO_ERROR = 'El video debe ser un link que empiece con http:// o https:/
 const DESCRIPTION_ERROR = 'La descripción puede tener hasta 1000 caracteres';
 const MUSCLE_ERROR = 'Elegí un grupo muscular';
 
-const text = (data, name) => String(data.get(name) ?? '').trim();
 const orNull = (value) => value || null;
 
-/** Body de `POST/PATCH /exercises` desde el formulario: se recorta y lo vacío va como `null`. */
-export function buildExerciseBody(formData) {
+function toBody(read) {
+  const text = (name) => String(read(name) ?? '').trim();
   return {
-    name: text(formData, 'name'),
-    muscle_group: text(formData, 'muscle_group'),
-    equipment: orNull(text(formData, 'equipment')),
-    description: orNull(text(formData, 'description')),
-    video_url: orNull(text(formData, 'video_url')),
+    name: text('name'),
+    muscle_group: text('muscle_group'),
+    equipment: orNull(text('equipment')),
+    description: orNull(text('description')),
+    video_url: orNull(text('video_url')),
   };
 }
 
-/** Chequeos que repiten los del backend para no hacer un viaje en vano. `{ campo: mensaje }`. */
+/** Body de `POST/PATCH /exercises` desde el formulario: se recorta y lo vacío va como `null`. */
+export function buildExerciseBody(formData) {
+  return toBody((name) => formData.get(name));
+}
+
+/** Body que el formulario produce sin que el usuario toque nada; base para `changedFields`. */
+export function initialBody(exercise) {
+  const values = formDefaults(exercise);
+  return toBody((name) => values[name]);
+}
+
+/** Solo los campos de `body` que difieren de `initial` (el PATCH manda solo esos). */
+export function changedFields(body, initial) {
+  return Object.fromEntries(Object.entries(body).filter(([key, value]) => value !== initial[key]));
+}
+
+/** Chequeos que repiten los del backend para no hacer un viaje en vano; solo de los campos presentes en `body`. `{ campo: mensaje }`. */
 export function validateExerciseBody(body) {
   const errors = {};
-  if (body.name.length < 2 || body.name.length > 120) errors.name = NAME_ERROR;
-  if (!body.muscle_group) errors.muscle_group = MUSCLE_ERROR;
+  if ('name' in body && (body.name.length < 2 || body.name.length > 120)) errors.name = NAME_ERROR;
+  if ('muscle_group' in body && !body.muscle_group) errors.muscle_group = MUSCLE_ERROR;
   if (body.video_url && !isValidVideoUrl(body.video_url)) {
     errors.video_url = VIDEO_ERROR;
   }
@@ -40,13 +55,20 @@ export function toExerciseErrors(error) {
   return fieldErrorsFrom(error, { fields: FIELDS, fallback: 'No pudimos guardar el ejercicio' });
 }
 
-/** Valores iniciales del formulario; un equipamiento desconocido arranca sin elegir. */
+/** Valores iniciales del formulario; un equipamiento desconocido se conserva tal cual. */
 export function formDefaults(exercise) {
   return {
     name: exercise?.name ?? '',
     muscle_group: exercise?.muscle_group ?? '',
-    equipment: EQUIPMENT.includes(exercise?.equipment) ? exercise.equipment : '',
+    equipment: exercise?.equipment ?? '',
     description: exercise?.description ?? '',
     video_url: exercise?.video_url ?? '',
   };
+}
+
+/** Opciones de equipamiento; uno desconocido del ejercicio se suma como "sin catalogar" para no perderlo. */
+export function equipmentOptionsFor(exercise) {
+  const unknown = exercise?.equipment;
+  if (!unknown || EQUIPMENT.includes(unknown)) return EQUIPMENT_OPTIONS;
+  return [...EQUIPMENT_OPTIONS, { value: unknown, label: `${unknown} (sin catalogar)` }];
 }

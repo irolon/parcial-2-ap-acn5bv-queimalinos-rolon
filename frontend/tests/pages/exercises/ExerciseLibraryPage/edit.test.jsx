@@ -47,12 +47,50 @@ describe('ExerciseLibraryPage: editar ejercicio', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     const [patch] = calls(fetchMock).filter(([, init]) => init?.method === 'PATCH');
     expect(patch[0]).toBe('/exercises/ex-incline');
-    expect(bodyOf(patch[1])).toEqual({
-      name: INCLINE.name,
-      muscle_group: 'chest',
-      equipment: 'dumbbell',
-      description: INCLINE.description,
-      video_url: null,
-    });
+    expect(bodyOf(patch[1])).toEqual({ video_url: null });
+  });
+
+  async function openEdit(name, list) {
+    const fetchMock = stubLibrary({ list, handlers: { update: () => jsonResponse(200, { data: list[0] }) } });
+    renderRoute(PAGE_PATH);
+    await screen.findByText(/^\d+ EJERCICIOS$/);
+    const user = userEvent.setup();
+    await user.click(page().getByRole('button', { name: `Editar ${name}` }));
+    await screen.findByRole('dialog', { name: 'Editar ejercicio' });
+    return { user, fetchMock };
+  }
+  const patches = (fetchMock) => calls(fetchMock).filter(([, init]) => init?.method === 'PATCH');
+
+  it('renombrar no manda el equipamiento desconocido ni bloquea por un video viejo inválido', async () => {
+    const legacy = { ...INCLINE, equipment: 'TRX', video_url: 'youtube.com/watch?v=x' };
+    const { user, fetchMock } = await openEdit(legacy.name, [legacy]);
+    expect(field('Equipamiento (opcional)')).toHaveValue('TRX');
+    expect(within(field('Equipamiento (opcional)')).getByRole('option', { name: 'TRX (sin catalogar)' })).toBeInTheDocument();
+
+    await user.clear(field('Nombre'));
+    await user.type(field('Nombre'), 'Press inclinado nuevo');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(patches(fetchMock)).toHaveLength(1);
+    expect(bodyOf(patches(fetchMock)[0][1])).toEqual({ name: 'Press inclinado nuevo' });
+  });
+
+  it('sin cambios cierra el diálogo sin hacer ninguna request', async () => {
+    const { user, fetchMock } = await openEdit(INCLINE.name, [INCLINE]);
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(patches(fetchMock)).toHaveLength(0);
+  });
+
+  it('valida en el cliente un campo que sí se cambió', async () => {
+    const { user, fetchMock } = await openEdit(INCLINE.name, [INCLINE]);
+    await user.clear(field('Link del video (opcional)'));
+    await user.type(field('Link del video (opcional)'), 'youtube.com/x');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(await screen.findByText(/El video debe ser un link/)).toBeInTheDocument();
+    expect(patches(fetchMock)).toHaveLength(0);
   });
 });

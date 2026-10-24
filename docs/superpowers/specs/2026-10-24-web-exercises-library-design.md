@@ -42,7 +42,7 @@ El entrenador explora la biblioteca (50 globales + los suyos), la filtra al inst
 - `Dialog` de shadcn (Radix): foco atrapado, Escape, `aria`. Se suman `Dialog` y `Textarea` a `components/shared/ui/`.
 - Campos: nombre\* (2 a 120), grupo muscular\* (select), equipamiento (select, opcional), descripción (textarea, hasta 1000), URL del video (opcional, http/https, hasta 500).
 - Validación en el cliente con los mismos límites; los errores del 400 del backend (`details[{field,message}]`) se muestran debajo de cada campo con `fieldErrorsFrom`.
-- Editar usa el mismo modal precargado, título "Editar ejercicio". El PATCH manda todos los campos; un opcional vacío va como `null` (así se puede quitar el video o el equipamiento).
+- Editar usa el mismo modal precargado, título "Editar ejercicio". El PATCH manda solo los campos que cambiaron (un opcional vacío va como `null`, así se puede quitar el video o el equipamiento); sin cambios no hay request. Un equipamiento fuera del catálogo se conserva como opción "<valor> (sin catalogar)".
 - Al guardar: se cierra el modal y se invalida la consulta; el ejercicio aparece en su lugar alfabético.
 - Nombres repetidos se permiten (el badge los diferencia).
 
