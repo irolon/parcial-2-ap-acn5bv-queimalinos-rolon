@@ -74,6 +74,46 @@ describe('ExerciseLibraryPage: detalle', () => {
 });
 
 describe('ExerciseLibraryPage: borrar ejercicio', () => {
+  it('desde el detalle de un propio, Borrar abre la confirmación', async () => {
+    const { user } = await openPage();
+    await user.click(page().getByRole('button', { name: /^Press inclinado/ }));
+    await screen.findByRole('dialog', { name: 'Press inclinado con mancuernas' });
+    await user.click(dialog().getByRole('button', { name: 'Borrar' }));
+
+    expect(await screen.findByRole('dialog', { name: '¿Borrar «Press inclinado con mancuernas»?' })).toBeInTheDocument();
+  });
+
+  it('si el grupo elegido se queda sin ejercicios, vuelve a "Todos" y no se reactiva al crear otro', async () => {
+    const calf = LIBRARY.find((e) => e.id === 'ex-calf');
+    let list = LIBRARY;
+    const fetchMock = stubLibrary();
+    fetchMock.mockImplementation(async (url, init = {}) => {
+      const method = init.method ?? 'GET';
+      if (method === 'DELETE') list = LIBRARY.filter((e) => e !== calf);
+      if (method === 'POST') list = [...list, exercise({ name: 'Gemelo sentado', muscle_group: 'calves' })];
+      if (method === 'GET') return jsonResponse(200, { data: list });
+      return method === 'DELETE' ? new Response(null, { status: 204 }) : jsonResponse(201, { data: list.at(-1) });
+    });
+    renderRoute(PAGE_PATH);
+    await screen.findByText(/^\d+ EJERCICIOS$/);
+    const user = userEvent.setup();
+    const group = () => within(page().getByRole('radiogroup', { name: 'Grupo muscular' }));
+    await user.click(group().getByRole('radio', { name: 'Gemelos' }));
+    await user.click(page().getByRole('button', { name: 'Borrar Elevación de talones' }));
+    await screen.findByRole('dialog');
+    await user.click(dialog().getByRole('button', { name: 'Borrar' }));
+    await waitFor(() => expect(group().queryByRole('radio', { name: 'Gemelos' })).not.toBeInTheDocument());
+    expect(group().getByRole('radio', { name: 'Todos' })).toHaveAttribute('aria-checked', 'true');
+
+    await user.click(page().getByRole('button', { name: 'Nuevo ejercicio' }));
+    const form = await screen.findByRole('dialog', { name: 'Nuevo ejercicio' });
+    await user.type(within(form).getByLabelText('Nombre'), 'Gemelo sentado');
+    await user.selectOptions(within(form).getByLabelText('Grupo muscular'), 'calves');
+    await user.click(within(form).getByRole('button', { name: 'Guardar' }));
+    expect(await group().findByRole('radio', { name: 'Gemelos' })).toBeInTheDocument();
+    expect(group().getByRole('radio', { name: 'Todos' })).toHaveAttribute('aria-checked', 'true');
+  });
+
   it('confirma, manda DELETE, cierra y vuelve a pedir la lista', async () => {
     const remove = vi.fn(() => new Response(null, { status: 204 }));
     const { fetchMock, user } = await openPage({ handlers: { remove } });

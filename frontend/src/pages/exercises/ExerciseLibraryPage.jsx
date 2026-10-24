@@ -9,8 +9,8 @@ import ExerciseResults from '@/components/exercises/ExerciseResults';
 import Button from '@/components/shared/ui/Button';
 import QueryState from '@/components/shared/states/QueryState';
 import {
+  ALL,
   INITIAL_FILTERS,
-  effectiveMuscle,
   filterExercises,
   muscleGroupsIn,
 } from '@/hooks/exercises/filterExercises';
@@ -23,6 +23,13 @@ export default function ExerciseLibraryPage() {
   // Un solo diálogo a la vez; `id` cambia en cada apertura para que el formulario arranque limpio.
   const [dialog, setDialog] = useState(null);
   const openCount = useRef(0);
+
+  // Si el grupo elegido se queda sin ejercicios, el estado vuelve a "Todos" (se ajusta durante el
+  // render, sin efecto): así el chip no reaparece activo si después se crea otro de ese grupo.
+  const groups = muscleGroupsIn(query.data ?? []);
+  if (query.data && filters.muscle !== ALL && !groups.includes(filters.muscle)) {
+    setFilters({ ...filters, muscle: ALL });
+  }
 
   const open = (type) => (exercise) => setDialog({ type, exercise, id: ++openCount.current });
   const openCreate = () => open('create')();
@@ -45,13 +52,11 @@ export default function ExerciseLibraryPage() {
         empty={{ title: 'Todavía no hay ejercicios' }}
       >
         {(exercises) => {
-          const groups = muscleGroupsIn(exercises);
-          const current = { ...filters, muscle: effectiveMuscle(filters, groups) };
           return (
             <>
-              <ExerciseFilters filters={current} groups={groups} onChange={setFilters} />
+              <ExerciseFilters filters={filters} groups={groups} onChange={setFilters} />
               <ExerciseResults
-                items={filterExercises(exercises, current)}
+                items={filterExercises(exercises, filters)}
                 ownOnly={filters.origin === 'own' && !exercises.some((e) => !e.is_global)}
                 onCreate={openCreate}
                 onClear={() => setFilters(INITIAL_FILTERS)}
