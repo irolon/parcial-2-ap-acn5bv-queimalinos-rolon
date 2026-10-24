@@ -107,3 +107,11 @@ describe('toExerciseErrors', () => {
     expect(toExerciseErrors({}).form).toBe('No pudimos guardar el ejercicio');
   });
 });
+
+describe('changedFields: saltos de línea', () => {
+  it('un \r\n del textarea no cuenta como cambio frente a un \n guardado', () => {
+    const initial = initialBody({ name: 'X', muscle_group: 'back', equipment: null, description: 'a\nb', video_url: null });
+    const body = buildExerciseBody(form({ name: 'X', muscle_group: 'back', equipment: '', description: 'a\r\nb', video_url: '' }));
+    expect(changedFields(body, initial)).not.toHaveProperty('description');
+  });
+});

@@ -93,4 +93,15 @@ describe('ExerciseLibraryPage: editar ejercicio', () => {
     expect(await screen.findByText(/El video debe ser un link/)).toBeInTheDocument();
     expect(patches(fetchMock)).toHaveLength(0);
   });
+
+  it('elegir Sin equipamiento en un ejercicio con equipamiento desconocido manda equipment null', async () => {
+    const legacy = { ...INCLINE, equipment: 'TRX' };
+    const { user, fetchMock } = await openEdit(legacy.name, [legacy]);
+    await user.selectOptions(field('Equipamiento (opcional)'), '');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(bodyOf(patches(fetchMock)[0][1])).toEqual({ equipment: null });
+  });
 });
+

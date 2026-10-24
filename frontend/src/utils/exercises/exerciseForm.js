@@ -17,7 +17,7 @@ function toBody(read) {
     name: text('name'),
     muscle_group: text('muscle_group'),
     equipment: orNull(text('equipment')),
-    description: orNull(text('description')),
+    description: orNull(text('description').replaceAll('\r\n', '\n')),
     video_url: orNull(text('video_url')),
   };
 }
