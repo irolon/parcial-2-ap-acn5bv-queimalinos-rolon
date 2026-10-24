@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeVideoUrl, thumbnailUrl, youTubeId } from '@/utils/exercises/videoUrl';
+import { isSafeVideoUrl, isValidVideoUrl, thumbnailUrl, youTubeId } from '@/utils/exercises/videoUrl';
 
 const ID = 'uEtiwYaT3d0';
 
@@ -36,5 +36,20 @@ describe('isSafeVideoUrl', () => {
     expect(isSafeVideoUrl('HTTPS://a.com')).toBe(true);
     expect(isSafeVideoUrl('http://a.com')).toBe(true);
     expect(isSafeVideoUrl(null)).toBe(false);
+  });
+});
+
+describe('isValidVideoUrl', () => {
+  it('acepta http/https con host, hasta 500 caracteres', () => {
+    expect(isValidVideoUrl('https://youtu.be/abc')).toBe(true);
+    expect(isValidVideoUrl('HTTP://a.com/x')).toBe(true);
+    expect(isValidVideoUrl(`https://a.com/${'x'.repeat(486)}`)).toBe(true);
+  });
+
+  it('rechaza sin protocolo, sin host, de otro esquema o demasiado larga', () => {
+    expect(isValidVideoUrl('youtube.com/watch?v=x')).toBe(false);
+    expect(isValidVideoUrl('https://')).toBe(false);
+    expect(isValidVideoUrl('javascript:alert(1)')).toBe(false);
+    expect(isValidVideoUrl(`https://a.com/${'x'.repeat(487)}`)).toBe(false);
   });
 });

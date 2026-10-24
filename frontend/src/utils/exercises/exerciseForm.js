@@ -1,5 +1,6 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { EQUIPMENT } from './exerciseOptions';
+import { isValidVideoUrl } from './videoUrl';
 
 export const FIELDS = ['name', 'muscle_group', 'equipment', 'description', 'video_url'];
 
@@ -7,16 +8,6 @@ const NAME_ERROR = 'El nombre debe tener entre 2 y 120 caracteres';
 const VIDEO_ERROR = 'El video debe ser un link que empiece con http:// o https:// (máximo 500 caracteres)';
 const DESCRIPTION_ERROR = 'La descripción puede tener hasta 1000 caracteres';
 const MUSCLE_ERROR = 'Elegí un grupo muscular';
-
-/** Igual que el backend: http(s), hasta 500 caracteres y con host. */
-function isValidVideoUrl(value) {
-  if (value.length > 500 || !/^https?:\/\//i.test(value)) return false;
-  try {
-    return new URL(value).hostname !== '';
-  } catch {
-    return false;
-  }
-}
 
 const text = (data, name) => String(data.get(name) ?? '').trim();
 const orNull = (value) => value || null;

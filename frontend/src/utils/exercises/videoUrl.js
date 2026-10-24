@@ -25,3 +25,13 @@ export function thumbnailUrl(url) {
 export function isSafeVideoUrl(url) {
   return typeof url === 'string' && /^https?:\/\//i.test(url);
 }
+
+/** Igual que el backend: http(s), hasta 500 caracteres y con host. */
+export function isValidVideoUrl(value) {
+  if (value.length > 500 || !isSafeVideoUrl(value)) return false;
+  try {
+    return new URL(value).hostname !== '';
+  } catch {
+    return false;
+  }
+}
