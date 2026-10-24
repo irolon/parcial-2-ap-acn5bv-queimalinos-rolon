@@ -213,12 +213,13 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
-    "active_routine": { "id": "uuid", "name": "Push/Pull", "days": ["monday", "thursday"] }
+    "active_routine": { "id": "uuid", "name": "Push/Pull", "days": ["monday", "thursday"] },
+    "last_session_at": "2026-10-20T10:00:00Z"
   }
 }
 ```
 
-> `latest_metrics` y `active_routine` pueden venir en `null`. `active_routine` es la rutina activa más reciente.
+> `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
 
 **Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `403 FORBIDDEN` (alumno de otro trainer o inexistente: no se distingue).
 

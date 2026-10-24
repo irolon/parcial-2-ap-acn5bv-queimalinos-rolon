@@ -35,13 +35,19 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
   };
 }
 
-/** Arma la ficha: fila del alumno + última medida (con IMC) + rutina activa. */
+/** Arma la ficha: fila del alumno + última medida (con IMC) + rutina activa + última sesión. */
 async function buildDetail(student) {
-  const [latestMetrics, activeRoutine] = await Promise.all([
+  const [latestMetrics, activeRoutine, lastSessions] = await Promise.all([
     latestForStudent(student.id),
     routinesRepo.findActiveRoutineSummary(student.id),
+    studentsRepo.findLastSessionDates([student.id]),
   ]);
-  return { ...student, latest_metrics: latestMetrics, active_routine: activeRoutine };
+  return {
+    ...student,
+    latest_metrics: latestMetrics,
+    active_routine: activeRoutine,
+    last_session_at: lastSessions[0]?.last_session_at ?? null,
+  };
 }
 
 /** GET /students/:id — ficha completa. Trainer dueño o el propio alumno. */
