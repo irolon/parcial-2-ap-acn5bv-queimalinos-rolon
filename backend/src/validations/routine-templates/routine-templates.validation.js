@@ -1,10 +1,11 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { ROUTINE_GOALS, DAYS } from '../../models/routines/routine.model.js';
+import { ROUTINE_GOALS } from '../../models/routines/routine.model.js';
 import {
   TEMPLATE_LEVELS,
   STRUCTURE_VERSION,
 } from '../../models/routine-templates/routine-template.model.js';
 import { isUuid, validateExerciseItem } from '../routines/routine-exercise.validation.js';
+import { validateDays } from '../routines/routines.validation.js';
 
 const MAX_EXERCISES = 50;
 const isString = (v) => typeof v === 'string';
@@ -22,17 +23,7 @@ export function validateStructure(structure, details) {
     details.push({ field: 'structure.version', message: `version debe ser ${STRUCTURE_VERSION}` });
   }
   const { days, exercises } = structure;
-  if (
-    !Array.isArray(days) ||
-    days.length === 0 ||
-    !days.every((d) => DAYS.includes(d)) ||
-    new Set(days).size !== days.length
-  ) {
-    details.push({
-      field: 'structure.days',
-      message: `days debe ser un arreglo no vacío, sin repetidos, de: ${DAYS.join(', ')}`,
-    });
-  }
+  validateDays(days, 'structure.days', details);
   let items = [];
   if (!Array.isArray(exercises) || exercises.length === 0 || exercises.length > MAX_EXERCISES) {
     details.push({
@@ -132,18 +123,7 @@ export function validateInstantiate(body) {
   else out.student_id = body.student_id;
   if (body.name !== undefined) out.name = validateName(body.name, details);
   if (body.days !== undefined) {
-    const { days } = body;
-    if (
-      !Array.isArray(days) ||
-      days.length === 0 ||
-      !days.every((d) => DAYS.includes(d)) ||
-      new Set(days).size !== days.length
-    ) {
-      details.push({
-        field: 'days',
-        message: `days debe ser un arreglo no vacío, sin repetidos, de: ${DAYS.join(', ')}`,
-      });
-    } else out.days = days;
+    if (validateDays(body.days, 'days', details)) out.days = body.days;
   }
   if (details.length > 0) fail(details);
   return out;

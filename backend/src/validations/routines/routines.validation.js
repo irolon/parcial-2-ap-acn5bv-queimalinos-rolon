@@ -9,6 +9,25 @@ import {
 const isString = (v) => typeof v === 'string';
 const trimmed = (v) => (isString(v) ? v.trim() : v);
 
+/**
+ * Valida un arreglo de días: no vacío, cada uno de DAYS y sin repetidos.
+ * Agrega el error a `details` y devuelve si es válido.
+ */
+export function validateDays(days, field, details) {
+  const valid =
+    Array.isArray(days) &&
+    days.length > 0 &&
+    days.every((d) => DAYS.includes(d)) &&
+    new Set(days).size === days.length;
+  if (!valid) {
+    details.push({
+      field,
+      message: `${field.split('.').pop()} debe ser un arreglo no vacío, sin repetidos, de: ${DAYS.join(', ')}`,
+    });
+  }
+  return valid;
+}
+
 function validateExercisesArray(exercises, details) {
   if (!Array.isArray(exercises) || exercises.length === 0) {
     details.push({ field: 'exercises', message: 'Debe incluir al menos un ejercicio' });
@@ -34,9 +53,7 @@ export function validateCreateRoutine(body) {
   if (!ROUTINE_GOALS.includes(body.goal)) {
     details.push({ field: 'goal', message: `goal debe ser uno de: ${ROUTINE_GOALS.join(', ')}` });
   }
-  if (!Array.isArray(body.days) || body.days.length === 0 || !body.days.every((d) => DAYS.includes(d))) {
-    details.push({ field: 'days', message: `days debe ser un arreglo no vacío de: ${DAYS.join(', ')}` });
-  }
+  validateDays(body.days, 'days', details);
   const exercises = validateExercisesArray(body.exercises, details);
 
   if (details.length > 0) throw Errors.validation('Error de validación', details);
@@ -75,9 +92,7 @@ export function validateUpdateRoutine(body) {
     } else out.goal = body.goal;
   }
   if (body.days !== undefined) {
-    if (!Array.isArray(body.days) || body.days.length === 0 || !body.days.every((d) => DAYS.includes(d))) {
-      details.push({ field: 'days', message: `days debe ser un arreglo no vacío de: ${DAYS.join(', ')}` });
-    } else out.days = body.days;
+    if (validateDays(body.days, 'days', details)) out.days = body.days;
   }
   if (body.active !== undefined) {
     if (typeof body.active !== 'boolean') {
