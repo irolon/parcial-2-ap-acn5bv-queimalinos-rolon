@@ -16,6 +16,7 @@ tags: [indice]
 | 8 | [Rutina del día offline](https://trello.com/c/IPotDBpI) | [[superpowers/specs/2026-10-17-rutina-del-dia-design\|spec]] | [[superpowers/plans/2026-10-17-rutina-del-dia\|plan]] | [[producto/casos-de-uso\|CU-04, CU-05]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
 | 9 | [Biblioteca de ejercicios](https://trello.com/c/N3ibzf1E) | [[superpowers/specs/2026-10-17-biblioteca-ejercicios-design\|spec]] | [[superpowers/plans/2026-10-17-biblioteca-ejercicios\|plan]] | [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
 | 10 | [Sesión activa + timer de descanso](https://trello.com/c/WgQacbkv) | [[superpowers/specs/2026-10-17-sesion-activa-design\|spec]] | [[superpowers/plans/2026-10-17-sesion-activa\|plan]] | [[producto/casos-de-uso\|CU-05]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
+| 21 | [Biblioteca de ejercicios en la web](https://trello.com/c/rCks8PTo) | [[superpowers/specs/2026-10-24-web-exercises-library-design\|spec]] | [[superpowers/plans/2026-10-24-web-exercises-library\|plan]] | [[arquitectura/contratos-api\|Contratos de API]] |
 | — | Límite de 200 líneas y orden (mobile) | — | [[superpowers/plans/2026-10-17-orden-y-limite-200-mobile\|plan]] | Regla de `CONTRIBUTING.md` |
 
 Volver a [[inicio]].

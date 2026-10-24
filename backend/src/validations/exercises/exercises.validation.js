@@ -1,9 +1,53 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { MUSCLE_GROUPS } from '../../models/exercises/exercise.model.js';
+import { MUSCLE_GROUPS, EQUIPMENT } from '../../models/exercises/exercise.model.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isString = (v) => typeof v === 'string';
 const trimmed = (v) => (isString(v) ? v.trim() : v);
+
+const VIDEO_URL_MESSAGE =
+  'El video debe ser un link que empiece con http:// o https:// (máximo 500 caracteres)';
+
+function isValidVideoUrl(value) {
+  if (value.length > 500 || !/^https?:\/\//i.test(value)) return false;
+  try {
+    return new URL(value).hostname !== '';
+  } catch {
+    return false;
+  }
+}
+
+/** Reglas extra por campo opcional: devuelven el mensaje de error o null. */
+const OPTIONAL_RULES = {
+  equipment: (v) => (EQUIPMENT.includes(v) ? null : `Debe ser uno de: ${EQUIPMENT.join(', ')}`),
+  video_url: (v) => (isValidVideoUrl(v) ? null : VIDEO_URL_MESSAGE),
+  description: (v) => (v.length <= 1000 ? null : 'La descripción puede tener hasta 1000 caracteres'),
+};
+
+/**
+ * Valida un campo opcional (equipment, description, video_url). Devuelve
+ * { value } (null si viene null o vacío) o { error } con el mensaje.
+ */
+function parseOptional(field, raw) {
+  if (raw === null) return { value: null };
+  if (!isString(raw)) return { error: `${field} debe ser texto` };
+  const value = raw.trim();
+  if (value === '') return { value: null };
+  const error = OPTIONAL_RULES[field](value);
+  return error ? { error } : { value };
+}
+
+/** Aplica parseOptional a los tres campos presentes; acumula errores en details. */
+function collectOptionals(body, details) {
+  const out = {};
+  Object.keys(OPTIONAL_RULES).forEach((field) => {
+    if (body[field] === undefined) return;
+    const { value, error } = parseOptional(field, body[field]);
+    if (error) details.push({ field, message: error });
+    else out[field] = value;
+  });
+  return out;
+}
 
 /** Filtros de GET /exercises (query string). */
 export function validateListQuery(query) {
@@ -38,19 +82,16 @@ export function validateCreateExercise(body) {
   if (!MUSCLE_GROUPS.includes(body.muscle_group)) {
     details.push({ field: 'muscle_group', message: `Debe ser uno de: ${MUSCLE_GROUPS.join(', ')}` });
   }
-  ['equipment', 'description', 'video_url'].forEach((f) => {
-    if (body[f] !== undefined && !isString(body[f])) {
-      details.push({ field: f, message: `${f} debe ser texto` });
-    }
-  });
+  const optionals = collectOptionals(body, details);
 
   if (details.length > 0) throw Errors.validation('Error de validación', details);
   return {
     name,
     muscle_group: body.muscle_group,
-    equipment: trimmed(body.equipment) || null,
-    description: trimmed(body.description) || null,
-    video_url: trimmed(body.video_url) || null,
+    equipment: null,
+    description: null,
+    video_url: null,
+    ...optionals,
   };
 }
 
@@ -70,13 +111,7 @@ export function validateUpdateExercise(body) {
       details.push({ field: 'muscle_group', message: `Debe ser uno de: ${MUSCLE_GROUPS.join(', ')}` });
     } else out.muscle_group = body.muscle_group;
   }
-  ['equipment', 'description', 'video_url'].forEach((f) => {
-    if (body[f] !== undefined) {
-      if (body[f] !== null && !isString(body[f])) {
-        details.push({ field: f, message: `${f} debe ser texto` });
-      } else out[f] = body[f] === null ? null : trimmed(body[f]);
-    }
-  });
+  Object.assign(out, collectOptionals(body, details));
 
   if (Object.keys(out).length === 0) {
     details.push({ field: 'body', message: 'Enviá al menos un campo para actualizar' });

@@ -79,5 +79,7 @@ export async function updateExercise(id, fields) {
 /** Elimina un ejercicio. */
 export async function deleteExercise(id) {
   const { error } = await supabase.from(EXERCISES_TABLE).delete().eq('id', id);
+  // 23503 = foreign_key_violation: está en una rutina o en una sesión.
+  if (error?.code === '23503') throw Errors.exerciseInUse();
   if (error) throw Errors.internal(error.message);
 }

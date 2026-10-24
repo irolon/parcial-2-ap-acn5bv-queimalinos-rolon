@@ -1,0 +1,39 @@
+import * as RadixDialog from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
+
+/** Modal accesible (Radix). Sin `description` no se asocia ningún aria-describedby. */
+export default function Dialog({ open, onOpenChange, title, description, children, footer }) {
+  const contentProps = description ? {} : { 'aria-describedby': undefined };
+  return (
+    <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
+      <RadixDialog.Portal>
+        <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
+        <RadixDialog.Content
+          {...contentProps}
+          className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-32px)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border border-ink3 bg-ink1 shadow-xl"
+        >
+          <div className="flex items-start justify-between gap-4 px-6 pt-5">
+            <div className="min-w-0">
+              <RadixDialog.Title className="font-display text-lg font-semibold text-bone0">
+                {title}
+              </RadixDialog.Title>
+              {description && (
+                <RadixDialog.Description className="mt-1 font-body text-sm text-ink6">
+                  {description}
+                </RadixDialog.Description>
+              )}
+            </div>
+            <RadixDialog.Close
+              aria-label="Cerrar"
+              className="shrink-0 cursor-pointer rounded-md p-1 text-ink6 hover:text-bone0 focus-visible:outline-2 focus-visible:outline-accentText"
+            >
+              <X size={18} aria-hidden="true" />
+            </RadixDialog.Close>
+          </div>
+          <div className="overflow-y-auto px-6 py-4">{children}</div>
+          {footer && <div className="flex justify-end gap-3 px-6 pb-5">{footer}</div>}
+        </RadixDialog.Content>
+      </RadixDialog.Portal>
+    </RadixDialog.Root>
+  );
+}
