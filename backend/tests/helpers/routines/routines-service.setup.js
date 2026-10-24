@@ -16,6 +16,7 @@ export const mockRepo = {
   findRoutineById: jest.fn(),
   findRoutineByIdWithExercises: jest.fn(),
   updateRoutine: jest.fn(),
+  deleteRoutine: jest.fn(),
   findActiveRoutineForStudentToday: jest.fn(),
   findActiveRoutinesForStudent: jest.fn(),
 };
@@ -24,15 +25,14 @@ jest.unstable_mockModule(
   () => mockRepo
 );
 
-export const mockExercisesRepo = {
+export const mockRoutineExercisesRepo = {
   findRoutineExercise: jest.fn(),
   updateRoutineExercise: jest.fn(),
   deleteRoutineExercise: jest.fn(),
-  deleteRoutine: jest.fn(),
 };
 jest.unstable_mockModule(
   src('repositories/routines/routine-exercises.repository.js'),
-  () => mockExercisesRepo
+  () => mockRoutineExercisesRepo
 );
 
 export const service = await import(src('services/routines/routines.service.js'));

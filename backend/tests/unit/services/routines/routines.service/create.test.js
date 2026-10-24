@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 import {
   mockRepo,
-  mockExercisesRepo,
   service,
   TRAINER_ID,
   ROUTINE,
@@ -112,10 +111,10 @@ describe('routines.service', () => {
       it('borra la rutina y re-lanza el error original', async () => {
         const original = new Error('insert falló');
         mockRepo.addRoutineExercises.mockRejectedValue(original);
-        mockExercisesRepo.deleteRoutine.mockResolvedValue();
+        mockRepo.deleteRoutine.mockResolvedValue();
 
         await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
-        expect(mockExercisesRepo.deleteRoutine).toHaveBeenCalledWith('rt-1');
+        expect(mockRepo.deleteRoutine).toHaveBeenCalledWith('rt-1');
       });
 
       it('si la compensación también falla, la loguea y sale el error original', async () => {
@@ -123,7 +122,7 @@ describe('routines.service', () => {
         const original = new Error('insert falló');
         const compensationError = new Error('delete falló');
         mockRepo.addRoutineExercises.mockRejectedValue(original);
-        mockExercisesRepo.deleteRoutine.mockRejectedValue(compensationError);
+        mockRepo.deleteRoutine.mockRejectedValue(compensationError);
 
         await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
         expect(errorSpy).toHaveBeenCalledWith(

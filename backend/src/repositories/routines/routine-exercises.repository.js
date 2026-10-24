@@ -1,7 +1,6 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import {
-  ROUTINES_TABLE,
   ROUTINE_EXERCISES_TABLE,
   ROUTINE_EXERCISE_COLUMNS,
 } from '../../models/routines/routine.model.js';
@@ -36,11 +35,5 @@ export async function deleteRoutineExercise(routineExerciseId) {
     .from(ROUTINE_EXERCISES_TABLE)
     .delete()
     .eq('id', routineExerciseId);
-  if (error) throw Errors.internal(error.message);
-}
-
-/** Borra una rutina (compensación si falla la carga de sus ejercicios). */
-export async function deleteRoutine(routineId) {
-  const { error } = await supabase.from(ROUTINES_TABLE).delete().eq('id', routineId);
   if (error) throw Errors.internal(error.message);
 }

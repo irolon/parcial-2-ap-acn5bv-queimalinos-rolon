@@ -1,6 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routines/routines.repository.js';
-import * as exercisesRepo from '../../repositories/routines/routine-exercises.repository.js';
+import * as routineExercisesRepo from '../../repositories/routines/routine-exercises.repository.js';
 import {
   isOwnedBy,
   dayName,
@@ -43,7 +43,7 @@ export async function createWithExercises(routineFields, exercises) {
     const created = await repository.addRoutineExercises(routine.id, exercises);
     return { ...routine, exercises: created };
   } catch (err) {
-    await exercisesRepo.deleteRoutine(routine.id).catch((compensationError) => {
+    await repository.deleteRoutine(routine.id).catch((compensationError) => {
       console.error('[ROUTINE COMPENSATION FAILED]', routine.id, compensationError);
     });
     throw err;
@@ -112,21 +112,21 @@ export async function addExercises(trainerId, routineId, exercises) {
 /** Verifica rutina propia + que el ejercicio sea parte de ella. */
 async function assertRoutineExercise(trainerId, routineId, routineExerciseId, action) {
   await getOwnedRoutine(trainerId, routineId, action);
-  const found = await exercisesRepo.findRoutineExercise(routineId, routineExerciseId);
+  const found = await routineExercisesRepo.findRoutineExercise(routineId, routineExerciseId);
   if (!found) throw Errors.routineExerciseNotFound();
 }
 
 /** Edita un ejercicio de una rutina propia y devuelve el detalle recargado. */
 export async function updateExercise(trainerId, routineId, routineExerciseId, fields) {
   await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
-  await exercisesRepo.updateRoutineExercise(routineExerciseId, fields);
+  await routineExercisesRepo.updateRoutineExercise(routineExerciseId, fields);
   return toRoutineDetail(await repository.findRoutineByIdWithExercises(routineId));
 }
 
 /** Quita un ejercicio de una rutina propia. */
 export async function removeExercise(trainerId, routineId, routineExerciseId) {
   await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
-  await exercisesRepo.deleteRoutineExercise(routineExerciseId);
+  await routineExercisesRepo.deleteRoutineExercise(routineExerciseId);
 }
 
 /** Rutina del día del alumno (null si no tiene ninguna activa para hoy). */

@@ -169,3 +169,9 @@ export async function findActiveRoutinesForStudent(studentId) {
   if (error) throw Errors.internal(error.message);
   return data;
 }
+
+/** Borra una rutina (compensación si falla la carga de sus ejercicios). */
+export async function deleteRoutine(routineId) {
+  const { error } = await supabase.from(ROUTINES_TABLE).delete().eq('id', routineId);
+  if (error) throw Errors.internal(error.message);
+}
