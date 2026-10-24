@@ -56,6 +56,13 @@ describe('routine-templates.service (CRUD)', () => {
       expect(result.structure.exercises[0].sets).toBe(4);
     });
 
+    it('deja exercise: null si el ejercicio ya no existe', async () => {
+      mockRepo.findTemplateById.mockResolvedValue(TEMPLATE);
+      mockRepo.findExercisesByIds.mockResolvedValue([]);
+      const result = await service.getById(TRAINER_ID, 'tp-1');
+      expect(result.structure.exercises[0].exercise).toBeNull();
+    });
+
     it('404 TEMPLATE_NOT_FOUND si es de otro trainer', async () => {
       mockRepo.findTemplateById.mockResolvedValue({ ...TEMPLATE, trainer_id: 'otro' });
       await expect(service.getById(TRAINER_ID, 'tp-1')).rejects.toMatchObject({

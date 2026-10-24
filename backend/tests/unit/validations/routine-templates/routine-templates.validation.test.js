@@ -61,6 +61,12 @@ describe('routine-templates.validation', () => {
       expect(fields(validateCreateTemplate, body({ structure: structure({ exercises: {} }) }))).toContain('structure.exercises');
     });
 
+    it('rechaza days string y structure null o arreglo', () => {
+      expect(fields(validateCreateTemplate, body({ structure: structure({ days: 'monday' }) }))).toContain('structure.days');
+      expect(fields(validateCreateTemplate, body({ structure: null }))).toContain('structure');
+      expect(fields(validateCreateTemplate, body({ structure: [] }))).toContain('structure');
+    });
+
     it('rechaza version distinta de 1', () => {
       expect(fields(validateCreateTemplate, body({ structure: structure({ version: 2 }) }))).toContain('structure.version');
     });
@@ -87,8 +93,10 @@ describe('routine-templates.validation', () => {
       expect(validateUpdateTemplate({ name: ' Nuevo ', level: null })).toEqual({ name: 'Nuevo', level: null });
     });
 
-    it('sanea structure si viene', () => {
-      expect(validateUpdateTemplate({ structure: structure() }).structure.days).toEqual(['monday']);
+    it('sanea structure si viene y descarta claves desconocidas', () => {
+      const out = validateUpdateTemplate({ structure: structure({ extra: true }) });
+      expect(out.structure.days).toEqual(['monday']);
+      expect(Object.keys(out.structure).sort()).toEqual(['days', 'exercises', 'version']);
     });
   });
 

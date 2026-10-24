@@ -10,7 +10,7 @@ const fail = (details) => {
 };
 
 /** Valida `structure` y devuelve solo version, days y exercises (saneados). */
-function validateStructure(structure, details) {
+export function validateStructure(structure, details) {
   if (!structure || typeof structure !== 'object' || Array.isArray(structure)) {
     details.push({ field: 'structure', message: 'structure debe ser un objeto' });
     return null;
@@ -43,6 +43,14 @@ function validateStructure(structure, details) {
     });
   }
   return { version: STRUCTURE_VERSION, days, exercises: items };
+}
+
+/** Valida una structure ya armada (p. ej. desde una rutina); lanza 400 si no cumple. */
+export function assertValidStructure(structure) {
+  const details = [];
+  const clean = validateStructure(structure, details);
+  if (details.length > 0) fail(details);
+  return clean;
 }
 
 function validateName(name, details) {

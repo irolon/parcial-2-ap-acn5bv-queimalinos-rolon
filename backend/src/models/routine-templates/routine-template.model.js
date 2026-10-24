@@ -36,12 +36,13 @@ export function toTemplateSummary(row) {
 
 /**
  * Arma la `structure` de una plantilla a partir del detalle de una rutina
- * (`toRoutineDetail`): ordena por order_index y lo normaliza a `order`.
+ * (`toRoutineDetail`): ordena por order_index y lo normaliza a `order`;
+ * quita días repetidos (conserva el orden de primera aparición).
  */
 export function structureFromRoutine(routineDetail) {
   return {
     version: STRUCTURE_VERSION,
-    days: routineDetail.days,
+    days: [...new Set(routineDetail.days)],
     exercises: routineDetail.exercises
       .slice()
       .sort((a, b) => a.order_index - b.order_index)

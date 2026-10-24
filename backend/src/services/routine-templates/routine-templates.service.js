@@ -2,6 +2,7 @@ import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routine-templates/routine-templates.repository.js';
 import * as routinesRepository from '../../repositories/routines/routines.repository.js';
 import { isOwnedBy, toRoutineDetail } from '../../models/routines/routine.model.js';
+import { assertValidStructure } from '../../validations/routine-templates/routine-templates.validation.js';
 import {
   toTemplateSummary,
   structureFromRoutine,
@@ -70,7 +71,7 @@ export async function createFromRoutine(trainerId, data) {
     name: data.name ?? routine.name,
     goal: routine.goal,
     level: data.level ?? null,
-    structure: structureFromRoutine(routine),
+    structure: assertValidStructure(structureFromRoutine(routine)),
   });
 }
 
