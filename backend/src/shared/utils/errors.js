@@ -24,6 +24,8 @@ export const Errors = {
   forbidden: (message = 'No tenés permiso para esta acción') =>
     new AppError(403, 'FORBIDDEN', message),
   notFound: (message = 'Recurso no encontrado') => new AppError(404, 'NOT_FOUND', message),
+  routineExerciseNotFound: () =>
+    new AppError(404, 'ROUTINE_EXERCISE_NOT_FOUND', 'El ejercicio no es parte de esta rutina'),
   emailExists: () =>
     new AppError(409, 'EMAIL_ALREADY_EXISTS', 'Ya existe una cuenta con ese email'),
   studentEmailExists: () =>

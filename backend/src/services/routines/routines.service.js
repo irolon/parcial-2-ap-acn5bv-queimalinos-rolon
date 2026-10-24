@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routines/routines.repository.js';
+import * as exercisesRepo from '../../repositories/routines/routine-exercises.repository.js';
 import {
   isOwnedBy,
   dayName,
@@ -32,6 +33,22 @@ async function getOwnedRoutine(trainerId, routineId, action) {
 }
 
 /**
+ * Inserta la rutina y después sus ejercicios. Sin transacción entre tablas: si
+ * los ejercicios fallan, se borra la rutina recién creada (compensación) y se
+ * re-lanza el error original; si la compensación también falla, se ignora.
+ */
+export async function createWithExercises(routineFields, exercises) {
+  const routine = await repository.createRoutine(routineFields);
+  try {
+    const created = await repository.addRoutineExercises(routine.id, exercises);
+    return { ...routine, exercises: created };
+  } catch (err) {
+    await exercisesRepo.deleteRoutine(routine.id).catch(() => {});
+    throw err;
+  }
+}
+
+/**
  * CU-04 — Crea y asigna una rutina a un alumno del trainer, con sus ejercicios.
  * Valida que el alumno, la plantilla (si viene) y cada ejercicio le pertenezcan
  * al trainer (los ejercicios también pueden ser globales).
@@ -50,18 +67,18 @@ export async function create(trainerId, data) {
 
   await assertExercisesAccessible(trainerId, data.exercises);
 
-  const routine = await repository.createRoutine({
-    trainer_id: trainerId,
-    student_id: data.student_id,
-    template_id: data.template_id ?? null,
-    name: data.name,
-    goal: data.goal,
-    days: data.days,
-    active: true,
-  });
-
-  const exercises = await repository.addRoutineExercises(routine.id, data.exercises);
-  return { ...routine, exercises };
+  return createWithExercises(
+    {
+      trainer_id: trainerId,
+      student_id: data.student_id,
+      template_id: data.template_id ?? null,
+      name: data.name,
+      goal: data.goal,
+      days: data.days,
+      active: true,
+    },
+    data.exercises
+  );
 }
 
 /** Lista las rutinas del trainer (filtros opcionales por alumno / activas). */
@@ -88,6 +105,26 @@ export async function addExercises(trainerId, routineId, exercises) {
   await getOwnedRoutine(trainerId, routineId, 'modificar');
   await assertExercisesAccessible(trainerId, exercises);
   return repository.addRoutineExercises(routineId, exercises);
+}
+
+/** Verifica rutina propia + que el ejercicio sea parte de ella. */
+async function assertRoutineExercise(trainerId, routineId, routineExerciseId, action) {
+  await getOwnedRoutine(trainerId, routineId, action);
+  const found = await exercisesRepo.findRoutineExercise(routineId, routineExerciseId);
+  if (!found) throw Errors.routineExerciseNotFound();
+}
+
+/** Edita un ejercicio de una rutina propia y devuelve el detalle recargado. */
+export async function updateExercise(trainerId, routineId, routineExerciseId, fields) {
+  await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
+  await exercisesRepo.updateRoutineExercise(routineExerciseId, fields);
+  return toRoutineDetail(await repository.findRoutineByIdWithExercises(routineId));
+}
+
+/** Quita un ejercicio de una rutina propia. */
+export async function removeExercise(trainerId, routineId, routineExerciseId) {
+  await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
+  await exercisesRepo.deleteRoutineExercise(routineExerciseId);
 }
 
 /** Rutina del día del alumno (null si no tiene ninguna activa para hoy). */

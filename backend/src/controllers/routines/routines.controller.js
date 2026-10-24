@@ -31,6 +31,20 @@ export const addExercises = asyncHandler(async (req, res) => {
   res.status(201).json({ data });
 });
 
+/** PATCH /routines/:id/exercises/:routineExerciseId — edita un ejercicio asignado. */
+export const updateExercise = asyncHandler(async (req, res) => {
+  const { id, routineExerciseId } = req.params;
+  const data = await routinesService.updateExercise(req.user.id, id, routineExerciseId, req.body);
+  res.json({ data });
+});
+
+/** DELETE /routines/:id/exercises/:routineExerciseId — quita un ejercicio. 204 */
+export const removeExercise = asyncHandler(async (req, res) => {
+  const { id, routineExerciseId } = req.params;
+  await routinesService.removeExercise(req.user.id, id, routineExerciseId);
+  res.status(204).end();
+});
+
 /** GET /routines/today — rutina del día del alumno (solo alumnos). */
 export const today = asyncHandler(async (req, res) => {
   const data = await routinesService.today(req.user.id);

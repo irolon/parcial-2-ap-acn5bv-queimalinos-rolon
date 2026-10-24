@@ -6,6 +6,8 @@ import {
   validateCreateRoutine,
   validateUpdateRoutine,
   validateAddExercises,
+  validateUpdateRoutineExercise,
+  validateRoutineExerciseParams,
   validateListQuery,
   validateIdParam,
 } from '../../validations/routines/routines.validation.js';
@@ -41,6 +43,19 @@ router.post(
   validate(validateIdParam, 'params'),
   validate(validateAddExercises),
   routinesController.addExercises
+);
+router.patch(
+  '/:id/exercises/:routineExerciseId',
+  requireRole('trainer'),
+  validate(validateRoutineExerciseParams, 'params'),
+  validate(validateUpdateRoutineExercise),
+  routinesController.updateExercise
+);
+router.delete(
+  '/:id/exercises/:routineExerciseId',
+  requireRole('trainer'),
+  validate(validateRoutineExerciseParams, 'params'),
+  routinesController.removeExercise
 );
 
 export default router;

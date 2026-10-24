@@ -1,5 +1,6 @@
 import {
   mockRepo,
+  mockExercisesRepo,
   service,
   TRAINER_ID,
   ROUTINE,
@@ -99,6 +100,30 @@ describe('routines.service', () => {
       });
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
       expect(mockRepo.addRoutineExercises).not.toHaveBeenCalled();
+    });
+
+    describe('compensación si fallan los ejercicios', () => {
+      beforeEach(() => {
+        mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+        mockRepo.createRoutine.mockResolvedValue(ROUTINE);
+      });
+
+      it('borra la rutina y re-lanza el error original', async () => {
+        const original = new Error('insert falló');
+        mockRepo.addRoutineExercises.mockRejectedValue(original);
+        mockExercisesRepo.deleteRoutine.mockResolvedValue();
+
+        await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
+        expect(mockExercisesRepo.deleteRoutine).toHaveBeenCalledWith('rt-1');
+      });
+
+      it('si la compensación también falla, sale el error original', async () => {
+        const original = new Error('insert falló');
+        mockRepo.addRoutineExercises.mockRejectedValue(original);
+        mockExercisesRepo.deleteRoutine.mockRejectedValue(new Error('delete falló'));
+
+        await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
+      });
     });
   });
 });
