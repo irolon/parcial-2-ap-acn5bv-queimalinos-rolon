@@ -1,16 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { api } from '@/api/shared/client';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
-import {
-  LOGIN_RESPONSE,
-  USER,
-  resetAuthStore,
-  savedSession,
-  seedSavedSession,
-} from '../../../helpers/auth/authStore';
+import { resetAuthStore, savedSession } from '../../../helpers/auth/authStore';
 
 const state = () => useAuthStore.getState();
+const TRAINER = { id: 't-1', email: 'pt@fit.com', name: 'Pablo' };
+const STUDENT = { id: 's-1', email: 'ana@fit.com', name: 'Ana' };
 
 beforeEach(() => resetAuthStore());
 
@@ -19,140 +14,50 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe('useAuthStore: login', () => {
-  it('guarda user, token y refresh; persiste solo user y refresh', async () => {
-    stubFetch(async () => jsonResponse(200, LOGIN_RESPONSE));
-    await expect(state().login({ email: 'pt@fit.com', password: 'x' })).resolves.toEqual(USER);
-    expect(state()).toMatchObject({
-      user: USER,
-      token: 'access-1',
-      refreshToken: 'refresh-1',
-      status: 'authenticated',
-    });
-    expect(savedSession()).toEqual({ user: USER, refreshToken: 'refresh-1' });
+describe('useAuthStore: register', () => {
+  it('guarda la sesión como trainer, sin persistir el token', async () => {
+    const fetchMock = stubFetch(async () =>
+      jsonResponse(201, { trainer: TRAINER, token: 'access-1', refresh_token: 'refresh-1' }),
+    );
+    const user = await state().register({ name: 'Pablo', email: 'pt@fit.com', password: 'x', specialty: 'Fuerza' });
+    expect(user).toEqual({ ...TRAINER, role: 'trainer' });
+    expect(calls(fetchMock)[0][0]).toBe('/auth/register');
+    expect(bodyOf(calls(fetchMock)[0][1]).email).toBe('pt@fit.com');
+    expect(state()).toMatchObject({ user, token: 'access-1', refreshToken: 'refresh-1', status: 'authenticated' });
+    expect(savedSession()).toEqual({ user, refreshToken: 'refresh-1' });
     expect(localStorage.getItem('fittrainer.session')).not.toContain('access-1');
   });
 
-  it('si falla, tira el error normalizado y queda anonymous', async () => {
-    stubFetch(async () => errorResponse(401, 'INVALID_CREDENTIALS', 'Credenciales inválidas'));
-    await expect(state().login({ email: 'a@b.com', password: 'mal' })).rejects.toMatchObject({
-      status: 401,
-      code: 'INVALID_CREDENTIALS',
-    });
-    expect(state()).toMatchObject({ user: null, token: null, status: 'anonymous' });
-  });
-});
-
-describe('useAuthStore: logout', () => {
-  beforeEach(() => {
-    useAuthStore.setState({ user: USER, token: 'access-1', refreshToken: 'refresh-1', status: 'authenticated' });
-  });
-
-  it('llama a /auth/logout con el refresh y limpia todo', async () => {
-    const fetchMock = stubFetch(async () => jsonResponse(204));
-    await state().logout();
-    const [[path, init]] = calls(fetchMock);
-    expect(path).toBe('/auth/logout');
-    expect(bodyOf(init)).toEqual({ refresh_token: 'refresh-1' });
-    expect(init.headers.Authorization).toBe('Bearer access-1');
-    expect(state()).toMatchObject({ user: null, token: null, refreshToken: null, status: 'anonymous' });
-    expect(savedSession()).toEqual({ user: null, refreshToken: null });
-  });
-
-  it('limpia el estado local aunque la API falle', async () => {
-    stubFetch(async () => {
-      throw new TypeError('Failed to fetch');
-    });
-    await state().logout();
-    expect(state()).toMatchObject({ user: null, token: null, refreshToken: null, status: 'anonymous' });
-  });
-});
-
-describe('useAuthStore: restore', () => {
-  it('con refresh guardado pide un access nuevo y queda authenticated', async () => {
-    await seedSavedSession();
-    const fetchMock = stubFetch(async () => jsonResponse(200, { token: 'access-9', expires_in: '1h' }));
-    const pending = state().restore();
-    expect(state().status).toBe('loading');
-    await pending;
-    expect(calls(fetchMock)[0][0]).toBe('/auth/refresh');
-    expect(state()).toMatchObject({ user: USER, token: 'access-9', status: 'authenticated' });
-    expect(savedSession()).toEqual({ user: USER, refreshToken: 'refresh-1' });
-  });
-
-  it('si el refresh falla, queda anonymous y limpia lo guardado', async () => {
-    await seedSavedSession();
-    stubFetch(async () => errorResponse(401, 'UNAUTHORIZED'));
-    await state().restore();
-    expect(state()).toMatchObject({ user: null, token: null, refreshToken: null, status: 'anonymous' });
-    expect(savedSession()).toEqual({ user: null, refreshToken: null });
-  });
-
-  it('sin conexión queda anonymous pero conserva user y refresh guardados', async () => {
-    await seedSavedSession();
-    stubFetch(async () => {
-      throw new TypeError('Failed to fetch');
-    });
-    await state().restore();
-    expect(state()).toMatchObject({
-      user: USER,
-      token: null,
-      refreshToken: 'refresh-1',
-      status: 'anonymous',
-    });
-    expect(savedSession()).toEqual({ user: USER, refreshToken: 'refresh-1' });
-  });
-
-  it('sin sesión guardada queda anonymous sin llamar a la API', async () => {
-    const fetchMock = stubFetch(async () => jsonResponse(200, {}));
-    await state().restore();
-    expect(state().status).toBe('anonymous');
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('useAuthStore + client', () => {
-  beforeEach(() => {
-    useAuthStore.setState({ user: USER, token: 'viejo', refreshToken: 'refresh-1', status: 'authenticated' });
-  });
-
-  it('un 401 renueva con el refresh del store y reintenta con el token nuevo', async () => {
-    const fetchMock = stubFetch(async (url, init) => {
-      if (url.endsWith('/auth/refresh')) return jsonResponse(200, { token: 'nuevo', expires_in: '1h' });
-      return init.headers.Authorization === 'Bearer nuevo'
-        ? jsonResponse(200, { ok: true })
-        : errorResponse(401, 'UNAUTHORIZED');
-    });
-    await expect(api.get('/students')).resolves.toEqual({ ok: true });
-    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh', '/students']);
-    expect(state().token).toBe('nuevo');
-  });
-
-  it('si la renovación falla, hace logout y el status pasa a anonymous', async () => {
-    stubFetch(async () => errorResponse(401, 'UNAUTHORIZED'));
-    await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
-    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
+  it('si falla, relanza el error y no guarda sesión', async () => {
+    stubFetch(async () => errorResponse(409, 'EMAIL_ALREADY_EXISTS'));
+    await expect(state().register({ email: 'pt@fit.com' })).rejects.toMatchObject({ code: 'EMAIL_ALREADY_EXISTS' });
     expect(state()).toMatchObject({ user: null, token: null, refreshToken: null });
+    expect(state().status).not.toBe('authenticated');
+    expect(localStorage.getItem('fittrainer.session')).toBeNull();
   });
+});
 
-  it('si la renovación falla por red, conserva user y refresh y no hace logout', async () => {
-    const fetchMock = stubFetch(async (url) => {
-      if (url.endsWith('/auth/refresh')) throw new TypeError('Failed to fetch');
-      return errorResponse(401, 'UNAUTHORIZED');
-    });
-    await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
-    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
-    expect(state()).toMatchObject({ user: USER, token: null, refreshToken: 'refresh-1' });
-    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh']);
-  });
-
-  it('si la renovación da 401, pide /students, /auth/refresh y /auth/logout una sola vez cada uno', async () => {
-    const fetchMock = stubFetch(async (url) =>
-      url.endsWith('/auth/logout') ? jsonResponse(204) : errorResponse(401, 'UNAUTHORIZED'),
+describe('useAuthStore: joinFromInvitation', () => {
+  it('guarda la sesión como student, sin persistir el token', async () => {
+    const fetchMock = stubFetch(async () =>
+      jsonResponse(201, { student: STUDENT, token: 'access-2', refresh_token: 'refresh-2' }),
     );
-    await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
-    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
-    await vi.waitFor(() => expect(calls(fetchMock)).toHaveLength(3));
-    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh', '/auth/logout']);
+    const user = await state().joinFromInvitation({ token: 'tok', password: 'x12345678' });
+    expect(user).toEqual({ ...STUDENT, role: 'student' });
+    expect(calls(fetchMock)[0][0]).toBe('/students');
+    expect(state()).toMatchObject({ user, token: 'access-2', refreshToken: 'refresh-2', status: 'authenticated' });
+    expect(savedSession()).toEqual({ user, refreshToken: 'refresh-2' });
+    expect(localStorage.getItem('fittrainer.session')).not.toContain('access-2');
+  });
+
+  it('si falla, relanza el error y no guarda sesión', async () => {
+    stubFetch(async () => errorResponse(410, 'INVITATION_ALREADY_USED'));
+    await expect(state().joinFromInvitation({ token: 'tok', password: 'x' })).rejects.toMatchObject({
+      status: 410,
+      code: 'INVITATION_ALREADY_USED',
+    });
+    expect(state()).toMatchObject({ user: null, token: null, refreshToken: null });
+    expect(state().status).not.toBe('authenticated');
+    expect(localStorage.getItem('fittrainer.session')).toBeNull();
   });
 });
