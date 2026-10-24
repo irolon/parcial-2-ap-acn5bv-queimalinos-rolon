@@ -62,6 +62,22 @@ export function structureFromRoutine(routineDetail) {
   };
 }
 
+/**
+ * Traduce los errores de validación de una structure armada desde una rutina
+ * (campos `structure.*` que el entrenador no mandó) a mensajes sobre la rutina,
+ * todos con `field: 'routine_id'`.
+ */
+export function routineStructureDetails(details) {
+  return details.map(({ field, message }) => {
+    const exercise = /^structure\.exercises\[(\d+)\]/.exec(field);
+    let text = message;
+    if (exercise) text = `El ejercicio ${Number(exercise[1]) + 1} de la rutina: ${message}`;
+    else if (field === 'structure.exercises') text = 'La rutina tiene que tener entre 1 y 50 ejercicios';
+    else if (field === 'structure.days') text = `Los días de la rutina: ${message}`;
+    return { field: 'routine_id', message: text };
+  });
+}
+
 /** Ids únicos de los ejercicios de una structure. */
 export const templateExerciseIds = (structure) => [
   ...new Set(structureExercises(structure).map((e) => e.exercise_id)),

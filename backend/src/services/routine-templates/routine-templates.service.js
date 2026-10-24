@@ -9,6 +9,7 @@ import {
   structureFromRoutine,
   templateExerciseIds,
   structureExercises,
+  routineStructureDetails,
 } from '../../models/routine-templates/routine-template.model.js';
 
 /** Lanza 403 si algún ejercicio de la structure no es global ni del trainer. */
@@ -66,6 +67,18 @@ export async function create(trainerId, data) {
   });
 }
 
+/** Structure de la rutina; si no cumple las reglas de plantillas, 400 en términos de la rutina. */
+function routineStructureOrFail(routine) {
+  try {
+    return assertValidStructure(structureFromRoutine(routine));
+  } catch (err) {
+    if (err.code === 'VALIDATION_ERROR') {
+      throw Errors.validation(err.message, routineStructureDetails(err.details));
+    }
+    throw err;
+  }
+}
+
 /** Guarda una rutina propia como plantilla (copia goal, días y ejercicios; `goal` del body pisa el de la rutina). */
 export async function createFromRoutine(trainerId, data) {
   const row = await routinesRepository.findRoutineByIdWithExercises(data.routine_id);
@@ -82,7 +95,7 @@ export async function createFromRoutine(trainerId, data) {
     name: data.name ?? routine.name,
     goal,
     level: data.level ?? null,
-    structure: assertValidStructure(structureFromRoutine(routine)),
+    structure: routineStructureOrFail(routine),
   });
 }
 

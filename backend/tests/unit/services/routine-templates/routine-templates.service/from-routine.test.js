@@ -86,9 +86,37 @@ describe('routine-templates.service (createFromRoutine)', () => {
     mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, routine_exercises: [] });
     await expect(service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' })).rejects.toMatchObject({
       statusCode: 400,
-      details: [expect.objectContaining({ field: 'structure.exercises' })],
+      details: [
+        { field: 'routine_id', message: 'La rutina tiene que tener entre 1 y 50 ejercicios' },
+      ],
     });
     expect(mockRepo.createTemplate).not.toHaveBeenCalled();
+  });
+
+  it('traduce los errores de la structure a términos de la rutina (field routine_id)', async () => {
+    const routine_exercises = [
+      ROUTINE.routine_exercises[1],
+      { ...ROUTINE.routine_exercises[0], order_index: 1, notes: 'x'.repeat(501) },
+    ];
+    mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, routine_exercises });
+    await expect(service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' })).rejects.toMatchObject({
+      statusCode: 400,
+      code: 'VALIDATION_ERROR',
+      details: [
+        {
+          field: 'routine_id',
+          message: 'El ejercicio 2 de la rutina: notes debe tener como máximo 500 caracteres',
+        },
+      ],
+    });
+    expect(mockRepo.createTemplate).not.toHaveBeenCalled();
+  });
+
+  it('traduce los días inválidos de la rutina', async () => {
+    mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, days: [] });
+    await expect(service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' })).rejects.toMatchObject({
+      details: [{ field: 'routine_id', message: expect.stringMatching(/^Los días de la rutina: /) }],
+    });
   });
 
   it('400 si la rutina tiene más de 50 ejercicios', async () => {
