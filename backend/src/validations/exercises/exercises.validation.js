@@ -5,6 +5,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const isString = (v) => typeof v === 'string';
 const trimmed = (v) => (isString(v) ? v.trim() : v);
 
+const EQUIPMENT_MESSAGE = `Debe ser uno de: ${EQUIPMENT.join(', ')}`;
 const VIDEO_URL_MESSAGE =
   'El video debe ser un link que empiece con http:// o https:// (máximo 500 caracteres)';
 
@@ -19,7 +20,7 @@ function isValidVideoUrl(value) {
 
 /** Reglas extra por campo opcional: devuelven el mensaje de error o null. */
 const OPTIONAL_RULES = {
-  equipment: (v) => (EQUIPMENT.includes(v) ? null : `Debe ser uno de: ${EQUIPMENT.join(', ')}`),
+  equipment: (v) => (EQUIPMENT.includes(v) ? null : EQUIPMENT_MESSAGE),
   video_url: (v) => (isValidVideoUrl(v) ? null : VIDEO_URL_MESSAGE),
   description: (v) => (v.length <= 1000 ? null : 'La descripción puede tener hasta 1000 caracteres'),
 };
@@ -61,7 +62,11 @@ export function validateListQuery(query) {
       out.muscleGroup = query.muscle_group;
     }
   }
-  if (isString(query.equipment) && query.equipment.trim() !== '') out.equipment = query.equipment.trim();
+  if (isString(query.equipment) && query.equipment.trim() !== '') {
+    const equipment = query.equipment.trim();
+    if (EQUIPMENT.includes(equipment)) out.equipment = equipment;
+    else details.push({ field: 'equipment', message: EQUIPMENT_MESSAGE });
+  }
   if (isString(query.search) && query.search.trim() !== '') out.search = query.search.trim();
 
   // include_global: por defecto true; 'false' lo desactiva.

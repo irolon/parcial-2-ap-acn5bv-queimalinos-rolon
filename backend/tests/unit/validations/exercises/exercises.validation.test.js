@@ -1,5 +1,6 @@
 import {
   validateCreateExercise,
+  validateListQuery,
   validateUpdateExercise,
 } from '../../../../src/validations/exercises/exercises.validation.js';
 
@@ -80,5 +81,26 @@ describe('exercises.validation update — null y vacío', () => {
   });
   it('video_url en blanco pasa a null', () => {
     expect(validateUpdateExercise({ video_url: '   ' })).toEqual({ video_url: null });
+  });
+});
+
+describe('validateListQuery — equipment', () => {
+  it('acepta un equipamiento del catálogo', () => {
+    expect(validateListQuery({ equipment: 'barbell' }).equipment).toBe('barbell');
+  });
+
+  it('rechaza uno fuera del catálogo con field equipment y el mensaje de POST', () => {
+    invalid(validateListQuery, { equipment: 'TRX' }, 'equipment');
+    const messageOf = (fn) => {
+      try {
+        fn();
+      } catch (e) {
+        return e.details.find((d) => d.field === 'equipment').message;
+      }
+      return null;
+    };
+    expect(messageOf(() => validateListQuery({ equipment: 'TRX' }))).toBe(
+      messageOf(() => create({ equipment: 'TRX' })),
+    );
   });
 });

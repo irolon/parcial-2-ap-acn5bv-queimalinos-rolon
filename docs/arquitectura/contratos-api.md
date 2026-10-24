@@ -200,7 +200,7 @@ Agrega medición corporal.
 
 ### GET /exercises
 
-Biblioteca disponible (solo trainer). Query: `muscle_group`, `equipment`, `search`, `include_global`.
+Biblioteca disponible (solo trainer). Query: `muscle_group`, `equipment` (uno de `barbell` | `dumbbell` | `machine` | `cable` | `bodyweight` | `kettlebell` | `band`; otro valor → 400), `search`, `include_global`.
 
 **200 OK** — `{ data: [...] }`, ordenada por nombre. Cada ejercicio: `id`, `trainer_id` (null en los globales), `name`, `muscle_group`, `equipment`, `description`, `video_url`, `is_global`.
 
