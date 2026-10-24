@@ -176,9 +176,11 @@ Lista los alumnos del trainer autenticado (rol: trainer).
 
 **Query**
 - `active`: por defecto `true` (solo activos); `?active=false` trae los dados de baja.
-- `search`: busca por nombre (sin distinguir mayúsculas).
+- `search`: busca por nombre (contiene, sin distinguir mayúsculas). `%` y `_` no se escapan: funcionan como comodines.
 - `page`: desde 1 (por defecto 1). `limit`: por defecto 20, máximo 100.
 - Orden fijo: alta más reciente primero.
+
+**Errores:** `403 FORBIDDEN` con rol alumno.
 
 **200 OK**
 
@@ -208,7 +210,7 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "goal": "strength", "level": "beginner", "birth_date": "1999-05-01", "avatar_url": null,
     "active": true, "gym_equipment": ["Mancuernas", "Banco"], "injuries": "Lumbalgia",
     "created_at": "2026-10-17T12:00:00Z",
-    "latest_metrics": { "id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
+    "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
     "active_routine": { "id": "uuid", "name": "Push/Pull", "days": ["monday", "thursday"] }
@@ -227,9 +229,9 @@ Actualiza un alumno. Solo el trainer dueño. Hay que mandar al menos un campo.
 | Campo | Regla |
 |---|---|
 | `name` | 2–100 caracteres |
-| `goal` | `tonify | weight_loss | hypertrophy | strength` |
-| `level` | `beginner | intermediate | advanced` |
-| `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; `true` lo reactiva con la misma contraseña |
+| `goal` | `tonify`, `weight_loss`, `hypertrophy` o `strength` |
+| `level` | `beginner`, `intermediate` o `advanced` |
+| `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`. **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña |
 | `birth_date` | `YYYY-MM-DD`, no futura, o `null` |
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
@@ -246,39 +248,55 @@ Rutas anidadas en el alumno: `/students/:id/metrics`. Acceden el trainer dueño 
 
 **200 OK** — `{ data: [...] }`, el historial en orden **ascendente** por `recorded_at` (listo para graficar), sin paginación. Cada medida trae su `bmi`.
 
+```json
+{
+  "data": [
+    { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": 18,
+      "waist_cm": 80, "hip_cm": 95, "chest_cm": 100, "recorded_at": "2026-10-20T13:00:00+00:00",
+      "recorded_by": "trainer", "bmi": 23.5 }
+  ]
+}
+```
+
+**Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `403 FORBIDDEN` (alumno de otro trainer o inexistente).
+
 ### POST /students/:id/metrics
 
-**Body**
+**Body** (ejemplo completo; todos los campos son opcionales, pero tiene que venir al menos una medida)
 
 ```json
 {
-  "id": "uuid (opcional, generado en el cliente)",
+  "id": "6f1c2a9e-3b4d-4c5e-8f70-1a2b3c4d5e6f",
   "weight_kg": 74.5,
   "height_cm": 178,
   "body_fat_pct": 18,
   "waist_cm": 80,
   "hip_cm": 95,
   "chest_cm": 100,
-  "recorded_at": "2026-10-20T10:00:00-03:00 (opcional)"
+  "recorded_at": "2026-10-20T10:00:00-03:00"
 }
 ```
 
+- `id`: UUID generado en el cliente (opcional).
 - Las medidas van como **números JSON** (`"80"` da 400), son ≥ 0 y `body_fat_pct` ≤ 100. Tiene que venir al menos una.
 - `recorded_at`: ISO 8601 **con zona** (`Z` o `-03:00`); por defecto, ahora; hasta 5 minutos en el futuro (tolera el reloj adelantado del celular).
 - `recorded_by` lo pone el backend según el rol.
 - `id` hace el POST idempotente: un reintento con el mismo `id` responde **200** con lo ya guardado.
 
-**201 Created** — `{ data }` con la medida y su `bmi`.
+**201 Created** — `{ data }` con la medida (incluye `student_id`) y su `bmi`.
 
-**Errores:** `400 VALIDATION_ERROR`, `403 FORBIDDEN`, `409 METRIC_ID_CONFLICT` (el `id` ya es de otro alumno).
+**Errores:** `400 VALIDATION_ERROR`, `403 FORBIDDEN` (alumno de otro trainer o inexistente), `409 METRIC_ID_CONFLICT` (el `id` ya es de otro alumno, o el insert chocó con ese `id` y la medida original ya no existe: se borró entre medio).
 
 ### DELETE /students/:id/metrics/:metricId
 
 **204 No Content.** No hay `PATCH`: para corregir una medida se borra y se vuelve a cargar.
 
-**Errores:** `404 METRIC_NOT_FOUND` (no existe o no es de ese alumno), `403 FORBIDDEN` (un alumno no puede borrar una medida cargada por su entrenador).
+**Errores:**
+- `400 VALIDATION_ERROR`: `id` o `metricId` no es UUID.
+- `403 FORBIDDEN`: el alumno es de otro trainer o no existe, o un alumno intenta borrar una medida cargada por su entrenador.
+- `404 METRIC_NOT_FOUND`: la medida no existe o no es de ese alumno.
 
-> **IMC:** `bmi` se calcula en cada respuesta (`peso / altura²`, en metros, con 1 decimal) y no se guarda. Si la medida no trae altura, se usa la última registrada antes de esa medida; puede venir `null`. Los clientes no lo calculan.
+> **IMC:** `bmi` se calcula en cada respuesta (`peso / altura²`, en metros, con 1 decimal) y no se guarda. Si la medida no trae altura, se usa la última registrada **en o antes** de esa medida; puede venir `null`. Los clientes no lo calculan.
 
 ---
 
