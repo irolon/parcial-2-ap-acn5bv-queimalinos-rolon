@@ -8,12 +8,23 @@ import {
   toTemplateSummary,
   structureFromRoutine,
   templateExerciseIds,
+  structureExercises,
 } from '../../models/routine-templates/routine-template.model.js';
 
 /** Lanza 403 si algún ejercicio de la structure no es global ni del trainer. */
 async function assertExercisesAccessible(trainerId, structure) {
   const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure));
   if (missing.length > 0) throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
+}
+
+/** Structure saneada; 409 TEMPLATE_STRUCTURE_INVALID (con los detalles) si no pasa la validación. */
+function validStructureOrConflict(structure) {
+  try {
+    return assertValidStructure(structure);
+  } catch (err) {
+    if (err.code === 'VALIDATION_ERROR') throw Errors.templateStructureInvalid(err.details);
+    throw err;
+  }
 }
 
 /** Plantilla propia; 404 si no existe o es de otro trainer (no revela su existencia). */
@@ -34,7 +45,7 @@ export async function getById(trainerId, id) {
   const template = await getOwnedTemplate(trainerId, id);
   const found = await repository.findExercisesByIds(templateExerciseIds(template.structure));
   const byId = new Map(found.map((e) => [e.id, e]));
-  const exercises = template.structure.exercises.map((e) => ({
+  const exercises = structureExercises(template.structure).map((e) => ({
     ...e,
     exercise: byId.get(e.exercise_id) ?? null,
   }));
@@ -105,8 +116,9 @@ export async function instantiate(trainerId, templateId, data) {
   const belongs = await routinesRepository.isStudentOfTrainer(data.student_id, trainerId);
   if (!belongs) throw Errors.forbidden('No podés asignarle rutinas a un alumno que no es tuyo');
 
+  // Una plantilla cargada por otra vía (seed, IA) puede estar incompleta.
+  const structure = validStructureOrConflict(template.structure);
   // Los ejercicios pudieron borrarse desde que se guardó la plantilla.
-  const { structure } = template;
   const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure));
   if (missing.length > 0) throw Errors.templateExercisesUnavailable(missing);
 

@@ -15,6 +15,12 @@ const BASE_COLUMNS = 'id, trainer_id, name, goal, level, frequency_per_week, gen
 /** Columnas para el detalle (con structure). */
 export const TEMPLATE_DETAIL_COLUMNS = `${BASE_COLUMNS}, structure`;
 
+/** Arreglo `field` de la structure; [] si falta o no es un arreglo (plantillas cargadas por otra vía). */
+const listOf = (structure, field) => (Array.isArray(structure?.[field]) ? structure[field] : []);
+
+/** Ejercicios de una structure, tolerante a structures incompletas. */
+export const structureExercises = (structure) => listOf(structure, 'exercises');
+
 /** Proyección de listado: la plantilla sin structure, con `days` y `exercise_count`. */
 export function toTemplateSummary(row) {
   const { id, name, goal, level, frequency_per_week, generated_by_ai, created_at, structure } = row;
@@ -26,8 +32,8 @@ export function toTemplateSummary(row) {
     frequency_per_week,
     generated_by_ai,
     created_at,
-    days: structure?.days ?? [],
-    exercise_count: structure?.exercises?.length ?? 0,
+    days: listOf(structure, 'days'),
+    exercise_count: structureExercises(structure).length,
   };
 }
 
@@ -58,5 +64,5 @@ export function structureFromRoutine(routineDetail) {
 
 /** Ids únicos de los ejercicios de una structure. */
 export const templateExerciseIds = (structure) => [
-  ...new Set((structure?.exercises ?? []).map((e) => e.exercise_id)),
+  ...new Set(structureExercises(structure).map((e) => e.exercise_id)),
 ];

@@ -29,6 +29,13 @@ export const Errors = {
   routineNeedsExercise: () =>
     new AppError(409, 'ROUTINE_NEEDS_EXERCISE', 'La rutina tiene que tener al menos un ejercicio'),
   templateNotFound: () => new AppError(404, 'TEMPLATE_NOT_FOUND', 'Plantilla no encontrada'),
+  templateStructureInvalid: (details) =>
+    new AppError(
+      409,
+      'TEMPLATE_STRUCTURE_INVALID',
+      'La plantilla está incompleta: editala antes de asignarla',
+      details
+    ),
   templateExercisesUnavailable: (missingIds) =>
     new AppError(
       409,

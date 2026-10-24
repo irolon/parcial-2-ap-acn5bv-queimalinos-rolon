@@ -28,6 +28,12 @@ describe('routine-template.model', () => {
     expect(toTemplateSummary({ id: 't', structure: {} })).toMatchObject({ days: [], exercise_count: 0 });
   });
 
+  it('tolera days/exercises que no son arreglos', () => {
+    const structure = { days: 'monday', exercises: 'x' };
+    expect(toTemplateSummary({ id: 't', structure })).toMatchObject({ days: [], exercise_count: 0 });
+    expect(templateExerciseIds(structure)).toEqual([]);
+  });
+
   it('structureFromRoutine ordena por order_index y lo pasa a order', () => {
     const detail = {
       days: ['monday'],

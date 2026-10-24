@@ -40,6 +40,18 @@ describe('routine-templates.service (instantiate)', () => {
     expect(mockRoutinesService.createWithExercises).not.toHaveBeenCalled();
   });
 
+  it('409 TEMPLATE_STRUCTURE_INVALID si la structure está incompleta, antes de mirar ejercicios', async () => {
+    mockRepo.findTemplateById.mockResolvedValue({ ...TEMPLATE, structure: {} });
+    await expect(service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' })).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'TEMPLATE_STRUCTURE_INVALID',
+      message: 'La plantilla está incompleta: editala antes de asignarla',
+      details: expect.arrayContaining([expect.objectContaining({ field: 'structure.exercises' })]),
+    });
+    expect(mockRoutinesService.findMissingExerciseIds).not.toHaveBeenCalled();
+    expect(mockRoutinesService.createWithExercises).not.toHaveBeenCalled();
+  });
+
   it('409 con los ids faltantes si algún ejercicio ya no está disponible', async () => {
     mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-1']);
     await expect(service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' })).rejects.toMatchObject({

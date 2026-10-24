@@ -5,6 +5,7 @@ import {
   TRAINER_ID,
   STRUCTURE,
   TEMPLATE,
+  EX_ID,
 } from '../../../../helpers/routine-templates/routine-templates-service.setup.js';
 
 describe('routine-templates.service (CRUD)', () => {
@@ -50,10 +51,17 @@ describe('routine-templates.service (CRUD)', () => {
   describe('getById', () => {
     it('hidrata cada ejercicio con sus datos', async () => {
       mockRepo.findTemplateById.mockResolvedValue(TEMPLATE);
-      mockRepo.findExercisesByIds.mockResolvedValue([{ id: 'ex-1', name: 'Sentadilla' }]);
+      mockRepo.findExercisesByIds.mockResolvedValue([{ id: EX_ID, name: 'Sentadilla' }]);
       const result = await service.getById(TRAINER_ID, 'tp-1');
-      expect(result.structure.exercises[0].exercise).toEqual({ id: 'ex-1', name: 'Sentadilla' });
+      expect(result.structure.exercises[0].exercise).toEqual({ id: EX_ID, name: 'Sentadilla' });
       expect(result.structure.exercises[0].sets).toBe(4);
+    });
+
+    it('una structure incompleta ({}) no tira: devuelve exercises: [] para poder corregirla', async () => {
+      mockRepo.findTemplateById.mockResolvedValue({ ...TEMPLATE, structure: {} });
+      mockRepo.findExercisesByIds.mockResolvedValue([]);
+      const result = await service.getById(TRAINER_ID, 'tp-1');
+      expect(result.structure.exercises).toEqual([]);
     });
 
     it('deja exercise: null si el ejercicio ya no existe', async () => {
