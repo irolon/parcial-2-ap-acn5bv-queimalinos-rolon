@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
-import ExerciseFormDialog from '@/components/exercises/ExerciseFormDialog';
+import DeleteExerciseDialog from '@/components/exercises/dialogs/DeleteExerciseDialog';
+import ExerciseDetailDialog from '@/components/exercises/dialogs/ExerciseDetailDialog';
+import ExerciseFormDialog from '@/components/exercises/dialogs/ExerciseFormDialog';
 import ExerciseFilters from '@/components/exercises/ExerciseFilters';
 import ExerciseGridSkeleton from '@/components/exercises/ExerciseGridSkeleton';
 import ExerciseResults from '@/components/exercises/ExerciseResults';
@@ -23,6 +25,7 @@ export default function ExerciseLibraryPage() {
   const openCount = useRef(0);
 
   const open = (type) => (exercise) => setDialog({ type, exercise, id: ++openCount.current });
+  const openCreate = () => open('create')();
   const close = () => setDialog(null);
 
   return (
@@ -31,7 +34,7 @@ export default function ExerciseLibraryPage() {
         <p className="font-mono text-[11px] uppercase tracking-[1px] text-ink6">
           {query.data ? `${query.data.length} EJERCICIOS` : ''}
         </p>
-        <Button onClick={() => open('create')()}>
+        <Button onClick={openCreate}>
           <Plus size={16} aria-hidden="true" />
           Nuevo ejercicio
         </Button>
@@ -50,7 +53,7 @@ export default function ExerciseLibraryPage() {
               <ExerciseResults
                 items={filterExercises(exercises, current)}
                 ownOnly={filters.origin === 'own' && !exercises.some((e) => !e.is_global)}
-                onCreate={() => open('create')()}
+                onCreate={openCreate}
                 onClear={() => setFilters(INITIAL_FILTERS)}
                 onOpen={open('detail')}
                 onEdit={open('edit')}
@@ -62,6 +65,18 @@ export default function ExerciseLibraryPage() {
       </QueryState>
       {(dialog?.type === 'create' || dialog?.type === 'edit') && (
         <ExerciseFormDialog key={dialog.id} open exercise={dialog.exercise} onClose={close} />
+      )}
+      {dialog?.type === 'detail' && (
+        <ExerciseDetailDialog
+          key={dialog.id}
+          exercise={dialog.exercise}
+          onClose={close}
+          onEdit={open('edit')}
+          onDelete={open('delete')}
+        />
+      )}
+      {dialog?.type === 'delete' && (
+        <DeleteExerciseDialog key={dialog.id} exercise={dialog.exercise} onClose={close} />
       )}
     </section>
   );

@@ -6,8 +6,8 @@ import Select from '@/components/shared/ui/Select';
 import Textarea from '@/components/shared/ui/Textarea';
 import { useCreateExercise, useUpdateExercise } from '@/hooks/exercises/useExercises';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
-import { EQUIPMENT_OPTIONS, MUSCLE_OPTIONS } from './exerciseOptions';
-import { buildExerciseBody, formDefaults, toExerciseErrors, validateExerciseBody } from './exerciseForm';
+import { EQUIPMENT_OPTIONS, MUSCLE_OPTIONS } from '../exerciseOptions';
+import { buildExerciseBody, formDefaults, toExerciseErrors, validateExerciseBody } from '../exerciseForm';
 
 const FORM_ID = 'exercise-form';
 const MUSCLE_PLACEHOLDER = { value: '', label: 'Elegí un grupo' };
