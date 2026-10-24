@@ -87,7 +87,7 @@ El entrenador explora la biblioteca (50 globales + los suyos), la filtra al inst
   4. editarlo quitando el video → placeholder;
   5. borrarlo;
   6. estado vacío en "Propios";
-  7. capturas a 1280 y 375 px en `docs/superpowers/specs/assets/card6/`.
+  7. capturas a 1280 y 375 px en `docs/superpowers/specs/assets/2026-10-24-web-exercises-library/`.
 
 ## 5. Fuera de alcance
 - Panel lateral de la biblioteca en el editor de rutinas (tarjeta 9).
