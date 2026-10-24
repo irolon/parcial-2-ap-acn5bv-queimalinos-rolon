@@ -24,6 +24,11 @@ describe('activityStatus', () => {
     expect(activityStatus(student({ last_session_at: '2026-10-17T12:00:00Z' }), NOW)).toBe('inactive');
   });
 
+  it('6 días y 23 h sigue al día; con otra zona horaria cuenta el instante real', () => {
+    expect(activityStatus(student({ last_session_at: '2026-10-17T13:00:00Z' }), NOW)).toBe('active');
+    expect(activityStatus(student({ last_session_at: '2026-10-17T09:00:00-03:00' }), NOW)).toBe('inactive');
+  });
+
   it('dado de baja gana sobre todo', () => {
     expect(activityStatus(student({ active: false, last_session_at: '2026-10-24T10:00:00Z' }), NOW)).toBe('disabled');
   });

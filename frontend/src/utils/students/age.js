@@ -1,4 +1,7 @@
-/** Edad en años cumplidos a `now`, o `null` sin fecha válida (`YYYY-MM-DD`). */
+/**
+ * Edad en años cumplidos a `now`, o `null` sin fecha válida (`YYYY-MM-DD`).
+ * Usa fechas UTC: cerca de medianoche en Argentina puede adelantarse unas horas.
+ */
 export function ageFrom(birthDate, now) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate ?? '');
   if (!match) return null;

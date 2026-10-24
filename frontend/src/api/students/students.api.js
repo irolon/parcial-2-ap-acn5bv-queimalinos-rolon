@@ -10,11 +10,13 @@ export function joinFromInvitation({ token, password }) {
   });
 }
 
+const LIST_LIMIT = 100;
+
 /** GET /students → `Student[]` (hasta 100; `active` filtra altas/bajas). */
 export async function listStudents({ active } = {}) {
   const params = new URLSearchParams();
   if (active !== undefined) params.set('active', String(active));
-  params.set('limit', "100");
+  params.set('limit', String(LIST_LIMIT));
   const res = await request(`/students?${params}`);
   return res.data;
 }
@@ -27,6 +29,6 @@ export async function getStudent(id) {
 
 /** PATCH /students/:id → ficha actualizada. */
 export async function updateStudent(id, body) {
-  const res = await request(`/students/${encodeURIComponent(id)}`, { method: "PATCH", body });
+  const res = await request(`/students/${encodeURIComponent(id)}`, { method: 'PATCH', body });
   return res.data;
 }
