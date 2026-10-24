@@ -8,7 +8,6 @@ const src = (p) => fileURLToPath(new URL(`../../../src/${p}`, import.meta.url));
 
 export const mockRepo = {
   isStudentOfTrainer: jest.fn(),
-  findTemplateById: jest.fn(),
   findAccessibleExerciseIds: jest.fn(),
   createRoutine: jest.fn(),
   addRoutineExercises: jest.fn(),
@@ -16,12 +15,31 @@ export const mockRepo = {
   findRoutineById: jest.fn(),
   findRoutineByIdWithExercises: jest.fn(),
   updateRoutine: jest.fn(),
+  deleteRoutine: jest.fn(),
   findActiveRoutineForStudentToday: jest.fn(),
   findActiveRoutinesForStudent: jest.fn(),
 };
 jest.unstable_mockModule(
   src('repositories/routines/routines.repository.js'),
   () => mockRepo
+);
+
+export const mockTemplatesRepo = { findTemplateById: jest.fn() };
+jest.unstable_mockModule(
+  src('repositories/routine-templates/routine-templates.repository.js'),
+  () => mockTemplatesRepo
+);
+
+export const mockRoutineExercisesRepo = {
+  findRoutineExercise: jest.fn(),
+  countRoutineExercises: jest.fn(),
+  findMaxOrderIndex: jest.fn(),
+  updateRoutineExercise: jest.fn(),
+  deleteRoutineExercise: jest.fn(),
+};
+jest.unstable_mockModule(
+  src('repositories/routines/routine-exercises.repository.js'),
+  () => mockRoutineExercisesRepo
 );
 
 export const service = await import(src('services/routines/routines.service.js'));

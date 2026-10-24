@@ -11,6 +11,7 @@ import invitationsRoutes from './routes/invitations/invitations.routes.js';
 import studentsRoutes from './routes/students/students.routes.js';
 import exercisesRoutes from './routes/exercises/exercises.routes.js';
 import routinesRoutes from './routes/routines/routines.routes.js';
+import routineTemplatesRoutes from './routes/routine-templates/routine-templates.routes.js';
 
 export function createApp() {
   const app = express();
@@ -30,6 +31,7 @@ export function createApp() {
   app.use('/api/students', studentsRoutes);
   app.use('/api/exercises', exercisesRoutes);
   app.use('/api/routines', routinesRoutes);
+  app.use('/api/routine-templates', routineTemplatesRoutes);
 
   // 404 + manejador central de errores (siempre al final).
   app.use(notFoundHandler);

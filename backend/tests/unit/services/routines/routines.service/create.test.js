@@ -1,5 +1,7 @@
+import { jest } from '@jest/globals';
 import {
   mockRepo,
+  mockTemplatesRepo,
   service,
   TRAINER_ID,
   ROUTINE,
@@ -42,37 +44,37 @@ describe('routines.service', () => {
 
       await service.create(TRAINER_ID, BODY);
 
-      expect(mockRepo.findTemplateById).not.toHaveBeenCalled();
+      expect(mockTemplatesRepo.findTemplateById).not.toHaveBeenCalled();
       expect(mockRepo.createRoutine.mock.calls[0][0].template_id).toBeNull();
     });
 
     it('crea la rutina con template_id si la plantilla es del trainer', async () => {
       mockRepo.isStudentOfTrainer.mockResolvedValue(true);
-      mockRepo.findTemplateById.mockResolvedValue({ id: 'tpl-1', trainer_id: TRAINER_ID });
+      mockTemplatesRepo.findTemplateById.mockResolvedValue({ id: 'tpl-1', trainer_id: TRAINER_ID });
       mockRepo.createRoutine.mockResolvedValue(ROUTINE);
       mockRepo.addRoutineExercises.mockResolvedValue([]);
 
       await service.create(TRAINER_ID, { ...BODY, template_id: 'tpl-1' });
 
-      expect(mockRepo.findTemplateById).toHaveBeenCalledWith('tpl-1');
+      expect(mockTemplatesRepo.findTemplateById).toHaveBeenCalledWith('tpl-1');
       expect(mockRepo.createRoutine.mock.calls[0][0].template_id).toBe('tpl-1');
     });
 
-    it('lanza NOT_FOUND si la plantilla no existe', async () => {
+    it('lanza TEMPLATE_NOT_FOUND si la plantilla no existe', async () => {
       mockRepo.isStudentOfTrainer.mockResolvedValue(true);
-      mockRepo.findTemplateById.mockResolvedValue(null);
+      mockTemplatesRepo.findTemplateById.mockResolvedValue(null);
       await expect(
         service.create(TRAINER_ID, { ...BODY, template_id: 'tpl-x' })
-      ).rejects.toMatchObject({ statusCode: 404 });
+      ).rejects.toMatchObject({ statusCode: 404, code: 'TEMPLATE_NOT_FOUND' });
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
     });
 
-    it('lanza FORBIDDEN si la plantilla es de otro trainer', async () => {
+    it('lanza TEMPLATE_NOT_FOUND (404, no 403) si la plantilla es de otro trainer', async () => {
       mockRepo.isStudentOfTrainer.mockResolvedValue(true);
-      mockRepo.findTemplateById.mockResolvedValue({ id: 'tpl-2', trainer_id: 'otro' });
+      mockTemplatesRepo.findTemplateById.mockResolvedValue({ id: 'tpl-2', trainer_id: 'otro' });
       await expect(
         service.create(TRAINER_ID, { ...BODY, template_id: 'tpl-2' })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 });
+      ).rejects.toMatchObject({ code: 'TEMPLATE_NOT_FOUND', statusCode: 404 });
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
     });
 
@@ -99,6 +101,38 @@ describe('routines.service', () => {
       });
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
       expect(mockRepo.addRoutineExercises).not.toHaveBeenCalled();
+    });
+
+    describe('compensación si fallan los ejercicios', () => {
+      beforeEach(() => {
+        mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+        mockRepo.createRoutine.mockResolvedValue(ROUTINE);
+      });
+
+      it('borra la rutina y re-lanza el error original', async () => {
+        const original = new Error('insert falló');
+        mockRepo.addRoutineExercises.mockRejectedValue(original);
+        mockRepo.deleteRoutine.mockResolvedValue();
+
+        await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
+        expect(mockRepo.deleteRoutine).toHaveBeenCalledWith('rt-1');
+      });
+
+      it('si la compensación también falla, la loguea y sale el error original', async () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const original = new Error('insert falló');
+        const compensationError = new Error('delete falló');
+        mockRepo.addRoutineExercises.mockRejectedValue(original);
+        mockRepo.deleteRoutine.mockRejectedValue(compensationError);
+
+        await expect(service.create(TRAINER_ID, BODY)).rejects.toBe(original);
+        expect(errorSpy).toHaveBeenCalledWith(
+          '[ROUTINE COMPENSATION FAILED]',
+          'rt-1',
+          compensationError
+        );
+        errorSpy.mockRestore();
+      });
     });
   });
 });

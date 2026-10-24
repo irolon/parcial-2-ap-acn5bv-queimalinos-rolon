@@ -9,8 +9,6 @@ import {
   ROUTINE_EXERCISE_COLUMNS,
 } from '../../models/routines/routine.model.js';
 
-const TEMPLATES_TABLE = 'routine_templates';
-
 // Rutina con sus ejercicios embebidos (y los datos del ejercicio para mostrarlo).
 const ROUTINE_WITH_EXERCISES =
   `${ROUTINE_COLUMNS}, routine_exercises ( ${ROUTINE_EXERCISE_COLUMNS}, ` +
@@ -26,17 +24,6 @@ export async function isStudentOfTrainer(studentId, trainerId) {
     .maybeSingle();
   if (error) throw Errors.internal(error.message);
   return Boolean(data);
-}
-
-/** Busca una plantilla por id (para validar existencia y ownership). */
-export async function findTemplateById(templateId) {
-  const { data, error } = await supabase
-    .from(TEMPLATES_TABLE)
-    .select('id, trainer_id')
-    .eq('id', templateId)
-    .maybeSingle();
-  if (error) throw Errors.internal(error.message);
-  return data;
 }
 
 /**
@@ -64,9 +51,9 @@ export async function createRoutine(fields) {
   return data;
 }
 
-/** Inserta ejercicios en una rutina (batch) y los devuelve. */
+/** Inserta ejercicios en una rutina (batch) y los devuelve. Precondición: `order` ya viene normalizado. */
 export async function addRoutineExercises(routineId, exercises) {
-  const rows = exercises.map((e, i) => ({
+  const rows = exercises.map((e) => ({
     routine_id: routineId,
     exercise_id: e.exercise_id,
     sets: e.sets,
@@ -75,7 +62,7 @@ export async function addRoutineExercises(routineId, exercises) {
     suggested_kg: e.suggested_kg,
     tempo: e.tempo,
     notes: e.notes,
-    order_index: e.order ?? i,
+    order_index: e.order,
   }));
   const { data, error } = await supabase
     .from(ROUTINE_EXERCISES_TABLE)
@@ -168,4 +155,10 @@ export async function findActiveRoutinesForStudent(studentId) {
     .order('created_at', { ascending: false });
   if (error) throw Errors.internal(error.message);
   return data;
+}
+
+/** Borra una rutina (compensación si falla la carga de sus ejercicios). */
+export async function deleteRoutine(routineId) {
+  const { error } = await supabase.from(ROUTINES_TABLE).delete().eq('id', routineId);
+  if (error) throw Errors.internal(error.message);
 }

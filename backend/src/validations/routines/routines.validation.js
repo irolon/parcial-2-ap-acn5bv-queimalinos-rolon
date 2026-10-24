@@ -1,38 +1,32 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { ROUTINE_GOALS, DAYS } from '../../models/routines/routine.model.js';
+import {
+  isUuid,
+  validateExerciseItem,
+  validateExerciseFields,
+  normalizeExerciseOrder,
+} from './routine-exercise.validation.js';
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isString = (v) => typeof v === 'string';
-const isUuid = (v) => isString(v) && UUID_RE.test(v);
-const isPosInt = (v) => Number.isInteger(v) && v > 0;
 const trimmed = (v) => (isString(v) ? v.trim() : v);
 
-/** Valida un item de exercises[] y devuelve la versión saneada. */
-function validateExerciseItem(item, idx, details) {
-  const prefix = `exercises[${idx}]`;
-  if (!item || typeof item !== 'object') {
-    details.push({ field: prefix, message: 'Debe ser un objeto' });
-    return null;
+/**
+ * Valida un arreglo de días: no vacío, cada uno de DAYS y sin repetidos.
+ * Agrega el error a `details` y devuelve si es válido.
+ */
+export function validateDays(days, field, details) {
+  const valid =
+    Array.isArray(days) &&
+    days.length > 0 &&
+    days.every((d) => DAYS.includes(d)) &&
+    new Set(days).size === days.length;
+  if (!valid) {
+    details.push({
+      field,
+      message: `${field.split('.').pop()} debe ser un arreglo no vacío, sin repetidos, de: ${DAYS.join(', ')}`,
+    });
   }
-  if (!isUuid(item.exercise_id)) {
-    details.push({ field: `${prefix}.exercise_id`, message: 'exercise_id inválido' });
-  }
-  if (!isPosInt(item.sets)) {
-    details.push({ field: `${prefix}.sets`, message: 'sets debe ser un entero positivo' });
-  }
-  if (!isPosInt(item.reps)) {
-    details.push({ field: `${prefix}.reps`, message: 'reps debe ser un entero positivo' });
-  }
-  return {
-    exercise_id: item.exercise_id,
-    sets: item.sets,
-    reps: item.reps,
-    rest_seconds: Number.isInteger(item.rest_seconds) ? item.rest_seconds : null,
-    suggested_kg: typeof item.suggested_kg === 'number' ? item.suggested_kg : null,
-    tempo: trimmed(item.tempo) || null,
-    notes: trimmed(item.notes) || null,
-    order: Number.isInteger(item.order) ? item.order : undefined,
-  };
+  return valid;
 }
 
 function validateExercisesArray(exercises, details) {
@@ -40,7 +34,8 @@ function validateExercisesArray(exercises, details) {
     details.push({ field: 'exercises', message: 'Debe incluir al menos un ejercicio' });
     return [];
   }
-  return exercises.map((e, i) => validateExerciseItem(e, i, details));
+  const items = exercises.map((e, i) => validateExerciseItem(e, `exercises[${i}]`, details));
+  return items.every(Boolean) ? normalizeExerciseOrder(items) : items;
 }
 
 /** Body de POST /routines. */
@@ -60,9 +55,7 @@ export function validateCreateRoutine(body) {
   if (!ROUTINE_GOALS.includes(body.goal)) {
     details.push({ field: 'goal', message: `goal debe ser uno de: ${ROUTINE_GOALS.join(', ')}` });
   }
-  if (!Array.isArray(body.days) || body.days.length === 0 || !body.days.every((d) => DAYS.includes(d))) {
-    details.push({ field: 'days', message: `days debe ser un arreglo no vacío de: ${DAYS.join(', ')}` });
-  }
+  validateDays(body.days, 'days', details);
   const exercises = validateExercisesArray(body.exercises, details);
 
   if (details.length > 0) throw Errors.validation('Error de validación', details);
@@ -101,9 +94,7 @@ export function validateUpdateRoutine(body) {
     } else out.goal = body.goal;
   }
   if (body.days !== undefined) {
-    if (!Array.isArray(body.days) || body.days.length === 0 || !body.days.every((d) => DAYS.includes(d))) {
-      details.push({ field: 'days', message: `days debe ser un arreglo no vacío de: ${DAYS.join(', ')}` });
-    } else out.days = body.days;
+    if (validateDays(body.days, 'days', details)) out.days = body.days;
   }
   if (body.active !== undefined) {
     if (typeof body.active !== 'boolean') {
@@ -129,6 +120,27 @@ export function validateListQuery(query) {
   if (query.active !== undefined) out.active = query.active !== 'false';
   if (details.length > 0) throw Errors.validation('Error de validación', details);
   return out;
+}
+
+/** Body de PATCH /routines/:id/exercises/:routineExerciseId — al menos un campo. */
+export function validateUpdateRoutineExercise(body) {
+  const details = [];
+  const out = validateExerciseFields(body ?? {}, details, { partial: true });
+  if (details.length === 0 && Object.keys(out).length === 0) {
+    details.push({ field: 'body', message: 'Enviá al menos un campo para actualizar' });
+  }
+  if (details.length > 0) throw Errors.validation('Error de validación', details);
+  return out;
+}
+
+/** Valida :id y :routineExerciseId de la ruta (UUID). */
+export function validateRoutineExerciseParams(params) {
+  const details = [];
+  for (const field of ['id', 'routineExerciseId']) {
+    if (!isUuid(params[field])) details.push({ field, message: `${field} inválido` });
+  }
+  if (details.length > 0) throw Errors.validation('Error de validación', details);
+  return { id: params.id, routineExerciseId: params.routineExerciseId };
 }
 
 /** Valida el :id de la ruta (UUID). */
