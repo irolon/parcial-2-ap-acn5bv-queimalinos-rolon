@@ -44,6 +44,18 @@ export function validateExerciseFields(body, details, { partial = false, prefix 
   return out;
 }
 
+/**
+ * Ordena de forma estable por `order` explícito (los ítems sin `order` usan su
+ * posición) y renumera 0..n-1: nunca quedan órdenes repetidos y el resultado
+ * es determinista. Los empates se desempatan por posición.
+ */
+export function normalizeExerciseOrder(items) {
+  return items
+    .map((item, position) => ({ item, position, key: item.order ?? position }))
+    .sort((a, b) => a.key - b.key || a.position - b.position)
+    .map(({ item }, order) => ({ ...item, order }));
+}
+
 /** Valida un item de exercises[] (rutina o plantilla) y devuelve la versión saneada. */
 export function validateExerciseItem(item, prefix, details) {
   if (!item || typeof item !== 'object') {

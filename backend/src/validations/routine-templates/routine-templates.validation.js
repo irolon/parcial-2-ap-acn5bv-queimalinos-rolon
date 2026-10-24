@@ -4,7 +4,11 @@ import {
   TEMPLATE_LEVELS,
   STRUCTURE_VERSION,
 } from '../../models/routine-templates/routine-template.model.js';
-import { isUuid, validateExerciseItem } from '../routines/routine-exercise.validation.js';
+import {
+  isUuid,
+  validateExerciseItem,
+  normalizeExerciseOrder,
+} from '../routines/routine-exercise.validation.js';
 import { validateDays } from '../routines/routines.validation.js';
 
 const MAX_EXERCISES = 50;
@@ -31,10 +35,10 @@ export function validateStructure(structure, details) {
       message: `exercises debe tener entre 1 y ${MAX_EXERCISES} ejercicios`,
     });
   } else {
-    items = exercises.map((e, i) => {
-      const item = validateExerciseItem(e, `structure.exercises[${i}]`, details);
-      return item && { ...item, order: item.order ?? i };
-    });
+    items = exercises.map((e, i) =>
+      validateExerciseItem(e, `structure.exercises[${i}]`, details)
+    );
+    if (items.every(Boolean)) items = normalizeExerciseOrder(items);
   }
   return { version: STRUCTURE_VERSION, days, exercises: items };
 }

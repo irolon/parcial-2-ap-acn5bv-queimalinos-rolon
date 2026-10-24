@@ -1,4 +1,7 @@
-import { validateExerciseItem } from '../../../../src/validations/routines/routine-exercise.validation.js';
+import {
+  validateExerciseItem,
+  normalizeExerciseOrder,
+} from '../../../../src/validations/routines/routine-exercise.validation.js';
 
 const UUID = '3f1c2b9a-1d2e-4f5a-8b7c-9d0e1f2a3b4c';
 const OK = { exercise_id: UUID, sets: 3, reps: 10 };
@@ -47,5 +50,37 @@ describe('validateExerciseItem', () => {
       order: 0,
     };
     expect(itemErrors(limits)).toEqual([]);
+  });
+});
+
+describe('normalizeExerciseOrder', () => {
+  const ids = (items) => items.map((i) => i.exercise_id);
+  const orders = (items) => items.map((i) => i.order);
+
+  it('sin order explícito renumera 0..n-1 en el orden recibido', () => {
+    const out = normalizeExerciseOrder([{ exercise_id: 'a' }, { exercise_id: 'b' }]);
+    expect(ids(out)).toEqual(['a', 'b']);
+    expect(orders(out)).toEqual([0, 1]);
+  });
+  it('mezclar explícito e implícito no repite órdenes', () => {
+    const out = normalizeExerciseOrder([{ exercise_id: 'a', order: 1 }, { exercise_id: 'b' }]);
+    expect(orders(out)).toEqual([0, 1]);
+    expect(ids(out)).toEqual(['a', 'b']);
+  });
+  it('explícitos repetidos se desempatan por posición', () => {
+    const out = normalizeExerciseOrder([
+      { exercise_id: 'a', order: 2 },
+      { exercise_id: 'b', order: 2 },
+    ]);
+    expect(orders(out)).toEqual([0, 1]);
+    expect(ids(out)).toEqual(['a', 'b']);
+  });
+  it('ordena por el order explícito aunque llegue desordenado', () => {
+    const out = normalizeExerciseOrder([
+      { exercise_id: 'a', order: 5 },
+      { exercise_id: 'b', order: 0 },
+    ]);
+    expect(ids(out)).toEqual(['b', 'a']);
+    expect(orders(out)).toEqual([0, 1]);
   });
 });

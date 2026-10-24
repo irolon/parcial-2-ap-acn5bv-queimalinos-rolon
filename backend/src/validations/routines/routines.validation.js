@@ -4,6 +4,7 @@ import {
   isUuid,
   validateExerciseItem,
   validateExerciseFields,
+  normalizeExerciseOrder,
 } from './routine-exercise.validation.js';
 
 const isString = (v) => typeof v === 'string';
@@ -33,7 +34,8 @@ function validateExercisesArray(exercises, details) {
     details.push({ field: 'exercises', message: 'Debe incluir al menos un ejercicio' });
     return [];
   }
-  return exercises.map((e, i) => validateExerciseItem(e, `exercises[${i}]`, details));
+  const items = exercises.map((e, i) => validateExerciseItem(e, `exercises[${i}]`, details));
+  return items.every(Boolean) ? normalizeExerciseOrder(items) : items;
 }
 
 /** Body de POST /routines. */

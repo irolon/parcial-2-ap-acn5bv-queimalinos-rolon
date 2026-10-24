@@ -3,6 +3,7 @@ import {
   validateRoutineExerciseParams,
   validateCreateRoutine,
   validateUpdateRoutine,
+  validateAddExercises,
 } from '../../../../src/validations/routines/routines.validation.js';
 
 const UUID = '3f1c2b9a-1d2e-4f5a-8b7c-9d0e1f2a3b4c';
@@ -80,6 +81,18 @@ describe('validateCreateRoutine', () => {
       'monday',
       'friday',
     ]);
+  });
+});
+
+describe('orden de los ejercicios', () => {
+  const mixed = [{ ...OK, order: 1 }, { ...OK }];
+  it('POST /routines renumera 0..n-1 sin repetidos', () => {
+    const out = validateCreateRoutine(createBody({ exercises: mixed }));
+    expect(out.exercises.map((e) => e.order)).toEqual([0, 1]);
+  });
+  it('POST /routines/:id/exercises renumera la lista nueva', () => {
+    const repeated = [{ ...OK, order: 2 }, { ...OK, order: 2 }];
+    expect(validateAddExercises({ exercises: repeated }).exercises.map((e) => e.order)).toEqual([0, 1]);
   });
 });
 

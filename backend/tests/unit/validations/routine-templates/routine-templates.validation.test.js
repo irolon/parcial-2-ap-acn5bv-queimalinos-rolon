@@ -35,6 +35,12 @@ describe('routine-templates.validation', () => {
       });
     });
 
+    it('renumera el orden sin repetidos al mezclar explícito e implícito', () => {
+      const exercises = [{ ...EX, order: 1 }, { ...EX }];
+      const out = validateCreateTemplate(body({ structure: structure({ exercises }) }));
+      expect(out.structure.exercises.map((e) => e.order)).toEqual([0, 1]);
+    });
+
     it('descarta propiedades desconocidas e ignora frequency_per_week', () => {
       const out = validateCreateTemplate(
         body({ frequency_per_week: 5, hack: 1, structure: structure({ extra: true }) })
