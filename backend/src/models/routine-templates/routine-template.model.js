@@ -12,9 +12,6 @@ export const STRUCTURE_VERSION = 1;
 
 const BASE_COLUMNS = 'id, trainer_id, name, goal, level, frequency_per_week, generated_by_ai, created_at';
 
-/** Columnas para listados (sin el jsonb pesado). */
-export const TEMPLATE_COLUMNS = BASE_COLUMNS;
-
 /** Columnas para el detalle (con structure). */
 export const TEMPLATE_DETAIL_COLUMNS = `${BASE_COLUMNS}, structure`;
 
