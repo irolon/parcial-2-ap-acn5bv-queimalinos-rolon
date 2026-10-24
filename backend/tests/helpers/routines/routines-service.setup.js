@@ -8,7 +8,6 @@ const src = (p) => fileURLToPath(new URL(`../../../src/${p}`, import.meta.url));
 
 export const mockRepo = {
   isStudentOfTrainer: jest.fn(),
-  findTemplateById: jest.fn(),
   findAccessibleExerciseIds: jest.fn(),
   createRoutine: jest.fn(),
   addRoutineExercises: jest.fn(),
@@ -23,6 +22,12 @@ export const mockRepo = {
 jest.unstable_mockModule(
   src('repositories/routines/routines.repository.js'),
   () => mockRepo
+);
+
+export const mockTemplatesRepo = { findTemplateById: jest.fn() };
+jest.unstable_mockModule(
+  src('repositories/routine-templates/routine-templates.repository.js'),
+  () => mockTemplatesRepo
 );
 
 export const mockRoutineExercisesRepo = {

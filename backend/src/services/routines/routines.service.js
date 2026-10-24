@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routines/routines.repository.js';
+import * as templatesRepository from '../../repositories/routine-templates/routine-templates.repository.js';
 import * as routineExercisesRepo from '../../repositories/routines/routine-exercises.repository.js';
 import {
   isOwnedBy,
@@ -67,11 +68,9 @@ export async function create(trainerId, data) {
   if (!belongs) throw Errors.forbidden('No podés asignarle rutinas a un alumno que no es tuyo');
 
   if (data.template_id) {
-    const template = await repository.findTemplateById(data.template_id);
-    if (!template) throw Errors.notFound('Plantilla no encontrada');
-    if (!isOwnedBy(template, trainerId)) {
-      throw Errors.forbidden('No podés usar una plantilla que no es tuya');
-    }
+    // Ajena o inexistente: mismo 404, para no revelar qué ids existen.
+    const template = await templatesRepository.findTemplateById(data.template_id);
+    if (!template || !isOwnedBy(template, trainerId)) throw Errors.templateNotFound();
   }
 
   await assertExercisesAccessible(trainerId, data.exercises);
