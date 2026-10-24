@@ -129,9 +129,12 @@ export async function updateExercise(trainerId, routineId, routineExerciseId, fi
   return toRoutineDetail(await repository.findRoutineByIdWithExercises(routineId));
 }
 
-/** Quita un ejercicio de una rutina propia. */
+/** Quita un ejercicio de una rutina propia; 409 si es el único que le queda. */
 export async function removeExercise(trainerId, routineId, routineExerciseId) {
   await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
+  if ((await routineExercisesRepo.countRoutineExercises(routineId)) <= 1) {
+    throw Errors.routineNeedsExercise();
+  }
   await routineExercisesRepo.deleteRoutineExercise(routineExerciseId);
 }
 

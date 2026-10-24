@@ -47,9 +47,22 @@ describe('routines.service — ejercicios de una rutina asignada', () => {
     expect(result.routine_exercises).toBeUndefined();
   });
 
-  it('removeExercise borra el ejercicio de la rutina', async () => {
+  it('removeExercise no borra el último ejercicio: 409 ROUTINE_NEEDS_EXERCISE', async () => {
     mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
     mockRoutineExercisesRepo.findRoutineExercise.mockResolvedValue({ id: 're-1' });
+    mockRoutineExercisesRepo.countRoutineExercises.mockResolvedValue(1);
+    await expect(service.removeExercise(TRAINER_ID, 'rt-1', 're-1')).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'ROUTINE_NEEDS_EXERCISE',
+    });
+    expect(mockRoutineExercisesRepo.countRoutineExercises).toHaveBeenCalledWith('rt-1');
+    expect(mockRoutineExercisesRepo.deleteRoutineExercise).not.toHaveBeenCalled();
+  });
+
+  it('removeExercise borra el ejercicio si la rutina tiene más de uno', async () => {
+    mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
+    mockRoutineExercisesRepo.findRoutineExercise.mockResolvedValue({ id: 're-1' });
+    mockRoutineExercisesRepo.countRoutineExercises.mockResolvedValue(2);
     await service.removeExercise(TRAINER_ID, 'rt-1', 're-1');
     expect(mockRoutineExercisesRepo.deleteRoutineExercise).toHaveBeenCalledWith('re-1');
   });

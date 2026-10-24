@@ -17,6 +17,16 @@ export async function findRoutineExercise(routineId, routineExerciseId) {
   return data;
 }
 
+/** Cantidad de ejercicios de una rutina. */
+export async function countRoutineExercises(routineId) {
+  const { count, error } = await supabase
+    .from(ROUTINE_EXERCISES_TABLE)
+    .select('id', { count: 'exact', head: true })
+    .eq('routine_id', routineId);
+  if (error) throw Errors.internal(error.message);
+  return count ?? 0;
+}
+
 /** Actualiza campos de un ejercicio de rutina (sets, reps, descanso, kg, tempo, notas). */
 export async function updateRoutineExercise(routineExerciseId, fields) {
   const { data, error } = await supabase

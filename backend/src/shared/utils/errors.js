@@ -26,6 +26,8 @@ export const Errors = {
   notFound: (message = 'Recurso no encontrado') => new AppError(404, 'NOT_FOUND', message),
   routineExerciseNotFound: () =>
     new AppError(404, 'ROUTINE_EXERCISE_NOT_FOUND', 'El ejercicio no es parte de esta rutina'),
+  routineNeedsExercise: () =>
+    new AppError(409, 'ROUTINE_NEEDS_EXERCISE', 'La rutina tiene que tener al menos un ejercicio'),
   templateNotFound: () => new AppError(404, 'TEMPLATE_NOT_FOUND', 'Plantilla no encontrada'),
   templateExercisesUnavailable: (missingIds) =>
     new AppError(
