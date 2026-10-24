@@ -220,6 +220,8 @@ Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goa
 
 **Límites de un ejercicio** (rutina y plantilla): `exercise_id` uuid (global o del trainer, si no 403); `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional.
 
+`POST /routines`, `POST /routines/:id/exercises` y `PATCH /routines/:id` aplican estos límites por ejercicio (antes un valor inválido se guardaba como `null`; ahora es 400). `days` (en `POST /routines` y `PATCH /routines/:id`) es un arreglo no vacío de `monday..sunday` y **rechaza días repetidos** con 400.
+
 ### PATCH /routines/:id/exercises/:routineExerciseId
 
 Personaliza un ejercicio de una rutina asignada (trainer dueño). Body: `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` (al menos uno; `null` borra los opcionales). **200 OK** devuelve la rutina completa (forma de `GET /routines/:id`). Un `routineExerciseId` que no es de esa rutina → 404 `ROUTINE_EXERCISE_NOT_FOUND`.
@@ -291,7 +293,7 @@ Crea una plantilla. **Body:** `{ "name": "2-120", "goal": "tonify|weight_loss|hy
 
 ### POST /routine-templates/from-routine
 
-Guarda una rutina propia como plantilla (copia `goal`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "level": "opcional" }`. Rutina inexistente → 404; ajena → 403. **201** → `{ data }`.
+Guarda una rutina propia como plantilla (copia `goal`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "goal": "opcional (pisa el de la rutina)", "level": "opcional" }`. Rutina inexistente → 404; ajena → 403. **400** si la rutina no tiene objetivo y el body no trae `goal` (`field: "goal"`, "Elegí un objetivo para la plantilla"), o si la rutina rompe las reglas de una plantilla: `days` vacíos o inválidos, 0 o más de 50 ejercicios, o límites por ejercicio. **201** → `{ data }`.
 
 ### PATCH /routine-templates/:id
 

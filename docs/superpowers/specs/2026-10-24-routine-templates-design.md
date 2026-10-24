@@ -44,7 +44,7 @@ Que el entrenador guarde rutinas como plantillas y cree rutinas nuevas a partir 
 | GET | `/` | Lista las plantillas del entrenador (más nuevas primero). Filtros: `goal`, `level`, `generated_by_ai`. Sin `structure`; suma `days` y `exercise_count`. |
 | GET | `/:id` | Plantilla con `structure`, y cada ejercicio con sus datos (`exercise: { id, name, muscle_group, equipment, video_url }`). |
 | POST | `/` | Crea con `{ name, goal, level?, structure }` → 201. |
-| POST | `/from-routine` | "Guardar rutina como plantilla": `{ routine_id, name?, level? }`. Copia `goal`, `days` y los ejercicios de una rutina del entrenador. `name` por defecto, el de la rutina → 201. |
+| POST | `/from-routine` | "Guardar rutina como plantilla": `{ routine_id, name?, goal?, level? }`. Copia `goal` (el `goal?` del body lo pisa; si la rutina no tiene y no viene → 400), `days` y los ejercicios de una rutina del entrenador. `name` por defecto, el de la rutina → 201. |
 | PATCH | `/:id` | `name`, `goal`, `level`, `structure` (al menos uno). `structure` se reemplaza entera. |
 | DELETE | `/:id` | 204. Las rutinas que salieron de ella quedan con `template_id = null` (FK existente). |
 | POST | `/:id/instantiate` | `{ student_id, name?, days? }` → 201 con la rutina creada en la forma de `GET /routines/:id`. |
