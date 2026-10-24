@@ -43,6 +43,9 @@ export const NEW_STUDENT = {
   subtitle: 'ALUMNOS › NUEVO · GENERÁ QR Y COMPARTILO POR WHATSAPP',
 };
 
+// Ficha del alumno: la página fija su propio título con `usePageHeader`.
+export const STUDENT_PROFILE = { path: '/pt/alumnos/:id' };
+
 const NAV_BY_ROLE = { [ROLES.TRAINER]: TRAINER_NAV, [ROLES.STUDENT]: STUDENT_NAV };
 
 /** Home de cada rol (`null` si el rol no es conocido). */
