@@ -27,6 +27,19 @@ export async function countRoutineExercises(routineId) {
   return count ?? 0;
 }
 
+/** Mayor order_index de los ejercicios de una rutina; -1 si no tiene ninguno. */
+export async function findMaxOrderIndex(routineId) {
+  const { data, error } = await supabase
+    .from(ROUTINE_EXERCISES_TABLE)
+    .select('order_index')
+    .eq('routine_id', routineId)
+    .order('order_index', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data ? data.order_index : -1;
+}
+
 /**
  * Actualiza campos de un ejercicio de rutina (sets, reps, descanso, kg, tempo, notas).
  * Filtra también por rutina; devuelve null si ya no existe.

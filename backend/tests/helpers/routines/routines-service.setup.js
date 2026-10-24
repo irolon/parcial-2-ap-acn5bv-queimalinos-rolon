@@ -33,6 +33,7 @@ jest.unstable_mockModule(
 export const mockRoutineExercisesRepo = {
   findRoutineExercise: jest.fn(),
   countRoutineExercises: jest.fn(),
+  findMaxOrderIndex: jest.fn(),
   updateRoutineExercise: jest.fn(),
   deleteRoutineExercise: jest.fn(),
 };

@@ -1,5 +1,6 @@
 import {
   mockRepo,
+  mockRoutineExercisesRepo,
   service,
   TRAINER_ID,
   ROUTINE,
@@ -29,9 +30,24 @@ describe('routines.service', () => {
   describe('addExercises', () => {
     it('agrega ejercicios a una rutina propia', async () => {
       mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
+      mockRoutineExercisesRepo.findMaxOrderIndex.mockResolvedValue(-1);
       mockRepo.addRoutineExercises.mockResolvedValue([{ id: 're-2' }]);
-      const result = await service.addExercises(TRAINER_ID, 'rt-1', [{ exercise_id: 'ex-2', sets: 3, reps: 10 }]);
+      const result = await service.addExercises(TRAINER_ID, 'rt-1', [{ exercise_id: 'ex-2', sets: 3, reps: 10, order: 0 }]);
       expect(result).toHaveLength(1);
+      expect(mockRepo.addRoutineExercises.mock.calls[0][1][0].order).toBe(0);
+    });
+
+    it('agrega después de los existentes: con máximo 3, los nuevos van en 4 y 5', async () => {
+      mockRepo.findRoutineById.mockResolvedValue(ROUTINE);
+      mockRoutineExercisesRepo.findMaxOrderIndex.mockResolvedValue(3);
+      mockRepo.addRoutineExercises.mockResolvedValue([]);
+      await service.addExercises(TRAINER_ID, 'rt-1', [
+        { exercise_id: 'ex-2', sets: 3, reps: 10, order: 0 },
+        { exercise_id: 'ex-3', sets: 3, reps: 10, order: 1 },
+      ]);
+      expect(mockRoutineExercisesRepo.findMaxOrderIndex).toHaveBeenCalledWith('rt-1');
+      const sent = mockRepo.addRoutineExercises.mock.calls[0][1];
+      expect(sent.map((e) => e.order)).toEqual([4, 5]);
     });
 
     it('lanza NOT_FOUND si la rutina no existe', async () => {

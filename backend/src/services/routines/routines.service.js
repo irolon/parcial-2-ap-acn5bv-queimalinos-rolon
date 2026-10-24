@@ -115,7 +115,12 @@ export async function addExercises(trainerId, routineId, exercises) {
     trainerId,
     exercises.map((e) => e.exercise_id)
   );
-  return repository.addRoutineExercises(routineId, exercises);
+  // Van después de los existentes: la lista nueva ya viene renumerada 0..n-1.
+  const offset = (await routineExercisesRepo.findMaxOrderIndex(routineId)) + 1;
+  return repository.addRoutineExercises(
+    routineId,
+    exercises.map((e) => ({ ...e, order: e.order + offset }))
+  );
 }
 
 /** Verifica rutina propia + que el ejercicio sea parte de ella. */

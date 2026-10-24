@@ -252,7 +252,7 @@ Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goa
 
 **Límites de un ejercicio** (rutina y plantilla): `exercise_id` uuid (global o del trainer, si no 403); `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional.
 
-**Orden:** los ejercicios se ordenan de forma estable por `order` (los que no lo traen usan su posición) y se **renumeran 0..n-1**: nunca quedan órdenes repetidos. En `POST /routines/:id/exercises` la renumeración es sobre la lista nueva, y el orden queda tal cual se guarda (puede coincidir con el de ejercicios ya existentes de la rutina).
+**Orden:** los ejercicios se ordenan de forma estable por `order` (los que no lo traen usan su posición) y se **renumeran 0..n-1**: nunca quedan órdenes repetidos. En `POST /routines/:id/exercises` la renumeración es sobre la lista nueva y se desplaza después del mayor `order_index` que ya tiene la rutina: los ejercicios agregados siempre quedan al final, sin repetir órdenes.
 
 `POST /routines`, `POST /routines/:id/exercises` y `PATCH /routines/:id` aplican estos límites por ejercicio (antes un valor inválido se guardaba como `null`; ahora es 400). `days` (en `POST /routines` y `PATCH /routines/:id`) es un arreglo no vacío de `monday..sunday` y **rechaza días repetidos** con 400.
 
