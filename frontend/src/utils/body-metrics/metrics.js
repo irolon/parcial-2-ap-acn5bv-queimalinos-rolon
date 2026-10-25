@@ -67,3 +67,9 @@ export function formatMetricDate(iso) {
 
 /** Número con coma decimal (estilo rioplatense). */
 export const formatNumber = (n) => String(n).replace('.', ',');
+
+/** Valor para un `datetime-local` (`aaaa-mm-ddThh:mm`) en la zona horaria local. */
+export function localInputValue(date = new Date()) {
+  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return `${day}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

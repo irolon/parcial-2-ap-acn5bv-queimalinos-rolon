@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { UserX } from 'lucide-react';
 import AnthropometryCard from '@/components/body-metrics/AnthropometryCard';
@@ -7,8 +7,11 @@ import WeightChart from '@/components/body-metrics/WeightChart';
 import EmptyState from '@/components/shared/states/EmptyState';
 import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
+import Button from '@/components/shared/ui/Button';
+import StudentDialogs from '@/components/students/dialogs/StudentDialogs';
 import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
 import AiContextCard from '@/components/students/profile/AiContextCard';
+import ProfileActions from '@/components/students/profile/ProfileActions';
 import ProfileHeader from '@/components/students/profile/ProfileHeader';
 import StudentNavigation from '@/components/students/profile/StudentNavigation';
 import { useMetricsQuery } from '@/hooks/body-metrics/useBodyMetrics';
@@ -44,6 +47,10 @@ export default function StudentProfilePage() {
   const estado = parseStudentFilters(searchParams).estado;
   const listQuery = useStudentsQuery({ active: estado !== 'baja' });
   const metricsQuery = useMetricsQuery(id);
+  const [dialog, setDialog] = useState(null);
+  const dialogSeq = useRef(0);
+  const open = (type, extra) => setDialog({ id: (dialogSeq.current += 1), type, ...extra });
+  const close = () => setDialog(null);
 
   const student = query.data;
   usePageHeader(student ? { title: student.name, subtitle: subtitleFor(student, now) } : null);
@@ -64,8 +71,24 @@ export default function StudentProfilePage() {
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
             <div className="flex flex-col gap-5">
               <ProfileHeader student={data} now={now} />
-              <AnthropometryCard latest={data.latest_metrics} previous={latestTwo(metrics).previous} />
-              <AiContextCard student={data} />
+              <ProfileActions student={data} onEdit={() => open('edit')} onDeactivate={() => open('deactivate')} />
+              <AnthropometryCard
+                latest={data.latest_metrics}
+                previous={latestTwo(metrics).previous}
+                extra={
+                  <Button variant="ghost" size="sm" onClick={() => open('metric')}>
+                    Cargar medida
+                  </Button>
+                }
+              />
+              <AiContextCard
+                student={data}
+                extra={
+                  <Button variant="ghost" size="sm" onClick={() => open('context')}>
+                    Editar
+                  </Button>
+                }
+              />
             </div>
             <div className="flex min-w-0 flex-col gap-5">
               {metricsQuery.isError ? (
@@ -73,12 +96,13 @@ export default function StudentProfilePage() {
               ) : (
                 <>
                   <WeightChart metrics={metrics} />
-                  <MetricsHistory metrics={metrics} />
+                  <MetricsHistory metrics={metrics} onDelete={(metric) => open('deleteMetric', { metric })} />
                 </>
               )}
               <ActiveRoutineCard routine={data.active_routine} />
             </div>
           </div>
+          <StudentDialogs dialog={dialog} student={data} onClose={close} />
         </div>
       )}
     </QueryState>

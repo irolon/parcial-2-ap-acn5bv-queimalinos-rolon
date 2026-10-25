@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
 import { resetAuthStore } from '../auth/authStore';
+import { calls } from '../shared/fetchMock';
 import { TRAINER, renderRoute, setSession } from '../routes/renderRoute';
 import { stubStudents } from './students';
 
@@ -7,8 +8,11 @@ import { stubStudents } from './students';
 export async function loadProfile({ path = '/pt/alumnos/st-1', detail, name = 'Ana Paz', ...stub }) {
   resetAuthStore();
   setSession(TRAINER);
-  stubStudents({ detail, ...stub });
+  const fetchMock = stubStudents({ detail, ...stub });
   const utils = renderRoute(path);
   await screen.findByRole('heading', { level: 1, name });
-  return utils;
+  return { ...utils, fetchMock };
 }
+
+/** Llamadas `[path, init]` hechas con ese método. */
+export const callsWith = (fetchMock, method) => calls(fetchMock).filter(([, init]) => init?.method === method);
