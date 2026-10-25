@@ -57,7 +57,7 @@ export default function StudentProfilePage() {
 
   const students = useMemo(() => {
     const filters = parseStudentFilters(new URLSearchParams(search));
-    return sortStudents(filterStudents(listQuery.data ?? [], filters, now), filters.orden);
+    return sortStudents(filterStudents(listQuery.data ?? [], filters, now), filters.orden, now);
   }, [listQuery.data, search, now]);
 
   if (query.error?.status === 403) return <NotFound />;

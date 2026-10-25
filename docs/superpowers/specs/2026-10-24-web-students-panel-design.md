@@ -28,7 +28,7 @@ La pantalla que más se ve en la demo: el entrenador ve a todos sus alumnos con 
 
 ### Dashboard (`/pt/dashboard`, reemplaza el placeholder)
 - 3 indicadores (`Stat`): **Alumnos activos**, **Inactivos > 7 días**, **Nunca entrenaron**.
-- Card **"Alertas de inactividad"**: los 5 inactivos con más días sin entrenar (los que nunca entrenaron, por antigüedad del alta), con avatar, nombre, "Hace N días" o "Nunca entrenó" y el badge; cada uno lleva a su ficha; "Ver todos" → `/pt/alumnos?estado=inactivos`.
+- Card **"Alertas de inactividad"**: los 5 inactivos con más días sin entrenar (se cuentan desde la última sesión o, si nunca entrenó, desde el alta; es el mismo orden que el del panel), con avatar, nombre, "Hace N días" o "Nunca entrenó" y el badge; cada uno lleva a su ficha; "Ver todos" → `/pt/alumnos?estado=inactivos`.
 - Sin inactivos: "Todos tus alumnos entrenaron en la última semana".
 - Sin alumnos: llamado a la acción "Generá tu primera invitación" → `/pt/alumnos/nuevo`.
 - Fuera (sin datos): sesiones por semana, gráfico de actividad, adherencia, RPE, actividad reciente.
@@ -36,7 +36,7 @@ La pantalla que más se ve en la demo: el entrenador ve a todos sus alumnos con 
 ### Panel de alumnos (`/pt/alumnos`, reemplaza el placeholder)
 - Datos: `GET /students?limit=100` (activos) con React Query; los dados de baja con `?active=false&limit=100` solo cuando se elige ese filtro. Filtrado y orden en el cliente.
 - Encabezado: subtítulo de la topbar con contadores ("12 ACTIVOS · 3 INACTIVOS") y botón "Nuevo alumno".
-- Filtros: buscador por nombre (sin distinguir mayúsculas ni tildes), **objetivo** (select), **estado** (Todos · Inactivos · Al día · Nuevos · Dados de baja), **orden** (última sesión — los más viejos primero, que es el default —, nombre, alta reciente).
+- Filtros: buscador por nombre (sin distinguir mayúsculas ni tildes), **objetivo** (select), **estado** (Todos · Inactivos · Al día · Nuevos · Dados de baja), **orden** (última sesión — más días sin entrenar primero, contando desde el alta si nunca entrenó, con desempate por nombre; es el default —, nombre, alta reciente).
 - El estado de los filtros vive en la URL (`?estado=…&objetivo=…&orden=…&q=…`) para que "Ver todos" del dashboard y el volver desde la ficha lo conserven.
 - Grilla de tarjetas: avatar con iniciales (tono `hot` si está inactivo), nombre, objetivo, "Última sesión: …", badge de estado (INACTIVO `hot`, NUEVO `cool`, DADO DE BAJA `ghost`) y borde rojo si está inactivo. Toda la tarjeta es un link a la ficha.
 - Estados: cargando (skeleton), error con reintento, sin alumnos (llamado a invitar), sin resultados por filtros ("Ningún alumno coincide" + limpiar filtros).

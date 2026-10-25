@@ -3,6 +3,7 @@ import {
   DEFAULT_FILTERS,
   filterStudents,
   filtersToSearch,
+  inactiveStudents,
   neighbors,
   parseStudentFilters,
   sortStudents,
@@ -59,8 +60,17 @@ describe('sortStudents', () => {
   const s2 = student({ name: 'Álvaro', last_session_at: '2026-10-01T00:00:00Z', created_at: '2026-06-01T00:00:00Z' });
   const list = [s1, never2, s2, never1];
 
-  it('ultima-sesion: nunca entrenó primero, después la más vieja', () => {
-    expect(sortStudents(list, 'ultima-sesion')).toEqual([never1, never2, s2, s1]);
+  it('ultima-sesion: más días sin entrenar primero, contando desde el alta si nunca entrenó', () => {
+    expect(sortStudents(list, 'ultima-sesion', NOW)).toEqual([never1, never2, s2, s1]);
+    const longAgo = student({ name: 'Vieja', last_session_at: '2026-08-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z' });
+    const recentNever = student({ name: 'Reciente', created_at: '2026-10-20T00:00:00Z' });
+    expect(sortStudents([recentNever, longAgo], 'ultima-sesion', NOW)).toEqual([longAgo, recentNever]);
+  });
+
+  it('ultima-sesion: el empate se desempata por nombre', () => {
+    const b = student({ name: 'Bruno', last_session_at: '2026-10-10T08:00:00Z' });
+    const a = student({ name: 'Álvaro', last_session_at: '2026-10-10T10:00:00Z' });
+    expect(sortStudents([b, a], 'ultima-sesion', NOW)).toEqual([a, b]);
   });
 
   it('nombre (con tildes) y alta; no muta la entrada', () => {
@@ -80,5 +90,15 @@ describe('neighbors', () => {
     expect(neighbors(list, c.id)).toEqual({ prev: b, next: null, index: 2, total: 3 });
     expect(neighbors([a], a.id)).toEqual({ prev: null, next: null, index: 0, total: 1 });
     expect(neighbors(list, 'x')).toEqual({ prev: null, next: null, index: -1, total: 3 });
+  });
+});
+
+describe('inactiveStudents', () => {
+  it('toma hasta 5 inactivos, los de más días sin entrenar primero', () => {
+    const trained = [9, 30, 12, 8].map((d) => student({ last_session_at: new Date(NOW - d * 864e5).toISOString() }));
+    const never = [8, 40].map((d) => student({ created_at: new Date(NOW - d * 864e5).toISOString() }));
+    const fresh = student({ last_session_at: '2026-10-23T10:00:00Z' });
+    const result = inactiveStudents([fresh, ...never, ...trained], NOW);
+    expect(result).toEqual([never[1], trained[1], trained[2], trained[0], trained[3]]);
   });
 });

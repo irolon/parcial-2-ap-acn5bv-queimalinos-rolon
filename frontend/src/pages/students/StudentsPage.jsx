@@ -54,7 +54,7 @@ export default function StudentsPage() {
         empty={{ title: 'No hay alumnos dados de baja' }}
       >
         {(students) => {
-          const items = sortStudents(filterStudents(students, filters, now), filters.orden);
+          const items = sortStudents(filterStudents(students, filters, now), filters.orden, now);
           if (items.length === 0) {
             return (
               <div className="flex flex-col items-center">

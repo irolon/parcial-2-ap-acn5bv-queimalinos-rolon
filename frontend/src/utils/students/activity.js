@@ -9,6 +9,9 @@ export function daysSince(iso, now) {
   return Math.floor((now.getTime() - new Date(iso).getTime()) / DAY_MS);
 }
 
+/** Días sin entrenar: desde la última sesión o, si nunca entrenó, desde el alta. */
+export const daysWithoutTraining = (student, now) => daysSince(student.last_session_at ?? student.created_at, now);
+
 /** 'active' | 'inactive' | 'new' | 'disabled' según baja, última sesión y alta. */
 export function activityStatus(student, now) {
   if (student.active === false) return 'disabled';

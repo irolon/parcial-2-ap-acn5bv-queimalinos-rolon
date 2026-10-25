@@ -49,7 +49,7 @@ describe('DashboardPage', () => {
     );
   });
 
-  it('lista hasta 5 inactivos: más días primero y los que nunca entrenaron después', async () => {
+  it('lista hasta 5 inactivos: más días sin entrenar primero, contando desde el alta si nunca entrenó', async () => {
     const trained = [9, 30, 12, 8].map((d, i) =>
       student({ name: `Con sesión ${i}`, last_session_at: daysAgo(d) }),
     );
@@ -64,9 +64,10 @@ describe('DashboardPage', () => {
       .getAllByRole('link', { name: /Con sesión|Nunca/ })
       .map((a) => a.textContent);
     expect(names).toHaveLength(5);
-    expect(names[0]).toContain('Con sesión 1');
-    expect(names[3]).toContain('Con sesión 3');
-    expect(names[4]).toContain('Nunca antiguo');
+    expect(names[0]).toContain('Nunca antiguo');
+    expect(names[1]).toContain('Con sesión 1');
+    expect(names[4]).toContain('Con sesión 3');
+    expect(main().queryByText('Nunca reciente')).not.toBeInTheDocument();
     expect(main().getByText('Nunca entrenó')).toBeInTheDocument();
   });
 

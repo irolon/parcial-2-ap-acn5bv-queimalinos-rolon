@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { INACTIVITY_DAYS, STATUS_LABELS, activityStatus, daysSince, lastSessionLabel } from '@/utils/students/activity';
+import {
+  INACTIVITY_DAYS,
+  STATUS_LABELS,
+  activityStatus,
+  daysSince,
+  daysWithoutTraining,
+  lastSessionLabel,
+} from '@/utils/students/activity';
 import { student } from '../../helpers/students/fixtures';
 
 const NOW = new Date('2026-10-24T12:00:00Z');
@@ -51,5 +58,12 @@ describe('lastSessionLabel', () => {
   it('expone las etiquetas de estado', () => {
     expect(STATUS_LABELS.active).toBe('Al día');
     expect(STATUS_LABELS.disabled).toBe('Dado de baja');
+  });
+});
+
+describe('daysWithoutTraining', () => {
+  it('cuenta desde la última sesión, o desde el alta si nunca entrenó', () => {
+    expect(daysWithoutTraining(student({ last_session_at: '2026-10-20T12:00:00Z' }), NOW)).toBe(4);
+    expect(daysWithoutTraining(student({ created_at: '2026-10-10T12:00:00Z' }), NOW)).toBe(14);
   });
 });

@@ -2,25 +2,8 @@ import { Link } from 'react-router';
 import Avatar from '@/components/shared/ui/Avatar';
 import Card from '@/components/shared/ui/Card';
 import Pill from '@/components/shared/ui/Pill';
-import { activityStatus, lastSessionLabel } from '@/utils/students/activity';
-
-const MAX_ALERTS = 5;
-
-// Con sesiones primero (más días sin entrenar arriba); después los que nunca entrenaron, por alta más vieja.
-function byInactivity(a, b) {
-  if (a.last_session_at && b.last_session_at) return a.last_session_at.localeCompare(b.last_session_at);
-  if (a.last_session_at) return -1;
-  if (b.last_session_at) return 1;
-  return a.created_at.localeCompare(b.created_at);
-}
-
-/** Hasta 5 alumnos inactivos, los más urgentes primero. */
-export function inactiveStudents(students, now) {
-  return students
-    .filter((s) => activityStatus(s, now) === 'inactive')
-    .sort(byInactivity)
-    .slice(0, MAX_ALERTS);
-}
+import { lastSessionLabel } from '@/utils/students/activity';
+import { inactiveStudents } from '@/utils/students/studentFilters';
 
 export default function InactivityAlerts({ students, now }) {
   const alerts = inactiveStudents(students, now);

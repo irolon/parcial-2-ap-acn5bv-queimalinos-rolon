@@ -1,4 +1,4 @@
-import { activityStatus } from './activity';
+import { activityStatus, daysWithoutTraining } from './activity';
 
 export const DEFAULT_FILTERS = { estado: 'todos', objetivo: '', orden: 'ultima-sesion', q: '' };
 export const ESTADOS = ['todos', 'inactivos', 'al-dia', 'nuevos', 'baja'];
@@ -45,21 +45,26 @@ export function filterStudents(students, filters, now) {
 }
 
 const byCreated = (a, b) => new Date(a.created_at) - new Date(b.created_at);
+const byName = (a, b) => a.name.localeCompare(b.name, 'es');
 
-const COMPARATORS = {
-  'ultima-sesion': (a, b) => {
-    if (a.last_session_at && b.last_session_at) return new Date(a.last_session_at) - new Date(b.last_session_at);
-    if (a.last_session_at) return 1;
-    if (b.last_session_at) return -1;
-    return byCreated(a, b);
-  },
-  nombre: (a, b) => a.name.localeCompare(b.name, 'es'),
+const comparators = (now) => ({
+  'ultima-sesion': (a, b) => daysWithoutTraining(b, now) - daysWithoutTraining(a, now) || byName(a, b),
+  nombre: byName,
   alta: (a, b) => byCreated(b, a),
-};
+});
 
-/** Copia ordenada; "ultima-sesion" pone primero a quienes nunca entrenaron. */
-export function sortStudents(students, orden) {
-  return [...students].sort(COMPARATORS[orden] ?? COMPARATORS[DEFAULT_FILTERS.orden]);
+/** Copia ordenada; "ultima-sesion" pone primero a quienes llevan más días sin entrenar. */
+export function sortStudents(students, orden, now = new Date()) {
+  const all = comparators(now);
+  return [...students].sort(all[orden] ?? all[DEFAULT_FILTERS.orden]);
+}
+
+const MAX_ALERTS = 5;
+
+/** Hasta 5 alumnos inactivos, los que más días llevan sin entrenar primero. */
+export function inactiveStudents(students, now) {
+  const inactive = students.filter((s) => activityStatus(s, now) === 'inactive');
+  return sortStudents(inactive, 'ultima-sesion', now).slice(0, MAX_ALERTS);
 }
 
 export function neighbors(students, id) {
