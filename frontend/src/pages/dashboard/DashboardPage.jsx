@@ -4,10 +4,10 @@ import Stat from '@/components/shared/ui/Stat';
 import FirstInvitationCta from '@/components/students/FirstInvitationCta';
 import InactivityAlerts from '@/components/students/InactivityAlerts';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
-import { INACTIVITY_DAYS, activityStatus } from '@/utils/students/activity';
+import { INACTIVITY_DAYS, countByStatus } from '@/utils/students/activity';
 
 function Indicators({ students, now }) {
-  const inactive = students.filter((s) => activityStatus(s, now) === 'inactive').length;
+  const { inactive } = countByStatus(students, now);
   const never = students.filter((s) => !s.last_session_at).length;
   return (
     <Card className="grid grid-cols-1 gap-5 sm:grid-cols-3">

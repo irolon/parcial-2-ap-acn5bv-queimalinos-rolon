@@ -21,6 +21,13 @@ export function activityStatus(student, now) {
   return daysSince(student.created_at, now) >= INACTIVITY_DAYS ? 'inactive' : 'new';
 }
 
+/** Cuántos alumnos hay en cada estado: `{ active, inactive, new, disabled }`. */
+export function countByStatus(students, now) {
+  const counts = { active: 0, inactive: 0, new: 0, disabled: 0 };
+  for (const s of students) counts[activityStatus(s, now)] += 1;
+  return counts;
+}
+
 export function lastSessionLabel(student, now) {
   if (!student.last_session_at) return 'Nunca entrenó';
   const days = daysSince(student.last_session_at, now);

@@ -10,7 +10,7 @@ import StudentsGridSkeleton from '@/components/students/StudentsGridSkeleton';
 import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
 import { NEW_STUDENT } from '@/routes/routeTable';
-import { activityStatus } from '@/utils/students/activity';
+import { countByStatus } from '@/utils/students/activity';
 import {
   DEFAULT_FILTERS,
   filterStudents,
@@ -22,8 +22,7 @@ import {
 function subtitleFor(students, estado, now) {
   if (!students) return undefined;
   if (estado === 'baja') return `${students.length} DADOS DE BAJA`;
-  const inactive = students.filter((s) => activityStatus(s, now) === 'inactive').length;
-  return `${students.length} ACTIVOS · ${inactive} INACTIVOS`;
+  return `${students.length} ACTIVOS · ${countByStatus(students, now).inactive} INACTIVOS`;
 }
 
 /** Panel de alumnos: grilla con estado de actividad y filtros guardados en la URL. */

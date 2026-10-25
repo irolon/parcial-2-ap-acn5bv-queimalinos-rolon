@@ -3,6 +3,7 @@ import {
   INACTIVITY_DAYS,
   STATUS_LABELS,
   activityStatus,
+  countByStatus,
   daysSince,
   daysWithoutTraining,
   lastSessionLabel,
@@ -65,5 +66,19 @@ describe('daysWithoutTraining', () => {
   it('cuenta desde la última sesión, o desde el alta si nunca entrenó', () => {
     expect(daysWithoutTraining(student({ last_session_at: '2026-10-20T12:00:00Z' }), NOW)).toBe(4);
     expect(daysWithoutTraining(student({ created_at: '2026-10-10T12:00:00Z' }), NOW)).toBe(14);
+  });
+});
+
+describe('countByStatus', () => {
+  it('cuenta cada estado', () => {
+    const list = [
+      student({ last_session_at: '2026-10-23T12:00:00Z' }),
+      student({ last_session_at: '2026-10-01T12:00:00Z' }),
+      student({ created_at: '2026-10-01T12:00:00Z' }),
+      student({ created_at: '2026-10-23T12:00:00Z' }),
+      student({ active: false }),
+    ];
+    expect(countByStatus(list, NOW)).toEqual({ active: 1, inactive: 2, new: 1, disabled: 1 });
+    expect(countByStatus([], NOW)).toEqual({ active: 0, inactive: 0, new: 0, disabled: 0 });
   });
 });
