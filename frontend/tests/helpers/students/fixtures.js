@@ -30,3 +30,17 @@ export function metric(overrides = {}) {
     ...overrides,
   };
 }
+
+/** Ficha como la devuelve `GET /students/:id`; `overrides` pisa cualquier campo. */
+export function studentDetail(overrides = {}) {
+  return {
+    ...student({ id: 'st-1', name: 'Ana Paz' }),
+    level: 'intermediate',
+    birth_date: '1990-05-10',
+    gym_equipment: ['barbell', 'Rack propio'],
+    injuries: 'Lumbalgia',
+    latest_metrics: null,
+    active_routine: null,
+    ...overrides,
+  };
+}

@@ -56,3 +56,14 @@ export function validateMetricBody(body) {
 export function weightSeries(metrics) {
   return metrics.filter((m) => m.weight_kg != null).map((m) => ({ date: m.recorded_at, weight: m.weight_kg }));
 }
+
+const pad = (n) => String(n).padStart(2, '0');
+
+/** `dd/mm/aaaa` en la zona horaria local. */
+export function formatMetricDate(iso) {
+  const date = new Date(iso);
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+/** Número con coma decimal (estilo rioplatense). */
+export const formatNumber = (n) => String(n).replace('.', ',');

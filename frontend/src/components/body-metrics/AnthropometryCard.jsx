@@ -1,0 +1,40 @@
+import Card from '@/components/shared/ui/Card';
+import Stat from '@/components/shared/ui/Stat';
+import { formatDelta, formatNumber, metricDelta } from '@/utils/body-metrics/metrics';
+
+const STATS = [
+  { field: 'weight_kg', label: 'Peso', unit: 'kg' },
+  { field: 'height_cm', label: 'Talla', unit: 'cm' },
+  { field: 'body_fat_pct', label: '% grasa', unit: '%' },
+  { field: 'bmi', label: 'IMC' },
+  { field: 'waist_cm', label: 'Cintura', unit: 'cm' },
+  { field: 'hip_cm', label: 'Cadera', unit: 'cm' },
+  { field: 'chest_cm', label: 'Pecho', unit: 'cm' },
+];
+
+/** Última medida con la diferencia contra la anterior. El IMC viene del backend y no lleva diferencia. */
+export default function AnthropometryCard({ latest, previous, extra }) {
+  return (
+    <Card title="Antropometría" extra={extra}>
+      {latest ? (
+        <div className="grid grid-cols-2 gap-4">
+          {STATS.map(({ field, label, unit }) => {
+            const value = latest[field];
+            const delta = unit ? metricDelta(latest, previous, field) : null;
+            return (
+              <Stat
+                key={field}
+                label={label}
+                value={value == null ? '—' : formatNumber(value)}
+                unit={value == null ? undefined : unit}
+                delta={delta === null ? undefined : formatDelta(delta, unit)}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <p className="font-body text-sm text-ink6">Todavía no hay medidas</p>
+      )}
+    </Card>
+  );
+}
