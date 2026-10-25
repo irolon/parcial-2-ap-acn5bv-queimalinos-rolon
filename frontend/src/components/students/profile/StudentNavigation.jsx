@@ -10,9 +10,9 @@ const hrefFor = (student, search) => `/pt/alumnos/${student.id}${search ? `?${se
 function NavLink({ student, search, children }) {
   if (!student) {
     return (
-      <span aria-disabled="true" className={`${LINK} cursor-not-allowed text-ink5`}>
+      <button type="button" disabled className={`${LINK} cursor-not-allowed text-ink5`}>
         {children}
-      </span>
+      </button>
     );
   }
   return (

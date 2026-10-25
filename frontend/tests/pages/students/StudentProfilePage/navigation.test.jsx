@@ -49,12 +49,12 @@ describe('StudentProfilePage: navegación entre alumnos', () => {
     const { unmount } = await open('st-beto', 'Beto');
     expect(screen.getByText('1 de 3')).toBeVisible();
     expect(screen.queryByRole('link', { name: /Anterior/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/Anterior/)).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /Anterior/ })).toBeDisabled();
     unmount();
     await open('st-dani', 'Dani');
     expect(screen.getByText('3 de 3')).toBeVisible();
     expect(screen.queryByRole('link', { name: /Siguiente/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/Siguiente/)).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /Siguiente/ })).toBeDisabled();
   });
 
   it('ArrowRight navega al siguiente', async () => {
@@ -102,8 +102,8 @@ describe('StudentProfilePage: navegación entre alumnos', () => {
       detail: studentDetail({ id: 'st-solo', name: 'Solo' }),
     });
     expect(await screen.findByText('1 de 1')).toBeVisible();
-    expect(screen.getByText(/Anterior/)).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText(/Siguiente/)).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /Anterior/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Siguiente/ })).toBeDisabled();
   });
 
   it('si el alumno no está en la lista filtrada, ambos quedan deshabilitados y las flechas no hacen nada', async () => {
@@ -113,8 +113,8 @@ describe('StudentProfilePage: navegación entre alumnos', () => {
       list: LIST(),
       detail: studentDetail({ id: 'st-dani', name: 'Dani' }),
     });
-    expect(await screen.findByText(/Siguiente/)).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText(/Anterior/)).toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByRole('button', { name: /Siguiente/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Anterior/ })).toBeDisabled();
     expect(screen.queryByText(/ de \d/)).not.toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(router.state.location.pathname).toBe('/pt/alumnos/st-dani');
