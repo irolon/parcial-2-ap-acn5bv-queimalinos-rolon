@@ -12,7 +12,7 @@ const STATS = [
   { field: 'chest_cm', label: 'Pecho', unit: 'cm' },
 ];
 
-/** Última medida con la diferencia contra la anterior. El IMC viene del backend y no lleva diferencia. */
+/** Última medida con la diferencia contra la anterior. El IMC viene del backend y su diferencia no lleva unidad. */
 export default function AnthropometryCard({ latest, previous, extra }) {
   return (
     <Card title="Antropometría" extra={extra}>
@@ -20,7 +20,7 @@ export default function AnthropometryCard({ latest, previous, extra }) {
         <div className="grid grid-cols-2 gap-4">
           {STATS.map(({ field, label, unit }) => {
             const value = latest[field];
-            const delta = unit ? metricDelta(latest, previous, field) : null;
+            const delta = metricDelta(latest, previous, field);
             return (
               <Stat
                 key={field}

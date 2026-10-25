@@ -38,7 +38,7 @@ describe('StudentsPage: listado', () => {
     await load();
     expect(within(card('Ana Paz')).getByText('Ganar fuerza')).toBeInTheDocument();
     expect(within(card('Ana Paz')).getByText('Última sesión: Ayer')).toBeInTheDocument();
-    expect(within(card('Ana Paz')).queryByText(/Inactivo|Nuevo/)).not.toBeInTheDocument();
+    expect(within(card('Ana Paz')).queryByText(/Inactivo|Nuevo|Al día/)).not.toBeInTheDocument();
     expect(within(card('Marcos Díaz')).getByText('Sin objetivo')).toBeInTheDocument();
     expect(within(card('Marcos Díaz')).getByText('Última sesión: Hace 10 días')).toBeInTheDocument();
     expect(within(card('Marcos Díaz')).getByText('Inactivo')).toBeInTheDocument();

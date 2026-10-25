@@ -47,8 +47,8 @@ La pantalla que más se ve en la demo: el entrenador ve a todos sus alumnos con 
 - **Topbar dinámica:** título = nombre del alumno; subtítulo "ALUMNOS › PERFIL · ÚLTIMA SESIÓN HACE X" (o "NUNCA ENTRENÓ"). Hace falta que una página pueda fijar el título de la topbar.
 - **Navegación entre alumnos:** "‹ Anterior", "Siguiente ›" e indicador "3 de 12", con atajos ← y → (no cuando el foco está en un campo). Recorre la lista del panel con los mismos filtros y orden (se pasan por la URL de la ficha: `?estado=…&orden=…`); entrando directo, el orden por defecto de los activos.
 - **Columna izquierda:**
-  - Avatar grande, nombre, edad (desde `birth_date`) y nivel; pills de estado y objetivo.
-  - Card **Antropometría** (última medida): peso, talla, % grasa, IMC, cintura, cadera, pecho, cada uno con su diferencia contra la medida anterior (`+0,8 kg`). El IMC viene del backend (no se calcula en la web). Sin medidas: "Todavía no hay medidas" + "Cargar medida".
+  - Avatar grande, nombre, edad (desde `birth_date`) y nivel; pills de estado (en la ficha también AL DÍA, tono `good`; en las tarjetas del panel no) y objetivo.
+  - Card **Antropometría** (última medida): peso, talla, % grasa, IMC, cintura, cadera, pecho, cada uno con su diferencia contra la medida anterior (`+0,8 kg`; la del IMC sin unidad). El IMC viene del backend (no se calcula en la web). Sin medidas: "Todavía no hay medidas" + "Cargar medida".
   - Card **Contexto para la IA**: equipamiento y lesiones, con "Editar". Vacíos: aviso "Sin completar: la IA no va a poder personalizar".
 - **Columna derecha:**
   - **Evolución del peso:** gráfico de línea con Recharts (`recharts@3.10.1`, versión exacta), con las medidas que tienen peso. Con menos de 2 puntos: texto en lugar del gráfico.

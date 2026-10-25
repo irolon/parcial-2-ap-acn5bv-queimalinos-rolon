@@ -18,7 +18,7 @@ export default function ProfileHeader({ student, now }) {
       <h2 className="font-display text-lg font-semibold text-bone0">{student.name}</h2>
       {details.length > 0 && <p className="font-body text-sm text-ink6">{details.join(' · ')}</p>}
       <div className="flex flex-wrap justify-center gap-2">
-        <StudentStatusPill status={activityStatus(student, now)} />
+        <StudentStatusPill status={activityStatus(student, now)} showUpToDate />
         {goal && <Pill tone="neutral">{goal}</Pill>}
       </div>
     </div>

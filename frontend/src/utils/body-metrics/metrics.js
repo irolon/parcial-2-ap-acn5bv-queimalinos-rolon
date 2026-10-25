@@ -22,10 +22,12 @@ export function metricDelta(latest, previous, field) {
   return Math.round((a - b) * 10) / 10;
 }
 
+/** `+0,8 kg`; sin `unit` (el IMC) va solo el número. */
 export function formatDelta(n, unit) {
   if (n === 0) return '=';
   const sign = n > 0 ? '+' : '−';
-  return `${sign}${String(Math.abs(n)).replace('.', ',')} ${unit}`;
+  const text = `${sign}${String(Math.abs(n)).replace('.', ',')}`;
+  return unit ? `${text} ${unit}` : text;
 }
 
 /** Valores de `type=number` (strings) → body del POST: números, sin vacíos. */

@@ -28,7 +28,8 @@ describe('latestTwo / metricDelta', () => {
 });
 
 describe('formatDelta', () => {
-  it('signo, coma decimal y unidad', () => {
+  it('signo, coma decimal y unidad (opcional)', () => {
+    expect(formatDelta(0.3)).toBe('+0,3');
     expect(formatDelta(0.8, 'kg')).toBe('+0,8 kg');
     expect(formatDelta(-1.2, 'cm')).toBe('−1,2 cm');
     expect(formatDelta(0, 'kg')).toBe('=');
