@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import Card from '@/components/shared/ui/Card';
-import { formatMetricDate, formatNumber } from '@/utils/body-metrics/metrics';
+import { formatBmi, formatMetricDate, formatNumber } from '@/utils/body-metrics/metrics';
 
 const cell = (value, unit) => (value == null ? '—' : `${formatNumber(value)} ${unit}`);
 const TH = 'px-2 py-2 text-left font-mono text-[10px] font-normal uppercase tracking-[0.8px] text-ink6';
@@ -35,7 +35,7 @@ export default function MetricsHistory({ metrics, onDelete }) {
                   <tr key={m.id} className="border-t border-ink3">
                     <td className={TD}>{date}</td>
                     <td className={TD}>{cell(m.weight_kg, 'kg')}</td>
-                    <td className={TD}>{m.bmi == null ? '—' : formatNumber(m.bmi)}</td>
+                    <td className={TD}>{m.bmi == null ? '—' : formatBmi(m.bmi)}</td>
                     <td className={TD}>{cell(m.body_fat_pct, '%')}</td>
                     <td className={TD}>{cell(m.waist_cm, 'cm')}</td>
                     <td className="px-2 py-1">

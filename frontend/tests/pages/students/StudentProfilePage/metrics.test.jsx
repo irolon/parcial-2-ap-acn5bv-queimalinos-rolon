@@ -36,6 +36,10 @@ describe('StudentProfilePage: gráfico e historial de medidas', () => {
     await waitFor(() => expect(chart.querySelectorAll('.recharts-line-dot')).toHaveLength(3));
     const ticks = [...chart.querySelectorAll('.recharts-xAxis-tick-labels text')];
     expect(ticks.map((t) => t.textContent)).toContain('05/09/2026');
+    const yTicks = [...chart.querySelectorAll('.recharts-yAxis-tick-labels text')].map((t) => t.textContent);
+    expect(yTicks.length).toBeGreaterThan(0);
+    expect(yTicks.every((text) => /^\d+$/.test(text))).toBe(true);
+    expect(main().getByText('kg')).toBeVisible();
   });
 
   it('si falla el historial muestra el error con reintento en lugar del gráfico y la tabla', async () => {
@@ -61,6 +65,18 @@ describe('StudentProfilePage: gráfico e historial de medidas', () => {
       '05/08/2026',
     ]);
     expect(within(rows[1]).getByText('20 %')).toBeVisible();
+  });
+
+  it('el IMC lleva siempre un decimal en el historial y en la antropometría', async () => {
+    const latest = metric({ recorded_at: '2026-10-05T12:00:00Z', bmi: 26 });
+    await loadProfile({
+      detail: studentDetail({ latest_metrics: latest }),
+      metrics: [metric({ recorded_at: '2026-09-05T12:00:00Z', bmi: 25.75 }), latest],
+    });
+    const table = await main().findByRole('table', { name: 'Historial de medidas' });
+    expect(within(table).getByText('26,0')).toBeVisible();
+    expect(within(table).getByText('25,8')).toBeVisible();
+    expect(main().getAllByText('26,0')).toHaveLength(2);
   });
 
   it('cada fila tiene su botón de borrar', async () => {

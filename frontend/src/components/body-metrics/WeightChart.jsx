@@ -8,7 +8,7 @@ const AXIS = { stroke: 'var(--color-ink6)', fontSize: 11 };
 export default function WeightChart({ metrics }) {
   const data = weightSeries(metrics);
   return (
-    <Card title="Evolución del peso">
+    <Card title="Evolución del peso" extra={data.length >= 2 && <span className="font-mono text-xs text-ink6">kg</span>}>
       {data.length < 2 ? (
         <p className="font-body text-sm text-ink6">Cargá al menos dos pesos para ver la evolución</p>
       ) : (
@@ -17,7 +17,7 @@ export default function WeightChart({ metrics }) {
             <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid stroke="var(--color-ink3)" vertical={false} />
               <XAxis dataKey="date" tickFormatter={formatMetricDate} {...AXIS} />
-              <YAxis domain={['dataMin - 2', 'dataMax + 2']} unit=" kg" width={56} {...AXIS} />
+              <YAxis domain={['dataMin - 2', 'dataMax + 2']} width={44} {...AXIS} />
               <Tooltip
                 labelFormatter={formatMetricDate}
                 formatter={(value) => [`${value} kg`, 'Peso']}

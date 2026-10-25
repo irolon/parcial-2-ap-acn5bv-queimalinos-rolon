@@ -70,6 +70,9 @@ export function formatMetricDate(iso) {
 /** Número con coma decimal (estilo rioplatense). */
 export const formatNumber = (n) => String(n).replace('.', ',');
 
+/** IMC con un decimal fijo y coma (`26,0`). */
+export const formatBmi = (n) => formatNumber(Number(n).toFixed(1));
+
 /** Valor para un `datetime-local` (`aaaa-mm-ddThh:mm`) en la zona horaria local. */
 export function localInputValue(date = new Date()) {
   const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;

@@ -1,6 +1,6 @@
 import Card from '@/components/shared/ui/Card';
 import Stat from '@/components/shared/ui/Stat';
-import { formatDelta, formatNumber, metricDelta } from '@/utils/body-metrics/metrics';
+import { formatBmi, formatDelta, formatNumber, metricDelta } from '@/utils/body-metrics/metrics';
 
 const STATS = [
   { field: 'weight_kg', label: 'Peso', unit: 'kg' },
@@ -25,7 +25,7 @@ export default function AnthropometryCard({ latest, previous, extra }) {
               <Stat
                 key={field}
                 label={label}
-                value={value == null ? '—' : formatNumber(value)}
+                value={value == null ? '—' : (field === 'bmi' ? formatBmi : formatNumber)(value)}
                 unit={value == null ? undefined : unit}
                 delta={delta === null ? undefined : formatDelta(delta, unit)}
               />

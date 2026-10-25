@@ -3,6 +3,7 @@ import {
   METRIC_FIELDS,
   METRIC_UNITS,
   buildMetricBody,
+  formatBmi,
   formatDelta,
   latestTwo,
   localInputValue,
@@ -35,6 +36,14 @@ describe('formatDelta', () => {
     expect(formatDelta(0, 'kg')).toBe('=');
     expect(METRIC_FIELDS).toHaveLength(6);
     expect(METRIC_UNITS.body_fat_pct).toBe('%');
+  });
+});
+
+describe('formatBmi', () => {
+  it('siempre un decimal con coma', () => {
+    expect(formatBmi(26)).toBe('26,0');
+    expect(formatBmi(25.75)).toBe('25,8');
+    expect(formatBmi(25.8)).toBe('25,8');
   });
 });
 
