@@ -5,13 +5,14 @@ import Textarea from '@/components/shared/ui/Textarea';
 import EquipmentPicker from '@/components/students/dialogs/EquipmentPicker';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
-import { MAX_INJURIES, STUDENT_FIELDS, buildContextBody } from '@/utils/students/studentForm';
+import { MAX_INJURIES, STUDENT_FIELDS, addEquipment, buildContextBody } from '@/utils/students/studentForm';
 
 const LABEL = 'mb-1.5 block font-mono text-[9px] uppercase tracking-[1px] text-ink6';
 
 /** Equipamiento (chips) y lesiones que la IA usa para personalizar. */
 export default function AiContextDialog({ student, onClose }) {
   const [equipment, setEquipment] = useState(student.gym_equipment ?? []);
+  const [draft, setDraft] = useState('');
   const [injuries, setInjuries] = useState(student.injuries ?? '');
   const [errors, setErrors] = useState({ form: null, fields: {} });
   const update = useUpdateStudent(student.id);
@@ -21,7 +22,7 @@ export default function AiContextDialog({ student, onClose }) {
     if (saving) return;
     setErrors({ form: null, fields: {} });
     try {
-      await update.mutateAsync(buildContextBody(equipment, injuries));
+      await update.mutateAsync(buildContextBody(addEquipment(equipment, draft), injuries));
       onClose();
     } catch (error) {
       setErrors(fieldErrorsFrom(error, { fields: STUDENT_FIELDS, fallback: 'No pudimos guardar el contexto' }));
@@ -56,7 +57,7 @@ export default function AiContextDialog({ student, onClose }) {
         )}
         <div>
           <span className={LABEL}>Equipamiento</span>
-          <EquipmentPicker value={equipment} onChange={setEquipment} />
+          <EquipmentPicker value={equipment} onChange={setEquipment} draft={draft} onDraftChange={setDraft} />
           {errors.fields.gym_equipment && (
             <p role="alert" className="mt-1.5 font-mono text-[11px] text-hot">
               {errors.fields.gym_equipment}

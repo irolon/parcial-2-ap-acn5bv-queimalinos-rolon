@@ -58,6 +58,14 @@ describe('StudentProfilePage: contexto para la IA', () => {
     expect(bodyOf(callsWith(fetchMock, 'PATCH')[0][1]).gym_equipment).toEqual(['barbell']);
   });
 
+  it('el equipo escrito en "Agregar otro" sin confirmar se guarda igual', async () => {
+    const user = userEvent.setup();
+    const { fetchMock, dialog } = await open(user, studentDetail({ gym_equipment: ['barbell'], injuries: null }));
+    await user.type(within(dialog).getByLabelText('Agregar otro'), 'Banco plano');
+    await save(user, dialog);
+    expect(bodyOf(callsWith(fetchMock, 'PATCH')[0][1]).gym_equipment).toEqual(['barbell', 'Banco plano']);
+  });
+
   it('vaciar todo manda null en ambos campos', async () => {
     const user = userEvent.setup();
     const detail = studentDetail({ gym_equipment: ['barbell'], injuries: 'Lumbalgia' });
