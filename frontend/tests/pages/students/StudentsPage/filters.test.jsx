@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 const main = () => within(screen.getByRole('main'));
-const cards = () => main().queryAllByRole('link').map((a) => a.textContent);
+const cards = () => main().queryAllByRole('link', { name: /^(?!Nuevo alumno)/ }).map((a) => a.textContent);
 
 const LIST = () => [
   student({ name: 'Ana Paz', last_session_at: daysAgo(1) }),

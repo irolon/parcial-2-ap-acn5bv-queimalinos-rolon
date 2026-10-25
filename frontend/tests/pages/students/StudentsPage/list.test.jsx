@@ -61,6 +61,12 @@ describe('StudentsPage: listado', () => {
     expect(router.state.location.search).toBe('?estado=inactivos');
   });
 
+  it('el botón "Nuevo alumno" lleva a invitar', async () => {
+    await load();
+    await userEvent.click(main().getByRole('link', { name: 'Nuevo alumno' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Invitar alumno' })).toBeVisible();
+  });
+
   it('sin alumnos invita a generar la primera invitación', async () => {
     stubStudents({ list: [] });
     const { pathname } = renderRoute('/pt/alumnos');

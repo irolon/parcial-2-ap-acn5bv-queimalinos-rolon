@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { SearchX } from 'lucide-react';
 import EmptyState from '@/components/shared/states/EmptyState';
 import QueryState from '@/components/shared/states/QueryState';
@@ -9,6 +9,7 @@ import StudentFilters from '@/components/students/StudentFilters';
 import StudentsGridSkeleton from '@/components/students/StudentsGridSkeleton';
 import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
+import { NEW_STUDENT } from '@/routes/routeTable';
 import { activityStatus } from '@/utils/students/activity';
 import {
   DEFAULT_FILTERS,
@@ -38,6 +39,14 @@ export default function StudentsPage() {
 
   return (
     <section className="flex flex-col gap-5">
+      <div className="flex justify-end">
+        <Link
+          to={NEW_STUDENT.path}
+          className="inline-flex h-11 items-center rounded-lg bg-accent px-[18px] font-display text-sm font-semibold text-accentInk hover:bg-accentDim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText"
+        >
+          Nuevo alumno
+        </Link>
+      </div>
       <StudentFilters filters={filters} onChange={update} />
       <QueryState
         query={query}
