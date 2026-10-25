@@ -66,10 +66,10 @@ export default function StudentProfilePage() {
   return (
     <QueryState query={query}>
       {(data) => (
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <StudentNavigation students={students} id={id} search={search} />
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
-            <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <div className="flex min-w-0 flex-col gap-5">
               <ProfileHeader student={data} now={now} />
               <ProfileActions student={data} onEdit={() => open('edit')} onDeactivate={() => open('deactivate')} />
               <AnthropometryCard

@@ -45,6 +45,15 @@ describe('StudentProfilePage: ficha', () => {
     expect(main().getByText('178')).toBeVisible();
   });
 
+  it('la tabla del historial scrollea adentro y las columnas de la grilla pueden encogerse', async () => {
+    await loadProfile({ detail: studentDetail(), metrics: [metric()] });
+    const table = await main().findByRole('table', { name: 'Historial de medidas' });
+    expect(table.parentElement).toHaveClass('overflow-x-auto');
+    const grid = table.closest('.grid');
+    expect(grid.className).toContain('minmax(0,1fr)');
+    for (const column of grid.children) expect(column).toHaveClass('min-w-0');
+  });
+
   it('sin medidas lo avisa', async () => {
     await loadProfile({ detail: studentDetail() });
     expect(await main().findByText('Todavía no hay medidas')).toBeVisible();
