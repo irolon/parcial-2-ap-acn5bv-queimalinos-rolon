@@ -31,6 +31,7 @@ export default function StudentNavigation({ students, id, search }) {
 
   useEffect(() => {
     const onKeyDown = (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest(FIELD) || document.querySelector('[role="dialog"]')) return;
       const href = event.key === 'ArrowLeft' ? prevHref : event.key === 'ArrowRight' ? nextHref : null;
@@ -40,15 +41,12 @@ export default function StudentNavigation({ students, id, search }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [navigate, prevHref, nextHref]);
 
-  if (index < 0) return null;
   return (
     <nav aria-label="Navegación entre alumnos" className="flex items-center justify-between gap-3">
       <NavLink student={prev} search={search}>
         ‹ Anterior
       </NavLink>
-      <span className="font-mono text-xs text-ink6">
-        {index + 1} de {total}
-      </span>
+      <span className="font-mono text-xs text-ink6">{index >= 0 && `${index + 1} de ${total}`}</span>
       <NavLink student={next} search={search}>
         Siguiente ›
       </NavLink>

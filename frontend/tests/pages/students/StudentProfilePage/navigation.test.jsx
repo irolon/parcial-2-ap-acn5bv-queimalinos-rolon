@@ -69,12 +69,55 @@ describe('StudentProfilePage: navegación entre alumnos', () => {
     expect(router.state.location.pathname).toBe('/pt/alumnos/st-beto');
   });
 
-  it('con el foco en un campo, las flechas no navegan', async () => {
+  const editable = () => {
+    const div = document.createElement('div');
+    div.setAttribute('contenteditable', 'true');
+    return div;
+  };
+
+  it.each([
+    ['input', () => document.createElement('input')],
+    ['textarea', () => document.createElement('textarea')],
+    ['select', () => document.createElement('select')],
+    ['contenteditable', editable],
+  ])('con el foco en %s, las flechas no navegan', async (_name, build) => {
     const { router } = await open('st-carla', 'Carla');
-    const input = document.body.appendChild(document.createElement('input'));
-    fireEvent.keyDown(input, { key: 'ArrowRight' });
+    const field = document.body.appendChild(build());
+    fireEvent.keyDown(field, { key: 'ArrowRight' });
     expect(router.state.location.pathname).toBe('/pt/alumnos/st-carla');
-    input.remove();
+    field.remove();
+  });
+
+  it('con una tecla modificadora (Alt+←) no navega', async () => {
+    const { router } = await open('st-carla', 'Carla');
+    fireEvent.keyDown(window, { key: 'ArrowLeft', altKey: true });
+    expect(router.state.location.pathname).toBe('/pt/alumnos/st-carla');
+  });
+
+  it('con una lista de uno muestra "1 de 1" y ambos deshabilitados', async () => {
+    await loadProfile({
+      path: '/pt/alumnos/st-solo',
+      name: 'Solo',
+      list: [student({ id: 'st-solo', name: 'Solo' })],
+      detail: studentDetail({ id: 'st-solo', name: 'Solo' }),
+    });
+    expect(await screen.findByText('1 de 1')).toBeVisible();
+    expect(screen.getByText(/Anterior/)).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText(/Siguiente/)).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('si el alumno no está en la lista filtrada, ambos quedan deshabilitados y las flechas no hacen nada', async () => {
+    const { router } = await loadProfile({
+      path: '/pt/alumnos/st-dani?estado=inactivos',
+      name: 'Dani',
+      list: LIST(),
+      detail: studentDetail({ id: 'st-dani', name: 'Dani' }),
+    });
+    expect(await screen.findByText(/Siguiente/)).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText(/Anterior/)).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.queryByText(/ de \d/)).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(router.state.location.pathname).toBe('/pt/alumnos/st-dani');
   });
 
   it('con un diálogo abierto, las flechas no navegan', async () => {

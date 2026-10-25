@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { metric, studentDetail } from '../../../helpers/students/fixtures';
 import { loadProfile } from '../../../helpers/students/profile';
 
@@ -32,6 +32,17 @@ describe('StudentProfilePage: gráfico e historial de medidas', () => {
     await loadProfile({ detail: studentDetail(), metrics: METRICS() });
     expect(await main().findByRole('img', { name: 'Evolución del peso' })).toBeInTheDocument();
     expect(main().queryByText(/Cargá al menos dos pesos/)).not.toBeInTheDocument();
+    const chart = main().getByRole('img', { name: 'Evolución del peso' });
+    await waitFor(() => expect(chart.querySelectorAll('.recharts-line-dot')).toHaveLength(3));
+    const ticks = [...chart.querySelectorAll('.recharts-xAxis-tick-labels text')];
+    expect(ticks.map((t) => t.textContent)).toContain('05/09/2026');
+  });
+
+  it('si falla el historial muestra el error con reintento en lugar del gráfico y la tabla', async () => {
+    await loadProfile({ detail: studentDetail(), metricsError: 500 });
+    expect(await main().findByRole('alert')).toHaveTextContent('Algo salió mal');
+    expect(main().getByRole('button', { name: 'Reintentar' })).toBeVisible();
+    expect(main().queryByText(/Cargá al menos dos pesos|El historial está vacío/)).not.toBeInTheDocument();
   });
 
   it('con un solo peso muestra el texto en lugar del gráfico', async () => {

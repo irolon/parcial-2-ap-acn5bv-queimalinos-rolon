@@ -5,6 +5,7 @@ import AnthropometryCard from '@/components/body-metrics/AnthropometryCard';
 import MetricsHistory from '@/components/body-metrics/MetricsHistory';
 import WeightChart from '@/components/body-metrics/WeightChart';
 import EmptyState from '@/components/shared/states/EmptyState';
+import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
 import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
 import AiContextCard from '@/components/students/profile/AiContextCard';
@@ -67,8 +68,14 @@ export default function StudentProfilePage() {
               <AiContextCard student={data} />
             </div>
             <div className="flex min-w-0 flex-col gap-5">
-              <WeightChart metrics={metrics} />
-              <MetricsHistory metrics={metrics} />
+              {metricsQuery.isError ? (
+                <ErrorState message={metricsQuery.error?.message} onRetry={() => metricsQuery.refetch()} />
+              ) : (
+                <>
+                  <WeightChart metrics={metrics} />
+                  <MetricsHistory metrics={metrics} />
+                </>
+              )}
               <ActiveRoutineCard routine={data.active_routine} />
             </div>
           </div>

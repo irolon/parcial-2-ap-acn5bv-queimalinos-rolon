@@ -13,7 +13,7 @@ export const daysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
  * - `detail`: ficha de `GET /students/:id` (`detailError`: status de error, p. ej. 403); `metrics`: respuesta de `GET /students/:id/metrics`.
  * - `handlers`: `{ update, createMetric, ... }` para el resto; lo que no se maneja devuelve 500.
  */
-export function stubStudents({ list = [], disabled = [], detail, detailError, metrics = [], handlers = {} } = {}) {
+export function stubStudents({ list = [], disabled = [], detail, detailError, metrics = [], metricsError, handlers = {} } = {}) {
   return stubFetch(async (url, init = {}) => {
     const method = init.method ?? 'GET';
     const path = url.replace(/^.*\/api/, '');
@@ -21,6 +21,7 @@ export function stubStudents({ list = [], disabled = [], detail, detailError, me
       return jsonResponse(200, { data: path.includes('active=false') ? disabled : list });
     }
     if (method === 'GET' && /^\/students\/[^/]+\/metrics/.test(path)) {
+      if (metricsError) return errorResponse(metricsError, 'INTERNAL');
       return jsonResponse(200, { data: metrics });
     }
     if (method === 'GET' && /^\/students\/[^/?]+$/.test(path) && detailError) {
