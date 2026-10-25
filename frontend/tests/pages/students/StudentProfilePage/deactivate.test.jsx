@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { bodyOf, jsonResponse } from '../../../helpers/shared/fetchMock';
+import { bodyOf, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { studentDetail } from '../../../helpers/students/fixtures';
 import { callsWith, loadProfile } from '../../../helpers/students/profile';
 
@@ -57,5 +57,32 @@ describe('StudentProfilePage: baja y reactivación', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Dado de baja')).not.toBeInTheDocument());
     expect(await screen.findByRole('button', { name: 'Dar de baja' })).toBeVisible();
+  });
+
+  it('si reactivar falla muestra el error; reintentar o abrir otro diálogo lo limpia', async () => {
+    const user = userEvent.setup();
+    const { detail, update } = mutableStudent(studentDetail({ active: false }));
+    update.mockImplementationOnce(async () => errorResponse(500, 'INTERNAL', 'Se cayó'));
+    update.mockImplementationOnce(async () => errorResponse(500, 'INTERNAL', 'Se cayó otra vez'));
+    await loadProfile({ detail, handlers: { update } });
+    await user.click(screen.getByRole('button', { name: 'Reactivar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Se cayó');
+    await user.click(screen.getByRole('button', { name: 'Reactivar' }));
+    expect(await screen.findByText('Se cayó otra vez')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Editar alumno' }));
+    await screen.findByRole('dialog', { name: 'Editar alumno' });
+    expect(screen.queryByText('Se cayó otra vez')).not.toBeInTheDocument();
+  });
+
+  it('reintentar tras el error reactiva y el aviso desaparece', async () => {
+    const user = userEvent.setup();
+    const { detail, update } = mutableStudent(studentDetail({ active: false }));
+    update.mockImplementationOnce(async () => errorResponse(500, 'INTERNAL', 'Se cayó'));
+    await loadProfile({ detail, handlers: { update } });
+    await user.click(screen.getByRole('button', { name: 'Reactivar' }));
+    expect(await screen.findByText('Se cayó')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Reactivar' }));
+    expect(await screen.findByRole('button', { name: 'Dar de baja' })).toBeVisible();
+    expect(screen.queryByText('Se cayó')).not.toBeInTheDocument();
   });
 });
