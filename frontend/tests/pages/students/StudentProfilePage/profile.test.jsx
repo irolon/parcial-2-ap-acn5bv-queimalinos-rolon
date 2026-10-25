@@ -90,6 +90,14 @@ describe('StudentProfilePage: ficha', () => {
     expect(await main().findByText('Sin rutina asignada')).toBeVisible();
   });
 
+  it('un :id que no es UUID (400 sobre `id`) muestra lo mismo', async () => {
+    resetAuthStore();
+    setSession(TRAINER);
+    stubStudents({ detailError: 400 });
+    renderRoute('/pt/alumnos/no-es-uuid');
+    expect(await screen.findByText('No encontramos a este alumno')).toBeVisible();
+  });
+
   it('un 403 muestra "No encontramos a este alumno" con link al panel', async () => {
     resetAuthStore();
     setSession(TRAINER);

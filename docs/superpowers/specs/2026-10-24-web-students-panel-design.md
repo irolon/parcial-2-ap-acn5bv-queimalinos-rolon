@@ -55,7 +55,7 @@ La pantalla que más se ve en la demo: el entrenador ve a todos sus alumnos con 
   - **Historial de medidas:** tabla (fecha, peso, IMC, % grasa, cintura) de la más nueva a la más vieja, con "Borrar" y confirmación.
   - **Rutina activa:** nombre y días, o "Sin rutina asignada".
 - Acciones: **Editar alumno**, **Cargar medida**, **Dar de baja / Reactivar**.
-- Alumno inexistente o ajeno (403 del backend): "No encontramos a este alumno" + volver al panel.
+- Alumno inexistente o ajeno (403 del backend) o `:id` que no es un UUID (400 `VALIDATION_ERROR` sobre `id`): "No encontramos a este alumno" + volver al panel.
 - Fuera (sin datos o de otras tarjetas): indicadores de sesiones, evolución de cargas, últimas sesiones con notas (tarjeta 12), "Mensaje" (tarjeta 19), "Asignar rutina" (tarjeta 9).
 
 ### Modales (todos con `Dialog`)

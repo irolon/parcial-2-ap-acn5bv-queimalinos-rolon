@@ -10,7 +10,7 @@ export const daysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
 /**
  * Stub de la API de alumnos sobre `stubFetch`.
  * - `list`: respuesta de `GET /students` (activos); `disabled`: la de `?active=false`.
- * - `detail`: ficha de `GET /students/:id` (o función que la arma en cada GET) (`detailError`: status de error, p. ej. 403); `metrics`: respuesta de `GET /students/:id/metrics`.
+ * - `detail`: ficha de `GET /students/:id` (o función que la arma en cada GET) (`detailError`: status de error, 403 o 400 con `:id` inválido); `metrics`: respuesta de `GET /students/:id/metrics`.
  * - `handlers`: `{ update, createMetric, deleteMetric }` para el resto; lo que no se maneja devuelve 500.
  */
 export function stubStudents({ list = [], disabled = [], detail, detailError, metrics = [], metricsError, handlers = {} } = {}) {
@@ -25,6 +25,9 @@ export function stubStudents({ list = [], disabled = [], detail, detailError, me
       return jsonResponse(200, { data: typeof metrics === 'function' ? metrics() : metrics });
     }
     if (method === 'GET' && /^\/students\/[^/?]+$/.test(path) && detailError) {
+      if (detailError === 400) {
+        return errorResponse(400, 'VALIDATION_ERROR', 'Datos inválidos', [{ field: 'id', message: 'Tiene que ser un UUID' }]);
+      }
       return errorResponse(detailError, detailError === 403 ? 'FORBIDDEN' : 'INTERNAL');
     }
     if (method === 'GET' && /^\/students\/[^/?]+$/.test(path) && detail) {

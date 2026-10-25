@@ -32,6 +32,10 @@ function NotFound() {
   );
 }
 
+// 403: alumno ajeno. 400 sobre `id`: el `:id` de la URL no es un UUID.
+const isMissing = (error) =>
+  error?.status === 403 || (error?.code === 'VALIDATION_ERROR' && error.details?.some((d) => d.field === 'id'));
+
 const subtitleFor = (student, now) =>
   `ALUMNOS › PERFIL · ${
     student.last_session_at ? `ÚLTIMA SESIÓN ${lastSessionLabel(student, now).toUpperCase()}` : 'NUNCA ENTRENÓ'
@@ -60,7 +64,7 @@ export default function StudentProfilePage() {
     return sortStudents(filterStudents(listQuery.data ?? [], filters, now), filters.orden, now);
   }, [listQuery.data, search, now]);
 
-  if (query.error?.status === 403) return <NotFound />;
+  if (isMissing(query.error)) return <NotFound />;
   const metrics = metricsQuery.data ?? [];
 
   return (
