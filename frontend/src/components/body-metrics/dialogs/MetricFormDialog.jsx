@@ -3,7 +3,8 @@ import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
 import { useCreateMetric } from '@/hooks/body-metrics/useBodyMetrics';
-import { METRIC_FIELDS, buildMetricBody, localInputValue, validateMetricBody } from '@/utils/body-metrics/metrics';
+import { METRIC_FIELDS, buildMetricBody, validateMetricBody } from '@/utils/body-metrics/metrics';
+import { localInputValue } from '@/utils/dates';
 import { NO_FIELD_ERRORS, fieldErrorsFrom } from '@/utils/fieldErrors';
 
 const FORM_ID = 'metric-form';

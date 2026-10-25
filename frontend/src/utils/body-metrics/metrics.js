@@ -1,3 +1,5 @@
+import { pad } from '@/utils/dates';
+
 export const METRIC_FIELDS = ['weight_kg', 'height_cm', 'body_fat_pct', 'waist_cm', 'hip_cm', 'chest_cm'];
 
 export const METRIC_UNITS = {
@@ -59,8 +61,6 @@ export function weightSeries(metrics) {
   return metrics.filter((m) => m.weight_kg != null).map((m) => ({ date: m.recorded_at, weight: m.weight_kg }));
 }
 
-const pad = (n) => String(n).padStart(2, '0');
-
 /** `dd/mm/aaaa` en la zona horaria local. */
 export function formatMetricDate(iso) {
   const date = new Date(iso);
@@ -72,9 +72,3 @@ export const formatNumber = (n) => String(n).replace('.', ',');
 
 /** IMC con un decimal fijo y coma (`26,0`). */
 export const formatBmi = (n) => formatNumber(Number(n).toFixed(1));
-
-/** Valor para un `datetime-local` (`aaaa-mm-ddThh:mm`) en la zona horaria local. */
-export function localInputValue(date = new Date()) {
-  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-  return `${day}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}

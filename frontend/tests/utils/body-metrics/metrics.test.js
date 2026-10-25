@@ -6,7 +6,6 @@ import {
   formatBmi,
   formatDelta,
   latestTwo,
-  localInputValue,
   metricDelta,
   validateMetricBody,
   weightSeries,
@@ -73,11 +72,5 @@ describe('weightSeries', () => {
   it('solo las medidas con peso', () => {
     const list = [metric({ recorded_at: 'd1', weight_kg: 80 }), metric({ recorded_at: 'd2', weight_kg: null })];
     expect(weightSeries(list)).toEqual([{ date: 'd1', weight: 80 }]);
-  });
-});
-
-describe('localInputValue', () => {
-  it('formatea para un datetime-local en hora local', () => {
-    expect(localInputValue(new Date(2026, 9, 5, 8, 7))).toBe('2026-10-05T08:07');
   });
 });

@@ -1,3 +1,4 @@
+import { todayString } from '@/utils/dates';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { EQUIPMENT_LABELS } from '@/utils/exercises/exerciseOptions';
 
@@ -34,11 +35,6 @@ export function buildStudentBody(formData, student) {
   if (text('birth_date') !== initial.birth_date) body.birth_date = text('birth_date') || null;
   return body;
 }
-
-const pad = (n) => String(n).padStart(2, '0');
-
-/** `YYYY-MM-DD` de hoy en la zona local (tope del selector de fecha). */
-export const todayString = (now = new Date()) => `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
 /** `{ campo: mensaje }` para los campos presentes en `body`. */
 export function validateStudentBody(body, now = new Date()) {

@@ -5,11 +5,11 @@ import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
+import { todayString } from '@/utils/dates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import {
   buildStudentBody,
   studentFormDefaults,
-  todayString,
   toStudentErrors,
   validateStudentBody,
 } from '@/utils/students/studentForm';
