@@ -1,8 +1,8 @@
 import { Search } from 'lucide-react';
 import Select from '@/components/shared/ui/Select';
-import { GOAL_OPTIONS } from '@/components/invitations/studentFormOptions';
+import { GOAL_OPTIONS } from '@/utils/students/studentOptions';
 
-const OBJETIVOS = [{ value: '', label: 'Todos' }, ...GOAL_OPTIONS.slice(1)];
+const OBJETIVOS = [{ value: '', label: 'Todos' }, ...GOAL_OPTIONS.filter((o) => o.value)];
 const ESTADOS = [
   { value: 'todos', label: 'Todos' },
   { value: 'inactivos', label: 'Inactivos' },

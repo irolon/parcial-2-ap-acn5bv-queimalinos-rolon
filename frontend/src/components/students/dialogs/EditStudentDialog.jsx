@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/components/invitations/studentFormOptions';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
@@ -7,6 +6,7 @@ import Select from '@/components/shared/ui/Select';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
 import { todayString } from '@/utils/dates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
+import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 import {
   buildStudentBody,
   studentFormDefaults,

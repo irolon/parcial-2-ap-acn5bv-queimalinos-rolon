@@ -1,10 +1,8 @@
 import { Link } from 'react-router';
 import Avatar from '@/components/shared/ui/Avatar';
-import { GOAL_OPTIONS } from '@/components/invitations/studentFormOptions';
 import { activityStatus, lastSessionLabel } from '@/utils/students/activity';
+import { goalLabel } from '@/utils/students/studentOptions';
 import StudentStatusPill from './StudentStatusPill';
-
-const goalLabel = (goal) => GOAL_OPTIONS.find((o) => o.value && o.value === goal)?.label ?? 'Sin objetivo';
 
 /** Tarjeta del alumno; el link a la ficha conserva la búsqueda (`search`, sin `?`) del panel. */
 export default function StudentCard({ student, now, search }) {
@@ -23,7 +21,7 @@ export default function StudentCard({ student, now, search }) {
           <span title={student.name} className="block truncate font-display text-sm font-semibold text-bone0">
             {student.name}
           </span>
-          <span className="block truncate font-body text-xs text-ink6">{goalLabel(student.goal)}</span>
+          <span className="block truncate font-body text-xs text-ink6">{goalLabel(student.goal) ?? 'Sin objetivo'}</span>
           <span className="mt-1 block font-mono text-[11px] text-ink6">
             Última sesión: {lastSessionLabel(student, now)}
           </span>
