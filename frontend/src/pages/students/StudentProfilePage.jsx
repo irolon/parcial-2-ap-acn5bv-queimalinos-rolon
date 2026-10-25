@@ -17,6 +17,7 @@ import StudentNavigation from '@/components/students/profile/StudentNavigation';
 import { useMetricsQuery } from '@/hooks/body-metrics/useBodyMetrics';
 import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { useStudentQuery, useStudentsQuery } from '@/hooks/students/useStudents';
+import { STUDENTS_PATH } from '@/routes/routeTable';
 import { latestTwo } from '@/utils/body-metrics/metrics';
 import { lastSessionLabel } from '@/utils/students/activity';
 import { filterStudents, parseStudentFilters, sortStudents } from '@/utils/students/studentFilters';
@@ -25,7 +26,7 @@ function NotFound() {
   return (
     <div className="flex flex-col items-center">
       <EmptyState icon={UserX} title="No encontramos a este alumno" />
-      <Link to="/pt/alumnos" className="font-display text-sm font-semibold text-accentText hover:underline">
+      <Link to={STUDENTS_PATH} className="font-display text-sm font-semibold text-accentText hover:underline">
         Volver a alumnos
       </Link>
     </div>

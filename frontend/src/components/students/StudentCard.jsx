@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import Avatar from '@/components/shared/ui/Avatar';
+import { profileHref } from '@/routes/routeTable';
 import { activityStatus, lastSessionLabel } from '@/utils/students/activity';
 import { goalLabel } from '@/utils/students/studentOptions';
 import StudentStatusPill from './StudentStatusPill';
@@ -11,7 +12,7 @@ export default function StudentCard({ student, now, search }) {
   return (
     <li>
       <Link
-        to={`/pt/alumnos/${student.id}${search ? `?${search}` : ''}`}
+        to={profileHref(student.id, search)}
         className={`flex h-full items-center gap-3 rounded-xl border bg-ink1 p-4 hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-accentText ${
           inactive ? 'border-hot/40' : 'border-ink3'
         }`}

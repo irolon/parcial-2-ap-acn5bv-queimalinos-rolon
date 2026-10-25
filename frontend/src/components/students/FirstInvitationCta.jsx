@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { User } from 'lucide-react';
 import EmptyState from '@/components/shared/states/EmptyState';
 import Card from '@/components/shared/ui/Card';
+import { NEW_STUDENT } from '@/routes/routeTable';
 
 /** Vacío de "todavía no tenés alumnos" con el link a la primera invitación. */
 export default function FirstInvitationCta() {
@@ -14,7 +15,7 @@ export default function FirstInvitationCta() {
       />
       <div className="flex justify-center pb-6">
         <Link
-          to="/pt/alumnos/nuevo"
+          to={NEW_STUDENT.path}
           className="inline-flex h-11 items-center rounded-lg bg-accent px-[18px] font-display text-sm font-semibold text-accentInk hover:bg-accentDim"
         >
           Generá tu primera invitación

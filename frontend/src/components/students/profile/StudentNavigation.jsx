@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { profileHref } from '@/routes/routeTable';
 import { neighbors } from '@/utils/students/studentFilters';
 
 const LINK = 'rounded-lg border border-white/[0.14] px-3 py-1.5 font-display text-[13px] font-semibold';
 const FIELD = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
-
-const hrefFor = (student, search) => `/pt/alumnos/${student.id}${search ? `?${search}` : ''}`;
 
 function NavLink({ student, search, children }) {
   if (!student) {
@@ -16,7 +15,7 @@ function NavLink({ student, search, children }) {
     );
   }
   return (
-    <Link to={hrefFor(student, search)} className={`${LINK} text-bone0 hover:bg-white/[0.06]`}>
+    <Link to={profileHref(student.id, search)} className={`${LINK} text-bone0 hover:bg-white/[0.06]`}>
       {children}
     </Link>
   );
@@ -26,8 +25,8 @@ function NavLink({ student, search, children }) {
 export default function StudentNavigation({ students, id, search }) {
   const navigate = useNavigate();
   const { prev, next, index, total } = neighbors(students, id);
-  const prevHref = prev && hrefFor(prev, search);
-  const nextHref = next && hrefFor(next, search);
+  const prevHref = prev && profileHref(prev.id, search);
+  const nextHref = next && profileHref(next.id, search);
 
   useEffect(() => {
     const onKeyDown = (event) => {
