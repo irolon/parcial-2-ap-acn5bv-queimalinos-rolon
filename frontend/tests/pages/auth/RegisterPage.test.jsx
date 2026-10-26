@@ -11,10 +11,12 @@ import {
   stubFetch,
 } from '../../helpers/shared/fetchMock';
 import { STUDENT, TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+import { stubStudents } from '../../helpers/students/students';
 
 beforeEach(() => {
   resetAuthStore();
   setSession(null);
+  stubStudents(); // el dashboard al que se llega pide la lista de alumnos
 });
 
 afterEach(() => {

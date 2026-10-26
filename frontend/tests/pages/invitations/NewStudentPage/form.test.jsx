@@ -17,10 +17,12 @@ import {
   jsonResponse,
   stubFetch,
 } from '../../../helpers/shared/fetchMock';
+import { stubStudents } from '../../../helpers/students/students';
 
 beforeEach(() => {
   resetAuthStore();
   setSession(TRAINER);
+  stubStudents(); // el dashboard del sidebar pide la lista de alumnos
   stubCanvas();
 });
 
