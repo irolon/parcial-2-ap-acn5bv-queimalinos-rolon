@@ -1,5 +1,7 @@
+import { Link } from 'react-router';
 import Button from '@/components/shared/ui/Button';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
+import { newRoutineHref } from '@/routes/routeTable';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
 /** Acciones de la ficha: editar y dar de baja (con confirmación) o reactivar (directo). Abrir un diálogo limpia el error de reactivar. */
@@ -19,6 +21,14 @@ export default function ProfileActions({ student, onEdit, onDeactivate }) {
         <Button variant="ghost" size="sm" onClick={open(onEdit)}>
           Editar alumno
         </Button>
+        {student.active !== false && (
+          <Link
+            to={newRoutineHref(student.id)}
+            className="inline-flex h-9 items-center rounded-lg bg-accent px-3.5 font-display text-sm font-semibold text-accentInk hover:bg-accentDim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText"
+          >
+            Asignar rutina
+          </Link>
+        )}
         {student.active === false ? (
           <Button variant="dark" size="sm" onClick={reactivate} loading={update.isPending}>
             Reactivar
