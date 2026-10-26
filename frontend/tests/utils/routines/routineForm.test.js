@@ -21,6 +21,14 @@ describe('validateRoutine', () => {
     expect(validateRoutine(updateHeader(stateWith(), 'name', 'x'.repeat(121))).header.name).toBeDefined();
   });
 
+  it('rechaza Infinity y hexadecimales en los opcionales', () => {
+    let state = stateWith([EX_A]);
+    const key = state.exercises[0].key;
+    state = updateExercise(state, key, 'suggested_kg', 'Infinity');
+    state = updateExercise(state, key, 'rest_seconds', '0x10');
+    expect(Object.keys(validateRoutine(state).exercises[key])).toEqual(['rest_seconds', 'suggested_kg']);
+  });
+
   it('valida cada campo del ejercicio', () => {
     let state = stateWith([EX_A, EX_B]);
     const [a, b] = state.exercises.map((e) => e.key);
@@ -86,6 +94,14 @@ describe('serverErrorsFor', () => {
     expect(errors.exercises[state.exercises[1].key]).toEqual({ reps: 'Debe ser positivo' });
     expect(errors.header).toEqual({ name: 'Nombre inválido' });
     expect(errors.count).toBe(2);
+  });
+
+  it('los detalles sin campo conocido van a form', () => {
+    const error = new ApiError({
+      status: 400, code: 'VALIDATION_ERROR', message: 'Datos inválidos',
+      details: [{ field: 'student_id', message: 'Alumno inválido' }, { field: 'exercises[9].sets', message: 'Fuera de rango' }],
+    });
+    expect(serverErrorsFor(error, stateWith()).form).toBe('Alumno inválido. Fuera de rango');
   });
 
   it('el resto de los errores va a form', () => {

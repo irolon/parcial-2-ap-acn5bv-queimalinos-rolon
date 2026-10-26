@@ -1,6 +1,7 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
 const INTEGER = /^\d+$/;
+const DECIMAL = /^-?\d+(\.\d+)?$/;
 const ROW_FIELD = /^exercises\[(\d+)\]\.(\w+)$/;
 const HEADER_FIELDS = ['name', 'goal', 'days'];
 
@@ -20,7 +21,7 @@ function positiveInteger(value) {
 function nonNegative(value, integer) {
   if (blank(value)) return null;
   const n = Number(value);
-  if (Number.isNaN(n)) return 'Tiene que ser un número';
+  if (!DECIMAL.test(String(value).trim()) || !Number.isFinite(n)) return 'Tiene que ser un número';
   if (n < 0) return 'No puede ser negativo';
   return integer && !Number.isInteger(n) ? 'Tiene que ser un entero' : null;
 }
@@ -89,6 +90,7 @@ export function buildTemplateBody(state, { name, goal, level }) {
 /** Traduce un error del backend al mismo formato que `validateRoutine`. */
 export function serverErrorsFor(error, state) {
   const errors = { header: {}, exercises: {} };
+  const other = [];
   const details = error?.code === 'VALIDATION_ERROR' && Array.isArray(error.details) ? error.details : [];
   for (const { field, message } of details) {
     const row = ROW_FIELD.exec(field);
@@ -97,10 +99,14 @@ export function serverErrorsFor(error, state) {
       errors.exercises[target.key] = { ...errors.exercises[target.key], [row[2]]: message };
     } else if (HEADER_FIELDS.includes(field)) {
       errors.header[field] = message;
+    } else {
+      other.push(message);
     }
   }
   const mapped = Object.keys(errors.header).length + Object.keys(errors.exercises).length;
-  if (mapped === 0) {
+  if (other.length > 0) {
+    errors.form = other.join('. ');
+  } else if (mapped === 0) {
     errors.form = fieldErrorsFrom(error, { fields: [], fallback: 'No pudimos guardar la rutina' }).form;
   }
   return withCount(errors);

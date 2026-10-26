@@ -1,4 +1,4 @@
-import { EMPTY_ROUTINE, makeExercise } from '@/utils/routines/editorState';
+import { EMPTY_ROUTINE, isBlank, makeExercise } from '@/utils/routines/editorState';
 
 export const DRAFT_KEY = (trainerId) => `fittrainer.routine-draft.${trainerId}`;
 
@@ -9,8 +9,11 @@ export function serializeDraft(state) {
   return JSON.stringify({ name, goal, days, templateId, templateName, exercises });
 }
 
-/** `{ state, missing }` desde el JSON guardado, o `null` si no se puede leer. */
-export function restoreDraft(raw, exercisesById) {
+/**
+ * `{ state, missing }` desde el JSON guardado, o `null` si no se puede leer o está vacío.
+ * El llamador debe esperar a la biblioteca de ejercicios: sin ella todo cuenta como faltante.
+ */
+export function restoreDraft(raw, exercisesById = new Map()) {
   let data;
   try {
     data = JSON.parse(raw);
@@ -19,18 +22,17 @@ export function restoreDraft(raw, exercisesById) {
   }
   if (!data || typeof data !== 'object' || !Array.isArray(data.exercises)) return null;
   const kept = data.exercises.filter((e) => e && exercisesById.has(e.exercise_id));
-  return {
-    missing: data.exercises.length - kept.length,
-    state: {
-      ...EMPTY_ROUTINE,
-      name: data.name ?? '',
-      goal: data.goal ?? '',
-      days: Array.isArray(data.days) ? data.days : [],
-      templateId: data.templateId ?? null,
+  const state = {
+    ...EMPTY_ROUTINE,
+    name: data.name ?? '',
+    goal: data.goal ?? '',
+    days: Array.isArray(data.days) ? data.days : [],
+    templateId: data.templateId ?? null,
       templateName: data.templateName ?? null,
-      exercises: kept.map((e) => makeExercise(e.exercise_id, e)),
-    },
+    exercises: kept.map((e) => makeExercise(e.exercise_id, e)),
   };
+  const blank = isBlank({ ...state, exercises: data.exercises });
+  return blank ? null : { state, missing: data.exercises.length - kept.length };
 }
 
 export function readDraft(trainerId) {

@@ -55,7 +55,14 @@ export function toggleDay(state, day) {
 }
 
 /** Estado precargado desde una plantilla; descarta los ejercicios que ya no existen. */
-export function fromTemplate(template, exercisesById) {
+/** Sin datos cargados (el borrador no vale la pena). */
+export function isBlank(state) {
+  return state.name.trim() === '' && !state.goal && state.days.length === 0
+    && state.exercises.length === 0 && !state.templateId;
+}
+
+/** `exercisesById` es la biblioteca ya cargada: esperarla antes de llamar o todo cuenta como faltante. */
+export function fromTemplate(template, exercisesById = new Map()) {
   const items = template.structure?.exercises ?? [];
   const kept = items.filter((item) => item.exercise && exercisesById.has(item.exercise_id));
   return {

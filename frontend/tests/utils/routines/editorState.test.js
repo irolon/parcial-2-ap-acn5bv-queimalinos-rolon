@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EMPTY_ROUTINE, fromTemplate, moveBy, moveExercise, removeExercise,
+  EMPTY_ROUTINE, fromTemplate, isBlank, moveBy, moveExercise, removeExercise,
   toggleDay, updateExercise, updateHeader,
 } from '@/utils/routines/editorState';
 import { EX_A, EX_B, EX_C, exercisesById, stateWith, templateFixture } from '../../helpers/routines/fixtures';
@@ -59,6 +59,17 @@ describe('editorState', () => {
       exercise_id: EX_A, sets: '4', reps: '8', rest_seconds: '60', suggested_kg: '20.5', tempo: '3-1-1', notes: 'Bajar lento',
     });
     expect(state.exercises[1]).toMatchObject({ rest_seconds: '', suggested_kg: '', tempo: '', notes: '' });
+  });
+
+  it('isBlank detecta el estado sin datos', () => {
+    expect(isBlank({ ...EMPTY_ROUTINE, name: '  ' })).toBe(true);
+    expect(isBlank(stateWith([]))).toBe(false);
+    expect(isBlank({ ...EMPTY_ROUTINE, templateId: 't-1' })).toBe(false);
+  });
+
+  it('fromTemplate sin biblioteca no tira y descarta todo', () => {
+    expect(() => fromTemplate(templateFixture())).not.toThrow();
+    expect(fromTemplate(templateFixture(), new Map()).missing).toBe(2);
   });
 
   it('fromTemplate descarta ejercicios faltantes y los cuenta', () => {

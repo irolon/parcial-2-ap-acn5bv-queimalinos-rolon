@@ -7,6 +7,7 @@ import { stateWith } from '../../helpers/routines/fixtures';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
   localStorage.clear();
 });
@@ -24,7 +25,14 @@ describe('useRoutineDraft', () => {
     expect(setItem).toHaveBeenCalledTimes(1);
     expect(JSON.parse(localStorage.getItem(DRAFT_KEY('t-1'))).name).toBe('Fuerza 2');
     expect(result.current.savedAt).toBeInstanceOf(Date);
-    setItem.mockRestore();
+  });
+
+  it('un estado vaciado a mano borra el borrador', () => {
+    localStorage.setItem(DRAFT_KEY('t-1'), 'viejo');
+    const { result } = renderHook(() => useRoutineDraft('t-1', { ...EMPTY_ROUTINE, name: ' ' }));
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBeNull();
+    expect(result.current.savedAt).toBeNull();
   });
 
   it('no escribe un estado vacío', () => {

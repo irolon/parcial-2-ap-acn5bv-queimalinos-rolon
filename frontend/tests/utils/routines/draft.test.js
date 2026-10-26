@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   clearDraft, DRAFT_KEY, readDraft, restoreDraft, serializeDraft, writeDraft,
 } from '@/utils/routines/draft';
+import { EMPTY_ROUTINE } from '@/utils/routines/editorState';
 import { EX_A, EX_B, exercisesById, stateWith } from '../../helpers/routines/fixtures';
 
 afterEach(() => {
@@ -34,6 +35,16 @@ describe('draft', () => {
     const { state, missing } = restoreDraft(raw, new Map([[EX_A, {}]]));
     expect(missing).toBe(1);
     expect(state.exercises).toHaveLength(1);
+  });
+
+  it('un borrador vacío se restaura como null', () => {
+    expect(restoreDraft(serializeDraft(EMPTY_ROUTINE), exercisesById)).toBeNull();
+  });
+
+  it('sin biblioteca no tira y con biblioteca vacía todo es faltante', () => {
+    const raw = serializeDraft(stateWith([EX_A, EX_B]));
+    expect(() => restoreDraft(raw, undefined)).not.toThrow();
+    expect(restoreDraft(raw, new Map()).missing).toBe(2);
   });
 
   it('JSON roto devuelve null', () => {
