@@ -35,6 +35,24 @@ describe('useRoutineDraft', () => {
     expect(result.current.savedAt).toBeNull();
   });
 
+  it('con enabled false no borra un borrador existente', () => {
+    localStorage.setItem(DRAFT_KEY('t-1'), 'viejo');
+    renderHook(() => useRoutineDraft('t-1', EMPTY_ROUTINE, { enabled: false }));
+    act(() => { vi.advanceTimersByTime(5000); });
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBe('viejo');
+  });
+
+  it('al pasar a enabled true escribe tras el delay', () => {
+    const { rerender } = renderHook(({ enabled }) => useRoutineDraft('t-1', stateWith(), { enabled }), {
+      initialProps: { enabled: false },
+    });
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBeNull();
+    rerender({ enabled: true });
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(JSON.parse(localStorage.getItem(DRAFT_KEY('t-1'))).name).toBe('Fuerza');
+  });
+
   it('no escribe un estado vacío', () => {
     const { result } = renderHook(() => useRoutineDraft('t-1', EMPTY_ROUTINE));
     act(() => { vi.advanceTimersByTime(2000); });
