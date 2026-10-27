@@ -12,16 +12,28 @@ import { student } from '../../helpers/students/fixtures';
 
 const NOW = new Date('2026-10-24T12:00:00Z');
 
+/** ISO de un instante en hora local (mes 9 = octubre). */
+const local = (day, hour, month = 9, year = 2026) => new Date(year, month, day, hour).toISOString();
+
 describe('daysSince', () => {
-  it('cuenta días enteros transcurridos', () => {
-    expect(daysSince('2026-10-24T01:00:00Z', NOW)).toBe(0);
-    expect(daysSince('2026-10-23T11:00:00Z', NOW)).toBe(1);
-    expect(daysSince('2026-10-23T13:00:00Z', NOW)).toBe(0);
+  it('cuenta días de calendario locales, no bloques de 24 h', () => {
+    const now = new Date(2026, 9, 24, 8);
+    expect(daysSince(local(24, 1), now)).toBe(0);
+    expect(daysSince(local(23, 23), now)).toBe(1);
+    expect(daysSince(local(23, 9), now)).toBe(1);
+    expect(daysSince(local(17, 23), now)).toBe(7);
   });
 
-  it('no depende de la zona horaria del ISO', () => {
-    expect(daysSince('2026-10-17T09:00:00-03:00', NOW)).toBe(7);
-    expect(daysSince('2026-10-17T13:00:00-03:00', NOW)).toBe(6);
+  it('un cambio de horario no corre el día', () => {
+    const tz = process.env.TZ;
+    process.env.TZ = 'Europe/Madrid';
+    try {
+      expect(daysSince(local(27, 12, 2, 2027), new Date(2027, 2, 29, 11, 30))).toBe(2);
+      expect(daysSince(local(24, 0, 9), new Date(2026, 9, 26, 23, 30))).toBe(2);
+    } finally {
+      if (tz === undefined) delete process.env.TZ;
+      else process.env.TZ = tz;
+    }
   });
 });
 
@@ -32,9 +44,10 @@ describe('activityStatus', () => {
     expect(activityStatus(student({ last_session_at: '2026-10-17T12:00:00Z' }), NOW)).toBe('inactive');
   });
 
-  it('6 días y 23 h sigue al día; con otra zona horaria cuenta el instante real', () => {
-    expect(activityStatus(student({ last_session_at: '2026-10-17T13:00:00Z' }), NOW)).toBe('active');
-    expect(activityStatus(student({ last_session_at: '2026-10-17T09:00:00-03:00' }), NOW)).toBe('inactive');
+  it('el corte es por día de calendario: hace 7 días a última hora ya es inactivo', () => {
+    const now = new Date(2026, 9, 24, 8);
+    expect(activityStatus(student({ last_session_at: local(18, 1) }), now)).toBe('active');
+    expect(activityStatus(student({ last_session_at: local(17, 23) }), now)).toBe('inactive');
   });
 
   it('dado de baja gana sobre todo', () => {
@@ -54,6 +67,10 @@ describe('lastSessionLabel', () => {
     expect(at('2026-10-23T08:00:00Z')).toBe('Ayer');
     expect(at('2026-10-20T08:00:00Z')).toBe('Hace 4 días');
     expect(lastSessionLabel(student(), NOW)).toBe('Nunca entrenó');
+  });
+
+  it('ayer a las 23 visto hoy a las 8 es Ayer', () => {
+    expect(lastSessionLabel(student({ last_session_at: local(23, 23) }), new Date(2026, 9, 24, 8))).toBe('Ayer');
   });
 
   it('expone las etiquetas de estado', () => {

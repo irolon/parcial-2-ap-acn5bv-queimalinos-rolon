@@ -4,9 +4,12 @@ export const STATUS_LABELS = { active: 'Al día', inactive: 'Inactivo', new: 'Nu
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Días enteros transcurridos entre `iso` y `now`. */
+// Número de día del calendario local; con `Date.UTC` los cambios de horario no corren la cuenta.
+const dayNumber = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS;
+
+/** Días de calendario (zona local) entre `iso` y `now`: ayer a las 23 visto hoy a las 8 es 1. */
 export function daysSince(iso, now) {
-  return Math.floor((now.getTime() - new Date(iso).getTime()) / DAY_MS);
+  return dayNumber(now) - dayNumber(new Date(iso));
 }
 
 /** Días sin entrenar: desde la última sesión o, si nunca entrenó, desde el alta. */
