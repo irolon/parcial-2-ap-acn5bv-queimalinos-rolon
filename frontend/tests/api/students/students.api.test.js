@@ -40,18 +40,33 @@ describe('students.api', () => {
     });
   });
 
-  it('listStudents sin filtro pide limit=100 y devuelve data', async () => {
+  it('listStudents sin filtro pide la página 1 con limit=100 y devuelve data', async () => {
     const data = [student()];
-    const fetchMock = stubFetch(async () => jsonResponse(200, { data, meta: {} }));
+    const fetchMock = stubFetch(async () => jsonResponse(200, { data, meta: { page: 1, total_pages: 1 } }));
     await expect(studentsApi.listStudents()).resolves.toEqual(data);
-    expect(calls(fetchMock)[0][0]).toBe('/students?limit=100');
+    expect(calls(fetchMock)).toHaveLength(1);
+    expect(calls(fetchMock)[0][0]).toBe('/students?limit=100&page=1');
     expect(calls(fetchMock)[0][1].method).toBe('GET');
   });
 
   it('listStudents({ active: false }) pide active=false&limit=100', async () => {
-    const fetchMock = stubFetch(async () => jsonResponse(200, { data: [], meta: {} }));
+    const fetchMock = stubFetch(async () => jsonResponse(200, { data: [], meta: { page: 1, total_pages: 0 } }));
     await studentsApi.listStudents({ active: false });
-    expect(calls(fetchMock)[0][0]).toBe('/students?active=false&limit=100');
+    expect(calls(fetchMock)[0][0]).toBe('/students?active=false&limit=100&page=1');
+  });
+
+  it('listStudents trae todas las páginas y las concatena en orden', async () => {
+    const pages = { 1: [student(), student()], 2: [student()], 3: [student()] };
+    const fetchMock = stubFetch(async (url) => {
+      const page = Number(new URL(url).searchParams.get('page'));
+      return jsonResponse(200, { data: pages[page], meta: { page, total_pages: 3 } });
+    });
+    await expect(studentsApi.listStudents({ active: true })).resolves.toEqual([...pages[1], ...pages[2], ...pages[3]]);
+    expect(calls(fetchMock).map(([path]) => path)).toEqual([
+      '/students?active=true&limit=100&page=1',
+      '/students?active=true&limit=100&page=2',
+      '/students?active=true&limit=100&page=3',
+    ]);
   });
 
   it('getStudent hace GET /students/:id y devuelve data', async () => {

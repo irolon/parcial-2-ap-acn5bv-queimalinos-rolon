@@ -57,7 +57,7 @@ describe('StudentsPage: filtros', () => {
     });
     await userEvent.selectOptions(main().getByLabelText('Estado'), 'baja');
     expect(await screen.findByText(/Bruno Baja/)).toBeVisible();
-    expect(calls(fetchMock).map(([path]) => path)).toContain('/students?active=false&limit=100');
+    expect(calls(fetchMock).map(([path]) => path)).toContain('/students?active=false&limit=100&page=1');
     expect(within(main().getByRole('link', { name: /Bruno Baja/ })).getByText('Dado de baja')).toBeVisible();
   });
 
