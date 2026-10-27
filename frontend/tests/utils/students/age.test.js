@@ -10,6 +10,12 @@ describe('ageFrom', () => {
     expect(ageFrom('1999-01-01', NOW)).toBe(27);
   });
 
+  it('usa el día local: la noche antes del cumpleaños todavía no lo cumplió', () => {
+    const lateNight = new Date(2026, 9, 24, 23, 30);
+    expect(ageFrom('1999-10-25', lateNight)).toBe(26);
+    expect(ageFrom('1999-10-24', new Date(2026, 9, 24, 0, 30))).toBe(27);
+  });
+
   it('sin fecha o inválida devuelve null', () => {
     expect(ageFrom(null, NOW)).toBeNull();
     expect(ageFrom('nada', NOW)).toBeNull();
