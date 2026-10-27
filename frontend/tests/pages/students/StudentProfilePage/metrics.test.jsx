@@ -39,7 +39,7 @@ describe('StudentProfilePage: gráfico e historial de medidas', () => {
     const yTicks = [...chart.querySelectorAll('.recharts-yAxis-tick-labels text')].map((t) => t.textContent);
     expect(yTicks.length).toBeGreaterThan(0);
     expect(yTicks.every((text) => /^\d+$/.test(text))).toBe(true);
-    expect(main().getByText('kg')).toBeVisible();
+    expect(within(main().getByText('Evolución del peso').parentElement).getByText('kg')).toBeVisible();
   });
 
   it('si falla el historial muestra el error con reintento en lugar del gráfico y la tabla', async () => {

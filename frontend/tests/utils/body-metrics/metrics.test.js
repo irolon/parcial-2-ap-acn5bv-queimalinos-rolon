@@ -6,25 +6,32 @@ import {
   formatBmi,
   formatDelta,
   formatWeight,
-  latestTwo,
+  latestByField,
   metricDelta,
   validateMetricBody,
   weightSeries,
 } from '@/utils/body-metrics/metrics';
 import { metric } from '../../helpers/students/fixtures';
 
-describe('latestTwo / metricDelta', () => {
-  it('toma las dos últimas de un historial ascendente', () => {
-    const [a, b, c] = [metric(), metric(), metric()];
-    expect(latestTwo([a, b, c])).toEqual({ latest: c, previous: b });
-    expect(latestTwo([a])).toEqual({ latest: a, previous: null });
-    expect(latestTwo([])).toEqual({ latest: null, previous: null });
+describe('latestByField / metricDelta', () => {
+  it('por campo: el último valor no nulo y el anterior no nulo de ese mismo campo', () => {
+    const list = [
+      metric({ weight_kg: 82, waist_cm: 95, bmi: 25.9 }),
+      metric({ weight_kg: 81, waist_cm: null, bmi: 25.6 }),
+      metric({ weight_kg: null, waist_cm: 90, bmi: null }),
+    ];
+    expect(latestByField(list, 'weight_kg')).toEqual({ value: 81, previous: 82 });
+    expect(latestByField(list, 'waist_cm')).toEqual({ value: 90, previous: 95 });
+    expect(latestByField(list, 'bmi')).toEqual({ value: 25.6, previous: 25.9 });
+    expect(latestByField(list, 'chest_cm')).toEqual({ value: null, previous: null });
+    expect(latestByField([metric({ weight_kg: 80 })], 'weight_kg')).toEqual({ value: 80, previous: null });
+    expect(latestByField([], 'weight_kg')).toEqual({ value: null, previous: null });
   });
 
   it('delta redondeado, null si falta alguno', () => {
-    expect(metricDelta({ weight_kg: 80.8 }, { weight_kg: 80 }, 'weight_kg')).toBe(0.8);
-    expect(metricDelta({ weight_kg: 80 }, { weight_kg: null }, 'weight_kg')).toBeNull();
-    expect(metricDelta(null, { weight_kg: 80 }, 'weight_kg')).toBeNull();
+    expect(metricDelta({ value: 80.8, previous: 80 })).toBe(0.8);
+    expect(metricDelta({ value: 80, previous: null })).toBeNull();
+    expect(metricDelta({ value: null, previous: 80 })).toBeNull();
   });
 });
 

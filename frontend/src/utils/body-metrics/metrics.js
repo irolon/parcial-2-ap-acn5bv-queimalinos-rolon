@@ -11,17 +11,19 @@ export const METRIC_UNITS = {
   chest_cm: 'cm',
 };
 
-/** El historial llega ascendente: la última y la anterior. */
-export function latestTwo(metrics) {
-  return { latest: metrics.at(-1) ?? null, previous: metrics.at(-2) ?? null };
+/**
+ * Del historial ascendente, el último valor no nulo de `field` y el anterior no nulo de ese mismo campo:
+ * las medidas pueden ser parciales (el IMC es nulo en las que no traen peso).
+ */
+export function latestByField(metrics, field) {
+  const values = metrics.map((m) => m[field]).filter((v) => v != null);
+  return { value: values.at(-1) ?? null, previous: values.at(-2) ?? null };
 }
 
 /** Diferencia redondeada a 1 decimal, o `null` si falta alguno de los dos valores. */
-export function metricDelta(latest, previous, field) {
-  const a = latest?.[field];
-  const b = previous?.[field];
-  if (a == null || b == null) return null;
-  return Math.round((a - b) * 10) / 10;
+export function metricDelta({ value, previous }) {
+  if (value == null || previous == null) return null;
+  return Math.round((value - previous) * 10) / 10;
 }
 
 /** `+0,8 kg`; sin `unit` (el IMC) va solo el número. */

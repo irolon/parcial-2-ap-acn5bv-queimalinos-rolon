@@ -3,7 +3,7 @@ import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
 import { useCreateMetric } from '@/hooks/body-metrics/useBodyMetrics';
-import { METRIC_FIELDS, buildMetricBody, validateMetricBody } from '@/utils/body-metrics/metrics';
+import { METRIC_FIELDS, buildMetricBody, latestByField, validateMetricBody } from '@/utils/body-metrics/metrics';
 import { localInputValue } from '@/utils/dates';
 import { NO_FIELD_ERRORS, fieldErrorsFrom } from '@/utils/fieldErrors';
 
@@ -21,8 +21,9 @@ const LABELS = {
 /**
  * Carga una medida. El `id` se genera una vez al abrir: reintentar tras un error de red manda el mismo
  * y el backend no duplica. La página lo monta con otra `key` en cada apertura.
+ * La talla se precarga con la última cargada en el historial (`metrics`).
  */
-export default function MetricFormDialog({ studentId, latest, onClose }) {
+export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
   const [id] = useState(() => crypto.randomUUID());
   const [now] = useState(() => localInputValue());
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
@@ -30,6 +31,7 @@ export default function MetricFormDialog({ studentId, latest, onClose }) {
   const create = useCreateMetric(studentId);
   const saving = create.isPending;
   const { fields } = errors;
+  const lastHeight = latestByField(metrics, 'height_cm').value;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -93,7 +95,7 @@ export default function MetricFormDialog({ studentId, latest, onClose }) {
             inputMode="decimal"
             min="0"
             step="any"
-            defaultValue={field === 'height_cm' ? (latest?.height_cm ?? '') : ''}
+            defaultValue={field === 'height_cm' ? (lastHeight ?? '') : ''}
             error={fields[field]}
           />
         ))}

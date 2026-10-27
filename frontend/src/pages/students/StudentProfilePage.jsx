@@ -18,7 +18,6 @@ import { useMetricsQuery } from '@/hooks/body-metrics/useBodyMetrics';
 import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { useStudentQuery, useStudentsQuery } from '@/hooks/students/useStudents';
 import { STUDENTS_PATH } from '@/routes/routeTable';
-import { latestTwo } from '@/utils/body-metrics/metrics';
 import { lastSessionLabel } from '@/utils/students/activity';
 import { filterStudents, parseStudentFilters, sortStudents } from '@/utils/students/studentFilters';
 
@@ -78,8 +77,7 @@ export default function StudentProfilePage() {
               <ProfileHeader student={data} now={now} />
               <ProfileActions student={data} onEdit={() => open('edit')} onDeactivate={() => open('deactivate')} />
               <AnthropometryCard
-                latest={data.latest_metrics}
-                previous={latestTwo(metrics).previous}
+                metrics={metrics}
                 extra={
                   <Button variant="ghost" size="sm" onClick={() => open('metric')}>
                     Cargar medida
@@ -107,7 +105,7 @@ export default function StudentProfilePage() {
               <ActiveRoutineCard routine={data.active_routine} />
             </div>
           </div>
-          <StudentDialogs dialog={dialog} student={data} onClose={close} />
+          <StudentDialogs dialog={dialog} student={data} metrics={metrics} onClose={close} />
         </div>
       )}
     </QueryState>

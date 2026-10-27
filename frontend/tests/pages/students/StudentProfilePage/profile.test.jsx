@@ -38,17 +38,23 @@ describe('StudentProfilePage: ficha', () => {
     expect(await main().findByText('Al día')).toBeVisible();
   });
 
-  it('antropometría con la diferencia contra la medida anterior', async () => {
-    const latest = metric({ recorded_at: '2026-10-10T10:00:00Z', weight_kg: 80.8, waist_cm: 90 });
+  it('antropometría con la diferencia contra la medida anterior, salteando los campos vacíos', async () => {
     await loadProfile({
-      detail: studentDetail({ latest_metrics: { ...latest, bmi: 25.5 } }),
-      metrics: [metric({ recorded_at: '2026-09-10T10:00:00Z', weight_kg: 80, waist_cm: 91, bmi: 25.2 }), latest],
+      detail: studentDetail({ latest_metrics: metric({ weight_kg: 1, height_cm: 1 }) }),
+      metrics: [
+        metric({ recorded_at: '2026-09-10T10:00:00Z', weight_kg: 80, waist_cm: 91, bmi: 25.2 }),
+        metric({ recorded_at: '2026-10-10T10:00:00Z', weight_kg: 80.8, waist_cm: 90, bmi: 25.5 }),
+        metric({ recorded_at: '2026-10-20T10:00:00Z', weight_kg: null, height_cm: null, body_fat_pct: 20, bmi: null }),
+      ],
     });
     expect(await main().findByText('+0,8 kg')).toBeVisible();
-    expect(main().getByText('−1 cm')).toBeVisible();
-    expect(main().getByText('25,5')).toBeVisible();
-    expect(main().getByText('+0,3')).toBeVisible();
-    expect(main().getByText('178')).toBeVisible();
+    const card = within(main().getByText('Antropometría').parentElement.parentElement);
+    const stat = (label) => card.getByText(label).parentElement.textContent;
+    expect(stat('Peso')).toBe('Peso80,8kg+0,8 kg');
+    expect(stat('Talla')).toBe('Talla178cm=');
+    expect(stat('% grasa')).toBe('% grasa20%');
+    expect(stat('IMC')).toBe('IMC25,5+0,3');
+    expect(stat('Cintura')).toBe('Cintura90cm−1 cm');
   });
 
   it('la tabla del historial scrollea adentro y las columnas de la grilla pueden encogerse', async () => {

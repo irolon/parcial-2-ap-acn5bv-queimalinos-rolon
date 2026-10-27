@@ -22,9 +22,16 @@ afterEach(() => {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const created = () => jsonResponse(201, { data: metric() });
 
+// La talla se precarga del historial: la última no nula, aunque la medida más nueva no la tenga.
+const HISTORY = () => [
+  metric({ recorded_at: '2026-09-01T10:00:00Z', height_cm: 178 }),
+  metric({ recorded_at: '2026-10-01T10:00:00Z', height_cm: null }),
+];
+
 async function open(user, stub = {}) {
-  const detail = studentDetail({ latest_metrics: metric({ height_cm: 178 }) });
-  const ctx = await loadProfile({ detail, ...stub });
+  const detail = studentDetail({ latest_metrics: metric({ height_cm: null }) });
+  const ctx = await loadProfile({ detail, metrics: HISTORY(), ...stub });
+  await screen.findByRole('table', { name: 'Historial de medidas' });
   await user.click(await screen.findByRole('button', { name: 'Cargar medida' }));
   return { ...ctx, dialog: await screen.findByRole('dialog', { name: 'Cargar medida' }) };
 }
