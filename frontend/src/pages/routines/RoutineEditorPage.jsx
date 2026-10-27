@@ -87,6 +87,7 @@ export default function RoutineEditorPage() {
             errors={errors?.exercises}
             onChange={(key, field, value) => apply(editor.updateExercise, key, field, value)}
             onMove={(key, delta) => apply(editor.moveBy, key, delta)}
+            onReorder={(from, to) => apply(editor.moveExercise, from, to)}
             onRemove={(key) => apply(editor.removeExercise, key)}
           />
           <div className="flex justify-end">

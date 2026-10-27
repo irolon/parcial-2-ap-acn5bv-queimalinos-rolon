@@ -33,12 +33,13 @@ function Cell({ item, name, value, error, width, numeric, label, field, onChange
   );
 }
 
-/** Fila de la tabla: `#`, ejercicio, campos editables y menú. `exercise` puede faltar si salió de la biblioteca. */
-export default function ExerciseRow({ item, index, last, exercise, errors = {}, onChange, onMove, onRemove }) {
+/** Fila de la tabla: `#`, asa (opcional), ejercicio, campos editables y menú. `exercise` puede faltar si salió de la biblioteca. */
+export default function ExerciseRow({ item, index, last, exercise, errors = {}, onChange, onMove, onRemove, handle, rowRef, style, dragging }) {
   const name = exercise?.name ?? 'Ejercicio';
   return (
-    <tr className="border-t border-ink2">
+    <tr ref={rowRef} style={style} className={`border-t border-ink2 ${dragging ? 'bg-ink2 shadow-lg' : 'bg-ink0'}`}>
       <td className="px-2 py-2 align-top font-mono text-xs text-ink6">{index + 1}</td>
+      <td className="px-1 py-1.5 align-top">{handle}</td>
       <td className="px-2 py-2 align-top">
         <div className="flex min-w-44 items-center gap-2.5">
           <div className="w-9 shrink-0">
