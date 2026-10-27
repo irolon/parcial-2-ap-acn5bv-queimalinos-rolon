@@ -18,11 +18,20 @@ function positionFor(trigger) {
   };
 }
 
+/** Tras quitar una fila, el foco pasa al menú de la fila vecina (o a la biblioteca si era la única). */
+function focusNeighbour(trigger) {
+  const row = trigger.closest('tr');
+  const next = row.nextElementSibling ?? row.previousElementSibling;
+  const target = next?.querySelector('[aria-haspopup="menu"]') ?? document.querySelector('[aria-label="Buscar ejercicio"]');
+  target?.focus();
+}
+
 /** Menú ⋯ de la fila: Subir, Bajar (deshabilitados en los bordes) y Quitar. Se cierra al hacer clic afuera o con Escape. */
 export default function RowMenu({ name, isFirst, isLast, onMove, onRemove }) {
   const [style, setStyle] = useState(null);
   const trigger = useRef(null);
   const menu = useRef(null);
+  const returnFocus = useRef(false);
   const open = style !== null;
 
   useEffect(() => {
@@ -37,20 +46,46 @@ export default function RowMenu({ name, isFirst, isLast, onMove, onRemove }) {
       trigger.current?.focus();
     };
     document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('focusin', onPointer);
     document.addEventListener('keydown', onKey);
     window.addEventListener('resize', close);
     window.addEventListener('scroll', close, true);
     return () => {
       document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('focusin', onPointer);
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', close);
       window.removeEventListener('scroll', close, true);
     };
   }, [open]);
 
-  const run = (action) => () => {
+  const items = () => [...(menu.current?.querySelectorAll('[role="menuitem"]:not(:disabled)') ?? [])];
+
+  useEffect(() => {
+    if (open) items()[0]?.focus();
+    else if (returnFocus.current) trigger.current?.focus();
+    returnFocus.current = false;
+  }, [open]);
+
+  const run = (action, { removing = false } = {}) => () => {
+    if (removing) focusNeighbour(trigger.current);
+    else returnFocus.current = true;
     setStyle(null);
     action();
+  };
+
+  const onMenuKey = (event) => {
+    const list = items();
+    const at = list.indexOf(document.activeElement);
+    const target = { ArrowDown: list[(at + 1) % list.length], ArrowUp: list[(at - 1 + list.length) % list.length], Home: list[0], End: list.at(-1) }[event.key];
+    if (target) {
+      event.preventDefault();
+      target.focus();
+    } else if (event.key === 'Tab') {
+      event.preventDefault();
+      returnFocus.current = true;
+      setStyle(null);
+    }
   };
   return (
     <>
@@ -67,10 +102,10 @@ export default function RowMenu({ name, isFirst, isLast, onMove, onRemove }) {
       </button>
       {open &&
         createPortal(
-          <div ref={menu} role="menu" style={style} className="z-50 w-32 overflow-hidden rounded-md border border-ink3 bg-ink2 shadow-xl">
+          <div ref={menu} role="menu" style={style} onKeyDown={onMenuKey} className="z-50 w-32 overflow-hidden rounded-md border border-ink3 bg-ink2 shadow-xl">
             <button type="button" role="menuitem" disabled={isFirst} onClick={run(() => onMove(-1))} className={ITEM}>Subir</button>
             <button type="button" role="menuitem" disabled={isLast} onClick={run(() => onMove(1))} className={ITEM}>Bajar</button>
-            <button type="button" role="menuitem" onClick={run(onRemove)} className={`${ITEM} text-hot`}>Quitar</button>
+            <button type="button" role="menuitem" onClick={run(onRemove, { removing: true })} className={`${ITEM} text-hot`}>Quitar</button>
           </div>,
           document.body,
         )}

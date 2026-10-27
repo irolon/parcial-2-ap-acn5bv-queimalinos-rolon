@@ -75,6 +75,39 @@ describe('RoutineEditorPage: armado', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('el menú se maneja con teclado y devuelve el foco', async () => {
+    await renderEditor();
+    for (const name of ['Sentadilla', 'Plancha']) await add(name);
+    screen.getByRole('button', { name: 'Opciones de Plancha' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getByRole('menuitem', { name: 'Subir' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'Bajar' })).toBeDisabled();
+    expect(screen.getByRole('menuitem', { name: 'Quitar' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'Subir' })).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Opciones de Plancha' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}{Enter}');
+    expect(rowNames()).toEqual(['Plancha', 'Sentadilla']);
+    expect(screen.getByRole('button', { name: 'Opciones de Plancha' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+    expect(rowNames()).toEqual(['Sentadilla']);
+    expect(screen.getByRole('button', { name: 'Opciones de Sentadilla' })).toHaveFocus();
+  });
+
+  it('abrir un menú con el teclado cierra el otro', async () => {
+    await renderEditor();
+    for (const name of ['Sentadilla', 'Plancha']) await add(name);
+    screen.getByRole('button', { name: 'Opciones de Sentadilla' }).focus();
+    await userEvent.keyboard('{Enter}');
+    screen.getByRole('button', { name: 'Opciones de Plancha' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+  });
+
   it('la topbar muestra el nombre de la rutina', async () => {
     await renderEditor();
     expect(await screen.findByRole('heading', { level: 1, name: 'Nueva rutina' })).toBeVisible();
