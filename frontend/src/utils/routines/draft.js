@@ -28,7 +28,7 @@ export function restoreDraft(raw, exercisesById = new Map()) {
     goal: data.goal ?? '',
     days: Array.isArray(data.days) ? data.days : [],
     templateId: data.templateId ?? null,
-      templateName: data.templateName ?? null,
+    templateName: data.templateName ?? null,
     exercises: kept.map((e) => makeExercise(e.exercise_id, e)),
   };
   const blank = isBlank({ ...state, exercises: data.exercises });

@@ -1,12 +1,13 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
 const INTEGER = /^\d+$/;
-const DECIMAL = /^-?\d+(\.\d+)?$/;
+const DECIMAL = /^-?(\d+([.,]\d+)?|[.,]\d+)$/;
 const ROW_FIELD = /^exercises\[(\d+)\]\.(\w+)$/;
 const HEADER_FIELDS = ['name', 'goal', 'days'];
 
 const blank = (value) => String(value ?? '').trim() === '';
-const toNumber = (value) => (blank(value) ? null : Number(value));
+const parse = (value) => Number(String(value).trim().replace(',', '.'));
+const toNumber = (value) => (blank(value) ? null : parse(value));
 const toText = (value) => (blank(value) ? null : String(value).trim());
 
 function withCount(errors) {
@@ -20,7 +21,7 @@ function positiveInteger(value) {
 
 function nonNegative(value, integer) {
   if (blank(value)) return null;
-  const n = Number(value);
+  const n = parse(value);
   if (!DECIMAL.test(String(value).trim()) || !Number.isFinite(n)) return 'Tiene que ser un número';
   if (n < 0) return 'No puede ser negativo';
   return integer && !Number.isInteger(n) ? 'Tiene que ser un entero' : null;

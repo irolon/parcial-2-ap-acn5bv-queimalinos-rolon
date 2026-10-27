@@ -4,15 +4,15 @@ import RowMenu from './RowMenu';
 import { muscleLabel } from '@/utils/exercises/exerciseOptions';
 
 export const FIELDS = [
-  { field: 'sets', label: 'Series', width: 'w-16', numeric: true },
-  { field: 'reps', label: 'Reps', width: 'w-16', numeric: true },
-  { field: 'rest_seconds', label: 'Descanso (s)', width: 'w-20', numeric: true },
-  { field: 'suggested_kg', label: 'Peso (kg)', width: 'w-20', numeric: true },
+  { field: 'sets', label: 'Series', width: 'w-16', inputMode: 'numeric' },
+  { field: 'reps', label: 'Reps', width: 'w-16', inputMode: 'numeric' },
+  { field: 'rest_seconds', label: 'Descanso (s)', width: 'w-20', inputMode: 'numeric' },
+  { field: 'suggested_kg', label: 'Peso (kg)', width: 'w-20', inputMode: 'decimal' },
   { field: 'tempo', label: 'Tempo', width: 'w-24' },
   { field: 'notes', label: 'Nota', width: 'w-44' },
 ];
 
-function Cell({ item, name, value, error, width, numeric, label, field, onChange }) {
+function Cell({ item, name, value, error, width, inputMode, label, field, onChange }) {
   const errorId = `${useId()}-error`;
   const invalid = Boolean(error);
   return (
@@ -21,7 +21,7 @@ function Cell({ item, name, value, error, width, numeric, label, field, onChange
         aria-label={`${label} de ${name}`}
         aria-invalid={invalid ? 'true' : undefined}
         aria-describedby={invalid ? errorId : undefined}
-        inputMode={numeric ? 'decimal' : undefined}
+        inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(item.key, field, event.target.value)}
         className={`h-9 rounded-md border bg-ink1 px-2 font-body text-sm text-bone0 outline-none focus:border-accentText ${width} ${

@@ -51,6 +51,27 @@ describe('validateRoutine', () => {
   });
 });
 
+describe('decimales', () => {
+  it('acepta .5 y la coma rioplatense y manda números', () => {
+    let state = stateWith([EX_A]);
+    const key = state.exercises[0].key;
+    state = updateExercise(state, key, 'suggested_kg', '27,5');
+    expect(validateRoutine(state).count).toBe(0);
+    expect(buildRoutineBody(state, 's-1').exercises[0].suggested_kg).toBe(27.5);
+    state = updateExercise(state, key, 'suggested_kg', '.5');
+    expect(validateRoutine(state).count).toBe(0);
+    expect(buildRoutineBody(state, 's-1').exercises[0].suggested_kg).toBe(0.5);
+  });
+
+  it('series, reps y descanso siguen siendo enteros', () => {
+    let state = stateWith([EX_A]);
+    const key = state.exercises[0].key;
+    for (const field of ['sets', 'reps']) state = updateExercise(state, key, field, '2,5');
+    state = updateExercise(state, key, 'rest_seconds', '.5');
+    expect(Object.keys(validateRoutine(state).exercises[key])).toEqual(['sets', 'reps', 'rest_seconds']);
+  });
+});
+
 describe('buildRoutineBody', () => {
   it('convierte números, vacíos a null y order por índice', () => {
     let state = stateWith([EX_A, EX_B], { name: '  Fuerza  ', templateId: 't-1' });
