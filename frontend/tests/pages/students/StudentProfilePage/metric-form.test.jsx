@@ -14,6 +14,7 @@ vi.mock('recharts', async (importOriginal) => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
@@ -74,6 +75,23 @@ describe('StudentProfilePage: cargar medida', () => {
     const posts = callsWith(fetchMock, 'POST');
     expect(posts).toHaveLength(2);
     expect(bodyOf(posts[1][1]).id).toBe(bodyOf(posts[0][1]).id);
+  });
+
+  it('la fecha vacía usa la hora del guardado, no la de apertura, y no hay max que frene la hora actual', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 26, 10, 0));
+    const user = userEvent.setup();
+    const createMetric = vi.fn(async () => created());
+    const { fetchMock, dialog } = await open(user, { handlers: { createMetric } });
+    const date = within(dialog).getByLabelText('Fecha y hora');
+    expect(date).not.toHaveAttribute('max');
+    vi.setSystemTime(new Date(2026, 9, 26, 10, 5));
+    await user.clear(date);
+    await user.type(within(dialog).getByLabelText(/Peso/), '80');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(callsWith(fetchMock, 'POST')).toHaveLength(1));
+    const body = bodyOf(callsWith(fetchMock, 'POST')[0][1]);
+    expect(body.recorded_at).toBe(new Date(2026, 9, 26, 10, 5).toISOString());
   });
 
   it('valida: al menos una medida y % grasa hasta 100, sin pedir nada', async () => {

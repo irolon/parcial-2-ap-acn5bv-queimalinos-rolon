@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
@@ -22,12 +22,12 @@ const LABELS = {
  * Carga una medida. El `id` se genera una vez al abrir: reintentar tras un error de red manda el mismo
  * y el backend no duplica. La página lo monta con otra `key` en cada apertura.
  * La talla se precarga con la última cargada en el historial (`metrics`).
+ * La fecha arranca en la hora de apertura; vacía toma la del guardado y lo futuro se valida al guardar (sin `max`).
  */
 export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
   const [id] = useState(() => crypto.randomUUID());
-  const [now] = useState(() => localInputValue());
+  const [openedAt] = useState(() => localInputValue());
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
-  const submitting = useRef(false);
   const create = useCreateMetric(studentId);
   const saving = create.isPending;
   const { fields } = errors;
@@ -35,19 +35,19 @@ export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (submitting.current) return;
+    if (create.isPending) return;
     const data = new FormData(event.currentTarget);
+    const now = localInputValue();
     const recordedAt = String(data.get('recorded_at') || '') || now;
     const body = buildMetricBody(Object.fromEntries(data), { id, recordedAt });
     const clientErrors = validateMetricBody(body);
-    if (recordedAt > localInputValue()) clientErrors.recorded_at = FUTURE_ERROR;
+    if (recordedAt > now) clientErrors.recorded_at = FUTURE_ERROR;
     if (Object.keys(clientErrors).length > 0) {
       const { form, ...byField } = clientErrors;
       setErrors({ form: form ?? null, fields: byField });
       return;
     }
     setErrors(NO_FIELD_ERRORS);
-    submitting.current = true;
     try {
       await create.mutateAsync(body);
       onClose();
@@ -55,8 +55,6 @@ export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
       setErrors(
         fieldErrorsFrom(error, { fields: [...METRIC_FIELDS, 'recorded_at'], fallback: 'No pudimos guardar la medida' }),
       );
-    } finally {
-      submitting.current = false;
     }
   }
 
@@ -104,8 +102,7 @@ export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
           label="Fecha y hora"
           name="recorded_at"
           type="datetime-local"
-          max={now}
-          defaultValue={now}
+          defaultValue={openedAt}
           error={fields.recorded_at}
         />
       </form>
