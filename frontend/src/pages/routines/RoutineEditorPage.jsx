@@ -69,6 +69,12 @@ export default function RoutineEditorPage() {
           </div>
         </aside>
         <div className="flex min-w-0 flex-col gap-5">
+          {errors?.count > 0 && (
+            <p role="alert" className="font-mono text-xs text-hot">
+              <span className="block">Revisá {errors.count} {errors.count === 1 ? 'campo' : 'campos'}</span>
+              {errors.form && <span className="block">{errors.form}</span>}
+            </p>
+          )}
           <RoutineHeader
             state={state}
             errors={errors?.header}
@@ -83,12 +89,6 @@ export default function RoutineEditorPage() {
             onMove={(key, delta) => apply(editor.moveBy, key, delta)}
             onRemove={(key) => apply(editor.removeExercise, key)}
           />
-          {errors?.count > 0 && (
-            <p role="alert" className="font-mono text-xs text-hot">
-              <span className="block">Revisá {errors.count} {errors.count === 1 ? 'campo' : 'campos'}</span>
-              {errors.form && <span className="block">{errors.form}</span>}
-            </p>
-          )}
           <div className="flex justify-end">
             <Button onClick={handleAssign}>Asignar a alumno</Button>
           </div>

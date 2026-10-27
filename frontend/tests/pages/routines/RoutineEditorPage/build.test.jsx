@@ -58,6 +58,23 @@ describe('RoutineEditorPage: armado', () => {
     expect(rowNames()).toEqual(['Press banca plano', 'Sentadilla']);
   });
 
+  it('cierra el menú al hacer clic afuera o con Escape y abre uno solo a la vez', async () => {
+    await renderEditor();
+    await add('Sentadilla');
+    await add('Plancha');
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Sentadilla' }));
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Plancha' }));
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+    await userEvent.click(screen.getByLabelText('Nombre de la rutina'));
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    const trigger = screen.getByRole('button', { name: 'Opciones de Plancha' });
+    await userEvent.click(trigger);
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
   it('la topbar muestra el nombre de la rutina', async () => {
     await renderEditor();
     expect(await screen.findByRole('heading', { level: 1, name: 'Nueva rutina' })).toBeVisible();

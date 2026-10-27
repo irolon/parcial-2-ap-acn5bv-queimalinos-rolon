@@ -23,6 +23,9 @@ describe('RoutineEditorPage: validación', () => {
     expect(screen.queryByText(/^Revisá/)).not.toBeInTheDocument();
     await assign();
     expect(screen.getByText('Revisá 4 campos')).toBeVisible();
+    const summary = screen.getByText('Revisá 4 campos');
+    const nameInput = screen.getByLabelText('Nombre de la rutina');
+    expect(summary.compareDocumentPosition(nameInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('El nombre debe tener entre 2 y 120 caracteres')).toBeVisible();
     expect(screen.getByLabelText('Objetivo')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Elegí al menos un día')).toBeVisible();
