@@ -1,6 +1,6 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import Card from '@/components/shared/ui/Card';
-import { formatMetricDate, weightSeries } from '@/utils/body-metrics/metrics';
+import { formatMetricDate, formatWeight, weightSeries } from '@/utils/body-metrics/metrics';
 
 const AXIS = { stroke: 'var(--color-ink6)', fontSize: 11 };
 
@@ -20,7 +20,7 @@ export default function WeightChart({ metrics }) {
               <YAxis domain={['dataMin - 2', 'dataMax + 2']} width={44} {...AXIS} />
               <Tooltip
                 labelFormatter={formatMetricDate}
-                formatter={(value) => [`${value} kg`, 'Peso']}
+                formatter={(value) => [formatWeight(value), 'Peso']}
                 contentStyle={{ background: 'var(--color-ink2)', border: '1px solid var(--color-ink4)' }}
               />
               <Line type="monotone" dataKey="weight" stroke="var(--color-accentText)" strokeWidth={2} dot />

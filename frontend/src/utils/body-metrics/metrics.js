@@ -28,7 +28,7 @@ export function metricDelta(latest, previous, field) {
 export function formatDelta(n, unit) {
   if (n === 0) return '=';
   const sign = n > 0 ? '+' : '−';
-  const text = `${sign}${String(Math.abs(n)).replace('.', ',')}`;
+  const text = `${sign}${formatNumber(Math.abs(n))}`;
   return unit ? `${text} ${unit}` : text;
 }
 
@@ -69,6 +69,9 @@ export function formatMetricDate(iso) {
 
 /** Número con coma decimal (estilo rioplatense). */
 export const formatNumber = (n) => String(n).replace('.', ',');
+
+/** Peso con coma y unidad (`80,5 kg`). */
+export const formatWeight = (n) => `${formatNumber(n)} kg`;
 
 /** IMC con un decimal fijo y coma (`26,0`). */
 export const formatBmi = (n) => formatNumber(Number(n).toFixed(1));

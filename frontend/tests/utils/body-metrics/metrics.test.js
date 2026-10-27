@@ -5,6 +5,7 @@ import {
   buildMetricBody,
   formatBmi,
   formatDelta,
+  formatWeight,
   latestTwo,
   metricDelta,
   validateMetricBody,
@@ -43,6 +44,13 @@ describe('formatBmi', () => {
     expect(formatBmi(26)).toBe('26,0');
     expect(formatBmi(25.75)).toBe('25,8');
     expect(formatBmi(25.8)).toBe('25,8');
+  });
+});
+
+describe('formatWeight', () => {
+  it('peso con coma decimal y kg (tooltip del gráfico)', () => {
+    expect(formatWeight(80.5)).toBe('80,5 kg');
+    expect(formatWeight(80)).toBe('80 kg');
   });
 });
 
