@@ -67,8 +67,10 @@ export function inactiveStudents(students, now) {
   return sortStudents(inactive, 'ultima-sesion', now).slice(0, MAX_ALERTS);
 }
 
+/** Anterior y siguiente de `id` en la lista; el UUID de la URL se compara sin importar mayúsculas. */
 export function neighbors(students, id) {
-  const index = students.findIndex((s) => s.id === id);
+  const wanted = String(id).toLowerCase();
+  const index = students.findIndex((s) => String(s.id).toLowerCase() === wanted);
   return {
     prev: index > 0 ? students[index - 1] : null,
     next: index >= 0 && index < students.length - 1 ? students[index + 1] : null,

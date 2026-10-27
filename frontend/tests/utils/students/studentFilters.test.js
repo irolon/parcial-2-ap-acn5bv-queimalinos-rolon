@@ -91,6 +91,10 @@ describe('neighbors', () => {
     expect(neighbors([a], a.id)).toEqual({ prev: null, next: null, index: 0, total: 1 });
     expect(neighbors(list, 'x')).toEqual({ prev: null, next: null, index: -1, total: 3 });
   });
+
+  it('el id de la URL en mayúsculas encuentra igual al alumno', () => {
+    expect(neighbors(list, b.id.toUpperCase())).toEqual({ prev: a, next: c, index: 1, total: 3 });
+  });
 });
 
 describe('inactiveStudents', () => {
