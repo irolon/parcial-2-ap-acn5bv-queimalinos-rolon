@@ -124,7 +124,7 @@ export default function RoutineEditorPage() {
             onRemove={(key) => apply(editor.removeExercise, key)}
           />
           <div className="flex flex-wrap justify-end gap-3">
-            <Button variant="ghost" onClick={() => setDialog({ type: 'template' })}>Usar plantilla</Button>
+            <Button variant="ghost" disabled={!draft.ready} onClick={() => setDialog({ type: 'template' })}>Usar plantilla</Button>
             <Button variant="ghost" onClick={() => setDialog({ type: 'save' })}>Guardar como plantilla</Button>
             <Button onClick={handleAssign}>Asignar a alumno</Button>
           </div>

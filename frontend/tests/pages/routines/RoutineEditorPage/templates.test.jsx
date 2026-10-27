@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { LIBRARY } from '../../../helpers/exercises/fixtures';
 import { fillRoutine, renderEditor, rowNames } from '../../../helpers/routines/editor';
+import { stubRoutinesApi } from '../../../helpers/routines/routines';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
 import { bodyOf, calls, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { student } from '../../../helpers/students/fixtures';
 
@@ -96,6 +99,38 @@ describe('RoutineEditorPage: usar plantilla', () => {
     expect(bodyOf(post(fetchMock, '/routines')[1])).toMatchObject({
       template_id: 't-1', name: 'Full body', goal: 'hypertrophy', days: ['monday', 'friday'],
     });
+  });
+});
+
+describe('RoutineEditorPage: usar plantilla sin biblioteca', () => {
+  it('queda deshabilitado hasta que carga la biblioteca', async () => {
+    setSession(TRAINER);
+    const fetchMock = stubRoutinesApi({ exercises: LIBRARY, ...api() });
+    const original = fetchMock.getMockImplementation();
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    fetchMock.mockImplementation(async (url, init) => {
+      if (url.includes('/exercises')) await gate;
+      return original(url, init);
+    });
+    renderRoute('/pt/rutinas/nueva');
+    const button = await screen.findByRole('button', { name: 'Usar plantilla' });
+    expect(button).toBeDisabled();
+    release();
+    await screen.findByLabelText('Buscar ejercicio');
+    await vi.waitFor(() => expect(button).toBeEnabled());
+  });
+
+  it('si la biblioteca falla sigue deshabilitado', async () => {
+    setSession(TRAINER);
+    const fetchMock = stubRoutinesApi({ ...api() });
+    const original = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation(async (url, init) => (
+      url.includes('/exercises') ? new Response('{}', { status: 500 }) : original(url, init)
+    ));
+    renderRoute('/pt/rutinas/nueva');
+    await screen.findByText(/reintentar/i);
+    expect(screen.getByRole('button', { name: 'Usar plantilla' })).toBeDisabled();
   });
 });
 
