@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { bodyOf, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
-import { studentDetail } from '../../../helpers/students/fixtures';
+import { student, studentDetail } from '../../../helpers/students/fixtures';
 import { callsWith, loadProfile } from '../../../helpers/students/profile';
+import { daysAgo } from '../../../helpers/students/students';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -84,5 +85,26 @@ describe('StudentProfilePage: baja y reactivación', () => {
     await user.click(screen.getByRole('button', { name: 'Reactivar' }));
     expect(await screen.findByRole('button', { name: 'Dar de baja' })).toBeVisible();
     expect(screen.queryByText('Se cayó')).not.toBeInTheDocument();
+  });
+
+  it('tras dar de baja, la navegación conserva la posición aunque el alumno ya no esté en la lista', async () => {
+    const user = userEvent.setup();
+    const carla = studentDetail({ id: 'st-carla', name: 'Carla', last_session_at: daysAgo(8) });
+    const others = [
+      student({ id: 'st-beto', name: 'Beto', last_session_at: daysAgo(10) }),
+      student({ id: 'st-dani', name: 'Dani', last_session_at: daysAgo(2) }),
+    ];
+    const { detail, update } = mutableStudent(carla);
+    const list = () => (detail().active ? [...others, carla] : others);
+    const { fetchMock } = await loadProfile({ path: '/pt/alumnos/st-carla', name: 'Carla', list, detail, handlers: { update } });
+    expect(await screen.findByText('2 de 3')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Dar de baja' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Dar de baja' }));
+    expect(await screen.findByText('Dado de baja')).toBeVisible();
+    const listCalls = () => callsWith(fetchMock, 'GET').filter(([path]) => path.startsWith('/students?'));
+    await waitFor(() => expect(listCalls().length).toBeGreaterThan(1));
+    await waitFor(() => expect(screen.getByText('2 de 3')).toBeVisible());
+    expect(screen.getByRole('link', { name: /Anterior/ })).toHaveAttribute('href', '/pt/alumnos/st-beto');
+    expect(screen.getByRole('link', { name: /Siguiente/ })).toHaveAttribute('href', '/pt/alumnos/st-dani');
   });
 });

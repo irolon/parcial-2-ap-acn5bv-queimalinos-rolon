@@ -9,7 +9,7 @@ export const daysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
 
 /**
  * Stub de la API de alumnos sobre `stubFetch`.
- * - `list`: respuesta de `GET /students` (activos); `disabled`: la de `?active=false`.
+ * - `list`: respuesta de `GET /students` (activos); `disabled`: la de `?active=false` (o funciones que la arman en cada GET).
  * - `detail`: ficha de `GET /students/:id` (o función que la arma en cada GET) (`detailError`: status de error, 403 o 400 con `:id` inválido); `metrics`: respuesta de `GET /students/:id/metrics`.
  * - `handlers`: `{ update, createMetric, deleteMetric }` para el resto; lo que no se maneja devuelve 500.
  */
@@ -18,7 +18,8 @@ export function stubStudents({ list = [], disabled = [], detail, detailError, me
     const method = init.method ?? 'GET';
     const path = url.replace(/^.*\/api/, '');
     if (method === 'GET' && path.startsWith('/students?')) {
-      return jsonResponse(200, { data: path.includes('active=false') ? disabled : list });
+      const data = path.includes('active=false') ? disabled : list;
+      return jsonResponse(200, { data: typeof data === 'function' ? data() : data });
     }
     if (method === 'GET' && /^\/students\/[^/]+\/metrics/.test(path)) {
       if (metricsError) return errorResponse(metricsError, 'INTERNAL');

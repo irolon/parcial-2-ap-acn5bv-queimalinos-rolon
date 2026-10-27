@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { profileHref } from '@/routes/routeTable';
 import { neighbors } from '@/utils/students/studentFilters';
@@ -21,10 +21,23 @@ function NavLink({ student, search, children }) {
   );
 }
 
+/**
+ * Vecinos de `id`; si deja de estar en la lista (se lo dio de baja desde la ficha y la lista se refrescó),
+ * los últimos que se calcularon para ese mismo `id`. Al cambiar de alumno se descartan.
+ */
+function useStickyNeighbors(students, id) {
+  const current = neighbors(students, id);
+  const [kept, setKept] = useState(null);
+  const key = current.index >= 0 && [id, current.index, current.total, current.prev?.id, current.next?.id].join('|');
+  if (key && kept?.key !== key) setKept({ key, id, nav: current });
+  if (current.index < 0 && kept?.id === id) return kept.nav;
+  return current;
+}
+
 /** "‹ Anterior · 3 de 12 · Siguiente ›" sobre la lista ya filtrada y ordenada; ←/→ también navegan. */
 export default function StudentNavigation({ students, id, search }) {
   const navigate = useNavigate();
-  const { prev, next, index, total } = neighbors(students, id);
+  const { prev, next, index, total } = useStickyNeighbors(students, id);
   const prevHref = prev && profileHref(prev.id, search);
   const nextHref = next && profileHref(next.id, search);
 
