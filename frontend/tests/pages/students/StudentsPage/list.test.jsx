@@ -3,6 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 import { student } from '../../../helpers/students/fixtures';
 import { daysAgo, stubStudents } from '../../../helpers/students/students';
 
@@ -72,5 +73,25 @@ describe('StudentsPage: listado', () => {
     const { pathname } = renderRoute('/pt/alumnos');
     await userEvent.click(await screen.findByRole('link', { name: 'Generá tu primera invitación' }));
     expect(pathname()).toBe('/pt/alumnos/nuevo');
+  });
+
+  it('con todos dados de baja no invita: muestra los filtros y deja llegar a los de baja', async () => {
+    stubStudents({ list: [], disabled: [student({ name: 'Bruno Baja', active: false })] });
+    renderRoute('/pt/alumnos');
+    expect(await main().findByText('No hay alumnos activos')).toBeVisible();
+    expect(main().queryByText('Todavía no tenés alumnos')).not.toBeInTheDocument();
+    await userEvent.selectOptions(main().getByLabelText('Estado'), 'baja');
+    expect(await main().findByText(/Bruno Baja/)).toBeVisible();
+  });
+
+  it('mientras averigua si hay dados de baja no muestra la invitación', async () => {
+    const fetchMock = stubFetch(async (url) =>
+      url.includes('active=false') ? new Promise(() => {}) : jsonResponse(200, { data: [] }),
+    );
+    renderRoute('/pt/alumnos');
+    await vi.waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('active=false'))).toBe(true));
+    expect(main().getByRole('status')).toHaveTextContent('Cargando alumnos…');
+    expect(main().queryByText('Todavía no tenés alumnos')).not.toBeInTheDocument();
+    expect(main().queryByText('No hay alumnos activos')).not.toBeInTheDocument();
   });
 });

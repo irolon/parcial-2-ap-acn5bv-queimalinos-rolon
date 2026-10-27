@@ -1,9 +1,10 @@
+import LoadingState from '@/components/shared/states/LoadingState';
 import QueryState from '@/components/shared/states/QueryState';
 import Card from '@/components/shared/ui/Card';
 import Stat from '@/components/shared/ui/Stat';
 import FirstInvitationCta from '@/components/students/FirstInvitationCta';
 import InactivityAlerts from '@/components/students/InactivityAlerts';
-import { useStudentsQuery } from '@/hooks/students/useStudents';
+import { useNoStudents, useStudentsQuery } from '@/hooks/students/useStudents';
 import { INACTIVITY_DAYS, countByStatus } from '@/utils/students/activity';
 
 function Indicators({ students, now }) {
@@ -18,13 +19,15 @@ function Indicators({ students, now }) {
   );
 }
 
-/** Resumen del entrenador: indicadores de actividad y alertas de inactividad. */
+/** Resumen del entrenador: indicadores de actividad y alertas de inactividad. La invitación, solo sin ningún alumno. */
 export default function DashboardPage() {
   const query = useStudentsQuery({ active: true });
+  const { none, checking } = useNoStudents(query);
   const now = new Date();
-  if (query.isSuccess && query.data.length === 0) return <FirstInvitationCta />;
+  if (none) return <FirstInvitationCta />;
+  if (checking) return <LoadingState />;
   return (
-    <QueryState query={query}>
+    <QueryState query={query} empty={{ title: 'No hay alumnos activos' }}>
       {(students) => (
         <div className="flex flex-col gap-5">
           <Indicators students={students} now={now} />

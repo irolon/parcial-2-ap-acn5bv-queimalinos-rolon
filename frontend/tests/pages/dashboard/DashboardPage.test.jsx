@@ -86,6 +86,13 @@ describe('DashboardPage', () => {
     expect(pathname()).toBe('/pt/alumnos/nuevo');
   });
 
+  it('con todos dados de baja no invita a la primera invitación', async () => {
+    stubStudents({ list: [], disabled: [student({ active: false })] });
+    renderRoute('/pt/dashboard');
+    expect(await main().findByText('No hay alumnos activos')).toBeVisible();
+    expect(main().queryByText('Todavía no tenés alumnos')).not.toBeInTheDocument();
+  });
+
   it('ante un error permite reintentar', async () => {
     let fail = true;
     stubFetch(async () =>
