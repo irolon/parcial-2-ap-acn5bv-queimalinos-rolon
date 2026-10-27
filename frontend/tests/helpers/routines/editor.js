@@ -1,15 +1,16 @@
 import { screen } from '@testing-library/react';
 import { LIBRARY } from '../exercises/fixtures';
 import { TRAINER, renderRoute, setSession } from '../routes/renderRoute';
+import userEvent from '@testing-library/user-event';
 import { stubRoutinesApi } from './routines';
 
 export const DRAFT_STORAGE_KEY = `fittrainer.routine-draft.${TRAINER.id}`;
 
 /** Monta el editor con la biblioteca cargada (espera al buscador de la biblioteca). */
-export async function renderEditor({ exercises = LIBRARY } = {}) {
+export async function renderEditor({ exercises = LIBRARY, path = '/pt/rutinas/nueva', api = {} } = {}) {
   setSession(TRAINER);
-  const fetchMock = stubRoutinesApi({ exercises });
-  const utils = renderRoute('/pt/rutinas/nueva');
+  const fetchMock = stubRoutinesApi({ exercises, ...api });
+  const utils = renderRoute(path);
   await screen.findByLabelText('Buscar ejercicio');
   return { ...utils, fetchMock };
 }
@@ -30,4 +31,12 @@ export function storeDraft(overrides = {}) {
 /** Nombres de los ejercicios de la tabla, en orden. */
 export function rowNames() {
   return screen.getAllByLabelText(/^Series de /).map((el) => el.getAttribute('aria-label').replace('Series de ', ''));
+}
+
+/** Arma una rutina válida: nombre, objetivo, un día y los ejercicios pedidos (en ese orden). */
+export async function fillRoutine(names = ['Sentadilla', 'Plancha', 'Press banca plano']) {
+  await userEvent.type(screen.getByLabelText('Nombre de la rutina'), 'Fuerza A');
+  await userEvent.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Lunes' }));
+  for (const name of names) await userEvent.click(screen.getByRole('button', { name: `Agregar ${name}` }));
 }
