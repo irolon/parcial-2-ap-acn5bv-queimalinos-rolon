@@ -30,7 +30,7 @@ export default function ExerciseTable({ exercises, byId, errors = {}, onChange, 
   }
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} accessibility={a11y}>
-      <div className="overflow-x-auto rounded-xl border border-ink2">
+      <div className="relative overflow-x-auto rounded-xl border border-ink2">
         <table className="w-full min-w-max border-collapse">
           <thead>
             <tr>
