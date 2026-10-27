@@ -5,7 +5,7 @@ import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import { useCreateTemplate } from '@/hooks/routine-templates/useRoutineTemplates';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
-import { buildTemplateBody } from '@/utils/routines/routineForm';
+import { buildTemplateBody, validateRoutine } from '@/utils/routines/routineForm';
 import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 
 const MAX_EXERCISES = 50;
@@ -20,11 +20,15 @@ function validate(form, state) {
   if (state.days.length === 0) errors.form = 'Elegí al menos un día en la rutina';
   if (state.exercises.length === 0) errors.form = 'Agregá al menos un ejercicio';
   if (state.exercises.length > MAX_EXERCISES) errors.form = `Una plantilla admite hasta ${MAX_EXERCISES} ejercicios`;
+  if (!errors.form && Object.keys(validateRoutine(state).exercises).length > 0) {
+    errors.form = 'Revisá los valores de los ejercicios en la tabla';
+    errors.rows = true;
+  }
   return errors;
 }
 
 /** Guarda la estructura del editor como plantilla (no hace falta asignar antes). */
-export default function SaveTemplateDialog({ state, onSaved, onClose }) {
+export default function SaveTemplateDialog({ state, onSaved, onInvalid, onClose }) {
   const [form, setForm] = useState({ name: state.name, goal: state.goal, level: '' });
   const [errors, setErrors] = useState({});
   const create = useCreateTemplate();
@@ -33,8 +37,9 @@ export default function SaveTemplateDialog({ state, onSaved, onClose }) {
   async function handleSubmit(event) {
     event.preventDefault();
     if (create.isPending) return;
-    const found = validate(form, state);
+    const { rows, ...found } = validate(form, state);
     setErrors(found);
+    if (rows) onInvalid?.();
     if (Object.keys(found).length > 0) return;
     try {
       await create.mutateAsync(buildTemplateBody(state, form));

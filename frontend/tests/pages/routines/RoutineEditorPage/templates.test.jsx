@@ -165,3 +165,16 @@ describe('RoutineEditorPage: guardar como plantilla', () => {
     expect(post(fetchMock, '/routine-templates')).toBeUndefined();
   });
 });
+
+describe('RoutineEditorPage: guardar como plantilla con valores inválidos', () => {
+  it('revisa las filas, no manda nada y marca la celda', async () => {
+    const { fetchMock } = await renderEditor({ api: api() });
+    await fillRoutine(['Sentadilla', 'Plancha']);
+    await userEvent.clear(screen.getByLabelText('Reps de Sentadilla'));
+    await open('Guardar como plantilla');
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
+    expect(screen.getByText('Revisá los valores de los ejercicios en la tabla')).toBeVisible();
+    expect(post(fetchMock, '/routine-templates')).toBeUndefined();
+    expect(screen.getByLabelText('Reps de Sentadilla')).toHaveAttribute('aria-invalid', 'true');
+  });
+});

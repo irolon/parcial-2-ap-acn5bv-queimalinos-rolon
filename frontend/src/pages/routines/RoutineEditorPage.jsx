@@ -74,6 +74,7 @@ export default function RoutineEditorPage() {
     hasContent: !editor.isBlank(state),
     assigned: (student) => navigate(profileHref(student.id)),
     invalid: (error) => setServerErrors(serverErrorsFor(error, state)),
+    invalidRows: () => setAttempted(true),
     load: (next, missing) => {
       replaceState(next);
       setAttempted(false);
