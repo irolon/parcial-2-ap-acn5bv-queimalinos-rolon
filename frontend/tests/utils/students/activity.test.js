@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   INACTIVITY_DAYS,
   STATUS_LABELS,
@@ -25,14 +25,12 @@ describe('daysSince', () => {
   });
 
   it('un cambio de horario no corre el día', () => {
-    const tz = process.env.TZ;
-    process.env.TZ = 'Europe/Madrid';
+    vi.stubEnv('TZ', 'Europe/Madrid');
     try {
       expect(daysSince(local(27, 12, 2, 2027), new Date(2027, 2, 29, 11, 30))).toBe(2);
       expect(daysSince(local(24, 0, 9), new Date(2026, 9, 26, 23, 30))).toBe(2);
     } finally {
-      if (tz === undefined) delete process.env.TZ;
-      else process.env.TZ = tz;
+      vi.unstubAllEnvs();
     }
   });
 });
