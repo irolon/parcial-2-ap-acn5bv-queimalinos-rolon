@@ -2,13 +2,16 @@ import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import JoinPage from '@/pages/students/JoinPage';
+import StudentProfilePage from '@/pages/students/StudentProfilePage';
+import StudentsPage from '@/pages/students/StudentsPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
-import { NEW_STUDENT, ROLES, STUDENT_NAV, TRAINER_NAV } from './routeTable';
+import { NEW_STUDENT, ROLES, STUDENT_NAV, STUDENT_PROFILE, TRAINER_NAV } from './routeTable';
 
 // Cada ítem del sidebar es una página "Próximamente" hasta que llegue su tarjeta;
 // `pages` suma las páginas reales de la sección y `elements` reemplaza el placeholder de un ítem
@@ -51,7 +54,8 @@ export const routes = [
       handle: { title: NEW_STUDENT.title, subtitle: NEW_STUDENT.subtitle },
       element: <NewStudentPage />,
     },
-  ], { biblioteca: <ExerciseLibraryPage /> }),
+    { path: STUDENT_PROFILE.path, element: <StudentProfilePage /> },
+  ], { dashboard: <DashboardPage />, alumnos: <StudentsPage />, biblioteca: <ExerciseLibraryPage /> }),
   roleSection(ROLES.STUDENT, STUDENT_NAV),
   { path: '*', element: <NotFoundPage /> },
 ];

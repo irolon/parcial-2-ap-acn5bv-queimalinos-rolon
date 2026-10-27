@@ -106,7 +106,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 |--------|------|-----|-------------|
 | POST | `/api/students` | — | Alta del alumno desde token de invitación |
 | GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`. Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
-| GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`) y `active_routine` (`{ id, name, days }`) |
+| GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`), `active_routine` (`{ id, name, days }`) y `last_session_at` |
 | PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) |
 | GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
 | POST | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Carga una medida. 201 si es nueva, 200 si es un reintento con el mismo `id` |

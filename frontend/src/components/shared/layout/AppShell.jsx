@@ -1,6 +1,7 @@
 import { Outlet, useMatches } from 'react-router';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useDrawer } from '@/hooks/shared/useDrawer';
+import { usePageHeaderStore } from '@/hooks/shared/usePageHeader';
 import { ROLES } from '@/routes/routeTable';
 import MobileDrawer from './MobileDrawer';
 import StudentSidebar from './StudentSidebar';
@@ -13,12 +14,13 @@ const SIDEBARS = { [ROLES.TRAINER]: TrainerSidebar, [ROLES.STUDENT]: StudentSide
  * Layout de las rutas privadas.
  * - ≥ 1024: sidebar completo de 220 px. 768–1023: sidebar de íconos de 64 px.
  * - < 768: sin sidebar fijo; el botón de menú de la topbar abre el panel lateral.
- * El título de la topbar sale del `handle` de la ruta activa.
+ * El título de la topbar es el que fija la página (`usePageHeader`) o, si no, el `handle` de la ruta.
  */
 export default function AppShell({ role }) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const page = useMatches().findLast((match) => match.handle)?.handle ?? {};
+  const handle = useMatches().findLast((match) => match.handle)?.handle;
+  const page = usePageHeaderStore((s) => s.header) ?? handle ?? {};
   const drawer = useDrawer();
   const Sidebar = SIDEBARS[role];
 

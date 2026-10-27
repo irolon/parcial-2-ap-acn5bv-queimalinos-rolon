@@ -137,6 +137,7 @@ describe('JoinPage', () => {
     const { pathname } = renderRoute(`/join?token=${TOKEN}`);
     expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
     expect(pathname()).toBe('/pt/dashboard');
-    expect(fetchMock).not.toHaveBeenCalled();
+    // El dashboard pide sus alumnos, pero no se consulta la invitación.
+    expect(calls(fetchMock).filter(([path]) => path.includes('invitation'))).toEqual([]);
   });
 });

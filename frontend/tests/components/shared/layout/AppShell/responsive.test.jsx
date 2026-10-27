@@ -1,14 +1,21 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../../../../helpers/auth/authStore';
 import { TRAINER, renderRoute, setSession } from '../../../../helpers/routes/renderRoute';
+import { stubStudents } from '../../../../helpers/students/students';
 
 // jsdom no aplica media queries: se verifica el contrato de clases de cada breakpoint
 // (qué se oculta o achica con `md:` y `lg:`) y el comportamiento real del panel de mobile.
 beforeEach(() => {
   resetAuthStore();
   setSession(TRAINER);
+  stubStudents(); // el dashboard pide la lista de alumnos
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 async function openDrawer() {

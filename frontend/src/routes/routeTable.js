@@ -36,12 +36,21 @@ export const STUDENT_NAV = {
   ],
 };
 
+/** Panel de alumnos (el ítem `alumnos` del menú del entrenador). */
+export const STUDENTS_PATH = `${TRAINER_NAV.base}/alumnos`;
+
 // Páginas del entrenador fuera del menú (la topbar toma título y subtítulo de acá).
 export const NEW_STUDENT = {
-  path: '/pt/alumnos/nuevo',
+  path: `${STUDENTS_PATH}/nuevo`,
   title: 'Invitar alumno',
   subtitle: 'ALUMNOS › NUEVO · GENERÁ QR Y COMPARTILO POR WHATSAPP',
 };
+
+// Ficha del alumno: la página fija su propio título con `usePageHeader`.
+export const STUDENT_PROFILE = { path: `${STUDENTS_PATH}/:id` };
+
+/** Link a la ficha; `search` (sin `?`) conserva los filtros del panel. */
+export const profileHref = (id, search = '') => `${STUDENTS_PATH}/${id}${search ? `?${search}` : ''}`;
 
 const NAV_BY_ROLE = { [ROLES.TRAINER]: TRAINER_NAV, [ROLES.STUDENT]: STUDENT_NAV };
 

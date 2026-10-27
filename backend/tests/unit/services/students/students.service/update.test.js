@@ -12,6 +12,10 @@ describe('students.service — update', () => {
   beforeEach(() => {
     mockBodyMetricsService.latestForStudent.mockResolvedValue(null);
     mockRoutinesRepo.findActiveRoutineSummary.mockResolvedValue(null);
+    mockStudentsRepo.findLastSessionDates.mockReset();
+    mockStudentsRepo.findLastSessionDates.mockResolvedValue([
+      { student_id: 'student-1', last_session_at: '2026-10-20T10:00:00Z' },
+    ]);
   });
 
   it('actualiza y devuelve la ficha completa', async () => {
@@ -21,7 +25,12 @@ describe('students.service — update', () => {
     const detail = await service.update(TRAINER, 'student-1', { level: 'advanced' });
 
     expect(mockStudentsRepo.updateStudent).toHaveBeenCalledWith('student-1', { level: 'advanced' });
-    expect(detail).toMatchObject({ level: 'advanced', latest_metrics: null, active_routine: null });
+    expect(detail).toMatchObject({
+      level: 'advanced',
+      latest_metrics: null,
+      active_routine: null,
+      last_session_at: '2026-10-20T10:00:00Z',
+    });
     expect(mockAuthRepo.revokeAllForUser).not.toHaveBeenCalled();
   });
 

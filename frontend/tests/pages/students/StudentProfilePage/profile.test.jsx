@@ -1,0 +1,115 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { screen, within } from '@testing-library/react';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { metric, studentDetail } from '../../../helpers/students/fixtures';
+import { loadProfile } from '../../../helpers/students/profile';
+import { daysAgo, stubStudents } from '../../../helpers/students/students';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
+
+const main = () => within(screen.getByRole('main'));
+
+describe('StudentProfilePage: ficha', () => {
+  it('la topbar muestra el nombre y la última sesión', async () => {
+    await loadProfile({ detail: studentDetail({ last_session_at: daysAgo(3) }) });
+    expect(await screen.findByText('ALUMNOS › PERFIL · ÚLTIMA SESIÓN HACE 3 DÍAS')).toBeVisible();
+  });
+
+  it('sin sesiones, la topbar dice que nunca entrenó', async () => {
+    await loadProfile({ detail: studentDetail() });
+    expect(await screen.findByText('ALUMNOS › PERFIL · NUNCA ENTRENÓ')).toBeVisible();
+  });
+
+  it('muestra edad, nivel, objetivo y estado', async () => {
+    const birth = new Date(Date.now() - 30.5 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    await loadProfile({ detail: studentDetail({ birth_date: birth, created_at: daysAgo(1) }) });
+    expect(await main().findByText('30 años · Intermedio')).toBeVisible();
+    expect(main().getByText('Ganar masa muscular')).toBeVisible();
+    expect(main().getByText('Nuevo')).toBeVisible();
+  });
+
+  it('un alumno al día muestra la pill "Al día"', async () => {
+    await loadProfile({ detail: studentDetail({ last_session_at: daysAgo(2) }) });
+    expect(await main().findByText('Al día')).toBeVisible();
+  });
+
+  it('antropometría con la diferencia contra la medida anterior, salteando los campos vacíos', async () => {
+    await loadProfile({
+      detail: studentDetail({ latest_metrics: metric({ weight_kg: 1, height_cm: 1 }) }),
+      metrics: [
+        metric({ recorded_at: '2026-09-10T10:00:00Z', weight_kg: 80, waist_cm: 91, bmi: 25.2 }),
+        metric({ recorded_at: '2026-10-10T10:00:00Z', weight_kg: 80.8, waist_cm: 90, bmi: 25.5 }),
+        metric({ recorded_at: '2026-10-20T10:00:00Z', weight_kg: null, height_cm: null, body_fat_pct: 20, bmi: null }),
+      ],
+    });
+    expect(await main().findByText('+0,8 kg')).toBeVisible();
+    const card = within(main().getByText('Antropometría').parentElement.parentElement);
+    const stat = (label) => card.getByText(label).parentElement.textContent;
+    expect(stat('Peso')).toBe('Peso80,8kg+0,8 kg');
+    expect(stat('Talla')).toBe('Talla178cm=');
+    expect(stat('% grasa')).toBe('% grasa20%');
+    expect(stat('IMC')).toBe('IMC25,5+0,3');
+    expect(stat('Cintura')).toBe('Cintura90cm−1 cm');
+  });
+
+  it('la tabla del historial scrollea adentro y las columnas de la grilla pueden encogerse', async () => {
+    await loadProfile({ detail: studentDetail(), metrics: [metric()] });
+    const table = await main().findByRole('table', { name: 'Historial de medidas' });
+    expect(table.parentElement).toHaveClass('overflow-x-auto');
+    const grid = table.closest('.grid');
+    expect(grid.className).toContain('minmax(0,1fr)');
+    for (const column of grid.children) expect(column).toHaveClass('min-w-0');
+  });
+
+  it('sin medidas lo avisa', async () => {
+    await loadProfile({ detail: studentDetail() });
+    expect(await main().findByText('Todavía no hay medidas')).toBeVisible();
+  });
+
+  it('contexto para la IA: equipamiento con etiquetas y lesiones', async () => {
+    await loadProfile({ detail: studentDetail() });
+    expect(await main().findByText('Barra')).toBeVisible();
+    expect(main().getByText('Rack propio')).toBeVisible();
+    expect(main().getByText('Lumbalgia')).toBeVisible();
+    expect(main().queryByText(/Sin completar/)).not.toBeInTheDocument();
+  });
+
+  it('contexto para la IA vacío avisa que falta completar', async () => {
+    await loadProfile({ detail: studentDetail({ gym_equipment: null, injuries: null }) });
+    expect(await main().findByText('Sin completar: la IA no va a poder personalizar')).toBeVisible();
+  });
+
+  it('rutina activa con nombre y días en español', async () => {
+    const routine = { id: 'r-1', name: 'Fuerza A', days: ['monday', 'thursday'] };
+    await loadProfile({ detail: studentDetail({ active_routine: routine }) });
+    expect(await main().findByText('Fuerza A')).toBeVisible();
+    expect(main().getByText('Lunes · Jueves')).toBeVisible();
+  });
+
+  it('sin rutina lo avisa', async () => {
+    await loadProfile({ detail: studentDetail() });
+    expect(await main().findByText('Sin rutina asignada')).toBeVisible();
+  });
+
+  it('un :id que no es UUID (400 sobre `id`) muestra lo mismo', async () => {
+    resetAuthStore();
+    setSession(TRAINER);
+    stubStudents({ detailError: 400 });
+    renderRoute('/pt/alumnos/no-es-uuid');
+    expect(await screen.findByText('No encontramos a este alumno')).toBeVisible();
+  });
+
+  it('un 403 muestra "No encontramos a este alumno" con link al panel', async () => {
+    resetAuthStore();
+    setSession(TRAINER);
+    stubStudents({ detailError: 403 });
+    renderRoute('/pt/alumnos/ajeno');
+    expect(await screen.findByText('No encontramos a este alumno')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Volver a alumnos' })).toHaveAttribute('href', '/pt/alumnos');
+  });
+});
