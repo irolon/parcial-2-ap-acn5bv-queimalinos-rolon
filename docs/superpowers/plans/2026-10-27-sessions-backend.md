@@ -18,7 +18,7 @@
 - Respuestas `{ data }`; errores `{ error: { code, message, details } }` con `Errors.*` de `shared/utils/errors.js`.
 - Sesión: `notes` ≤ 1000; `rpe` entero 1–10; `finished_at ≥ started_at`; fechas ISO 8601 **con zona** y fecha real (como `recorded_at` de body-metrics) — sin chequeo de futuro.
 - Serie: `set_number` entero 1–100; `actual_reps` entero 0–1000; `actual_kg` número 0–1000 o `null`; `completed` booleano, default `true`; lote de 1 a 100 series.
-- Códigos: `SESSION_NOT_FOUND` (404), `SESSION_ID_CONFLICT` (409); por serie `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `ROUTINE_EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`.
+- Códigos: `SESSION_NOT_FOUND` (404), `SESSION_ID_CONFLICT` (409); por serie `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una referencia de rutina inválida (`routine_id`, `routine_exercise_id`) no rechaza nada: se guarda como `null` (ver spec).
 - Verificación por tarea: `cd backend && npm run lint && npm test` en verde.
 
 ## Review Focus
@@ -102,7 +102,7 @@ Algoritmo de `addSets` (en este orden):
 2. `parseSet` por índice; inválidas → `failed` (`VALIDATION_ERROR`, mensaje del primer detalle); `id` repetido en el lote → la segunda a `failed`.
 3. `findSetsByIds` de las válidas: existente con otro `session_id` → `SET_ID_CONFLICT`; existente en esta sesión → `created: false`.
 4. Ejercicios: un `findAccessibleExerciseIds` con todos los `exercise_id` y `original_exercise_id` (trainer del alumno); faltante → `EXERCISE_NOT_FOUND`.
-5. `routine_exercise_id` no nulos: si la sesión no tiene `routine_id` → todos `ROUTINE_EXERCISE_NOT_FOUND`; si tiene, un `findRoutineExerciseIds`; faltante → `ROUTINE_EXERCISE_NOT_FOUND`.
+5. `routine_exercise_id` no nulos: si la sesión no tiene `routine_id` → todos se guardan con `routine_exercise_id: null`; si tiene, un `findRoutineExerciseIds`; los que no estén → `null` (la serie se guarda igual).
 6. `upsertSets` con las que quedan (con `session_id`); si ninguna, no se llama.
 7. Si alguna guardada `isSubstitution` → `markSessionModified`.
 
@@ -114,7 +114,7 @@ Algoritmo de `addSets` (en este orden):
   - id en mayúsculas existente en minúsculas → reconocido como la misma serie (Review Focus 3);
   - id repetido dentro del lote → segunda a `failed` (Review Focus 5);
   - ejercicio inaccesible → `EXERCISE_NOT_FOUND`; `original_exercise_id` inaccesible → igual;
-  - `routine_exercise_id` ajeno → `ROUTINE_EXERCISE_NOT_FOUND`; sesión sin rutina con `routine_exercise_id` → idem;
+  - `routine_exercise_id` ajeno → la serie se guarda con `routine_exercise_id: null`; sesión sin rutina con `routine_exercise_id` → idem;
   - lote mixto: válidas guardadas, inválidas con su `index`;
   - sustitución → `markSessionModified`; sin sustitución → no; todas fallidas → ni upsert ni mark;
   - sesión cerrada (`finished_at` no nulo) → se guardan igual;

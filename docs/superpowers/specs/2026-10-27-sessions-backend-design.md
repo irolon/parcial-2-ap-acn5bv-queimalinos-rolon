@@ -32,10 +32,10 @@ Body:
 ```
 
 - `id`, `started_at` obligatorios; el resto opcional. `finished_at ≥ started_at`.
-- `routine_id`, si viene, tiene que ser una rutina **del alumno** (activa o no); si no, 400 `VALIDATION_ERROR` sobre `routine_id`.
+- `routine_id`, si viene, tiene que ser una rutina **del alumno** (activa o no); si no lo es (ajena, o borrada antes de que el celular sincronice), la sesión se guarda con `routine_id = null` — nunca se enlaza una rutina ajena y nunca se pierde la sesión ("ante la duda, guardá").
 - **Idempotente por `id`:**
   - no existe → se crea → **201** `{ data: session }`;
-  - existe y es del alumno → **200**: se actualizan `finished_at`, `rpe`, `notes` si vienen; `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran, sin error);
+  - existe y es del alumno → **200**: se actualizan `finished_at`, `rpe`, `notes` si vienen; `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran, sin error, y `routine_id` no se valida); si el `finished_at` del reintento es anterior al `started_at` guardado, se ignora ese campo y se guardan los demás;
   - existe y es de otro alumno → **409** `SESSION_ID_CONFLICT`.
 
 ### 3.2 `POST /api/sessions/:id/sets`
@@ -63,7 +63,7 @@ Sin clave única en `(session_id, set_number)`.
 **Por serie** (las válidas se guardan aunque otras fallen):
 - datos inválidos → `failed` con `VALIDATION_ERROR` y el campo;
 - `exercise_id` / `original_exercise_id` que el alumno no puede ver (ni globales ni de su entrenador) → `failed` con `EXERCISE_NOT_FOUND`;
-- `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesión no tiene rutina) → `failed` con `ROUTINE_EXERCISE_NOT_FOUND`;
+- `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesión no tiene rutina, o se borró) → la serie **se guarda** con `routine_exercise_id = null` (es solo un enlace al plan; la serie vale igual);
 - `id` que ya existe en **otra** sesión (de este u otro alumno) → `failed` con `SET_ID_CONFLICT`, sin tocar la fila;
 - `id` nuevo → se inserta (`created: true`); `id` existente en esta sesión → se **actualiza** con los datos nuevos (`created: false`).
 
