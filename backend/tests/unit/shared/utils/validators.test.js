@@ -22,6 +22,8 @@ describe('validators — isIsoDateTime', () => {
     expect(isIsoDateTime('2026-02-30T10:00:00Z')).toBe(false);
     expect(isIsoDateTime('2026-13-01T10:00:00Z')).toBe(false);
     expect(isIsoDateTime('2026-10-17T24:00:00Z')).toBe(false);
+    expect(isIsoDateTime('2026-10-17T09:30:00+25:00')).toBe(false);
+    expect(isIsoDateTime('2026-10-17T09:30:00-99:00')).toBe(false);
     expect(isIsoDateTime(1700000000)).toBe(false);
     expect(isIsoDateTime(null)).toBe(false);
   });

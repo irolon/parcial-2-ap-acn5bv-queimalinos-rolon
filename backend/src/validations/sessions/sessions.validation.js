@@ -114,9 +114,9 @@ export function validateSetsEnvelope(body) {
 export function parseSet(raw) {
   if (!isObject(raw)) return { ok: false, details: [{ field: 'set', message: 'la serie debe ser un objeto' }] };
   const details = [];
-  const intField = (field, min) => {
-    if (!Number.isInteger(raw[field]) || raw[field] < min) {
-      details.push({ field, message: `${field} debe ser un entero mayor o igual a ${min}` });
+  const intField = (field, min, max) => {
+    if (!Number.isInteger(raw[field]) || raw[field] < min || raw[field] > max) {
+      details.push({ field, message: `${field} debe ser un entero entre ${min} y ${max}` });
     }
     return raw[field];
   };
@@ -128,15 +128,16 @@ export function parseSet(raw) {
       ? null : parseUuid('original_exercise_id', raw.original_exercise_id, details),
     routine_exercise_id: isMissing(raw.routine_exercise_id)
       ? null : parseUuid('routine_exercise_id', raw.routine_exercise_id, details),
-    set_number: intField('set_number', 1),
-    actual_reps: intField('actual_reps', 0),
+    set_number: intField('set_number', 1, 100),
+    actual_reps: intField('actual_reps', 0, 1000),
     actual_kg: null,
     completed: true,
     executed_at: parseDateTime('executed_at', raw.executed_at, details),
   };
   if (!isMissing(raw.actual_kg)) {
-    if (typeof raw.actual_kg !== 'number' || !Number.isFinite(raw.actual_kg) || raw.actual_kg < 0) {
-      details.push({ field: 'actual_kg', message: 'actual_kg debe ser un número mayor o igual a 0' });
+    if (typeof raw.actual_kg !== 'number' || !Number.isFinite(raw.actual_kg) || raw.actual_kg < 0
+      || raw.actual_kg > 1000) {
+      details.push({ field: 'actual_kg', message: 'actual_kg debe ser un número entre 0 y 1000' });
     } else {
       value.actual_kg = raw.actual_kg;
     }

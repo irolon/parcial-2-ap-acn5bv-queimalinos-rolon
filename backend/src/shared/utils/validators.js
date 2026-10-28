@@ -18,4 +18,6 @@ export function isRealCalendarDateTime(value) {
 }
 
 /** String ISO 8601 con zona obligatoria y fecha/hora reales. */
-export const isIsoDateTime = (v) => typeof v === 'string' && isRealCalendarDateTime(v);
+// Date.parse descarta offsets imposibles como +25:00.
+export const isIsoDateTime = (v) =>
+  typeof v === 'string' && isRealCalendarDateTime(v) && !Number.isNaN(Date.parse(v));

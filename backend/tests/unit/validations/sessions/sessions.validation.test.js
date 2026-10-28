@@ -39,6 +39,7 @@ describe('sessions.validation — validateCreateSession', () => {
     failsOn(() => validateCreateSession({ id: 'x', started_at: START }), 'id');
     failsOn(() => validateCreateSession({ id: UUID, started_at: '2026-10-17T09:00:00' }), 'started_at');
     failsOn(() => validateCreateSession({ id: UUID }), 'started_at');
+    failsOn(() => validateCreateSession({ id: UUID, started_at: '2026-10-17T09:00:00+25:00' }), 'started_at');
     failsOn(
       () => validateCreateSession({ id: UUID, started_at: START, finished_at: '2026-10-17T08:00:00-03:00' }),
       'finished_at'

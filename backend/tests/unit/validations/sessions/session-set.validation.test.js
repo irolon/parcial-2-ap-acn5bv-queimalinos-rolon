@@ -37,6 +37,10 @@ describe('sessions.validation — parseSet', () => {
     });
   });
 
+  it('acepta los topes: set_number 100, reps 1000, kg 1000', () => {
+    expect(parseSet({ ...base, set_number: 100, actual_reps: 1000, actual_kg: 1000 }).ok).toBe(true);
+  });
+
   it('rechaza valores inválidos indicando el campo', () => {
     badField({ id: 'x' }, 'id');
     badField({ exercise_id: undefined }, 'exercise_id');
@@ -48,6 +52,9 @@ describe('sessions.validation — parseSet', () => {
     badField({ executed_at: '2026-02-30T10:00:00Z' }, 'executed_at');
     badField({ executed_at: undefined }, 'executed_at');
     badField({ original_exercise_id: 'x' }, 'original_exercise_id');
+    badField({ set_number: 101 }, 'set_number');
+    badField({ actual_reps: 1001 }, 'actual_reps');
+    badField({ actual_kg: 1001 }, 'actual_kg');
     expect(parseSet(null).ok).toBe(false);
   });
 });
