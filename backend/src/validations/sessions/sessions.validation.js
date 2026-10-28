@@ -72,15 +72,15 @@ export function validateCreateSession(body) {
   };
 }
 
-/** Valida el body de PATCH /sessions/:id: al menos uno de finished_at, rpe, notes. */
+/** Valida el body de PATCH /sessions/:id: al menos uno (no null) de finished_at, rpe, notes. */
 export function validateUpdateSession(body) {
   const details = [];
   const src = isObject(body) ? body : {};
   const out = {};
 
-  if (src.finished_at !== undefined) out.finished_at = parseDateTime('finished_at', src.finished_at, details);
-  if (src.rpe !== undefined) out.rpe = parseRpe(src.rpe, details);
-  if (src.notes !== undefined) out.notes = parseNotes(src.notes, details);
+  if (!isMissing(src.finished_at)) out.finished_at = parseDateTime('finished_at', src.finished_at, details);
+  if (!isMissing(src.rpe)) out.rpe = parseRpe(src.rpe, details);
+  if (!isMissing(src.notes)) out.notes = parseNotes(src.notes, details);
 
   if (details.length > 0) fail(details);
   if (Object.keys(out).length === 0) {

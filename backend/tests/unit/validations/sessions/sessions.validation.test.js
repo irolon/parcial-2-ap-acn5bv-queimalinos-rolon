@@ -66,6 +66,11 @@ describe('sessions.validation — validateUpdateSession', () => {
     });
   });
 
+  it('trata null como ausente', () => {
+    expect(validateUpdateSession({ rpe: null, notes: null, finished_at: START })).toEqual({ finished_at: START });
+    failsOn(() => validateUpdateSession({ rpe: null }), 'body');
+  });
+
   it('valida cada campo', () => {
     failsOn(() => validateUpdateSession({ rpe: 11 }), 'rpe');
     failsOn(() => validateUpdateSession({ finished_at: 'ayer' }), 'finished_at');
