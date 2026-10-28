@@ -60,7 +60,15 @@ export default function UseTemplateDialog({ hasContent, exercisesById, onLoad, o
       )}
     >
       {picked && confirmed && !detail.isError && <p role="status" className="font-body text-sm text-ink6">Cargando plantilla…</p>}
-      {detail.isError && <p role="alert" className="font-body text-sm text-hot">No pudimos cargar la plantilla</p>}
+      {detail.isError && (
+        <div role="alert" className="flex flex-col items-start gap-3">
+          <p className="font-body text-sm text-hot">No pudimos cargar la plantilla</p>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => detail.refetch()}>Reintentar</Button>
+            <Button variant="ghost" size="sm" onClick={() => setPicked(null)}>Elegir otra</Button>
+          </div>
+        </div>
+      )}
       {!picked && (
         <QueryState query={templates} empty={{ title: 'Todavía no tenés plantillas' }}>
           {(items) => <TemplateList items={items} onPick={setPicked} />}

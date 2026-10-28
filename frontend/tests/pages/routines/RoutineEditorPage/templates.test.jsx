@@ -91,6 +91,36 @@ describe('RoutineEditorPage: usar plantilla', () => {
   });
 });
 
+describe('RoutineEditorPage: usar plantilla con el detalle caído', () => {
+  /** Hace fallar `GET /routine-templates/t-1` las primeras `times` veces. */
+  async function renderFailingDetail(times) {
+    const { fetchMock } = await renderEditor({ api: api() });
+    const original = fetchMock.getMockImplementation();
+    let left = times;
+    fetchMock.mockImplementation(async (url, init) => {
+      if (url.endsWith('/routine-templates/t-1') && left-- > 0) return new Response('{}', { status: 500 });
+      return original(url, init);
+    });
+    await open('Usar plantilla');
+    await chooseTemplate();
+    await screen.findByText('No pudimos cargar la plantilla');
+  }
+
+  it('"Reintentar" vuelve a pedir el detalle y precarga', async () => {
+    await renderFailingDetail(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await vi.waitFor(() => expect(rowNames()).toEqual(['Sentadilla', 'Plancha']));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('"Elegir otra" vuelve al listado', async () => {
+    await renderFailingDetail(5);
+    await userEvent.click(screen.getByRole('button', { name: 'Elegir otra' }));
+    expect(await screen.findByRole('button', { name: /Full body/ })).toBeVisible();
+    expect(screen.queryByText('No pudimos cargar la plantilla')).not.toBeInTheDocument();
+  });
+});
+
 describe('RoutineEditorPage: usar plantilla sin biblioteca', () => {
   it('queda deshabilitado hasta que carga la biblioteca', async () => {
     setSession(TRAINER);
