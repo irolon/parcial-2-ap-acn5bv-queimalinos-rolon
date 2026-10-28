@@ -56,6 +56,10 @@ export function toggleDay(state, day) {
   return { ...state, days };
 }
 
+export function clearTemplate(state) {
+  return { ...state, templateId: null, templateName: null };
+}
+
 /** Sin datos cargados (el borrador no vale la pena). */
 export function isBlank(state) {
   return state.name.trim() === '' && !state.goal && state.days.length === 0

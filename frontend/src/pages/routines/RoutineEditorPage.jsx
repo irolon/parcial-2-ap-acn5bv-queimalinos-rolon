@@ -75,6 +75,7 @@ export default function RoutineEditorPage() {
     hasContent: !editor.isBlank(state),
     assigned: (student) => navigate(profileHref(student.id)),
     invalid: (error) => setServerErrors(serverErrorsFor(error, state)),
+    templateGone: () => apply(editor.clearTemplate),
     invalidRows: () => setAttempted(true),
     invalidTemplate: (error) => setServerErrors(templateErrorsFor(error, state)),
     load: (next, missing) => {
@@ -116,6 +117,7 @@ export default function RoutineEditorPage() {
             errors={errors?.header}
             onChange={(field, value) => apply(editor.updateHeader, field, value)}
             onToggleDay={(day) => apply(editor.toggleDay, day)}
+            onClearTemplate={() => apply(editor.clearTemplate)}
           />
           <ExerciseTable
             exercises={state.exercises}

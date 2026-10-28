@@ -6,7 +6,7 @@ import { LIBRARY } from '../../../helpers/exercises/fixtures';
 import { fillRoutine, renderEditor, rowNames } from '../../../helpers/routines/editor';
 import { stubRoutinesApi } from '../../../helpers/routines/routines';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
-import { bodyOf, calls, jsonResponse } from '../../../helpers/shared/fetchMock';
+import { bodyOf, calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { DETAIL, api, item, open, post } from '../../../helpers/routines/templates';
 
 
@@ -88,6 +88,45 @@ describe('RoutineEditorPage: usar plantilla', () => {
     expect(bodyOf(post(fetchMock, '/routines')[1])).toMatchObject({
       template_id: 't-1', name: 'Full body', goal: 'hypertrophy', days: ['monday', 'friday'],
     });
+  });
+});
+
+describe('RoutineEditorPage: plantilla de origen', () => {
+  const loadTemplate = async (extra) => {
+    const utils = await renderEditor({ api: api(extra) });
+    await open('Usar plantilla');
+    await chooseTemplate();
+    await vi.waitFor(() => expect(rowNames()).toHaveLength(2));
+    return utils;
+  };
+
+  it('"Quitar" desvincula la plantilla y no manda `template_id`', async () => {
+    const create = vi.fn(() => jsonResponse(201, { data: { id: 'r-1' } }));
+    const { fetchMock } = await loadTemplate({ handlers: { create } });
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar plantilla de origen' }));
+    expect(screen.queryByText('Desde: Full body')).not.toBeInTheDocument();
+    await open('Asignar a alumno');
+    await userEvent.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await vi.waitFor(() => expect(create).toHaveBeenCalled());
+    expect(bodyOf(post(fetchMock, '/routines')[1])).not.toHaveProperty('template_id');
+  });
+
+  it('si la plantilla ya no existe avisa, la desvincula y deja asignar sin ella', async () => {
+    const create = vi.fn()
+      .mockImplementationOnce(() => errorResponse(404, 'TEMPLATE_NOT_FOUND', 'No existe'))
+      .mockImplementation(() => jsonResponse(201, { data: { id: 'r-1' } }));
+    const { fetchMock } = await loadTemplate({ handlers: { create } });
+    await open('Asignar a alumno');
+    await userEvent.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    expect(await screen.findByText('La plantilla de origen ya no existe. Volvé a asignar y se guarda sin plantilla.')).toBeVisible();
+    expect(screen.queryByText('Desde: Full body')).not.toBeInTheDocument();
+    expect(create).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await vi.waitFor(() => expect(create).toHaveBeenCalledTimes(2));
+    const sent = calls(fetchMock).filter(([p, init]) => p === '/routines' && init?.method === 'POST');
+    expect(bodyOf(sent[1][1])).not.toHaveProperty('template_id');
   });
 });
 

@@ -10,12 +10,20 @@ import { clearDraft } from '@/utils/routines/draft';
 import { buildRoutineBody } from '@/utils/routines/routineForm';
 
 const INVALID = 'Revisá los datos de la rutina';
+const TEMPLATE_GONE = 'La plantilla de origen ya no existe. Volvé a asignar y se guarda sin plantilla.';
+
+function failureMessage(err, invalid) {
+  if (invalid) return INVALID;
+  if (err?.code === 'TEMPLATE_NOT_FOUND') return TEMPLATE_GONE;
+  return fieldErrorsFrom(err, { fields: [], fallback: 'No pudimos asignar la rutina' }).form;
+}
 
 /**
  * Elige el alumno activo y crea la rutina (un solo POST aunque se haga doble clic).
- * Un 400 le pasa el error a la página (`onInvalid`) para marcar las celdas; el resto se muestra acá.
+ * Un 400 le pasa el error a la página (`onInvalid`) para marcar las celdas; si la plantilla de origen ya no existe
+ * (404) la página la desvincula (`onTemplateGone`) y hay que volver a asignar; el resto se muestra acá.
  */
-export default function AssignRoutineDialog({ state, preselectedStudentId, onAssigned, onInvalid, onClose }) {
+export default function AssignRoutineDialog({ state, preselectedStudentId, onAssigned, onInvalid, onTemplateGone, onClose }) {
   const trainerId = useAuthStore((s) => s.user?.id);
   const students = useStudentsQuery({ active: true });
   const create = useCreateRoutine();
@@ -42,7 +50,8 @@ export default function AssignRoutineDialog({ state, preselectedStudentId, onAss
       sending.current = false;
       const invalid = err?.code === 'VALIDATION_ERROR';
       if (invalid) onInvalid(err);
-      setError(invalid ? INVALID : fieldErrorsFrom(err, { fields: [], fallback: 'No pudimos asignar la rutina' }).form);
+      if (err?.code === 'TEMPLATE_NOT_FOUND') onTemplateGone();
+      setError(failureMessage(err, invalid));
     }
   }
 

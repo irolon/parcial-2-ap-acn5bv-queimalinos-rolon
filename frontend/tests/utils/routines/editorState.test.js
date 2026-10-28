@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EMPTY_ROUTINE, fromTemplate, isBlank, moveBy, moveExercise, removeExercise,
+  EMPTY_ROUTINE, clearTemplate, fromTemplate, isBlank, moveBy, moveExercise, removeExercise,
   toggleDay, updateExercise, updateHeader,
 } from '@/utils/routines/editorState';
 import { EX_A, EX_B, EX_C, exercisesById, stateWith, templateFixture } from '../../helpers/routines/fixtures';
@@ -51,6 +51,12 @@ describe('editorState', () => {
   it('toggleDay mantiene los días en orden de semana', () => {
     const state = ['sunday', 'monday', 'thursday'].reduce(toggleDay, EMPTY_ROUTINE);
     expect(state.days).toEqual(['monday', 'thursday', 'sunday']);
+  });
+
+  it('clearTemplate desvincula la plantilla y deja el resto', () => {
+    const { state } = fromTemplate(templateFixture(), exercisesById);
+    const next = clearTemplate(state);
+    expect(next).toMatchObject({ templateId: null, templateName: null, name: state.name, exercises: state.exercises });
   });
 
   it('fromTemplate ordena los días de la plantilla', () => {
