@@ -349,7 +349,23 @@ Elimina un ejercicio propio. **204 No Content**. **403** si no es del trainer o 
 
 ### GET /routines
 
-Rutinas del trainer. Query: `student_id`, `active`.
+Rutinas del trainer, la más nueva primero. Query: `student_id`, `active`.
+
+**200 OK** — cada rutina trae sus columnas (`id`, `trainer_id`, `student_id`, `template_id`, `name`, `goal`, `days`, `active`, `created_at`) y el alumno embebido, para que el listado no tenga que pedir `GET /students`:
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid", "student_id": "uuid", "name": "Fuerza A", "goal": "strength",
+      "days": ["monday", "thursday"], "active": true,
+      "student": { "name": "Ana Paz", "active": true }
+    }
+  ]
+}
+```
+
+`student.active` es `false` si el alumno está dado de baja. El resto de los endpoints de rutinas no incluyen `student`.
 
 ### POST /routines
 
