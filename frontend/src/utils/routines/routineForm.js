@@ -1,10 +1,18 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { sortDays } from '@/utils/students/routineDays';
+import { GOAL_OPTIONS } from '@/utils/students/studentOptions';
 
 const INTEGER = /^\d+$/;
 const DECIMAL = /^-?(\d+([.,]\d+)?|[.,]\d+)$/;
 const ROW_FIELD = /^exercises\[(\d+)\]\.(\w+)$/;
 const HEADER_FIELDS = ['name', 'goal', 'days'];
+
+export const MAX_EXERCISES = 50;
+export const NAME_ERROR = 'El nombre debe tener entre 2 y 120 caracteres';
+/** Objetivos elegibles (sin la opción vacía): cada selector agrega su propio "Elegí un objetivo". */
+export const ROUTINE_GOAL_OPTIONS = GOAL_OPTIONS.filter((option) => option.value);
+
+export const isValidName = (name) => name.trim().length >= 2 && name.trim().length <= 120;
 
 const blank = (value) => String(value ?? '').trim() === '';
 const parse = (value) => Number(String(value).trim().replace(',', '.'));
@@ -47,8 +55,7 @@ function exerciseErrors(e) {
 /** Errores del editor: cabecera, filas por `key`, `form` general y total (`count`). */
 export function validateRoutine(state) {
   const header = {};
-  const name = state.name.trim();
-  if (name.length < 2 || name.length > 120) header.name = 'El nombre debe tener entre 2 y 120 caracteres';
+  if (!isValidName(state.name)) header.name = NAME_ERROR;
   if (!state.goal) header.goal = 'Elegí un objetivo';
   if (state.days.length === 0) header.days = 'Elegí al menos un día';
   const exercises = {};

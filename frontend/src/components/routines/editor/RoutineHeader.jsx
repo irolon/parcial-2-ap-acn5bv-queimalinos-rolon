@@ -1,9 +1,9 @@
 import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import DayPicker from './DayPicker';
-import { GOAL_OPTIONS } from '@/utils/students/studentOptions';
+import { ROUTINE_GOAL_OPTIONS } from '@/utils/routines/routineForm';
 
-const OPTIONS = [{ value: '', label: 'Elegí un objetivo' }, ...GOAL_OPTIONS.filter((option) => option.value)];
+const OPTIONS = [{ value: '', label: 'Elegí un objetivo' }, ...ROUTINE_GOAL_OPTIONS];
 
 /** Nombre, objetivo y días de la rutina; `errors` es el `header` de `validateRoutine`. */
 export default function RoutineHeader({ state, errors = {}, onChange, onToggleDay }) {

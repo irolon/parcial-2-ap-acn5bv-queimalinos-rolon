@@ -5,17 +5,17 @@ import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import { useCreateTemplate } from '@/hooks/routine-templates/useRoutineTemplates';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
-import { buildTemplateBody, validateRoutine } from '@/utils/routines/routineForm';
-import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
+import {
+  MAX_EXERCISES, NAME_ERROR, ROUTINE_GOAL_OPTIONS, buildTemplateBody, isValidName, validateRoutine,
+} from '@/utils/routines/routineForm';
+import { LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 
-const MAX_EXERCISES = 50;
 const FORM_ID = 'save-template-form';
-const GOALS = [{ value: '', label: 'Elegí un objetivo' }, ...GOAL_OPTIONS.filter((o) => o.value)];
+const GOALS = [{ value: '', label: 'Elegí un objetivo' }, ...ROUTINE_GOAL_OPTIONS];
 
 function validate(form, state) {
   const errors = {};
-  const name = form.name.trim();
-  if (name.length < 2 || name.length > 120) errors.name = 'El nombre debe tener entre 2 y 120 caracteres';
+  if (!isValidName(form.name)) errors.name = NAME_ERROR;
   if (!form.goal) errors.goal = 'Elegí un objetivo';
   if (state.days.length === 0) errors.form = 'Elegí al menos un día en la rutina';
   if (state.exercises.length === 0) errors.form = 'Agregá al menos un ejercicio';

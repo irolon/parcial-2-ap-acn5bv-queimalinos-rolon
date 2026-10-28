@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_ROUTINE, updateExercise, updateHeader } from '@/utils/routines/editorState';
-import { buildRoutineBody, buildTemplateBody, serverErrorsFor, validateRoutine } from '@/utils/routines/routineForm';
+import {
+  MAX_EXERCISES, NAME_ERROR, ROUTINE_GOAL_OPTIONS, buildRoutineBody, buildTemplateBody, isValidName, serverErrorsFor, validateRoutine,
+} from '@/utils/routines/routineForm';
 import { ApiError } from '@/api/shared/client';
 import { EX_A, EX_B, stateWith } from '../../helpers/routines/fixtures';
 
@@ -87,6 +89,19 @@ describe('buildRoutineBody', () => {
 
   it('omite template_id si no hay plantilla', () => {
     expect(buildRoutineBody(stateWith(), 's-1')).not.toHaveProperty('template_id');
+  });
+});
+
+describe('reglas compartidas', () => {
+  it('el nombre admite de 2 a 120 caracteres', () => {
+    expect([' a ', 'ab', 'a'.repeat(120), 'a'.repeat(121)].map(isValidName)).toEqual([false, true, true, false]);
+    expect(NAME_ERROR).toBe('El nombre debe tener entre 2 y 120 caracteres');
+    expect(MAX_EXERCISES).toBe(50);
+  });
+
+  it('las opciones de objetivo no traen el vacío', () => {
+    expect(ROUTINE_GOAL_OPTIONS.length).toBeGreaterThan(0);
+    expect(ROUTINE_GOAL_OPTIONS.every((option) => option.value)).toBe(true);
   });
 });
 
