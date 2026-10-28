@@ -547,6 +547,8 @@ Inicia (o cierra, o reintenta) una sesión. Solo alumnos; el `student_id` sale d
 
 Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones. **Idempotente por `id` de cada serie** (upsert): reenviar el lote no duplica nada y reenviar una serie con datos nuevos la corrige. Se aceptan series aunque la sesión ya esté cerrada.
 
+**Reemplaza** a `POST /session-sets` y a la forma "una serie por request" del contrato propuesto en la spec de sesión activa (§8): el celular manda todas las series juntas.
+
 **Body:** `{ "sets": [ ... ] }` con 1 a 100 series.
 
 ```json
@@ -580,7 +582,9 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
 }
 ```
 
-`created` es `false` si la serie ya existía en esta sesión (se actualizó). `index` es la posición en `sets`.
+`created` es `false` si la serie ya existía en esta sesión (se actualizó). `index` es la posición en `sets`. Los `id` vuelven en minúscula, aunque se hayan mandado en mayúscula.
+
+**Qué hace el cliente con la respuesta:** un 200 no significa que todo se sincronizó. Las series en `failed` con `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND` o `SET_ID_CONFLICT` son **permanentes**: reenviarlas da lo mismo, así que no se reintentan para siempre (se descartan o se marcan como error local). Si falla el request entero (4xx/5xx o sin red), se reenvía **todo el lote**: es idempotente, no duplica nada.
 
 **Códigos por serie (`failed`)**
 
@@ -600,7 +604,7 @@ Un `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesió
 
 Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesiones.
 
-**Body:** al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1-10) y `notes` (máx. 1000). Se puede repetir (corregir RPE o notas).
+**Body:** al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1-10) y `notes` (máx. 1000). Se puede repetir (corregir RPE o notas). Los campos en `null` se ignoran (como ausentes); si todos vienen en `null` o el body está vacío, 400.
 
 **Response 200:** `{ data: session }`. Sesión ajena o inexistente: 404 `SESSION_NOT_FOUND`.
 
