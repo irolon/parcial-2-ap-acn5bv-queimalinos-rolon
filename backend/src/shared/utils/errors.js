@@ -58,6 +58,9 @@ export const Errors = {
   metricNotFound: () => new AppError(404, 'METRIC_NOT_FOUND', 'La medida no existe'),
   metricIdConflict: () =>
     new AppError(409, 'METRIC_ID_CONFLICT', 'Ya existe una medida con ese id'),
+  sessionNotFound: () => new AppError(404, 'SESSION_NOT_FOUND', 'La sesión no existe'),
+  sessionIdConflict: () =>
+    new AppError(409, 'SESSION_ID_CONFLICT', 'Ya existe una sesión con ese id'),
   exerciseInUse: () =>
     new AppError(
       409,
