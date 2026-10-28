@@ -526,42 +526,93 @@ Marca una generación IA como plantilla reutilizable.
 
 ### POST /sessions
 
-Inicia una sesión. Solo alumnos. Body: `routine_id`.
-
-### POST /session-sets
-
-Registra series ejecutadas en batch (soporta modo offline).
+Inicia (o cierra, o reintenta) una sesión. Solo alumnos; el `student_id` sale del token. **Idempotente por `id`** (lo genera el celular).
 
 **Body**
+
+```json
+{ "id": "uuid", "routine_id": "uuid | null", "started_at": "ISO", "finished_at": "ISO | null", "rpe": "1-10 | null", "notes": "string (máx. 1000) | null" }
+```
+
+`id` y `started_at` son obligatorios; `finished_at` ≥ `started_at`.
+
+- **`routine_id`:** si no es una rutina del alumno (ajena, o borrada antes de que el celular sincronice) la sesión se guarda con `routine_id = null`; el request no se rechaza.
+- **201** `{ data: session }` si el `id` es nuevo.
+- **200** si el `id` ya existe y es del alumno (reintento): se actualizan `finished_at`, `rpe` y `notes` si vienen; `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran). Un `finished_at` anterior al `started_at` guardado se ignora y se guardan los demás campos.
+- **409** `SESSION_ID_CONFLICT` si el `id` es de otro alumno.
+
+`session` = `{ id, student_id, routine_id, started_at, finished_at, rpe, notes, has_modifications }`.
+
+### POST /sessions/:id/sets
+
+Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones. **Idempotente por `id` de cada serie** (upsert): reenviar el lote no duplica nada y reenviar una serie con datos nuevos la corrige. Se aceptan series aunque la sesión ya esté cerrada.
+
+**Body:** `{ "sets": [ ... ] }` con 1 a 100 series.
 
 ```json
 {
   "sets": [
     {
-      "session_id": "uuid",
-      "routine_exercise_id": "uuid",
-      "substituted_exercise_id": "uuid (null si no hubo sustitución)",
+      "id": "uuid",
+      "exercise_id": "uuid (el ejercicio realmente hecho)",
+      "original_exercise_id": "uuid | null (el planificado, si hubo sustitución)",
+      "routine_exercise_id": "uuid | null",
       "set_number": 1,
       "actual_reps": 8,
       "actual_kg": 80,
       "completed": true,
-      "executed_at": "ISO datetime"
+      "executed_at": "ISO 8601 con zona"
     }
   ]
 }
 ```
 
-> Si alguna serie tiene `substituted_exercise_id`, automáticamente la sesión queda con `has_modifications = true` y se notifica al PT.
+`set_number` entero 1-100, `actual_reps` entero 0-1000 (0 = serie fallida), `actual_kg` 0-1000 o `null` (peso corporal), `completed` opcional (por defecto `true`). `executed_at` se guarda tal cual, sin chequear fechas futuras.
+
+**Response 200** (siempre, si la sesión es válida; las series válidas se guardan aunque otras fallen)
+
+```json
+{
+  "data": {
+    "saved": [{ "id": "uuid", "created": true }],
+    "failed": [{ "id": "uuid", "index": 3, "code": "EXERCISE_NOT_FOUND", "message": "…" }]
+  }
+}
+```
+
+`created` es `false` si la serie ya existía en esta sesión (se actualizó). `index` es la posición en `sets`.
+
+**Códigos por serie (`failed`)**
+
+| code | Cuándo |
+|---|---|
+| `VALIDATION_ERROR` | datos inválidos (el mensaje nombra el campo) o `id` repetido dentro del lote |
+| `EXERCISE_NOT_FOUND` | `exercise_id` u `original_exercise_id` que el alumno no puede ver (ni globales ni de su entrenador) |
+| `SET_ID_CONFLICT` | el `id` ya existe en **otra** sesión; no se toca la fila |
+
+Un `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesión no tiene rutina) **no falla**: la serie se guarda con `routine_exercise_id = null`.
+
+**Errores del request:** 400 `VALIDATION_ERROR` si `sets` no es un arreglo de 1 a 100; 404 `SESSION_NOT_FOUND` si la sesión no existe o es de otro alumno.
+
+> **Sustitución:** si alguna serie guardada tiene `original_exercise_id` no nulo y distinto de `exercise_id`, la sesión queda con `has_modifications = true` (nunca vuelve a `false` sola). La notificación al PT llega con la tarjeta de push.
 
 ### PATCH /sessions/:id
 
-Finaliza sesión con feedback. Body: `rpe` (1-10), `notes` (opcional).
+Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesiones.
+
+**Body:** al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1-10) y `notes` (máx. 1000). Se puede repetir (corregir RPE o notas).
+
+**Response 200:** `{ data: session }`. Sesión ajena o inexistente: 404 `SESSION_NOT_FOUND`.
 
 ### GET /students/:id/sessions
+
+> Pendiente (tarjeta 12).
 
 Historial. Trainer ve sus alumnos, alumno ve las suyas.
 
 ### PATCH /sessions/:id/comment
+
+> Pendiente (tarjeta 12).
 
 Trainer agrega comentario a una sesión. Body: `trainer_comment`.
 
@@ -731,5 +782,5 @@ Marca como leída. **204 No Content**
 > - Añadido módulo completo de Asistente IA del entrenador (`/trainer-ai/*`).
 > - Añadido módulo completo de Gamificación (`/students/:id/achievements`, `/streak`, `/challenges`).
 > - Modificado `POST /invitations` para soportar canal `whatsapp | qr | both`.
-> - Modificado `POST /session-sets` para registrar sustituciones de ejercicios (`substituted_exercise_id`).
+> - Las series se registran con `POST /sessions/:id/sets` (lote, con sustituciones vía `original_exercise_id`).
 > - Cualquier cambio futuro en endpoints existentes debe ser discutido entre los integrantes para no romper el cliente que ya lo usa.

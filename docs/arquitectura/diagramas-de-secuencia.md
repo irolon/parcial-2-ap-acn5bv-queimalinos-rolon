@@ -71,7 +71,7 @@ Alumno (mobile)     Backend           Supabase        Cache local
    |<-session_id--------------------|                  |  |
    |                 |                  |                  |
    | [loop — por cada serie]           |                  |
-   |--POST /session-sets------------>|  |                  |
+   |--POST /sessions/:id/sets-------->|  |                  |
    |                 |--INSERT session_sets---------->|   |
    |<-ok → inicia timer descanso----|                  |   |
    | [fin loop]      |                  |                  |
