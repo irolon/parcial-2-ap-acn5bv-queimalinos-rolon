@@ -7,6 +7,7 @@ import ExerciseTable from '@/components/routines/editor/ExerciseTable';
 import RoutineHeader from '@/components/routines/editor/RoutineHeader';
 import RoutineDialogs from '@/components/routines/dialogs/RoutineDialogs';
 import LibraryPanel from '@/components/routines/library/LibraryPanel';
+import LibraryErrorAlert from '@/components/routines/library/LibraryErrorAlert';
 import QueryState from '@/components/shared/states/QueryState';
 import Button from '@/components/shared/ui/Button';
 import { useExercisesQuery } from '@/hooks/exercises/useExercises';
@@ -90,6 +91,7 @@ export default function RoutineEditorPage() {
   return (
     <section className="flex flex-col gap-5">
       <AutosaveHeader name={state.name} savedAt={savedAt} />
+      {exercisesQuery.isError && <LibraryErrorAlert onRetry={() => exercisesQuery.refetch()} />}
       {draft.restored && <DraftBanner missing={draft.missing} onDiscard={discard} />}
       {notice && <p role="status" className="font-body text-sm text-ink6">{notice}</p>}
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -98,7 +100,7 @@ export default function RoutineEditorPage() {
             <Plus size={16} aria-hidden="true" /> Agregar ejercicio
           </Button>
           <div className={libraryOpen ? 'block' : 'hidden lg:block'}>
-            <QueryState query={exercisesQuery} empty={{ title: 'Todavía no hay ejercicios' }}>
+            <QueryState query={exercisesQuery} errorMessage="No pudimos cargar los ejercicios." empty={{ title: 'Todavía no hay ejercicios' }}>
               {(items) => <LibraryPanel exercises={items} onAdd={(id) => apply(editor.addExercise, id)} />}
             </QueryState>
           </div>

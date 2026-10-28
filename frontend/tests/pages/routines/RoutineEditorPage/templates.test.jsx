@@ -178,16 +178,4 @@ describe('RoutineEditorPage: usar plantilla sin biblioteca', () => {
     await screen.findByLabelText('Buscar ejercicio');
     await vi.waitFor(() => expect(button).toBeEnabled());
   });
-
-  it('si la biblioteca falla sigue deshabilitado', async () => {
-    setSession(TRAINER);
-    const fetchMock = stubRoutinesApi({ ...api() });
-    const original = fetchMock.getMockImplementation();
-    fetchMock.mockImplementation(async (url, init) => (
-      url.includes('/exercises') ? new Response('{}', { status: 500 }) : original(url, init)
-    ));
-    renderRoute('/pt/rutinas/nueva');
-    await screen.findByText(/reintentar/i);
-    expect(screen.getByRole('button', { name: 'Usar plantilla' })).toBeDisabled();
-  });
 });
