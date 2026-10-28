@@ -27,6 +27,8 @@ export default function RoutineEditorPage() {
   const trainerId = useAuthStore((s) => s.user?.id);
   const exercisesQuery = useExercisesQuery();
   const library = exercisesQuery.data;
+  // Un refetch fallido con la biblioteca ya cargada no esconde el panel ni avisa: el editor sigue andando.
+  const failed = exercisesQuery.isError && !library;
   const byId = useMemo(() => new Map((library ?? []).map((e) => [e.id, e])), [library]);
   const [state, setState] = useState(editor.EMPTY_ROUTINE);
   const [draft, setDraft] = useState(NO_DRAFT);
@@ -91,7 +93,7 @@ export default function RoutineEditorPage() {
   return (
     <section className="flex flex-col gap-5">
       <AutosaveHeader name={state.name} savedAt={savedAt} />
-      {exercisesQuery.isError && <LibraryErrorAlert onRetry={() => exercisesQuery.refetch()} />}
+      {failed && <LibraryErrorAlert onRetry={() => exercisesQuery.refetch()} />}
       {draft.restored && <DraftBanner missing={draft.missing} onDiscard={discard} />}
       {notice && <p role="status" className="font-body text-sm text-ink6">{notice}</p>}
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -100,9 +102,13 @@ export default function RoutineEditorPage() {
             <Plus size={16} aria-hidden="true" /> Agregar ejercicio
           </Button>
           <div className={libraryOpen ? 'block' : 'hidden lg:block'}>
-            <QueryState query={exercisesQuery} errorMessage="No pudimos cargar los ejercicios." empty={{ title: 'Todavía no hay ejercicios' }}>
-              {(items) => <LibraryPanel exercises={items} onAdd={(id) => apply(editor.addExercise, id)} />}
-            </QueryState>
+            {failed ? (
+              <p className="font-body text-sm text-ink6">No pudimos cargar los ejercicios.</p>
+            ) : (
+              <QueryState query={{ ...exercisesQuery, isError: false }} empty={{ title: 'Todavía no hay ejercicios' }}>
+                {(items) => <LibraryPanel exercises={items} onAdd={(id) => apply(editor.addExercise, id)} />}
+              </QueryState>
+            )}
           </div>
         </aside>
         <div className="flex min-w-0 flex-col gap-5">

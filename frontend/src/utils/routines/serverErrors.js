@@ -2,7 +2,6 @@ import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { withCount } from '@/utils/routines/routineForm';
 
 const ROW_FIELD = /^(?:structure\.)?exercises\[(\d+)\]\.(\w+)$/;
-const ROW_LEVEL = ['exercise_id', 'order'];
 const ASSIGN_FIELDS = { name: ['header', 'name'], goal: ['header', 'goal'], days: ['header', 'days'] };
 const TEMPLATE_FIELDS = { 'structure.days': ['header', 'days'], name: ['dialog', 'name'], goal: ['dialog', 'goal'] };
 
@@ -17,9 +16,8 @@ function translate(error, state, fields, fallback) {
     const row = ROW_FIELD.exec(field);
     const target = row && state.exercises[Number(row[1])];
     if (target) {
-      // `exercise_id` y `order` no tienen celda: se muestran bajo el nombre del ejercicio.
-      const key = ROW_LEVEL.includes(row[2]) ? 'exercise_id' : row[2];
-      errors.exercises[target.key] = { ...errors.exercises[target.key], [key]: message };
+      // `exercise_id` y `order` no tienen celda: ExerciseRow los muestra bajo el nombre del ejercicio.
+      errors.exercises[target.key] = { ...errors.exercises[target.key], [row[2]]: message };
     } else if (Object.hasOwn(fields, field)) {
       const [group, name] = fields[field];
       targets[group][name] = message;

@@ -44,7 +44,19 @@ describe('serverErrorsFor: errores de fila sin celda', () => {
     expect(errors.form).toBeUndefined();
     expect(errors.count).toBe(1);
     const order = serverErrorsFor(invalid([{ field: 'exercises[1].order', message: 'Orden repetido' }]), state);
-    expect(order.exercises[state.exercises[1].key]).toEqual({ exercise_id: 'Orden repetido' });
+    expect(order.exercises[state.exercises[1].key]).toEqual({ order: 'Orden repetido' });
+  });
+});
+
+describe('serverErrorsFor: varios errores en la misma fila', () => {
+  it('`exercise_id` y `order` no se pisan y cuentan por separado', () => {
+    const state = stateWith([EX_A]);
+    const errors = serverErrorsFor(invalid([
+      { field: 'exercises[0].exercise_id', message: 'Ejercicio inexistente' },
+      { field: 'exercises[0].order', message: 'Orden repetido' },
+    ]), state);
+    expect(errors.exercises[state.exercises[0].key]).toEqual({ exercise_id: 'Ejercicio inexistente', order: 'Orden repetido' });
+    expect(errors.count).toBe(2);
   });
 });
 
