@@ -25,8 +25,9 @@ describe('sessions.routes', () => {
     expect(err).toBeUndefined();
   });
 
-  it('expone POST / y PATCH /:id', () => {
+  it('expone POST /, PATCH /:id y POST /:id/sets', () => {
     expect(routeOf('post', '/')).toBeDefined();
     expect(routeOf('patch', '/:id')).toBeDefined();
+    expect(routeOf('post', '/:id/sets')).toBeDefined();
   });
 });

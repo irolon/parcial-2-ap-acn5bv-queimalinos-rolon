@@ -21,5 +21,6 @@ router.patch(
   validate(validateUpdateSession),
   sessionsController.update
 );
+router.post('/:id/sets', validate(validateSessionIdParam, 'params'), sessionsController.addSets);
 
 export default router;
