@@ -14,29 +14,44 @@ export async function getOwnedSession(studentId, sessionId) {
 }
 
 /**
- * POST /sessions — idempotente por id. Si ya existe y es del alumno, solo
- * completa finished_at / rpe / notes que vengan; started_at y routine_id
- * quedan como estaban. Si es de otro alumno, 409.
+ * Reintento (el id ya existe): solo completa finished_at / rpe / notes que
+ * vengan. started_at y routine_id quedan como estaban, sin validarse. Un
+ * finished_at anterior al started_at guardado se ignora (sin error), para no
+ * perder el rpe y las notas del mismo request.
  */
-export async function create(studentId, body) {
-  if (body.routine_id && !(await sessionsRepo.isRoutineOfStudent(body.routine_id, studentId))) {
-    throw Errors.validation('Error de validación', [
-      { field: 'routine_id', message: 'routine_id no es una rutina del alumno' },
-    ]);
-  }
-
-  const inserted = await sessionsRepo.insertSession({ ...body, student_id: studentId });
-  if (inserted) return { session: inserted, created: true };
-
-  const existing = await sessionsRepo.findSessionById(body.id);
+async function applyRetry(studentId, body, existing) {
   if (!existing || existing.student_id !== studentId) throw Errors.sessionIdConflict();
 
   const changes = {};
   for (const field of RETRY_UPDATABLE) {
     if (body[field] !== null && body[field] !== undefined) changes[field] = body[field];
   }
+  if (changes.finished_at && Date.parse(changes.finished_at) < Date.parse(existing.started_at)) {
+    delete changes.finished_at;
+  }
   if (Object.keys(changes).length === 0) return { session: existing, created: false };
   return { session: await sessionsRepo.updateSession(body.id, changes), created: false };
+}
+
+/**
+ * POST /sessions — idempotente por id. Un routine_id que no es del alumno
+ * (ajeno o borrado) nunca rechaza el request: la sesión se crea sin rutina.
+ * Si el id ya existe es un reintento (otro alumno: 409).
+ */
+export async function create(studentId, body) {
+  const existing = await sessionsRepo.findSessionById(body.id);
+  if (existing) return applyRetry(studentId, body, existing);
+
+  const owned = body.routine_id && (await sessionsRepo.isRoutineOfStudent(body.routine_id, studentId));
+  const inserted = await sessionsRepo.insertSession({
+    ...body,
+    routine_id: owned ? body.routine_id : null,
+    student_id: studentId,
+  });
+  if (inserted) return { session: inserted, created: true };
+
+  // Carrera: otro request creó el mismo id entre la lectura y el insert (23505).
+  return applyRetry(studentId, body, await sessionsRepo.findSessionById(body.id));
 }
 
 /** PATCH /sessions/:id — cierra la sesión o corrige RPE / notas. */
