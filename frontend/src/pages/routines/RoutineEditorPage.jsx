@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
+import AutosaveHeader from '@/components/routines/editor/AutosaveHeader';
 import DraftBanner from '@/components/routines/editor/DraftBanner';
 import ExerciseTable from '@/components/routines/editor/ExerciseTable';
 import RoutineHeader from '@/components/routines/editor/RoutineHeader';
@@ -11,8 +12,6 @@ import Button from '@/components/shared/ui/Button';
 import { useExercisesQuery } from '@/hooks/exercises/useExercises';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useRoutineDraft } from '@/hooks/routines/useRoutineDraft';
-import { useSecondsSince } from '@/hooks/routines/useSecondsSince';
-import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { profileHref } from '@/routes/routeTable';
 import { clearDraft, readDraft, restoreDraft } from '@/utils/routines/draft';
 import * as editor from '@/utils/routines/editorState';
@@ -54,11 +53,6 @@ export default function RoutineEditorPage() {
   }
 
   const { savedAt, cancel: cancelDraft } = useRoutineDraft(trainerId, state, { enabled: draft.ready });
-  const seconds = useSecondsSince(savedAt);
-  usePageHeader({
-    title: state.name ? `Nueva rutina — ${state.name}` : 'Nueva rutina',
-    subtitle: `RUTINAS › CREAR${seconds === null ? '' : ` · AUTO-GUARDADO · HACE ${seconds}S`}`,
-  });
 
   const errors = serverErrors ?? (attempted ? validateRoutine(state) : null);
   const discard = () => {
@@ -95,6 +89,7 @@ export default function RoutineEditorPage() {
 
   return (
     <section className="flex flex-col gap-5">
+      <AutosaveHeader name={state.name} savedAt={savedAt} />
       {draft.restored && <DraftBanner missing={draft.missing} onDiscard={discard} />}
       {notice && <p role="status" className="font-body text-sm text-ink6">{notice}</p>}
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
