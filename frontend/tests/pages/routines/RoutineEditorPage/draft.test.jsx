@@ -31,6 +31,14 @@ describe('RoutineEditorPage: borrador', () => {
     expect(screen.getByText(/AUTO-GUARDADO · HACE 0S/)).toBeVisible();
   });
 
+  it('si se sale antes del segundo, el último cambio igual queda guardado', async () => {
+    const { unmount } = await renderEditor();
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar Sentadilla' }));
+    expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+    unmount();
+    expect(stored().exercises).toHaveLength(1);
+  });
+
   it('al volver restaura el borrador con el aviso', async () => {
     storeDraft();
     await renderEditor();

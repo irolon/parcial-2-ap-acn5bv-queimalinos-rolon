@@ -53,7 +53,7 @@ export default function RoutineEditorPage() {
     setDraft({ ready: true, restored: Boolean(found), missing: found?.missing ?? 0 });
   }
 
-  const { savedAt } = useRoutineDraft(trainerId, state, { enabled: draft.ready });
+  const { savedAt, cancel: cancelDraft } = useRoutineDraft(trainerId, state, { enabled: draft.ready });
   const seconds = useSecondsSince(savedAt);
   usePageHeader({
     title: state.name ? `Nueva rutina — ${state.name}` : 'Nueva rutina',
@@ -73,7 +73,10 @@ export default function RoutineEditorPage() {
   const on = {
     close: () => setDialog(null),
     hasContent: !editor.isBlank(state),
-    assigned: (student) => navigate(profileHref(student.id)),
+    assigned: (student) => {
+      cancelDraft();
+      navigate(profileHref(student.id));
+    },
     invalid: (error) => setServerErrors(serverErrorsFor(error, state)),
     templateGone: () => apply(editor.clearTemplate),
     invalidRows: () => setAttempted(true),

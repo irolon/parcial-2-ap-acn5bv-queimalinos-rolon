@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import { useRoutineDraft } from '@/hooks/routines/useRoutineDraft';
 import { DRAFT_KEY } from '@/utils/routines/draft';
 import { EMPTY_ROUTINE, updateHeader } from '@/utils/routines/editorState';
@@ -7,6 +7,7 @@ import { stateWith } from '../../helpers/routines/fixtures';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
+  cleanup(); // desmonta antes de limpiar: al desmontar el hook vuelca lo pendiente
   vi.restoreAllMocks();
   vi.useRealTimers();
   localStorage.clear();
@@ -51,6 +52,62 @@ describe('useRoutineDraft', () => {
     rerender({ enabled: true });
     act(() => { vi.advanceTimersByTime(1000); });
     expect(JSON.parse(localStorage.getItem(DRAFT_KEY('t-1'))).name).toBe('Fuerza');
+  });
+
+  it('al desmontar antes del delay escribe el último cambio', () => {
+    const { unmount } = renderHook(() => useRoutineDraft('t-1', stateWith()));
+    act(() => { vi.advanceTimersByTime(400); });
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBeNull();
+    unmount();
+    expect(JSON.parse(localStorage.getItem(DRAFT_KEY('t-1'))).name).toBe('Fuerza');
+  });
+
+  it('al desmontar con el estado vacío borra el borrador', () => {
+    localStorage.setItem(DRAFT_KEY('t-1'), 'viejo');
+    const { unmount } = renderHook(() => useRoutineDraft('t-1', EMPTY_ROUTINE));
+    unmount();
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBeNull();
+  });
+
+  it('en beforeunload escribe lo pendiente', () => {
+    renderHook(() => useRoutineDraft('t-1', stateWith()));
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(JSON.parse(localStorage.getItem(DRAFT_KEY('t-1'))).name).toBe('Fuerza');
+  });
+
+  it('un cambio de estado no escribe el anterior: solo se vuelca al desmontar', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    const { rerender, unmount } = renderHook(({ state }) => useRoutineDraft('t-1', state), {
+      initialProps: { state: stateWith() },
+    });
+    rerender({ state: updateHeader(stateWith(), 'name', 'Nuevo') });
+    expect(setItem).not.toHaveBeenCalled();
+    unmount();
+    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(localStorage.getItem(DRAFT_KEY('t-1'))).name).toBe('Nuevo');
+  });
+
+  it('con enabled false no vuelca nada al desmontar', () => {
+    const { unmount } = renderHook(() => useRoutineDraft('t-1', stateWith(), { enabled: false }));
+    unmount();
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBeNull();
+  });
+
+  it('después de escribir no vuelve a escribir al desmontar', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    const state = stateWith();
+    const { unmount } = renderHook(() => useRoutineDraft('t-1', state));
+    act(() => { vi.advanceTimersByTime(1000); });
+    unmount();
+    expect(setItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('`cancel` descarta lo pendiente: ni el timer ni el desmontaje escriben', () => {
+    const { result, unmount } = renderHook(() => useRoutineDraft('t-1', stateWith()));
+    act(() => { result.current.cancel(); });
+    act(() => { vi.advanceTimersByTime(2000); });
+    unmount();
+    expect(localStorage.getItem(DRAFT_KEY('t-1'))).toBeNull();
   });
 
   it('no escribe un estado vacío', () => {
