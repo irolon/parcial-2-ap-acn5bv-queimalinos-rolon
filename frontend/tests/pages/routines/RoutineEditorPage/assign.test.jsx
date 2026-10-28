@@ -98,6 +98,19 @@ describe('RoutineEditorPage: asignar', () => {
     expect(screen.queryByText(/^Revisá/)).not.toBeInTheDocument();
   });
 
+  it('un error de `exercise_id` se muestra bajo el nombre del ejercicio', async () => {
+    const details = [{ field: 'exercises[0].exercise_id', message: 'Ejercicio inexistente' }];
+    const create = vi.fn(() => errorResponse(400, 'VALIDATION_ERROR', 'Datos inválidos', details));
+    await renderEditor({ api: { students: [ANA], handlers: { create } } });
+    await fillRoutine(['Sentadilla']);
+    await openAssign();
+    await chooseAna();
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
+    expect(screen.getByText('Ejercicio inexistente')).toBeVisible();
+    expect(screen.getByText('Revisá 1 campo')).toBeVisible();
+  });
+
   it('un 403 muestra el mensaje del backend y deja el modal abierto', async () => {
     const create = vi.fn(() => errorResponse(403, 'FORBIDDEN', 'Ese alumno no es tuyo'));
     await renderEditor({ api: { students: [ANA], handlers: { create } } });

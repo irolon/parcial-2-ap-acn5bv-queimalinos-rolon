@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_ROUTINE, updateExercise, updateHeader } from '@/utils/routines/editorState';
 import {
-  MAX_EXERCISES, NAME_ERROR, ROUTINE_GOAL_OPTIONS, buildRoutineBody, buildTemplateBody, isValidName, serverErrorsFor, validateRoutine,
+  MAX_EXERCISES, NAME_ERROR, ROUTINE_GOAL_OPTIONS, buildRoutineBody, buildTemplateBody, isValidName, validateRoutine,
 } from '@/utils/routines/routineForm';
-import { ApiError } from '@/api/shared/client';
 import { EX_A, EX_B, stateWith } from '../../helpers/routines/fixtures';
 
 describe('validateRoutine', () => {
@@ -121,36 +120,5 @@ describe('buildTemplateBody', () => {
     expect(body.structure).toMatchObject({ version: 1, days: ['monday'] });
     expect(body.structure.exercises).toEqual([expect.objectContaining({ exercise_id: EX_A, order: 0 })]);
     expect(JSON.stringify(body)).not.toContain('template_id');
-  });
-});
-
-describe('serverErrorsFor', () => {
-  it('mapea detalles a la fila y a la cabecera', () => {
-    const state = stateWith([EX_A, EX_B]);
-    const error = new ApiError({
-      status: 400, code: 'VALIDATION_ERROR', message: 'Datos inválidos',
-      details: [
-        { field: 'exercises[1].reps', message: 'Debe ser positivo' },
-        { field: 'name', message: 'Nombre inválido' },
-      ],
-    });
-    const errors = serverErrorsFor(error, state);
-    expect(errors.exercises[state.exercises[1].key]).toEqual({ reps: 'Debe ser positivo' });
-    expect(errors.header).toEqual({ name: 'Nombre inválido' });
-    expect(errors.count).toBe(2);
-  });
-
-  it('los detalles sin campo conocido van a form', () => {
-    const error = new ApiError({
-      status: 400, code: 'VALIDATION_ERROR', message: 'Datos inválidos',
-      details: [{ field: 'student_id', message: 'Alumno inválido' }, { field: 'exercises[9].sets', message: 'Fuera de rango' }],
-    });
-    expect(serverErrorsFor(error, stateWith()).form).toBe('Alumno inválido. Fuera de rango');
-  });
-
-  it('el resto de los errores va a form', () => {
-    const errors = serverErrorsFor(new ApiError({ status: 500, code: 'INTERNAL', message: 'Falló' }), stateWith());
-    expect(errors.form).toBe('Falló');
-    expect(errors.header).toEqual({});
   });
 });

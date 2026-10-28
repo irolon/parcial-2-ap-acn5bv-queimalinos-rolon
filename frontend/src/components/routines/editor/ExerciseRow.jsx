@@ -48,6 +48,7 @@ export default function ExerciseRow({ item, index, last, exercise, errors = {}, 
           <div className="min-w-0">
             <p className="font-body text-sm text-bone0">{name}</p>
             {exercise && <p className="font-mono text-[10px] uppercase text-ink6">{muscleLabel(exercise.muscle_group)}</p>}
+            {errors.exercise_id && <p className="mt-1 font-mono text-[10px] text-hot">{errors.exercise_id}</p>}
           </div>
         </div>
       </td>

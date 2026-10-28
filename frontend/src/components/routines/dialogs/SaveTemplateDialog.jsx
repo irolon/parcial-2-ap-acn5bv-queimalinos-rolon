@@ -8,8 +8,10 @@ import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import {
   MAX_EXERCISES, NAME_ERROR, ROUTINE_GOAL_OPTIONS, buildTemplateBody, isValidName, validateRoutine,
 } from '@/utils/routines/routineForm';
+import { templateErrorsFor } from '@/utils/routines/serverErrors';
 import { LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 
+const INVALID = 'Revisá los datos de la rutina';
 const FORM_ID = 'save-template-form';
 const GOALS = [{ value: '', label: 'Elegí un objetivo' }, ...ROUTINE_GOAL_OPTIONS];
 
@@ -27,8 +29,11 @@ function validate(form, state) {
   return errors;
 }
 
-/** Guarda la estructura del editor como plantilla (no hace falta asignar antes). */
-export default function SaveTemplateDialog({ state, onSaved, onInvalid, onClose }) {
+/**
+ * Guarda la estructura del editor como plantilla (no hace falta asignar antes).
+ * `onInvalid` marca la tabla (valores locales); `onServerInvalid(error)` recibe el 400 del backend para marcarla.
+ */
+export default function SaveTemplateDialog({ state, onSaved, onInvalid, onServerInvalid, onClose }) {
   const [form, setForm] = useState({ name: state.name, goal: state.goal, level: '' });
   const [errors, setErrors] = useState({});
   const create = useCreateTemplate();
@@ -45,7 +50,12 @@ export default function SaveTemplateDialog({ state, onSaved, onInvalid, onClose 
       await create.mutateAsync(buildTemplateBody(state, form));
       onSaved();
     } catch (err) {
-      setErrors({ form: fieldErrorsFrom(err, { fields: [], fallback: 'No pudimos guardar la plantilla' }).form });
+      if (err?.code === 'VALIDATION_ERROR') {
+        onServerInvalid?.(err);
+        setErrors({ ...templateErrorsFor(err, state).dialog, form: INVALID });
+      } else {
+        setErrors({ form: fieldErrorsFrom(err, { fields: [], fallback: 'No pudimos guardar la plantilla' }).form });
+      }
     }
   }
 

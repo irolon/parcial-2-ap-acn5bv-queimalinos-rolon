@@ -1,11 +1,8 @@
-import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { sortDays } from '@/utils/students/routineDays';
 import { GOAL_OPTIONS } from '@/utils/students/studentOptions';
 
 const INTEGER = /^\d+$/;
 const DECIMAL = /^-?(\d+([.,]\d+)?|[.,]\d+)$/;
-const ROW_FIELD = /^exercises\[(\d+)\]\.(\w+)$/;
-const HEADER_FIELDS = ['name', 'goal', 'days'];
 
 export const MAX_EXERCISES = 50;
 export const NAME_ERROR = 'El nombre debe tener entre 2 y 120 caracteres';
@@ -19,7 +16,7 @@ const parse = (value) => Number(String(value).trim().replace(',', '.'));
 const toNumber = (value) => (blank(value) ? null : parse(value));
 const toText = (value) => (blank(value) ? null : String(value).trim());
 
-function withCount(errors) {
+export function withCount(errors) {
   const rows = Object.values(errors.exercises).reduce((sum, row) => sum + Object.keys(row).length, 0);
   return { ...errors, count: Object.keys(errors.header).length + rows + (errors.form ? 1 : 0) };
 }
@@ -94,29 +91,4 @@ export function buildTemplateBody(state, { name, goal, level }) {
     level: level || null,
     structure: { version: 1, days: sortDays(state.days), exercises: bodyExercises(state) },
   };
-}
-
-/** Traduce un error del backend al mismo formato que `validateRoutine`. */
-export function serverErrorsFor(error, state) {
-  const errors = { header: {}, exercises: {} };
-  const other = [];
-  const details = error?.code === 'VALIDATION_ERROR' && Array.isArray(error.details) ? error.details : [];
-  for (const { field, message } of details) {
-    const row = ROW_FIELD.exec(field);
-    const target = row && state.exercises[Number(row[1])];
-    if (target) {
-      errors.exercises[target.key] = { ...errors.exercises[target.key], [row[2]]: message };
-    } else if (HEADER_FIELDS.includes(field)) {
-      errors.header[field] = message;
-    } else {
-      other.push(message);
-    }
-  }
-  const mapped = Object.keys(errors.header).length + Object.keys(errors.exercises).length;
-  if (other.length > 0) {
-    errors.form = other.join('. ');
-  } else if (mapped === 0) {
-    errors.form = fieldErrorsFrom(error, { fields: [], fallback: 'No pudimos guardar la rutina' }).form;
-  }
-  return withCount(errors);
 }

@@ -16,7 +16,8 @@ import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { profileHref } from '@/routes/routeTable';
 import { clearDraft, readDraft, restoreDraft } from '@/utils/routines/draft';
 import * as editor from '@/utils/routines/editorState';
-import { serverErrorsFor, validateRoutine } from '@/utils/routines/routineForm';
+import { validateRoutine } from '@/utils/routines/routineForm';
+import { serverErrorsFor, templateErrorsFor } from '@/utils/routines/serverErrors';
 
 const missingNotice = (n) => `Quitamos ${n} ${n === 1 ? 'ejercicio que ya no está' : 'ejercicios que ya no están'} en la biblioteca`;
 const NO_DRAFT = { ready: false, restored: false, missing: 0 };
@@ -75,6 +76,7 @@ export default function RoutineEditorPage() {
     assigned: (student) => navigate(profileHref(student.id)),
     invalid: (error) => setServerErrors(serverErrorsFor(error, state)),
     invalidRows: () => setAttempted(true),
+    invalidTemplate: (error) => setServerErrors(templateErrorsFor(error, state)),
     load: (next, missing) => {
       replaceState(next);
       setAttempted(false);

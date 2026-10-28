@@ -7,17 +7,8 @@ import { fillRoutine, renderEditor, rowNames } from '../../../helpers/routines/e
 import { stubRoutinesApi } from '../../../helpers/routines/routines';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
 import { bodyOf, calls, jsonResponse } from '../../../helpers/shared/fetchMock';
-import { student } from '../../../helpers/students/fixtures';
+import { DETAIL, api, item, open, post } from '../../../helpers/routines/templates';
 
-const item = (id, order, extra = {}) => ({
-  exercise_id: id, sets: 4, reps: 8, rest_seconds: 60, suggested_kg: 20.5, tempo: '3-1-1', notes: 'Bajar lento', order, exercise: { id }, ...extra,
-});
-const SUMMARY = { id: 't-1', name: 'Full body', goal: 'hypertrophy', level: 'beginner', days: ['monday', 'friday'], exercise_count: 2 };
-const DETAIL = {
-  ...SUMMARY,
-  structure: { version: 1, days: ['monday', 'friday'], exercises: [item('ex-squat', 0), item('ex-plank', 1)] },
-};
-const api = (extra = {}) => ({ templates: [SUMMARY], template: DETAIL, students: [student({ id: 'st-9', name: 'Ana Paz' })], ...extra });
 
 beforeEach(() => {
   resetAuthStore();
@@ -29,9 +20,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const open = (name) => userEvent.click(screen.getByRole('button', { name }));
 const chooseTemplate = () => userEvent.click(screen.getByRole('button', { name: /Full body/ }));
-const post = (fetchMock, path) => calls(fetchMock).find(([p, init]) => p === path && init?.method === 'POST');
 
 describe('RoutineEditorPage: usar plantilla', () => {
   it('lista las plantillas y con el editor vacío precarga sin confirmar', async () => {
@@ -131,50 +120,5 @@ describe('RoutineEditorPage: usar plantilla sin biblioteca', () => {
     renderRoute('/pt/rutinas/nueva');
     await screen.findByText(/reintentar/i);
     expect(screen.getByRole('button', { name: 'Usar plantilla' })).toBeDisabled();
-  });
-});
-
-describe('RoutineEditorPage: guardar como plantilla', () => {
-  it('propone nombre y objetivo de la rutina y manda la estructura', async () => {
-    const createTemplate = vi.fn(() => jsonResponse(201, { data: { id: 't-2' } }));
-    const { fetchMock } = await renderEditor({ api: api({ handlers: { createTemplate } }) });
-    await fillRoutine(['Sentadilla', 'Plancha']);
-    await open('Guardar como plantilla');
-    const dialog = within(screen.getByRole('dialog'));
-    expect(dialog.getByLabelText('Nombre')).toHaveValue('Fuerza A');
-    expect(dialog.getByLabelText('Objetivo')).toHaveValue('strength');
-    await userEvent.selectOptions(dialog.getByLabelText('Nivel (opcional)'), 'advanced');
-    await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }));
-    expect(await screen.findByText('Plantilla guardada')).toBeVisible();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    const exercise = (id, order) => ({ exercise_id: id, sets: 3, reps: 10, rest_seconds: 90, suggested_kg: null, tempo: null, notes: null, order });
-    expect(bodyOf(post(fetchMock, '/routine-templates')[1])).toEqual({
-      name: 'Fuerza A',
-      goal: 'strength',
-      level: 'advanced',
-      structure: { version: 1, days: ['monday'], exercises: [exercise('ex-squat', 0), exercise('ex-plank', 1)] },
-    });
-  });
-
-  it('sin ejercicios no guarda y lo pide', async () => {
-    const { fetchMock } = await renderEditor({ api: api() });
-    await fillRoutine([]);
-    await open('Guardar como plantilla');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-    expect(screen.getByText('Agregá al menos un ejercicio')).toBeVisible();
-    expect(post(fetchMock, '/routine-templates')).toBeUndefined();
-  });
-});
-
-describe('RoutineEditorPage: guardar como plantilla con valores inválidos', () => {
-  it('revisa las filas, no manda nada y marca la celda', async () => {
-    const { fetchMock } = await renderEditor({ api: api() });
-    await fillRoutine(['Sentadilla', 'Plancha']);
-    await userEvent.clear(screen.getByLabelText('Reps de Sentadilla'));
-    await open('Guardar como plantilla');
-    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
-    expect(screen.getByText('Revisá los valores de los ejercicios en la tabla')).toBeVisible();
-    expect(post(fetchMock, '/routine-templates')).toBeUndefined();
-    expect(screen.getByLabelText('Reps de Sentadilla')).toHaveAttribute('aria-invalid', 'true');
   });
 });
