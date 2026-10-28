@@ -4,7 +4,7 @@ const NOT_HANDLED = () => errorResponse(500, 'INTERNAL', 'Sin handler');
 
 /**
  * Stub de la API del editor de rutinas sobre `stubFetch`.
- * - `routines`, `students` (activos), `deactivated` (dados de baja, `?active=false`), `exercises`, `templates`: respuestas de los GET.
+ * - `routines` (cada una con `student: { name, active }`, como el listado real), `students` (activos), `deactivated` (dados de baja, `?active=false`), `exercises`, `templates`: respuestas de los GET.
  * - `template`: respuesta de `GET /routine-templates/:id` (el listado usa `templates`).
  * - `handlers`: `{ create, update, createTemplate }` para POST/PATCH de `/routines` y POST de `/routine-templates`; lo que no se maneja devuelve 500.
  */
