@@ -90,6 +90,14 @@ describe('buildRoutineBody', () => {
   });
 });
 
+describe('días en los cuerpos', () => {
+  it('se mandan en orden de semana aunque el estado los tenga desordenados', () => {
+    const state = stateWith([EX_A], { days: ['sunday', 'monday'] });
+    expect(buildRoutineBody(state, 'st-1').days).toEqual(['monday', 'sunday']);
+    expect(buildTemplateBody(state, { name: 'Mi plantilla', goal: 'strength', level: '' }).structure.days).toEqual(['monday', 'sunday']);
+  });
+});
+
 describe('buildTemplateBody', () => {
   it('arma la estructura sin template_id', () => {
     const state = stateWith([EX_A], { templateId: 't-1' });

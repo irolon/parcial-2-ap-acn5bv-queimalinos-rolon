@@ -9,6 +9,15 @@ export const DAY_OPTIONS = [
   { value: 'sunday', short: 'D', label: 'Domingo' },
 ];
 
+/** Copia de `days` en orden de semana (lunes primero); un valor desconocido queda al final. */
+export function sortDays(days = []) {
+  const rank = (day) => {
+    const index = DAY_OPTIONS.findIndex((d) => d.value === day);
+    return index < 0 ? DAY_OPTIONS.length : index;
+  };
+  return [...days].sort((a, b) => rank(a) - rank(b));
+}
+
 const DAY_LABELS = Object.fromEntries(DAY_OPTIONS.map((d) => [d.value, d.label]));
 
 /** Días de la rutina en español, separados por " · "; un valor desconocido se muestra tal cual. */

@@ -47,6 +47,11 @@ describe('draft', () => {
     expect(restoreDraft(raw, new Map()).missing).toBe(2);
   });
 
+  it('restoreDraft ordena los días guardados', () => {
+    const raw = JSON.stringify({ ...JSON.parse(serializeDraft(stateWith([EX_A]))), days: ['friday', 'monday'] });
+    expect(restoreDraft(raw, exercisesById).state.days).toEqual(['monday', 'friday']);
+  });
+
   it('JSON roto devuelve null', () => {
     expect(restoreDraft('{no es json', exercisesById)).toBeNull();
     expect(restoreDraft(null, exercisesById)).toBeNull();

@@ -1,3 +1,4 @@
+import { sortDays } from '@/utils/students/routineDays';
 import { EMPTY_ROUTINE, isBlank, makeExercise } from '@/utils/routines/editorState';
 
 export const DRAFT_KEY = (trainerId) => `fittrainer.routine-draft.${trainerId}`;
@@ -26,7 +27,7 @@ export function restoreDraft(raw, exercisesById = new Map()) {
     ...EMPTY_ROUTINE,
     name: data.name ?? '',
     goal: data.goal ?? '',
-    days: Array.isArray(data.days) ? data.days : [],
+    days: sortDays(Array.isArray(data.days) ? data.days : []),
     templateId: data.templateId ?? null,
     templateName: data.templateName ?? null,
     exercises: kept.map((e) => makeExercise(e.exercise_id, e)),

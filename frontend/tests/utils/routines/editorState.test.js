@@ -48,6 +48,17 @@ describe('editorState', () => {
     expect(toggleDay(on, 'friday').days).toEqual([]);
   });
 
+  it('toggleDay mantiene los días en orden de semana', () => {
+    const state = ['sunday', 'monday', 'thursday'].reduce(toggleDay, EMPTY_ROUTINE);
+    expect(state.days).toEqual(['monday', 'thursday', 'sunday']);
+  });
+
+  it('fromTemplate ordena los días de la plantilla', () => {
+    const template = templateFixture();
+    template.structure.days = ['friday', 'monday'];
+    expect(fromTemplate(template, exercisesById).state.days).toEqual(['monday', 'friday']);
+  });
+
   it('fromTemplate precarga la plantilla y los números como string', () => {
     const { state, missing } = fromTemplate(templateFixture(), exercisesById);
     expect(missing).toBe(0);

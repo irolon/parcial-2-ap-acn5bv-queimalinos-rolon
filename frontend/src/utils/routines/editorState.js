@@ -1,3 +1,5 @@
+import { sortDays } from '@/utils/students/routineDays';
+
 export const EMPTY_ROUTINE = Object.freeze({
   name: '', goal: '', days: [], templateId: null, templateName: null, exercises: [],
 });
@@ -50,7 +52,7 @@ export function updateHeader(state, field, value) {
 }
 
 export function toggleDay(state, day) {
-  const days = state.days.includes(day) ? state.days.filter((d) => d !== day) : [...state.days, day];
+  const days = state.days.includes(day) ? state.days.filter((d) => d !== day) : sortDays([...state.days, day]);
   return { ...state, days };
 }
 
@@ -71,7 +73,7 @@ export function fromTemplate(template, exercisesById = new Map()) {
       ...EMPTY_ROUTINE,
       name: template.name ?? '',
       goal: template.goal ?? '',
-      days: [...(template.structure?.days ?? [])],
+      days: sortDays(template.structure?.days),
       templateId: template.id,
       templateName: template.name,
       exercises: kept.map((item) => makeExercise(item.exercise_id, item)),

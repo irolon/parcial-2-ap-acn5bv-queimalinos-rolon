@@ -1,4 +1,5 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
+import { sortDays } from '@/utils/students/routineDays';
 
 const INTEGER = /^\d+$/;
 const DECIMAL = /^-?(\d+([.,]\d+)?|[.,]\d+)$/;
@@ -74,7 +75,7 @@ function bodyExercises(state) {
 }
 
 export function buildRoutineBody(state, studentId) {
-  const body = { student_id: studentId, name: state.name.trim(), goal: state.goal, days: state.days };
+  const body = { student_id: studentId, name: state.name.trim(), goal: state.goal, days: sortDays(state.days) };
   if (state.templateId) body.template_id = state.templateId;
   return { ...body, exercises: bodyExercises(state) };
 }
@@ -84,7 +85,7 @@ export function buildTemplateBody(state, { name, goal, level }) {
     name: name.trim(),
     goal,
     level: level || null,
-    structure: { version: 1, days: state.days, exercises: bodyExercises(state) },
+    structure: { version: 1, days: sortDays(state.days), exercises: bodyExercises(state) },
   };
 }
 
