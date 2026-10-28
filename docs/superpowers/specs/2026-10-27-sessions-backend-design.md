@@ -96,7 +96,7 @@ Body con al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1�
   3. validar ejercicios y `routine_exercise_id` en dos consultas (no una por serie);
   4. **un solo upsert** (`onConflict: 'id'`) con las válidas, que en Postgres es atómico;
   5. si alguna guardada es sustitución, `update sessions set has_modifications = true`.
-- Errores nuevos en `shared/utils/errors.js`: `SESSION_NOT_FOUND` (404), `SESSION_ID_CONFLICT` (409); códigos por serie `SET_ID_CONFLICT`, `EXERCISE_NOT_FOUND`, `ROUTINE_EXERCISE_NOT_FOUND`, `VALIDATION_ERROR`.
+- Errores nuevos en `shared/utils/errors.js`: `SESSION_NOT_FOUND` (404), `SESSION_ID_CONFLICT` (409); códigos por serie `SET_ID_CONFLICT`, `EXERCISE_NOT_FOUND`, `VALIDATION_ERROR` (un `routine_exercise_id` inválido no es error: se guarda `null`).
 - Los helpers de UUID y fecha ISO de `validations/body-metrics` pasan a `shared/utils` si se reutilizan.
 
 ## 5. Fuera de alcance
