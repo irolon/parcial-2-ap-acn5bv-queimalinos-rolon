@@ -2,7 +2,6 @@ import {
   validateCreateSession,
   validateUpdateSession,
   validateSessionIdParam,
-  validateSetsEnvelope,
 } from '../../../../src/validations/sessions/sessions.validation.js';
 import { Errors } from '../../../../src/shared/utils/errors.js';
 
@@ -78,13 +77,6 @@ describe('sessions.validation — validateSessionIdParam y envelope', () => {
   it('param: minúscula o error', () => {
     expect(validateSessionIdParam({ id: UUID.toUpperCase() })).toEqual({ id: UUID });
     failsOn(() => validateSessionIdParam({ id: 'x' }), 'id');
-  });
-
-  it('envelope: array de 1 a 100', () => {
-    failsOn(() => validateSetsEnvelope({}), 'sets');
-    failsOn(() => validateSetsEnvelope({ sets: [] }), 'sets');
-    failsOn(() => validateSetsEnvelope({ sets: new Array(101).fill({}) }), 'sets');
-    expect(validateSetsEnvelope({ sets: new Array(24).fill({}) }).sets).toHaveLength(24);
   });
 
   it('errores de sesión', () => {

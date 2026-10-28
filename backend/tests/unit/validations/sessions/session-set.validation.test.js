@@ -1,4 +1,4 @@
-import { parseSet } from '../../../../src/validations/sessions/sessions.validation.js';
+import { parseSet, validateSetsEnvelope } from '../../../../src/validations/sessions/session-set.validation.js';
 
 const U1 = '3f1c2b9a-1d2e-4f5a-8b7c-9d0e1f2a3b4c';
 const U2 = '4a2d3c0b-2e3f-4a6b-9c8d-0e1f2a3b4c5d';
@@ -12,7 +12,7 @@ const badField = (patch, field) => {
   expect(r.details.map((d) => d.field)).toContain(field);
 };
 
-describe('sessions.validation — parseSet', () => {
+describe('session-set.validation — parseSet', () => {
   it('válido: completed true por defecto y nulls en opcionales', () => {
     expect(parseSet(base)).toEqual({
       ok: true,
@@ -56,5 +56,23 @@ describe('sessions.validation — parseSet', () => {
     badField({ actual_reps: 1001 }, 'actual_reps');
     badField({ actual_kg: 1001 }, 'actual_kg');
     expect(parseSet(null).ok).toBe(false);
+  });
+});
+
+describe('session-set.validation — validateSetsEnvelope', () => {
+  const fails = (body) => {
+    try { validateSetsEnvelope(body); } catch (e) {
+      expect(e).toMatchObject({ code: 'VALIDATION_ERROR', statusCode: 400 });
+      expect(e.details.map((d) => d.field)).toContain('sets');
+      return;
+    }
+    throw new Error('no tiró');
+  };
+
+  it('array de 1 a 100', () => {
+    fails({});
+    fails({ sets: [] });
+    fails({ sets: new Array(101).fill({}) });
+    expect(validateSetsEnvelope({ sets: new Array(24).fill({}) }).sets).toHaveLength(24);
   });
 });

@@ -1,4 +1,4 @@
-import { parseSet } from '../../validations/sessions/sessions.validation.js';
+import { parseSet } from '../../validations/sessions/session-set.validation.js';
 
 /** Entrada de `failed` de la respuesta de POST /sessions/:id/sets. */
 export const failure = (id, index, code, message) => ({ id, index, code, message });

@@ -2,9 +2,9 @@ import { getOwnedSession } from './sessions.service.js';
 import * as setsRepo from '../../repositories/sessions/session-sets.repository.js';
 import { findAccessibleExerciseIds } from '../../repositories/routines/routines.repository.js';
 import { findStudentById } from '../../repositories/students/students.repository.js';
-import { validateSetsEnvelope } from '../../validations/sessions/sessions.validation.js';
+import { validateSetsEnvelope } from '../../validations/sessions/session-set.validation.js';
 import { isSubstitution } from '../../models/sessions/session.model.js';
-import { parseBatch, failure } from './classifySets.js';
+import { parseBatch, failure } from './classify-sets.js';
 
 /** Ejercicios que el alumno puede ver: un fallo por serie con alguno inaccesible. */
 async function checkExercises(studentId, candidates, failed) {
