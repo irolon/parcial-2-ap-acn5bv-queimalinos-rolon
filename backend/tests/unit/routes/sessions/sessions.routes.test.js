@@ -2,45 +2,63 @@ import { describe, it, expect } from '@jest/globals';
 import router from '../../../../src/routes/sessions/sessions.routes.js';
 import { authenticate } from '../../../../src/shared/middlewares/auth.middleware.js';
 
-// router.use(authenticate, requireRole('student')) va primero en el stack.
-const guards = router.stack.filter((layer) => !layer.route).map((layer) => layer.handle);
 const routeOf = (method, path) =>
   router.stack.find((l) => l.route?.path === path && l.route.methods[method]);
+const handlersOf = (method, path) => routeOf(method, path).route.stack.map((l) => l.handle);
+const res = { status: () => res, json: () => res };
+// El segundo handler de cada ruta es requireRole(...): lo ejercitamos con un rol.
+const roleResult = (method, path, role) => {
+  let err;
+  handlersOf(method, path)[0]({ user: { role } }, res, (e) => { err = e; });
+  return err;
+};
 
 describe('sessions.routes', () => {
-  it('toda la ruta exige authenticate y un middleware de rol, antes de las rutas', () => {
-    expect(guards).toHaveLength(2);
-    expect(guards[0]).toBe(authenticate);
+  it('authenticate va global, antes de las rutas, sin requireRole global', () => {
+    const guards = router.stack.filter((layer) => !layer.route).map((layer) => layer.handle);
+    expect(guards).toEqual([authenticate]);
     expect(router.stack[0].route).toBeUndefined();
-    expect(router.stack[1].route).toBeUndefined();
+    expect(router.stack[1].route).toBeDefined();
   });
 
-  it('el rol exigido es student', () => {
-    const res = { status: () => res, json: () => res };
+  it.each([['post', '/'], ['patch', '/:id'], ['post', '/:id/sets']])(
+    '%s %s exige student',
+    (method, path) => {
+      expect(roleResult(method, path, 'trainer')).toMatchObject({ statusCode: 403 });
+      expect(roleResult(method, path, 'student')).toBeUndefined();
+    }
+  );
+
+  it('PATCH /:id/comment exige trainer', () => {
+    expect(roleResult('patch', '/:id/comment', 'student')).toMatchObject({ statusCode: 403 });
+    expect(roleResult('patch', '/:id/comment', 'trainer')).toBeUndefined();
+  });
+
+  it('PATCH /:id/comment valida el body en el middleware', () => {
+    const handlers = handlersOf('patch', '/:id/comment');
+    expect(handlers).toHaveLength(4);
     let err;
-    guards[1]({ user: { role: 'trainer' } }, res, (e) => { err = e; });
-    expect(err).toMatchObject({ statusCode: 403 });
-    err = undefined;
-    guards[1]({ user: { role: 'student' } }, res, (e) => { err = e; });
-    expect(err).toBeUndefined();
+    handlers[2]({ body: { trainer_comment: 5 } }, {}, (e) => { err = e; });
+    expect(err).toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
   });
 
-  it('expone POST /, PATCH /:id y POST /:id/sets', () => {
+  it('expone POST /, PATCH /:id, POST /:id/sets y PATCH /:id/comment', () => {
     expect(routeOf('post', '/')).toBeDefined();
     expect(routeOf('patch', '/:id')).toBeDefined();
     expect(routeOf('post', '/:id/sets')).toBeDefined();
+    expect(routeOf('patch', '/:id/comment')).toBeDefined();
   });
 
   it('POST /:id/sets valida el envelope en el middleware, antes del controller', () => {
     const handlers = routeOf('post', '/:id/sets').route.stack.map((l) => l.handle);
-    expect(handlers).toHaveLength(3);
+    expect(handlers).toHaveLength(4);
     const req = { body: { sets: [] }, params: {} };
     let err;
-    handlers[1](req, {}, (e) => { err = e; });
+    handlers[2](req, {}, (e) => { err = e; });
     expect(err).toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
     const ok = { body: { sets: [{ id: 'x' }], extra: 1 } };
     err = undefined;
-    handlers[1](ok, {}, (e) => { err = e; });
+    handlers[2](ok, {}, (e) => { err = e; });
     expect(err).toBeUndefined();
     expect(ok.body).toEqual({ sets: [{ id: 'x' }] });
   });

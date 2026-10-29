@@ -53,6 +53,25 @@ export async function findStudentSession(studentId, sessionId) {
   );
 }
 
+/** Una sesión por id (con trainer_comment), o null. */
+export async function findSessionById(sessionId) {
+  return unwrap(
+    await supabase.from(SESSIONS_TABLE).select(HISTORY_COLUMNS).eq('id', sessionId).maybeSingle()
+  );
+}
+
+/** Guarda (o borra con null) el comentario del entrenador y devuelve la fila. */
+export async function updateTrainerComment(sessionId, comment) {
+  return unwrap(
+    await supabase
+      .from(SESSIONS_TABLE)
+      .update({ trainer_comment: comment })
+      .eq('id', sessionId)
+      .select(HISTORY_COLUMNS)
+      .single()
+  );
+}
+
 /** Series de varias sesiones en una sola consulta. */
 export async function findSetsForSessions(sessionIds) {
   return fetchAll(() =>

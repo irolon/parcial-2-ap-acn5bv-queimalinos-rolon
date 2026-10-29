@@ -16,3 +16,9 @@ export const detail = asyncHandler(async (req, res) => {
   );
   res.json({ data });
 });
+
+/** PATCH /sessions/:id/comment — 200 → { data: resumen } */
+export const comment = asyncHandler(async (req, res) => {
+  const data = await historyService.commentSession(req.user, req.params.id, req.body);
+  res.json({ data });
+});

@@ -8,6 +8,8 @@ const src = (p) => fileURLToPath(new URL(`../../../src/${p}`, import.meta.url));
 export const mockRepo = {
   findSessionsPage: jest.fn(),
   findStudentSession: jest.fn(),
+  findSessionById: jest.fn(),
+  updateTrainerComment: jest.fn(),
   findSetsForSessions: jest.fn(),
   fetchSessionRecords: jest.fn(),
   findRoutinesByIds: jest.fn(),
@@ -15,8 +17,10 @@ export const mockRepo = {
   findExercisesByIds: jest.fn(),
 };
 export const mockAccess = { assertCanAccessStudent: jest.fn() };
+export const mockStudents = { findStudentById: jest.fn() };
 jest.unstable_mockModule(src('repositories/sessions/session-history.repository.js'), () => mockRepo);
 jest.unstable_mockModule(src('services/students/student-access.service.js'), () => mockAccess);
+jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudents);
 
 export const service = await import(src('services/sessions/session-history.service.js'));
 

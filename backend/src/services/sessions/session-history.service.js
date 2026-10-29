@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repo from '../../repositories/sessions/session-history.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import { toSessionSummary, groupSetsByExercise } from '../../models/sessions/session-history.model.js';
 
@@ -72,4 +73,23 @@ export async function getSessionDetail(user, studentId, sessionId) {
       recordExerciseIds: new Set(records.map((r) => r.exercise_id)),
     }),
   };
+}
+
+/** PATCH /sessions/:id/comment — el entrenador del alumno comenta; ajena o inexistente → 404. */
+export async function commentSession(user, sessionId, { trainer_comment }) {
+  const row = await repo.findSessionById(sessionId);
+  if (!row) throw Errors.sessionNotFound();
+  const student = await studentsRepo.findStudentById(row.student_id);
+  if (!student || student.trainer_id !== user.id) throw Errors.sessionNotFound();
+
+  const updated = await repo.updateTrainerComment(sessionId, trainer_comment);
+  const [sets, records, [withRoutine]] = await Promise.all([
+    repo.findSetsForSessions([sessionId]),
+    repo.fetchSessionRecords(row.student_id, [sessionId]),
+    withRoutines([updated]),
+  ]);
+  return toSessionSummary(withRoutine, {
+    sets,
+    recordsBySession: new Set(records.map((r) => r.session_id)),
+  });
 }

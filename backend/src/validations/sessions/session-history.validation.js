@@ -20,3 +20,17 @@ export function validateHistoryDetailParams(params) {
   if (details.length > 0) throw Errors.validation('Error de validación', details);
   return { id: params.id.toLowerCase(), sessionId: params.sessionId.toLowerCase() };
 }
+
+const MAX_COMMENT = 1000;
+
+/** Body de PATCH /sessions/:id/comment: texto ≤ 1000 o null; vacío → null. */
+export function validateCommentBody(body) {
+  const value = body?.trainer_comment;
+  const valid = value === null || (typeof value === 'string' && value.length <= MAX_COMMENT);
+  if (!valid) {
+    throw Errors.validation('Error de validación', [
+      { field: 'trainer_comment', message: `trainer_comment debe ser texto de hasta ${MAX_COMMENT} caracteres o null` },
+    ]);
+  }
+  return { trainer_comment: value === null || value.trim() === '' ? null : value };
+}

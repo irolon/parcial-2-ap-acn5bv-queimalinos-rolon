@@ -6,7 +6,7 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 // Builder encadenable y "thenable": cada método devuelve el mismo objeto.
 const result = { current: { data: [], count: 0, error: null } };
 const q = {};
-for (const m of ['select', 'eq', 'in', 'order', 'range', 'maybeSingle']) q[m] = jest.fn(() => q);
+for (const m of ['select', 'eq', 'in', 'order', 'range', 'maybeSingle', 'update', 'single']) q[m] = jest.fn(() => q);
 const queue = [];
 q.then = (resolve) => resolve(queue.length ? queue.shift() : result.current);
 const supabase = { from: jest.fn(() => q), rpc: jest.fn(() => q) };
@@ -38,6 +38,20 @@ describe('session-history.repository', () => {
     await expect(repo.findStudentSession('st', 's')).resolves.toEqual({ id: 's' });
     expect(q.eq).toHaveBeenCalledWith('id', 's');
     expect(q.eq).toHaveBeenCalledWith('student_id', 'st');
+  });
+
+  it('findSessionById: por id, con trainer_comment', async () => {
+    result.current = { data: { id: 's' }, error: null };
+    await expect(repo.findSessionById('s')).resolves.toEqual({ id: 's' });
+    expect(q.eq).toHaveBeenCalledWith('id', 's');
+    expect(q.select).toHaveBeenCalledWith(expect.stringContaining('trainer_comment'));
+  });
+
+  it('updateTrainerComment: actualiza solo trainer_comment y devuelve la fila', async () => {
+    result.current = { data: { id: 's', trainer_comment: 'x' }, error: null };
+    await expect(repo.updateTrainerComment('s', 'x')).resolves.toEqual({ id: 's', trainer_comment: 'x' });
+    expect(q.update).toHaveBeenCalledWith({ trainer_comment: 'x' });
+    expect(q.eq).toHaveBeenCalledWith('id', 's');
   });
 
   it('consultas por lote usan .in(...)', async () => {
