@@ -10,6 +10,7 @@ import {
 } from '../../validations/students/students.validation.js';
 import * as studentsController from '../../controllers/students/students.controller.js';
 import bodyMetricsRoutes from '../body-metrics/body-metrics.routes.js';
+import studentSessionsRoutes from '../sessions/student-sessions.routes.js';
 
 const router = Router();
 
@@ -40,5 +41,8 @@ router.patch(
 
 // Medidas corporales del alumno: /students/:id/metrics.
 router.use('/:id/metrics', bodyMetricsRoutes);
+
+// Historial de sesiones del alumno: /students/:id/sessions.
+router.use('/:id/sessions', studentSessionsRoutes);
 
 export default router;
