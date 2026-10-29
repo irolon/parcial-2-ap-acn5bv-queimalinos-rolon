@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NEW_STUDENT, STUDENTS_PATH, STUDENT_NAV, STUDENT_PROFILE, TRAINER_NAV, homeFor, profileHref } from '@/routes/routeTable';
+import { NEW_ROUTINE, NEW_STUDENT, ROUTINES_PATH, STUDENTS_PATH, STUDENT_NAV, STUDENT_PROFILE, TRAINER_NAV, homeFor, newRoutineHref, profileHref } from '@/routes/routeTable';
 
 describe('tabla de rutas', () => {
   it('tiene los ítems del entrenador en el orden del prototipo', () => {
@@ -20,6 +20,13 @@ describe('tabla de rutas', () => {
     expect(STUDENT_PROFILE.path).toBe('/pt/alumnos/:id');
     expect(profileHref('st-1')).toBe('/pt/alumnos/st-1');
     expect(profileHref('st-1', 'estado=inactivos')).toBe('/pt/alumnos/st-1?estado=inactivos');
+  });
+
+  it('arma los links de rutinas', () => {
+    expect(ROUTINES_PATH).toBe('/pt/rutinas');
+    expect(NEW_ROUTINE.path).toBe('/pt/rutinas/nueva');
+    expect(newRoutineHref()).toBe('/pt/rutinas/nueva');
+    expect(newRoutineHref('st-1')).toBe('/pt/rutinas/nueva?alumno=st-1');
   });
 
   it('da la home de cada rol', () => {
