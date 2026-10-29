@@ -61,6 +61,8 @@ export const Errors = {
   sessionNotFound: () => new AppError(404, 'SESSION_NOT_FOUND', 'La sesión no existe'),
   sessionIdConflict: () =>
     new AppError(409, 'SESSION_ID_CONFLICT', 'Ya existe una sesión con ese id'),
+  exerciseNotFound: () =>
+    new AppError(404, 'EXERCISE_NOT_FOUND', 'El ejercicio no existe'),
   exerciseInUse: () =>
     new AppError(
       409,
