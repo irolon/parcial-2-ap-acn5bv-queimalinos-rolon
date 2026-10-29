@@ -584,7 +584,11 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
 
 `created` es `false` si la serie ya existía en esta sesión (se actualizó). `index` es la posición en `sets`. Los `id` vuelven en minúscula, aunque se hayan mandado en mayúscula.
 
-**Qué hace el cliente con la respuesta:** un 200 no significa que todo se sincronizó. Las series en `failed` con `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND` o `SET_ID_CONFLICT` son **permanentes**: reenviarlas da lo mismo, así que no se reintentan para siempre (se descartan o se marcan como error local). Si falla el request entero (4xx/5xx o sin red), se reenvía **todo el lote**: es idempotente, no duplica nada.
+**Qué hace el cliente con la respuesta:** un 200 no significa que todo se sincronizó. Las series en `failed` con `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND` o `SET_ID_CONFLICT` son **permanentes**: reenviarlas da lo mismo, así que no se reintentan para siempre (se descartan o se marcan como error local). Si falla el request entero, depende del error:
+
+- **sin red o 5xx:** se reintenta **todo el lote** (es idempotente, no duplica nada);
+- **404 `SESSION_NOT_FOUND`:** la sesión todavía no se subió; primero `POST /sessions` y después las series;
+- **400 y 403:** no se reintentan (error del cliente o rol equivocado; reenviar da lo mismo).
 
 **Códigos por serie (`failed`)**
 
