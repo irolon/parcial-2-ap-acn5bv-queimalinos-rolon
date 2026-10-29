@@ -80,14 +80,14 @@ create table if not exists session_sets (
 );
 
 create index if not exists idx_session_sets_session on session_sets (session_id);
-create index if not exists idx_session_sets_exercise on session_sets (exercise_id);
 
+-- Curva de carga por ejercicio (tarjeta 32). Cubre también las consultas solo por exercise_id.
+create index if not exists idx_session_sets_exercise_session
+  on session_sets (exercise_id, session_id);
 
 -- ── Funciones de progreso (tarjeta 32) ───────────────────────────────────────
 -- Agregan en la base las series completadas de un alumno por día calendario
 -- argentino. security invoker + revoke: solo las ejecuta el backend (service_role).
-create index if not exists idx_session_sets_exercise_session
-  on session_sets (exercise_id, session_id);
 
 -- Un punto por día: mejor peso, volumen, 1RM estimado (Epley) y totales.
 create or replace function exercise_progress(
