@@ -71,9 +71,4 @@ describe('session-sets.service · addSets (lote)', () => {
     expect(mockRepo.findSetsByIds).not.toHaveBeenCalled();
     expect(mockRepo.upsertSets).not.toHaveBeenCalled();
   });
-
-  it('envelope inválido: VALIDATION_ERROR', async () => {
-    await expect(service.addSets(STUDENT_ID, SESSION_ID, { sets: [] }))
-      .rejects.toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
-  });
 });

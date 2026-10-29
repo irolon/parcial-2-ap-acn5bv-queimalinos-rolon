@@ -7,6 +7,7 @@ import {
   validateUpdateSession,
   validateSessionIdParam,
 } from '../../validations/sessions/sessions.validation.js';
+import { validateSetsEnvelope } from '../../validations/sessions/session-set.validation.js';
 import * as sessionsController from '../../controllers/sessions/sessions.controller.js';
 
 const router = Router();
@@ -21,6 +22,11 @@ router.patch(
   validate(validateUpdateSession),
   sessionsController.update
 );
-router.post('/:id/sets', validate(validateSessionIdParam, 'params'), sessionsController.addSets);
+router.post(
+  '/:id/sets',
+  validate(validateSessionIdParam, 'params'),
+  validate(validateSetsEnvelope),
+  sessionsController.addSets
+);
 
 export default router;

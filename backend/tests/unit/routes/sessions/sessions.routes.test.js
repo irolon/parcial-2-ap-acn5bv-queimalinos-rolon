@@ -30,4 +30,18 @@ describe('sessions.routes', () => {
     expect(routeOf('patch', '/:id')).toBeDefined();
     expect(routeOf('post', '/:id/sets')).toBeDefined();
   });
+
+  it('POST /:id/sets valida el envelope en el middleware, antes del controller', () => {
+    const handlers = routeOf('post', '/:id/sets').route.stack.map((l) => l.handle);
+    expect(handlers).toHaveLength(3);
+    const req = { body: { sets: [] }, params: {} };
+    let err;
+    handlers[1](req, {}, (e) => { err = e; });
+    expect(err).toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
+    const ok = { body: { sets: [{ id: 'x' }], extra: 1 } };
+    err = undefined;
+    handlers[1](ok, {}, (e) => { err = e; });
+    expect(err).toBeUndefined();
+    expect(ok.body).toEqual({ sets: [{ id: 'x' }] });
+  });
 });

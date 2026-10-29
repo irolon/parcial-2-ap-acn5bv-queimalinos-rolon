@@ -2,7 +2,6 @@ import { getOwnedSession } from './sessions.service.js';
 import * as setsRepo from '../../repositories/sessions/session-sets.repository.js';
 import { findAccessibleExerciseIds } from '../../repositories/routines/routines.repository.js';
 import { findStudentById } from '../../repositories/students/students.repository.js';
-import { validateSetsEnvelope } from '../../validations/sessions/session-set.validation.js';
 import { isSubstitution } from '../../models/sessions/session.model.js';
 import { parseBatch, failure } from './classify-sets.js';
 
@@ -44,9 +43,8 @@ async function resolveRoutineLinks(session, candidates) {
  * POST /sessions/:id/sets — lote idempotente (upsert por id). Las series
  * válidas se guardan aunque otras fallen; se aceptan en sesiones cerradas.
  */
-export async function addSets(studentId, sessionId, body) {
+export async function addSets(studentId, sessionId, { sets }) {
   const session = await getOwnedSession(studentId, sessionId);
-  const { sets } = validateSetsEnvelope(body);
 
   const { valid, failed } = parseBatch(sets);
   let candidates = valid;
