@@ -55,6 +55,17 @@ describe('session-history.service · getSessionDetail', () => {
     expect(d.exercises[1]).toMatchObject({ original_exercise: null, planned: null, is_pr: false });
   });
 
+  it('sin rutina (routine_id null): routine null y todo planned null', async () => {
+    mockRepo.findStudentSession.mockResolvedValueOnce(row(S1, { routine_id: null }));
+    mockRepo.findSetsForSessions.mockResolvedValueOnce([set('a', S1), set('b', S1, { exercise_id: 'e-2' })]);
+    mockRepo.findExercisesByIds.mockResolvedValueOnce([{ id: 'e-1', name: 'A' }, { id: 'e-2', name: 'B' }]);
+    const d = await service.getSessionDetail(USER, STUDENT_ID, S1);
+    expect(d.routine).toBeNull();
+    expect(mockRepo.findRoutinesByIds).not.toHaveBeenCalled();
+    expect(d.exercises).toHaveLength(2);
+    expect(d.exercises.every((e) => e.planned === null)).toBe(true);
+  });
+
   it('consultas por lote con los ids de las series', async () => {
     mockRepo.findSetsForSessions.mockResolvedValueOnce([
       set('a', S1, { exercise_id: 'e-2', original_exercise_id: 'e-1', routine_exercise_id: 're-1' }),

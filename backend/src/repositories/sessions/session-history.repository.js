@@ -16,6 +16,17 @@ const unwrap = ({ data, error }) => {
   return data;
 };
 
+// PostgREST corta en 1000 filas por respuesta: se pagina hasta una página corta.
+const PAGE = 1000;
+async function fetchAll(buildQuery) {
+  const out = [];
+  for (let from = 0; ; from += PAGE) {
+    const rows = unwrap(await buildQuery().range(from, from + PAGE - 1));
+    out.push(...rows);
+    if (rows.length < PAGE) return out;
+  }
+}
+
 /** Sesiones del alumno, más recientes primero. Devuelve { data, total }. */
 export async function findSessionsPage(studentId, { page, limit }) {
   const from = (page - 1) * limit;
@@ -24,6 +35,7 @@ export async function findSessionsPage(studentId, { page, limit }) {
     .select(HISTORY_COLUMNS, { count: 'exact' })
     .eq('student_id', studentId)
     .order('started_at', { ascending: false })
+    .order('id', { ascending: false })
     .range(from, from + limit - 1);
   if (error) throw Errors.internal(error.message);
   return { data, total: count ?? 0 };
@@ -43,15 +55,18 @@ export async function findStudentSession(studentId, sessionId) {
 
 /** Series de varias sesiones en una sola consulta. */
 export async function findSetsForSessions(sessionIds) {
-  return unwrap(
-    await supabase.from(SESSION_SETS_TABLE).select(SET_COLUMNS).in('session_id', sessionIds)
+  return fetchAll(() =>
+    supabase.from(SESSION_SETS_TABLE).select(SET_COLUMNS).in('session_id', sessionIds).order('id')
   );
 }
 
 /** Pares (session_id, exercise_id) con récord, vía la función SQL session_records. */
 export async function fetchSessionRecords(studentId, sessionIds) {
-  return unwrap(
-    await supabase.rpc('session_records', { p_student_id: studentId, p_session_ids: sessionIds })
+  return fetchAll(() =>
+    supabase
+      .rpc('session_records', { p_student_id: studentId, p_session_ids: sessionIds })
+      .order('session_id')
+      .order('exercise_id')
   );
 }
 

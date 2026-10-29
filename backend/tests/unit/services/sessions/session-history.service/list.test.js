@@ -54,6 +54,12 @@ describe('session-history.service · listSessions', () => {
     expect(data[1]).toMatchObject({ id: S2, sets: 1, volume_kg: 80, has_pr: false, routine: null });
   });
 
+  it('sesión sin cerrar (finished_at null): duration_min null', async () => {
+    mockRepo.findSessionsPage.mockResolvedValueOnce({ data: [row(S1, { finished_at: null })], total: 1 });
+    const { data } = await service.listSessions(USER, STUDENT_ID, { page: 1, limit: 20 });
+    expect(data[0]).toMatchObject({ finished_at: null, duration_min: null });
+  });
+
   it('rutina borrada (id sin fila): routine null', async () => {
     mockRepo.findSessionsPage.mockResolvedValueOnce({ data: [row(S1)], total: 1 });
     const { data } = await service.listSessions(USER, STUDENT_ID, { page: 1, limit: 20 });
