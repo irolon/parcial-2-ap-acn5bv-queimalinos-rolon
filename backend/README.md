@@ -155,13 +155,16 @@ Plantilla ajena o inexistente → 404 `TEMPLATE_NOT_FOUND`. `instantiate` respon
 
 ### Sesiones — Fase 3
 
-Solo rol `student`; el `student_id` sale del token. Sesión ajena o inexistente → 404 `SESSION_NOT_FOUND`.
+Escritura del alumno: solo rol `student`; el `student_id` sale del token. Sesión ajena o inexistente → 404 `SESSION_NOT_FOUND`.
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
 | POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
 | PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
+| GET | `/api/students/:id/sessions?page=&limit=` | Historial paginado `{ data, meta }`, más recientes primero (trainer: sus alumnos; student: él mismo): `routine`, `duration_min`, `sets`, `volume_kg`, `has_pr`, `trainer_comment` |
+| GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
+| PATCH | `/api/sessions/:id/comment` | Solo `trainer`: `{ trainer_comment }` (≤ 1000 o `null`; `""` borra) en una sesión de sus alumnos (ajena o inexistente: 404). Devuelve el resumen; el alumno lo ve en su historial |
 
 ### Autenticación
 
@@ -244,7 +247,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **Series en lote:** el contrato decía `POST /session-sets`; ahora es `POST /sessions/:id/sets` con `{ "sets": [...] }` (1 a 100) y respuesta `{ saved, failed }`. El `id` de cada serie lo genera el celular.
 - **Sustitución:** `substituted_exercise_id` se reemplaza por `exercise_id` (lo realmente hecho) + `original_exercise_id` (lo planificado).
 - **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
-- Pendiente (tarjeta 12): `GET /students/:id/sessions` y `PATCH /sessions/:id/comment`.
+- **Historial:** `GET /students/:id/sessions`, `GET /students/:id/sessions/:sessionId` y `PATCH /sessions/:id/comment` (solo `trainer`); ver el contrato.
 
 ### Ejercicios (`/exercises`)
 
