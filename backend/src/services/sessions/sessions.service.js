@@ -14,8 +14,9 @@ export async function getOwnedSession(studentId, sessionId) {
 }
 
 /**
- * Reintento (el id ya existe): solo completa finished_at / rpe / notes que
- * vengan. started_at y routine_id quedan como estaban, sin validarse. Un
+ * Reintento (el id ya existe): solo completa los finished_at / rpe / notes que
+ * vengan Y que estén en null en la base; nunca pisa un valor guardado (las
+ * correcciones van por PATCH). started_at y routine_id quedan como estaban, sin validarse. Un
  * finished_at anterior al started_at guardado se ignora (sin error), para no
  * perder el rpe y las notas del mismo request.
  */
@@ -24,7 +25,8 @@ async function applyRetry(studentId, body, existing) {
 
   const changes = {};
   for (const field of RETRY_UPDATABLE) {
-    if (body[field] !== null && body[field] !== undefined) changes[field] = body[field];
+    const incoming = body[field];
+    if (incoming !== null && incoming !== undefined && existing[field] === null) changes[field] = incoming;
   }
   if (changes.finished_at && Date.parse(changes.finished_at) < Date.parse(existing.started_at)) {
     delete changes.finished_at;

@@ -538,7 +538,7 @@ Inicia (o cierra, o reintenta) una sesión. Solo alumnos; el `student_id` sale d
 
 - **`routine_id`:** si no es una rutina del alumno (ajena, o borrada antes de que el celular sincronice) la sesión se guarda con `routine_id = null`; el request no se rechaza.
 - **201** `{ data: session }` si el `id` es nuevo.
-- **200** si el `id` ya existe y es del alumno (reintento): se actualizan `finished_at`, `rpe` y `notes` si vienen; `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran). Un `finished_at` anterior al `started_at` guardado se ignora y se guardan los demás campos.
+- **200** si el `id` ya existe y es del alumno (reintento): se completan `finished_at`, `rpe` y `notes` que vengan **solo si en la base están en `null`**: nunca se pisa un valor ya guardado (las correcciones van por `PATCH`), y si no hay nada para completar se devuelve la sesión tal cual. `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran). Un `finished_at` anterior al `started_at` guardado se ignora y se guardan los demás campos.
 - **409** `SESSION_ID_CONFLICT` si el `id` es de otro alumno.
 
 `session` = `{ id, student_id, routine_id, started_at, finished_at, rpe, notes, has_modifications }`.

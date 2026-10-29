@@ -35,7 +35,7 @@ Body:
 - `routine_id`, si viene, tiene que ser una rutina **del alumno** (activa o no); si no lo es (ajena, o borrada antes de que el celular sincronice), la sesión se guarda con `routine_id = null` — nunca se enlaza una rutina ajena y nunca se pierde la sesión ("ante la duda, guardá").
 - **Idempotente por `id`:**
   - no existe → se crea → **201** `{ data: session }`;
-  - existe y es del alumno → **200**: se actualizan `finished_at`, `rpe`, `notes` si vienen; `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran, sin error, y `routine_id` no se valida); si el `finished_at` del reintento es anterior al `started_at` guardado, se ignora ese campo y se guardan los demás;
+  - existe y es del alumno → **200**: se completan `finished_at`, `rpe`, `notes` que vengan **y estén en `null` en la base** (nunca se pisa un valor guardado: las correcciones van por `PATCH`; si no hay nada para completar no se actualiza y se devuelve lo guardado); `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran, sin error, y `routine_id` no se valida); si el `finished_at` del reintento es anterior al `started_at` guardado, se ignora ese campo y se guardan los demás;
   - existe y es de otro alumno → **409** `SESSION_ID_CONFLICT`.
 
 ### 3.2 `POST /api/sessions/:id/sets`

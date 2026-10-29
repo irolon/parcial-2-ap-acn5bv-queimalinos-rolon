@@ -94,6 +94,25 @@ describe('sessions.service · create', () => {
       expect(result.created).toBe(false);
     });
 
+    it('rpe ya guardado: el reintento con otro rpe no lo pisa ni llama a update', async () => {
+      const stored = { ...STORED, rpe: 8 };
+      mockRepo.findSessionById.mockResolvedValueOnce(stored);
+      const result = await service.create(STUDENT_ID, { ...BODY, rpe: 7 });
+      expect(mockRepo.updateSession).not.toHaveBeenCalled();
+      expect(result).toEqual({ session: stored, created: false });
+    });
+
+    it('completa solo los campos null guardados (finished_at) y respeta los demás', async () => {
+      mockRepo.findSessionById.mockResolvedValueOnce({ ...STORED, rpe: 8 });
+      mockRepo.updateSession.mockResolvedValueOnce(STORED);
+      await service.create(STUDENT_ID, {
+        ...BODY, finished_at: '2026-10-27T11:00:00-03:00', rpe: 7, notes: 'n',
+      });
+      expect(mockRepo.updateSession).toHaveBeenCalledWith(SESSION_ID, {
+        finished_at: '2026-10-27T11:00:00-03:00', notes: 'n',
+      });
+    });
+
     it('sin campos nuevos no llama a updateSession y devuelve lo guardado', async () => {
       mockRepo.findSessionById.mockResolvedValueOnce(STORED);
       const result = await service.create(STUDENT_ID, BODY);
