@@ -650,7 +650,7 @@ Roles `trainer` y `student`. La autorización vive en el service (ADR 0001). Mé
 
 Curva de carga de un ejercicio: un punto por día con series que cuentan (`completed` y `actual_reps > 0`), agrupado por día calendario argentino de `sessions.started_at`.
 
-**Query:** `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, hora argentina).
+**Query:** `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, hora argentina). `from` y `to` son opcionales (omitidos → todo el historial). Un UUID o una fecha mal formados → 400 `VALIDATION_ERROR`.
 
 - **Alumno:** `student_id` opcional (por defecto, él mismo); el de otro alumno → 403.
 - **Trainer:** `student_id` obligatorio (400 `VALIDATION_ERROR` si falta) y tiene que ser alumno suyo (si no, 403).
@@ -664,11 +664,12 @@ Curva de carga de un ejercicio: un punto por día con series que cuentan (`compl
   "data": {
     "exercise": { "id": "uuid", "name": "Press de banca", "muscle_group": "chest" },
     "points": [
-      { "date": "2026-10-20", "max_kg": 62.5, "volume_kg": 1875, "e1rm_kg": 79.2, "sets": 3, "reps": 30 }
+      { "date": "2026-10-20", "max_kg": 62.5, "volume_kg": 1875, "e1rm_kg": 83.3, "sets": 3, "reps": 30 },
+      { "date": "2026-10-27", "max_kg": 70, "volume_kg": 1680, "e1rm_kg": 88.7, "sets": 3, "reps": 24 }
     ],
     "pr": {
-      "max_kg": { "value": 75, "date": "2026-12-01" },
-      "e1rm_kg": { "value": 90.0, "date": "2026-12-01" }
+      "max_kg": { "value": 70, "date": "2026-10-27" },
+      "e1rm_kg": { "value": 88.7, "date": "2026-10-27" }
     },
     "default_metric": "e1rm_kg"
   }
@@ -692,14 +693,19 @@ Evolución corporal. Mismo permiso que `GET /students/:id/metrics` (alumno a sí
     "points": [ { "id": "uuid", "recorded_at": "2026-10-01T12:00:00Z", "weight_kg": 80, "bmi": 24.9 } ],
     "summary": {
       "weight_kg": { "first": 80, "last": 76.5, "delta": -3.5 },
-      "body_fat_pct": null
+      "height_cm": { "first": 180, "last": 180, "delta": 0 },
+      "body_fat_pct": null,
+      "waist_cm": null,
+      "hip_cm": null,
+      "chest_cm": null,
+      "bmi": { "first": 24.7, "last": 23.6, "delta": -1.1 }
     }
   }
 }
 ```
 
-- `points`: el historial de medidas igual que `GET /students/:id/metrics` (ascendente, con `bmi`).
-- `summary`: por cada campo de medida y `bmi`, primer y último valor no nulo y su diferencia (1 decimal); `null` si el campo nunca se cargó. Sin medidas: `points: []` y cada campo `null`.
+- `points`: filas iguales a las de `GET /students/:id/metrics` (todas las columnas de medida, ascendente, con `bmi`).
+- `summary`: claves `weight_kg`, `height_cm`, `body_fat_pct`, `waist_cm`, `hip_cm`, `chest_cm` y `bmi`; todas siempre presentes, con `null` (el campo nunca se cargó) o `{ first, last, delta }` (primer y último valor no nulo, diferencia a 1 decimal). Sin medidas: `points: []` y las siete claves `null`.
 
 ---
 

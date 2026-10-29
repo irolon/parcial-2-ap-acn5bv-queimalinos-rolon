@@ -7,7 +7,7 @@ tags: [arquitectura, adr]
 
 # ADR 0004 — La curva de progreso usa el 1RM estimado (Epley)
 
-- **Estado:** aceptada
+- **Estado:** aceptado
 - **Fecha:** 2026-10-29
 
 ## Contexto
@@ -56,6 +56,8 @@ y cuál se grafica por defecto.
   defecto es un cambio de `default_metric`, sin tocar la base.
 - La sustitución de ejercicios se resuelve por lo realmente hecho: la curva de X
   usa `exercise_id = X`, así que la serie sustituida no ensucia al original.
+- La consulta de la curva usa `idx_session_sets_exercise_session (exercise_id, session_id)`;
+  el índice viejo `(exercise_id)` se borró por redundante.
 - `last_session_kg` de `GET /routines/today` usa la misma regla de "series que
   cuentan" y se resuelve con la función `last_session_kg`, en una sola consulta
   por rutina.

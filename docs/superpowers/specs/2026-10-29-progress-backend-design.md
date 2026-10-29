@@ -27,7 +27,7 @@ Convertir las series de `session_sets` en la curva de carga de cada ejercicio y 
 
 ### 3.1 `GET /api/progress/exercise/:exerciseId`
 
-Query: `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, en hora argentina).
+Query: `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, en hora argentina). `from` y `to` son opcionales (omitidos → todo el historial). UUID o fecha mal formados → 400 `VALIDATION_ERROR`.
 
 - **Alumno:** `student_id` opcional (por defecto él mismo); si es de otro alumno → 403.
 - **Entrenador:** `student_id` obligatorio (400 `VALIDATION_ERROR` si falta); tiene que ser alumno suyo → si no, 403 (`assertCanAccessStudent`).
@@ -40,9 +40,10 @@ Respuesta 200:
 { "data": {
   "exercise": { "id": "uuid", "name": "Press de banca", "muscle_group": "chest" },
   "points": [
-    { "date": "2026-10-20", "max_kg": 62.5, "volume_kg": 1875, "e1rm_kg": 79.2, "sets": 3, "reps": 30 }
+    { "date": "2026-10-20", "max_kg": 62.5, "volume_kg": 1875, "e1rm_kg": 83.3, "sets": 3, "reps": 30 },
+    { "date": "2026-10-27", "max_kg": 70, "volume_kg": 1680, "e1rm_kg": 88.7, "sets": 3, "reps": 24 }
   ],
-  "pr": { "max_kg": { "value": 75, "date": "2026-12-01" }, "e1rm_kg": { "value": 90.0, "date": "2026-12-01" } },
+  "pr": { "max_kg": { "value": 70, "date": "2026-10-27" }, "e1rm_kg": { "value": 88.7, "date": "2026-10-27" } },
   "default_metric": "e1rm_kg"
 } }
 ```
@@ -62,7 +63,7 @@ Mismo permiso que `GET /students/:id/metrics` (alumno a sí mismo, entrenador a 
 } }
 ```
 
-`summary` por cada campo de medida y `bmi`: primer y último valor no nulo del historial y su diferencia (1 decimal); `null` si el campo nunca se cargó. Sin medidas → `points: []` y cada campo `null`.
+`summary` tiene siempre las claves `weight_kg`, `height_cm`, `body_fat_pct`, `waist_cm`, `hip_cm`, `chest_cm` y `bmi`; las filas de `points` son las de `GET /students/:id/metrics` (todas las columnas de medida). Por cada clave: primer y último valor no nulo del historial y su diferencia (1 decimal); `null` si el campo nunca se cargó. Sin medidas → `points: []` y cada campo `null`.
 
 ### 3.3 `last_session_kg` en `GET /api/routines/today`
 
