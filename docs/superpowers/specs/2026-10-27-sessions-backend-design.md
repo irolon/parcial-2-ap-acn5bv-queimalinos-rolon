@@ -94,8 +94,11 @@ Body con al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1�
   1. validar cada serie (las inválidas a `failed`);
   2. traer en una consulta las filas existentes con esos `id` → conflicto si `session_id` ≠ la sesión;
   3. validar ejercicios y `routine_exercise_id` en dos consultas (no una por serie);
-  4. **un solo upsert** (`onConflict: 'id'`) con las válidas, que en Postgres es atómico;
-  5. si alguna guardada es sustitución, `update sessions set has_modifications = true`.
+  4. guardar sin pisar filas de otra sesión, aunque aparezcan entre la lectura (paso 2) y la escritura:
+     - las **no encontradas** en el paso 2 se insertan con `upsert(..., { onConflict: 'id', ignoreDuplicates: true }).select('id')`; los ids devueltos son `created: true`;
+     - las **encontradas en esta sesión** se actualizan una a una con `.update(campos).eq('id', id).eq('session_id', sesión).select('id')` (en paralelo, máx. 100); la que devuelve fila es `created: false`;
+     - lo que no se insertó ni se actualizó (apareció en otra sesión, o en esta, mientras tanto) va a `failed` como `SET_ID_CONFLICT`; el reintento del lote completo lo encuentra en el paso 2 como existente en esta sesión y lo actualiza;
+  5. si alguna serie **guardada** es sustitución, `update sessions set has_modifications = true`.
 - Errores nuevos en `shared/utils/errors.js`: `SESSION_NOT_FOUND` (404), `SESSION_ID_CONFLICT` (409); códigos por serie `SET_ID_CONFLICT`, `EXERCISE_NOT_FOUND`, `VALIDATION_ERROR` (un `routine_exercise_id` inválido no es error: se guarda `null`).
 - Los helpers de UUID y fecha ISO de `validations/body-metrics` pasan a `shared/utils` si se reutilizan.
 
@@ -116,5 +119,5 @@ Body con al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1�
 ## 7. Verificación
 
 - `npm run lint` y `npm test` en `backend/`.
-- Tests unitarios: validaciones; service con propiedad (sesión ajena = 404, id de otro alumno = 409); **el mismo lote dos veces no duplica** (upsert, `created` false la segunda vez); corrección de una serie; series mixtas válidas e inválidas; `SET_ID_CONFLICT`; ejercicio ajeno; `routine_exercise_id` de otra rutina; sustitución → `has_modifications`; sesión cerrada acepta series; PATCH.
+- Tests unitarios: validaciones; service con propiedad (sesión ajena = 404, id de otro alumno = 409); **el mismo lote dos veces no duplica** (la segunda vez actualiza por sesión, `created` false); carrera: insert que devuelve menos ids o update sin fila → `SET_ID_CONFLICT`; corrección de una serie; series mixtas válidas e inválidas; `SET_ID_CONFLICT`; ejercicio ajeno; `routine_exercise_id` de otra rutina; sustitución → `has_modifications`; sesión cerrada acepta series; PATCH.
 - **Contra el backend real y Supabase dev**, con un alumno de prueba: crear la sesión, subir **24 series en un request**, contarlas en la base; reenviar el lote y volver a contar (24); una sustitución deja `has_modifications = true`; reenviar `POST /sessions` con `finished_at` la cierra.

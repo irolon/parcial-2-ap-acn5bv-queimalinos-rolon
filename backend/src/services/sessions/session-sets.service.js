@@ -4,6 +4,7 @@ import { findAccessibleExerciseIds } from '../../repositories/routines/routines.
 import { findStudentById } from '../../repositories/students/students.repository.js';
 import { isSubstitution } from '../../models/sessions/session.model.js';
 import { parseBatch, failure } from './classify-sets.js';
+import { persistSets } from './persist-sets.js';
 
 /** Ejercicios que el alumno puede ver: un fallo por serie con alguno inaccesible. */
 async function checkExercises(studentId, candidates, failed) {
@@ -40,7 +41,7 @@ async function resolveRoutineLinks(session, candidates) {
 }
 
 /**
- * POST /sessions/:id/sets — lote idempotente (upsert por id). Las series
+ * POST /sessions/:id/sets — lote idempotente por id. Las series
  * válidas se guardan aunque otras fallen; se aceptan en sesiones cerradas.
  */
 export async function addSets(studentId, sessionId, { sets }) {
@@ -48,7 +49,7 @@ export async function addSets(studentId, sessionId, { sets }) {
 
   const { valid, failed } = parseBatch(sets);
   let candidates = valid;
-  const created = new Map();
+  const existingIds = new Set();
 
   if (candidates.length > 0) {
     const existing = new Map(
@@ -60,7 +61,7 @@ export async function addSets(studentId, sessionId, { sets }) {
         failed.push(failure(value.id, index, 'SET_ID_CONFLICT', 'Ya existe una serie con ese id'));
         return false;
       }
-      created.set(value.id, owner === undefined);
+      if (owner !== undefined) existingIds.add(value.id);
       return true;
     });
   }
@@ -68,12 +69,11 @@ export async function addSets(studentId, sessionId, { sets }) {
   if (candidates.length === 0) return { saved: [], failed: sortByIndex(failed) };
 
   await resolveRoutineLinks(session, candidates);
-  const rows = candidates.map(({ value }) => ({ ...value, session_id: session.id }));
-  await setsRepo.upsertSets(rows);
-  if (rows.some(isSubstitution)) await setsRepo.markSessionModified(session.id);
+  const saved = await persistSets(session.id, candidates, existingIds, failed);
+  if (saved.some(({ value }) => isSubstitution(value))) await setsRepo.markSessionModified(session.id);
 
   return {
-    saved: rows.map(({ id }) => ({ id, created: created.get(id) })),
+    saved: saved.map(({ value, created }) => ({ id: value.id, created })),
     failed: sortByIndex(failed),
   };
 }

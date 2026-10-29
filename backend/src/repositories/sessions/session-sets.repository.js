@@ -27,14 +27,32 @@ export async function findRoutineExerciseIds(routineId, ids) {
   return data.map((row) => row.id);
 }
 
-/** Inserta o actualiza las series por id en una sola sentencia (atómica). */
-export async function upsertSets(rows) {
+/**
+ * Inserta las series nuevas sin pisar nada: si un id ya existe (apareció entre
+ * la lectura y la escritura) se saltea. Devuelve los ids realmente insertados.
+ */
+export async function insertNewSets(rows) {
   const { data, error } = await supabase
     .from(SESSION_SETS_TABLE)
-    .upsert(rows, { onConflict: 'id' })
+    .upsert(rows, { onConflict: 'id', ignoreDuplicates: true })
     .select('id');
   if (error) throw Errors.internal(error.message);
-  return data;
+  return data.map((row) => row.id);
+}
+
+/**
+ * Actualiza una serie solo si sigue siendo de esa sesión (nunca toca session_id).
+ * Devuelve true si la actualizó.
+ */
+export async function updateSetInSession(sessionId, id, fields) {
+  const { data, error } = await supabase
+    .from(SESSION_SETS_TABLE)
+    .update(fields)
+    .eq('id', id)
+    .eq('session_id', sessionId)
+    .select('id');
+  if (error) throw Errors.internal(error.message);
+  return data.length > 0;
 }
 
 /** Marca la sesión con sustituciones; nunca vuelve a false. */

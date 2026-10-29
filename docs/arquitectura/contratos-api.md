@@ -596,7 +596,7 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
 |---|---|
 | `VALIDATION_ERROR` | datos inválidos (el mensaje nombra el campo) o `id` repetido dentro del lote |
 | `EXERCISE_NOT_FOUND` | `exercise_id` u `original_exercise_id` que el alumno no puede ver (ni globales ni de su entrenador) |
-| `SET_ID_CONFLICT` | el `id` ya existe en **otra** sesión; no se toca la fila |
+| `SET_ID_CONFLICT` | el `id` ya existe en **otra** sesión (o apareció en otra mientras se guardaba el lote); no se toca la fila |
 
 Un `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesión no tiene rutina) **no falla**: la serie se guarda con `routine_exercise_id = null`.
 

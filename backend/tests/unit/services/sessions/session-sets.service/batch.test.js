@@ -7,10 +7,11 @@ import {
 beforeEach(() => { jest.resetAllMocks(); arrange(); });
 
 describe('session-sets.service · addSets (lote)', () => {
-  it('24 series válidas: un solo upsert con 24 filas, todas created: true', async () => {
+  it('24 series nuevas: un solo insert con 24 filas, todas created: true', async () => {
     const res = await service.addSets(STUDENT_ID, SESSION_ID, { sets: batch(24) });
-    expect(mockRepo.upsertSets).toHaveBeenCalledTimes(1);
-    const rows = mockRepo.upsertSets.mock.calls[0][0];
+    expect(mockRepo.insertNewSets).toHaveBeenCalledTimes(1);
+    expect(mockRepo.updateSetInSession).not.toHaveBeenCalled();
+    const rows = mockRepo.insertNewSets.mock.calls[0][0];
     expect(rows).toHaveLength(24);
     expect(rows.every((r) => r.session_id === SESSION_ID)).toBe(true);
     expect(res.saved).toHaveLength(24);
@@ -18,11 +19,13 @@ describe('session-sets.service · addSets (lote)', () => {
     expect(res.failed).toEqual([]);
   });
 
-  it('reenviar el mismo lote (ya existe en esta sesión): upsert de 24, todas created: false', async () => {
+  it('reenviar el mismo lote (ya existe en esta sesión): 24 updates por sesión, sin insert, created: false', async () => {
     const sets = batch(24);
     arrange({ existing: sets.map((s) => ({ id: s.id, session_id: SESSION_ID })) });
     const res = await service.addSets(STUDENT_ID, SESSION_ID, { sets });
-    expect(mockRepo.upsertSets.mock.calls[0][0]).toHaveLength(24);
+    expect(mockRepo.insertNewSets).not.toHaveBeenCalled();
+    expect(mockRepo.updateSetInSession).toHaveBeenCalledTimes(24);
+    expect(mockRepo.updateSetInSession.mock.calls.every(([sid]) => sid === SESSION_ID)).toBe(true);
     expect(res.saved).toHaveLength(24);
     expect(res.saved.every((s) => s.created === false)).toBe(true);
   });
@@ -31,7 +34,12 @@ describe('session-sets.service · addSets (lote)', () => {
     const original = rawSet(1);
     arrange({ existing: [{ id: original.id, session_id: SESSION_ID }] });
     await service.addSets(STUDENT_ID, SESSION_ID, { sets: [{ ...original, actual_kg: 42.5 }] });
-    expect(mockRepo.upsertSets.mock.calls[0][0][0]).toMatchObject({ id: original.id, actual_kg: 42.5 });
+    expect(mockRepo.updateSetInSession).toHaveBeenCalledWith(
+      SESSION_ID, original.id, expect.objectContaining({ actual_kg: 42.5 })
+    );
+    const fields = mockRepo.updateSetInSession.mock.calls[0][2];
+    expect(fields).not.toHaveProperty('id');
+    expect(fields).not.toHaveProperty('session_id');
   });
 
   it('id en mayúsculas existente en minúsculas: es la misma serie (created: false)', async () => {
@@ -53,7 +61,7 @@ describe('session-sets.service · addSets (lote)', () => {
 
   it('id repetido dentro del lote: la segunda va a failed', async () => {
     const res = await service.addSets(STUDENT_ID, SESSION_ID, { sets: [rawSet(1), rawSet(1)] });
-    expect(mockRepo.upsertSets.mock.calls[0][0]).toHaveLength(1);
+    expect(mockRepo.insertNewSets.mock.calls[0][0]).toHaveLength(1);
     expect(res.saved).toHaveLength(1);
     expect(res.failed).toEqual([expect.objectContaining({ id: setId(1), index: 1, code: 'VALIDATION_ERROR' })]);
   });
@@ -69,6 +77,6 @@ describe('session-sets.service · addSets (lote)', () => {
     await expect(service.addSets(STUDENT_ID, SESSION_ID, { sets: [rawSet(1)] }))
       .rejects.toMatchObject({ code: 'SESSION_NOT_FOUND' });
     expect(mockRepo.findSetsByIds).not.toHaveBeenCalled();
-    expect(mockRepo.upsertSets).not.toHaveBeenCalled();
+    expect(mockRepo.insertNewSets).not.toHaveBeenCalled();
   });
 });

@@ -10,7 +10,8 @@ export const mockSessions = { getOwnedSession: jest.fn() };
 export const mockRepo = {
   findSetsByIds: jest.fn(),
   findRoutineExerciseIds: jest.fn(),
-  upsertSets: jest.fn(),
+  insertNewSets: jest.fn(),
+  updateSetInSession: jest.fn(),
   markSessionModified: jest.fn(),
 };
 export const mockRoutinesRepo = { findAccessibleExerciseIds: jest.fn() };
@@ -60,6 +61,7 @@ export function arrange({
   mockRepo.findSetsByIds.mockResolvedValue(existing);
   mockRoutinesRepo.findAccessibleExerciseIds.mockResolvedValue(accessible);
   mockRepo.findRoutineExerciseIds.mockResolvedValue(routineExercises);
-  mockRepo.upsertSets.mockImplementation(async (rows) => rows.map((r) => ({ id: r.id })));
+  mockRepo.insertNewSets.mockImplementation(async (rows) => rows.map((r) => r.id));
+  mockRepo.updateSetInSession.mockResolvedValue(true);
   mockRepo.markSessionModified.mockResolvedValue();
 }
