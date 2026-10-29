@@ -153,6 +153,16 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 
 Plantilla ajena o inexistente → 404 `TEMPLATE_NOT_FOUND`. `instantiate` responde 409 `TEMPLATE_STRUCTURE_INVALID` si la plantilla está incompleta (cargada por otra vía) y 409 `TEMPLATE_EXERCISES_UNAVAILABLE` si algún ejercicio ya no está disponible. Los errores de `from-routine` salen con `field: "routine_id"`. El `order` de los ejercicios se renumera 0..n-1.
 
+### Sesiones — Fase 3
+
+Solo rol `student`; el `student_id` sale del token. Sesión ajena o inexistente → 404 `SESSION_NOT_FOUND`.
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
+| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
+| PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
+
 ### Autenticación
 
 - **Access token:** JWT firmado con `JWT_SECRET` (`{ sub, role, email }`), expira según `JWT_EXPIRES_IN`.
@@ -228,6 +238,13 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
   - borrado con `DELETE`;
   - el IMC no se calcula en la web: se usa el `bmi` de la respuesta.
 - **Login web:** si el login de un alumno responde `ACCOUNT_DISABLED`, mostrar "Tu entrenador dio de baja tu cuenta". Si el refresh falla (`401`), tratarlo como cierre de sesión: el mensaje aparece en el próximo login.
+
+### Sesiones (`/sessions`)
+
+- **Series en lote:** el contrato decía `POST /session-sets`; ahora es `POST /sessions/:id/sets` con `{ "sets": [...] }` (1 a 100) y respuesta `{ saved, failed }`. El `id` de cada serie lo genera el celular.
+- **Sustitución:** `substituted_exercise_id` se reemplaza por `exercise_id` (lo realmente hecho) + `original_exercise_id` (lo planificado).
+- **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
+- Pendiente (tarjeta 12): `GET /students/:id/sessions` y `PATCH /sessions/:id/comment`.
 
 ### Ejercicios (`/exercises`)
 

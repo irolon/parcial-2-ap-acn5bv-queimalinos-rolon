@@ -70,11 +70,12 @@ Alumno (mobile)     Backend           Supabase        Cache local
    |                 |--INSERT sessions--------------->|  |
    |<-session_id--------------------|                  |  |
    |                 |                  |                  |
-   | [loop — por cada serie]           |                  |
-   |--POST /session-sets------------>|  |                  |
-   |                 |--INSERT session_sets---------->|   |
-   |<-ok → inicia timer descanso----|                  |   |
-   | [fin loop]      |                  |                  |
+   | [offline — por cada serie: se guarda en el celular y arranca el timer de descanso] |
+   |                 |                  |                  |
+   | [al sincronizar — un solo request]|                  |
+   |--POST /sessions/:id/sets { sets: [...] }->|          |
+   |                 |--UPSERT session_sets---------->|   |
+   |<-{ saved, failed }-------------|                  |   |
    |                 |                  |                  |
    |--PATCH /sessions/:id----------->|  |                  |
    |                 |--UPDATE finished_at, rpe------>|   |

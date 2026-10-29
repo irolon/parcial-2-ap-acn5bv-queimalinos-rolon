@@ -157,8 +157,9 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 |---|---|---|
 | id | uuid | PK |
 | session_id | uuid | FK → sessions |
-| routine_exercise_id | uuid | FK → routine_exercises |
-| substituted_exercise_id | uuid | FK → exercises (null si no hubo sustitución) |
+| exercise_id | uuid | FK → exercises (ejercicio realmente ejecutado) |
+| original_exercise_id | uuid | FK → exercises (el planificado; null si no hubo sustitución) |
+| routine_exercise_id | uuid | FK → routine_exercises (opcional, set null) |
 | set_number | int | |
 | actual_reps | int | reps reales ejecutadas |
 | actual_kg | numeric | peso real usado |
@@ -303,6 +304,6 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 > **Notas:**
 > - La tabla `routine_exercises` es la pivote de la relación N:M entre `routines` y `exercises`. Allí van los parámetros específicos de cada ejercicio dentro de una rutina (series, reps, descanso, peso sugerido).
 > - La tabla `session_sets` es donde se persiste todo lo que el alumno ejecutó realmente — es la fuente de verdad para el historial de progreso.
-> - `substituted_exercise_id` en `session_sets` permite registrar cuando el alumno reemplaza un ejercicio por otro durante la sesión (sugerido por el asistente IA o por decisión propia). Cuando esto ocurre, `sessions.has_modifications = true` y el PT recibe una notificación.
+> - `original_exercise_id` (junto con `exercise_id`) en `session_sets` permite registrar cuando el alumno reemplaza un ejercicio por otro durante la sesión (sugerido por el asistente IA o por decisión propia). Cuando esto ocurre, `sessions.has_modifications = true` y el PT recibe una notificación (llega con la tarjeta 20, push).
 > - `routine_templates` puede ser creada manualmente o por el asistente IA del entrenador (campo `generated_by_ai`). Esto permite reutilizar y refinar rutinas exitosas.
 > - El sistema de gamificación se compone de logros (catálogo + tabla pivote por alumno) y challenges (objetivos con plazo). Los logros se desbloquean por triggers post-sesión; los challenges se evalúan en un cron diario.

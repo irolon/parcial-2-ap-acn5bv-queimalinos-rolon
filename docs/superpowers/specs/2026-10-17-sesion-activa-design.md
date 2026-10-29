@@ -222,6 +222,8 @@ No se implementa acá. Es lo que va a mandar la tarjeta 11, para que Pablo arme 
 - Los dos son **idempotentes por `id`**: reenviar el mismo id no duplica, y una corrección posterior actualiza la fila.
 - Las fechas van en ISO 8601 UTC.
 
+> **Nota (tarjeta 29, backend):** el backend recibe las series en lote, no una por request: `POST /sessions/:id/sets` con `{ "sets": [...] }` (1 a 100) y responde `{ saved, failed }`. Detalle y manejo de errores en [`contratos-api.md`](../../arquitectura/contratos-api.md) (sección POST /sessions/:id/sets).
+
 ## 9. Fuera de alcance
 
 - Subir las sesiones al backend (tarjeta 11).
