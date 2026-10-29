@@ -1,4 +1,5 @@
 import { errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
+import { sessionsRoute } from '../sessions/sessions';
 
 const NOT_HANDLED = () => errorResponse(500, 'INTERNAL', 'Sin handler');
 
@@ -11,9 +12,21 @@ export const daysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
  * Stub de la API de alumnos sobre `stubFetch`.
  * - `list`: respuesta de `GET /students` (activos); `disabled`: la de `?active=false` (o funciones que la arman en cada GET).
  * - `detail`: ficha de `GET /students/:id` (o función que la arma en cada GET) (`detailError`: status de error, 403 o 400 con `:id` inválido); `metrics`: respuesta de `GET /students/:id/metrics`.
+ * - `sessions`, `sessionDetails`, `handlers.comment`: historial de sesiones (ver `sessionsRoute`); por defecto, vacío.
  * - `handlers`: `{ update, createMetric, deleteMetric }` para el resto; lo que no se maneja devuelve 500.
  */
-export function stubStudents({ list = [], disabled = [], detail, detailError, metrics = [], metricsError, handlers = {} } = {}) {
+export function stubStudents({
+  list = [],
+  disabled = [],
+  detail,
+  detailError,
+  metrics = [],
+  metricsError,
+  sessions,
+  sessionDetails,
+  handlers = {},
+} = {}) {
+  const sessionsHandler = sessionsRoute({ sessions, details: sessionDetails, comment: handlers.comment });
   return stubFetch(async (url, init = {}) => {
     const method = init.method ?? 'GET';
     const path = url.replace(/^.*\/api/, '');
@@ -34,6 +47,8 @@ export function stubStudents({ list = [], disabled = [], detail, detailError, me
     if (method === 'GET' && /^\/students\/[^/?]+$/.test(path) && detail) {
       return jsonResponse(200, { data: typeof detail === 'function' ? detail() : detail });
     }
+    const sessionsResponse = await sessionsHandler(method, path, init, url);
+    if (sessionsResponse) return sessionsResponse;
     const byMethod = { PATCH: handlers.update, POST: handlers.createMetric, DELETE: handlers.deleteMetric };
     return (byMethod[method] ?? NOT_HANDLED)(init, url);
   });

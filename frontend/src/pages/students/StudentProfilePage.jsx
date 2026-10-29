@@ -4,6 +4,7 @@ import { UserX } from 'lucide-react';
 import AnthropometryCard from '@/components/body-metrics/AnthropometryCard';
 import MetricsHistory from '@/components/body-metrics/MetricsHistory';
 import WeightChart from '@/components/body-metrics/WeightChart';
+import SessionsHistory from '@/components/sessions/SessionsHistory';
 import EmptyState from '@/components/shared/states/EmptyState';
 import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
@@ -103,6 +104,7 @@ export default function StudentProfilePage() {
                 </>
               )}
               <ActiveRoutineCard routine={data.active_routine} />
+              <SessionsHistory studentId={id} />
             </div>
           </div>
           <StudentDialogs dialog={dialog} student={data} metrics={metrics} onClose={close} />

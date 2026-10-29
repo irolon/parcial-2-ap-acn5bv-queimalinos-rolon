@@ -1,0 +1,42 @@
+import Button from '@/components/shared/ui/Button';
+import Card from '@/components/shared/ui/Card';
+import EmptyState from '@/components/shared/states/EmptyState';
+import ErrorState from '@/components/shared/states/ErrorState';
+import LoadingState from '@/components/shared/states/LoadingState';
+import SessionRow from '@/components/sessions/SessionRow';
+import { useSessionsInfinite } from '@/hooks/sessions/useSessions';
+
+function Body({ query, studentId }) {
+  if (query.isPending) return <LoadingState rows={2} />;
+  if (query.isError && !query.data) {
+    return <ErrorState message="No pudimos cargar las sesiones." onRetry={() => query.refetch()} />;
+  }
+  const sessions = query.data.pages.flatMap((page) => page.data);
+  if (sessions.length === 0) return <EmptyState title="Todavía no entrenó" />;
+  return (
+    <>
+      <ul>
+        {sessions.map((session) => (
+          <SessionRow key={session.id} studentId={studentId} session={session} />
+        ))}
+      </ul>
+      {query.hasNextPage && (
+        <div className="mt-3 flex justify-center">
+          <Button variant="ghost" size="sm" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>
+            Cargar más
+          </Button>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Bloque "Últimas sesiones" de la ficha del alumno: de a 20, con detalle y comentario. */
+export default function SessionsHistory({ studentId }) {
+  const query = useSessionsInfinite(studentId);
+  return (
+    <Card title="Últimas sesiones" className="min-w-0">
+      <Body query={query} studentId={studentId} />
+    </Card>
+  );
+}
