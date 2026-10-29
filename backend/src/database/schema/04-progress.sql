@@ -105,6 +105,7 @@ returns table (
   reps int
 )
 language sql stable security invoker
+set search_path = public
 as $$
   select
     (s.started_at at time zone 'America/Argentina/Buenos_Aires')::date as "date",
@@ -135,6 +136,7 @@ create or replace function last_session_kg(
 )
 returns table (exercise_id uuid, last_session_kg numeric)
 language sql stable security invoker
+set search_path = public
 as $$
   select distinct on (ss.exercise_id)
     ss.exercise_id,
@@ -144,6 +146,7 @@ as $$
   where s.student_id = p_student_id
     and ss.exercise_id = any (p_exercise_ids)
     and ss.completed
+    and ss.actual_reps > 0
   order by ss.exercise_id, s.started_at desc, ss.session_id;
 $$;
 
