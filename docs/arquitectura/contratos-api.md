@@ -389,7 +389,7 @@ Quita un ejercicio de la rutina. **204**. Mismo 404 que el PATCH. Si es el únic
 
 Rutina activa del alumno para hoy. Solo alumnos.
 
-**200 OK** — incluye `routine_id`, `name`, `exercises[]` con `last_session_kg` para sugerir carga.
+**200 OK** — incluye `routine_id`, `name`, `goal`, `days` y `exercises[]`, cada uno con `last_session_kg`: el mayor `actual_kg` de las series completadas con repeticiones del ejercicio en la **última sesión** (por `started_at`) en que el alumno lo hizo, a 1 decimal. Es `null` si nunca lo hizo o no cargó peso. Se calcula con una sola consulta por rutina (función SQL `last_session_kg`).
 
 ---
 
@@ -644,11 +644,62 @@ Trainer agrega comentario a una sesión. Body: `trainer_comment`.
 
 ## Módulo: Progreso
 
+Roles `trainer` y `student`. La autorización vive en el service (ADR 0001). Métrica por defecto: ver [ADR 0004](../adr/0004-metrica-de-progreso.md).
+
 ### GET /progress/exercise/:exerciseId
 
-Curva de progresión de carga para un ejercicio. Query: `student_id`, `from`, `to`.
+Curva de carga de un ejercicio: un punto por día con series que cuentan (`completed` y `actual_reps > 0`), agrupado por día calendario argentino de `sessions.started_at`.
 
-**200 OK** — `{ exercise, history[], pr }`
+**Query:** `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, hora argentina).
+
+- **Alumno:** `student_id` opcional (por defecto, él mismo); el de otro alumno → 403.
+- **Trainer:** `student_id` obligatorio (400 `VALIDATION_ERROR` si falta) y tiene que ser alumno suyo (si no, 403).
+- `exerciseId` tiene que ser global o del trainer del alumno; si no, 404 `EXERCISE_NOT_FOUND`.
+- `from > to` → 400 `VALIDATION_ERROR`.
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "exercise": { "id": "uuid", "name": "Press de banca", "muscle_group": "chest" },
+    "points": [
+      { "date": "2026-10-20", "max_kg": 62.5, "volume_kg": 1875, "e1rm_kg": 79.2, "sets": 3, "reps": 30 }
+    ],
+    "pr": {
+      "max_kg": { "value": 75, "date": "2026-12-01" },
+      "e1rm_kg": { "value": 90.0, "date": "2026-12-01" }
+    },
+    "default_metric": "e1rm_kg"
+  }
+}
+```
+
+- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
+- `pr`: mayor `max_kg` y mayor `e1rm_kg` del rango, con su fecha (la primera en alcanzarse); `null` cada uno si no hay valores. Sin series: `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
+- `default_metric`: métrica que los clientes grafican por defecto (`e1rm_kg`).
+- Una serie sustituida cuenta para el ejercicio realmente hecho, no para el original.
+
+### GET /progress/body/:studentId
+
+Evolución corporal. Mismo permiso que `GET /students/:id/metrics` (alumno a sí mismo, trainer a sus alumnos; si no, 403).
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "points": [ { "id": "uuid", "recorded_at": "2026-10-01T12:00:00Z", "weight_kg": 80, "bmi": 24.9 } ],
+    "summary": {
+      "weight_kg": { "first": 80, "last": 76.5, "delta": -3.5 },
+      "body_fat_pct": null
+    }
+  }
+}
+```
+
+- `points`: el historial de medidas igual que `GET /students/:id/metrics` (ascendente, con `bmi`).
+- `summary`: por cada campo de medida y `bmi`, primer y último valor no nulo y su diferencia (1 decimal); `null` si el campo nunca se cargó. Sin medidas: `points: []` y cada campo `null`.
 
 ---
 
