@@ -50,7 +50,8 @@ export default function RoutineEditorPage() {
 
   if (library && !draft.ready) {
     // Se intenta restaurar una sola vez, con la biblioteca ya cargada (ver `useRoutineDraft`).
-    const found = trainerId ? restoreDraft(readDraft(trainerId), byId) : null;
+    // Si ya hay algo escrito no se pisa: se marca listo sin restaurar.
+    const found = trainerId && editor.isBlank(state) ? restoreDraft(readDraft(trainerId), byId) : null;
     if (found) setState(found.state);
     setDraft({ ready: true, restored: Boolean(found), missing: found?.missing ?? 0 });
   }
@@ -120,6 +121,7 @@ export default function RoutineEditorPage() {
           )}
           <RoutineHeader
             state={state}
+            disabled={!draft.ready}
             errors={errors?.header}
             onChange={(field, value) => apply(editor.updateHeader, field, value)}
             onToggleDay={(day) => apply(editor.toggleDay, day)}
@@ -136,8 +138,8 @@ export default function RoutineEditorPage() {
           />
           <div className="flex flex-wrap justify-end gap-3">
             <Button variant="ghost" disabled={!draft.ready} onClick={() => setDialog({ type: 'template' })}>Usar plantilla</Button>
-            <Button variant="ghost" onClick={() => setDialog({ type: 'save' })}>Guardar como plantilla</Button>
-            <Button onClick={handleAssign}>Asignar a alumno</Button>
+            <Button variant="ghost" disabled={!draft.ready} onClick={() => setDialog({ type: 'save' })}>Guardar como plantilla</Button>
+            <Button disabled={!draft.ready} onClick={handleAssign}>Asignar a alumno</Button>
           </div>
         </div>
       </div>

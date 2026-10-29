@@ -5,8 +5,8 @@ import { ROUTINE_GOAL_OPTIONS } from '@/utils/routines/routineForm';
 
 const OPTIONS = [{ value: '', label: 'Elegí un objetivo' }, ...ROUTINE_GOAL_OPTIONS];
 
-/** Nombre, objetivo y días de la rutina; `errors` es el `header` de `validateRoutine`. `onClearTemplate` desvincula la plantilla de origen. */
-export default function RoutineHeader({ state, errors = {}, onChange, onToggleDay, onClearTemplate }) {
+/** Nombre, objetivo y días de la rutina; `errors` es el `header` de `validateRoutine`. `disabled` bloquea los campos mientras no cargó la biblioteca. `onClearTemplate` desvincula la plantilla de origen. */
+export default function RoutineHeader({ state, errors = {}, disabled = false, onChange, onToggleDay, onClearTemplate }) {
   return (
     <div className="flex flex-col gap-4">
       {state.templateName && (
@@ -27,6 +27,7 @@ export default function RoutineHeader({ state, errors = {}, onChange, onToggleDa
           label="Nombre de la rutina"
           value={state.name}
           error={errors.name}
+          disabled={disabled}
           onChange={(event) => onChange('name', event.target.value)}
           className="min-w-0"
         />
@@ -35,11 +36,12 @@ export default function RoutineHeader({ state, errors = {}, onChange, onToggleDa
           options={OPTIONS}
           value={state.goal}
           error={errors.goal}
+          disabled={disabled}
           onChange={(event) => onChange('goal', event.target.value)}
           className="min-w-0"
         />
       </div>
-      <DayPicker value={state.days} onToggle={onToggleDay} error={errors.days} />
+      <DayPicker value={state.days} onToggle={onToggleDay} error={errors.days} disabled={disabled} />
     </div>
   );
 }

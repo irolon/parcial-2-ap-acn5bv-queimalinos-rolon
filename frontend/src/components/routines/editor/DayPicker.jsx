@@ -1,7 +1,7 @@
 import { DAY_OPTIONS } from '@/utils/students/routineDays';
 
 /** Chips de días (L M X J V S D) con `role="checkbox"`. */
-export default function DayPicker({ value, onToggle, error }) {
+export default function DayPicker({ value, onToggle, error, disabled = false }) {
   return (
     <div>
       <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[1px] text-ink6">Días</span>
@@ -15,8 +15,9 @@ export default function DayPicker({ value, onToggle, error }) {
               role="checkbox"
               aria-checked={checked}
               aria-label={label}
+              disabled={disabled}
               onClick={() => onToggle(day)}
-              className={`h-10 w-10 cursor-pointer rounded-full border font-display text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accentText ${
+              className={`h-10 w-10 cursor-pointer rounded-full disabled:cursor-not-allowed disabled:opacity-50 border font-display text-sm font-semibold focus-visible:outline-2 focus-visible:outline-accentText ${
                 checked ? 'border-transparent bg-accent text-accentInk' : 'border-ink3 bg-ink1 text-ink6 hover:text-bone0'
               }`}
             >

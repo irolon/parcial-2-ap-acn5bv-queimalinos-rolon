@@ -55,6 +55,31 @@ describe('RoutineEditorPage: biblioteca caída', () => {
   });
 });
 
+describe('RoutineEditorPage: editor deshabilitado hasta cargar la biblioteca', () => {
+  const ACTIONS = ['Usar plantilla', 'Guardar como plantilla', 'Asignar a alumno'];
+
+  it('con la biblioteca caída la cabecera y las acciones están deshabilitadas', async () => {
+    renderWithFailingLibrary(1);
+    await screen.findByRole('button', { name: 'Reintentar' });
+    expect(screen.getByLabelText('Nombre de la rutina')).toBeDisabled();
+    expect(screen.getByLabelText('Objetivo')).toBeDisabled();
+    screen.getAllByRole('checkbox').forEach((day) => expect(day).toBeDisabled());
+    ACTIONS.forEach((name) => expect(screen.getByRole('button', { name })).toBeDisabled());
+  });
+
+  it('al reintentar con éxito se habilita todo y se restaura el borrador', async () => {
+    storeDraft();
+    renderWithFailingLibrary(1);
+    await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
+    await screen.findByText('Recuperamos tu borrador');
+    expect(screen.getByLabelText('Nombre de la rutina')).toBeEnabled();
+    expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('Fuerza A');
+    expect(screen.getByLabelText('Objetivo')).toBeEnabled();
+    screen.getAllByRole('checkbox').forEach((day) => expect(day).toBeEnabled());
+    ACTIONS.forEach((name) => expect(screen.getByRole('button', { name })).toBeEnabled());
+  });
+});
+
 describe('RoutineEditorPage: biblioteca ya cargada', () => {
   it('si falla un refetch en segundo plano, el panel sigue y no hay aviso', async () => {
     setSession(TRAINER);
