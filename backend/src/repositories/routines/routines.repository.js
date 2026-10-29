@@ -14,6 +14,9 @@ const ROUTINE_WITH_EXERCISES =
   `${ROUTINE_COLUMNS}, routine_exercises ( ${ROUTINE_EXERCISE_COLUMNS}, ` +
   `exercise:exercise_id ( id, name, muscle_group, equipment, video_url ) )`;
 
+// Rutina con el alumno embebido (nombre y estado) para el listado del trainer.
+const ROUTINE_WITH_STUDENT = `${ROUTINE_COLUMNS}, student:students ( name, active )`;
+
 /** ¿El alumno pertenece a este trainer? */
 export async function isStudentOfTrainer(studentId, trainerId) {
   const { data, error } = await supabase
@@ -72,9 +75,12 @@ export async function addRoutineExercises(routineId, exercises) {
   return data;
 }
 
-/** Lista las rutinas de un trainer, con filtros opcionales. */
+/** Lista las rutinas de un trainer (con `student: { name, active }`), con filtros opcionales. */
 export async function findRoutinesByTrainer({ trainerId, studentId, active }) {
-  let query = supabase.from(ROUTINES_TABLE).select(ROUTINE_COLUMNS).eq('trainer_id', trainerId);
+  let query = supabase
+    .from(ROUTINES_TABLE)
+    .select(ROUTINE_WITH_STUDENT)
+    .eq('trainer_id', trainerId);
   if (studentId) query = query.eq('student_id', studentId);
   if (active !== undefined) query = query.eq('active', active);
   const { data, error } = await query.order('created_at', { ascending: false });

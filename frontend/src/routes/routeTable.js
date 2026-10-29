@@ -46,6 +46,15 @@ export const NEW_STUDENT = {
   subtitle: 'ALUMNOS › NUEVO · GENERÁ QR Y COMPARTILO POR WHATSAPP',
 };
 
+/** Listado de rutinas (el ítem `rutinas` del menú del entrenador). */
+export const ROUTINES_PATH = `${TRAINER_NAV.base}/rutinas`;
+
+// Editor de rutinas: la página fija su propio título con `usePageHeader`.
+export const NEW_ROUTINE = { path: `${ROUTINES_PATH}/nueva` };
+
+/** Link al editor; con `studentId` llega con el alumno preseleccionado. */
+export const newRoutineHref = (studentId) => (studentId ? `${NEW_ROUTINE.path}?alumno=${studentId}` : NEW_ROUTINE.path);
+
 // Ficha del alumno: la página fija su propio título con `usePageHeader`.
 export const STUDENT_PROFILE = { path: `${STUDENTS_PATH}/:id` };
 

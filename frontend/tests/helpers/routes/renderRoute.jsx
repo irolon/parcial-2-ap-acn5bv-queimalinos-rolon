@@ -26,5 +26,5 @@ export function renderRoute(path) {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
-  return { ...utils, router, pathname: () => router.state.location.pathname };
+  return { ...utils, router, queryClient, pathname: () => router.state.location.pathname };
 }
