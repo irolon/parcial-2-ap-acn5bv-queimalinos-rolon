@@ -31,6 +31,11 @@ export default function SessionComment({ studentId, session }) {
     setDraft(saved);
   };
 
+  const onChange = (event) => {
+    if (mutation.isError) mutation.reset();
+    setDraft(event.target.value);
+  };
+
   const onKeyDown = (event) => {
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
@@ -45,7 +50,7 @@ export default function SessionComment({ studentId, session }) {
         value={draft}
         maxLength={1000}
         placeholder="Dejale un comentario sobre esta sesión"
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={onChange}
         onKeyDown={onKeyDown}
         error={mutation.isError ? (mutation.error?.message ?? 'No pudimos guardar el comentario') : undefined}
       />

@@ -89,6 +89,34 @@ describe('SessionComment', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  it('Ctrl+Enter repetido mientras va el PATCH manda uno solo', async () => {
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const comment = async () => {
+      await gate;
+      return jsonResponse(200, { data: sessionItem() });
+    };
+    const { user, box, handler } = await open({ comment });
+    await user.type(box, 'Hola');
+    await user.keyboard('{Control>}{Enter}{Enter}{/Control}');
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    release();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Guardando…' })).toBeNull());
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('al volver a editar tras un error, el error desaparece', async () => {
+    const comment = async () => errorResponse(500, 'INTERNAL', 'No se pudo guardar');
+    const { user, box } = await open({ comment });
+    await user.type(box, 'Hola');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+    expect(await screen.findByRole('alert')).toBeVisible();
+    await user.type(box, '!');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('si falla muestra el error inline y conserva el texto', async () => {
     const comment = async () => errorResponse(500, 'INTERNAL', 'No se pudo guardar');
     const { user, box } = await open({ comment });
