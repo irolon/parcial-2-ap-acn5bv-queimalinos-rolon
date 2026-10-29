@@ -545,7 +545,7 @@ Inicia (o cierra, o reintenta) una sesión. Solo alumnos; el `student_id` sale d
 
 ### POST /sessions/:id/sets
 
-Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones. **Idempotente por `id` de cada serie** (upsert): reenviar el lote no duplica nada y reenviar una serie con datos nuevos la corrige. Se aceptan series aunque la sesión ya esté cerrada.
+Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones. **Idempotente por `id` de cada serie**: reenviar el lote no duplica nada y reenviar una serie con datos nuevos la corrige. Se aceptan series aunque la sesión ya esté cerrada.
 
 **Reemplaza** a `POST /session-sets` y a la forma "una serie por request" del contrato propuesto en la spec de sesión activa (§8): el celular manda todas las series juntas.
 
@@ -586,7 +586,7 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
 
 **Qué hace el cliente con la respuesta:** un 200 no significa que todo se sincronizó. Las series en `failed` con `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND` o `SET_ID_CONFLICT` son **permanentes**: reenviarlas da lo mismo, así que no se reintentan para siempre (se descartan o se marcan como error local). Si falla el request entero, depende del error:
 
-- **sin red o 5xx:** se reintenta **todo el lote** (es idempotente, no duplica nada);
+- **sin red o 5xx:** se reintenta **todo el lote** (es idempotente, no duplica nada). El guardado no es atómico: si el request falla a medias pueden haber quedado series guardadas, y reenviar el lote igual es seguro;
 - **404 `SESSION_NOT_FOUND`:** la sesión todavía no se subió; primero `POST /sessions` y después las series;
 - **400 y 403:** no se reintentan (error del cliente o rol equivocado; reenviar da lo mismo).
 
@@ -596,7 +596,7 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
 |---|---|
 | `VALIDATION_ERROR` | datos inválidos (el mensaje nombra el campo) o `id` repetido dentro del lote |
 | `EXERCISE_NOT_FOUND` | `exercise_id` u `original_exercise_id` que el alumno no puede ver (ni globales ni de su entrenador) |
-| `SET_ID_CONFLICT` | el `id` ya existe en **otra** sesión (o apareció en otra mientras se guardaba el lote); no se toca la fila |
+| `SET_ID_CONFLICT` | el `id` ya existe en **otra** sesión (también si apareció allí mientras se guardaba el lote); no se toca la fila. Un `id` que quedó guardado en **esta** sesión (p. ej. dos copias del mismo lote a la vez) nunca da este error: se actualiza |
 
 Un `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesión no tiene rutina) **no falla**: la serie se guarda con `routine_exercise_id = null`.
 

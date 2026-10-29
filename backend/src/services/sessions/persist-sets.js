@@ -8,18 +8,26 @@ const conflict = (value, index) =>
  * Guarda las series sin pisar filas de otra sesión, aunque aparezcan entre la
  * lectura previa y la escritura: las nuevas se insertan ignorando duplicados y
  * las ya existentes en esta sesión se actualizan filtrando por session_id.
- * Lo que no se guarda va a `failed` como SET_ID_CONFLICT.
+ * Una nueva que el insert omitió se relee: si quedó en ESTA sesión (otro request
+ * del mismo lote) se actualiza con estos valores; si es de otra sesión (o
+ * desapareció) va a `failed` como SET_ID_CONFLICT.
  * Devuelve las series guardadas ({ value, index, created }), en orden de entrada.
  */
 export async function persistSets(sessionId, candidates, existingIds, failed) {
-  const isNew = ({ value }) => !existingIds.has(value.id);
-  const news = candidates.filter(isNew);
-  const olds = candidates.filter((c) => !isNew(c));
+  const news = candidates.filter(({ value }) => !existingIds.has(value.id));
+  const toUpdate = new Set(existingIds);
   const rowOf = ({ value }) => ({ ...value, session_id: sessionId });
 
   const inserted = new Set(news.length > 0 ? await setsRepo.insertNewSets(news.map(rowOf)) : []);
+  const skipped = news.filter(({ value }) => !inserted.has(value.id)).map(({ value }) => value.id);
+  if (skipped.length > 0) {
+    for (const row of await setsRepo.findSetsByIds(skipped)) {
+      if (row.session_id === sessionId) toUpdate.add(row.id);
+    }
+  }
+
   const updated = new Set();
-  await Promise.all(olds.map(async ({ value }) => {
+  await Promise.all(candidates.filter(({ value }) => toUpdate.has(value.id)).map(async ({ value }) => {
     const { id, ...fields } = value;
     if (await setsRepo.updateSetInSession(sessionId, id, fields)) updated.add(id);
   }));

@@ -97,7 +97,9 @@ Body con al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1�
   4. guardar sin pisar filas de otra sesión, aunque aparezcan entre la lectura (paso 2) y la escritura:
      - las **no encontradas** en el paso 2 se insertan con `upsert(..., { onConflict: 'id', ignoreDuplicates: true }).select('id')`; los ids devueltos son `created: true`;
      - las **encontradas en esta sesión** se actualizan una a una con `.update(campos).eq('id', id).eq('session_id', sesión).select('id')` (en paralelo, máx. 100); la que devuelve fila es `created: false`;
-     - lo que no se insertó ni se actualizó (apareció en otra sesión, o en esta, mientras tanto) va a `failed` como `SET_ID_CONFLICT`; el reintento del lote completo lo encuentra en el paso 2 como existente en esta sesión y lo actualiza;
+     - las que el insert omitió (el `id` apareció mientras tanto) se **releen**: si quedaron en **esta** sesión (otra copia del mismo lote corriendo a la vez) se actualizan con los valores de este request (`created: false`); si están en **otra** sesión, o ya no existen, van a `failed` como `SET_ID_CONFLICT`;
+     - lo que un update filtrado por `session_id` no devuelve también va a `SET_ID_CONFLICT`;
+     - no es una sola sentencia atómica: si el request falla a medias (5xx) pueden haber quedado series guardadas, y no importa, porque reenviar el lote es idempotente;
   5. si alguna serie **guardada** es sustitución, `update sessions set has_modifications = true`.
 - Errores nuevos en `shared/utils/errors.js`: `SESSION_NOT_FOUND` (404), `SESSION_ID_CONFLICT` (409); códigos por serie `SET_ID_CONFLICT`, `EXERCISE_NOT_FOUND`, `VALIDATION_ERROR` (un `routine_exercise_id` inválido no es error: se guarda `null`).
 - Los helpers de UUID y fecha ISO de `validations/body-metrics` pasan a `shared/utils` si se reutilizan.
