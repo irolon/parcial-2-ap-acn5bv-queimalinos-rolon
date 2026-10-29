@@ -2,6 +2,7 @@ import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/routines/routines.repository.js';
 import * as templatesRepository from '../../repositories/routine-templates/routine-templates.repository.js';
 import * as routineExercisesRepo from '../../repositories/routines/routine-exercises.repository.js';
+import * as progressRepository from '../../repositories/progress/progress.repository.js';
 import {
   isOwnedBy,
   dayName,
@@ -154,7 +155,11 @@ export async function removeExercise(trainerId, routineId, routineExerciseId) {
 /** Rutina del día del alumno (null si no tiene ninguna activa para hoy). */
 export async function today(studentId) {
   const row = await repository.findActiveRoutineForStudentToday(studentId, dayName());
-  return toTodayRoutine(row);
+  if (!row) return null;
+  // Una sola consulta para todos los ejercicios de la rutina (no una por ejercicio).
+  const ids = [...new Set((row.routine_exercises ?? []).map((re) => re.exercise_id))];
+  const lastKg = ids.length ? await progressRepository.fetchLastSessionKg(studentId, ids) : {};
+  return toTodayRoutine(row, lastKg);
 }
 
 /** Rutinas activas del alumno con sus ejercicios (caché offline de mobile). */

@@ -3,6 +3,8 @@
  * Estructura, enums y helpers puros. SIN lógica de negocio ni acceso a datos.
  */
 
+import { round1 } from '../progress/progress.model.js';
+
 export const ROUTINES_TABLE = 'routines';
 export const ROUTINE_EXERCISES_TABLE = 'routine_exercises';
 
@@ -64,13 +66,14 @@ export function mapRoutineExercises(routineExercises = []) {
 
 /**
  * Proyección para GET /routines/today: la rutina del día con sus ejercicios.
- * `last_session_kg` queda en null hasta que existan sesiones (Fase 3).
+ * `last_session_kg` sale de `lastKgByExercise` ({ [exercise_id]: kg }); null si
+ * el alumno nunca hizo el ejercicio o no cargó peso.
  */
-export function toTodayRoutine(row) {
+export function toTodayRoutine(row, lastKgByExercise = {}) {
   if (!row) return null;
   const exercises = mapRoutineExercises(row.routine_exercises).map((e) => ({
     ...e,
-    last_session_kg: null,
+    last_session_kg: round1(lastKgByExercise[e.exercise?.id]),
   }));
   return { routine_id: row.id, name: row.name, goal: row.goal, days: row.days, exercises };
 }
