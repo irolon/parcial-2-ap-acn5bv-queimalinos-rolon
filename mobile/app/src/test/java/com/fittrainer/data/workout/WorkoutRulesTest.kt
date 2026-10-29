@@ -73,7 +73,7 @@ class WorkoutRulesTest {
 
     @Test fun `el resumen cuenta series y minutos`() {
         val w = workout(sets = listOf(doneSet(0, 1), doneSet(0, 2)))
-        assertEquals(WorkoutSummary(2, 52), w.summary(T0.plusSeconds(52 * 60 + 30)))
+        assertEquals(WorkoutSummary(2, 52, "w-1"), w.summary(T0.plusSeconds(52 * 60 + 30)))
         assertEquals(2, w.pendingSets())
     }
 

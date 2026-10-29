@@ -65,4 +65,4 @@ data class Rest(val endsAt: Instant?, val totalSeconds: Int, val pausedRemaining
 
 data class Load(val kg: Double, val reps: Int)
 
-data class WorkoutSummary(val sets: Int, val minutes: Long)
+data class WorkoutSummary(val sets: Int, val minutes: Long, val sessionId: String)

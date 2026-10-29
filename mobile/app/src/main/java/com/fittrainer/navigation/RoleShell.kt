@@ -25,6 +25,8 @@ import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
+import com.fittrainer.ui.sync.SignOutSyncViewModel
+import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
 import com.fittrainer.ui.today.TodayScreen
 import com.fittrainer.ui.workout.WorkoutEntryViewModel
 import com.fittrainer.ui.workout.WorkoutScreen
@@ -33,7 +35,12 @@ import com.fittrainer.ui.workout.components.SignOutFailedDialog
 
 /** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → Estado del servidor. */
 @Composable
-fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit, entry: WorkoutEntryViewModel = hiltViewModel()) {
+fun RoleShell(
+    tabs: List<Tab>,
+    onSignOut: () -> Unit,
+    entry: WorkoutEntryViewModel = hiltViewModel(),
+    uploads: SignOutSyncViewModel = hiltViewModel(),
+) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -47,19 +54,23 @@ fun RoleShell(tabs: List<Tab>, onSignOut: () -> Unit, entry: WorkoutEntryViewMod
         }
     }
     var confirmSignOut by remember { mutableStateOf(false) }
+    // Antes de salir se ofrece subir lo pendiente (tarjeta 11); también después de terminar la abierta.
+    val syncedSignOut: () -> Unit = { uploads.request(onSignOut) }
     val guardedSignOut: () -> Unit = {
         if (isStudent) {
-            entry.requestSignOut(onNoActive = onSignOut, onActive = { confirmSignOut = true })
+            entry.requestSignOut(onNoActive = syncedSignOut, onActive = { confirmSignOut = true })
         } else {
             onSignOut()
         }
     }
     if (confirmSignOut) {
         ActiveWorkoutSignOutDialog(
-            onFinishAndSignOut = { confirmSignOut = false; entry.finishActive(onSignOut) },
+            onFinishAndSignOut = { confirmSignOut = false; entry.finishActive(syncedSignOut) },
             onCancel = { confirmSignOut = false },
         )
     }
+    val uploadState by uploads.state.collectAsStateWithLifecycle()
+    PendingUploadsSignOutDialog(uploadState, uploads::uploadNow, uploads::signOutAnyway, uploads::cancel)
     // finishActive corre en esta instancia (no en la de Hoy): si falla, el aviso se muestra acá.
     val entryError by entry.error.collectAsStateWithLifecycle()
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }

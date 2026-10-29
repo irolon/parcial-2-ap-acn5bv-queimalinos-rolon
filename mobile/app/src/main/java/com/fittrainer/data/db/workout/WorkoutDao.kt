@@ -28,6 +28,53 @@ abstract class WorkoutDao {
     )
     abstract suspend fun lastSetFor(ownerId: String, exerciseId: String): WorkoutSetEntity?
 
+    /** Lo que sube la tarjeta 11: terminadas y pendientes del dueño, en orden. Nunca una ACTIVE. */
+    @Query(
+        "SELECT * FROM workout_sessions WHERE ownerId = :ownerId AND status = 'FINISHED' " +
+            "AND syncState = 'PENDING' ORDER BY startedAt"
+    )
+    abstract suspend fun pendingUploads(ownerId: String): List<WorkoutSessionEntity>
+
+    @Query("SELECT * FROM workout_sets WHERE sessionId = :sessionId AND syncState = 'PENDING' ORDER BY executedAt, id")
+    abstract suspend fun pendingSets(sessionId: String): List<WorkoutSetEntity>
+
+    @Query("UPDATE workout_sets SET syncState = 'SYNCED', syncError = NULL WHERE id IN (:ids)")
+    abstract suspend fun markSetsSynced(ids: List<String>)
+
+    @Query("UPDATE workout_sets SET syncState = 'FAILED', syncError = :code WHERE id = :id")
+    abstract suspend fun markSetFailed(id: String, code: String)
+
+    @Query("UPDATE workout_sessions SET syncState = :syncState WHERE id = :id")
+    abstract suspend fun setSyncState(id: String, syncState: String)
+
+    @Query(
+        "SELECT COALESCE(SUM(syncState = 'PENDING'), 0) AS pending, COALESCE(SUM(syncState = 'FAILED'), 0) AS failed, " +
+            "(SELECT COUNT(*) FROM workout_sets s INNER JOIN workout_sessions w ON w.id = s.sessionId " +
+            "WHERE w.ownerId = :ownerId AND s.syncState = 'FAILED') AS failedSets " +
+            "FROM workout_sessions WHERE ownerId = :ownerId AND status = 'FINISHED'"
+    )
+    abstract fun observeUploadCounts(ownerId: String): Flow<UploadCounts>
+
+    @Query(
+        "SELECT syncState, (SELECT COUNT(*) FROM workout_sets WHERE sessionId = :id AND syncState = 'FAILED') " +
+            "AS failedSets FROM workout_sessions WHERE id = :id"
+    )
+    abstract fun observeSessionUpload(id: String): Flow<SessionUploadRow?>
+
+    /**
+     * Resultado de subir una sesión: series marcadas y, si no le queda ninguna pendiente, la sesión
+     * subida. rejected: el servidor rechazó la sesión entera (queda FAILED, sus series sin tocar).
+     */
+    @Transaction
+    open suspend fun applyUpload(sessionId: String, synced: List<String>, failed: Map<String, String>, rejected: Boolean) {
+        if (synced.isNotEmpty()) markSetsSynced(synced)
+        failed.forEach { (id, code) -> markSetFailed(id, code) }
+        when {
+            rejected -> setSyncState(sessionId, SYNC_FAILED)
+            pendingSets(sessionId).isEmpty() -> setSyncState(sessionId, SYNC_SYNCED)
+        }
+    }
+
     @Insert
     abstract suspend fun insertSession(session: WorkoutSessionEntity)
 

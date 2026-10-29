@@ -2,6 +2,11 @@ package com.fittrainer.testing.fakes.workout
 
 import com.fittrainer.data.db.workout.STATUS_ACTIVE
 import com.fittrainer.data.db.workout.STATUS_FINISHED
+import com.fittrainer.data.db.workout.SYNC_FAILED
+import com.fittrainer.data.db.workout.SYNC_PENDING
+import com.fittrainer.data.db.workout.SYNC_SYNCED
+import com.fittrainer.data.db.workout.SessionUploadRow
+import com.fittrainer.data.db.workout.UploadCounts
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.WorkoutExerciseEntity
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
@@ -87,6 +92,41 @@ class FakeWorkoutDao : WorkoutDao() {
             sets = st.sets.filterNot { it.sessionId == id },
         )
     }
+
+    override suspend fun pendingUploads(ownerId: String) = state.value.sessions.values
+        .filter { it.ownerId == ownerId && it.status == STATUS_FINISHED && it.syncState == SYNC_PENDING }
+        .sortedBy { it.startedAt }
+
+    override suspend fun pendingSets(sessionId: String) = state.value.sets
+        .filter { it.sessionId == sessionId && it.syncState == SYNC_PENDING }
+        .sortedWith(compareBy({ it.executedAt }, { it.id }))
+
+    override suspend fun markSetsSynced(ids: List<String>) = write { st ->
+        st.copy(sets = st.sets.map { if (it.id in ids) it.copy(syncState = SYNC_SYNCED, syncError = null) else it })
+    }
+
+    override suspend fun markSetFailed(id: String, code: String) = write { st ->
+        st.copy(sets = st.sets.map { if (it.id == id) it.copy(syncState = SYNC_FAILED, syncError = code) else it })
+    }
+
+    override suspend fun setSyncState(id: String, syncState: String) = write { st ->
+        val session = st.sessions[id] ?: return@write st
+        st.copy(sessions = st.sessions + (id to session.copy(syncState = syncState)))
+    }
+
+    override fun observeUploadCounts(ownerId: String): Flow<UploadCounts> = state.map { st ->
+        val done = st.sessions.values.filter { it.ownerId == ownerId && it.status == STATUS_FINISHED }
+        val mine = st.sessions.values.filter { it.ownerId == ownerId }.map { it.id }.toSet()
+        UploadCounts(
+            done.count { it.syncState == SYNC_PENDING },
+            done.count { it.syncState == SYNC_FAILED },
+            st.sets.count { it.sessionId in mine && it.syncState == SYNC_FAILED },
+        )
+    }.distinctUntilChanged()
+
+    override fun observeSessionUpload(id: String): Flow<SessionUploadRow?> = state.map { st ->
+        st.sessions[id]?.let { s -> SessionUploadRow(s.syncState, st.sets.count { it.sessionId == id && it.syncState == SYNC_FAILED }) }
+    }.distinctUntilChanged()
 
     // Atómicos como el @Transaction de Room: el Flow nunca emite un estado a medias.
     override suspend fun start(session: WorkoutSessionEntity, exercises: List<WorkoutExerciseEntity>) {

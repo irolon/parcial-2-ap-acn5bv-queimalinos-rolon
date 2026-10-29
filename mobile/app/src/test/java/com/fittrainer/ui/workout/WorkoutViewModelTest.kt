@@ -112,7 +112,7 @@ class WorkoutViewModelTest {
         vm.onFinish()
         gate.complete(Unit)
 
-        assertEquals(WorkoutSummary(1, 10), state.summary)
+        assertEquals(WorkoutSummary(1, 10, "id-0"), state.summary)
         assertTrue(seen.any { it.workout == null && it.summary == null })
         assertTrue(seen.none { it.closed })
     }

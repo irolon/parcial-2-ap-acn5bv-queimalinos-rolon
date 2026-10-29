@@ -78,6 +78,30 @@ class FitTrainerDatabaseMigrationTest {
         }
     }
 
+    @Test fun migra4a5DejandoLasSeriesPendientesDeSubir() {
+        helper.createDatabase(DB, 4).apply {
+            execSQL(
+                "INSERT INTO workout_sessions (id, ownerId, routineId, routineName, startedAt, finishedAt, status, " +
+                    "syncState, currentPosition, currentSet, restEndsAt, restTotalSeconds, restPausedRemainingMs) " +
+                    "VALUES ('w1', 'u1', 'rt-1', 'Push', 1, 2, 'FINISHED', 'PENDING', 0, 1, NULL, NULL, NULL)"
+            )
+            execSQL(
+                "INSERT INTO workout_sets (id, sessionId, position, exerciseId, originalExerciseId, routineExerciseId, " +
+                    "setNumber, actualKg, actualReps, executedAt) VALUES ('s1', 'w1', 0, 'ex-0', NULL, 're-0', 1, 40.0, 8, 2)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(DB, 5, true)
+
+        db.query("SELECT actualKg, syncState, syncError FROM workout_sets WHERE id = 's1'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(40.0, it.getDouble(0), 0.0)
+            assertEquals("PENDING", it.getString(1))
+            assertTrue(it.isNull(2))
+        }
+    }
+
     // La base real (la del DatabaseModule, sin borrado destructivo) abre una v1 existente.
     @Test fun laBaseRealAbreUnaV1Existente() {
         helper.createDatabase(DB, 1).close()

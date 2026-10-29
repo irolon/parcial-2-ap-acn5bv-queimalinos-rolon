@@ -1,5 +1,6 @@
 package com.fittrainer.data.db.workout
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -11,6 +12,10 @@ const val STATUS_ACTIVE = "ACTIVE"
 const val STATUS_FINISHED = "FINISHED"
 /** La tarjeta 11 la sube y la marca como subida. */
 const val SYNC_PENDING = "PENDING"
+/** Subida y guardada en el servidor (tarjeta 11). */
+const val SYNC_SYNCED = "SYNCED"
+/** El servidor la rechazó para siempre (spec §5 de la tarjeta 11): no se reintenta. */
+const val SYNC_FAILED = "FAILED"
 
 /**
  * Sesión de entrenamiento. Mismos datos que `sessions` del backend más el cursor (dónde está el
@@ -87,6 +92,9 @@ data class WorkoutSetEntity(
     val actualKg: Double,
     val actualReps: Int,
     val executedAt: Long,
+    /** PENDING hasta que el servidor la guarda (SYNCED) o la rechaza (FAILED, con su code en syncError). */
+    @ColumnInfo(defaultValue = SYNC_PENDING) val syncState: String = SYNC_PENDING,
+    val syncError: String? = null,
 )
 
 data class WorkoutWithDetails(
