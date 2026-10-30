@@ -10,7 +10,7 @@ jest.unstable_mockModule(src('repositories/notifications/notifications.repositor
 jest.unstable_mockModule(src('repositories/notifications/push-tokens.repository.js'), () => mockTokens);
 jest.unstable_mockModule(src('services/notifications/fcm.client.js'), () => mockFcm);
 
-export const { notify } = await import(src('services/notifications/notify.service.js'));
+export const { notify, pushOnly } = await import(src('services/notifications/notify.service.js'));
 
 export const INPUT = { userId: 'u-1', userRole: 'student', type: 'comment', title: 'T', body: 'B', data: { a: 1 } };
 export const row = { id: 'n-1', user_id: 'u-1', push_sent_at: null };

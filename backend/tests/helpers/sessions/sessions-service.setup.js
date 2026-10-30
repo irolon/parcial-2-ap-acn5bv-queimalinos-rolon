@@ -17,6 +17,13 @@ jest.unstable_mockModule(src('repositories/sessions/sessions.repository.js'), ()
 export const mockEvaluate = { evaluateStudent: jest.fn() };
 jest.unstable_mockModule(src('services/gamification/evaluate.service.js'), () => mockEvaluate);
 
+export const mockTriggers = {
+  onSessionClosed: jest.fn(),
+  onSessionModified: jest.fn(),
+  onSessionCommented: jest.fn(),
+};
+jest.unstable_mockModule(src('services/notifications/triggers.service.js'), () => mockTriggers);
+
 export const service = await import(src('services/sessions/sessions.service.js'));
 
 export const STUDENT_ID = 'st-1';

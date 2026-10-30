@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { INPUT, mockFcm, mockNotifications, mockTokens, notify, row } from '../../../helpers/notifications/notify.setup.js';
+import { INPUT, mockFcm, mockNotifications, mockTokens, notify, pushOnly, row } from '../../../helpers/notifications/notify.setup.js';
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -73,5 +73,26 @@ describe('notify', () => {
     const out = await notify(INPUT);
     expect(out.push_sent_at).toBe('now');
     expect(console.error).toHaveBeenCalledWith('[notifications] limpieza de tokens', 'del');
+  });
+});
+
+describe('pushOnly', () => {
+  it('envía sin insertar fila y borra los tokens muertos', async () => {
+    mockTokens.findTokensForUser.mockResolvedValue(['a', 'b']);
+    mockFcm.sendToToken
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({ ok: false, reason: 'unregistered', status: 404 });
+    await pushOnly({ userId: 'u-1', title: 'T' });
+    expect(mockNotifications.insert).not.toHaveBeenCalled();
+    expect(mockTokens.deleteTokens).toHaveBeenCalledWith(['b']);
+  });
+
+  it('sin FCM no hace nada y un fallo no lanza', async () => {
+    mockFcm.isFcmEnabled.mockReturnValue(false);
+    await pushOnly({ userId: 'u-1', title: 'T' });
+    expect(mockTokens.findTokensForUser).not.toHaveBeenCalled();
+    mockFcm.isFcmEnabled.mockReturnValue(true);
+    mockTokens.findTokensForUser.mockRejectedValue(new Error('db'));
+    await expect(pushOnly({ userId: 'u-1', title: 'T' })).resolves.toBeUndefined();
   });
 });

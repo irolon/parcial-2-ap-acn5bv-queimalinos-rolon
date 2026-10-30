@@ -45,3 +45,14 @@ export async function notify({ userId, userRole, type, title, body = null, data 
   }
   return notification;
 }
+
+/** Push sin fila (p. ej. el resumen de varios logros, que ya tienen su fila). Best-effort, nunca lanza. */
+export async function pushOnly({ userId, title, body = null, data = {} }) {
+  if (!isFcmEnabled()) return;
+  try {
+    const { dead } = await pushToUser(userId, { title, body, data });
+    await pushTokensRepo.deleteTokens(dead);
+  } catch (err) {
+    console.error('[notifications] push', err.message);
+  }
+}

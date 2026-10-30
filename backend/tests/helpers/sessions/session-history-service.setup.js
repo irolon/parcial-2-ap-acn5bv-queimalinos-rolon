@@ -22,6 +22,13 @@ jest.unstable_mockModule(src('repositories/sessions/session-history.repository.j
 jest.unstable_mockModule(src('services/students/student-access.service.js'), () => mockAccess);
 jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudents);
 
+export const mockTriggers = {
+  onSessionClosed: jest.fn(),
+  onSessionModified: jest.fn(),
+  onSessionCommented: jest.fn(),
+};
+jest.unstable_mockModule(src('services/notifications/triggers.service.js'), () => mockTriggers);
+
 export const service = await import(src('services/sessions/session-history.service.js'));
 
 export const USER = { id: 'tr-1', role: 'trainer' };
