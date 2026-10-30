@@ -52,3 +52,6 @@ export function validateExerciseProgressQuery(query) {
   throwIfAny(details);
   return result;
 }
+
+/** Query de GET /progress/overview: mismas reglas que la de /exercise. */
+export const validateProgressOverviewQuery = validateExerciseProgressQuery;

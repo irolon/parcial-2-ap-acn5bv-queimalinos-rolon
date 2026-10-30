@@ -3,6 +3,7 @@ import {
   validateExerciseProgressParams,
   validateExerciseProgressQuery,
   validateBodyProgressParams,
+  validateProgressOverviewQuery,
 } from '../../../../src/validations/progress/progress.validation.js';
 
 const ID = '44444444-4444-4444-8444-444444444444';
@@ -54,5 +55,22 @@ describe('progress.validation · query', () => {
   });
   it('student_id inválido → 400', () => {
     expect(failure(validateExerciseProgressQuery, { student_id: 'abc' }).fields).toEqual(['student_id']);
+  });
+});
+
+describe('progress.validation · query del overview', () => {
+  it('query vacía y completa son válidas', () => {
+    expect(validateProgressOverviewQuery({})).toEqual({});
+    expect(validateProgressOverviewQuery({ student_id: ID, from: '2026-10-01', to: '2026-10-31' }))
+      .toEqual({ student_id: ID, from: '2026-10-01', to: '2026-10-31' });
+  });
+  it('UUID o fechas inválidas → 400', () => {
+    expect(failure(validateProgressOverviewQuery, { student_id: 'abc' }).fields).toEqual(['student_id']);
+    expect(failure(validateProgressOverviewQuery, { from: '2026-02-30' }).fields).toEqual(['from']);
+    expect(failure(validateProgressOverviewQuery, { to: '31/10/2026' }).fields).toEqual(['to']);
+  });
+  it('from > to → 400', () => {
+    expect(failure(validateProgressOverviewQuery, { from: '2026-11-01', to: '2026-10-01' }).fields)
+      .toEqual(['from']);
   });
 });

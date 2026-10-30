@@ -42,3 +42,13 @@ describe('progress.routes', () => {
     expect(run(handlers[0], { params: { studentId: 'x' } })).toMatchObject({ statusCode: 400 });
   });
 });
+
+describe('progress.routes · overview', () => {
+  it('GET /overview valida la query antes del controller', () => {
+    const handlers = routeOf('/overview').route.stack.map((l) => l.handle);
+    expect(handlers).toHaveLength(2);
+    expect(run(handlers[0], { query: { from: '2026-11-01', to: '2026-10-01' } }))
+      .toMatchObject({ statusCode: 400 });
+    expect(run(handlers[0], { query: {} })).toBeUndefined();
+  });
+});

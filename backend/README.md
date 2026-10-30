@@ -170,6 +170,7 @@ Roles `trainer` y `student`. El alumno puede omitir `student_id` (por defecto es
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/progress/exercise/:exerciseId` | Curva de carga: un punto por día con `max_kg`, `volume_kg`, `e1rm_kg` (Epley), `sets` y `reps`; más `pr` y `default_metric`. Query `student_id`, `from`, `to`. Ejercicio no visible para el alumno → 404 `EXERCISE_NOT_FOUND`. Ver [ADR 0004](../docs/adr/0004-metrica-de-progreso.md) |
+| GET | `/api/progress/overview` | Ejercicios entrenados (`id`, `name`, `muscle_group`, `days`, `last_date`) y volumen semanal (`week_start` lunes AR, `volume_kg`, `sessions`; semanas vacías en 0). Query `student_id`, `from`, `to`. Ver [contrato](../docs/arquitectura/contratos-api.md) |
 | GET | `/api/progress/body/:studentId` | Historial de medidas (como `/students/:id/metrics`) más `summary` por campo (`first`, `last`, `delta`) |
 
 ### Autenticación
@@ -261,5 +262,5 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 ### Progreso (`/progress`) y `/routines/today`
 
-- Rutas nuevas (no están en el contrato de Notion): `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. La agregación vive en funciones SQL (`exercise_progress`, `last_session_kg`) llamadas con `supabase.rpc`; son `security invoker`, con `search_path` fijo y ejecutables solo por `service_role`. Migración: `src/database/migrations/2026-10-29-progress.sql`.
+- Rutas nuevas (no están en el contrato de Notion): `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. La agregación vive en funciones SQL (`exercise_progress`, `last_session_kg`) llamadas con `supabase.rpc`; son `security invoker`, con `search_path` fijo y ejecutables solo por `service_role`. Migración: `src/database/migrations/2026-10-29-progress.sql`. `GET /progress/overview` usa `progress_exercises` y `weekly_volume` (`schema/04b-progress-overview.sql`, migración `2026-10-30-progress-overview.sql`).
 - **`GET /routines/today`:** `last_session_kg` deja de ser siempre `null`: es el mayor peso de la última sesión en que el alumno hizo el ejercicio.

@@ -6,7 +6,7 @@ import { findAccessibleExerciseIds } from '../../repositories/routines/routines.
 import { findExerciseById } from '../../repositories/exercises/exercises.repository.js';
 import { MEASUREMENT_FIELDS } from '../../models/body-metrics/body-metric.model.js';
 import {
-  toProgressPoints, computePr, defaultMetricFor, bodySummary,
+  toProgressPoints, computePr, defaultMetricFor, bodySummary, toOverview,
 } from '../../models/progress/progress.model.js';
 
 function resolveStudentId(user, query) {
@@ -50,4 +50,18 @@ export async function exerciseProgress(user, exerciseId, query = {}) {
 export async function bodyProgress(user, studentId) {
   const points = await bodyMetricsService.list(user, studentId);
   return { points, summary: bodySummary(points, [...MEASUREMENT_FIELDS, 'bmi']) };
+}
+
+/**
+ * GET /progress/overview — ejercicios entrenados (sin filtrar por rango) y
+ * volumen semanal (con from/to) del alumno. Mismos permisos que /exercise.
+ */
+export async function overview(user, query = {}) {
+  const studentId = resolveStudentId(user, query);
+  await assertCanAccessStudent(user, studentId);
+  const [exerciseRows, weekRows] = await Promise.all([
+    progressRepo.fetchProgressExercises(studentId),
+    progressRepo.fetchWeeklyVolume({ studentId, from: query.from ?? null, to: query.to ?? null }),
+  ]);
+  return toOverview(exerciseRows, weekRows);
 }

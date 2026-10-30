@@ -28,3 +28,21 @@ export async function fetchLastSessionKg(studentId, exerciseIds) {
   if (error) throw Errors.internal(error.message);
   return Object.fromEntries((data ?? []).map((r) => [r.exercise_id, r.last_session_kg]));
 }
+
+/** Ejercicios con series que cuentan (función SQL progress_exercises), sin filtrar por rango. */
+export async function fetchProgressExercises(studentId) {
+  const { data, error } = await supabase.rpc('progress_exercises', { p_student_id: studentId });
+  if (error) throw Errors.internal(error.message);
+  return data ?? [];
+}
+
+/** Una fila por semana (lunes AR) con volumen y sesiones (función SQL weekly_volume). */
+export async function fetchWeeklyVolume({ studentId, from, to }) {
+  const { data, error } = await supabase.rpc('weekly_volume', {
+    p_student_id: studentId,
+    p_from: from,
+    p_to: to,
+  });
+  if (error) throw Errors.internal(error.message);
+  return data ?? [];
+}

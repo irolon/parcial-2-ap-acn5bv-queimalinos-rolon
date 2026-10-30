@@ -6,6 +6,7 @@ import {
   validateExerciseProgressParams,
   validateExerciseProgressQuery,
   validateBodyProgressParams,
+  validateProgressOverviewQuery,
 } from '../../validations/progress/progress.validation.js';
 import * as progressController from '../../controllers/progress/progress.controller.js';
 
@@ -14,6 +15,7 @@ const router = Router();
 // Trainer dueño o el propio alumno: el ownership se valida en el service.
 router.use(authenticate, requireRole('trainer', 'student'));
 
+router.get('/overview', validate(validateProgressOverviewQuery, 'query'), progressController.overview);
 router.get(
   '/exercise/:exerciseId',
   validate(validateExerciseProgressParams, 'params'),

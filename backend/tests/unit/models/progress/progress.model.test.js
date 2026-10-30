@@ -4,6 +4,7 @@ import {
   toProgressPoints,
   computePr,
   bodySummary,
+  toOverview,
 } from '../../../../src/models/progress/progress.model.js';
 
 describe('toProgressPoints', () => {
@@ -78,5 +79,28 @@ describe('defaultMetricFor', () => {
 
   it('sin puntos devuelve e1rm_kg', () => {
     expect(defaultMetricFor([])).toBe('e1rm_kg');
+  });
+});
+
+describe('toOverview', () => {
+  it('mapea ejercicios y semanas, redondea y pasa Date a string', () => {
+    const exercises = [
+      { exercise_id: 'e1', name: 'Sentadilla', muscle_group: 'legs', days: '4', last_date: new Date('2026-10-27T00:00:00Z') },
+    ];
+    const weeks = [
+      { week_start: new Date('2026-10-20T00:00:00Z'), volume_kg: '5230.45', sessions: '3' },
+      { week_start: '2026-10-27', volume_kg: 0, sessions: 0 },
+    ];
+    expect(toOverview(exercises, weeks)).toEqual({
+      exercises: [{ id: 'e1', name: 'Sentadilla', muscle_group: 'legs', days: 4, last_date: '2026-10-27' }],
+      weekly_volume: [
+        { week_start: '2026-10-20', volume_kg: 5230.5, sessions: 3 },
+        { week_start: '2026-10-27', volume_kg: 0, sessions: 0 },
+      ],
+    });
+  });
+
+  it('sin filas devuelve listas vacías', () => {
+    expect(toOverview([], [])).toEqual({ exercises: [], weekly_volume: [] });
   });
 });
