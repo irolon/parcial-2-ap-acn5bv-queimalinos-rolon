@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import {
   mockRepo,
   mockProgressRepo,
@@ -68,6 +69,17 @@ describe('routines.service', () => {
       const result = await service.today('st-1');
       expect(result.exercises[0].last_session_kg).toBe(62.5); // Press
       expect(result.exercises[1].last_session_kg).toBeNull(); // Remo
+    });
+
+    it('si falla last_session_kg devuelve la rutina con null y lo loguea', async () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockRepo.findActiveRoutineForStudentToday.mockResolvedValue(row);
+      mockProgressRepo.fetchLastSessionKg.mockRejectedValue(new Error('rpc caído'));
+      const result = await service.today('st-1');
+      expect(result.exercises).toHaveLength(2);
+      expect(result.exercises.every((e) => e.last_session_kg === null)).toBe(true);
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('no llama al RPC si la rutina no tiene ejercicios', async () => {

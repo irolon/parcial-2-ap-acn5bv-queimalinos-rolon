@@ -152,14 +152,24 @@ export async function removeExercise(trainerId, routineId, routineExerciseId) {
   await routineExercisesRepo.deleteRoutineExercise(routineExerciseId);
 }
 
+/** last_session_kg es un dato de ayuda: si falla, se loguea y la rutina sale con null. */
+async function lastSessionKgOrEmpty(studentId, exerciseIds) {
+  if (!exerciseIds.length) return {};
+  try {
+    return await progressRepository.fetchLastSessionKg(studentId, exerciseIds);
+  } catch (error) {
+    console.error('[LAST SESSION KG FAILED]', studentId, error);
+    return {};
+  }
+}
+
 /** Rutina del día del alumno (null si no tiene ninguna activa para hoy). */
 export async function today(studentId) {
   const row = await repository.findActiveRoutineForStudentToday(studentId, dayName());
   if (!row) return null;
   // Una sola consulta para todos los ejercicios de la rutina (no una por ejercicio).
   const ids = [...new Set((row.routine_exercises ?? []).map((re) => re.exercise_id))];
-  const lastKg = ids.length ? await progressRepository.fetchLastSessionKg(studentId, ids) : {};
-  return toTodayRoutine(row, lastKg);
+  return toTodayRoutine(row, await lastSessionKgOrEmpty(studentId, ids));
 }
 
 /** Rutinas activas del alumno con sus ejercicios (caché offline de mobile). */
