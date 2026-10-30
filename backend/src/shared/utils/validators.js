@@ -21,3 +21,13 @@ export function isRealCalendarDateTime(value) {
 // Date.parse descarta offsets imposibles como +25:00.
 export const isIsoDateTime = (v) =>
   typeof v === 'string' && isRealCalendarDateTime(v) && !Number.isNaN(Date.parse(v));
+
+const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Fecha de calendario real con formato YYYY-MM-DD (rechaza 2026-02-30). */
+export function isRealCalendarDate(value) {
+  const m = typeof value === 'string' ? DATE_RE.exec(value) : null;
+  if (!m) return false;
+  const [year, month, day] = m.slice(1).map(Number);
+  return month >= 1 && month <= 12 && day >= 1 && day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+}

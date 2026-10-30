@@ -4,8 +4,9 @@
  * Los numéricos de Supabase pueden llegar como string: se coercionan.
  */
 
+import { round1 } from '../../shared/utils/numbers.js';
+
 const toNum = (v) => (v === null || v === undefined ? null : Number(v));
-const round1 = (n) => Math.round(n * 10) / 10;
 const lookup = (src, key) => (src instanceof Map ? src.get(key) : src?.[key]);
 
 /** Minutos enteros entre inicio y fin; null si la sesión no se cerró. */

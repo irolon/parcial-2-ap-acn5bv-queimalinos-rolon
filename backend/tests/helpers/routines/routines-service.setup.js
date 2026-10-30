@@ -42,6 +42,12 @@ jest.unstable_mockModule(
   () => mockRoutineExercisesRepo
 );
 
+export const mockProgressRepo = { fetchLastSessionKg: jest.fn() };
+jest.unstable_mockModule(
+  src('repositories/progress/progress.repository.js'),
+  () => mockProgressRepo
+);
+
 export const service = await import(src('services/routines/routines.service.js'));
 
 export const TRAINER_ID = 'trainer-1';

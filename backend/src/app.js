@@ -13,6 +13,7 @@ import exercisesRoutes from './routes/exercises/exercises.routes.js';
 import routinesRoutes from './routes/routines/routines.routes.js';
 import routineTemplatesRoutes from './routes/routine-templates/routine-templates.routes.js';
 import sessionsRoutes from './routes/sessions/sessions.routes.js';
+import progressRoutes from './routes/progress/progress.routes.js';
 import achievementsRoutes from './routes/gamification/achievements.routes.js';
 import challengesRoutes from './routes/gamification/challenges.routes.js';
 import notificationsRoutes from './routes/notifications/notifications.routes.js';
@@ -37,6 +38,7 @@ export function createApp() {
   app.use('/api/routines', routinesRoutes);
   app.use('/api/routine-templates', routineTemplatesRoutes);
   app.use('/api/sessions', sessionsRoutes);
+  app.use('/api/progress', progressRoutes);
   app.use('/api/achievements', achievementsRoutes);
   app.use('/api/challenges', challengesRoutes);
   app.use('/api/notifications', notificationsRoutes);
