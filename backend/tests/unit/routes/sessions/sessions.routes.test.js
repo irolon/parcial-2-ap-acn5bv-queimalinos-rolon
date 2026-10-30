@@ -6,7 +6,7 @@ const routeOf = (method, path) =>
   router.stack.find((l) => l.route?.path === path && l.route.methods[method]);
 const handlersOf = (method, path) => routeOf(method, path).route.stack.map((l) => l.handle);
 const res = { status: () => res, json: () => res };
-// El segundo handler de cada ruta es requireRole(...): lo ejercitamos con un rol.
+// El primer handler de cada ruta es requireRole(...) (authenticate es global): lo ejercitamos con un rol.
 const roleResult = (method, path, role) => {
   let err;
   handlersOf(method, path)[0]({ user: { role } }, res, (e) => { err = e; });
