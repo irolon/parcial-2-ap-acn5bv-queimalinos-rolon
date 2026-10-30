@@ -626,7 +626,7 @@ Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesione
 
 **Body:** al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1-10) y `notes` (máx. 1000). Se puede repetir (corregir RPE o notas). Los campos en `null` se ignoran (como ausentes); si todos vienen en `null` o el body está vacío, 400.
 
-**Response 200:** `{ data: session }`. Sesión ajena o inexistente: 404 `SESSION_NOT_FOUND`.
+**Response 200:** `{ data: session }` más `unlocked_achievements`: los logros que se desbloquearon con este cierre, `[{ "code": "FIRST_SESSION", "name": "Primera sesión", "category": "milestone" }]` (arreglo vacío si no hubo o si el body no trae `finished_at`). Si la evaluación de logros falla, el cierre responde igual con `[]` (se loguea). Sesión ajena o inexistente: 404 `SESSION_NOT_FOUND`.
 
 ### GET /students/:id/sessions
 
@@ -697,9 +697,32 @@ Curva de progresión de carga para un ejercicio. Query: `student_id`, `from`, `t
 
 ## Módulo: Gamificación
 
+Logros, racha y desafíos. Todos los endpoints piden `Authorization: Bearer <token>` y responden `{ data }`. La regla de la racha está en [[adr/0005-racha-contra-dias-asignados|ADR 0005]]. Los permisos sobre un alumno siguen la regla de siempre: `trainer` solo sobre sus alumnos, `student` solo sobre sí mismo; ajeno o inexistente → 403 `FORBIDDEN`. Un `:id` que no es UUID → 400 `VALIDATION_ERROR`.
+
+### GET /achievements
+
+Catálogo de logros. Roles: `trainer` y `student`. Ordenado por `category` y `code`.
+
+**200 OK**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid", "code": "FIRST_SESSION", "name": "Primera sesión",
+      "description": "Cerraste tu primera sesión de entrenamiento",
+      "icon_url": null, "category": "milestone",
+      "criteria": { "type": "sessions_count", "value": 1 }
+    }
+  ]
+}
+```
+
+`icon_url` es `null` en el catálogo inicial: el cliente elige el ícono según `category`. Tipos de `criteria`: `sessions_count {value}`, `streak {days}`, `pr_count {value}`, `full_week {count}` y `challenge {}` (el logro "Desafío cumplido" no lo otorga el evaluador sino un desafío completado).
+
 ### GET /students/:id/achievements
 
-Logros desbloqueados por el alumno.
+Logros desbloqueados por el alumno, el más reciente primero. Roles: `trainer` (dueño) y `student` (el propio).
 
 **200 OK**
 
@@ -710,21 +733,23 @@ Logros desbloqueados por el alumno.
       "id": "uuid",
       "achievement": {
         "code": "FIRST_PR",
-        "name": "Primer PR",
-        "description": "Lograste tu primer Personal Record",
-        "icon_url": "https://...",
+        "name": "Primer récord",
+        "description": "Lograste tu primer récord personal",
+        "icon_url": null,
         "category": "pr"
       },
       "unlocked_at": "2026-04-08T18:30:00Z",
-      "context": { "exercise": "Press banca", "kg": 90 }
+      "context": { "session_id": "uuid", "exercise_id": "uuid" }
     }
   ]
 }
 ```
 
+`context` depende del logro: `{ session_id }` en general y `{ session_id, exercise_id }` en los de récords. Un logro se desbloquea una sola vez por alumno.
+
 ### GET /students/:id/streak
 
-Racha actual del alumno.
+Racha del alumno (ver ADR 0005). Mismos roles y permisos. Lee `student_streaks`; si el alumno todavía no tiene fila, la calcula y la guarda.
 
 **200 OK**
 
@@ -738,13 +763,30 @@ Racha actual del alumno.
 }
 ```
 
+`last_session_date` es `null` si el alumno nunca cerró una sesión.
+
 ### GET /challenges
 
-Lista challenges disponibles (globales + del trainer). Query: `goal_type`, `active_only`.
+Desafíos que puede ver el usuario: globales (`trainer_id: null`) y los del entrenador; un alumno ve los globales y los de su entrenador. Roles: `trainer` y `student`. Los globales salen primero y después los propios, cada grupo ordenado por nombre.
+
+**Query:** `goal_type` (`sessions_count | weight_target | streak | volume`; otro valor → 400 `VALIDATION_ERROR`). `active_only` se **acepta y se ignora**: `challenges` no tiene estado de vigencia, todos están disponibles.
+
+**200 OK**
+
+```json
+{
+  "data": [{
+    "id": "uuid", "trainer_id": null, "name": "12 sesiones en 30 días",
+    "description": "Cerrá 12 sesiones de entrenamiento en 30 días.",
+    "goal_type": "sessions_count", "goal_value": 12, "duration_days": 30,
+    "reward_achievement_id": null
+  }]
+}
+```
 
 ### POST /challenges
 
-Solo trainer. Crea un desafío personalizado para asignar a alumnos.
+Solo `trainer` (alumno → 403 `FORBIDDEN`). Crea un desafío propio.
 
 **Body**
 
@@ -755,19 +797,55 @@ Solo trainer. Crea un desafío personalizado para asignar a alumnos.
   "goal_type": "sessions_count | weight_target | streak | volume",
   "goal_value": 12,
   "duration_days": 30,
-  "reward_achievement_id": "uuid (opcional)"
+  "reward_achievement_id": "uuid (opcional, o null)"
 }
 ```
 
+- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0. `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
+- Campo inválido → 400 `VALIDATION_ERROR` con `details`; un `reward_achievement_id` que no existe también.
+
+**201 Created:** `{ data }` con el desafío (misma forma que un ítem de `GET /challenges`, con `trainer_id` del entrenador).
+
+### PATCH /challenges/:id
+
+Solo `trainer`, sobre un desafío **propio**. Body parcial con cualquiera de los campos de `POST /challenges` (al menos uno, si no 400 `VALIDATION_ERROR`). Un desafío global, de otro entrenador o inexistente → 404 `CHALLENGE_NOT_FOUND`. Editarlo no cambia las asignaciones ya hechas (`ends_at` queda como estaba).
+
+**200 OK:** `{ data }` con el desafío actualizado.
+
+### DELETE /challenges/:id
+
+Solo `trainer`, sobre un desafío propio. Si tiene asignaciones **activas** → 409 `CHALLENGE_IN_USE`. Global, ajeno o inexistente → 404 `CHALLENGE_NOT_FOUND`.
+
+**204 No Content.**
+
+### POST /challenges/:id/assignments
+
+Solo `trainer`. Asigna el desafío (global o propio) a varios alumnos suyos.
+
+**Body:** `{ "student_ids": ["uuid", …] }` — de 1 a 50 uuids sin repetir; si no, 400 `VALIDATION_ERROR`. Desafío ajeno o inexistente → 404 `CHALLENGE_NOT_FOUND`.
+
+**201 Created**
+
+```json
+{ "data": {
+  "created": [ /* asignaciones, misma forma que GET /students/:id/challenges */ ],
+  "skipped": [ { "student_id": "uuid", "reason": "not_your_student | already_active" } ]
+} }
+```
+
+`started_at` es el momento de la asignación y `ends_at = started_at + duration_days`. Un alumno inactivo o que no es del entrenador se saltea con `not_your_student`; uno que ya tiene el desafío activo, con `already_active`.
+
 ### POST /students/:id/challenges
 
-Asigna un challenge a un alumno (lo puede asignar el PT o tomarlo el alumno mismo).
+Asigna un desafío a un alumno: lo puede asignar el `trainer` dueño o tomarlo el propio `student`.
 
-**Body:** `{ "challenge_id": "uuid" }`
+**Body:** `{ "challenge_id": "uuid" }`. El desafío tiene que ser global o del entrenador del alumno; si no existe o no es visible → 404 `CHALLENGE_NOT_FOUND`. Si el alumno ya lo tiene activo → 409 `CHALLENGE_ALREADY_ACTIVE`. `challenge_id` inválido → 400 `VALIDATION_ERROR`.
+
+**201 Created:** `{ data }` con la asignación (misma forma que un ítem de `GET /students/:id/challenges`).
 
 ### GET /students/:id/challenges
 
-Lista challenges activos y completados del alumno con su progreso.
+Desafíos del alumno (activos, completados y fallidos), el más nuevo primero. Roles: `trainer` (dueño) y `student` (el propio).
 
 **200 OK**
 
@@ -776,17 +854,31 @@ Lista challenges activos y completados del alumno con su progreso.
   "data": [
     {
       "id": "uuid",
-      "challenge": { /* datos del challenge */ },
+      "challenge": {
+        "id": "uuid", "name": "12 sesiones en 30 días", "description": "…",
+        "goal_type": "sessions_count", "goal_value": 12, "duration_days": 30,
+        "reward_achievement_id": null
+      },
       "started_at": "2026-04-01T00:00:00Z",
       "ends_at": "2026-05-01T00:00:00Z",
       "current_progress": 8,
       "goal_value": 12,
       "progress_pct": 66.7,
-      "status": "active"
+      "status": "active",
+      "completed_at": null
     }
   ]
 }
 ```
+
+- `status`: `active | completed | failed | abandoned`. `completed_at` es `null` mientras no se completa.
+- El progreso cuenta lo hecho dentro de la ventana `started_at`–`ends_at`: `sessions_count` = sesiones cerradas; `volume` = Σ repeticiones × kg de las series completadas; `streak` = mejor racha dentro de la ventana; `weight_target` = último peso registrado. Se recalcula al cerrar una sesión y en el job diario.
+- `progress_pct` = `min(100, current_progress / goal_value × 100)` a 1 decimal. **En `weight_target` el porcentaje no se calcula al listar**: vale `100` si el desafío está `completed` y `null` en cualquier otro estado (el avance se ve en `current_progress`, el último peso). La dirección (bajar o subir) se infiere del peso inicial contra la meta.
+- Al alcanzar la meta pasa a `completed` y, si el desafío tiene `reward_achievement_id`, se otorga ese logro. Un desafío activo vencido sin meta pasa a `failed` en el job diario.
+
+> **Job diario:** corre a las 03:00 (hora de Buenos Aires) dentro del server si `CRON_ENABLED` no es `false` (apagado en tests), o a mano con `npm run gamification:daily`. Recalcula racha, logros y desafíos de los alumnos activos y marca `failed` los desafíos vencidos. Es idempotente.
+
+> **Errores propios del módulo:** 404 `CHALLENGE_NOT_FOUND`, 409 `CHALLENGE_IN_USE`, 409 `CHALLENGE_ALREADY_ACTIVE`; además 400 `VALIDATION_ERROR` y 403 `FORBIDDEN` como en el resto de la API.
 
 ---
 

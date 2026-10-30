@@ -305,7 +305,7 @@ Originalmente la gamificación (logros, rachas, badges) estaba planeada como fun
 
 **Incluir un sistema de gamificación básico pero completo en el MVP**, con tres componentes:
 
-- **Rachas (streaks):** días/semanas consecutivas de entrenamiento.
+- **Rachas (streaks):** días asignados seguidos entrenados. *(Originalmente "días/semanas consecutivas"; la regla vigente está en [[adr/0005-racha-contra-dias-asignados]].)*
 - **Logros (badges):** primer PR en cada ejercicio, completar N semanas, completar todas las sesiones de un mes.
 - **Desafíos (challenges):** objetivos predefinidos asignables (ej: "12 sesiones en 30 días", "alcanzar X kg en sentadilla"). Pueden ser globales o personalizados por el PT.
 
@@ -343,3 +343,4 @@ Decisiones registradas como archivos en `docs/adr/` (numeración propia, distint
 - **0001** — Autorización en la capa Service, RLS deny-all en la base: [[adr/0001-autorizacion-en-services-rls-deny-all]].
 - **0002** — Sesión de la web: access token en memoria, refresh y user en `localStorage`: [[adr/0002-sesion-web]].
 - **0003** — Las plantillas de rutina se copian al asignarlas (no son referencia viva): [[adr/0003-plantillas-se-copian]].
+- **0005** — La racha se mide contra los días asignados, no contra días corridos (reemplaza el "días consecutivos" del ADR-007): [[adr/0005-racha-contra-dias-asignados]].

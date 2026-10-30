@@ -252,7 +252,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 1. Al finalizar una sesión, el sistema evalúa los logros:
    - ¿Es un PR (Personal Record) en algún ejercicio? → desbloqueá `FIRST_PR` o `NEW_PR`.
-   - ¿Cumplió N días consecutivos? → desbloqueá `STREAK_7_DAYS`, `STREAK_30_DAYS`, etc.
+   - ¿Cumplió N días asignados seguidos (ver [[adr/0005-racha-contra-dias-asignados|ADR 0005]])? → desbloqueá `STREAK_7_DAYS`, `STREAK_30_DAYS`, etc.
    - ¿Completó X sesiones totales? → desbloqueá `MILESTONE_10`, `MILESTONE_50`, etc.
 2. Para cada logro nuevo, crea un registro en `student_achievements` con `unlocked_at = now`.
 3. Actualiza `current_progress` en los challenges activos del alumno.
