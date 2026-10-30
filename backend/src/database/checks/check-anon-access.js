@@ -41,6 +41,7 @@ const TABLES = [
   'student_achievements',
   'challenges',
   'student_challenges',
+  'student_streaks',
   'chat_messages',
   'ai_routine_generations',
   'appointments',

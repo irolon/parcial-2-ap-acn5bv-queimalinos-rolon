@@ -17,7 +17,7 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`.
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`.
 
 ```
 src/
@@ -35,7 +35,7 @@ src/
 │   ├── schema/              # DDL por dominio: 01…07 en orden (ver su README)
 │   ├── migrations/          # cambios de schema con fecha, para bases ya creadas
 │   ├── checks/              # schema-checks.sql, exercises-checks.sql y check-anon-access.js
-│   └── seeds/exercises.sql  # 50 ejercicios globales iniciales (con video)
+│   └── seeds/               # exercises.sql (50 ejercicios globales), achievements.sql (catálogo de logros), challenges.sql (desafíos globales)
 ├── app.js                   # arma la app de Express y monta las rutas
 └── server.js                # entrypoint (levanta el server)
 
@@ -75,6 +75,7 @@ están en la guía: [`docs/proceso/setup-tecnico.md`](../docs/proceso/setup-tecn
 | `npm run lint:fix` | ESLint con autofix |
 | `npm run format` | Prettier sobre `src`, `tests` y `scripts` |
 | `npm run db:check-anon` | Verifica que la clave `anon` no vea filas por la API pública |
+| `npm run gamification:daily` | Corre una vez el job diario de gamificación (racha, logros, desafíos vencidos); es idempotente |
 
 ## Endpoints
 
@@ -160,7 +161,7 @@ Escritura del alumno: solo rol `student`; el `student_id` sale del token. Sesió
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
-| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
+| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed, unlocked_achievements } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
 | PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
 | GET | `/api/students/:id/sessions?page=&limit=` | Historial paginado `{ data, meta }`, más recientes primero (trainer: sus alumnos; student: él mismo): `routine`, `duration_min`, `sets`, `volume_kg`, `has_pr`, `trainer_comment` |
 | GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
@@ -174,6 +175,27 @@ Roles `trainer` y `student`. El alumno puede omitir `student_id` (por defecto es
 |--------|------|-------------|
 | GET | `/api/progress/exercise/:exerciseId` | Curva de carga: un punto por día con `max_kg`, `volume_kg`, `e1rm_kg` (Epley), `sets` y `reps`; más `pr` y `default_metric`. Query `student_id`, `from`, `to`. Ejercicio no visible para el alumno → 404 `EXERCISE_NOT_FOUND`. Ver [ADR 0004](../docs/adr/0004-metrica-de-progreso.md) |
 | GET | `/api/progress/body/:studentId` | Historial de medidas (como `/students/:id/metrics`) más `summary` por campo (`first`, `last`, `delta`) |
+
+### Gamificación — Fase 5
+
+Rol: `trainer` / `student`. Sobre un alumno rige la regla de siempre (trainer dueño o el propio alumno; si no, 403). El detalle de cada body y respuesta está en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+| Método | Ruta | Rol | Descripción |
+|--------|------|-----|-------------|
+| GET | `/api/achievements` | trainer/student | Catálogo de logros |
+| GET | `/api/students/:id/achievements` | trainer dueño / el propio alumno | Logros desbloqueados, el más reciente primero |
+| GET | `/api/students/:id/streak` | trainer dueño / el propio alumno | `{ current_streak_days, longest_streak_days, last_session_date }` ([ADR 0005](../docs/adr/0005-racha-contra-dias-asignados.md)) |
+| GET | `/api/challenges` | trainer/student | Globales + del entrenador. Query `goal_type`; `active_only` se acepta y se ignora |
+| POST | `/api/challenges` | trainer | Crea un desafío (`duration_days` obligatorio). 201 |
+| PATCH | `/api/challenges/:id` | trainer dueño | Edición parcial; global o ajeno → 404 `CHALLENGE_NOT_FOUND`; cambiar `goal_type`/`goal_value` con asignaciones activas → 409 `CHALLENGE_IN_USE` |
+| DELETE | `/api/challenges/:id` | trainer dueño | 204; con cualquier asignación (aun terminada) 409 `CHALLENGE_IN_USE`, para conservar el historial |
+| POST | `/api/challenges/:id/assignments` | trainer | `{ student_ids }` (1 a 50). 201 `{ created, skipped }` |
+| POST | `/api/students/:id/challenges` | trainer dueño / el propio alumno | `{ challenge_id }`. 201; ya activo 409 `CHALLENGE_ALREADY_ACTIVE` |
+| GET | `/api/students/:id/challenges` | trainer dueño / el propio alumno | Asignaciones con `current_progress`, `progress_pct` y `status` |
+
+`PATCH /api/sessions/:id`, `POST /api/sessions` (cuando queda cerrada) y `POST /api/sessions/:id/sets` (sobre una sesión cerrada) suman `unlocked_achievements` dentro de `data` (`[]` si no hubo).
+
+**Job diario.** Corre a las 03:00 (hora de Buenos Aires) dentro del proceso del server, con un `setTimeout` que se reprograma solo. Lo controla `CRON_ENABLED` (por defecto activo; `false` lo apaga y en `NODE_ENV=test` siempre está apagado). Para correrlo a mano: `npm run gamification:daily`. Recalcula racha, logros y progreso de los desafíos de los alumnos activos y marca `failed` los desafíos vencidos hace más de 2 días (`CHALLENGE_GRACE_DAYS`: hasta entonces siguen activos y una sesión offline sincronizada tarde todavía los puede completar); reejecutarlo no duplica nada.
 
 ### Autenticación
 
@@ -257,6 +279,13 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **Sustitución:** `substituted_exercise_id` se reemplaza por `exercise_id` (lo realmente hecho) + `original_exercise_id` (lo planificado).
 - **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
 - **Historial:** `GET /students/:id/sessions`, `GET /students/:id/sessions/:sessionId` y `PATCH /sessions/:id/comment` (solo `trainer`); ver el contrato.
+
+### Gamificación (`/achievements`, `/challenges`)
+
+- **Racha:** cuenta días asignados seguidos entrenados, no días corridos (ADR 0005); reemplaza lo que decía el contrato v1.1.
+- **`GET /challenges`:** `active_only` se acepta pero no filtra, porque `challenges` no tiene estado de vigencia.
+- **Logros:** `GET /students/:id/achievements` devuelve `context` con `session_id` (y `exercise_id` en los de récords) en lugar de datos del ejercicio.
+- **Desafíos:** se suman `PATCH` y `DELETE /challenges/:id` y `POST /challenges/:id/assignments`, y `duration_days` es obligatorio.
 
 ### Ejercicios (`/exercises`)
 

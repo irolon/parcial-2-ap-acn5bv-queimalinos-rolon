@@ -134,6 +134,8 @@ tests/
 scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en scripts/lib/)
 ```
 
+Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación).
+
 #### Web (`frontend/`)
 
 ```

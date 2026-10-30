@@ -21,6 +21,9 @@ jest.unstable_mockModule(src('repositories/sessions/session-sets.repository.js')
 jest.unstable_mockModule(src('repositories/routines/routines.repository.js'), () => mockRoutinesRepo);
 jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
 
+export const mockEvaluate = { evaluateStudent: jest.fn() };
+jest.unstable_mockModule(src('services/gamification/evaluate.service.js'), () => mockEvaluate);
+
 export const service = await import(src('services/sessions/session-sets.service.js'));
 
 export const STUDENT_ID = 'st-1';

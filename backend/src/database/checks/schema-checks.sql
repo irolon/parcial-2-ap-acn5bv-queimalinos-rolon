@@ -7,7 +7,7 @@ with expected (t) as (
          ('invitations'), ('exercises'), ('routine_templates'), ('routines'),
          ('routine_exercises'), ('sessions'), ('session_sets'),
          ('achievements'), ('student_achievements'), ('challenges'),
-         ('student_challenges'), ('chat_messages'),
+         ('student_challenges'), ('student_streaks'), ('chat_messages'),
          ('ai_routine_generations'), ('appointments'), ('notifications')
 )
 select 'falta la tabla ' || t as problema

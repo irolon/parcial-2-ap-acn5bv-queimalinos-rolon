@@ -10,7 +10,7 @@ describe('sessions.service · create', () => {
     mockRepo.insertSession.mockResolvedValueOnce(STORED);
     const result = await service.create(STUDENT_ID, BODY);
     expect(mockRepo.insertSession).toHaveBeenCalledWith({ ...BODY, student_id: STUDENT_ID });
-    expect(result).toEqual({ session: STORED, created: true });
+    expect(result).toEqual({ session: STORED, created: true, unlocked_achievements: [] });
   });
 
   it('sin routine_id no consulta la propiedad de la rutina', async () => {
@@ -51,7 +51,7 @@ describe('sessions.service · create', () => {
       expect(mockRepo.updateSession).toHaveBeenCalledWith(SESSION_ID, {
         finished_at: '2026-10-27T11:00:00-03:00', rpe: 7,
       });
-      expect(result).toEqual({ session: closed, created: false });
+      expect(result).toEqual({ session: closed, created: false, unlocked_achievements: [] });
     });
 
     it('ignora started_at y routine_id distintos (no se envían al update)', async () => {
@@ -73,7 +73,7 @@ describe('sessions.service · create', () => {
       const result = await service.create(STUDENT_ID, {
         ...BODY, routine_id: ROUTINE_ID, finished_at: '2026-10-27T11:00:00-03:00',
       });
-      expect(result).toEqual({ session: closed, created: false });
+      expect(result).toEqual({ session: closed, created: false, unlocked_achievements: [] });
     });
 
     it('finished_at anterior al started_at guardado: se ignora y guarda rpe y notes', async () => {
@@ -99,7 +99,7 @@ describe('sessions.service · create', () => {
       mockRepo.findSessionById.mockResolvedValueOnce(stored);
       const result = await service.create(STUDENT_ID, { ...BODY, rpe: 7 });
       expect(mockRepo.updateSession).not.toHaveBeenCalled();
-      expect(result).toEqual({ session: stored, created: false });
+      expect(result).toEqual({ session: stored, created: false, unlocked_achievements: [] });
     });
 
     it('completa solo los campos null guardados (finished_at) y respeta los demás', async () => {
@@ -117,7 +117,7 @@ describe('sessions.service · create', () => {
       mockRepo.findSessionById.mockResolvedValueOnce(STORED);
       const result = await service.create(STUDENT_ID, BODY);
       expect(mockRepo.updateSession).not.toHaveBeenCalled();
-      expect(result).toEqual({ session: STORED, created: false });
+      expect(result).toEqual({ session: STORED, created: false, unlocked_achievements: [] });
     });
 
     it('existente de otro alumno: 409 SESSION_ID_CONFLICT', async () => {

@@ -53,3 +53,16 @@ create table if not exists student_challenges (
 
 create index if not exists idx_student_challenges_student on student_challenges (student_id);
 
+
+-- ── student_streaks (tarjeta 41 · racha recalculada desde el historial) ──────
+create table if not exists student_streaks (
+  student_id        uuid primary key references students (id) on delete cascade,
+  current_days      int not null default 0,
+  longest_days      int not null default 0,
+  last_trained_date date,
+  updated_at        timestamptz not null default now()
+);
+
+-- Un alumno no puede tener el mismo desafío activo dos veces.
+create unique index if not exists uq_student_challenges_active
+  on student_challenges (student_id, challenge_id) where status = 'active';

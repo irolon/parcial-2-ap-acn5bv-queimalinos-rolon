@@ -32,7 +32,9 @@ describe('sessions.service · update', () => {
     const closed = { ...STORED, finished_at: '2026-10-27T11:00:00-03:00', rpe: 8 };
     mockRepo.updateSession.mockResolvedValueOnce(closed);
     const body = { finished_at: '2026-10-27T11:00:00-03:00', rpe: 8 };
-    expect(await service.update(STUDENT_ID, SESSION_ID, body)).toEqual(closed);
+    expect(await service.update(STUDENT_ID, SESSION_ID, body)).toEqual({
+      ...closed, unlocked_achievements: [],
+    });
     expect(mockRepo.updateSession).toHaveBeenCalledWith(SESSION_ID, body);
   });
 

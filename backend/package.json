@@ -16,6 +16,7 @@
     "lint": "eslint \"**/*.js\" && node scripts/check-file-length.js",
     "lint:fix": "eslint \"**/*.js\" --fix",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"scripts/**/*.js\"",
+    "gamification:daily": "node scripts/gamification-daily.js",
     "db:check-anon": "node src/database/checks/check-anon-access.js"
   },
   "dependencies": {
