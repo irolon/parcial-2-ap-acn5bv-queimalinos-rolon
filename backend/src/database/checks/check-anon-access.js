@@ -46,6 +46,7 @@ const TABLES = [
   'ai_routine_generations',
   'appointments',
   'notifications',
+  'push_tokens',
   // Vista (no tabla): con security_invoker hereda el RLS de sessions.
   'student_last_session',
 ];

@@ -9,7 +9,7 @@ El schema de FitTrainer está repartido por dominio en siete archivos SQL.
 | `03-routines.sql` | `exercises`, `routines`, `routine_exercises`, `routine_templates` y la FK `routines_template_id_fkey` |
 | `04-progress.sql` | `body_metrics`, `sessions`, la vista `student_last_session`, `session_sets`, la función `session_records` |
 | `05-gamification.sql` | `achievements`, `student_achievements`, `challenges`, `student_challenges`, `student_streaks` y el índice único de desafíos activos |
-| `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `notifications` |
+| `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `notifications`, `push_tokens` |
 | `07-rls.sql` | Row Level Security (activado sin políticas en todas las tablas) |
 
 ## Cómo correrlos

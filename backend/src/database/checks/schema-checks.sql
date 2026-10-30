@@ -8,7 +8,8 @@ with expected (t) as (
          ('routine_exercises'), ('sessions'), ('session_sets'),
          ('achievements'), ('student_achievements'), ('challenges'),
          ('student_challenges'), ('student_streaks'), ('chat_messages'),
-         ('ai_routine_generations'), ('appointments'), ('notifications')
+         ('ai_routine_generations'), ('appointments'), ('notifications'),
+         ('push_tokens')
 )
 select 'falta la tabla ' || t as problema
 from expected e
@@ -49,12 +50,23 @@ select format('%s.%s debería ser not null', v.tbl, v.col)
 from (values
   ('session_sets',  'exercise_id'),
   ('session_sets',  'executed_at'),
-  ('notifications', 'user_role')
+  ('notifications', 'user_role'),
+  ('notifications', 'data'),
+  ('push_tokens',   'user_role'),
+  ('push_tokens',   'token')
 ) v (tbl, col)
 where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = v.tbl
     and column_name = v.col and is_nullable = 'NO'
+)
+
+union all
+select 'falta la columna notifications.push_sent_at'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'notifications'
+    and column_name = 'push_sent_at'
 )
 
 union all

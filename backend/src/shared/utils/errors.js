@@ -67,6 +67,8 @@ export const Errors = {
     new AppError(409, 'CHALLENGE_IN_USE', 'El desafío tiene asignaciones activas'),
   challengeAlreadyActive: () =>
     new AppError(409, CHALLENGE_ALREADY_ACTIVE, 'El alumno ya tiene este desafío activo'),
+  notificationNotFound: () =>
+    new AppError(404, 'NOTIFICATION_NOT_FOUND', 'La notificación no existe'),
   sessionIdConflict: () =>
     new AppError(409, 'SESSION_ID_CONFLICT', 'Ya existe una sesión con ese id'),
   exerciseInUse: () =>
