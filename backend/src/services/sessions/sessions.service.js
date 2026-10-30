@@ -1,4 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
+import { safeEvaluate } from '../gamification/safe-evaluate.js';
 import * as sessionsRepo from '../../repositories/sessions/sessions.repository.js';
 
 const RETRY_UPDATABLE = ['finished_at', 'rpe', 'notes'];
@@ -41,6 +42,13 @@ async function applyRetry(studentId, body, existing) {
  * Si el id ya existe es un reintento (otro alumno: 409).
  */
 export async function create(studentId, body) {
+  const result = await createOrRetry(studentId, body);
+  // Llegó cerrada (nueva o completada por el reintento): puede desbloquear logros.
+  if (result.session.finished_at) await safeEvaluate(studentId);
+  return result;
+}
+
+async function createOrRetry(studentId, body) {
   const existing = await sessionsRepo.findSessionById(body.id);
   if (existing) return applyRetry(studentId, body, existing);
 
@@ -56,7 +64,10 @@ export async function create(studentId, body) {
   return applyRetry(studentId, body, await sessionsRepo.findSessionById(body.id));
 }
 
-/** PATCH /sessions/:id — cierra la sesión o corrige RPE / notas. */
+/**
+ * PATCH /sessions/:id — cierra la sesión o corrige RPE / notas. Devuelve la
+ * sesión + unlocked_achievements (los logros recién desbloqueados al cerrar).
+ */
 export async function update(studentId, sessionId, body) {
   const session = await getOwnedSession(studentId, sessionId);
   if (body.finished_at && Date.parse(body.finished_at) < Date.parse(session.started_at)) {
@@ -64,5 +75,7 @@ export async function update(studentId, sessionId, body) {
       { field: 'finished_at', message: 'finished_at no puede ser anterior a started_at' },
     ]);
   }
-  return sessionsRepo.updateSession(sessionId, body);
+  const updated = await sessionsRepo.updateSession(sessionId, body);
+  const unlocked_achievements = body.finished_at ? await safeEvaluate(studentId) : [];
+  return { ...updated, unlocked_achievements };
 }
