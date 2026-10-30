@@ -49,7 +49,7 @@ export const sessionsPage = (data, { page = 1, totalPages = 1, total = data.leng
 
 /**
  * Rutas de sesiones para `stubFetch`; devuelve `null` si el pedido no es de sesiones.
- * - `sessions`: página, o `(page) => página`, o status de error; por defecto, historial vacío.
+ * - `sessions`: página, o `(page) => página | status`, o status de error; por defecto, historial vacío.
  * - `details`: `{ [sessionId]: detalle }`, o función `(sessionId) => detalle`.
  * - `comment`: handler `(init, url)` del PATCH `/sessions/:id/comment`.
  */
@@ -58,7 +58,8 @@ export function sessionsRoute({ sessions, details = {}, comment } = {}) {
     if (method === 'GET' && /^\/students\/[^/]+\/sessions\?/.test(path)) {
       if (typeof sessions === 'number') return errorResponse(sessions, 'INTERNAL');
       const page = Number(new URL(url).searchParams.get('page'));
-      return jsonResponse(200, typeof sessions === 'function' ? sessions(page) : (sessions ?? sessionsPage([])));
+      const body = typeof sessions === 'function' ? sessions(page) : (sessions ?? sessionsPage([]));
+      return typeof body === 'number' ? errorResponse(body, 'INTERNAL') : jsonResponse(200, body);
     }
     const detail = path.match(/^\/students\/[^/]+\/sessions\/([^/?]+)$/);
     if (method === 'GET' && detail) {

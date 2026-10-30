@@ -21,7 +21,12 @@ function Body({ query, studentId }) {
         ))}
       </ul>
       {query.hasNextPage && (
-        <div className="mt-3 flex justify-center">
+        <div className="mt-3 flex flex-col items-center gap-2">
+          {query.isFetchNextPageError && (
+            <p role="alert" className="text-sm text-hot">
+              No pudimos cargar más sesiones.
+            </p>
+          )}
           <Button variant="ghost" size="sm" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>
             Cargar más
           </Button>

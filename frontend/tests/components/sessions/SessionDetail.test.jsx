@@ -99,6 +99,11 @@ describe('SessionDetail', () => {
     expect(table.parentElement).toHaveClass('relative', 'overflow-x-auto');
   });
 
+  it('una sesión sin series muestra "Sin series registradas"', async () => {
+    await expand(sessionDetailItem({ exercises: [] }));
+    expect(await screen.findByText('Sin series registradas')).toBeVisible();
+  });
+
   it('si falla el detalle ofrece reintentar', async () => {
     const { user, fetchMock } = await expand(500);
     await user.click(await screen.findByRole('button', { name: 'Reintentar' }));

@@ -91,6 +91,27 @@ describe('SessionsHistory: estados y paginación', () => {
     ]);
   });
 
+  it('si falla "Cargar más" avisa, conserva el botón y el aviso se va al reintentar con éxito', async () => {
+    const user = userEvent.setup();
+    let failSecond = true;
+    const pages = {
+      1: sessionsPage([sessionItem({ id: 'a' })], { page: 1, totalPages: 2 }),
+      2: sessionsPage([sessionItem({ id: 'b', routine: { id: 'r', name: 'Legs' } })], { page: 2, totalPages: 2 }),
+    };
+    show({
+      sessions: (page) => {
+        return page === 2 && failSecond ? 500 : pages[page];
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Cargar más' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos cargar más sesiones.');
+    expect(screen.getByRole('button', { name: 'Cargar más' })).toBeVisible();
+    failSecond = false;
+    await user.click(screen.getByRole('button', { name: 'Cargar más' }));
+    expect(await screen.findByText('Legs')).toBeVisible();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('sin más páginas no ofrece "Cargar más"', async () => {
     show({ sessions: sessionsPage([sessionItem()]) });
     await rowOf('Push · día 3');

@@ -99,6 +99,7 @@ export default function SessionDetail({ studentId, session }) {
       <QueryState query={query} errorMessage="No pudimos cargar el detalle de la sesión.">
         {(detail) => (
           <div className="flex flex-col gap-4">
+            {detail.exercises.length === 0 && <p className="text-sm text-bone2">Sin series registradas</p>}
             {detail.exercises.map((item, index) => (
               <ExerciseBlock key={`${item.exercise.id}-${index}`} item={item} />
             ))}
