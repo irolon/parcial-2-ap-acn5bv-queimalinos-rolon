@@ -85,7 +85,8 @@ create index if not exists idx_session_sets_exercise on session_sets (exercise_i
 
 -- ── session_records (tarjeta 33) ─────────────────────────────────────────────
 -- Récords personales por sesión: devuelve (sesión, ejercicio) cuando el mejor
--- 1RM estimado (Epley; solo series completadas con reps > 0 y kg no nulo) de
+-- 1RM estimado (Epley; solo series completadas con 0 < reps <= 12 y kg no nulo:
+-- Epley sobreestima por encima de 12 reps) de
 -- esa sesión supera ESTRICTAMENTE al mejor de todas las sesiones anteriores del
 -- alumno. La primera vez que hace un ejercicio no cuenta (no hay anterior).
 create or replace function session_records(p_student_id uuid, p_session_ids uuid[])
@@ -99,7 +100,8 @@ as $$
     from sessions s
     join session_sets ss on ss.session_id = s.id
     where s.student_id = p_student_id
-      and ss.completed and ss.actual_reps > 0 and ss.actual_kg is not null
+      and ss.completed and ss.actual_reps > 0 and ss.actual_reps <= 12
+      and ss.actual_kg is not null
     group by s.id, s.started_at, ss.exercise_id
   )
   select b.sid, b.eid

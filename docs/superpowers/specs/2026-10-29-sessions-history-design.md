@@ -54,7 +54,7 @@ Solo `trainer`. Body `{ "trainer_comment": "string ≤ 1000 | null" }`; `""` o `
 
 ### 2.4 Récords personales
 
-Para cada ejercicio realmente hecho en una sesión: su mejor 1RM estimado (Epley, misma fórmula que el ADR 0004: `reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`, solo series completadas con `actual_reps > 0` y `actual_kg` no nulo) **supera estrictamente** al mejor de **todas las sesiones anteriores** del alumno (por `started_at`). **La primera vez que hace un ejercicio no cuenta.**
+Para cada ejercicio realmente hecho en una sesión: su mejor 1RM estimado (Epley, misma fórmula que el ADR 0004: `reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`, solo series completadas con `0 < actual_reps <= 12` y `actual_kg` no nulo: Epley sobreestima por encima de 12 repeticiones y generaría récords falsos, p. ej. 70 kg × 22 = 121,3 le ganaría a 100 kg × 5 = 116,7) **supera estrictamente** al mejor de **todas las sesiones anteriores** del alumno (por `started_at`). **La primera vez que hace un ejercicio no cuenta.**
 
 Función SQL `session_records(p_student_id uuid, p_session_ids uuid[]) returns table (session_id uuid, exercise_id uuid)` en la migración `2026-10-29-sessions-history.sql` (y en el schema), `language sql stable security invoker`, `set search_path = public`, `revoke all … from public, anon, authenticated; grant execute … to service_role`. Usa el índice `sessions (student_id, started_at desc)`.
 

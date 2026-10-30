@@ -649,7 +649,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 - `duration_min`: minutos enteros entre `started_at` y `finished_at`; `null` si la sesión no se cerró.
 - `routine`: `null` si la sesión no tiene rutina o se borró.
 - `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
-- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
+- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
 - `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
 - **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
 
