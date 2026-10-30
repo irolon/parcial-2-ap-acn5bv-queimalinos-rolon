@@ -41,6 +41,7 @@ describe('notify', () => {
   it('envía a todos los tokens y marca push_sent_at si alguno salió', async () => {
     mockFcm.sendToToken.mockResolvedValueOnce({ ok: false, reason: 'other', status: 500 }).mockResolvedValueOnce({ ok: true });
     const out = await notify(INPUT);
+    expect(mockTokens.findTokensForUser).toHaveBeenCalledWith('u-1', 'student');
     expect(mockFcm.sendToToken).toHaveBeenCalledTimes(2);
     expect(mockNotifications.setPushSent).toHaveBeenCalledWith('n-1', expect.any(String));
     expect(out.push_sent_at).toBe('now');
@@ -82,7 +83,8 @@ describe('pushOnly', () => {
     mockFcm.sendToToken
       .mockResolvedValueOnce({ ok: true })
       .mockResolvedValueOnce({ ok: false, reason: 'unregistered', status: 404 });
-    await pushOnly({ userId: 'u-1', title: 'T' });
+    await pushOnly({ userId: 'u-1', userRole: 'student', title: 'T' });
+    expect(mockTokens.findTokensForUser).toHaveBeenCalledWith('u-1', 'student');
     expect(mockNotifications.insert).not.toHaveBeenCalled();
     expect(mockTokens.deleteTokens).toHaveBeenCalledWith(['b']);
   });

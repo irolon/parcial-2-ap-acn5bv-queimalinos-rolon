@@ -997,7 +997,7 @@ Lista las notificaciones propias, las más nuevas primero (`created_at` desc).
 
 | `type` | Cuándo se crea | Para quién | Push | `data` |
 |---|---|---|---|---|
-| `inactivity` | Job nocturno (03:00 ART): el alumno acumula 3 o más días asignados sin entrenar; máximo una por alumno cada 7 días (ver CU-10 en [[producto/casos-de-uso\|Casos de uso]]) | PT del alumno | PT | `student_id`, `missed_days`, `days_since` |
+| `inactivity` | Job nocturno (03:00 ART): el alumno acumula 3 o más días asignados sin entrenar; máximo una por alumno cada 7 días, contados por fecha de Buenos Aires (ver CU-10 en [[producto/casos-de-uso\|Casos de uso]]) | PT del alumno | PT | `student_id`, `missed_days`, `days_since` |
 | `routine_modified` | Una sesión pasa a tener sustituciones (`has_modifications`); una sola vez por sesión | PT del alumno | PT | `student_id`, `session_id` |
 | `pr` | Se cierra una sesión con récords; una por sesión | Alumno y PT del alumno | Alumno (el PT solo la ve en la lista) | `student_id`, `session_id`, `exercise_ids` |
 | `achievement` | Se desbloquea un logro al cerrar una sesión; una por logro, para el alumno y para el PT. Los que desbloquea el job nocturno quedan solo en la base | Alumno y PT del alumno | Alumno (con varios logros en la sesión, un único push resumen); el PT solo la ve en la lista | `student_id`, `achievement_code` |

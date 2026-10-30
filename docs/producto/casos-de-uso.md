@@ -261,7 +261,8 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
    - **Récord (`pr`):** una por sesión, para el alumno y para el PT.
    - **Logro (`achievement`):** una por logro, para el alumno y para el PT.
    - Todas quedan guardadas; el **push** (FCM) va solo al alumno. El PT ve los récords y logros de sus alumnos en su listado, sin push. Con varios logros en la misma sesión, el alumno recibe un único push resumen.
-   - Los logros que desbloquea el cron diario quedan solo en la base, sin push.
+   - Los logros que desbloquea el cron diario quedan solo en la base (una fila por logro para el alumno y para el PT), sin push.
+   - Las series que se suben tarde a una sesión ya cerrada también disparan estos avisos (el de récords, una sola vez por sesión).
 
 **Flujo cron diario**
 
@@ -312,7 +313,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 1. El cron nocturno revisa todos los alumnos activos.
 2. Para cada alumno calcula cuántos **días asignados** se saltó desde su última sesión cerrada (misma regla de días asignados que la racha, [[adr/0005-racha-contra-dias-asignados|ADR 0005]]): la unión de los días de sus rutinas activas, o todos los días si no tiene rutina activa. Hoy no cuenta. Si nunca entrenó, se cuenta desde que se dio de alta (`created_at`).
-3. Si se saltó **3 o más** días asignados y no se le avisó al PT por ese alumno en los últimos **7 días**, crea una notificación de tipo `inactivity` para el PT (`data`: `student_id`, `missed_days`, `days_since`). El umbral es fijo, no lo configura el PT.
+3. Si se saltó **3 o más** días asignados y no se le avisó al PT por ese alumno en los últimos **7 días** (contados por fecha de Buenos Aires: el aviso se puede repetir recién 7 días después de la fecha del anterior), crea una notificación de tipo `inactivity` para el PT (`data`: `student_id`, `missed_days`, `days_since`). El umbral es fijo, no lo configura el PT.
 4. Envía push al PT vía FCM a todos los dispositivos que tenga registrados (`push_tokens`). La web (Web Push) usa la misma tabla cuando se integre.
 
 **Flujo principal — modificaciones**

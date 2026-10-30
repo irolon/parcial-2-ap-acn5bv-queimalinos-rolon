@@ -78,10 +78,11 @@ describe('push-tokens.repository (registro)', () => {
     );
   });
 
-  it('deleteTokenForUser filtra por token y user_id', async () => {
+  it('deleteTokenForUser filtra por token, user_id y user_role', async () => {
     await tokens.deleteTokenForUser(USER, 't');
     expect(q.delete).toHaveBeenCalled();
     expect(q.eq).toHaveBeenCalledWith('token', 't');
     expect(q.eq).toHaveBeenCalledWith('user_id', 'u-1');
+    expect(q.eq).toHaveBeenCalledWith('user_role', 'student');
   });
 });

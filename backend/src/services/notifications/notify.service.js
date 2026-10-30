@@ -5,8 +5,8 @@ import { isFcmEnabled, sendToToken } from './fcm.client.js';
 const DEAD_REASONS = ['unregistered', 'invalid'];
 
 /** Envía a todos los dispositivos. Devuelve si alguno salió y los tokens que FCM dio por muertos. */
-async function pushToUser(userId, payload) {
-  const tokens = await pushTokensRepo.findTokensForUser(userId);
+async function pushToUser(userId, userRole, payload) {
+  const tokens = await pushTokensRepo.findTokensForUser(userId, userRole);
   const results = await Promise.all(tokens.map((t) => sendToToken(t, payload)));
   return {
     sent: results.some((r) => r.ok),
@@ -30,7 +30,7 @@ export async function notify({ userId, userRole, type, title, body = null, data 
   if (!push || !isFcmEnabled()) return notification;
   let dead = [];
   try {
-    const result = await pushToUser(userId, { title, body, data });
+    const result = await pushToUser(userId, userRole, { title, body, data });
     dead = result.dead;
     if (result.sent) {
       notification = await notificationsRepo.setPushSent(notification.id, new Date().toISOString());
@@ -47,10 +47,10 @@ export async function notify({ userId, userRole, type, title, body = null, data 
 }
 
 /** Push sin fila (p. ej. el resumen de varios logros, que ya tienen su fila). Best-effort, nunca lanza. */
-export async function pushOnly({ userId, title, body = null, data = {} }) {
+export async function pushOnly({ userId, userRole, title, body = null, data = {} }) {
   if (!isFcmEnabled()) return;
   try {
-    const { dead } = await pushToUser(userId, { title, body, data });
+    const { dead } = await pushToUser(userId, userRole, { title, body, data });
     await pushTokensRepo.deleteTokens(dead);
   } catch (err) {
     console.error('[notifications] push', err.message);

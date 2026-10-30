@@ -26,15 +26,21 @@ export async function findLastClosedSessionStarts() {
   return last;
 }
 
-/** Set de student_id con un aviso de inactividad creado desde `sinceIso` (una sola consulta). */
-export async function findStudentsNotifiedSince(sinceIso) {
+/** Mapa student_id → created_at (ISO) de su último aviso de inactividad creado desde `sinceIso` (una sola consulta). */
+export async function findLastInactivityNotifications(sinceIso) {
   const rows = await fetchAll(() =>
     supabase
       .from(NOTIFICATIONS_TABLE)
-      .select('id, data')
+      .select('id, data, created_at')
       .eq('type', 'inactivity')
       .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
       .order('id')
   );
-  return new Set(rows.map((row) => row.data?.student_id).filter(Boolean));
+  const last = new Map();
+  for (const row of rows) {
+    const studentId = row.data?.student_id;
+    if (studentId && !last.has(studentId)) last.set(studentId, row.created_at);
+  }
+  return last;
 }

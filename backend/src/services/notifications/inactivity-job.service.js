@@ -7,10 +7,17 @@ import {
   INACTIVITY_MISSED_DAYS,
   INACTIVITY_COOLDOWN_DAYS,
 } from '../../models/notifications/notification.model.js';
-import { missedAssignedDays } from '../../models/gamification/streak.js';
+import { missedAssignedDays, addDays } from '../../models/gamification/streak.js';
 import { localDate, DAY_MS } from '../../shared/utils/dates.js';
 
 const toUtc = (str) => new Date(`${str}T00:00:00Z`).getTime();
+
+/**
+ * Cooldown por fecha argentina: el aviso previo bloquea solo si ocurrió después de `hoy - COOLDOWN`;
+ * a los 7 días exactos se permite de nuevo aunque se haya creado unos segundos pasadas las 03:00 UTC.
+ */
+const isInCooldown = (createdAt, today) =>
+  Boolean(createdAt) && localDate(createdAt) > addDays(today, -INACTIVITY_COOLDOWN_DAYS);
 
 /** Evalúa a un alumno; devuelve true si avisó al entrenador, false si lo salteó. */
 async function checkStudent(student, { lastStarts, notified, today }) {
@@ -18,7 +25,7 @@ async function checkStudent(student, { lastStarts, notified, today }) {
   const lastDate = localDate(lastStarts.get(student.id) ?? student.created_at);
   const assignedDays = await findAssignedDays(student.id);
   const missed = missedAssignedDays({ lastDate, assignedDays, today });
-  if (missed < INACTIVITY_MISSED_DAYS || notified.has(student.id)) return false;
+  if (missed < INACTIVITY_MISSED_DAYS || isInCooldown(notified.get(student.id), today)) return false;
 
   const daysSince = Math.round((toUtc(today) - toUtc(lastDate)) / DAY_MS);
   await notify({
@@ -41,8 +48,9 @@ export async function runInactivityAlerts({ now = new Date() } = {}) {
   const [students, lastStarts, notified] = await Promise.all([
     inactivityRepo.findActiveStudents(),
     inactivityRepo.findLastClosedSessionStarts(),
-    inactivityRepo.findStudentsNotifiedSince(
-      new Date(now.getTime() - INACTIVITY_COOLDOWN_DAYS * DAY_MS).toISOString()
+    // Un día de margen: el filtro fino se hace por fecha argentina (isInCooldown).
+    inactivityRepo.findLastInactivityNotifications(
+      new Date(now.getTime() - (INACTIVITY_COOLDOWN_DAYS + 1) * DAY_MS).toISOString()
     ),
   ]);
   const ctx = { lastStarts, notified, today: localDate(now) };

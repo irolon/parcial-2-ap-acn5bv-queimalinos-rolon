@@ -81,9 +81,9 @@ export async function addSets(studentId, sessionId, { sets }) {
   }
 
   // Series sobre una sesión ya cerrada pueden cambiar récords y logros.
-  const unlocked_achievements =
-    session.finished_at && saved.length > 0 ? await safeEvaluate(studentId) : [];
-  if (session.finished_at && saved.length > 0) {
+  const closedWithSets = session.finished_at && saved.length > 0;
+  const unlocked_achievements = closedWithSets ? await safeEvaluate(studentId) : [];
+  if (closedWithSets) {
     await onSessionClosed({ studentId, session, unlocked: unlocked_achievements });
   }
 

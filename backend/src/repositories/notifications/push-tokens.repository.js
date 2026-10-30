@@ -2,9 +2,11 @@ import { supabase } from '../../config/supabase.js';
 import { unwrap } from '../../shared/utils/supabase-query.js';
 import { PUSH_TOKENS_TABLE } from '../../models/notifications/notification.model.js';
 
-/** Tokens (strings) de todos los dispositivos del usuario. */
-export async function findTokensForUser(userId) {
-  const rows = unwrap(await supabase.from(PUSH_TOKENS_TABLE).select('token').eq('user_id', userId));
+/** Tokens (strings) de todos los dispositivos del usuario (id + rol: los ids pueden repetirse entre tablas). */
+export async function findTokensForUser(userId, userRole) {
+  const rows = unwrap(
+    await supabase.from(PUSH_TOKENS_TABLE).select('token').eq('user_id', userId).eq('user_role', userRole)
+  );
   return rows.map((r) => r.token);
 }
 
@@ -24,7 +26,14 @@ export async function upsertToken(user, token, platform, now) {
 }
 
 export async function deleteTokenForUser(user, token) {
-  unwrap(await supabase.from(PUSH_TOKENS_TABLE).delete().eq('token', token).eq('user_id', user.id));
+  unwrap(
+    await supabase
+      .from(PUSH_TOKENS_TABLE)
+      .delete()
+      .eq('token', token)
+      .eq('user_id', user.id)
+      .eq('user_role', user.role)
+  );
 }
 
 export async function deleteTokens(tokens) {

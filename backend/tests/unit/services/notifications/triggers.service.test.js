@@ -96,8 +96,17 @@ describe('triggers · onSessionClosed · logros', () => {
     expect(calls).toHaveLength(4);
     expect(calls.every((c) => c.push === false)).toBe(true);
     expect(mockNotify.pushOnly).toHaveBeenCalledWith(expect.objectContaining({
-      userId: STUDENT_ID, title: 'Desbloqueaste 2 logros', body: 'Primera, Racha',
+      userId: STUDENT_ID, userRole: 'student', title: 'Desbloqueaste 2 logros', body: 'Primera, Racha',
     }));
+  });
+
+  it('si falla un logro, los demás se notifican igual', async () => {
+    mockNotify.notify.mockRejectedValueOnce(new Error('db')).mockResolvedValue({ id: 'n-1' });
+    await expect(triggers.onSessionClosed({ studentId: STUDENT_ID, session: SESSION, unlocked: two }))
+      .resolves.toBeUndefined();
+    const calls = mockNotify.notify.mock.calls.map(([c]) => c);
+    expect(calls.filter((c) => c.data.achievement_code === 'streak')).toHaveLength(2);
+    expect(console.error).toHaveBeenCalledWith('[notifications] achievement first', 'db');
   });
 
   it('sin logros ni récords no notifica', async () => {
@@ -131,5 +140,29 @@ describe('triggers · onSessionCommented', () => {
   it('un error no se propaga', async () => {
     mockNotify.notify.mockRejectedValue(new Error('db'));
     await expect(triggers.onSessionCommented({ ...base, comment: 'Hola' })).resolves.toBeUndefined();
+  });
+});
+
+describe('triggers · onAchievementsFromJob', () => {
+  const unlocked = [{ code: 'first', name: 'Primera' }, { code: 'streak', name: 'Racha' }];
+
+  it('crea las filas de alumno y entrenador sin push ni resumen', async () => {
+    await triggers.onAchievementsFromJob({ studentId: STUDENT_ID, unlocked });
+    const calls = mockNotify.notify.mock.calls.map(([c]) => c);
+    expect(calls).toHaveLength(4);
+    expect(calls.every((c) => c.push === false && c.type === 'achievement')).toBe(true);
+    expect(calls.map((c) => c.userId)).toEqual([STUDENT_ID, TRAINER_ID, STUDENT_ID, TRAINER_ID]);
+    expect(calls[0].data).toEqual({ student_id: STUDENT_ID, achievement_code: 'first' });
+    expect(mockNotify.pushOnly).not.toHaveBeenCalled();
+  });
+
+  it('sin logros no consulta; sin entrenador solo crea la del alumno; nunca lanza', async () => {
+    await triggers.onAchievementsFromJob({ studentId: STUDENT_ID, unlocked: [] });
+    expect(mockData.findStudentInfo).not.toHaveBeenCalled();
+    mockData.findStudentInfo.mockResolvedValue({ id: STUDENT_ID, name: 'Lucía', trainer_id: null });
+    await triggers.onAchievementsFromJob({ studentId: STUDENT_ID, unlocked: unlocked.slice(0, 1) });
+    expect(mockNotify.notify).toHaveBeenCalledTimes(1);
+    mockData.findStudentInfo.mockRejectedValue(new Error('db'));
+    await expect(triggers.onAchievementsFromJob({ studentId: STUDENT_ID, unlocked })).resolves.toBeUndefined();
   });
 });

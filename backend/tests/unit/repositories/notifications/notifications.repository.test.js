@@ -42,8 +42,9 @@ describe('notifications.repository', () => {
 describe('push-tokens.repository', () => {
   it('findTokensForUser devuelve solo los strings', async () => {
     result.current = { data: [{ token: 'a' }, { token: 'b' }], error: null };
-    await expect(tokens.findTokensForUser('u-1')).resolves.toEqual(['a', 'b']);
+    await expect(tokens.findTokensForUser('u-1', 'student')).resolves.toEqual(['a', 'b']);
     expect(q.eq).toHaveBeenCalledWith('user_id', 'u-1');
+    expect(q.eq).toHaveBeenCalledWith('user_role', 'student');
   });
 
   it('deleteTokens borra por token y no consulta con lista vacía', async () => {
