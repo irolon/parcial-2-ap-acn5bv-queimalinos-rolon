@@ -30,6 +30,7 @@ describe('notify', () => {
   it('push false: no envía', async () => {
     await notify({ ...INPUT, push: false });
     expect(mockFcm.sendToToken).not.toHaveBeenCalled();
+    expect(mockTokens.findTokensForUser).not.toHaveBeenCalled();
   });
 
   it('si la BD falla, lanza', async () => {
@@ -62,5 +63,15 @@ describe('notify', () => {
     mockTokens.findTokensForUser.mockRejectedValue(new Error('tokens'));
     expect(await notify(INPUT)).toBe(row);
     expect(console.error).toHaveBeenCalledWith('[notifications] push', 'tokens');
+  });
+
+  it('si falla el borrado de tokens, conserva push_sent_at y no lanza', async () => {
+    mockFcm.sendToToken
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({ ok: false, reason: 'unregistered', status: 404 });
+    mockTokens.deleteTokens.mockRejectedValue(new Error('del'));
+    const out = await notify(INPUT);
+    expect(out.push_sent_at).toBe('now');
+    expect(console.error).toHaveBeenCalledWith('[notifications] limpieza de tokens', 'del');
   });
 });

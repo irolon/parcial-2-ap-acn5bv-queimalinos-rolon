@@ -2,13 +2,16 @@ import * as notificationsRepo from '../../repositories/notifications/notificatio
 import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
 import { isFcmEnabled, sendToToken } from './fcm.client.js';
 
-/** Envía a todos los dispositivos; borra los tokens muertos. Devuelve true si alguno salió. */
+const DEAD_REASONS = ['unregistered', 'invalid'];
+
+/** Envía a todos los dispositivos. Devuelve si alguno salió y los tokens que FCM dio por muertos. */
 async function pushToUser(userId, payload) {
   const tokens = await pushTokensRepo.findTokensForUser(userId);
   const results = await Promise.all(tokens.map((t) => sendToToken(t, payload)));
-  const dead = tokens.filter((_, i) => ['unregistered', 'invalid'].includes(results[i].reason));
-  await pushTokensRepo.deleteTokens(dead);
-  return results.some((r) => r.ok);
+  return {
+    sent: results.some((r) => r.ok),
+    dead: tokens.filter((_, i) => DEAD_REASONS.includes(results[i].reason)),
+  };
 }
 
 /**
@@ -25,12 +28,20 @@ export async function notify({ userId, userRole, type, title, body = null, data 
     data,
   });
   if (!push || !isFcmEnabled()) return notification;
+  let dead = [];
   try {
-    if (await pushToUser(userId, { title, body, data })) {
+    const result = await pushToUser(userId, { title, body, data });
+    dead = result.dead;
+    if (result.sent) {
       notification = await notificationsRepo.setPushSent(notification.id, new Date().toISOString());
     }
   } catch (err) {
     console.error('[notifications] push', err.message);
+  }
+  try {
+    await pushTokensRepo.deleteTokens(dead);
+  } catch (err) {
+    console.error('[notifications] limpieza de tokens', err.message);
   }
   return notification;
 }

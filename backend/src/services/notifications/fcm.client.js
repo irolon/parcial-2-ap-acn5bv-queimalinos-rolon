@@ -6,9 +6,11 @@ const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
 const REFRESH_MARGIN_MS = 60_000;
+const TIMEOUT_MS = 10_000;
 
 let account; // undefined = sin cargar; null = deshabilitado
 let cachedToken = null; // { value, expiresAt }
+let inFlight = null; // intercambio OAuth en curso (evita duplicados con caché frío)
 
 /** Deshabilita FCM con un único aviso (nunca se loguea la clave). */
 function disable(reason) {
@@ -34,18 +36,15 @@ export function loadServiceAccount() {
     const parsed = JSON.parse(raw);
     const missing = ['project_id', 'client_email', 'private_key'].filter((k) => !parsed[k]);
     account = missing.length > 0 ? disable(`faltan campos: ${missing.join(', ')}`) : parsed;
-  } catch (err) {
-    account = disable(`credenciales ilegibles (${err.message})`);
+  } catch {
+    account = disable('credenciales ilegibles (ruta o JSON inválido)');
   }
   return account;
 }
 
 export const isFcmEnabled = () => loadServiceAccount() !== null;
 
-/** Access token OAuth2 (JWT bearer); cacheado hasta 60 s antes de vencer. */
-export async function getAccessToken() {
-  if (cachedToken && Date.now() < cachedToken.expiresAt - REFRESH_MARGIN_MS) return cachedToken.value;
-  const acc = loadServiceAccount();
+async function requestAccessToken(acc) {
   const iat = Math.floor(Date.now() / 1000);
   const assertion = jwt.sign(
     { iss: acc.client_email, scope: SCOPE, aud: TOKEN_URL, iat, exp: iat + 3600 },
@@ -56,6 +55,7 @@ export async function getAccessToken() {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ grant_type: GRANT_TYPE, assertion }).toString(),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`OAuth ${res.status}`);
   const json = await res.json();
@@ -63,11 +63,40 @@ export async function getAccessToken() {
   return cachedToken.value;
 }
 
+/** Access token OAuth2 (JWT bearer); cacheado hasta 60 s antes de vencer y compartido entre llamadas concurrentes. */
+export async function getAccessToken() {
+  const acc = loadServiceAccount();
+  if (!acc) throw new Error('FCM deshabilitado');
+  if (cachedToken && Date.now() < cachedToken.expiresAt - REFRESH_MARGIN_MS) return cachedToken.value;
+  inFlight ??= requestAccessToken(acc).finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
+}
+
+const detailsOf = (body) => (Array.isArray(body?.error?.details) ? body.error.details : []);
+
+/**
+ * Solo se borra un token cuando FCM lo señala a él: 'unregistered' exige el FcmError UNREGISTERED
+ * y 'invalid' una violación sobre message.token. Un 404/400 genérico (proyecto, API, payload) es 'other'.
+ */
 function classify(status, body) {
-  const text = JSON.stringify(body ?? {});
-  if (status === 404 || text.includes('UNREGISTERED')) return 'unregistered';
-  if (status === 400 && text.includes('INVALID_ARGUMENT')) return 'invalid';
+  const details = detailsOf(body);
+  if (details.some((d) => d.errorCode === 'UNREGISTERED')) return 'unregistered';
+  const aboutToken =
+    details.some((d) => (d.fieldViolations ?? []).some((v) => v.field === 'message.token')) ||
+    /registration token/i.test(body?.error?.message ?? '');
+  if (status === 400 && aboutToken) return 'invalid';
   return 'other';
+}
+
+function stringifyData(data) {
+  const out = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v === null || v === undefined) continue;
+    out[k] = typeof v === 'object' ? JSON.stringify(v) : String(v);
+  }
+  return out;
 }
 
 /** Envía un push a un token. Nunca lanza: devuelve { ok } o { ok:false, reason, status }. */
@@ -75,9 +104,10 @@ export async function sendToToken(token, { title, body, data = {} }, { validateO
   try {
     const acc = loadServiceAccount();
     const accessToken = await getAccessToken();
-    const stringData = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]));
+    const stringData = stringifyData(data);
     const res = await fetch(`https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`, {
       method: 'POST',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         validate_only: validateOnly,
@@ -97,4 +127,5 @@ export async function sendToToken(token, { title, body, data = {} }, { validateO
 export function __resetForTests() {
   account = undefined;
   cachedToken = null;
+  inFlight = null;
 }

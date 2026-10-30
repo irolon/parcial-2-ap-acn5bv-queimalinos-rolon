@@ -61,6 +61,18 @@ describe('getAccessToken', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('llamadas concurrentes con caché frío hacen un solo intercambio', async () => {
+    global.fetch.mockResolvedValue(tokenReply());
+    const tokens = await Promise.all([fcm.getAccessToken(), fcm.getAccessToken(), fcm.getAccessToken()]);
+    expect(tokens).toEqual(['at-1', 'at-1', 'at-1']);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('con FCM deshabilitado lanza un error claro', async () => {
+    mockEnv.FCM_SERVICE_ACCOUNT_JSON = undefined;
+    await expect(fcm.getAccessToken()).rejects.toThrow('FCM deshabilitado');
+  });
+
   it('renueva cuando faltan menos de 60 s', async () => {
     global.fetch.mockResolvedValue(tokenReply(30));
     await fcm.getAccessToken();
@@ -93,14 +105,47 @@ describe('sendToToken', () => {
     expect(JSON.parse(global.fetch.mock.calls[1][1].body).validate_only).toBe(true);
   });
 
+  const unregistered = {
+    error: {
+      code: 404,
+      message: 'Requested entity was not found.',
+      status: 'NOT_FOUND',
+      details: [{ '@type': 'type.googleapis.com/google.firebase.fcm.v1.FcmError', errorCode: 'UNREGISTERED' }],
+    },
+  };
+  const badToken = {
+    error: {
+      code: 400,
+      message: 'The registration token is not a valid FCM registration token',
+      status: 'INVALID_ARGUMENT',
+      details: [{ fieldViolations: [{ field: 'message.token', description: 'invalid' }] }],
+    },
+  };
+  const badPayload = {
+    error: { code: 400, message: 'Invalid value at message.data', status: 'INVALID_ARGUMENT' },
+  };
+  const notFound = { error: { code: 404, message: 'Requested entity was not found.', status: 'NOT_FOUND' } };
+
   it.each([
-    ['404', 404, {}, 'unregistered'],
-    ['UNREGISTERED en el detalle', 400, { error: { details: [{ errorCode: 'UNREGISTERED' }] } }, 'unregistered'],
-    ['INVALID_ARGUMENT', 400, { error: { status: 'INVALID_ARGUMENT' } }, 'invalid'],
+    ['UNREGISTERED (FcmError)', 404, unregistered, 'unregistered'],
+    ['404 sin detalle UNREGISTERED (proyecto/API)', 404, notFound, 'other'],
+    ['400 sobre message.token', 400, badToken, 'invalid'],
+    ['400 por el payload', 400, badPayload, 'other'],
     ['500', 500, {}, 'other'],
   ])('clasifica %s', async (_n, status, body, reason) => {
     global.fetch.mockResolvedValueOnce(tokenReply()).mockResolvedValueOnce(reply(status, body));
     expect(await fcm.sendToToken('tok', MSG)).toEqual({ ok: false, reason, status });
+  });
+
+  it('data: omite null/undefined, serializa objetos y convierte primitivos', async () => {
+    global.fetch.mockResolvedValueOnce(tokenReply()).mockResolvedValueOnce(reply(200));
+    await fcm.sendToToken('tok', { ...MSG, data: { a: null, b: undefined, c: { x: 1 }, d: 7 } });
+    expect(JSON.parse(global.fetch.mock.calls[1][1].body).message.data).toEqual({ c: '{"x":1}', d: '7' });
+  });
+
+  it('un timeout del fetch es reason other', async () => {
+    global.fetch.mockResolvedValueOnce(tokenReply()).mockRejectedValueOnce(new DOMException('t', 'TimeoutError'));
+    expect(await fcm.sendToToken('tok', MSG)).toEqual({ ok: false, reason: 'other' });
   });
 
   it('un error de red no lanza', async () => {
