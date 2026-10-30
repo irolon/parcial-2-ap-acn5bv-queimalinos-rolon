@@ -52,9 +52,10 @@ describe('MyProgressPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('sin entrenamientos muestra solo el estado vacío global', async () => {
+  it('sin entrenamientos muestra el estado vacío y, debajo, las medidas del alumno', async () => {
     load({ overview: { exercises: [], weekly_volume: [] } });
     expect(await screen.findByText('Todavía no hay entrenamientos registrados')).toBeInTheDocument();
-    expect(screen.queryByText('Peso corporal y medidas')).not.toBeInTheDocument();
+    expect(await screen.findByText('Peso corporal y medidas')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Ejercicio')).not.toBeInTheDocument();
   });
 });

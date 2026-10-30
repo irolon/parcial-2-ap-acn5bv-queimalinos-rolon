@@ -4,7 +4,9 @@ import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
 import Stat from '@/components/shared/ui/Stat';
 import { useBodyProgress } from '@/hooks/progress/useProgress';
-import { formatDelta, formatMetricDate, formatNumber, formatWeight, weightSeries } from '@/utils/body-metrics/metrics';
+import { formatDelta, formatNumber, formatWeight, weightSeries } from '@/utils/body-metrics/metrics';
+import { todayString } from '@/utils/dates';
+import { formatLongDate, formatShortDate } from '@/utils/progress/format';
 import { AXIS, GRID, TooltipBox } from './chartStyle';
 
 const FIELDS = [
@@ -13,10 +15,10 @@ const FIELDS = [
   { key: 'waist_cm', label: 'Cintura', unit: 'cm' },
 ];
 
-function WeightTooltip({ active, payload }) {
+export function WeightTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
-  return <TooltipBox title={formatMetricDate(p.date)} rows={[`Peso: ${formatWeight(p.weight)}`]} />;
+  return <TooltipBox title={formatLongDate(p.date)} rows={[`Peso: ${formatWeight(p.weight)}`]} />;
 }
 
 function Deltas({ summary }) {
@@ -46,7 +48,8 @@ export default function BodyProgressCard({ studentId }) {
     return <Card title={title}><ErrorState message={query.error?.message} onRetry={() => query.refetch()} /></Card>;
   }
   const { points, summary } = query.data;
-  const series = weightSeries(points);
+  // weightSeries trae el instante; para el eje y el tooltip se usa el día local (YYYY-MM-DD).
+  const series = weightSeries(points).map((p) => ({ ...p, date: todayString(new Date(p.date)) }));
   const hasAny = FIELDS.some((f) => summary?.[f.key]);
   return (
     <Card title={title}>
@@ -62,7 +65,7 @@ export default function BodyProgressCard({ studentId }) {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={series} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                   <CartesianGrid {...GRID} />
-                  <XAxis dataKey="date" tickFormatter={formatMetricDate} {...AXIS} />
+                  <XAxis dataKey="date" tickFormatter={formatShortDate} {...AXIS} />
                   <YAxis domain={['dataMin - 2', 'dataMax + 2']} width={44} {...AXIS} />
                   <Tooltip content={<WeightTooltip />} />
                   <Line type="monotone" dataKey="weight" stroke="var(--color-accentText)" strokeWidth={2} dot />

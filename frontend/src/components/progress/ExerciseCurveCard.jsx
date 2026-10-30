@@ -1,20 +1,20 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import Card from '@/components/shared/ui/Card';
 import Pill from '@/components/shared/ui/Pill';
-import { formatLongDate, formatMetric, formatShortDate } from '@/utils/progress/format';
+import { dateToTime, formatLongDate, formatMetric, formatShortDate, timeToDate } from '@/utils/progress/format';
 import { METRICS, MIN_POINTS, metricOptions, recordFor } from '@/utils/progress/metrics';
 import MetricSelector from './MetricSelector';
 import NotEnoughData from './NotEnoughData';
 import { AXIS, GRID, TooltipBox } from './chartStyle';
 
-function CurveTooltip({ active, payload, metric }) {
+export function CurveTooltip({ active, payload, metric }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   const label = METRICS.find((m) => m.value === metric)?.label;
   return (
     <TooltipBox
       title={formatLongDate(p.date)}
-      rows={[`${label}: ${formatMetric(metric, p[metric])}`, `${p.sets} × ${p.reps}`]}
+      rows={[`${label}: ${formatMetric(metric, p[metric])}`, `${p.sets} ${p.sets === 1 ? 'serie' : 'series'} · ${p.reps} reps`]}
     />
   );
 }
@@ -24,6 +24,8 @@ export default function ExerciseCurveCard({ data, metric, onMetricChange }) {
   const { exercise, points, pr } = data;
   const valid = points.filter((p) => p[metric] !== null && p[metric] !== undefined);
   const record = recordFor(pr, metric);
+  // Eje de tiempo real: los días sin entrenar quedan proporcionalmente vacíos.
+  const series = points.map((p) => ({ ...p, time: dateToTime(p.date) }));
   const dot = ({ cx, cy, payload, index }) => {
     const isPr = record && payload.date === record.date;
     if (cx == null || cy == null) return <g key={index} />;
@@ -50,9 +52,16 @@ export default function ExerciseCurveCard({ data, metric, onMetricChange }) {
       ) : (
         <div role="img" aria-label={`Progresión de ${exercise.name}`} className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+            <LineChart data={series} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid {...GRID} />
-              <XAxis dataKey="date" tickFormatter={formatShortDate} {...AXIS} />
+              <XAxis
+                dataKey="time"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={(t) => formatShortDate(timeToDate(t))}
+                {...AXIS}
+              />
               <YAxis domain={['auto', 'auto']} width={48} {...AXIS} />
               <Tooltip content={<CurveTooltip metric={metric} />} />
               <Line

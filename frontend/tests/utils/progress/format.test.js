@@ -18,6 +18,7 @@ describe('formato es-AR de progreso', () => {
   it('formatVolume pasa a toneladas desde 1000 kg', () => {
     expect(formatVolume(950)).toBe('950 kg');
     expect(formatVolume(999.9)).toBe('999,9 kg');
+    expect(formatVolume(999.96)).toBe('1 t');
     expect(formatVolume(1000)).toBe('1 t');
     expect(formatVolume(12400)).toBe('12,4 t');
   });

@@ -11,13 +11,15 @@ function query(params) {
 }
 
 /** GET /progress/overview → { exercises, weekly_volume }. */
-export async function getOverview(studentId, { from, to } = {}) {
+export async function getOverview(studentId, range) {
+  const { from, to } = range ?? {};
   const res = await request(`/progress/overview${query({ student_id: studentId, from, to })}`);
   return res.data;
 }
 
 /** GET /progress/exercise/:id → { exercise, points, pr, default_metric }. */
-export async function getExerciseProgress(exerciseId, studentId, { from, to } = {}) {
+export async function getExerciseProgress(exerciseId, studentId, range) {
+  const { from, to } = range ?? {};
   const res = await request(
     `/progress/exercise/${encodeURIComponent(exerciseId)}${query({ student_id: studentId, from, to })}`,
   );

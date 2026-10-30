@@ -59,6 +59,11 @@ describe('progress.repository · fetchWeeklyVolume', () => {
     expect(result).toEqual([{ week_start: '2026-10-20' }]);
   });
 
+  it('data null → []', async () => {
+    supabase.rpc.mockResolvedValue({ data: null, error: null });
+    await expect(fetchWeeklyVolume({ studentId: 'st-1', from: null, to: null })).resolves.toEqual([]);
+  });
+
   it('error → 500', async () => {
     supabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
     await expect(fetchWeeklyVolume({ studentId: 'st-1', from: null, to: null }))

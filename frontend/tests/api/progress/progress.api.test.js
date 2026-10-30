@@ -25,6 +25,18 @@ describe('progress.api', () => {
     expect(calls(fetchMock)[0][0]).toBe('/progress/overview?student_id=st-1');
   });
 
+  it('acepta un rango null o undefined', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(200, { data: {} }));
+    await api.getOverview('st-1', null);
+    await api.getOverview('st-1');
+    await api.getExerciseProgress('ex-1', 'st-1', null);
+    expect(calls(fetchMock).map(([path]) => path)).toEqual([
+      '/progress/overview?student_id=st-1',
+      '/progress/overview?student_id=st-1',
+      '/progress/exercise/ex-1?student_id=st-1',
+    ]);
+  });
+
   it('getExerciseProgress hace GET /progress/exercise/:id con la query', async () => {
     const data = { points: [] };
     const fetchMock = stubFetch(async () => jsonResponse(200, { data }));

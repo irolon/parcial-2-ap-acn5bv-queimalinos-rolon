@@ -1,7 +1,7 @@
 /** Selector segmentado de métrica; las opciones `disabled` no se pueden elegir. */
 export default function MetricSelector({ value, options, onChange }) {
   return (
-    <div role="radiogroup" aria-label="Métrica" className="flex flex-wrap gap-1.5">
+    <div role="group" aria-label="Métrica" className="flex flex-wrap gap-1.5">
       {options.map((o) => {
         const active = o.value === value;
         return (

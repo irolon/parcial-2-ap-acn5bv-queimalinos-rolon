@@ -1,15 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import ProgressPanel from '@/components/progress/ProgressPanel';
-import { exerciseData, progressUrls, renderWithQuery, stubProgress } from '../../../helpers/progress/progress';
+import { BODY, EXERCISES, WEEKS, exerciseData, progressUrls, renderWithQuery, stubProgress } from '../../../helpers/progress/progress';
 
-vi.mock('recharts', async (importOriginal) => {
-  const { cloneElement } = await import('react');
-  return {
-    ...(await importOriginal()),
-    ResponsiveContainer: ({ children }) => cloneElement(children, { width: 600, height: 240 }),
-  };
-});
+vi.mock('recharts', async (importOriginal) => (await import('../../../helpers/progress/recharts')).mockRecharts(importOriginal));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -94,5 +88,37 @@ describe('ProgressPanel', () => {
     expect(screen.getByText('Después de 3 entrenamientos vas a ver tu progresión acá.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Ejercicio')).not.toBeInTheDocument();
     expect(screen.queryByText('Volumen semanal')).not.toBeInTheDocument();
+  });
+
+  it('por defecto elige el más reciente con al menos 3 días; si ninguno, el más reciente', async () => {
+    const few = EXERCISES.map((e, i) => ({ ...e, days: i === 0 ? 2 : 5 }));
+    stubProgress({ overview: { exercises: few, weekly_volume: WEEKS } });
+    const first = renderWithQuery(<ProgressPanel studentId="st-9" />);
+    await screen.findByRole('img', { name: /Progresión de/ });
+    expect(screen.getByLabelText('Ejercicio')).toHaveValue('ex-2');
+    first.unmount();
+
+    const none = EXERCISES.map((e) => ({ ...e, days: 1 }));
+    stubProgress({ overview: { exercises: none, weekly_volume: WEEKS } });
+    renderWithQuery(<ProgressPanel studentId="st-9" />);
+    await screen.findByLabelText('Ejercicio');
+    expect(screen.getByLabelText('Ejercicio')).toHaveValue('ex-1');
+  });
+
+  it('una elección todavía válida gana sobre el ejercicio por defecto', async () => {
+    const few = EXERCISES.map((e, i) => ({ ...e, days: i === 0 ? 2 : 5 }));
+    stubProgress({ overview: { exercises: few, weekly_volume: WEEKS } });
+    renderWithQuery(<ProgressPanel studentId="st-9" />);
+    await screen.findByLabelText('Ejercicio');
+    fireEvent.change(screen.getByLabelText('Ejercicio'), { target: { value: 'ex-1' } });
+    expect(screen.getByLabelText('Ejercicio')).toHaveValue('ex-1');
+  });
+
+  it('el alumno ve "Peso corporal y medidas" también sin ejercicios', async () => {
+    stubProgress({ overview: { exercises: [], weekly_volume: [] }, body: BODY });
+    renderWithQuery(<ProgressPanel studentId="st-9" showBody />);
+    expect(await screen.findByText('Todavía no hay entrenamientos registrados')).toBeInTheDocument();
+    expect(await screen.findByText('Peso corporal y medidas')).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'Evolución del peso corporal' })).toBeInTheDocument();
   });
 });

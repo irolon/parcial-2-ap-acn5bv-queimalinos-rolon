@@ -3,7 +3,7 @@ import { TrendingUp } from 'lucide-react';
 import EmptyState from '@/components/shared/states/EmptyState';
 import QueryState from '@/components/shared/states/QueryState';
 import { useExerciseProgress, useProgressOverview } from '@/hooks/progress/useProgress';
-import { metricOptions } from '@/utils/progress/metrics';
+import { MIN_POINTS, metricOptions } from '@/utils/progress/metrics';
 import { DEFAULT_RANGE, rangeFor } from '@/utils/progress/ranges';
 import BodyProgressCard from './BodyProgressCard';
 import ExerciseCurveCard from './ExerciseCurveCard';
@@ -17,9 +17,12 @@ const EMPTY = {
   text: 'Después de 3 entrenamientos vas a ver tu progresión acá.',
 };
 
+/** El más reciente con datos suficientes para la curva; si ninguno llega, el más reciente. */
+const defaultExercise = (exercises) => exercises.find((e) => e.days >= MIN_POINTS) ?? exercises[0];
+
 function Content({ studentId, overview, sel, rangeObj, showBody }) {
   const { range, setRange, chosenId, setChosenId, chosenMetric, setChosenMetric } = sel;
-  const exerciseId = overview.exercises.some((e) => e.id === chosenId) ? chosenId : overview.exercises[0].id;
+  const exerciseId = overview.exercises.some((e) => e.id === chosenId) ? chosenId : defaultExercise(overview.exercises).id;
   const exerciseQuery = useExerciseProgress(exerciseId, studentId, rangeObj);
   const data = exerciseQuery.data;
   const chosenOk = data && metricOptions(data.points).some((o) => o.value === chosenMetric && !o.disabled);
@@ -67,7 +70,10 @@ export default function ProgressPanel({ studentId, showBody = false }) {
     <QueryState query={overviewQuery}>
       {(overview) =>
         overview.exercises.length === 0 ? (
-          <EmptyState {...EMPTY} />
+          <div className="flex min-w-0 flex-col gap-5">
+            <EmptyState {...EMPTY} />
+            {showBody && <BodyProgressCard studentId={studentId} />}
+          </div>
         ) : (
           <Content
             studentId={studentId}
