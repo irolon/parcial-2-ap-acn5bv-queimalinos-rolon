@@ -137,7 +137,7 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina, después de los existentes |
 | PATCH | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Edita un ejercicio de la rutina (`sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes`; al menos uno). Devuelve la rutina completa |
 | DELETE | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Quita un ejercicio de la rutina. 204; 409 `ROUTINE_NEEDS_EXERCISE` si es el último |
-| GET | `/api/routines/today` | student | Rutina activa del alumno para hoy |
+| GET | `/api/routines/today` | student | Rutina activa del alumno para hoy; cada ejercicio trae `last_session_kg` (mayor peso de la última sesión en que lo hizo, o `null`) |
 | GET | `/api/routines/mine` | student | Rutinas activas del alumno con sus ejercicios (caché offline de mobile) |
 
 ### Plantillas de rutina — Fase 2
@@ -162,6 +162,15 @@ Solo rol `student`; el `student_id` sale del token. Sesión ajena o inexistente 
 | POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
 | POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
 | PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
+
+### Progreso — Fase 3
+
+Roles `trainer` y `student`. El alumno puede omitir `student_id` (por defecto es él mismo); el trainer lo manda siempre y tiene que ser su alumno (403 si no).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/progress/exercise/:exerciseId` | Curva de carga: un punto por día con `max_kg`, `volume_kg`, `e1rm_kg` (Epley), `sets` y `reps`; más `pr` y `default_metric`. Query `student_id`, `from`, `to`. Ejercicio no visible para el alumno → 404 `EXERCISE_NOT_FOUND`. Ver [ADR 0004](../docs/adr/0004-metrica-de-progreso.md) |
+| GET | `/api/progress/body/:studentId` | Historial de medidas (como `/students/:id/metrics`) más `summary` por campo (`first`, `last`, `delta`) |
 
 ### Autenticación
 
@@ -249,3 +258,8 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 ### Ejercicios (`/exercises`)
 
 - **`GET /exercises/library` (nuevo, solo alumno):** lo usa la biblioteca offline de mobile. El entrenador sale de la ficha del alumno, no del request. Un alumno sin entrenador recibe solo los globales; uno que no existe, 404. **Para la web: nada que hacer**, `GET /exercises` sigue igual y solo para trainer.
+
+### Progreso (`/progress`) y `/routines/today`
+
+- Rutas nuevas (no están en el contrato de Notion): `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. La agregación vive en funciones SQL (`exercise_progress`, `last_session_kg`) llamadas con `supabase.rpc`; son `security invoker`, con `search_path` fijo y ejecutables solo por `service_role`. Migración: `src/database/migrations/2026-10-29-progress.sql`.
+- **`GET /routines/today`:** `last_session_kg` deja de ser siempre `null`: es el mayor peso de la última sesión en que el alumno hizo el ejercicio.
