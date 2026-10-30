@@ -59,6 +59,11 @@ export const Errors = {
   metricIdConflict: () =>
     new AppError(409, 'METRIC_ID_CONFLICT', 'Ya existe una medida con ese id'),
   sessionNotFound: () => new AppError(404, 'SESSION_NOT_FOUND', 'La sesión no existe'),
+  challengeNotFound: () => new AppError(404, 'CHALLENGE_NOT_FOUND', 'El desafío no existe'),
+  challengeInUse: () =>
+    new AppError(409, 'CHALLENGE_IN_USE', 'El desafío tiene asignaciones activas'),
+  challengeAlreadyActive: () =>
+    new AppError(409, 'CHALLENGE_ALREADY_ACTIVE', 'El alumno ya tiene este desafío activo'),
   sessionIdConflict: () =>
     new AppError(409, 'SESSION_ID_CONFLICT', 'Ya existe una sesión con ese id'),
   exerciseInUse: () =>
