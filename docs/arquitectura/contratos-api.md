@@ -673,7 +673,7 @@ Resumen para la vista de progreso: los ejercicios que el alumno entrenó y su vo
 ```
 
 - `exercises`: todos los ejercicios con al menos una serie que cuenta (`completed` y `actual_reps > 0`), **sin filtrar por rango**. `days` = días distintos (hora argentina) con ese ejercicio. Orden: `last_date` descendente y después `name`.
-- `weekly_volume`: una fila por semana (lunes, hora argentina), ascendente, desde la semana de `from` (o la de la primera sesión si no hay `from`) hasta la de `to` (o la actual). `volume_kg` = Σ `actual_reps × actual_kg` de las series que cuentan (kg nulo cuenta 0), a 1 decimal; `sessions` = sesiones distintas con alguna serie que cuenta. Las semanas sin series vienen en 0. Sin ninguna sesión y sin `from` → `[]`.
+- `weekly_volume`: una fila por semana completa (lunes a domingo, hora argentina), ascendente, desde la semana de `from` hasta la de `to` (o la actual). La primera y la última semana incluyen todo su volumen aunque `from`/`to` caigan a mitad de semana (la web alinea `from` al lunes). Sin `from`, arranca en la semana de la primera serie que cuenta (`completed` y `actual_reps > 0`). `volume_kg` = Σ `actual_reps × actual_kg` de las series que cuentan (kg nulo cuenta 0), a 1 decimal; `sessions` = sesiones distintas con alguna serie que cuenta. Las semanas sin series vienen en 0. Sin ninguna sesión y sin `from` → `[]`.
 
 ### GET /progress/exercise/:exerciseId
 
