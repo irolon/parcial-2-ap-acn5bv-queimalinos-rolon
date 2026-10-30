@@ -84,7 +84,7 @@ export async function commentSession(user, sessionId, { trainer_comment }) {
   if (!student || student.trainer_id !== user.id) throw Errors.sessionNotFound();
 
   const updated = await repo.updateTrainerComment(sessionId, trainer_comment);
-  await onSessionCommented({
+  void onSessionCommented({
     session: updated,
     studentId: row.student_id,
     previousComment: row.trainer_comment,

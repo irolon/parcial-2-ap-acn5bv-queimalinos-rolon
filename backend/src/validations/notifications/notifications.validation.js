@@ -35,6 +35,13 @@ export function validateListQuery(query) {
   return out;
 }
 
+export function validateTokenParam(params) {
+  if (typeof params.token !== 'string' || params.token.length < 1 || params.token.length > 4096) {
+    fail([{ field: 'token', message: 'token debe tener entre 1 y 4096 caracteres' }]);
+  }
+  return { token: params.token };
+}
+
 export function validateRegisterToken(body) {
   const details = [];
   if (typeof body.token !== 'string' || body.token.length < 1 || body.token.length > 4096) {

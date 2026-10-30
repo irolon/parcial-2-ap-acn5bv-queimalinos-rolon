@@ -21,7 +21,7 @@ Infraestructura de notificaciones (tabla como fuente de verdad, push como aviso)
 | Q3 | Envío | FCM HTTP v1 sin dependencias nuevas: JWT RS256 firmado con `jsonwebtoken` → access token OAuth (cacheado hasta que vence) → `fetch` a `messages:send`. Credencial en `FCM_SERVICE_ACCOUNT_PATH` o `FCM_SERVICE_ACCOUNT_JSON` (base64). `UNREGISTERED`/404 → se borra el token. La `FCM_SERVER_KEY` legacy de la tarjeta ya no existe (Google la apagó en 2024) |
 | Q4 | Tokens | Tabla `push_tokens` (`user_id`, `user_role`, `token` único, `platform` android\|web, `created_at`, `last_seen_at`). `POST /notifications/tokens` (upsert; si el token era de otro usuario, se reasigna) y `DELETE /notifications/tokens/:token`. Push a todos los tokens del usuario |
 | Q5 | Columnas nuevas | `notifications.data jsonb` (contexto: `student_id`, `session_id`, `achievement_code`…) y `push_sent_at timestamptz`. Sin reintentos: la tabla es la fuente de verdad (se actualiza el CU-10 E1) |
-| Q6 | Inactividad | Inactivo = **≥ 3 días asignados sin entrenar** desde la última sesión cerrada (hoy no cuenta; sin rutina activa, todos los días son asignados; sin sesiones, desde `students.created_at`). Constante `INACTIVITY_MISSED_DAYS = 3` |
+| Q6 | Inactividad | Inactivo = **≥ 3 días asignados sin entrenar** desde la última sesión cerrada (hoy no cuenta; un alumno sin rutina activa se saltea (no hay días que perder); sin sesiones, desde `students.created_at`). Constante `INACTIVITY_MISSED_DAYS = 3` |
 | Q7 | Una por semana | No se crea si ya hay una `inactivity` con el mismo `data.student_id` en los últimos 7 días |
 | Q8 | Disparadores | Ver tabla §3.2 |
 | Q9 | Endpoints | `GET /notifications?unread_only=&limit=&before=` → `{ data, meta:{ unread_count, next_before } }` (20, máx 100), `PATCH /notifications/:id/read` (204; ajena → 404), `PATCH /notifications/read-all` (204) |
@@ -35,7 +35,7 @@ Infraestructura de notificaciones (tabla como fuente de verdad, push como aviso)
 ### 3.1 Inactividad (`missedAssignedDays({ lastDate, assignedDays, today })`)
 
 - `lastDate`: fecha AR de la última sesión cerrada, o de `created_at` del alumno si no tiene.
-- Cuenta los días desde el día siguiente a `lastDate` hasta ayer cuyo día de la semana está en `assignedDays` (vacío = todos).
+- Cuenta los días desde el día siguiente a `lastDate` hasta ayer cuyo día de la semana está en `assignedDays`. El job saltea a los alumnos sin rutina activa (`assignedDays` vacío): no se les avisa.
 - El job (`runInactivityAlerts({ now })`) recorre los alumnos activos, calcula los días perdidos y, si son ≥ 3 y no hubo otra `inactivity` de ese alumno en 7 días, notifica al PT del alumno. `data: { student_id, missed_days, days_since }`.
 
 ### 3.2 Disparadores
@@ -74,7 +74,7 @@ Los disparadores nunca rompen la operación que los origina (try/catch + log).
 Migración `backend/src/database/migrations/2026-10-30-notifications.sql` (y en `schema/06-ai-and-agenda.sql`):
 
 - `alter table notifications add column if not exists data jsonb not null default '{}'`, `add column if not exists push_sent_at timestamptz`.
-- índice para el límite semanal: `create index if not exists idx_notifications_inactivity on notifications ((data->>'student_id'), created_at desc) where type = 'inactivity'`.
+- índice para el límite semanal: `create index if not exists idx_notifications_inactivity on notifications (created_at desc) where type = 'inactivity'` (precedido de `drop index if exists` para reemplazar el índice anterior al reaplicar).
 - `create table if not exists push_tokens (id uuid pk default gen_random_uuid(), user_id uuid not null, user_role varchar(20) not null check (user_role in ('trainer','student')), token text not null unique, platform varchar(10) not null check (platform in ('android','web')), created_at timestamptz not null default now(), last_seen_at timestamptz not null default now())` + índice `(user_id)`.
 - RLS activado sin políticas en `push_tokens`; `schema-checks.sql` y `check-anon-access.js`.
 
@@ -85,7 +85,7 @@ Migración `backend/src/database/migrations/2026-10-30-notifications.sql` (y en 
 - `missedAssignedDays` en `models/gamification/streak.js` (misma regla de días asignados que la racha, ADR 0005).
 - `services/notifications/fcm.client.js`: token OAuth + envío + clasificación de errores (`unregistered`, `other`); no-op si no hay credenciales (`FCM_ENABLED` derivado).
 - `services/notifications/notify.service.js`: `notify({ userId, userRole, type, title, body, data, push })` → inserta, envía a los tokens si `push`, setea `push_sent_at` si alguno salió, borra los tokens `unregistered`; nunca tira.
-- `services/notifications/triggers.service.js`: `onSessionModified`, `onSessionClosed({ studentId, sessionId, unlocked })` (récords + logros), `onSessionCommented`, cada uno envuelto en try/catch.
+- `services/notifications/triggers.service.js`: `onSessionModified`, `onSessionClosed({ studentId, session, unlocked })` (récords + logros), `onSessionCommented`, cada uno envuelto en try/catch.
 - Job `runInactivityAlerts` + scheduler con lista de jobs; script `backend/scripts/notifications-inactivity.js`.
 
 ## 7. Fuera de alcance
@@ -117,3 +117,8 @@ Migración `backend/src/database/migrations/2026-10-30-notifications.sql` (y en 
 - **Cooldown de inactividad por fecha argentina:** el aviso previo bloquea solo si `localDate(created_at) > hoy - 7 días` (fechas de Buenos Aires). Al día 7 exacto se permite de nuevo aunque el anterior se haya creado segundos después de las 03:00. El repo trae los avisos de los últimos 8 días (`findLastInactivityNotifications`: alumno → último `created_at`) y el filtro fino se hace en JS.
 - **Logros del job nocturno solo en la base:** `runDailyGamification` crea, por cada logro que desbloquea `evaluateStudent`, una fila para el alumno y otra para el PT con `push: false` (`onAchievementsFromJob`, que usa `shouldPush('achievement', role, { fromJob: true })` y nunca lanza). Un logro que falla no corta a los demás.
 - **Tokens por usuario y rol:** `push_tokens` se consulta y se borra por `user_id` **y** `user_role`, porque un id de alumno y uno de entrenador viven en tablas distintas; `notify`/`pushOnly` pasan `userRole`.
+- **Alumno sin rutina activa (ruling de la revisión de #36):** el job no avisa de los alumnos sin rutina activa (invitado sin rutina todavía, o rutinas pausadas): no hay días asignados que saltearse. Reemplaza la regla "sin rutina, todos los días son asignados" para la inactividad; la racha de gamificación mantiene la suya (ADR 0005).
+- **Disparadores sin `await`:** sessions, session-sets y session-history lanzan los disparadores con `void` para no alargar el request (cada `notify` hace varias consultas más el envío a FCM). Son seguros porque `safely` nunca deja escapar un error.
+- **Payload del push:** `notify` envía `{ ...data, type, notification_id }` (la fila no cambia) y el push resumen de logros lleva `type: 'achievement'` y `student_id`, para que la app navegue y marque la notificación como leída.
+- **Índice de inactividad:** `(created_at desc) where type = 'inactivity'`, porque `findLastInactivityNotifications` filtra solo por tipo y fecha.
+- **Deuda:** `findLastClosedSessionStarts` trae las sesiones cerradas de todos los alumnos cada noche para quedarse con la última, y `findAssignedDays` se consulta alumno por alumno. Crecen con el historial y la cantidad de alumnos; conviene agregar en la base (última sesión por alumno, días asignados en lote) cuando haga falta.

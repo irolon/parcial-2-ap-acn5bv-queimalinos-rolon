@@ -95,7 +95,7 @@ async function notifyAchievements(student, unlocked) {
   }
   if (!single && shouldPush('achievement', 'student')) {
     const summary = texts.achievementsSummary(unlocked.map((a) => a.name));
-    await pushOnly({ userId: student.id, userRole: 'student', ...summary, data: { student_id: student.id } });
+    await pushOnly({ userId: student.id, userRole: 'student', ...summary, data: { type: 'achievement', student_id: student.id } });
   }
 }
 

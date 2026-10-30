@@ -43,6 +43,10 @@ describe('notify', () => {
     const out = await notify(INPUT);
     expect(mockTokens.findTokensForUser).toHaveBeenCalledWith('u-1', 'student');
     expect(mockFcm.sendToToken).toHaveBeenCalledTimes(2);
+    expect(mockFcm.sendToToken).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      data: { ...INPUT.data, type: INPUT.type, notification_id: 'n-1' },
+    }));
+    expect(mockNotifications.insert).toHaveBeenCalledWith(expect.objectContaining({ data: INPUT.data }));
     expect(mockNotifications.setPushSent).toHaveBeenCalledWith('n-1', expect.any(String));
     expect(out.push_sent_at).toBe('now');
     expect(mockTokens.deleteTokens).toHaveBeenCalledWith([]);

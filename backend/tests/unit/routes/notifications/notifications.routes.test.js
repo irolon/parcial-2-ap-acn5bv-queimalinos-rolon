@@ -33,6 +33,16 @@ describe.each([
   });
 });
 
+describe('validación', () => {
+  it.each([['/:id/read', 'patch'], ['/tokens', 'post'], ['/tokens/:token', 'delete']])(
+    '%s [%s] pasa por el middleware de validación',
+    (path, method) => {
+      // authenticate, requireRole, validate y controller
+      expect(find(path, method).route.stack).toHaveLength(4);
+    }
+  );
+});
+
 describe('orden de rutas', () => {
   it('/read-all se define antes que /:id/read', () => {
     const paths = layers.map((l) => l.route.path);

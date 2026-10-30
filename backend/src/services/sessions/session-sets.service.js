@@ -77,14 +77,14 @@ export async function addSets(studentId, sessionId, { sets }) {
     .map(({ value }) => ({ from: value.original_exercise_id, to: value.exercise_id }));
   if (substitutions.length > 0) {
     await setsRepo.markSessionModified(session.id);
-    await onSessionModified({ studentId, session, substitutions });
+    void onSessionModified({ studentId, session, substitutions });
   }
 
   // Series sobre una sesión ya cerrada pueden cambiar récords y logros.
   const closedWithSets = session.finished_at && saved.length > 0;
   const unlocked_achievements = closedWithSets ? await safeEvaluate(studentId) : [];
   if (closedWithSets) {
-    await onSessionClosed({ studentId, session, unlocked: unlocked_achievements });
+    void onSessionClosed({ studentId, session, unlocked: unlocked_achievements });
   }
 
   return {

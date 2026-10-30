@@ -3,6 +3,7 @@ import {
   validateNotificationIdParam,
   validateListQuery,
   validateRegisterToken,
+  validateTokenParam,
 } from '../../../../src/validations/notifications/notifications.validation.js';
 
 const UUID = '3F2504E0-4F89-41D3-9A0C-0305E82C3301';
@@ -45,5 +46,15 @@ describe('validateRegisterToken', () => {
   });
   it('acepta token de 4096 caracteres', () => {
     expect(validateRegisterToken({ token: 'x'.repeat(4096), platform: 'android' }).platform).toBe('android');
+  });
+});
+
+describe('validateTokenParam', () => {
+  it('acepta un token de 1 a 4096 caracteres', () => {
+    expect(validateTokenParam({ token: 'abc' })).toEqual({ token: 'abc' });
+    expect(validateTokenParam({ token: 'x'.repeat(4096) }).token).toHaveLength(4096);
+  });
+  it.each([[{}], [{ token: '' }], [{ token: 'x'.repeat(4097) }], [{ token: 5 }]])('rechaza %j', (params) => {
+    expect(() => validateTokenParam(params)).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }));
   });
 });

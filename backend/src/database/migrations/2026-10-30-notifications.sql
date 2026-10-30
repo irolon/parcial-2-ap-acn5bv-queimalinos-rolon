@@ -8,9 +8,10 @@
 alter table notifications add column if not exists data jsonb not null default '{}';
 alter table notifications add column if not exists push_sent_at timestamptz;
 
--- Límite semanal de avisos de inactividad por alumno.
+-- Avisos de inactividad recientes (el job los consulta por tipo y fecha).
+drop index if exists idx_notifications_inactivity;
 create index if not exists idx_notifications_inactivity
-  on notifications ((data->>'student_id'), created_at desc) where type = 'inactivity';
+  on notifications (created_at desc) where type = 'inactivity';
 
 -- ── push_tokens ──────────────────────────────────────────────────────────────
 -- user_id apunta a trainers o students según user_role (sin FK dura, como notifications).

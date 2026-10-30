@@ -6,6 +6,7 @@ import {
   validateNotificationIdParam,
   validateListQuery,
   validateRegisterToken,
+  validateTokenParam,
 } from '../../validations/notifications/notifications.validation.js';
 import * as controller from '../../controllers/notifications/notifications.controller.js';
 
@@ -18,6 +19,6 @@ router.get('/', ...guards, validate(validateListQuery, 'query'), controller.list
 router.patch('/read-all', ...guards, controller.markAllRead);
 router.patch('/:id/read', ...guards, validate(validateNotificationIdParam, 'params'), controller.markRead);
 router.post('/tokens', ...guards, validate(validateRegisterToken), controller.registerToken);
-router.delete('/tokens/:token', ...guards, controller.removeToken);
+router.delete('/tokens/:token', ...guards, validate(validateTokenParam, 'params'), controller.removeToken);
 
 export default router;

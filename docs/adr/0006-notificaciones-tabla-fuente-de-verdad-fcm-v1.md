@@ -72,8 +72,8 @@ modificadas. Quedaban varias decisiones abiertas:
    cuando acumula **3 o más días asignados sin entrenar** desde su última
    sesión cerrada (hoy no cuenta; sin sesiones, desde `students.created_at`).
    Se reutiliza la regla de [[adr/0005-racha-contra-dias-asignados|ADR 0005]]:
-   días asignados = unión de los `days` de las rutinas activas, y sin rutina
-   activa todos los días son asignados. Se avisa **como máximo una vez cada
+   días asignados = unión de los `days` de las rutinas activas; un alumno
+   sin rutina activa se saltea (no hay días que perder). Se avisa **como máximo una vez cada
    7 días por alumno** (se busca una `inactivity` previa con el mismo
    `data.student_id`). El umbral es una constante (`INACTIVITY_MISSED_DAYS`),
    no configurable por PT. Corre en el job nocturno de las 03:00 ART, después

@@ -30,7 +30,11 @@ export async function notify({ userId, userRole, type, title, body = null, data 
   if (!push || !isFcmEnabled()) return notification;
   let dead = [];
   try {
-    const result = await pushToUser(userId, userRole, { title, body, data });
+    const result = await pushToUser(userId, userRole, {
+      title,
+      body,
+      data: { ...data, type, notification_id: notification.id },
+    });
     dead = result.dead;
     if (result.sent) {
       notification = await notificationsRepo.setPushSent(notification.id, new Date().toISOString());

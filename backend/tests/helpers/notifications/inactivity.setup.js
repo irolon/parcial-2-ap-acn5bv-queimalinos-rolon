@@ -9,6 +9,7 @@ export const mockRepo = {
   findLastClosedSessionStarts: jest.fn(),
   findLastInactivityNotifications: jest.fn(),
 };
+const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 export const mockDays = { findAssignedDays: jest.fn() };
 jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => mockNotify);
 jest.unstable_mockModule(src('repositories/notifications/inactivity.repository.js'), () => mockRepo);
@@ -29,6 +30,6 @@ export function arrange({ students = [], lastStarts = {}, notified = {} } = {}) 
   mockRepo.findActiveStudents.mockResolvedValue(students);
   mockRepo.findLastClosedSessionStarts.mockResolvedValue(new Map(Object.entries(lastStarts)));
   mockRepo.findLastInactivityNotifications.mockResolvedValue(new Map(Object.entries(notified)));
-  mockDays.findAssignedDays.mockResolvedValue([]);
+  mockDays.findAssignedDays.mockResolvedValue(ALL_DAYS);
   mockNotify.notify.mockResolvedValue({ id: 'n-1' });
 }

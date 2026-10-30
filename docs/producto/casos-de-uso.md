@@ -312,7 +312,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujo principal — inactividad**
 
 1. El cron nocturno revisa todos los alumnos activos.
-2. Para cada alumno calcula cuántos **días asignados** se saltó desde su última sesión cerrada (misma regla de días asignados que la racha, [[adr/0005-racha-contra-dias-asignados|ADR 0005]]): la unión de los días de sus rutinas activas, o todos los días si no tiene rutina activa. Hoy no cuenta. Si nunca entrenó, se cuenta desde que se dio de alta (`created_at`).
+2. Para cada alumno calcula cuántos **días asignados** se saltó desde su última sesión cerrada (misma regla de días asignados que la racha, [[adr/0005-racha-contra-dias-asignados|ADR 0005]]): la unión de los días de sus rutinas activas. Un alumno sin rutina activa se saltea (no se le avisa al PT). Hoy no cuenta. Si nunca entrenó, se cuenta desde que se dio de alta (`created_at`).
 3. Si se saltó **3 o más** días asignados y no se le avisó al PT por ese alumno en los últimos **7 días** (contados por fecha de Buenos Aires: el aviso se puede repetir recién 7 días después de la fecha del anterior), crea una notificación de tipo `inactivity` para el PT (`data`: `student_id`, `missed_days`, `days_since`). El umbral es fijo, no lo configura el PT.
 4. Envía push al PT vía FCM a todos los dispositivos que tenga registrados (`push_tokens`). La web (Web Push) usa la misma tabla cuando se integre.
 

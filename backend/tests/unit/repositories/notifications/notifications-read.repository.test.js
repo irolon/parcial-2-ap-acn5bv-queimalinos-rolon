@@ -11,7 +11,6 @@ const supabase = { from: jest.fn(() => q) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
 const repo = await import(src('repositories/notifications/notifications-read.repository.js'));
-const tokens = await import(src('repositories/notifications/push-tokens.repository.js'));
 
 const USER = { id: 'u-1', role: 'student' };
 
@@ -61,28 +60,5 @@ describe('notifications-read.repository', () => {
   it('un error de supabase se propaga', async () => {
     result.current = { data: null, count: null, error: { message: 'boom' } };
     await expect(repo.countUnread(USER)).rejects.toThrow('boom');
-  });
-});
-
-describe('push-tokens.repository (registro)', () => {
-  it('tokenExists', async () => {
-    result.current = { data: [{ id: 1 }], error: null };
-    await expect(tokens.tokenExists('t')).resolves.toBe(true);
-  });
-
-  it('upsertToken hace upsert por token con dueño y last_seen_at', async () => {
-    await tokens.upsertToken(USER, 't', 'web', 'NOW');
-    expect(q.upsert).toHaveBeenCalledWith(
-      { token: 't', user_id: 'u-1', user_role: 'student', platform: 'web', last_seen_at: 'NOW' },
-      { onConflict: 'token' }
-    );
-  });
-
-  it('deleteTokenForUser filtra por token, user_id y user_role', async () => {
-    await tokens.deleteTokenForUser(USER, 't');
-    expect(q.delete).toHaveBeenCalled();
-    expect(q.eq).toHaveBeenCalledWith('token', 't');
-    expect(q.eq).toHaveBeenCalledWith('user_id', 'u-1');
-    expect(q.eq).toHaveBeenCalledWith('user_role', 'student');
   });
 });

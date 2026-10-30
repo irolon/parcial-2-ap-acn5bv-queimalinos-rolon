@@ -49,7 +49,7 @@ export async function create(studentId, body) {
   // Llegó cerrada (nueva o completada por el reintento): puede desbloquear logros.
   const unlocked_achievements = result.session.finished_at ? await safeEvaluate(studentId) : [];
   if (result.session.finished_at) {
-    await onSessionClosed({ studentId, session: result.session, unlocked: unlocked_achievements });
+    void onSessionClosed({ studentId, session: result.session, unlocked: unlocked_achievements });
   }
   return { ...result, unlocked_achievements };
 }
@@ -83,6 +83,6 @@ export async function update(studentId, sessionId, body) {
   }
   const updated = await sessionsRepo.updateSession(sessionId, body);
   const unlocked_achievements = body.finished_at ? await safeEvaluate(studentId) : [];
-  if (body.finished_at) await onSessionClosed({ studentId, session: updated, unlocked: unlocked_achievements });
+  if (body.finished_at) void onSessionClosed({ studentId, session: updated, unlocked: unlocked_achievements });
   return { ...updated, unlocked_achievements };
 }

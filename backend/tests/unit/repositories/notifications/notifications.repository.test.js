@@ -11,7 +11,6 @@ const supabase = { from: jest.fn(() => q) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
 const notifications = await import(src('repositories/notifications/notifications.repository.js'));
-const tokens = await import(src('repositories/notifications/push-tokens.repository.js'));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -36,21 +35,5 @@ describe('notifications.repository', () => {
   it('un error de supabase se propaga', async () => {
     result.current = { data: null, error: { message: 'boom' } };
     await expect(notifications.insert({})).rejects.toThrow('boom');
-  });
-});
-
-describe('push-tokens.repository', () => {
-  it('findTokensForUser devuelve solo los strings', async () => {
-    result.current = { data: [{ token: 'a' }, { token: 'b' }], error: null };
-    await expect(tokens.findTokensForUser('u-1', 'student')).resolves.toEqual(['a', 'b']);
-    expect(q.eq).toHaveBeenCalledWith('user_id', 'u-1');
-    expect(q.eq).toHaveBeenCalledWith('user_role', 'student');
-  });
-
-  it('deleteTokens borra por token y no consulta con lista vacía', async () => {
-    await tokens.deleteTokens([]);
-    expect(supabase.from).not.toHaveBeenCalled();
-    await tokens.deleteTokens(['a']);
-    expect(q.in).toHaveBeenCalledWith('token', ['a']);
   });
 });

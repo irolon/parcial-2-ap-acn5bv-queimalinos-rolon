@@ -35,6 +35,13 @@ describe('runInactivityAlerts', () => {
     expect((await run()).notified).toBe(0);
   });
 
+  it('sin rutina activa: no avisa aunque hayan pasado muchos días', async () => {
+    arrange({ students: [student('a')], lastStarts: { a: '2026-10-20T13:00:00Z' } });
+    mockDays.findAssignedDays.mockResolvedValue([]);
+    expect(await run()).toEqual({ checked: 1, notified: 0, skipped: 1, errors: 0 });
+    expect(mockNotify.notify).not.toHaveBeenCalled();
+  });
+
   it('cooldown: con un aviso de los últimos 7 días no repite', async () => {
     arrange({ students: [student('a')], lastStarts: { a: '2026-10-20T13:00:00Z' }, notified: { a: '2026-10-27T12:00:00Z' } });
     expect(await run()).toEqual({ checked: 1, notified: 0, skipped: 1, errors: 0 });

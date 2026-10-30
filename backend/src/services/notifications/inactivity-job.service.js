@@ -24,6 +24,8 @@ async function checkStudent(student, { lastStarts, notified, today }) {
   if (!student.trainer_id) return false;
   const lastDate = localDate(lastStarts.get(student.id) ?? student.created_at);
   const assignedDays = await findAssignedDays(student.id);
+  // Sin rutina activa no hay días que saltearse: no se avisa.
+  if (assignedDays.length === 0) return false;
   const missed = missedAssignedDays({ lastDate, assignedDays, today });
   if (missed < INACTIVITY_MISSED_DAYS || isInCooldown(notified.get(student.id), today)) return false;
 

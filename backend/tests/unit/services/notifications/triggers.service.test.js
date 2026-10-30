@@ -97,6 +97,7 @@ describe('triggers · onSessionClosed · logros', () => {
     expect(calls.every((c) => c.push === false)).toBe(true);
     expect(mockNotify.pushOnly).toHaveBeenCalledWith(expect.objectContaining({
       userId: STUDENT_ID, userRole: 'student', title: 'Desbloqueaste 2 logros', body: 'Primera, Racha',
+      data: { type: 'achievement', student_id: STUDENT_ID },
     }));
   });
 

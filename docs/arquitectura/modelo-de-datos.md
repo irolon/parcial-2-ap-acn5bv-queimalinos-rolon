@@ -291,7 +291,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | push_sent_at | timestamptz | cuándo salió el push a algún dispositivo; null si no se envió (sin credenciales, sin tokens, política "solo base" o error). No hay reintentos |
 | created_at | timestamptz | |
 
-Índice parcial `idx_notifications_inactivity` sobre `((data->>'student_id'), created_at desc) where type = 'inactivity'`: lo usa el job nocturno para respetar el máximo de un aviso de inactividad por alumno cada 7 días. La tabla es la fuente de verdad; el push es un aviso best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
+Índice parcial `idx_notifications_inactivity` sobre `(created_at desc) where type = 'inactivity'`: lo usa el job nocturno para traer los avisos recientes y respetar el máximo de un aviso de inactividad por alumno cada 7 días. La tabla es la fuente de verdad; el push es un aviso best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
 
 **push_tokens** *(dispositivos que reciben push)*
 
