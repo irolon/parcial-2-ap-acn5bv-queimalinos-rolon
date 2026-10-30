@@ -1,20 +1,10 @@
 import {
   DEFAULT_METRIC,
   defaultMetricFor,
-  round1,
   toProgressPoints,
   computePr,
   bodySummary,
 } from '../../../../src/models/progress/progress.model.js';
-
-describe('round1', () => {
-  it('redondea a un decimal, acepta strings y null', () => {
-    expect(round1(79.1666)).toBe(79.2);
-    expect(round1('80.04')).toBe(80);
-    expect(round1(null)).toBeNull();
-    expect(round1(undefined)).toBeNull();
-  });
-});
 
 describe('toProgressPoints', () => {
   it('redondea los valores y convierte date a string', () => {

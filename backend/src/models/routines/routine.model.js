@@ -3,7 +3,7 @@
  * Estructura, enums y helpers puros. SIN lógica de negocio ni acceso a datos.
  */
 
-import { round1 } from '../progress/progress.model.js';
+import { round1 } from '../../shared/utils/numbers.js';
 
 export const ROUTINES_TABLE = 'routines';
 export const ROUTINE_EXERCISES_TABLE = 'routine_exercises';

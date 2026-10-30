@@ -3,16 +3,10 @@
  * Helpers puros sobre las filas que devuelven las funciones SQL. SIN acceso a datos.
  */
 
+import { round1 } from '../../shared/utils/numbers.js';
+
 export const DEFAULT_METRIC = 'e1rm_kg';
 export const BODYWEIGHT_METRIC = 'reps';
-
-/** Redondea a 1 decimal. Acepta number, string numérico (rpc) o null. */
-export function round1(n) {
-  if (n === null || n === undefined || n === '') return null;
-  const value = Number(n);
-  if (!Number.isFinite(value)) return null;
-  return Math.round(value * 10) / 10;
-}
 
 function toDateString(date) {
   return date instanceof Date ? date.toISOString().slice(0, 10) : String(date).slice(0, 10);
