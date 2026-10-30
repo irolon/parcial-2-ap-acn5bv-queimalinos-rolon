@@ -630,7 +630,7 @@ Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesione
 
 ### GET /students/:id/sessions
 
-Historial de sesiones del alumno, más recientes primero (`started_at` descendente, desempate por `id`). Roles: `trainer` (solo sus alumnos) y `student` (solo él mismo); si no → 403 `FORBIDDEN`.
+Historial de sesiones del alumno, más recientes primero (`started_at` descendente, desempate por `id`). Roles: `trainer` (solo sus alumnos) y `student` (solo él mismo); si no → 403 `FORBIDDEN`. `id` que no es UUID → 400 `VALIDATION_ERROR`.
 
 **Query:** `page` (desde 1, default 1) y `limit` (default 20, máximo 100). Valores inválidos caen al default.
 
@@ -651,6 +651,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 - `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
 - `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
 - `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
+- **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
 
 ### GET /students/:id/sessions/:sessionId
 
@@ -672,6 +673,7 @@ Mismos roles y permisos. La sesión tiene que ser de ese alumno; si no existe o 
 - `original_exercise`: `null` si no hubo sustitución.
 - `planned`: plan **actual** de la rutina (`sets`, `reps`, `suggested_kg`) vía `routine_exercise_id`; `null` si la serie no tiene enlace.
 - `is_pr`: el ejercicio fue récord en esa sesión.
+- **Campos que pueden ser `null`:** los del resumen (`finished_at`, `duration_min`, `routine`, `rpe`, `notes`, `trainer_comment`), `original_exercise`, `planned` (y dentro de él, `sets`, `reps` y `suggested_kg` por separado) y, en cada serie, `actual_reps` y `actual_kg`.
 
 ### PATCH /sessions/:id/comment
 
