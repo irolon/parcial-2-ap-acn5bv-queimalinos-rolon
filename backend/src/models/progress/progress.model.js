@@ -42,13 +42,13 @@ export function computePr(points) {
 
 /**
  * Métrica que los clientes grafican por defecto, en escalones: el 1RM estimado
- * si algún punto lo tiene; si no, el mayor peso si algún punto tiene kg > 0
+ * si algún punto lo tiene mayor a 0; si no, el mayor peso si algún punto tiene kg > 0
  * (siempre más de 12 repeticiones); si no, las repeticiones (peso corporal,
  * que el celular manda como 0 kg).
  */
 export function defaultMetricFor(points) {
   if (points.length === 0) return DEFAULT_METRIC;
-  if (points.some((p) => p.e1rm_kg !== null && p.e1rm_kg !== undefined)) return DEFAULT_METRIC;
+  if (points.some((p) => p.e1rm_kg > 0)) return DEFAULT_METRIC;
   if (points.some((p) => p.max_kg > 0)) return MAX_KG_METRIC;
   return BODYWEIGHT_METRIC;
 }

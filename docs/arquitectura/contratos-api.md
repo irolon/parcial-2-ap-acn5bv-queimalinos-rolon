@@ -676,9 +676,9 @@ Curva de carga de un ejercicio: un punto por día con series que cuentan (`compl
 }
 ```
 
-- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
+- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
 - `pr`: mayor `max_kg` y mayor `e1rm_kg` del rango, con su fecha (la primera en alcanzarse); `null` cada uno si no hay valores. Sin series: `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
-- `default_metric`: métrica que los clientes grafican por defecto, en escalones: `e1rm_kg` si algún punto lo tiene; si no, `max_kg` si algún punto tiene `max_kg > 0` (ejercicios con peso hechos siempre con más de 12 repeticiones); si no, `reps` (peso corporal, como dominadas o flexiones, con `actual_kg` nulo o 0). Sin puntos: `e1rm_kg`.
+- `default_metric`: métrica que los clientes grafican por defecto, en escalones: `e1rm_kg` si algún punto lo tiene mayor a 0; si no, `max_kg` si algún punto tiene `max_kg > 0` (ejercicios con peso hechos siempre con más de 12 repeticiones); si no, `reps` (peso corporal, como dominadas o flexiones, con `actual_kg` nulo o 0). Sin puntos: `e1rm_kg`.
 - Una serie sustituida cuenta para el ejercicio realmente hecho, no para el original.
 
 ### GET /progress/body/:studentId

@@ -68,6 +68,10 @@ describe('defaultMetricFor', () => {
     expect(defaultMetricFor([point(0, null), point(0, null)])).toBe('reps');
   });
 
+  it('con 1RM en 0 (kg en 0) no lo toma como 1RM y devuelve reps', () => {
+    expect(defaultMetricFor([point(0, 0), point(0, 0)])).toBe('reps');
+  });
+
   it('con algún punto con 1RM devuelve e1rm_kg', () => {
     expect(defaultMetricFor([point(null), point(40)])).toBe('e1rm_kg');
   });

@@ -23,7 +23,7 @@ y cuál se grafica por defecto.
 1. **El punto del día trae las tres métricas**: `max_kg` (mayor peso),
    `volume_kg` (Σ repeticiones × kg) y `e1rm_kg` (1RM estimado). La respuesta
    incluye `default_metric` y los clientes eligen cuál graficar. Se elige en
-   escalones: `e1rm_kg` si algún punto lo tiene; si no, `max_kg` si algún
+   escalones: `e1rm_kg` si algún punto lo tiene mayor a 0; si no, `max_kg` si algún
    punto tiene kg mayor a 0; si no, `reps`. Sin puntos, `e1rm_kg`.
 2. **La métrica por defecto es el 1RM estimado con Epley**, calculado por serie
    y tomando el máximo del día: `reps = 1 → kg`; `reps > 1 → kg × (1 + reps / 30)`.
@@ -31,8 +31,9 @@ y cuál se grafica por defecto.
    `null` al 1RM estimado (y por lo tanto al `pr.e1rm_kg`), pero siguen
    sumando en `max_kg`, `volume_kg`, `sets` y `reps`.
 3. **Solo cuentan las series completadas con repeticiones** (`completed` y
-   `actual_reps > 0`). Una serie sin peso (`actual_kg` nulo) suma al volumen
-   como 0 y no aporta 1RM.
+   `actual_reps > 0`). Una serie sin peso (`actual_kg` nulo o 0, como manda el
+   celular en peso corporal) suma al volumen como 0 y no aporta 1RM: su
+   `e1rm_kg` es `null`, no 0, así el `pr.e1rm_kg` tampoco queda en 0.
 4. **Día calendario argentino**: el punto se agrupa por la fecha de
    `sessions.started_at` en `America/Argentina/Buenos_Aires`.
 5. **La agregación vive en Postgres** (función `exercise_progress`, llamada con
