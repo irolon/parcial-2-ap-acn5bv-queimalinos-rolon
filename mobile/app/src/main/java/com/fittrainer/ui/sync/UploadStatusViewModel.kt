@@ -4,15 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fittrainer.data.db.workout.SessionUploadRow
 import com.fittrainer.data.db.workout.UploadCounts
-import com.fittrainer.data.network.ConnectivityObserver
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
-import com.fittrainer.data.sync.SessionSync
+import com.fittrainer.data.sync.ManualSync
+import com.fittrainer.data.sync.ManualSyncResult
 import com.fittrainer.data.sync.UploadStatusRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,9 +29,9 @@ import kotlinx.coroutines.launch
 
 /**
  * "Subir ahora" del aviso de Hoy (spec §6). REJECTED: subió, pero el servidor rechazó algo (una sesión
- * o series); no es un éxito y el aviso lo sigue mostrando.
+ * o series); no es un éxito y el aviso lo sigue mostrando. IN_BACKGROUND: no terminó dentro del tope.
  */
-enum class ManualUpload { IDLE, UPLOADING, DONE, FAILED, REJECTED }
+enum class ManualUpload { IDLE, UPLOADING, DONE, FAILED, REJECTED, IN_BACKGROUND }
 
 /** Lo que el alumno ve de la subida: el aviso de Hoy, "Subir ahora" y la línea del resumen (spec §6). */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,8 +39,7 @@ enum class ManualUpload { IDLE, UPLOADING, DONE, FAILED, REJECTED }
 class UploadStatusViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val status: UploadStatusRepository,
-    private val sync: SessionSync,
-    private val connectivity: ConnectivityObserver,
+    private val manualSync: ManualSync,
 ) : ViewModel() {
 
     val counts: StateFlow<UploadCounts> = sessionRepository.session
@@ -51,27 +51,55 @@ class UploadStatusViewModel @Inject constructor(
     private val _manual = MutableStateFlow(ManualUpload.IDLE)
     val manual: StateFlow<ManualUpload> = _manual
 
+    /** La subida a mano en curso o la que espera para limpiar su resultado. */
+    private var manualJob: Job? = null
+
     fun session(sessionId: String): Flow<SessionUploadRow?> = status.observeSession(sessionId)
 
-    /** Fuerza una pasada y espera su resultado (como el aviso del logout). "Subido ✓" se va solo. */
+    /** Fuerza una pasada y espera su resultado (como el aviso del logout). */
     fun uploadNow() {
         if (_manual.value == ManualUpload.UPLOADING) return
         // Se marca antes de lanzar: un segundo toque ya no entra.
         _manual.value = ManualUpload.UPLOADING
-        viewModelScope.launch {
+        manualJob?.cancel()
+        manualJob = viewModelScope.launch {
+            val owner = currentOwner()
+            if (owner == null) {
+                _manual.value = ManualUpload.IDLE
+                return@launch
+            }
             val result = try {
-                upload()
+                manualSync.run(owner).toManualUpload()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 ManualUpload.FAILED // el alumno nunca queda atrapado en la ruedita
             }
             _manual.value = result
-            if (result == ManualUpload.DONE) {
-                delay(DONE_VISIBLE_MS)
-                if (_manual.value == ManualUpload.DONE) _manual.value = ManualUpload.IDLE
+            // Cualquiera sea el resultado (también el de una excepción), se limpia: nunca queda pegado.
+            try {
+                clearWhenStale(owner, result)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Room no se pudo leer: mejor sin resultado que uno que ya no corresponde.
+                if (_manual.value == result) _manual.value = ManualUpload.IDLE
             }
         }
+    }
+
+    /**
+     * "Subido ✓" se va a los segundos. El resto, cuando cambian las pendientes: ya no habla de lo que
+     * está a la vista (Pablo #32, ronda 2, punto 2).
+     */
+    private suspend fun clearWhenStale(owner: String, result: ManualUpload) {
+        if (result == ManualUpload.DONE) {
+            delay(DONE_VISIBLE_MS)
+        } else {
+            val pending = status.counts(owner).pending
+            status.observeCounts(owner).first { it.pending != pending }
+        }
+        if (_manual.value == result) _manual.value = ManualUpload.IDLE
     }
 
     /** Oculta del aviso de Hoy lo que no se pudo subir hasta ahora; un rechazo nuevo vuelve a mostrarse. */
@@ -89,22 +117,14 @@ class UploadStatusViewModel @Inject constructor(
 
     private suspend fun currentOwner(): String? = (sessionRepository.session.first() as? Session.Student)?.user?.id
 
-    private suspend fun upload(): ManualUpload {
-        val owner = currentOwner() ?: return ManualUpload.IDLE
-        // Sin red no tiene sentido esperar: se avisa enseguida y WorkManager sube cuando vuelva.
-        if (!connectivity.isOnline.first()) return ManualUpload.FAILED
-        val before = status.counts(owner)
-        sync.syncNow(SignOutSyncViewModel.SYNC_NOW_TIMEOUT_MS)
-        val after = status.counts(owner)
-        // Una sesión rechazada deja de estar pendiente (queda FAILED): "sin pendientes" no alcanza para el éxito.
-        return when {
-            after.pending > 0 -> ManualUpload.FAILED
-            after.rejections > before.rejections -> ManualUpload.REJECTED
-            else -> ManualUpload.DONE
-        }
-    }
-
     companion object {
         const val DONE_VISIBLE_MS = 3_000L
     }
+}
+
+private fun ManualSyncResult.toManualUpload() = when (this) {
+    ManualSyncResult.DONE -> ManualUpload.DONE
+    ManualSyncResult.REJECTED -> ManualUpload.REJECTED
+    ManualSyncResult.OFFLINE, ManualSyncResult.FAILED -> ManualUpload.FAILED
+    ManualSyncResult.STILL_UPLOADING -> ManualUpload.IN_BACKGROUND
 }

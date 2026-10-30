@@ -1,6 +1,5 @@
 package com.fittrainer.data.sync
 
-import android.util.Log
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
@@ -28,6 +27,7 @@ class SyncTrigger @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val dao: WorkoutDao,
     private val sync: SessionSync,
+    private val logger: SyncLogger,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun start(scope: CoroutineScope): Job = scope.launch {
@@ -44,9 +44,6 @@ class SyncTrigger @Inject constructor(
             .collect { (before, pending) -> enqueue(newWork = before != null && pending > before) }
     }
 
-    /** Qué hacer con un error al encolar (los tests JVM lo reemplazan: ahí `Log` no existe). */
-    internal var onEnqueueError: (Exception) -> Unit = { Log.w(TAG, "No se pudo encolar la subida de sesiones", it) }
-
     /** Un error al encolar (Room, WorkManager) no puede matar el disparador por el resto del proceso. */
     private suspend fun enqueue(newWork: Boolean) {
         try {
@@ -54,12 +51,8 @@ class SyncTrigger @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            onEnqueueError(e)
+            logger.enqueueFailed(e)
         }
-    }
-
-    private companion object {
-        const val TAG = "SyncTrigger"
     }
 }
 

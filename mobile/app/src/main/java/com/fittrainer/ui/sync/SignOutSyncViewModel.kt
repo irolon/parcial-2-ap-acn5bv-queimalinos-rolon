@@ -2,10 +2,10 @@ package com.fittrainer.ui.sync
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fittrainer.data.network.ConnectivityObserver
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
-import com.fittrainer.data.sync.SessionSync
+import com.fittrainer.data.sync.ManualSync
+import com.fittrainer.data.sync.ManualSyncResult
 import com.fittrainer.data.sync.UploadStatusRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -33,8 +33,7 @@ sealed interface SignOutSyncState {
 class SignOutSyncViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val status: UploadStatusRepository,
-    private val sync: SessionSync,
-    private val connectivity: ConnectivityObserver,
+    private val manualSync: ManualSync,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<SignOutSyncState>(SignOutSyncState.Hidden)
@@ -60,19 +59,11 @@ class SignOutSyncViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val owner = currentOwner() ?: return@launch close()
-                // Sin red no tiene sentido esperar 15 s: se avisa enseguida.
-                if (!connectivity.isOnline.first()) {
-                    _state.value = SignOutSyncState.Failed(status.pendingCount(owner))
-                    return@launch
-                }
-                val before = status.counts(owner)
-                sync.syncNow(SYNC_NOW_TIMEOUT_MS)
-                val after = status.counts(owner)
-                // Una sesión rechazada deja de estar pendiente: sin comparar los rechazos se cerraría como éxito.
-                when {
-                    after.pending > 0 -> _state.value = SignOutSyncState.Failed(after.pending)
-                    after.rejections > before.rejections -> _state.value = SignOutSyncState.Rejected
-                    else -> close()
+                when (manualSync.run(owner)) {
+                    ManualSyncResult.DONE -> close()
+                    ManualSyncResult.REJECTED -> _state.value = SignOutSyncState.Rejected
+                    // Sin red, con error o todavía subiendo: queda pendiente, se ofrece cerrar igual.
+                    else -> _state.value = SignOutSyncState.Failed(status.pendingCount(owner))
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -107,8 +98,4 @@ class SignOutSyncViewModel @Inject constructor(
     }
 
     private suspend fun currentOwner(): String? = (sessionRepository.session.first() as? Session.Student)?.user?.id
-
-    companion object {
-        const val SYNC_NOW_TIMEOUT_MS = 15_000L
-    }
 }

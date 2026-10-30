@@ -37,6 +37,8 @@ fun uploadsNoticeUi(counts: UploadCounts, manual: ManualUpload): UploadsNoticeUi
     val text = when {
         manual == ManualUpload.FAILED && counts.pending > 0 ->
             listOfNotNull(base, "No se pudo subir, se reintenta solo cuando haya conexión").joinToString(" · ")
+        manual == ManualUpload.IN_BACKGROUND && counts.pending > 0 ->
+            listOfNotNull(base, "Sigue subiendo en segundo plano").joinToString(" · ")
         manual == ManualUpload.DONE && counts.pending == 0 -> listOfNotNull("Subido ✓", base).joinToString(" · ")
         else -> base
     } ?: return null

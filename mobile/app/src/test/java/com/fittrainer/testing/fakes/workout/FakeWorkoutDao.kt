@@ -135,17 +135,6 @@ class FakeWorkoutDao : WorkoutDao() {
         st.copy(sets = st.sets.map { if (it.sessionId in mine && it.syncState == SYNC_FAILED) it.copy(failureSeen = true) else it })
     }
 
-    // Atómico como el @Transaction de Room.
-    override suspend fun dismissFailures(ownerId: String) = write { st ->
-        val mine = st.sessions.filterValues { it.ownerId == ownerId }.keys
-        st.copy(
-            sessions = st.sessions.mapValues { (_, s) ->
-                if (s.ownerId == ownerId && s.syncState == SYNC_FAILED) s.copy(failureSeen = true) else s
-            },
-            sets = st.sets.map { if (it.sessionId in mine && it.syncState == SYNC_FAILED) it.copy(failureSeen = true) else it },
-        )
-    }
-
     override fun observeSessionUpload(id: String): Flow<SessionUploadRow?> = state.map { st ->
         st.sessions[id]?.let { s -> SessionUploadRow(s.syncState, st.sets.count { it.sessionId == id && it.syncState == SYNC_FAILED }) }
     }.distinctUntilChanged()

@@ -2,6 +2,7 @@ package com.fittrainer.ui.sync
 
 import com.fittrainer.data.db.workout.SYNC_FAILED
 import com.fittrainer.data.db.workout.SYNC_SYNCED
+import com.fittrainer.data.sync.ManualSync
 import com.fittrainer.data.sync.UploadStatusRepository
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
@@ -22,7 +23,7 @@ class SignOutSyncViewModelTest {
     private val dao = FakeWorkoutDao()
     private val sync = FakeSessionSync()
     private val online = FakeConnectivityObserver(online = true)
-    private val vm by lazy { SignOutSyncViewModel(FakeStudentSession(), UploadStatusRepository(dao), sync, online) }
+    private val vm by lazy { SignOutSyncViewModel(FakeStudentSession(), UploadStatusRepository(dao), ManualSync(UploadStatusRepository(dao), sync, online)) }
 
     private fun pending(vararg ids: String) {
         dao.state.value = FakeWorkoutDao.State(sessions = ids.toList().associateWith { finishedSession(it) })

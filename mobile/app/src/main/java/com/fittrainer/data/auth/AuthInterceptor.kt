@@ -17,15 +17,15 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val path = request.url.encodedPath
+        val required = request.tag(RequiredUser::class.java)
         // No pisa un header explícito ni autentica los endpoints que emiten tokens.
-        if (request.header(AUTHORIZATION) != null || UNAUTHENTICATED_PATHS.any { path.endsWith(it) }) {
-            return chain.proceed(request)
-        }
+        val bypass = request.header(AUTHORIZATION) != null || UNAUTHENTICATED_PATHS.any { path.endsWith(it) }
+        if (bypass && required == null) return chain.proceed(request)
         val state = runBlocking { tokenStore.current() }
         // El token se lee acá, en cada request: si la cuenta cambió desde que se armó, no sale con la nueva.
-        val required = request.tag(RequiredUser::class.java)
+        // Va antes del bypass: la garantía no depende de cómo se armó la request.
         if (required != null && state?.user?.id != required.userId) throw AccountChangedException()
-        if (state == null) return chain.proceed(request)
+        if (bypass || state == null) return chain.proceed(request)
         return chain.proceed(
             request.newBuilder()
                 .header(AUTHORIZATION, "Bearer ${state.accessToken}")

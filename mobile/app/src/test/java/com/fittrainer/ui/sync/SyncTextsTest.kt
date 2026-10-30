@@ -53,6 +53,10 @@ class SyncTextsTest {
             "1 entrenamiento sin subir · No se pudo subir, se reintenta solo cuando haya conexión",
             uploadsNoticeUi(UploadCounts(pending = 1), ManualUpload.FAILED)?.text,
         )
+        assertEquals(
+            "1 entrenamiento sin subir · Sigue subiendo en segundo plano",
+            uploadsNoticeUi(UploadCounts(pending = 1), ManualUpload.IN_BACKGROUND)?.text,
+        )
         assertEquals("Subido ✓", uploadsNoticeUi(UploadCounts(), ManualUpload.DONE)?.text)
         // Con un rechazo nuevo no hay "Subido ✓": queda el aviso del rechazo.
         assertEquals("1 entrenamiento no se pudo subir", uploadsNoticeUi(UploadCounts(failed = 1), ManualUpload.REJECTED)?.text)

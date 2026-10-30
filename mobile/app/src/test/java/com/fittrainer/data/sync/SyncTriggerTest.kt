@@ -23,7 +23,13 @@ class SyncTriggerTest {
     private val dao = FakeWorkoutDao()
     private val session = FakeStudentSession()
     private val sync = FakeSessionSync()
-    private val trigger = SyncTrigger(session, dao, sync)
+    private val errors = mutableListOf<Exception>()
+    private val logger = object : SyncLogger() {
+        override fun enqueueFailed(error: Exception) {
+            errors += error
+        }
+    }
+    private val trigger = SyncTrigger(session, dao, sync, logger)
 
     private fun put(vararg sessions: WorkoutSessionEntity) {
         dao.state.value = dao.state.value.copy(sessions = dao.state.value.sessions + sessions.associateBy { it.id })
@@ -77,8 +83,6 @@ class SyncTriggerTest {
 
     // Pablo #32 punto 5: un error al encolar no puede dejar muerto al disparador.
     @Test fun `si falla un enqueue el disparador sigue vivo`() = runTest {
-        val errors = mutableListOf<Exception>()
-        trigger.onEnqueueError = { errors += it }
         sync.enqueueError = IllegalStateException("WorkManager roto")
         trigger.start(backgroundScope + UnconfinedTestDispatcher(testScheduler))
 

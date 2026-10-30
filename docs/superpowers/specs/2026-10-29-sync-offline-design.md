@@ -31,7 +31,7 @@ Las sesiones que el alumno termina en el celular (hoy quedan en Room como `PENDI
   - un aviso en Hoy, solo si hay algo pendiente o fallido, con **Subir ahora** cuando hay pendientes y una **X** para descartar los rechazos ya vistos.
 - **Enfoque:** un único trabajo de WorkManager (`sync-sessions`) que vacía la cola del alumno con sesión iniciada. Se descartaron un trabajo por sesión (coordinar N trabajos en el logout) y un trabajo periódico (mínimo 15 min, no ayuda a los 5 s).
 
-## 3. Datos: Room v5 (`data/db/workout/`)
+## 3. Datos: Room v6 (`data/db/workout/`)
 
 Migración v4 → v5, sin pérdida de datos.
 
@@ -64,7 +64,7 @@ Migración v4 → v5, sin pérdida de datos.
 | Pieza | Qué hace |
 |---|---|
 | `data/api/SessionApi.kt` | Retrofit: `POST sessions`, `POST sessions/{id}/sets` y sus DTO. Usa el cliente principal (Bearer + `TokenAuthenticator`), así el token vencido se renueva solo. Cada request lleva el dueño de la sesión como tag (`RequiredUser`). |
-| `data/auth/AuthInterceptor` + `RequiredUser` | Si la request trae `RequiredUser` y la cuenta guardada es otra (o no hay), no sale: tira `AccountChangedException`. |
+| `data/auth/AuthInterceptor` + `RequiredUser` | Si la request trae `RequiredUser` y la cuenta guardada es otra (o no hay), no sale: tira `AccountChangedException`. Se chequea antes que nada, también con un `Authorization` explícito o en `/auth/*`. |
 | `data/sync/SessionUploader` | Sube **una** sesión: `POST /sessions` con `finished_at`, y después sus series `PENDING` en lotes de hasta 100. Devuelve qué series quedaron guardadas, cuáles fallaron y con qué código, si la sesión se llegó a crear y qué cortó la subida. No toca Room. |
 | `data/sync/SyncPass` | Una pasada: lee quién tiene la sesión iniciada, recorre sus sesiones pendientes de a una, re-chequea el dueño antes de cada una, usa `SessionUploader` y guarda cada resultado en Room (`applyUpload`, en una transacción). |
 | `data/sync/SyncSessionsWorker` | `CoroutineWorker` con `@HiltWorker`: corre una `SyncPass` y traduce su resultado a `success` / `retry`. |
@@ -72,6 +72,8 @@ Migración v4 → v5, sin pérdida de datos.
 | `data/sync/SyncTrigger` | Arranca en `FitTrainerApp`: observa en Room las pendientes del alumno logueado y encola. |
 | `data/sync/CancelSyncOnSignOut` | Al cerrar sesión cancela la pasada en curso o en espera, antes de que se borre el token. |
 | `data/sync/UploadStatusRepository` | Lo que lee la UI, siempre de Room: los conteos del alumno y el estado de una sesión. |
+| `data/sync/ManualSync` | "Subir ahora" (Hoy y logout): chequea la red, llama a `syncNow()` con tope de 15 s y compara los conteos antes y después. Devuelve `DONE`, `REJECTED`, `OFFLINE`, `FAILED` (terminó con pendientes) o `STILL_UPLOADING` (no terminó en el tope). |
+| `data/sync/SyncLogger` | El log de la sincronización (lo usa `SyncTrigger` si falla un enqueue); los tests lo reemplazan. |
 | `ui/sync/` | `UploadStatusViewModel` (aviso de Hoy, "Subir ahora", línea del resumen), `SignOutSyncViewModel` (aviso del logout) y `SyncTexts`. |
 | `FitTrainerApp` + `AndroidManifest.xml` | `Configuration.Provider` con `HiltWorkerFactory`; se saca el inicializador por defecto de WorkManager. |
 | Dependencias | `androidx.work:work-runtime-ktx`, `androidx.hilt:hilt-work` (+ su compilador por KSP); `androidx.work:work-testing` en los tests. |
@@ -115,6 +117,8 @@ Los `id` vuelven en minúscula; los del celular ya lo son (`UUID.toString()`), p
   2. `SyncPass` re-chequea el dueño antes de cada sesión;
   3. `AuthInterceptor` lee el token en cada request y frena la que trae el `RequiredUser` de otra cuenta. Esa es la que cierra la ventana entre el chequeo y el request.
 
+  La 1 y la 2 achican la ventana, pero no son absolutas: si la pasada alcanza a guardar un resultado justo antes de que la cancelen, bajan las pendientes y `SyncTrigger` encola una pasada nueva mientras el logout todavía espera la revocación. La que garantiza es la 3: esa pasada sale sin token o con otra cuenta y termina en `ACCOUNT_CHANGED`.
+
 ## 6. Pantallas
 
 - **Resumen al terminar** (`ui/workout/components/WorkoutSummaryView.kt`): una línea de estado que observa Room:
@@ -124,7 +128,7 @@ Los `id` vuelven en minúscula; los del celular ya lo son (`UUID.toString()`), p
   - "No se pudo subir este entrenamiento" (`FAILED`).
 - **Hoy** (`ui/today/` + `ui/sync/components/UploadsNotice.kt`): un aviso chico arriba, solo si hace falta: "N entrenamientos sin subir", "N entrenamientos no se pudieron subir" y/o "N series no se pudieron subir". Lo arma `UploadStatusViewModel` desde Room.
   - Con rechazos lleva una **X**: los marca como vistos y el aviso deja de contarlos.
-  - Con pendientes lleva **Subir ahora**: llama a `syncNow()` (tope de 15 s) con una ruedita. Si queda todo subido, muestra "Subido ✓" unos segundos. Si no, o si no hay red, "No se pudo subir, se reintenta solo cuando haya conexión". Si el servidor rechazó algo en esa pasada (una sesión `FAILED` deja de estar pendiente, así que no alcanza con "sin pendientes"), no hay "Subido ✓": queda el aviso del rechazo.
+  - Con pendientes lleva **Subir ahora**: llama a `syncNow()` (tope de 15 s) con una ruedita. Si queda todo subido, muestra "Subido ✓" unos segundos. Si la pasada terminó con pendientes, o si no hay red, "No se pudo subir, se reintenta solo cuando haya conexión". Si no terminó en el tope, "Sigue subiendo en segundo plano". Si el servidor rechazó algo en esa pasada (una sesión `FAILED` deja de estar pendiente, así que no alcanza con "sin pendientes"), no hay "Subido ✓": queda el aviso del rechazo. El resultado se borra cuando cambian las pendientes, para que no aparezca después hablando de otra sesión.
 - **Carga de una serie:** el peso y las repeticiones quedan entre 0 y 1000, y una rutina con más de 100 series se corta en 100. Son los topes del backend: fuera de ellos la serie se rechazaría para siempre.
 - **Logout:**
   - Si hay una sesión abierta, sale primero el aviso actual (`ActiveWorkoutSignOutDialog`).
@@ -145,9 +149,10 @@ Los `id` vuelven en minúscula; los del celular ya lo son (`UUID.toString()`), p
   - sin red;
   - ids en mayúscula en la respuesta.
   - con el `AuthInterceptor` real: otra cuenta logueada → no sale ningún request.
+- `AuthInterceptor` solo (`AuthInterceptorTest`): con `RequiredUser` y sin sesión, con un `Authorization` explícito o en `/auth/*` de otra cuenta, no sale; sin tag, igual que antes.
 - `SyncPass` con fakes (`data/sync/syncpass/`): que solo suba lo del dueño logueado, que no toque sesiones `ACTIVE`, cada error de §5, que un cambio de cuenta a mitad de la pasada o justo antes de un request no suba nada, y que una sesión sin crear no quede `SYNCED`.
 - `SyncTrigger`: cuándo encola y con qué `newWork`, y que un error al encolar no lo mate.
-- `UploadStatusViewModel` ("Subir ahora": con red, sin red, queda pendiente, doble toque) y `SignOutSyncViewModel` (los tres botones, el tope de 15 s y el error). Textos en `SyncTextsTest`.
+- `UploadStatusViewModel` ("Subir ahora": con red, sin red, queda pendiente, no termina en el tope, doble toque, y que el resultado se borre al cambiar las pendientes) y `SignOutSyncViewModel` (los tres botones, el resultado de `syncNow` y el error), los dos con el `ManualSync` real. El tope de 15 s de verdad se prueba en `SessionSyncTest.syncNowSinRedDevuelveFalseAlAgotarElTope` (instrumentado). Textos en `SyncTextsTest`.
 - Topes de la carga (`WorkoutViewModelTest`, `WorkoutRulesTest`).
 
 **Instrumentadas (`connectedDebugAndroidTest`):**
