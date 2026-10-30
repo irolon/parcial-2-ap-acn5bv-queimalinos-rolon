@@ -61,4 +61,7 @@ export const env = {
   JWT_REFRESH_EXPIRES_IN: defaults.JWT_REFRESH_EXPIRES_IN,
   FRONTEND_URL: defaults.FRONTEND_URL,
   CRON_ENABLED: defaults.CRON_ENABLED,
+  // Push (FCM HTTP v1): opcionales; sin credenciales el push es no-op. En test se ignoran.
+  FCM_SERVICE_ACCOUNT_PATH: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_PATH,
+  FCM_SERVICE_ACCOUNT_JSON: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_JSON,
 };
