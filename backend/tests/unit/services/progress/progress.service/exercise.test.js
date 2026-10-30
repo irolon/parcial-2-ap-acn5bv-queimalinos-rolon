@@ -80,6 +80,15 @@ describe('progress.service · exerciseProgress · ejercicio y respuesta', () => 
     expect(result.default_metric).toBe('e1rm_kg');
   });
 
+  it('ejercicio de peso corporal (sin kg): default_metric es reps', async () => {
+    mockProgressRepo.fetchExerciseProgress.mockResolvedValueOnce([
+      { date: '2026-10-20', max_kg: null, volume_kg: 0, e1rm_kg: null, sets: 3, reps: 24 },
+    ]);
+    const result = await service.exerciseProgress(STUDENT, EXERCISE_ID, {});
+    expect(result.default_metric).toBe('reps');
+    expect(result.pr).toEqual({ max_kg: null, e1rm_kg: null });
+  });
+
   it('sin filas: points vacío y pr con nulls', async () => {
     mockProgressRepo.fetchExerciseProgress.mockResolvedValueOnce([]);
     const result = await service.exerciseProgress(STUDENT, EXERCISE_ID, {});

@@ -4,6 +4,7 @@
  */
 
 export const DEFAULT_METRIC = 'e1rm_kg';
+export const BODYWEIGHT_METRIC = 'reps';
 
 /** Redondea a 1 decimal. Acepta number, string numérico (rpc) o null. */
 export function round1(n) {
@@ -42,6 +43,17 @@ function bestOf(points, field) {
 /** Récord personal: el primer día que alcanza el máximo de cada métrica. */
 export function computePr(points) {
   return { max_kg: bestOf(points, 'max_kg'), e1rm_kg: bestOf(points, 'e1rm_kg') };
+}
+
+/**
+ * Métrica que los clientes grafican por defecto: el 1RM estimado, salvo que
+ * ningún punto tenga kg (peso corporal): ahí las repeticiones.
+ */
+export function defaultMetricFor(points) {
+  if (points.length === 0) return DEFAULT_METRIC;
+  return points.some((p) => p.max_kg !== null && p.max_kg !== undefined)
+    ? DEFAULT_METRIC
+    : BODYWEIGHT_METRIC;
 }
 
 /** Primera y última medida cargada de cada campo (metricsAsc va de vieja a nueva). */

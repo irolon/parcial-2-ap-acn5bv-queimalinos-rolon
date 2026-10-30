@@ -678,7 +678,7 @@ Curva de carga de un ejercicio: un punto por día con series que cuentan (`compl
 
 - `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
 - `pr`: mayor `max_kg` y mayor `e1rm_kg` del rango, con su fecha (la primera en alcanzarse); `null` cada uno si no hay valores. Sin series: `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
-- `default_metric`: métrica que los clientes grafican por defecto (`e1rm_kg`).
+- `default_metric`: métrica que los clientes grafican por defecto: `e1rm_kg`, o `reps` si ningún punto tiene kg (ejercicios de peso corporal, como dominadas o flexiones). Sin puntos: `e1rm_kg`.
 - Una serie sustituida cuenta para el ejercicio realmente hecho, no para el original.
 
 ### GET /progress/body/:studentId

@@ -6,7 +6,7 @@ import { findAccessibleExerciseIds } from '../../repositories/routines/routines.
 import { findExerciseById } from '../../repositories/exercises/exercises.repository.js';
 import { MEASUREMENT_FIELDS } from '../../models/body-metrics/body-metric.model.js';
 import {
-  DEFAULT_METRIC, toProgressPoints, computePr, bodySummary,
+  toProgressPoints, computePr, defaultMetricFor, bodySummary,
 } from '../../models/progress/progress.model.js';
 
 function resolveStudentId(user, query) {
@@ -42,7 +42,7 @@ export async function exerciseProgress(user, exerciseId, query = {}) {
     exercise: { id: exercise.id, name: exercise.name, muscle_group: exercise.muscle_group },
     points,
     pr: computePr(points),
-    default_metric: DEFAULT_METRIC,
+    default_metric: defaultMetricFor(points),
   };
 }
 

@@ -1,5 +1,6 @@
 import {
   DEFAULT_METRIC,
+  defaultMetricFor,
   round1,
   toProgressPoints,
   computePr,
@@ -64,4 +65,20 @@ describe('bodySummary', () => {
 
 it('la métrica por defecto es e1rm_kg', () => {
   expect(DEFAULT_METRIC).toBe('e1rm_kg');
+});
+
+describe('defaultMetricFor', () => {
+  const point = (max_kg) => ({ date: '2026-10-01', max_kg, volume_kg: 0, e1rm_kg: max_kg, sets: 1, reps: 10 });
+
+  it('sin ningún kg (peso corporal) devuelve reps', () => {
+    expect(defaultMetricFor([point(null), point(null)])).toBe('reps');
+  });
+
+  it('con algún punto con kg devuelve e1rm_kg', () => {
+    expect(defaultMetricFor([point(null), point(40)])).toBe('e1rm_kg');
+  });
+
+  it('sin puntos devuelve e1rm_kg', () => {
+    expect(defaultMetricFor([])).toBe('e1rm_kg');
+  });
 });

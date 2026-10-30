@@ -22,7 +22,8 @@ y cuál se grafica por defecto.
 
 1. **El punto del día trae las tres métricas**: `max_kg` (mayor peso),
    `volume_kg` (Σ repeticiones × kg) y `e1rm_kg` (1RM estimado). La respuesta
-   incluye `default_metric: "e1rm_kg"` y los clientes eligen cuál graficar.
+   incluye `default_metric` y los clientes eligen cuál graficar. Es `e1rm_kg`,
+   salvo que ningún punto tenga kg (peso corporal): ahí es `reps`.
 2. **La métrica por defecto es el 1RM estimado con Epley**, calculado por serie
    y tomando el máximo del día: `reps = 1 → kg`; `reps > 1 → kg × (1 + reps / 30)`.
    **Solo cuentan las series de hasta 12 repeticiones**: las de más aportan
@@ -58,7 +59,8 @@ y cuál se grafica por defecto.
   repeticiones trae `e1rm_kg` en `null`. La curva sirve para ver la tendencia
   de un alumno, no como valor absoluto de su máximo.
 - Los ejercicios de **peso corporal (sin `actual_kg`) no tienen 1RM**: su punto
-  trae `max_kg` y `e1rm_kg` en `null`, y solo `sets`, `reps` y `volume_kg` (0).
+  trae `max_kg` y `e1rm_kg` en `null`, y solo `sets`, `reps` y `volume_kg` (0). Como el gráfico por defecto saldría
+  vacío, para esos ejercicios `default_metric` es `reps`.
 - Las tres métricas conviven en cada punto, así que cambiar la métrica por
   defecto es un cambio de `default_metric`, sin tocar la base.
 - La sustitución de ejercicios se resuelve por lo realmente hecho: la curva de X
