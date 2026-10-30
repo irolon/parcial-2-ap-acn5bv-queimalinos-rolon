@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import {
-  evaluate, mockGam, mockData, mockHistory, STUDENT_ID, NOW, session, resetMocks,
+  evaluate, mockGam, mockData, mockHistory, STUDENT_ID, NOW, CATALOG, session, resetMocks,
 } from '../../../helpers/gamification/evaluate.setup.js';
 
 const run = () => evaluate.evaluateStudent(STUDENT_ID, { now: NOW });
@@ -82,6 +82,24 @@ describe('evaluateStudent', () => {
     expect(mockGam.insertUnlocked).toHaveBeenCalledWith([
       { student_id: STUDENT_ID, achievement_id: 'a-done', context: { challenge_id: 'c-1' } },
     ]);
+  });
+
+  it('si falla el insert del premio, la asignación no se marca completed (reintenta luego)', async () => {
+    mockData.findClosedSessions.mockResolvedValue([session('s-1', 28), session('s-2', 29)]);
+    mockGam.findUnlockedAchievementIds.mockResolvedValue(['a-first']);
+    mockData.findActiveAssignments.mockResolvedValue([
+      assignment({ goal_type: 'sessions_count', goal_value: 2, reward_achievement_id: 'a-done' }),
+    ]);
+    mockGam.insertUnlocked.mockRejectedValue(new Error('db caída'));
+    await expect(run()).rejects.toThrow('db caída');
+    expect(mockData.updateAssignment).not.toHaveBeenCalled();
+  });
+
+  it('con catálogo precargado no lo vuelve a pedir', async () => {
+    mockData.findClosedSessions.mockResolvedValue([session('s-1', 30)]);
+    const result = await evaluate.evaluateStudent(STUDENT_ID, { now: NOW, catalog: CATALOG });
+    expect(mockGam.findCatalog).not.toHaveBeenCalled();
+    expect(codes(result)).toEqual(['FIRST_SESSION']);
   });
 
   it('desafío sin alcanzar solo actualiza el progreso y no falla aunque haya vencido', async () => {

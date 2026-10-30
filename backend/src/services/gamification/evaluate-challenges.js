@@ -43,25 +43,24 @@ async function windowFacts(assignment, { closed, assignedDays, now, weights }) {
 /**
  * Actualiza el progreso de las asignaciones activas del alumno; las que llegan a
  * la meta pasan a `completed`. Nunca marca `failed` (eso es del cron).
- * Devuelve los premios por otorgar: [{ achievement_id, challenge_id }].
+ * El premio se otorga (`grantReward`, idempotente) ANTES de marcar completed: si
+ * falla, la asignación sigue activa y la próxima corrida reintenta.
  */
-export async function updateActiveChallenges(studentId, { closed, assignedDays, now }) {
+export async function updateActiveChallenges(studentId, { closed, assignedDays, now, grantReward }) {
   const assignments = await dataRepo.findActiveAssignments(studentId);
-  if (assignments.length === 0) return [];
+  if (assignments.length === 0) return;
   const needsWeights = assignments.some((a) => a.challenge.goal_type === 'weight_target');
   const weights = needsWeights ? await dataRepo.findWeights(studentId) : [];
 
-  const rewards = [];
   for (const assignment of assignments) {
     const facts = await windowFacts(assignment, { closed, assignedDays, now, weights });
     const progress = challengeProgress(assignment.challenge, facts);
     const fields = { current_progress: progress.current_progress };
     if (progress.reached) {
-      Object.assign(fields, { status: CHALLENGE_STATUS.COMPLETED, completed_at: new Date(now).toISOString() });
       const reward = assignment.challenge.reward_achievement_id;
-      if (reward) rewards.push({ achievement_id: reward, challenge_id: assignment.challenge_id });
+      if (reward) await grantReward(reward, assignment.challenge_id);
+      Object.assign(fields, { status: CHALLENGE_STATUS.COMPLETED, completed_at: new Date(now).toISOString() });
     }
     await dataRepo.updateAssignment(assignment.id, fields);
   }
-  return rewards;
 }

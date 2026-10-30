@@ -21,13 +21,14 @@ async function fetchRecordPairs(studentId, sessionIds) {
  * Evalúa al alumno desde su historial (idempotente): recalcula y guarda la racha,
  * otorga los logros cuya regla se cumple, actualiza los desafíos activos y
  * otorga el logro premio de los completados.
+ * `catalog` opcional: catálogo ya cargado (el job diario lo trae una vez por corrida).
  * Devuelve { unlocked: [{ code, name, category }], streak } con solo lo recién desbloqueado.
  */
-export async function evaluateStudent(studentId, { now = new Date() } = {}) {
+export async function evaluateStudent(studentId, { now = new Date(), catalog: preloaded } = {}) {
   const [closed, assignedDays, catalog, unlockedIds] = await Promise.all([
     dataRepo.findClosedSessions(studentId),
     dataRepo.findAssignedDays(studentId),
-    gamificationRepo.findCatalog(),
+    preloaded ?? gamificationRepo.findCatalog(),
     gamificationRepo.findUnlockedAchievementIds(studentId),
   ]);
   const recordPairs = closed.length ? await fetchRecordPairs(studentId, closed.map((s) => s.id)) : [];
@@ -52,10 +53,18 @@ export async function evaluateStudent(studentId, { now = new Date() } = {}) {
       push(achievement.id, contextFor(achievement.criteria, { closed, recordSessions }));
     }
   }
-  const rewards = await updateActiveChallenges(studentId, { closed, assignedDays, now });
-  for (const reward of rewards) push(reward.achievement_id, { challenge_id: reward.challenge_id });
+  const inserted = new Set();
+  const grantReward = async (achievementId, challengeId) => {
+    if (known.has(achievementId)) return;
+    const done = await gamificationRepo.insertUnlocked([
+      { student_id: studentId, achievement_id: achievementId, context: { challenge_id: challengeId } },
+    ]);
+    known.add(achievementId);
+    for (const r of done) inserted.add(r.achievement_id);
+  };
+  await updateActiveChallenges(studentId, { closed, assignedDays, now, grantReward });
 
-  const inserted = new Set((await gamificationRepo.insertUnlocked(rows)).map((r) => r.achievement_id));
+  for (const r of await gamificationRepo.insertUnlocked(rows)) inserted.add(r.achievement_id);
   const unlocked = catalog
     .filter((a) => inserted.has(a.id))
     .map(({ code, name, category }) => ({ code, name, category }));
