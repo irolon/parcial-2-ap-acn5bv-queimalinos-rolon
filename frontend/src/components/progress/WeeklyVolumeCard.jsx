@@ -14,7 +14,7 @@ function WeekTooltip({ active, payload }) {
 
 /** Volumen total por semana; las semanas sin entrenar quedan en cero. */
 export default function WeeklyVolumeCard({ weeks }) {
-  const trained = weeks.filter((w) => w.volume_kg > 0).length;
+  const trained = weeks.filter((w) => w.sessions > 0).length;
   return (
     <Card title="Volumen semanal">
       {trained < MIN_POINTS ? (

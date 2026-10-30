@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import MetricSelector from '@/components/progress/MetricSelector';
 
 const options = [
-  { value: 'e1rm_kg', label: '1RM estimado', disabled: true },
+  { value: 'e1rm_kg', label: '1RM estimado', disabled: true, reason: 'Sin peso registrado' },
   { value: 'reps', label: 'Repeticiones' },
 ];
 

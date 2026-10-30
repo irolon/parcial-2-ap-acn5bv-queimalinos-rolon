@@ -66,4 +66,30 @@ describe('CurveTooltip', () => {
     const { container } = render(<CurveTooltip active={false} payload={payload()} metric="e1rm_kg" />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('con días suficientes en total pero pocos en el rango sugiere probar con Todo', () => {
+    render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="3m" totalDays={10} />);
+    expect(screen.getByText('Pocos entrenamientos en este rango: probá con Todo')).toBeInTheDocument();
+    expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
+  });
+
+  it('con menos de 3 días en total mantiene "Llevás N de 3"', () => {
+    render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="3m" totalDays={2} />);
+    expect(screen.getByText(/Llevás 1 de 3 entrenamientos/)).toBeInTheDocument();
+  });
+
+  it('el chip dice "Récord" con Todo y "Mejor del rango" con 1 o 3 meses', () => {
+    const { rerender } = render(<ExerciseCurveCard data={curveData(SIX)} metric="e1rm_kg" onMetricChange={noop} range="1m" />);
+    expect(screen.getByText('Mejor del rango 100 kg')).toBeInTheDocument();
+    rerender(<ExerciseCurveCard data={curveData(SIX)} metric="e1rm_kg" onMetricChange={noop} range="all" />);
+    expect(screen.getByText('Récord 100 kg')).toBeInTheDocument();
+  });
+
+  it('1RM sin valores queda deshabilitado con "Sin datos en este rango"', () => {
+    const pts = SIX.map((p) => ({ ...p, e1rm_kg: null }));
+    render(<ExerciseCurveCard data={curveData(pts)} metric="max_kg" onMetricChange={noop} />);
+    const btn = screen.getByRole('button', { name: '1RM estimado' });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', 'Sin datos en este rango');
+  });
 });

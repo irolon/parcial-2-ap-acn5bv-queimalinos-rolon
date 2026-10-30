@@ -2,7 +2,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import Card from '@/components/shared/ui/Card';
 import Pill from '@/components/shared/ui/Pill';
 import { dateToTime, formatLongDate, formatMetric, formatShortDate, timeToDate } from '@/utils/progress/format';
-import { METRICS, MIN_POINTS, metricOptions, recordFor } from '@/utils/progress/metrics';
+import { METRICS, MIN_POINTS, metricOptions, recordFor, recordLabel } from '@/utils/progress/metrics';
 import MetricSelector from './MetricSelector';
 import NotEnoughData from './NotEnoughData';
 import { AXIS, GRID, TooltipBox } from './chartStyle';
@@ -20,7 +20,7 @@ export function CurveTooltip({ active, payload, metric }) {
 }
 
 /** Curva de progreso de un ejercicio, con la métrica elegida y el punto del récord resaltado. */
-export default function ExerciseCurveCard({ data, metric, onMetricChange }) {
+export default function ExerciseCurveCard({ data, metric, onMetricChange, range = 'all', totalDays = 0 }) {
   const { exercise, points, pr } = data;
   const valid = points.filter((p) => p[metric] !== null && p[metric] !== undefined);
   const record = recordFor(pr, metric);
@@ -43,12 +43,12 @@ export default function ExerciseCurveCard({ data, metric, onMetricChange }) {
     );
   };
   return (
-    <Card title={exercise.name} extra={record && <Pill tone="hot">Récord {formatMetric(metric, record.value)}</Pill>}>
+    <Card title={exercise.name} extra={record && <Pill tone="hot">{recordLabel(range)} {formatMetric(metric, record.value)}</Pill>}>
       <div className="mb-3">
         <MetricSelector value={metric} options={metricOptions(points)} onChange={onMetricChange} />
       </div>
       {valid.length < MIN_POINTS ? (
-        <NotEnoughData count={valid.length} exerciseName={exercise.name} />
+        <NotEnoughData count={valid.length} exerciseName={exercise.name} rangeLimited={totalDays >= MIN_POINTS} />
       ) : (
         <div role="img" aria-label={`Progresión de ${exercise.name}`} className="h-64">
           <ResponsiveContainer width="100%" height="100%">

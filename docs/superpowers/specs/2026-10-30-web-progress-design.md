@@ -2,7 +2,7 @@
 
 - **Tarjeta de equipo:** [S4] Vista de progreso del alumno en la web (Recharts) (https://trello.com/c/IkcYj8pl), fuente de verdad del alcance y del criterio de aceptación.
 - **Tablero personal:** "14 · Vista de progreso del alumno en la web (Recharts)".
-- **Fecha:** 2026-10-30 · **Rama:** `feature/web-progress`, apilada sobre `feature/progress` (PR #31, todavía en review).
+- **Fecha:** 2026-10-30 · **Rama:** `feature/web-progress` (PR #34, base `develop`; la #31 ya está mergeada).
 
 ## 1. Objetivo y criterio de aceptación
 
@@ -19,13 +19,13 @@ Mostrarle al entrenador y al alumno que el entrenamiento sirve: curva de carga p
 | Q1 | Dónde lo ve el PT | Sección "Progreso" al final de la ficha `/pt/alumnos/:id`. El PT "elige alumno" con el panel y las flechas que ya existen. Componente compartido `ProgressPanel`, que el alumno ve en `/alumno/progreso` con su `user.id` |
 | Q2 | Lista del selector de ejercicio | Endpoint nuevo: ejercicios con series registradas del alumno, ordenados por última fecha (desc) |
 | Q3 | Volumen total por semana | En el backend, en el mismo endpoint: `GET /api/progress/overview`. Funciones SQL en un archivo de schema propio |
-| Q4 | Datos insuficientes | Umbral de 3 puntos por gráfico (3 días con el ejercicio; 3 semanas con volumen > 0). Debajo: mensaje motivador con el avance ("Llevás 1 de 3…"). Sin ninguna sesión: un único estado vacío para todo el panel. El gráfico de peso de la ficha sigue igual (2 puntos) |
+| Q4 | Datos insuficientes | Umbral de 3 puntos por gráfico (3 días con el ejercicio en el rango; 3 semanas con sesiones, ver sección 8). Debajo: mensaje motivador con el avance ("Llevás 1 de 3…"). Sin ninguna sesión: un único estado vacío para todo el panel. El gráfico de peso de la ficha sigue igual (2 puntos) |
 | Q5 | Selector de métrica | Segmentado: 1RM estimado · Peso máximo · Volumen · Repeticiones. Arranca en `default_metric`. En un ejercicio sin kg (ningún `max_kg > 0`) las tres de kg se deshabilitan con el título "Sin peso registrado". Tooltip: fecha, valor y series × reps del día. Chip de récord + punto marcado |
 | Q6 | Rango | 1 mes · 3 meses (por defecto) · Todo. Aplica a la curva y al volumen semanal |
 | Q7 | Qué entra del prototipo | 3 KPIs: sesiones en el rango, volumen total del rango, récord del ejercicio elegido. Para el alumno, "Peso corporal y medidas" con `/progress/body`. Afuera: racha y logros (tarjetas 17/18), "Exportar" y sparklines por ejercicio (a DESEABLES). Con Volumen o Repeticiones el KPI de récord muestra el de 1RM (o, si no hay, el de peso máximo) |
 | Q8 | Home del alumno | No se toca (`/alumno/hoy` es de la tarjeta 22). Solo se reemplaza el placeholder de `/alumno/progreso` |
 | Q9 | Rango de la lista de ejercicios | La lista ignora el rango (todo el historial). Por defecto, el más reciente con al menos 3 días; si ninguno, el más reciente |
-| Q10 | Semanas sin entrenar | Se rellenan con 0 en SQL (`generate_series` sobre los lunes, hora argentina). Con "Todo", desde la semana de la primera sesión. Para el umbral cuentan solo las semanas con volumen > 0 |
+| Q10 | Semanas sin entrenar | Se rellenan con 0 en SQL (`generate_series` sobre los lunes, hora argentina). Con "Todo", desde la semana de la primera sesión. Para el umbral cuentan solo las semanas con sesiones (ver sección 8) |
 | Q11 | Gráficos y números | Línea del ejercicio elegido en `accent`, récord en `hot`; volumen semanal en barras `cool`. Formato es-AR: "88,7 kg"; volumen en "12,4 t" desde 1000 kg. Eje X "dd/mm"; tooltip con fecha completa |
 | Q12 | Estado de los selectores | Estado local del panel (no la URL). Al cambiar de alumno vuelve a los valores por defecto |
 | Q13 | Alumno sin medidas | Estado vacío: "Todavía no hay medidas cargadas. Tu entrenador o vos pueden cargarlas desde la app" |
@@ -97,3 +97,15 @@ Módulo `progress` (CONTRIBUTING: capa → módulo, máximo 200 líneas por arch
 - Frontend: utils (rangos, formato, opciones de métrica), panel con fetch mockeado: lista y ejercicio por defecto, cambio de métrica, métricas deshabilitadas sin kg, umbral de 3 puntos (mensaje con el avance), estado vacío global, rol alumno en `/alumno/progreso` sin selector de alumno, sección en la ficha del PT.
 - Supabase dev: aplicar la migración y comparar `overview` de la alumna QA (6 semanas) con un cálculo a mano.
 - E2E en el navegador integrado con el backend real: PT → Lucía QA → Press de banca (curva ascendente, tooltips, cambio de métrica y rango); alumna → `/alumno/progreso`; alumno con una sola sesión → mensaje motivador. Capturas en `docs/superpowers/specs/assets/tarjeta-34/`.
+
+## 8. Cambios tras la review (PR #34)
+
+| Ítem | Decisión |
+|---|---|
+| Rango sin datos suficientes | Si el ejercicio tiene `days >= 3` en todo el historial pero menos de 3 puntos con valor en el rango: "Pocos entrenamientos en este rango: probá con Todo". Si en total tiene menos de 3 días, sigue "Llevás N de 3…" |
+| Récord | Con "Todo" se llama "Récord"; con 1 mes / 3 meses, el KPI y el chip dicen "Mejor del rango" (el récord se calcula sobre los puntos del rango) |
+| Métrica activa deshabilitada | Si la elegida (o la por defecto) está deshabilitada con los datos del rango, cae en la primera habilitada; si no hay ninguna, queda la por defecto y se muestra el estado de datos insuficientes |
+| `metricOptions` | Deshabilita toda métrica sin ningún valor no nulo (1RM todo `null` aunque `max_kg > 0`) y las de kg sin peso registrado. Título: "Sin peso registrado" para las de kg sin kg; "Sin datos en este rango" en los demás casos |
+| Volumen semanal | El umbral de 3 cuenta semanas con `sessions > 0` (el peso corporal tiene volumen 0 pero entrena) |
+| Tope de `from` | `GET /progress/overview` devuelve 400 si `from` está a más de 3 años (1095 días) de `to` u hoy en Argentina. No aplica a `/progress/exercise`. La web solo manda `from` para 1 mes / 3 meses (como mucho 3 meses atrás, alineado al lunes); "Todo" no manda `from` |
+

@@ -18,4 +18,16 @@ describe('WeeklyVolumeCard', () => {
     render(<WeeklyVolumeCard weeks={[week('05', 4000, 2), week('12', 0, 0), week('19', 100, 1)]} />);
     expect(screen.getByText(/Llevás 2 de 3 semanas entrenadas/)).toBeInTheDocument();
   });
+
+  it('cuenta las semanas con sesiones aunque el volumen sea 0 (peso corporal)', () => {
+    const weeks = [week('05', 0, 2), week('12', 0, 1), week('19', 0, 3)];
+    render(<WeeklyVolumeCard weeks={weeks} />);
+    expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Volumen semanal' })).toBeInTheDocument();
+  });
+
+  it('no cuenta las semanas sin sesiones', () => {
+    render(<WeeklyVolumeCard weeks={[week('05', 0, 2), week('12', 0, 0), week('19', 0, 0)]} />);
+    expect(screen.getByText(/Llevás 1 de 3 semanas entrenadas/)).toBeInTheDocument();
+  });
 });

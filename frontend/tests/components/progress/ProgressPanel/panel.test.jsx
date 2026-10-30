@@ -121,4 +121,32 @@ describe('ProgressPanel', () => {
     expect(await screen.findByText('Peso corporal y medidas')).toBeInTheDocument();
     expect(await screen.findByRole('img', { name: 'Evolución del peso corporal' })).toBeInTheDocument();
   });
+
+  it('si la métrica por defecto está deshabilitada en el rango cae en la primera habilitada', async () => {
+    const points = [{ date: '2026-10-01', max_kg: 0, volume_kg: 0, e1rm_kg: null, sets: 3, reps: 8 }];
+    stubProgress({ exercise: (id) => ({ ...exerciseData(id), points, default_metric: 'e1rm_kg' }) });
+    renderWithQuery(<ProgressPanel studentId="st-9" />);
+    await screen.findByRole('button', { name: 'Repeticiones' });
+    expect(pressed('Repeticiones')).toBe(true);
+    expect(screen.getByRole('button', { name: '1RM estimado' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '1RM estimado' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('sin puntos en el rango conserva la métrica por defecto y muestra el aviso del rango', async () => {
+    stubProgress({ exercise: (id) => ({ ...exerciseData(id), points: [], pr: { max_kg: null, e1rm_kg: null } }) });
+    renderWithQuery(<ProgressPanel studentId="st-9" />);
+    expect(await screen.findByText('Pocos entrenamientos en este rango: probá con Todo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1RM estimado' })).toBeDisabled();
+    expect(screen.getAllByRole('button', { pressed: false }).length).toBeGreaterThan(0);
+  });
+
+  it('el KPI de récord dice "Mejor del rango" con 3 meses y "Récord" con Todo', async () => {
+    stubProgress();
+    renderWithQuery(<ProgressPanel studentId="st-9" />);
+    await screen.findByRole('img', { name: 'Progresión de Press banca' });
+    expect(screen.getAllByText('Mejor del rango').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText('Rango'), { target: { value: 'all' } });
+    await waitFor(() => expect(screen.queryByText('Mejor del rango')).not.toBeInTheDocument());
+    expect((await screen.findAllByText('Récord')).length).toBeGreaterThan(0);
+  });
 });

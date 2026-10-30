@@ -25,4 +25,12 @@ describe('ProgressKpis', () => {
     render(<ProgressKpis weeks={weeks} pr={{ max_kg: null, e1rm_kg: null }} metric="reps" />);
     expect(screen.getByText('—')).toBeInTheDocument();
   });
+
+  it('rotula el récord según el rango', () => {
+    const { rerender } = render(<ProgressKpis weeks={weeks} pr={pr} metric="max_kg" range="all" />);
+    expect(screen.getByText('Récord')).toBeInTheDocument();
+    rerender(<ProgressKpis weeks={weeks} pr={pr} metric="max_kg" range="3m" />);
+    expect(screen.getByText('Mejor del rango')).toBeInTheDocument();
+    expect(screen.queryByText('Récord')).not.toBeInTheDocument();
+  });
 });

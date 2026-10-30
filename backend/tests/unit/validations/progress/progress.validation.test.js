@@ -74,3 +74,28 @@ describe('progress.validation · query del overview', () => {
       .toEqual(['from']);
   });
 });
+
+describe('progress.validation · tope de rango del overview', () => {
+  const now = new Date('2026-10-30T15:00:00Z');
+  const run = (q) => validateProgressOverviewQuery(q, now);
+
+  it('acepta exactamente 1095 días entre from y to', () => {
+    expect(run({ from: '2023-11-01', to: '2026-10-31' })).toMatchObject({ from: '2023-11-01' });
+  });
+  it('from a más de 1095 días de to → 400 sobre from', () => {
+    const err = (() => { try { run({ from: '2023-10-31', to: '2026-10-31' }); } catch (e) { return e; } })();
+    expect(err.code).toBe('VALIDATION_ERROR');
+    expect(err.details).toEqual([{ field: 'from', message: 'El rango no puede superar 3 años' }]);
+  });
+  it('sin to compara contra hoy en Argentina', () => {
+    expect(run({ from: '2023-10-31' })).toMatchObject({ from: '2023-10-31' });
+    expect(failure(run, { from: '2023-10-29' }).fields).toEqual(['from']);
+    // 01:00 UTC del 31 todavía es 30 en Argentina
+    const early = new Date('2026-10-31T01:00:00Z');
+    expect(validateProgressOverviewQuery({ from: '2023-10-31' }, early)).toMatchObject({ from: '2023-10-31' });
+  });
+  it('sin from no hay tope, y /exercise no lo aplica', () => {
+    expect(run({ to: '2026-10-31' })).toEqual({ to: '2026-10-31' });
+    expect(validateExerciseProgressQuery({ from: '1900-01-01' })).toEqual({ from: '1900-01-01' });
+  });
+});

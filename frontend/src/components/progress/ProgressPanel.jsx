@@ -3,7 +3,7 @@ import { TrendingUp } from 'lucide-react';
 import EmptyState from '@/components/shared/states/EmptyState';
 import QueryState from '@/components/shared/states/QueryState';
 import { useExerciseProgress, useProgressOverview } from '@/hooks/progress/useProgress';
-import { MIN_POINTS, metricOptions } from '@/utils/progress/metrics';
+import { MIN_POINTS, resolveMetric } from '@/utils/progress/metrics';
 import { DEFAULT_RANGE, rangeFor } from '@/utils/progress/ranges';
 import BodyProgressCard from './BodyProgressCard';
 import ExerciseCurveCard from './ExerciseCurveCard';
@@ -25,8 +25,8 @@ function Content({ studentId, overview, sel, rangeObj, showBody }) {
   const exerciseId = overview.exercises.some((e) => e.id === chosenId) ? chosenId : defaultExercise(overview.exercises).id;
   const exerciseQuery = useExerciseProgress(exerciseId, studentId, rangeObj);
   const data = exerciseQuery.data;
-  const chosenOk = data && metricOptions(data.points).some((o) => o.value === chosenMetric && !o.disabled);
-  const metric = chosenOk ? chosenMetric : data?.default_metric;
+  const metric = data && resolveMetric(data.points, chosenMetric ?? data.default_metric, data.default_metric);
+  const totalDays = overview.exercises.find((e) => e.id === exerciseId)?.days ?? 0;
 
   const pickExercise = (id) => {
     setChosenId(id);
@@ -45,8 +45,8 @@ function Content({ studentId, overview, sel, rangeObj, showBody }) {
       <QueryState query={exerciseQuery}>
         {(d) => (
           <>
-            <ProgressKpis weeks={overview.weekly_volume} pr={d.pr} metric={metric} />
-            <ExerciseCurveCard data={d} metric={metric} onMetricChange={setChosenMetric} />
+            <ProgressKpis weeks={overview.weekly_volume} pr={d.pr} metric={metric} range={range} />
+            <ExerciseCurveCard data={d} metric={metric} onMetricChange={setChosenMetric} range={range} totalDays={totalDays} />
           </>
         )}
       </QueryState>
