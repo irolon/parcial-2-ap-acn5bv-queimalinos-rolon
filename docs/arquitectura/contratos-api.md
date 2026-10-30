@@ -630,15 +630,58 @@ Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesione
 
 ### GET /students/:id/sessions
 
-> Pendiente (tarjeta 12).
+Historial de sesiones del alumno, más recientes primero (`started_at` descendente, desempate por `id`). Roles: `trainer` (solo sus alumnos) y `student` (solo él mismo); si no → 403 `FORBIDDEN`. `id` que no es UUID → 400 `VALIDATION_ERROR`.
 
-Historial. Trainer ve sus alumnos, alumno ve las suyas.
+**Query:** `page` (desde 1, default 1) y `limit` (default 20, máximo 100). Valores inválidos caen al default.
+
+**Response 200:**
+
+```json
+{ "data": [{
+    "id": "uuid", "started_at": "ISO", "finished_at": "ISO|null", "duration_min": 54,
+    "routine": { "id": "uuid", "name": "Push · día 3" },
+    "rpe": 8, "notes": "…", "trainer_comment": "…|null", "has_modifications": false,
+    "sets": 18, "volume_kg": 4210.5, "has_pr": true
+  }],
+  "meta": { "total": 57, "page": 1, "limit": 20, "total_pages": 3 } }
+```
+
+- `duration_min`: minutos enteros entre `started_at` y `finished_at`; `null` si la sesión no se cerró.
+- `routine`: `null` si la sesión no tiene rutina o se borró.
+- `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
+- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
+- `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
+- **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
+
+### GET /students/:id/sessions/:sessionId
+
+Mismos roles y permisos. La sesión tiene que ser de ese alumno; si no existe o es de otro → 404 `SESSION_NOT_FOUND`. `id` o `sessionId` que no son UUID → 400 `VALIDATION_ERROR`.
+
+**Response 200:** `{ data }` con el resumen de arriba más `exercises`:
+
+```json
+"exercises": [{
+  "exercise": { "id": "uuid", "name": "Press de banca" },
+  "original_exercise": { "id": "uuid", "name": "Press con mancuernas" },
+  "planned": { "sets": 4, "reps": 10, "suggested_kg": 60 },
+  "is_pr": true,
+  "sets": [{ "id": "uuid", "set_number": 1, "actual_reps": 10, "actual_kg": 62.5, "completed": true, "executed_at": "ISO" }]
+}]
+```
+
+- Agrupado por ejercicio realmente hecho (y por `original_exercise_id` si fue sustitución), en el orden del primer `executed_at`.
+- `original_exercise`: `null` si no hubo sustitución.
+- `planned`: plan **actual** de la rutina (`sets`, `reps`, `suggested_kg`) vía `routine_exercise_id`; `null` si la serie no tiene enlace.
+- `is_pr`: el ejercicio fue récord en esa sesión.
+- **Campos que pueden ser `null`:** los del resumen (`finished_at`, `duration_min`, `routine`, `rpe`, `notes`, `trainer_comment`), `original_exercise`, `planned` (y dentro de él, `sets`, `reps` y `suggested_kg` por separado) y, en cada serie, `actual_reps` y `actual_kg`.
 
 ### PATCH /sessions/:id/comment
 
-> Pendiente (tarjeta 12).
+El entrenador comenta una sesión de uno de sus alumnos. Solo `trainer` (alumno → 403 `FORBIDDEN`).
 
-Trainer agrega comentario a una sesión. Body: `trainer_comment`.
+**Body:** `{ "trainer_comment": "string de hasta 1000 | null" }`. `""`, solo espacios o `null` borran el comentario (se guarda `null`); el resto se guarda recortado (`trim`); cualquier otro tipo o más de 1000 caracteres → 400 `VALIDATION_ERROR` sobre `trainer_comment`.
+
+**Response 200:** `{ data }` con el resumen de la sesión (misma forma que un ítem de `GET /students/:id/sessions`, ya con el comentario). Sesión inexistente o de un alumno de otro entrenador → 404 `SESSION_NOT_FOUND` (nunca 403, para no revelar qué ids existen). El alumno ve el comentario en su historial.
 
 ---
 

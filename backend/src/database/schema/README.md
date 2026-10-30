@@ -7,7 +7,7 @@ El schema de FitTrainer está repartido por dominio en siete archivos SQL.
 | `01-auth.sql` | extensión `pgcrypto`, `trainers`, `refresh_tokens` |
 | `02-students.sql` | `students`, `invitations` |
 | `03-routines.sql` | `exercises`, `routines`, `routine_exercises`, `routine_templates` y la FK `routines_template_id_fkey` |
-| `04-progress.sql` | `body_metrics`, `sessions`, la vista `student_last_session`, `session_sets`, el índice `idx_session_sets_exercise_session` y las funciones `exercise_progress` y `last_session_kg` |
+| `04-progress.sql` | `body_metrics`, `sessions`, la vista `student_last_session`, `session_sets`, el índice `idx_session_sets_exercise_session` y las funciones `exercise_progress`, `last_session_kg` y `session_records` |
 | `05-gamification.sql` | `achievements`, `student_achievements`, `challenges`, `student_challenges` |
 | `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `notifications` |
 | `07-rls.sql` | Row Level Security (activado sin políticas en todas las tablas) |

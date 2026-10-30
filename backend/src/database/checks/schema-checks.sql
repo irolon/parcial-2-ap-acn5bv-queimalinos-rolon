@@ -93,4 +93,8 @@ from (values ('student_gym_equipment'), ('student_injuries'), ('student_level'))
 where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = 'invitations' and column_name = v.c
-);
+)
+
+union all
+select 'falta la función session_records(uuid, uuid[])'
+where to_regprocedure('public.session_records(uuid, uuid[])') is null;
