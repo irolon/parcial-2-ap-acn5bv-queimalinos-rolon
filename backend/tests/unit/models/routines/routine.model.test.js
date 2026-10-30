@@ -1,4 +1,8 @@
-import { dayName, toStudentRoutines } from '../../../../src/models/routines/routine.model.js';
+import {
+  dayName,
+  toStudentRoutines,
+  toTodayRoutine,
+} from '../../../../src/models/routines/routine.model.js';
 
 /**
  * Todo el suite corre con TZ=UTC (ver el script `test` en package.json) para
@@ -55,5 +59,28 @@ describe('routine.model · toStudentRoutines', () => {
   it('sin filas devuelve una lista vacía', () => {
     expect(toStudentRoutines([])).toEqual([]);
     expect(toStudentRoutines(null)).toEqual([]);
+  });
+});
+
+describe('routine.model · toTodayRoutine', () => {
+  const row = {
+    id: 'rt-1',
+    name: 'Full body',
+    goal: 'strength',
+    days: ['monday'],
+    routine_exercises: [
+      { id: 're-1', order_index: 0, exercise: { id: 'ex-1' } },
+      { id: 're-2', order_index: 1, exercise: { id: 'ex-2' } },
+    ],
+  };
+
+  it('pone last_session_kg redondeado y null cuando no hay dato', () => {
+    const result = toTodayRoutine(row, { 'ex-1': '82.55' });
+    expect(result.exercises.map((e) => e.last_session_kg)).toEqual([82.6, null]);
+  });
+
+  it('sin mapa, todos null; sin fila, null', () => {
+    expect(toTodayRoutine(row).exercises.every((e) => e.last_session_kg === null)).toBe(true);
+    expect(toTodayRoutine(null)).toBeNull();
   });
 });
