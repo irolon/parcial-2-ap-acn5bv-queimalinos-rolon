@@ -18,3 +18,6 @@ export function metricOptions(points) {
   const kg = hasKg(points);
   return METRICS.map((m) => ({ ...m, disabled: !kg && KG_METRICS.includes(m.value) }));
 }
+
+/** Récord de la métrica de kg elegida (e1rm_kg/max_kg); null para volumen y reps. */
+export const recordFor = (pr, metric) => (metric === 'e1rm_kg' || metric === 'max_kg' ? pr?.[metric] ?? null : null);
