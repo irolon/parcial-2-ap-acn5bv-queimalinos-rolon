@@ -3,6 +3,7 @@ import {
   assignments,
   mockChallenges as repo,
   mockStudentChallenges as sc,
+  mockData,
   mockAccess,
   TRAINER,
   STUDENT,
@@ -48,14 +49,56 @@ describe('listForStudent', () => {
     expect(items.map((i) => i.progress_pct)).toEqual([100, 33.3]);
   });
 
-  it('weight_target: 100 si está completado, null si no', async () => {
-    const challenge = challengeRow({ goal_type: 'weight_target', goal_value: 70 });
+  describe('weight_target', () => {
+    const weightRow = (goal, over = {}) =>
+      assignmentRow({
+        challenge: challengeRow({ goal_type: 'weight_target', goal_value: goal }),
+        started_at: '2026-10-01T00:00:00Z',
+        ends_at: '2099-01-01T00:00:00Z',
+        ...over,
+      });
+    const kg = (weight_kg, recorded_at) => ({ weight_kg, recorded_at });
+
+    it('bajando de peso: distancia recorrida sobre la total', async () => {
+      sc.findByStudent.mockResolvedValue([weightRow(70)]);
+      mockData.findWeights.mockResolvedValue([kg(80, '2026-09-30T00:00:00Z'), kg(75, '2026-10-10T00:00:00Z')]);
+      const [item] = await assignments.listForStudent(TRAINER, 'st-1');
+      expect(item.progress_pct).toBe(50);
+    });
+
+    it('subiendo de peso', async () => {
+      sc.findByStudent.mockResolvedValue([weightRow(70)]);
+      mockData.findWeights.mockResolvedValue([kg(60, '2026-09-30T00:00:00Z'), kg(63, '2026-10-10T00:00:00Z')]);
+      const [item] = await assignments.listForStudent(TRAINER, 'st-1');
+      expect(item.progress_pct).toBe(30);
+    });
+
+    it('sin mediciones vale 0', async () => {
+      sc.findByStudent.mockResolvedValue([weightRow(70)]);
+      const [item] = await assignments.listForStudent(TRAINER, 'st-1');
+      expect(item.progress_pct).toBe(0);
+    });
+
+    it('completado vale 100 y trae los pesos una sola vez', async () => {
+      sc.findByStudent.mockResolvedValue([weightRow(70, { status: 'completed' }), weightRow(70)]);
+      const items = await assignments.listForStudent(TRAINER, 'st-1');
+      expect(items[0].progress_pct).toBe(100);
+      expect(mockData.findWeights).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('sin desafíos weight_target no consulta los pesos', async () => {
+    sc.findByStudent.mockResolvedValue([assignmentRow()]);
+    await assignments.listForStudent(TRAINER, 'st-1');
+    expect(mockData.findWeights).not.toHaveBeenCalled();
+  });
+
+  it('una meta casi cumplida no muestra 100 (tope 99.9)', async () => {
     sc.findByStudent.mockResolvedValue([
-      assignmentRow({ challenge, status: 'completed' }),
-      assignmentRow({ challenge, status: 'active' }),
+      assignmentRow({ current_progress: 9999, challenge: challengeRow({ goal_value: 10000 }) }),
     ]);
-    const items = await assignments.listForStudent(TRAINER, 'st-1');
-    expect(items.map((i) => i.progress_pct)).toEqual([100, null]);
+    const [item] = await assignments.listForStudent(TRAINER, 'st-1');
+    expect(item.progress_pct).toBe(99.9);
   });
 });
 

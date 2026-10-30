@@ -8,4 +8,4 @@ app.listen(env.PORT, () => {
   console.log(`🚀 FitTrainer API escuchando en http://localhost:${env.PORT} [${env.NODE_ENV}]`);
 });
 
-if (env.CRON_ENABLED && env.NODE_ENV !== 'test') startScheduler();
+if (env.CRON_ENABLED) startScheduler();

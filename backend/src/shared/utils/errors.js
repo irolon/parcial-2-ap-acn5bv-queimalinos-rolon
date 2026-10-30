@@ -3,6 +3,9 @@
  * El error.middleware traduce esto al formato de error del contrato de API:
  *   { error: { code, message, details } }
  */
+/** Código del 409 al asignar un desafío que el alumno ya tiene activo. */
+export const CHALLENGE_ALREADY_ACTIVE = 'CHALLENGE_ALREADY_ACTIVE';
+
 export class AppError extends Error {
   constructor(statusCode, code, message, details = []) {
     super(message);
@@ -63,7 +66,7 @@ export const Errors = {
   challengeInUse: () =>
     new AppError(409, 'CHALLENGE_IN_USE', 'El desafío tiene asignaciones activas'),
   challengeAlreadyActive: () =>
-    new AppError(409, 'CHALLENGE_ALREADY_ACTIVE', 'El alumno ya tiene este desafío activo'),
+    new AppError(409, CHALLENGE_ALREADY_ACTIVE, 'El alumno ya tiene este desafío activo'),
   sessionIdConflict: () =>
     new AppError(409, 'SESSION_ID_CONFLICT', 'Ya existe una sesión con ese id'),
   exerciseInUse: () =>

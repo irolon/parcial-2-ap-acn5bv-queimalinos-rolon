@@ -18,9 +18,11 @@ export const mockStudentChallenges = {
   insertAssignment: jest.fn(),
   findActiveStudentIds: jest.fn(),
 };
+export const mockData = { findWeights: jest.fn() };
 export const mockAccess = { assertCanAccessStudent: jest.fn() };
 jest.unstable_mockModule(src('repositories/gamification/challenges.repository.js'), () => mockChallenges);
 jest.unstable_mockModule(src('repositories/gamification/student-challenges.repository.js'), () => mockStudentChallenges);
+jest.unstable_mockModule(src('repositories/gamification/evaluate-data.repository.js'), () => mockData);
 jest.unstable_mockModule(src('services/students/student-access.service.js'), () => mockAccess);
 
 export const challenges = await import(src('services/gamification/challenges.service.js'));
@@ -58,10 +60,12 @@ export function resetMocks() {
   const all = [
     ...Object.values(mockChallenges),
     ...Object.values(mockStudentChallenges),
+    mockData.findWeights,
     mockAccess.assertCanAccessStudent,
   ];
   for (const fn of all) fn.mockReset();
   mockAccess.assertCanAccessStudent.mockResolvedValue({ id: 'st-1', trainer_id: 'tr-1' });
+  mockData.findWeights.mockResolvedValue([]);
   mockChallenges.hasActiveAssignments.mockResolvedValue(false);
   mockChallenges.achievementExists.mockResolvedValue(true);
 }

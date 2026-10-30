@@ -11,34 +11,20 @@ import * as achievementsController from '../../controllers/gamification/achievem
 const router = Router({ mergeParams: true });
 
 // Trainer dueño o el propio alumno: el ownership se valida en el service.
-router.get(
-  '/achievements',
+const studentScoped = [
   authenticate,
   requireRole('trainer', 'student'),
   validate(validateStudentIdParam, 'params'),
-  achievementsController.listForStudent
-);
-router.get(
-  '/streak',
-  authenticate,
-  requireRole('trainer', 'student'),
-  validate(validateStudentIdParam, 'params'),
-  achievementsController.streak
-);
+];
 
-// Desafíos del alumno: listado y toma (trainer dueño o el propio alumno).
-router.get(
-  '/challenges',
-  authenticate,
-  requireRole('trainer', 'student'),
-  validate(validateStudentIdParam, 'params'),
-  challengesController.listForStudent
-);
+router.get('/achievements', ...studentScoped, achievementsController.listForStudent);
+router.get('/streak', ...studentScoped, achievementsController.streak);
+
+// Desafíos del alumno: listado y toma.
+router.get('/challenges', ...studentScoped, challengesController.listForStudent);
 router.post(
   '/challenges',
-  authenticate,
-  requireRole('trainer', 'student'),
-  validate(validateStudentIdParam, 'params'),
+  ...studentScoped,
   validate(validateSelfAssign),
   challengesController.assignToStudent
 );

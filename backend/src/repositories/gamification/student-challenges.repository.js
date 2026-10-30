@@ -1,16 +1,12 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
+import { unwrap } from '../../shared/utils/supabase-query.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 import {
   CHALLENGE_COLUMNS,
   STUDENT_CHALLENGES_TABLE,
   STUDENT_CHALLENGE_COLUMNS,
 } from '../../models/gamification/gamification.model.js';
-
-const unwrap = ({ data, error }) => {
-  if (error) throw Errors.internal(error.message);
-  return data;
-};
 
 const WITH_CHALLENGE = `${STUDENT_CHALLENGE_COLUMNS}, challenge:challenges ( ${CHALLENGE_COLUMNS} )`;
 

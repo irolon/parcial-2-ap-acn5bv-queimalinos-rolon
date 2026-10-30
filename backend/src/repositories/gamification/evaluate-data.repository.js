@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase.js';
-import { Errors } from '../../shared/utils/errors.js';
+import { unwrap, fetchAll } from '../../shared/utils/supabase-query.js';
 import { SESSIONS_TABLE, SESSION_SETS_TABLE } from '../../models/sessions/session.model.js';
 import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
 import { BODY_METRICS_TABLE } from '../../models/body-metrics/body-metric.model.js';
@@ -9,22 +9,6 @@ import {
   CHALLENGE_COLUMNS,
   CHALLENGE_STATUS,
 } from '../../models/gamification/gamification.model.js';
-
-const unwrap = ({ data, error }) => {
-  if (error) throw Errors.internal(error.message);
-  return data;
-};
-
-// PostgREST corta en 1000 filas por respuesta: se pagina hasta una página corta.
-const PAGE = 1000;
-async function fetchAll(buildQuery) {
-  const out = [];
-  for (let from = 0; ; from += PAGE) {
-    const rows = unwrap(await buildQuery().range(from, from + PAGE - 1));
-    out.push(...rows);
-    if (rows.length < PAGE) return out;
-  }
-}
 
 /** Sesiones cerradas del alumno (id, started_at, finished_at), de la más vieja a la más nueva. */
 export async function findClosedSessions(studentId) {

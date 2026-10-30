@@ -1,24 +1,27 @@
-import { Errors } from '../../shared/utils/errors.js';
+import { Errors, CHALLENGE_ALREADY_ACTIVE } from '../../shared/utils/errors.js';
+import { DAY_MS } from '../../shared/utils/dates.js';
 import * as studentChallengesRepo from '../../repositories/gamification/student-challenges.repository.js';
+import * as dataRepo from '../../repositories/gamification/evaluate-data.repository.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import { getVisibleChallenge } from './challenges.service.js';
-import { CHALLENGE_STATUS } from '../../models/gamification/gamification.model.js';
-
-const DAY_MS = 86_400_000;
-const round1 = (n) => Math.round(n * 10) / 10;
+import { weightFacts } from './evaluate-challenges.js';
+import { challengeProgress, counterFacts } from '../../models/gamification/challenge-progress.js';
+import { CHALLENGE_STATUS, GOAL_TYPE } from '../../models/gamification/gamification.model.js';
 
 /**
- * Forma pública de una asignación. weight_target no se calcula acá (necesita
- * las mediciones): progress_pct = 100 si está completado y null si no.
+ * Forma pública de una asignación. El porcentaje sale de `challengeProgress`;
+ * `weights` (mediciones del alumno) solo hace falta para weight_target.
+ * Un desafío completado siempre vale 100.
  */
-export function toAssignmentView(row) {
+export function toAssignmentView(row, weights = []) {
   const { challenge } = row;
   const goal = Number(challenge.goal_value);
   const current = Number(row.current_progress);
-  let progressPct = null;
-  if (challenge.goal_type !== 'weight_target') {
-    progressPct = goal > 0 ? round1(Math.min(100, (current / goal) * 100)) : 0;
-  } else if (row.status === CHALLENGE_STATUS.COMPLETED) progressPct = 100;
+  const facts =
+    challenge.goal_type === GOAL_TYPE.WEIGHT_TARGET
+      ? weightFacts(weights, row.started_at, row.ends_at, new Date())
+      : counterFacts(current);
+  const completed = row.status === CHALLENGE_STATUS.COMPLETED;
   return {
     id: row.id,
     challenge: {
@@ -34,7 +37,7 @@ export function toAssignmentView(row) {
     ends_at: row.ends_at,
     current_progress: current,
     goal_value: goal,
-    progress_pct: progressPct,
+    progress_pct: completed ? 100 : challengeProgress(challenge, facts).progress_pct,
     status: row.status,
     completed_at: row.completed_at,
   };
@@ -43,7 +46,10 @@ export function toAssignmentView(row) {
 /** Asignaciones del alumno, la más nueva primero. */
 export async function listForStudent(user, studentId) {
   await assertCanAccessStudent(user, studentId);
-  return (await studentChallengesRepo.findByStudent(studentId)).map(toAssignmentView);
+  const rows = await studentChallengesRepo.findByStudent(studentId);
+  const needsWeights = rows.some((r) => r.challenge.goal_type === GOAL_TYPE.WEIGHT_TARGET);
+  const weights = needsWeights ? await dataRepo.findWeights(studentId) : [];
+  return rows.map((row) => toAssignmentView(row, weights));
 }
 
 async function createAssignment(studentId, challenge) {
@@ -83,7 +89,7 @@ export async function assignToMany(user, challengeId, studentIds) {
     try {
       created.push(await createAssignment(studentId, challenge));
     } catch (err) {
-      if (err.code !== 'CHALLENGE_ALREADY_ACTIVE') throw err;
+      if (err.code !== CHALLENGE_ALREADY_ACTIVE) throw err;
       skipped.push({ student_id: studentId, reason: 'already_active' });
     }
   }

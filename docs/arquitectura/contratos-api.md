@@ -873,7 +873,7 @@ Desafíos del alumno (activos, completados y fallidos), el más nuevo primero. R
 
 - `status`: `active | completed | failed | abandoned`. `completed_at` es `null` mientras no se completa.
 - El progreso cuenta lo hecho dentro de la ventana `started_at`–`ends_at`: `sessions_count` = sesiones cerradas; `volume` = Σ repeticiones × kg de las series completadas; `streak` = mejor racha dentro de la ventana; `weight_target` = último peso registrado. Se recalcula al cerrar una sesión y en el job diario.
-- `progress_pct` = `min(100, current_progress / goal_value × 100)` a 1 decimal. **En `weight_target` el porcentaje no se calcula al listar**: vale `100` si el desafío está `completed` y `null` en cualquier otro estado (el avance se ve en `current_progress`, el último peso). La dirección (bajar o subir) se infiere del peso inicial contra la meta.
+- `progress_pct` = `min(100, current_progress / goal_value × 100)` a 1 decimal; vale `100` solo si el desafío está `completed` (una meta casi cumplida se topa en `99.9`). En `weight_target` es la distancia recorrida desde el peso inicial sobre la distancia total (`0` si no hay mediciones); la dirección (bajar o subir) se infiere del peso inicial contra la meta, y `current_progress` es el último peso.
 - Al alcanzar la meta pasa a `completed` y, si el desafío tiene `reward_achievement_id`, se otorga ese logro. Un desafío activo vencido sin meta pasa a `failed` en el job diario.
 
 > **Job diario:** corre a las 03:00 (hora de Buenos Aires) dentro del server si `CRON_ENABLED` no es `false` (apagado en tests), o a mano con `npm run gamification:daily`. Recalcula racha, logros y desafíos de los alumnos activos y marca `failed` los desafíos vencidos. Es idempotente.

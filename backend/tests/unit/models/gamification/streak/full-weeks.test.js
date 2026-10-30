@@ -1,4 +1,4 @@
-import { countFullWeeks } from '../../../../src/models/gamification/streak.js';
+import { countFullWeeks } from '../../../../../src/models/gamification/streak.js';
 
 const MWF = ['monday', 'wednesday', 'friday'];
 const weeks = (trainedDates, assignedDays, today) =>

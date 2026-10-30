@@ -4,6 +4,9 @@
  */
 import { TIMEZONE } from '../../models/routines/routine.model.js';
 
+/** Milisegundos de un día. */
+export const DAY_MS = 86_400_000;
+
 // 'en-CA' formatea como YYYY-MM-DD.
 const dateFormatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: TIMEZONE,

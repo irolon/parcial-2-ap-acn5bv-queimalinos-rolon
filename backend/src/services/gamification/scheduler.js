@@ -1,6 +1,6 @@
 import { runDailyGamification } from './daily-job.service.js';
+import { DAY_MS } from '../../shared/utils/dates.js';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 // Buenos Aires es UTC-3 todo el año (sin horario de verano).
 const AR_UTC_OFFSET_HOURS = 3;
 

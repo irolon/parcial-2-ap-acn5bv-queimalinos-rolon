@@ -83,3 +83,30 @@ describe('challengeProgress · weight_target', () => {
     expect(r.reached).toBe(true);
   });
 });
+
+describe('challengeProgress · tope y datos inválidos', () => {
+  it('sin alcanzar la meta el porcentaje se topa en 99.9', () => {
+    const r = progress('volume', 10000, { volumeInWindow: 9996 });
+    expect(r).toEqual({ current_progress: 9996, progress_pct: 99.9, reached: false });
+  });
+
+  it('weight_target sin alcanzar tampoco muestra 100', () => {
+    const r = progress('weight_target', 70, { startWeight: 80, lastWeight: 70.004 });
+    expect(r.progress_pct).toBe(99.9);
+    expect(r.reached).toBe(false);
+  });
+
+  it('goal_type desconocido → sin progreso', () => {
+    expect(progress('otro', 10, { sessionsInWindow: 99 })).toEqual({
+      current_progress: 0,
+      progress_pct: 0,
+      reached: false,
+    });
+  });
+
+  it('goal_value <= 0 → sin progreso y no alcanzada', () => {
+    const none = { current_progress: 0, progress_pct: 0, reached: false };
+    expect(progress('sessions_count', 0, { sessionsInWindow: 5 })).toEqual(none);
+    expect(progress('weight_target', -1, { startWeight: 80, lastWeight: 75 })).toEqual(none);
+  });
+});

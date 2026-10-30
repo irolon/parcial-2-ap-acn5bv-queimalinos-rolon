@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase.js';
-import { Errors } from '../../shared/utils/errors.js';
+import { unwrap } from '../../shared/utils/supabase-query.js';
 import {
   ACHIEVEMENTS_TABLE,
   ACHIEVEMENT_COLUMNS,
@@ -8,11 +8,6 @@ import {
   STUDENT_STREAKS_TABLE,
   STUDENT_STREAK_COLUMNS,
 } from '../../models/gamification/gamification.model.js';
-
-const unwrap = ({ data, error }) => {
-  if (error) throw Errors.internal(error.message);
-  return data;
-};
 
 /** Catálogo completo de logros, ordenado por categoría y código. */
 export async function findCatalog() {

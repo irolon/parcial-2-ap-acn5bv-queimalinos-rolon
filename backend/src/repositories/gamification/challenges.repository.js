@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
+import { unwrap } from '../../shared/utils/supabase-query.js';
 import {
   ACHIEVEMENTS_TABLE,
   CHALLENGES_TABLE,
@@ -7,11 +8,6 @@ import {
   STUDENT_CHALLENGES_TABLE,
   CHALLENGE_STATUS,
 } from '../../models/gamification/gamification.model.js';
-
-const unwrap = ({ data, error }) => {
-  if (error) throw Errors.internal(error.message);
-  return data;
-};
 
 /** Desafíos globales (trainer_id null) más los del entrenador; globales primero, luego por nombre. */
 export async function findVisible(trainerId, goalType) {

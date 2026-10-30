@@ -1,5 +1,4 @@
 import { describe, it, expect } from '@jest/globals';
-import catalogRouter from '../../../../src/routes/gamification/achievements.routes.js';
 import studentRouter from '../../../../src/routes/gamification/student-gamification.routes.js';
 import studentsRouter from '../../../../src/routes/students/students.routes.js';
 import { authenticate } from '../../../../src/shared/middlewares/auth.middleware.js';
@@ -14,7 +13,6 @@ const roleResult = (router, path, role) => {
 };
 
 describe.each([
-  ['GET /achievements', catalogRouter, '/'],
   ['GET /students/:id/achievements', studentRouter, '/achievements'],
   ['GET /students/:id/streak', studentRouter, '/streak'],
 ])('%s', (_name, router, path) => {

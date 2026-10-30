@@ -12,7 +12,13 @@ export const STUDENT_STREAKS_TABLE = 'student_streaks';
 export const ACHIEVEMENT_CATEGORIES = ['streak', 'volume', 'consistency', 'pr', 'milestone'];
 
 /** Tipos de meta de un desafío. */
-export const GOAL_TYPES = ['sessions_count', 'weight_target', 'streak', 'volume'];
+export const GOAL_TYPE = {
+  SESSIONS_COUNT: 'sessions_count',
+  WEIGHT_TARGET: 'weight_target',
+  STREAK: 'streak',
+  VOLUME: 'volume',
+};
+export const GOAL_TYPES = Object.values(GOAL_TYPE);
 
 /** Estados de la asignación de un desafío a un alumno. */
 export const CHALLENGE_STATUS = {

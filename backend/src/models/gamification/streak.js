@@ -4,8 +4,7 @@
  * de fechas se hace sobre Date en UTC-medianoche para no depender del TZ del server.
  */
 import { DAYS } from '../routines/routine.model.js';
-
-const DAY_MS = 86_400_000;
+import { DAY_MS } from '../../shared/utils/dates.js';
 
 const toUtc = (str) => new Date(`${str}T00:00:00Z`);
 

@@ -1,24 +1,8 @@
 import { supabase } from '../../config/supabase.js';
-import { Errors } from '../../shared/utils/errors.js';
+import { unwrap, fetchAll } from '../../shared/utils/supabase-query.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';
 import { STUDENT_CHALLENGES_TABLE, CHALLENGE_STATUS } from '../../models/gamification/gamification.model.js';
-
-const unwrap = ({ data, error }) => {
-  if (error) throw Errors.internal(error.message);
-  return data;
-};
-
-// PostgREST corta en 1000 filas por respuesta: se pagina hasta una página corta.
-const PAGE = 1000;
-async function fetchAll(buildQuery) {
-  const out = [];
-  for (let from = 0; ; from += PAGE) {
-    const rows = unwrap(await buildQuery().range(from, from + PAGE - 1));
-    out.push(...rows);
-    if (rows.length < PAGE) return out;
-  }
-}
 
 /**
  * Ids de los alumnos activos con al menos una sesión cerrada o una asignación

@@ -1,4 +1,4 @@
-import { addDays, weekdayOf, computeStreak } from '../../../../src/models/gamification/streak.js';
+import { addDays, weekdayOf, computeStreak } from '../../../../../src/models/gamification/streak.js';
 
 // 2026-10-26 es lunes; 2026-10-30 es viernes.
 const run = (trainedDates, assignedDays, today) =>
