@@ -37,14 +37,9 @@ class SyncSessionsWorkerTest {
         assertEquals(ListenableWorker.Result.retry(), worker({ PassResult.RETRY }).doWork())
     }
 
-    @Test fun errorInesperadoReintentaMientrasNoSeAgotenLosIntentos() = runBlocking {
-        val last = SyncSessionsWorker.MAX_UNEXPECTED_ATTEMPTS - 1
+    // Pablo #32 punto 4: con failure() nada volvía a encolar mientras viviera el proceso.
+    @Test fun errorInesperadoSiempreReintentaConBackoff() = runBlocking {
         assertEquals(ListenableWorker.Result.retry(), worker(explodes, runAttemptCount = 0).doWork())
-        assertEquals(ListenableWorker.Result.retry(), worker(explodes, runAttemptCount = last).doWork())
-    }
-
-    @Test fun errorInesperadoEnElQuintoIntentoFalla() = runBlocking {
-        val attempts = SyncSessionsWorker.MAX_UNEXPECTED_ATTEMPTS
-        assertEquals(ListenableWorker.Result.failure(), worker(explodes, runAttemptCount = attempts).doWork())
+        assertEquals(ListenableWorker.Result.retry(), worker(explodes, runAttemptCount = 20).doWork())
     }
 }

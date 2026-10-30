@@ -93,4 +93,22 @@ class WorkoutDaoUploadTest {
 
         assertEquals(UploadCounts(failedSets = 1), dao.observeUploadCounts("u1").first())
     }
+
+    // Pablo #32 punto 9: el aviso de rechazos se descarta; un rechazo nuevo vuelve a contarse.
+    @Test fun dismissFailuresDejaDeContarLosRechazosDelDuenioYNoBorraNada() = runTest {
+        dao.insertSession(session("w1").copy(syncState = SYNC_FAILED))
+        dao.insertSession(session("w2").copy(syncState = SYNC_SYNCED))
+        dao.upsertSet(set("s1", "w2").copy(syncState = SYNC_FAILED, syncError = "EXERCISE_NOT_FOUND"))
+        dao.insertSession(session("w3"))
+        dao.insertSession(session("ajena", owner = "u2").copy(syncState = SYNC_FAILED))
+
+        dao.dismissFailures("u1")
+
+        assertEquals(UploadCounts(pending = 1), dao.observeUploadCounts("u1").first())
+        assertEquals(UploadCounts(failed = 1), dao.observeUploadCounts("u2").first())
+        assertEquals(SessionUploadRow(SYNC_SYNCED, failedSets = 1), dao.observeSessionUpload("w2").first())
+
+        dao.upsertSet(set("s3", "w3").copy(syncState = SYNC_FAILED, syncError = "VALIDATION_ERROR"))
+        assertEquals(UploadCounts(pending = 1, failedSets = 1), dao.observeUploadCounts("u1").first())
+    }
 }

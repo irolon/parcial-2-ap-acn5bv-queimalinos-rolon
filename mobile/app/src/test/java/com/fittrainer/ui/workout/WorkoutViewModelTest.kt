@@ -71,6 +71,16 @@ class WorkoutViewModelTest {
         assertEquals(Load(62.5, 12), state.load)
     }
 
+    // Pablo #32 punto 8: el backend rechaza más de 1000 kg o 1000 reps; esa serie no subiría nunca.
+    @Test fun `la carga no pasa de los topes del backend`() = runTest {
+        start()
+        collect()
+        vm.onManualEntry(1200.0, 1500)
+        assertEquals(Load(1000.0, 1000), state.load)
+        vm.onAdjustKg(2.5)
+        assertEquals(1000.0, state.load.kg, 0.0)
+    }
+
     @Test fun `confirmar arranca el descanso y la serie 2 precarga lo de la 1`() = runTest {
         start()
         collect()

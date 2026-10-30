@@ -27,7 +27,7 @@ import com.fittrainer.data.db.workout.WorkoutSetEntity
         WorkoutExerciseEntity::class,
         WorkoutSetEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en FitTrainerDatabaseMigrationTest.
@@ -36,6 +36,7 @@ import com.fittrainer.data.db.workout.WorkoutSetEntity
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {

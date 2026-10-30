@@ -6,6 +6,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.fittrainer.ui.sync.SIGN_OUT_REJECTED_TEXT
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.signOutPendingText
 
@@ -18,7 +19,7 @@ fun PendingUploadsSignOutDialog(
     onCancel: () -> Unit,
 ) {
     when (state) {
-        SignOutSyncState.Hidden -> Unit
+        SignOutSyncState.Hidden, SignOutSyncState.SignOut -> Unit
         is SignOutSyncState.Asking -> AlertDialog(
             onDismissRequest = onCancel,
             title = { Text("Entrenamientos sin subir") },
@@ -48,6 +49,14 @@ fun PendingUploadsSignOutDialog(
                     TextButton(onClick = onSignOutAnyway) { Text("Cerrar igual") }
                 }
             },
+        )
+        // Reintentar no cambia un rechazo: solo cerrar igual o quedarse a verlo en Hoy.
+        SignOutSyncState.Rejected -> AlertDialog(
+            onDismissRequest = onCancel,
+            title = { Text("El servidor rechazó parte de lo subido") },
+            text = { Text(SIGN_OUT_REJECTED_TEXT) },
+            confirmButton = { TextButton(onClick = onSignOutAnyway) { Text("Cerrar igual") } },
+            dismissButton = { TextButton(onClick = onCancel) { Text("Cancelar") } },
         )
     }
 }

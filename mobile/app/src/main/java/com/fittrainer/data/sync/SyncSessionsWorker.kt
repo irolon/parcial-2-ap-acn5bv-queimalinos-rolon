@@ -25,15 +25,14 @@ class SyncSessionsWorker @AssistedInject constructor(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        // Room o una respuesta ilegible: lo resuelto ya quedó guardado.
+        // Room u otro error inesperado: lo resuelto ya quedó guardado. Se reintenta siempre, con el backoff
+        // exponencial (WorkManager lo topea en 5 h): con failure() nada volvería a encolar mientras viva
+        // el proceso, y lo pendiente no subiría sin abrir la app (spec §5).
         Log.w(TAG, "Falló la subida de sesiones", e)
-        if (runAttemptCount >= MAX_UNEXPECTED_ATTEMPTS) Result.failure() else Result.retry()
+        Result.retry()
     }
 
-    companion object {
-        private const val TAG = "SyncSessionsWorker"
-
-        /** Spec §5: solo red/timeout/5xx son reintentables; un error inesperado se corta y la próxima apertura o login vuelve a encolar. */
-        const val MAX_UNEXPECTED_ATTEMPTS = 5
+    private companion object {
+        const val TAG = "SyncSessionsWorker"
     }
 }

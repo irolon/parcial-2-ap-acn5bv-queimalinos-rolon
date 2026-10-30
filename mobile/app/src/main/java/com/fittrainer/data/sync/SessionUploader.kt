@@ -5,6 +5,8 @@ import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.SessionSetDto
 import com.fittrainer.data.api.SessionSetsRequest
 import com.fittrainer.data.api.SessionSetsResult
+import com.fittrainer.data.auth.AccountChangedException
+import com.fittrainer.data.auth.RequiredUser
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
 import com.fittrainer.data.db.workout.WorkoutSetEntity
 import java.io.IOException
@@ -25,6 +27,9 @@ enum class StopReason {
     /** 403: rol equivocado. Definitivo: reintentar da lo mismo (spec §5). */
     FORBIDDEN,
     SESSION_REJECTED,
+
+    /** Entró otra cuenta: la request no salió (AuthInterceptor). Lo pendiente espera a su dueño. */
+    ACCOUNT_CHANGED,
 }
 
 /** Series que el servidor ya resolvió, con los ids locales: subidas y fallidas (id → code). */
@@ -32,39 +37,53 @@ data class SetResults(val synced: List<String> = emptyList(), val failed: Map<St
     operator fun plus(other: SetResults) = SetResults(synced + other.synced, failed + other.failed)
 }
 
-/** stop == null: la sesión y todas las series que se mandaron tuvieron respuesta. */
-data class UploadResult(val sets: SetResults, val stop: StopReason? = null)
+/**
+ * stop == null: la sesión y todas las series que se mandaron tuvieron respuesta.
+ * created: el servidor tiene la sesión (POST /sessions respondió bien).
+ */
+data class UploadResult(val sets: SetResults, val stop: StopReason? = null, val created: Boolean = true)
+
+/** Respuesta de un request: el valor, o por qué se corta la subida. */
+private sealed interface Outcome<out T> {
+    data class Ok<T>(val value: T) : Outcome<T>
+    data class Stop(val reason: StopReason) : Outcome<Nothing>
+}
 
 /** Sube UNA sesión terminada y sus series, en lotes. No toca Room: devuelve qué pasó con cada serie. */
 class SessionUploader @Inject constructor(private val api: SessionApi) {
 
-    suspend fun upload(session: WorkoutSessionEntity, sets: List<WorkoutSetEntity>): UploadResult {
-        stopOf { api.create(session.toRequest()) }?.let { return UploadResult(SetResults(), it) }
+    /** [owner]: dueño de la sesión. Cada request sale solo si sigue siendo la cuenta logueada. */
+    suspend fun upload(owner: String, session: WorkoutSessionEntity, sets: List<WorkoutSetEntity>): UploadResult {
+        val tag = RequiredUser(owner)
+        val create = attempt { api.create(tag, session.toRequest()) }
+        if (create is Outcome.Stop) return UploadResult(SetResults(), create.reason, created = false)
         var results = SetResults()
         for (batch in sets.chunked(SETS_PER_BATCH)) {
-            var response: SessionSetsResult? = null
-            val stop = stopOf { response = api.addSets(session.id, SessionSetsRequest(batch.map { it.toDto() })).data }
-            if (stop != null) return UploadResult(results, stop)
-            results += response!!.resolve(batch)
+            when (val sent = attempt { api.addSets(tag, session.id, SessionSetsRequest(batch.map { it.toDto() })).data }) {
+                is Outcome.Stop -> return UploadResult(results, sent.reason)
+                is Outcome.Ok -> results += sent.value.resolve(batch)
+            }
         }
         return UploadResult(results)
     }
 
-    /** null si el request anduvo; si no, cómo sigue la pasada. */
-    private suspend fun stopOf(block: suspend () -> Unit): StopReason? = try {
-        block()
-        null
+    private suspend fun <T> attempt(block: suspend () -> T): Outcome<T> = try {
+        Outcome.Ok(block())
+    } catch (e: AccountChangedException) {
+        Outcome.Stop(StopReason.ACCOUNT_CHANGED)
     } catch (e: HttpException) {
-        when (e.code()) {
-            401 -> StopReason.UNAUTHORIZED
-            403 -> StopReason.FORBIDDEN
-            400, 409 -> StopReason.SESSION_REJECTED
-            else -> StopReason.RETRY
-        }
+        Outcome.Stop(stopFor(e.code()))
     } catch (e: IOException) {
-        StopReason.RETRY
+        Outcome.Stop(StopReason.RETRY)
     } catch (e: SerializationException) {
-        StopReason.RETRY // respuesta ilegible (portal cautivo, proxy): se reintenta
+        Outcome.Stop(StopReason.RETRY) // respuesta ilegible (portal cautivo, proxy): se reintenta
+    }
+
+    private fun stopFor(code: Int): StopReason = when (code) {
+        401 -> StopReason.UNAUTHORIZED
+        403 -> StopReason.FORBIDDEN
+        400, 409 -> StopReason.SESSION_REJECTED
+        else -> StopReason.RETRY
     }
 }
 

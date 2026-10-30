@@ -25,6 +25,7 @@ import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
+import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
 import com.fittrainer.ui.today.TodayScreen
@@ -55,7 +56,7 @@ fun RoleShell(
     }
     var confirmSignOut by remember { mutableStateOf(false) }
     // Antes de salir se ofrece subir lo pendiente (tarjeta 11); también después de terminar la abierta.
-    val syncedSignOut: () -> Unit = { uploads.request(onSignOut) }
+    val syncedSignOut: () -> Unit = uploads::request
     val guardedSignOut: () -> Unit = {
         if (isStudent) {
             entry.requestSignOut(onNoActive = syncedSignOut, onActive = { confirmSignOut = true })
@@ -70,6 +71,12 @@ fun RoleShell(
         )
     }
     val uploadState by uploads.state.collectAsStateWithLifecycle()
+    LaunchedEffect(uploadState) {
+        if (uploadState == SignOutSyncState.SignOut) {
+            uploads.signOutHandled()
+            onSignOut()
+        }
+    }
     PendingUploadsSignOutDialog(uploadState, uploads::uploadNow, uploads::signOutAnyway, uploads::cancel)
     // finishActive corre en esta instancia (no en la de Hoy): si falla, el aviso se muestra acá.
     val entryError by entry.error.collectAsStateWithLifecycle()

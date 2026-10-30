@@ -1,10 +1,12 @@
 package com.fittrainer.data.api
 
+import com.fittrainer.data.auth.RequiredUser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Tag
 
 /** POST /sessions: la sesión ya terminada (el RPE y las notas son de la tarjeta 12). */
 @Serializable
@@ -43,11 +45,14 @@ data class SessionSetsResult(val saved: List<SavedSetDto> = emptyList(), val fai
 @Serializable
 data class SessionSetsResponse(val data: SessionSetsResult)
 
-/** Módulo Sesiones (contratos-api.md). Va por el cliente principal: Bearer y refresh transparente. */
+/**
+ * Módulo Sesiones (contratos-api.md). Va por el cliente principal: Bearer y refresh transparente.
+ * [RequiredUser] es el dueño de la sesión: si la cuenta logueada es otra, la request no sale.
+ */
 interface SessionApi {
     @POST("sessions")
-    suspend fun create(@Body body: CreateSessionRequest)
+    suspend fun create(@Tag owner: RequiredUser, @Body body: CreateSessionRequest)
 
     @POST("sessions/{id}/sets")
-    suspend fun addSets(@Path("id") id: String, @Body body: SessionSetsRequest): SessionSetsResponse
+    suspend fun addSets(@Tag owner: RequiredUser, @Path("id") id: String, @Body body: SessionSetsRequest): SessionSetsResponse
 }

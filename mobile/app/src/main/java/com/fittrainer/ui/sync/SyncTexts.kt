@@ -26,6 +26,32 @@ fun pendingUploadsText(counts: UploadCounts): String? = listOfNotNull(
     },
 ).joinToString(" · ").ifEmpty { null }
 
+/**
+ * Qué muestra el aviso de Hoy: el texto, si va "Subir ahora" (solo con pendientes) y si se puede descartar
+ * (solo con rechazos). null: no se muestra.
+ */
+data class UploadsNoticeUi(val text: String, val canUpload: Boolean, val uploading: Boolean, val canDismiss: Boolean = false)
+
+fun uploadsNoticeUi(counts: UploadCounts, manual: ManualUpload): UploadsNoticeUi? {
+    val base = pendingUploadsText(counts)
+    val text = when {
+        manual == ManualUpload.FAILED && counts.pending > 0 ->
+            listOfNotNull(base, "No se pudo subir, se reintenta solo cuando haya conexión").joinToString(" · ")
+        manual == ManualUpload.DONE && counts.pending == 0 -> listOfNotNull("Subido ✓", base).joinToString(" · ")
+        else -> base
+    } ?: return null
+    return UploadsNoticeUi(
+        text,
+        canUpload = counts.pending > 0,
+        uploading = manual == ManualUpload.UPLOADING,
+        canDismiss = counts.failed > 0 || counts.failedSets > 0,
+    )
+}
+
+const val SIGN_OUT_REJECTED_TEXT =
+    "Algunos entrenamientos o series no se pudieron subir y no se van a reintentar. Quedan guardados en el " +
+        "celular y los ves en Hoy. ¿Cerrar sesión igual?"
+
 fun signOutPendingText(pending: Int): String =
     if (pending == 1) "Tenés 1 entrenamiento sin subir. Se va a subir cuando vuelvas a entrar."
     else "Tenés $pending entrenamientos sin subir. Se van a subir cuando vuelvas a entrar."

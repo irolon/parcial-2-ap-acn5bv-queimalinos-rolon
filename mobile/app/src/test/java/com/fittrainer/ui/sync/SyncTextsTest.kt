@@ -37,6 +37,27 @@ class SyncTextsTest {
         )
     }
 
+    @Test fun `Subir ahora solo con pendientes y el resultado en el aviso`() {
+        assertNull(uploadsNoticeUi(UploadCounts(), ManualUpload.IDLE))
+        assertEquals(
+            UploadsNoticeUi("1 entrenamiento sin subir", canUpload = true, uploading = false),
+            uploadsNoticeUi(UploadCounts(pending = 1), ManualUpload.IDLE),
+        )
+        assertEquals(true, uploadsNoticeUi(UploadCounts(pending = 1), ManualUpload.UPLOADING)?.uploading)
+        assertEquals(false, uploadsNoticeUi(UploadCounts(failed = 1), ManualUpload.IDLE)?.canUpload)
+        // La X para descartar solo con rechazos (sesiones o series).
+        assertEquals(false, uploadsNoticeUi(UploadCounts(pending = 1), ManualUpload.IDLE)?.canDismiss)
+        assertEquals(true, uploadsNoticeUi(UploadCounts(failed = 1), ManualUpload.IDLE)?.canDismiss)
+        assertEquals(true, uploadsNoticeUi(UploadCounts(failedSets = 2), ManualUpload.IDLE)?.canDismiss)
+        assertEquals(
+            "1 entrenamiento sin subir · No se pudo subir, se reintenta solo cuando haya conexión",
+            uploadsNoticeUi(UploadCounts(pending = 1), ManualUpload.FAILED)?.text,
+        )
+        assertEquals("Subido ✓", uploadsNoticeUi(UploadCounts(), ManualUpload.DONE)?.text)
+        // Con un rechazo nuevo no hay "Subido ✓": queda el aviso del rechazo.
+        assertEquals("1 entrenamiento no se pudo subir", uploadsNoticeUi(UploadCounts(failed = 1), ManualUpload.REJECTED)?.text)
+    }
+
     @Test fun `aviso del logout`() {
         assertEquals("Tenés 1 entrenamiento sin subir. Se va a subir cuando vuelvas a entrar.", signOutPendingText(1))
         assertEquals("Tenés 2 entrenamientos sin subir. Se van a subir cuando vuelvas a entrar.", signOutPendingText(2))

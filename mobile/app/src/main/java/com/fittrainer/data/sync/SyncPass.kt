@@ -25,13 +25,16 @@ class SyncPass @Inject constructor(
     override suspend fun run(): PassResult {
         val owner = currentStudent() ?: return PassResult.DONE
         for (session in dao.pendingUploads(owner)) {
-            // Si el alumno cerró sesión (y quizá entró otro) a mitad de la pasada, no se sigue: el token
-            // se lee en cada request y la próxima sesión saldría con la cuenta de otro. Lo pendiente
-            // queda en Room y el próximo login de su dueño vuelve a encolar.
+            // Si el alumno cerró sesión (y quizá entró otro) a mitad de la pasada, no se sigue. Lo
+            // pendiente queda en Room y el próximo login de su dueño vuelve a encolar. Entre este chequeo
+            // y cada request, AuthInterceptor frena la que saldría con otra cuenta (ACCOUNT_CHANGED).
             if (currentStudent() != owner) return PassResult.DONE
-            val result = uploader.upload(session, dao.pendingSets(session.id))
+            val result = uploader.upload(owner, session, dao.pendingSets(session.id))
             val rejected = result.stop == StopReason.SESSION_REJECTED
-            dao.applyUpload(session.id, result.sets.synced, result.sets.failed, rejected)
+            // Si no se llegó a crear, la sesión no existe en el servidor: no se puede dar por subida.
+            if (result.created || rejected) {
+                dao.applyUpload(session.id, result.sets.synced, result.sets.failed, rejected)
+            }
             when (result.stop) {
                 StopReason.RETRY -> return PassResult.RETRY
                 // Si el refresh fue rechazado, TokenAuthenticator ya cerró la sesión: todo queda PENDING
@@ -41,6 +44,7 @@ class SyncPass @Inject constructor(
                     return if (currentStudent() == owner) PassResult.RETRY else PassResult.DONE
                 // 403 no depende del token: reintentar no lo arregla. Todo queda PENDING (spec §5).
                 StopReason.FORBIDDEN -> return PassResult.DONE
+                StopReason.ACCOUNT_CHANGED -> return PassResult.DONE
                 StopReason.SESSION_REJECTED, null -> Unit
             }
         }

@@ -14,5 +14,11 @@ class UploadStatusRepository @Inject constructor(private val dao: WorkoutDao) {
 
     fun observeSession(sessionId: String): Flow<SessionUploadRow?> = dao.observeSessionUpload(sessionId)
 
-    suspend fun pendingCount(ownerId: String): Int = dao.observeUploadCounts(ownerId).first().pending
+    suspend fun pendingCount(ownerId: String): Int = counts(ownerId).pending
+
+    /** Foto de los conteos: se compara antes y después de forzar una pasada. */
+    suspend fun counts(ownerId: String): UploadCounts = dao.observeUploadCounts(ownerId).first()
+
+    /** El alumno descartó en Hoy el aviso de lo que no se pudo subir (los datos quedan en Room). */
+    suspend fun dismissFailures(ownerId: String) = dao.dismissFailures(ownerId)
 }

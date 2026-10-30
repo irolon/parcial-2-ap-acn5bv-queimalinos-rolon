@@ -20,6 +20,12 @@ sealed interface SignOutSyncState {
     data class Asking(val pending: Int) : SignOutSyncState
     data object Uploading : SignOutSyncState
     data class Failed(val pending: Int) : SignOutSyncState
+
+    /** Subió todo, pero el servidor rechazó algo: se avisa antes de cerrar (queda guardado en el celular). */
+    data object Rejected : SignOutSyncState
+
+    /** Hay que completar el logout: RoleShell llama a su onSignOut y avisa con [SignOutSyncViewModel.signOutHandled]. */
+    data object SignOut : SignOutSyncState
 }
 
 /** Aviso del logout con entrenamientos sin subir (spec §6): Subir ahora, Cerrar igual o Cancelar. */
@@ -34,22 +40,16 @@ class SignOutSyncViewModel @Inject constructor(
     private val _state = MutableStateFlow<SignOutSyncState>(SignOutSyncState.Hidden)
     val state: StateFlow<SignOutSyncState> = _state
 
-    /** El logout que se completa al cerrar el aviso; null si no hay aviso abierto. */
-    private var signOut: (() -> Unit)? = null
-
-    fun request(onSignOut: () -> Unit) {
+    fun request() {
         if (_state.value != SignOutSyncState.Hidden) return
         viewModelScope.launch {
-            val owner = currentOwner() ?: return@launch onSignOut()
+            val owner = currentOwner() ?: return@launch close()
             val pending = status.pendingCount(owner)
-            if (pending == 0) return@launch onSignOut()
-            signOut = onSignOut
-            _state.value = SignOutSyncState.Asking(pending)
+            _state.value = if (pending == 0) SignOutSyncState.SignOut else SignOutSyncState.Asking(pending)
         }
     }
 
     fun uploadNow() {
-        val onSignOut = signOut ?: return
         val lastPending = when (val current = _state.value) {
             is SignOutSyncState.Asking -> current.pending
             is SignOutSyncState.Failed -> current.pending
@@ -59,15 +59,21 @@ class SignOutSyncViewModel @Inject constructor(
         _state.value = SignOutSyncState.Uploading
         viewModelScope.launch {
             try {
-                val owner = currentOwner() ?: return@launch close(onSignOut)
+                val owner = currentOwner() ?: return@launch close()
                 // Sin red no tiene sentido esperar 15 s: se avisa enseguida.
                 if (!connectivity.isOnline.first()) {
                     _state.value = SignOutSyncState.Failed(status.pendingCount(owner))
                     return@launch
                 }
+                val before = status.counts(owner)
                 sync.syncNow(SYNC_NOW_TIMEOUT_MS)
-                val left = status.pendingCount(owner)
-                if (left == 0) close(onSignOut) else _state.value = SignOutSyncState.Failed(left)
+                val after = status.counts(owner)
+                // Una sesión rechazada deja de estar pendiente: sin comparar los rechazos se cerraría como éxito.
+                when {
+                    after.pending > 0 -> _state.value = SignOutSyncState.Failed(after.pending)
+                    after.rejections > before.rejections -> _state.value = SignOutSyncState.Rejected
+                    else -> close()
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -78,20 +84,26 @@ class SignOutSyncViewModel @Inject constructor(
     }
 
     fun signOutAnyway() {
-        if (_state.value == SignOutSyncState.Uploading) return
-        signOut?.let(::close)
+        if (isAsking()) close()
     }
 
     fun cancel() {
-        if (_state.value == SignOutSyncState.Uploading) return
-        signOut = null
-        _state.value = SignOutSyncState.Hidden
+        if (isAsking()) _state.value = SignOutSyncState.Hidden
     }
 
-    private fun close(onSignOut: () -> Unit) {
-        signOut = null
-        _state.value = SignOutSyncState.Hidden
-        onSignOut()
+    /** Hay un aviso abierto esperando respuesta (no subiendo ni cerrando). */
+    private fun isAsking() = when (_state.value) {
+        is SignOutSyncState.Asking, is SignOutSyncState.Failed, SignOutSyncState.Rejected -> true
+        else -> false
+    }
+
+    /** RoleShell ya completó el logout. */
+    fun signOutHandled() {
+        if (_state.value == SignOutSyncState.SignOut) _state.value = SignOutSyncState.Hidden
+    }
+
+    private fun close() {
+        _state.value = SignOutSyncState.SignOut
     }
 
     private suspend fun currentOwner(): String? = (sessionRepository.session.first() as? Session.Student)?.user?.id

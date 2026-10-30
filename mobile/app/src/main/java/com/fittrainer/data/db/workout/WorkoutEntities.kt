@@ -36,6 +36,8 @@ data class WorkoutSessionEntity(
     val restEndsAt: Long?,
     val restTotalSeconds: Int?,
     val restPausedRemainingMs: Long?,
+    /** El alumno ya vio y descartó en Hoy que no se pudo subir (v6): deja de contarse en el aviso. */
+    @ColumnInfo(defaultValue = "0") val failureSeen: Boolean = false,
 )
 
 /** Copia del plan al empezar: que Hoy refresque la rutina no cambia la sesión. */
@@ -95,6 +97,8 @@ data class WorkoutSetEntity(
     /** PENDING hasta que el servidor la guarda (SYNCED) o la rechaza (FAILED, con su code en syncError). */
     @ColumnInfo(defaultValue = SYNC_PENDING) val syncState: String = SYNC_PENDING,
     val syncError: String? = null,
+    /** Como en la sesión: el rechazo ya se vio y se descartó en Hoy (v6). */
+    @ColumnInfo(defaultValue = "0") val failureSeen: Boolean = false,
 )
 
 data class WorkoutWithDetails(

@@ -64,6 +64,32 @@ class SyncTriggerTest {
         assertEquals(1, sync.enqueued)
     }
 
+    // Pablo #32 punto 6: al abrir o entrar se respeta la que espera (KEEP); terminar otra sí es trabajo nuevo.
+    @Test fun `solo es trabajo nuevo cuando crecen las pendientes`() = runTest {
+        put(finishedSession("w1"))
+        trigger.start(backgroundScope + UnconfinedTestDispatcher(testScheduler))
+
+        put(finishedSession("w2"))
+        put(dao.state.value.sessions.getValue("w1").copy(syncState = SYNC_SYNCED)) // la pasada subió w1
+
+        assertEquals(listOf(false, true, false), sync.enqueues)
+    }
+
+    // Pablo #32 punto 5: un error al encolar no puede dejar muerto al disparador.
+    @Test fun `si falla un enqueue el disparador sigue vivo`() = runTest {
+        val errors = mutableListOf<Exception>()
+        trigger.onEnqueueError = { errors += it }
+        sync.enqueueError = IllegalStateException("WorkManager roto")
+        trigger.start(backgroundScope + UnconfinedTestDispatcher(testScheduler))
+
+        put(finishedSession("w1"))
+        sync.enqueueError = null
+        put(finishedSession("w2"))
+
+        assertEquals(2, sync.enqueued)
+        assertEquals(1, errors.size)
+    }
+
     @Test fun `volver a entrar con las mismas pendientes vuelve a encolar`() = runTest {
         put(finishedSession("w1"))
         trigger.start(backgroundScope + UnconfinedTestDispatcher(testScheduler))
