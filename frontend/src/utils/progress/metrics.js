@@ -28,9 +28,18 @@ export function metricOptions(points) {
   });
 }
 
-/** Métrica a mostrar: la pedida si está habilitada; si no, la primera habilitada; si no hay, la por defecto. */
+const countValues = (points, key) => points.filter((p) => p[key] !== null && p[key] !== undefined).length;
+
+/**
+ * Métrica a mostrar. Prefiere una con al menos MIN_POINTS valores (alcanza para dibujar la curva):
+ * la pedida, si no la por defecto, si no la primera habilitada. Si ninguna llega, vale la pedida
+ * si está habilitada; si no, la por defecto o la primera habilitada, y si no hay, la por defecto.
+ */
 export function resolveMetric(points, wanted, fallback) {
   const enabled = metricOptions(points).filter((o) => !o.disabled);
+  const drawable = enabled.filter((o) => countValues(points, o.value) >= MIN_POINTS);
+  if (drawable.some((o) => o.value === wanted)) return wanted;
+  if (drawable.length > 0) return drawable[0].value;
   if (enabled.some((o) => o.value === wanted)) return wanted;
   if (enabled.some((o) => o.value === fallback)) return fallback;
   return enabled[0]?.value ?? fallback;

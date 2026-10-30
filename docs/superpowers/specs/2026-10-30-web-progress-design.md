@@ -108,4 +108,6 @@ Módulo `progress` (CONTRIBUTING: capa → módulo, máximo 200 líneas por arch
 | `metricOptions` | Deshabilita toda métrica sin ningún valor no nulo (1RM todo `null` aunque `max_kg > 0`) y las de kg sin peso registrado. Título: "Sin peso registrado" para las de kg sin kg; "Sin datos en este rango" en los demás casos |
 | Volumen semanal | El umbral de 3 cuenta semanas con `sessions > 0` (el peso corporal tiene volumen 0 pero entrena) |
 | Tope de `from` | `GET /progress/overview` devuelve 400 si `from` está a más de 3 años (1095 días) de `to` u hoy en Argentina. No aplica a `/progress/exercise`. La web solo manda `from` para 1 mes / 3 meses (como mucho 3 meses atrás, alineado al lunes); "Todo" no manda `from` |
-
+| Tope de `to` | `GET /progress/overview` devuelve 400 sobre `to` ("La fecha `to` no puede ser futura") si `to` es posterior a hoy en Argentina más un día. Cierra el hueco de `?to=9999-12-31` sin `from`, que generaba cientos de miles de filas en `weekly_volume` |
+| Métrica con datos suficientes | `resolveMetric` prefiere una métrica con 3 o más valores no nulos: conserva la elegida o la por defecto si los tiene; si no, la primera habilitada que sí; si ninguna llega, las reglas anteriores |
+| Aviso por métrica | Con 3 o más puntos en el rango pero menos de 3 valores en la métrica activa, la curva dice "Pocos datos de esta métrica: probá con otra" en vez de "Llevás N de 3…" o "probá con Todo" (caso Curl: 10 días, 9 de ellos con más de 12 repeticiones) |

@@ -48,7 +48,12 @@ export default function ExerciseCurveCard({ data, metric, onMetricChange, range 
         <MetricSelector value={metric} options={metricOptions(points)} onChange={onMetricChange} />
       </div>
       {valid.length < MIN_POINTS ? (
-        <NotEnoughData count={valid.length} exerciseName={exercise.name} rangeLimited={range !== 'all' && totalDays >= MIN_POINTS} />
+        <NotEnoughData
+          count={valid.length}
+          exerciseName={exercise.name}
+          rangeLimited={range !== 'all' && totalDays >= MIN_POINTS}
+          metricLimited={points.length >= MIN_POINTS}
+        />
       ) : (
         <div role="img" aria-label={`Progresión de ${exercise.name}`} className="h-64">
           <ResponsiveContainer width="100%" height="100%">

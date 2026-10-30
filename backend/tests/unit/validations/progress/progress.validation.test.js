@@ -94,8 +94,37 @@ describe('progress.validation · tope de rango del overview', () => {
     const early = new Date('2026-10-31T01:00:00Z');
     expect(validateProgressOverviewQuery({ from: '2023-10-31' }, early)).toMatchObject({ from: '2023-10-31' });
   });
-  it('sin from no hay tope, y /exercise no lo aplica', () => {
+  it('sin from no hay tope de 3 años, y /exercise no lo aplica', () => {
     expect(run({ to: '2026-10-31' })).toEqual({ to: '2026-10-31' });
     expect(validateExerciseProgressQuery({ from: '1900-01-01' })).toEqual({ from: '1900-01-01' });
+  });
+});
+
+describe('progress.validation · to no puede ser futuro en el overview', () => {
+  const now = new Date('2026-10-30T15:00:00Z'); // hoy en Argentina: 2026-10-30
+  const run = (q) => validateProgressOverviewQuery(q, now);
+
+  it('acepta hoy y mañana (un día de margen)', () => {
+    expect(run({ to: '2026-10-30' })).toEqual({ to: '2026-10-30' });
+    expect(run({ to: '2026-10-31' })).toEqual({ to: '2026-10-31' });
+  });
+  it('to pasado mañana o más → 400 sobre to', () => {
+    const err = (() => { try { run({ to: '2026-11-01' }); } catch (e) { return e; } })();
+    expect(err.code).toBe('VALIDATION_ERROR');
+    expect(err.details).toEqual([{ field: 'to', message: 'La fecha `to` no puede ser futura' }]);
+  });
+  it('to lejano sin from → 400 (cierra ?to=9999-12-31)', () => {
+    expect(failure(run, { to: '9999-12-31' }).fields).toEqual(['to']);
+  });
+  it('to lejano con from válido también → 400 sobre to', () => {
+    expect(failure(run, { from: '2026-10-01', to: '2030-01-01' }).fields).toEqual(['to']);
+  });
+  it('usa la fecha de Argentina: 01:00 UTC del 31 todavía es 30', () => {
+    const early = new Date('2026-10-31T01:00:00Z');
+    expect(validateProgressOverviewQuery({ to: '2026-10-31' }, early)).toEqual({ to: '2026-10-31' });
+    expect(failure((q) => validateProgressOverviewQuery(q, early), { to: '2026-11-02' }).fields).toEqual(['to']);
+  });
+  it('/exercise no aplica el tope', () => {
+    expect(validateExerciseProgressQuery({ to: '9999-12-31' })).toEqual({ to: '9999-12-31' });
   });
 });

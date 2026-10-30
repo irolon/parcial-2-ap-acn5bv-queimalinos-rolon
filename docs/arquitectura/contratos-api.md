@@ -742,6 +742,7 @@ Resumen para la vista de progreso: los ejercicios que el alumno entrenó y su vo
 - **Trainer:** `student_id` obligatorio (400 `VALIDATION_ERROR` si falta) y tiene que ser alumno suyo (si no, 403).
 - UUID o fecha mal formados, o `from > to` → 400 `VALIDATION_ERROR`.
 - `from` no puede quedar a más de 3 años (1095 días) de `to`, o de hoy en hora argentina si no hay `to` → 400 `VALIDATION_ERROR` sobre `from` ("El rango no puede superar 3 años"). Acota las filas de `weekly_volume` (una por semana). `GET /progress/exercise` no tiene este tope.
+- `to` no puede ser posterior a mañana en hora argentina (un día de margen) → 400 `VALIDATION_ERROR` sobre `to` ("La fecha `to` no puede ser futura"). Junto con el tope de `from`, acota `weekly_volume` aunque no se mande `from` (`?to=9999-12-31` se rechaza).
 
 **200 OK**
 

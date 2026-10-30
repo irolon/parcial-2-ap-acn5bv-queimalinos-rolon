@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ExerciseCurveCard, { CurveTooltip } from '@/components/progress/ExerciseCurveCard';
-import { SIX, curveData } from '../../helpers/progress/charts';
+import { SIX, curveData, point } from '../../helpers/progress/charts';
 
 vi.mock('recharts', async (importOriginal) => (await import('../../helpers/progress/recharts')).mockRecharts(importOriginal));
 
@@ -40,10 +40,11 @@ describe('ExerciseCurveCard', () => {
     expect(screen.getByText(/Llevás 2 de 3 entrenamientos de Press banca/)).toBeInTheDocument();
   });
 
-  it('no cuenta los puntos sin valor para la métrica', () => {
+  it('no cuenta los puntos sin valor para la métrica: con 6 puntos y 2 valores avisa de la métrica', () => {
     const pts = SIX.map((p, i) => (i < 4 ? { ...p, e1rm_kg: null } : p));
     render(<ExerciseCurveCard data={curveData(pts)} metric="e1rm_kg" onMetricChange={noop} />);
-    expect(screen.getByText(/Llevás 2 de 3/)).toBeInTheDocument();
+    expect(screen.getByText('Pocos datos de esta métrica: probá con otra')).toBeInTheDocument();
+    expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
   });
 });
 
@@ -73,10 +74,22 @@ describe('CurveTooltip', () => {
     expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
   });
 
-  it('con el rango en Todo no sugiere probar con Todo', () => {
-    render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="all" totalDays={10} />);
+  it('con el rango en Todo y pocos entrenamientos no sugiere probar con Todo', () => {
+    render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="all" totalDays={1} />);
     expect(screen.queryByText(/probá con Todo/)).not.toBeInTheDocument();
     expect(screen.getByText(/Llevás 1 de 3/)).toBeInTheDocument();
+  });
+
+  it('con 3 o más puntos pero la métrica con menos de 3 valores dice "probá con otra"', () => {
+    // Curl: 10 días, 9 a 15 reps (1RM null) y 1 a 10 reps (1RM válido).
+    const curl = [...Array(10)].map((_, i) => ({ ...point(i + 1, 40), e1rm_kg: i === 0 ? 40 : null, reps: i === 0 ? 10 : 15 }));
+    for (const range of ['all', '3m']) {
+      const { unmount } = render(<ExerciseCurveCard data={curveData(curl)} metric="e1rm_kg" onMetricChange={noop} range={range} totalDays={10} />);
+      expect(screen.getByText('Pocos datos de esta métrica: probá con otra')).toBeInTheDocument();
+      expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/probá con Todo/)).not.toBeInTheDocument();
+      unmount();
+    }
   });
 
   it('con menos de 3 días en total mantiene "Llevás N de 3"', () => {

@@ -47,6 +47,27 @@ describe('metrics de progreso', () => {
     expect(resolveMetric([], 'max_kg', 'e1rm_kg')).toBe('e1rm_kg');
   });
 
+  it('resolveMetric prefiere una métrica con al menos 3 valores (caso Curl)', () => {
+    // 10 días: 1RM con un solo valor, repeticiones con los 10 (9 de ellos > 12).
+    const curl = [...Array(10)].map((_, i) => ({ max_kg: 30, volume_kg: 300, e1rm_kg: i === 0 ? 40 : null, reps: i === 0 ? 10 : 15 }));
+    expect(metricOptions(curl).find((m) => m.value === 'e1rm_kg').disabled).toBe(false);
+    expect(resolveMetric(curl, 'e1rm_kg', 'e1rm_kg')).toBe('max_kg');
+    expect(resolveMetric(curl, 'reps', 'e1rm_kg')).toBe('reps');
+  });
+
+  it('resolveMetric conserva la pedida o la por defecto si tienen 3 o más valores', () => {
+    const pts = [1, 2, 3].map((n) => ({ max_kg: n, volume_kg: n, e1rm_kg: n, reps: n }));
+    expect(resolveMetric(pts, 'volume_kg', 'e1rm_kg')).toBe('volume_kg');
+    const few = [{ max_kg: 1, volume_kg: 1, e1rm_kg: null, reps: 1 }, { max_kg: 2, volume_kg: 2, e1rm_kg: 5, reps: 2 }, { max_kg: 3, volume_kg: 3, e1rm_kg: null, reps: 3 }];
+    expect(resolveMetric(few, 'e1rm_kg', 'max_kg')).toBe('max_kg');
+  });
+
+  it('resolveMetric sin ninguna métrica con 3 valores aplica las reglas anteriores', () => {
+    const two = [{ max_kg: 1, volume_kg: 1, e1rm_kg: 1, reps: 1 }, { max_kg: 2, volume_kg: 2, e1rm_kg: 2, reps: 2 }];
+    expect(resolveMetric(two, 'reps', 'e1rm_kg')).toBe('reps');
+    expect(resolveMetric([], 'max_kg', 'e1rm_kg')).toBe('e1rm_kg');
+  });
+
   it('recordLabel: "Récord" con Todo y "Mejor del rango" con un rango', () => {
     expect(recordLabel('all')).toBe('Récord');
     expect(recordLabel('1m')).toBe('Mejor del rango');

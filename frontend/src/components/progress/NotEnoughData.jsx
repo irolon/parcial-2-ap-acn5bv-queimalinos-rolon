@@ -2,9 +2,10 @@ import { LineChart } from 'lucide-react';
 import { MIN_POINTS } from '@/utils/progress/metrics';
 
 /** Aviso cuando todavía no alcanzan los datos para dibujar el gráfico. */
-export default function NotEnoughData({ count, exerciseName, rangeLimited = false }) {
+export default function NotEnoughData({ count, exerciseName, rangeLimited = false, metricLimited = false }) {
   let text;
-  if (exerciseName && rangeLimited) text = 'Pocos entrenamientos en este rango: probá con Todo';
+  if (exerciseName && metricLimited) text = 'Pocos datos de esta métrica: probá con otra';
+  else if (exerciseName && rangeLimited) text = 'Pocos entrenamientos en este rango: probá con Todo';
   else if (exerciseName) text = `Llevás ${count} de ${MIN_POINTS} entrenamientos de ${exerciseName}: después del tercero vas a ver tu progresión acá`;
   else text = `Llevás ${count} de ${MIN_POINTS} semanas entrenadas: después de la tercera vas a ver tu volumen semanal acá`;
   return (
