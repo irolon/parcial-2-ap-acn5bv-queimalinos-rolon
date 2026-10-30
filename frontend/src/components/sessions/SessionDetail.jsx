@@ -91,7 +91,7 @@ function ExerciseBlock({ item }) {
   );
 }
 
-/** Series de la sesión (real contra plan) y comentario; el detalle se pide al montarse. */
+/** Series de la sesión (real contra plan), nota del alumno y comentario; el detalle se pide al montarse. */
 export default function SessionDetail({ studentId, session }) {
   const query = useSessionDetail(studentId, session.id);
   return (
@@ -106,6 +106,12 @@ export default function SessionDetail({ studentId, session }) {
           </div>
         )}
       </QueryState>
+      {session.notes && (
+        <div className="mt-4">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink6">Nota del alumno</div>
+          <p className="whitespace-pre-line break-words font-body text-sm text-bone1">{session.notes}</p>
+        </div>
+      )}
       <SessionComment key={session.trainer_comment ?? ''} studentId={studentId} session={session} />
     </div>
   );

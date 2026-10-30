@@ -32,5 +32,6 @@ export function validateCommentBody(body) {
       { field: 'trainer_comment', message: `trainer_comment debe ser texto de hasta ${MAX_COMMENT} caracteres o null` },
     ]);
   }
-  return { trainer_comment: value === null || value.trim() === '' ? null : value };
+  const trimmed = value === null ? '' : value.trim();
+  return { trainer_comment: trimmed === '' ? null : trimmed };
 }

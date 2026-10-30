@@ -30,7 +30,7 @@ async function expand(detail) {
 const detailCalls = (fetchMock) => calls(fetchMock).filter(([path]) => path === '/students/st-1/sessions/s-1');
 
 describe('SessionDetail', () => {
-  it('pide el detalle al expandir, una sola vez aunque se cierre y se abra', async () => {
+  it('pide el detalle al expandir y lo vuelve a pedir al reabrir (puede haber series nuevas)', async () => {
     const { user, fetchMock, button } = await expand(sessionDetailItem());
     expect(button).toHaveAttribute('aria-expanded', 'true');
     expect(await screen.findByText('Press de banca')).toBeVisible();
@@ -38,7 +38,18 @@ describe('SessionDetail', () => {
     expect(screen.queryByText('Press de banca')).toBeNull();
     await user.click(button);
     expect(await screen.findByText('Press de banca')).toBeVisible();
-    expect(detailCalls(fetchMock)).toHaveLength(1);
+    await vi.waitFor(() => expect(detailCalls(fetchMock)).toHaveLength(2));
+  });
+
+  it('muestra la nota del alumno arriba del comentario aunque el entrenador ya haya respondido', async () => {
+    const user = userEvent.setup();
+    const session = sessionItem({ notes: 'Me dolió la rodilla en la sentadilla', trainer_comment: 'Bajá el peso' });
+    stubSessions({ sessions: sessionsPage([session]), details: { 's-1': sessionDetailItem() } });
+    renderWithQuery(<SessionsHistory studentId="st-1" />);
+    await user.click(await screen.findByRole('button', { name: 'Detalle' }));
+    expect(await screen.findByText('Nota del alumno')).toBeVisible();
+    expect(screen.getByText('Me dolió la rodilla en la sentadilla')).toBeVisible();
+    expect(screen.getByLabelText('Comentario del entrenador')).toHaveValue('Bajá el peso');
   });
 
   it('no pide el detalle mientras la fila está cerrada', async () => {

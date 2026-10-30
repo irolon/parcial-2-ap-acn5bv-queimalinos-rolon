@@ -679,7 +679,7 @@ Mismos roles y permisos. La sesión tiene que ser de ese alumno; si no existe o 
 
 El entrenador comenta una sesión de uno de sus alumnos. Solo `trainer` (alumno → 403 `FORBIDDEN`).
 
-**Body:** `{ "trainer_comment": "string de hasta 1000 | null" }`. `""`, solo espacios o `null` borran el comentario (se guarda `null`); cualquier otro tipo o más de 1000 caracteres → 400 `VALIDATION_ERROR` sobre `trainer_comment`.
+**Body:** `{ "trainer_comment": "string de hasta 1000 | null" }`. `""`, solo espacios o `null` borran el comentario (se guarda `null`); el resto se guarda recortado (`trim`); cualquier otro tipo o más de 1000 caracteres → 400 `VALIDATION_ERROR` sobre `trainer_comment`.
 
 **Response 200:** `{ data }` con el resumen de la sesión (misma forma que un ítem de `GET /students/:id/sessions`, ya con el comentario). Sesión inexistente o de un alumno de otro entrenador → 404 `SESSION_NOT_FOUND` (nunca 403, para no revelar qué ids existen). El alumno ve el comentario en su historial.
 

@@ -42,10 +42,10 @@ describe('validateCommentBody', () => {
     expect(validateCommentBody({ trainer_comment: 'Bien' })).toEqual({ trainer_comment: 'Bien' });
     expect(validateCommentBody({ trainer_comment: null })).toEqual({ trainer_comment: null });
   });
-  it('"" y solo espacios pasan a null; el resto se guarda como se envió', () => {
+  it('"" y solo espacios pasan a null; el resto se guarda recortado', () => {
     expect(validateCommentBody({ trainer_comment: '' }).trainer_comment).toBeNull();
     expect(validateCommentBody({ trainer_comment: '  \n ' }).trainer_comment).toBeNull();
-    expect(validateCommentBody({ trainer_comment: ' hola ' }).trainer_comment).toBe(' hola ');
+    expect(validateCommentBody({ trainer_comment: ' hola ' }).trainer_comment).toBe('hola');
   });
   it('acepta 1000 caracteres y rechaza 1001', () => {
     expect(validateCommentBody({ trainer_comment: 'a'.repeat(1000) }).trainer_comment).toHaveLength(1000);

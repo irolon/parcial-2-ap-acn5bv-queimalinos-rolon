@@ -3,7 +3,6 @@ import { commentSession, getSession, listSessions } from '@/api/sessions/session
 
 export const SESSIONS_KEY = ['sessions'];
 const PAGE_SIZE = 20;
-const DETAIL_STALE_MS = 5 * 60 * 1000;
 
 /** Historial paginado de a 20; `getNextPageParam` sale de `meta`. */
 export function useSessionsInfinite(studentId) {
@@ -16,12 +15,15 @@ export function useSessionsInfinite(studentId) {
   });
 }
 
-/** Detalle de una sesión; se pide recién cuando `enabled` (fila expandida) y queda en caché. */
+/**
+ * Detalle de una sesión; se pide recién cuando `enabled` (fila expandida). Sin
+ * `staleTime`: las series pueden llegar después (subida offline del celular o
+ * sesión en curso), así que al reabrir se vuelve a pedir mostrando la caché.
+ */
 export function useSessionDetail(studentId, sessionId, { enabled = true } = {}) {
   return useQuery({
     queryKey: [...SESSIONS_KEY, studentId, 'detail', sessionId],
     queryFn: () => getSession(studentId, sessionId),
-    staleTime: DETAIL_STALE_MS, // una sesión terminada no cambia: se pide una vez
     enabled: Boolean(studentId && sessionId) && enabled,
   });
 }
