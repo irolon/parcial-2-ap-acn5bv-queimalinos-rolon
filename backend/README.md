@@ -17,7 +17,7 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`.
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`.
 
 ```
 src/
@@ -76,6 +76,7 @@ están en la guía: [`docs/proceso/setup-tecnico.md`](../docs/proceso/setup-tecn
 | `npm run format` | Prettier sobre `src`, `tests` y `scripts` |
 | `npm run db:check-anon` | Verifica que la clave `anon` no vea filas por la API pública |
 | `npm run gamification:daily` | Corre una vez el job diario de gamificación (racha, logros, desafíos vencidos); es idempotente |
+| `npm run notifications:inactivity` | Corre una vez la alerta de inactividad (avisa al PT de los alumnos con 3 o más días asignados sin entrenar; un aviso por alumno cada 7 días) |
 
 ## Endpoints
 
@@ -186,7 +187,25 @@ Rol: `trainer` / `student`. Sobre un alumno rige la regla de siempre (trainer du
 
 `PATCH /api/sessions/:id` suma `unlocked_achievements` cuando cierra la sesión.
 
-**Job diario.** Corre a las 03:00 (hora de Buenos Aires) dentro del proceso del server, con un `setTimeout` que se reprograma solo. Lo controla `CRON_ENABLED` (por defecto activo; `false` lo apaga y en `NODE_ENV=test` siempre está apagado). Para correrlo a mano: `npm run gamification:daily`. Recalcula racha, logros y progreso de los desafíos de los alumnos activos y marca `failed` los desafíos vencidos; reejecutarlo no duplica nada.
+**Job diario.** Corre a las 03:00 (hora de Buenos Aires) dentro del proceso del server, con un `setTimeout` que se reprograma solo. Lo controla `CRON_ENABLED` (por defecto activo; `false` lo apaga y en `NODE_ENV=test` siempre está apagado). Para correrlo a mano: `npm run gamification:daily`. Recalcula racha, logros y progreso de los desafíos de los alumnos activos y marca `failed` los desafíos vencidos; reejecutarlo no duplica nada. A las 03:00 el scheduler corre en secuencia los jobs de gamificación y de inactividad (ver abajo); si uno falla, el otro corre igual.
+
+### Notificaciones — Fase 5
+
+Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `notifications` es la fuente de verdad y el push (FCM HTTP v1) es un aviso best-effort sin reintentos ([ADR 0006](../docs/adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1.md)). Tipos, `data` y respuestas en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/notifications?unread_only=&limit=&before=` | Propias, más nuevas primero. `{ data, meta: { unread_count, next_before } }` (20 por página, máx. 100). `next_before` termina en `+00:00`: codificarlo (`%2B`) al reenviarlo |
+| PATCH | `/api/notifications/read-all` | Marca todas como leídas. 204 |
+| PATCH | `/api/notifications/:id/read` | Marca una como leída. 204; inexistente o ajena: 404 `NOTIFICATION_NOT_FOUND` |
+| POST | `/api/notifications/tokens` | `{ token, platform }` con `platform` `android` o `web`. Upsert del token de FCM del dispositivo: 201 si es nuevo, 200 si ya existía |
+| DELETE | `/api/notifications/tokens/:token` | Baja el token del usuario. 204 siempre |
+
+**Push.** Se configura con `FCM_SERVICE_ACCOUNT_PATH` (local) o `FCM_SERVICE_ACCOUNT_JSON` en base64 (VPS); sin credenciales el push queda apagado y las notificaciones se guardan igual. Pasos en [`setup-tecnico.md`](../docs/proceso/setup-tecnico.md). Un token se borra solo cuando FCM lo señala como inválido (`UNREGISTERED` o token mal formado).
+
+**Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno).
+
+**Job de inactividad.** `runInactivityAlerts` recorre los alumnos activos y avisa al PT de los que acumulan 3 o más días asignados sin entrenar desde su última sesión cerrada (desde el alta si nunca entrenaron), como máximo una vez cada 7 días por alumno. Corre a las 03:00 ART justo después del job de gamificación, bajo el mismo `CRON_ENABLED`. A mano: `npm run notifications:inactivity`; correrlo de nuevo es seguro (el límite de 7 días evita duplicados).
 
 ### Autenticación
 

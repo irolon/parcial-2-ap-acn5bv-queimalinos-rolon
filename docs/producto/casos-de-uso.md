@@ -257,7 +257,11 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 2. Para cada logro nuevo, crea un registro en `student_achievements` con `unlocked_at = now`.
 3. Actualiza `current_progress` en los challenges activos del alumno.
 4. Si un challenge llegó al `goal_value`, lo marca como `completed` y desbloquea su `reward_achievement_id` si lo tuviera.
-5. Crea notificaciones en `notifications` para alumno y PT. Las notificaciones llegan a ambas plataformas: FCM para mobile, Web Push para web.
+5. Crea notificaciones en `notifications` ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]):
+   - **Récord (`pr`):** una por sesión, para el alumno y para el PT.
+   - **Logro (`achievement`):** una por logro, para el alumno y para el PT.
+   - Todas quedan guardadas; el **push** (FCM) va solo al alumno. El PT ve los récords y logros de sus alumnos en su listado, sin push. Con varios logros en la misma sesión, el alumno recibe un único push resumen.
+   - Los logros que desbloquea el cron diario quedan solo en la base, sin push.
 
 **Flujo cron diario**
 
@@ -268,6 +272,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujos de error**
 
 - **E1:** Error al evaluar criterios complejos → log y reintento al final del día.
+- **E2:** Falla el aviso (notificación o push) → se loguea y no afecta el cierre de la sesión ni la evaluación de logros.
 
 ---
 
@@ -306,14 +311,14 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujo principal — inactividad**
 
 1. El cron nocturno revisa todos los alumnos activos.
-2. Para cada alumno calcula los días desde su última sesión.
-3. Si supera el umbral configurado por el PT, crea notificación de tipo `inactivity`.
-4. Envía push al PT vía FCM (mobile) y/o Web Push (web), según los clientes que tenga registrados.
+2. Para cada alumno calcula cuántos **días asignados** se saltó desde su última sesión cerrada (misma regla de días asignados que la racha, [[adr/0005-racha-contra-dias-asignados|ADR 0005]]): la unión de los días de sus rutinas activas, o todos los días si no tiene rutina activa. Hoy no cuenta. Si nunca entrenó, se cuenta desde que se dio de alta (`created_at`).
+3. Si se saltó **3 o más** días asignados y no se le avisó al PT por ese alumno en los últimos **7 días**, crea una notificación de tipo `inactivity` para el PT (`data`: `student_id`, `missed_days`, `days_since`). El umbral es fijo, no lo configura el PT.
+4. Envía push al PT vía FCM a todos los dispositivos que tenga registrados (`push_tokens`). La web (Web Push) usa la misma tabla cuando se integre.
 
 **Flujo principal — modificaciones**
 
-1. Cuando una sesión termina con `has_modifications = true`, se genera notificación inmediata para el PT (tipo `routine_modified`) con detalle: qué ejercicio, qué cambió, qué sustituyó.
+1. Cuando una sesión pasa a tener modificaciones (`has_modifications = true`), se genera una notificación inmediata para el PT (tipo `routine_modified`, una sola vez por sesión) con el detalle de qué ejercicio sustituyó el alumno y por cuál, y se le envía push.
 
 **Flujos de error**
 
-- **E1:** FCM o Web Push no disponibles → el registro queda pendiente y se reintenta.
+- **E1:** FCM o Web Push no disponibles (o sin credenciales, o el token es inválido) → la notificación **igual queda guardada** en `notifications`: es la fuente de verdad y el PT la ve en su listado. El push es best-effort y **no se reintenta**. Si FCM indica que un token ya no es válido, se borra de `push_tokens`.

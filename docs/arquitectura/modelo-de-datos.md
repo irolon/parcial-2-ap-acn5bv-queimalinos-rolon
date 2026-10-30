@@ -9,7 +9,7 @@ tags: [arquitectura]
 
 # Modelo de datos (DER)
 
-Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07) (19 tablas: estas 18 + refresh_tokens). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
+Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07) (19 tablas: estas 18 + refresh_tokens). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, y se suma la tabla push_tokens (tarjeta 44); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
 
 ---
 
@@ -281,12 +281,31 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | Campo | Tipo | Clave |
 |---|---|---|
 | id | uuid | PK |
-| user_id | uuid | FK → trainers o students |
+| user_id | uuid | FK → trainers o students (según `user_role`; sin FK dura) |
+| user_role | varchar | trainer / student |
 | type | enum | inactivity / appointment / comment / pr / achievement / routine_modified |
-| title | varchar | |
-| body | text | |
+| title | varchar | máx. 150 caracteres |
+| body | text | opcional |
+| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
 | read | boolean | |
+| push_sent_at | timestamptz | cuándo salió el push a algún dispositivo; null si no se envió (sin credenciales, sin tokens, política "solo base" o error). No hay reintentos |
 | created_at | timestamptz | |
+
+Índice parcial `idx_notifications_inactivity` sobre `((data->>'student_id'), created_at desc) where type = 'inactivity'`: lo usa el job nocturno para respetar el máximo de un aviso de inactividad por alumno cada 7 días. La tabla es la fuente de verdad; el push es un aviso best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
+
+**push_tokens** *(dispositivos que reciben push)*
+
+| Campo | Tipo | Clave |
+|---|---|---|
+| id | uuid | PK |
+| user_id | uuid | trainers o students según `user_role` (sin FK dura, como `notifications`); índice `idx_push_tokens_user` |
+| user_role | varchar | trainer / student |
+| token | text | único: si el token pasa a otro usuario, se reasigna |
+| platform | varchar | android / web |
+| created_at | timestamptz | |
+| last_seen_at | timestamptz | se actualiza cada vez que el cliente registra el token |
+
+RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FCM lo da por inválido (`UNREGISTERED` o token mal formado).
 
 ---
 

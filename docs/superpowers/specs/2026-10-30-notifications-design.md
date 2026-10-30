@@ -103,3 +103,13 @@ Migración `backend/src/database/migrations/2026-10-30-notifications.sql` (y en 
 
 - `npm run lint` y `npm test`. Tests de `missedAssignedDays`, textos, política, `fcm.client` (token cacheado, `UNREGISTERED`, sin credenciales), `notify` (guarda aunque falle el push, borra tokens inválidos), disparadores (una por sesión, sin romper la operación), job (límite semanal, alumno sin rutina, sin sesiones), endpoints y permisos.
 - Supabase dev: alumno QA con rutina de 3 días y 10 días sin entrenar → 1 notificación al PT; segunda corrida → ninguna; con un token inválido registrado, la notificación queda guardada. Con el proyecto Firebase creado: `validate_only` OK y token inválido → `UNREGISTERED` y token borrado.
+
+## 10. Cambios durante la implementación
+
+- **Borrado de tokens más estricto (Q3):** el spec decía "`UNREGISTERED`/404 → se borra el token". Un 404 también lo devuelve FCM por un proyecto equivocado o la API sin habilitar, y borraría todos los tokens. Se borra solo con `UNREGISTERED` o con un 400 que señala `message.token` (token inválido); un 404/400 genérico, un 401, un timeout o un error de red cuentan como error `other` y no borran nada. Un 401 además descarta el access token cacheado.
+- **`FCM_ENABLED` derivado:** quedó como función `isFcmEnabled()` en `fcm.client.js` (memoiza la carga de la credencial; la ruta gana sobre el base64). Las llamadas llevan un timeout de 10 s.
+- **`pushOnly` en `notify.service.js`:** para el push resumen de varios logros (Q12), que no tiene fila propia. Con un solo logro se usa `notify` con `push: true`.
+- **Comentario (`comment`):** además de no vacío, solo notifica si el texto cambió respecto del anterior (`previousComment`), para que reguardar el mismo comentario no repita el aviso.
+- **Scheduler:** vive en `backend/src/shared/utils/scheduler.js` (`startScheduler({ jobs, hour })`); `server.js` le pasa la lista `gamification` → `inactividad`, que corren en secuencia, cada una con su `try/catch`.
+- **Listado:** el orden es `created_at` desc con `id` desc como desempate, y `next_before` es el `created_at` de la última fila solo cuando la página vino llena. Como termina en `+00:00`, el cliente debe codificarlo en la URL (`%2B`) al reenviarlo en `before`.
+- **Migración y schema:** el índice de inactividad y las columnas están además en `schema/06-ai-and-agenda.sql`; `push_tokens` en `07-rls.sql`, `schema-checks.sql` y `check-anon-access.js`, como se planeó.
