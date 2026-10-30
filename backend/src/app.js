@@ -13,6 +13,7 @@ import exercisesRoutes from './routes/exercises/exercises.routes.js';
 import routinesRoutes from './routes/routines/routines.routes.js';
 import routineTemplatesRoutes from './routes/routine-templates/routine-templates.routes.js';
 import sessionsRoutes from './routes/sessions/sessions.routes.js';
+import achievementsRoutes from './routes/gamification/achievements.routes.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp() {
   app.use('/api/routines', routinesRoutes);
   app.use('/api/routine-templates', routineTemplatesRoutes);
   app.use('/api/sessions', sessionsRoutes);
+  app.use('/api/achievements', achievementsRoutes);
 
   // 404 + manejador central de errores (siempre al final).
   app.use(notFoundHandler);

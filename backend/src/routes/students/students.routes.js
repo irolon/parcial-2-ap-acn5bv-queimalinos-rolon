@@ -11,6 +11,7 @@ import {
 import * as studentsController from '../../controllers/students/students.controller.js';
 import bodyMetricsRoutes from '../body-metrics/body-metrics.routes.js';
 import studentSessionsRoutes from '../sessions/student-sessions.routes.js';
+import studentGamificationRoutes from '../gamification/student-gamification.routes.js';
 
 const router = Router();
 
@@ -44,5 +45,8 @@ router.use('/:id/metrics', bodyMetricsRoutes);
 
 // Historial de sesiones del alumno: /students/:id/sessions.
 router.use('/:id/sessions', studentSessionsRoutes);
+
+// Logros y racha del alumno: /students/:id/achievements y /students/:id/streak.
+router.use('/:id', studentGamificationRoutes);
 
 export default router;
