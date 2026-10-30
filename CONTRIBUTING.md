@@ -158,6 +158,8 @@ test/java/com/fittrainer/
   testing/   testing/fakes/   data/<módulo>/   ui/<módulo>/   (mismo árbol que main)
 ```
 
+Excepciones de nombre: `workout` (recurso `sessions`; `session` es la sesión de login) y `sync` (subida offline de `sessions`).
+
 ### Cómo se controla
 
 Las reglas no dependen de acordarse: **el lint o el build fallan**.

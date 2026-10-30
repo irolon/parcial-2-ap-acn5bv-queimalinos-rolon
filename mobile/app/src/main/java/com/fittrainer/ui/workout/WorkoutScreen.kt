@@ -28,6 +28,8 @@ import com.fittrainer.data.workout.isOver
 import com.fittrainer.data.workout.pendingSets
 import com.fittrainer.ui.components.exercise.ExerciseDetail
 import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
+import com.fittrainer.ui.sync.UploadStatusViewModel
+import com.fittrainer.ui.sync.sessionUploadText
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.workout.components.ExerciseListSheet
 import com.fittrainer.ui.workout.components.ExitMenu
@@ -43,7 +45,7 @@ private enum class Overlay { Edit, Technique, Replace, List }
 
 /** Guía Mobile p.13-14 · Sesión activa y timer de descanso. */
 @Composable
-fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewModel()) {
+fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewModel(), uploads: UploadStatusViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var notificationsOn by remember { mutableStateOf(notificationsAllowed(context)) }
@@ -81,8 +83,10 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
     var exit by remember { mutableStateOf<ExitStep?>(null) }
     var overlay by remember { mutableStateOf<Overlay?>(null) }
     Box(Modifier.fillMaxSize().background(FtColors.Background).safeDrawingPadding()) {
-        state.summary?.let {
-            WorkoutSummaryView(it, onExit)
+        state.summary?.let { summary ->
+            val upload by remember(summary.sessionId) { uploads.session(summary.sessionId) }
+                .collectAsStateWithLifecycle(initialValue = null)
+            WorkoutSummaryView(summary, sessionUploadText(upload), onExit)
             return@Box
         }
         WorkoutContent(

@@ -19,6 +19,11 @@ class WorkoutRulesTest {
         assertEquals(90, e.restTotal)
     }
 
+    // Pablo #32 punto 8: el backend rechaza set_number > 100.
+    @Test fun `una rutina con mas de 100 series se corta en 100`() {
+        assertEquals(100, exercise(0, sets = 150).totalSets)
+    }
+
     @Test fun `despues de una serie sigue la proxima del mismo ejercicio`() {
         assertEquals(Cursor(0, 2), workout().nextAfter(Cursor(0, 1)))
     }
@@ -73,7 +78,7 @@ class WorkoutRulesTest {
 
     @Test fun `el resumen cuenta series y minutos`() {
         val w = workout(sets = listOf(doneSet(0, 1), doneSet(0, 2)))
-        assertEquals(WorkoutSummary(2, 52), w.summary(T0.plusSeconds(52 * 60 + 30)))
+        assertEquals(WorkoutSummary(2, 52, "w-1"), w.summary(T0.plusSeconds(52 * 60 + 30)))
         assertEquals(2, w.pendingSets())
     }
 

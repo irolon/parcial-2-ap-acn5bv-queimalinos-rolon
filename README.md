@@ -17,18 +17,30 @@ desarrollo, guía de setup) vive en [`docs/`](docs/inicio.md), que se abre como 
 
 **Tablero de seguimiento del equipo (Trello):** https://trello.com/b/yBj0xE8S
 
-## Estado (backend)
+## Estado
 
-- [x] **Fase 1 — Auth:** register, login (trainer y alumno), refresh, logout + middleware JWT/rol.
-- [x] **Fase 1 — Onboarding:** invitaciones (QR / WhatsApp) + alta de alumno desde invitación.
-- [x] **Fase 2 — Ejercicios:** biblioteca CRUD con ownership + seed de globales.
-- [x] **Fase 2 — Rutinas:** crear/asignar, listar, detalle, editar/desactivar, agregar ejercicios, rutina del día.
-- [x] **Fase 2 — Alumnos:** listado del PT (`GET /students`).
-- [ ] Fase 2 — Plantillas de rutina reutilizables (HU-07).
-- [ ] Fase 3 — Sesiones, tracking y progreso.
-- [ ] **Frontend web** y **mobile** en desarrollo (todo lo de arriba es backend).
+Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que toca) está en [`docs/tarjetas.md`](docs/tarjetas.md).
 
-> DB en Supabase (proyecto **Fit-Trainer**): schema + seed aplicados, conexión verificada.
+**Backend** (detalle de endpoints en [`backend/README.md`](backend/README.md))
+- [x] **Auth:** register, login (trainer y alumno), refresh, logout + middleware JWT/rol.
+- [x] **Onboarding:** invitaciones (QR / WhatsApp) + alta de alumno desde la invitación.
+- [x] **Alumnos:** listado del PT, ficha, edición/baja y medidas corporales con IMC.
+- [x] **Ejercicios:** biblioteca CRUD con ownership + seed de 50 globales.
+- [x] **Rutinas y plantillas:** crear/asignar, editar, rutina del día; plantillas reutilizables que se copian al asignarlas.
+- [x] **Sesiones:** inicio, lote de series idempotente (offline-first) y cierre.
+- [x] **Progreso:** curva de carga por ejercicio (1RM estimado, peso máximo y volumen) y evolución corporal.
+
+**Web** (React)
+- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios y editor de rutinas con plantillas.
+
+**Mobile** (Android)
+- [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer y **sincronización offline** de sesiones con WorkManager.
+
+**En revisión (PRs abiertas):** historial de sesiones con comentarios del PT (#33), vista de progreso en la web (#34), gamificación —logros, rachas y desafíos— (#35) y notificaciones con push FCM y alerta de inactividad (#36).
+
+**Pendiente:** IA (asistente del alumno y del PT, con n8n), logros en la web, agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
+
+> DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
 
 ## Arranque rápido (backend)
 
@@ -53,7 +65,24 @@ La guía completa (cómo generar el `JWT_SECRET`, base nueva, usuarios de prueba
 la web y el emulador, problemas frecuentes) está en
 [`docs/proceso/setup-tecnico.md`](docs/proceso/setup-tecnico.md).
 
-> **Mobile:** el emulador de Android **no** llega a la API por `localhost` —
+### Web
+
+Con el backend levantado:
+
+```bash
+cp frontend/.env.example frontend/.env   # VITE_API_URL=http://localhost:3001/api
+cd frontend
+npm install
+npm run dev                              # web en http://localhost:5173
+```
+
+`npm run lint` y `npm test` (Vitest) antes de cada PR, igual que en el backend.
+
+### Mobile
+
+Abrí `mobile/` en Android Studio y copiá `mobile/.env.example` a `mobile/.env`.
+
+> El emulador de Android **no** llega a la API por `localhost` —
 > tiene que ser **`10.0.2.2`**. Está explicado en `mobile/.env.example`.
 
 ### Docker (opcional)

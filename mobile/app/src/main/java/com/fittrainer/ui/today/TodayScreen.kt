@@ -25,6 +25,10 @@ import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
 import com.fittrainer.ui.components.exercise.ExerciseRow
 import com.fittrainer.ui.components.exercise.SectionLabel
+import com.fittrainer.ui.sync.UploadStatusViewModel
+import com.fittrainer.ui.sync.UploadsNoticeUi
+import com.fittrainer.ui.sync.components.UploadsNotice
+import com.fittrainer.ui.sync.uploadsNoticeUi
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.today.components.ActiveWorkoutCard
@@ -42,10 +46,13 @@ fun TodayScreen(
     onOpenWorkout: () -> Unit,
     viewModel: TodayViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
+    uploads: UploadStatusViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val workoutActive by entry.hasActive.collectAsStateWithLifecycle()
     val entryError by entry.error.collectAsStateWithLifecycle()
+    val uploadCounts by uploads.counts.collectAsStateWithLifecycle()
+    val manualUpload by uploads.manual.collectAsStateWithLifecycle()
     // ON_START: al entrar a la pestaña y cada vez que la app vuelve al frente.
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
@@ -59,6 +66,9 @@ fun TodayScreen(
         onContinueWorkout = onOpenWorkout,
         onRefresh = viewModel::onPullToRefresh,
         onDismissNotice = { if (entryError != null) entry.dismissError() else viewModel.dismissNotice() },
+        uploads = uploadsNoticeUi(uploadCounts, manualUpload),
+        onUploadNow = uploads::uploadNow,
+        onDismissFailures = uploads::dismissFailures,
     )
 }
 
@@ -71,6 +81,9 @@ fun TodayBody(
     onContinueWorkout: () -> Unit,
     onRefresh: () -> Unit,
     onDismissNotice: () -> Unit,
+    uploads: UploadsNoticeUi? = null,
+    onUploadNow: () -> Unit = {},
+    onDismissFailures: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
     PullToRefreshBox(
@@ -85,6 +98,7 @@ fun TodayBody(
         ) {
             item { TodayHeader(state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine) }
             state.notice?.let { notice -> item { NoticeBanner(notice, onDismissNotice) } }
+            uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
             if (showsActiveWorkoutCard(state.content, workoutActive)) item { ActiveWorkoutCard(onContinueWorkout) }
             todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it })
         }
