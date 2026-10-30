@@ -53,6 +53,35 @@ describe('updateChallenge / deleteChallenge', () => {
   });
 
   it.each([
+    ['goal_type', { goal_type: 'volume' }],
+    ['goal_value', { goal_value: 100 }],
+  ])('cambiar %s con asignaciones activas → 409 y no actualiza', async (_n, fields) => {
+    repo.findById.mockResolvedValue(challengeRow());
+    repo.hasActiveAssignments.mockResolvedValue(true);
+    await expect(challenges.updateChallenge(TRAINER, 'ch-1', fields)).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'CHALLENGE_IN_USE',
+    });
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('cambiar la meta sin asignaciones activas actualiza', async () => {
+    repo.findById.mockResolvedValue(challengeRow());
+    repo.hasActiveAssignments.mockResolvedValue(false);
+    repo.update.mockResolvedValue(challengeRow({ goal_value: 100 }));
+    await challenges.updateChallenge(TRAINER, 'ch-1', { goal_value: 100 });
+    expect(repo.update).toHaveBeenCalledWith('ch-1', { goal_value: 100 });
+  });
+
+  it('editar nombre o repetir la misma meta con asignaciones activas no bloquea', async () => {
+    repo.findById.mockResolvedValue(challengeRow());
+    repo.hasActiveAssignments.mockResolvedValue(true);
+    repo.update.mockResolvedValue(challengeRow());
+    await challenges.updateChallenge(TRAINER, 'ch-1', { name: 'Nuevo', goal_value: 10, goal_type: 'sessions_count' });
+    expect(repo.update).toHaveBeenCalled();
+  });
+
+  it.each([
     ['global', challengeRow({ trainer_id: null })],
     ['ajeno', challengeRow({ trainer_id: 'tr-2' })],
     ['inexistente', null],
@@ -66,9 +95,9 @@ describe('updateChallenge / deleteChallenge', () => {
     expect(repo.remove).not.toHaveBeenCalled();
   });
 
-  it('borrar con asignaciones activas → 409', async () => {
+  it('borrar con alguna asignación (activa o terminada) → 409', async () => {
     repo.findById.mockResolvedValue(challengeRow());
-    repo.hasActiveAssignments.mockResolvedValue(true);
+    repo.hasAssignments.mockResolvedValue(true);
     await expect(challenges.deleteChallenge(TRAINER, 'ch-1')).rejects.toMatchObject({
       statusCode: 409,
       code: 'CHALLENGE_IN_USE',
@@ -76,8 +105,9 @@ describe('updateChallenge / deleteChallenge', () => {
     expect(repo.remove).not.toHaveBeenCalled();
   });
 
-  it('borrar sin activas elimina', async () => {
+  it('borrar sin asignaciones elimina', async () => {
     repo.findById.mockResolvedValue(challengeRow());
+    repo.hasAssignments.mockResolvedValue(false);
     await challenges.deleteChallenge(TRAINER, 'ch-1');
     expect(repo.remove).toHaveBeenCalledWith('ch-1');
   });

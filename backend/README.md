@@ -162,7 +162,7 @@ Escritura del alumno: solo rol `student`; el `student_id` sale del token. Sesió
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
-| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
+| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed, unlocked_achievements } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
 | PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
 | GET | `/api/students/:id/sessions?page=&limit=` | Historial paginado `{ data, meta }`, más recientes primero (trainer: sus alumnos; student: él mismo): `routine`, `duration_min`, `sets`, `volume_kg`, `has_pr`, `trainer_comment` |
 | GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
@@ -179,15 +179,15 @@ Rol: `trainer` / `student`. Sobre un alumno rige la regla de siempre (trainer du
 | GET | `/api/students/:id/streak` | trainer dueño / el propio alumno | `{ current_streak_days, longest_streak_days, last_session_date }` ([ADR 0005](../docs/adr/0005-racha-contra-dias-asignados.md)) |
 | GET | `/api/challenges` | trainer/student | Globales + del entrenador. Query `goal_type`; `active_only` se acepta y se ignora |
 | POST | `/api/challenges` | trainer | Crea un desafío (`duration_days` obligatorio). 201 |
-| PATCH | `/api/challenges/:id` | trainer dueño | Edición parcial; global o ajeno → 404 `CHALLENGE_NOT_FOUND` |
-| DELETE | `/api/challenges/:id` | trainer dueño | 204; con asignaciones activas 409 `CHALLENGE_IN_USE` |
+| PATCH | `/api/challenges/:id` | trainer dueño | Edición parcial; global o ajeno → 404 `CHALLENGE_NOT_FOUND`; cambiar `goal_type`/`goal_value` con asignaciones activas → 409 `CHALLENGE_IN_USE` |
+| DELETE | `/api/challenges/:id` | trainer dueño | 204; con cualquier asignación (aun terminada) 409 `CHALLENGE_IN_USE`, para conservar el historial |
 | POST | `/api/challenges/:id/assignments` | trainer | `{ student_ids }` (1 a 50). 201 `{ created, skipped }` |
 | POST | `/api/students/:id/challenges` | trainer dueño / el propio alumno | `{ challenge_id }`. 201; ya activo 409 `CHALLENGE_ALREADY_ACTIVE` |
 | GET | `/api/students/:id/challenges` | trainer dueño / el propio alumno | Asignaciones con `current_progress`, `progress_pct` y `status` |
 
-`PATCH /api/sessions/:id` suma `unlocked_achievements` cuando cierra la sesión.
+`PATCH /api/sessions/:id`, `POST /api/sessions` (cuando queda cerrada) y `POST /api/sessions/:id/sets` (sobre una sesión cerrada) suman `unlocked_achievements` dentro de `data` (`[]` si no hubo).
 
-**Job diario.** Corre a las 03:00 (hora de Buenos Aires) dentro del proceso del server, con un `setTimeout` que se reprograma solo. Lo controla `CRON_ENABLED` (por defecto activo; `false` lo apaga y en `NODE_ENV=test` siempre está apagado). Para correrlo a mano: `npm run gamification:daily`. Recalcula racha, logros y progreso de los desafíos de los alumnos activos y marca `failed` los desafíos vencidos; reejecutarlo no duplica nada. A las 03:00 el scheduler corre en secuencia los jobs de gamificación y de inactividad (ver abajo); si uno falla, el otro corre igual.
+**Job diario.** Corre a las 03:00 (hora de Buenos Aires) dentro del proceso del server, con un `setTimeout` que se reprograma solo. Lo controla `CRON_ENABLED` (por defecto activo; `false` lo apaga y en `NODE_ENV=test` siempre está apagado). Para correrlo a mano: `npm run gamification:daily`. Recalcula racha, logros y progreso de los desafíos de los alumnos activos y marca `failed` los desafíos vencidos hace más de 2 días (`CHALLENGE_GRACE_DAYS`: hasta entonces siguen activos y una sesión offline sincronizada tarde todavía los puede completar); reejecutarlo no duplica nada. A las 03:00 el scheduler corre en secuencia los jobs de gamificación y de inactividad (ver abajo); si uno falla, el otro corre igual.
 
 ### Notificaciones — Fase 5
 

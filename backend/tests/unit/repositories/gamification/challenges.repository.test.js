@@ -37,6 +37,15 @@ describe('challenges.repository', () => {
     await expect(challenges.hasActiveAssignments('c')).resolves.toBe(false);
   });
 
+  it('hasAssignments cuenta en cualquier estado (sin filtrar por status)', async () => {
+    result.current = { count: 1, error: null };
+    await expect(challenges.hasAssignments('c')).resolves.toBe(true);
+    expect(q.eq).toHaveBeenCalledTimes(1);
+    expect(q.eq).toHaveBeenCalledWith('challenge_id', 'c');
+    result.current = { count: 0, error: null };
+    await expect(challenges.hasAssignments('c')).resolves.toBe(false);
+  });
+
   it('achievementExists', async () => {
     result.current = { data: { id: 'a' }, error: null };
     await expect(challenges.achievementExists('a')).resolves.toBe(true);

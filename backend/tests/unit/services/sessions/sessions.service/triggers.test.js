@@ -33,7 +33,7 @@ describe('sessions.service · disparadores de notificaciones', () => {
     mockRepo.findSessionById.mockResolvedValue(null);
     mockRepo.insertSession.mockResolvedValue(CLOSED);
     const out = await service.create(STUDENT_ID, { ...BODY, finished_at: CLOSED.finished_at });
-    expect(out).toEqual({ session: CLOSED, created: true });
+    expect(out).toEqual({ session: CLOSED, created: true, unlocked_achievements: UNLOCKED });
     expect(mockTriggers.onSessionClosed).toHaveBeenCalledWith({
       studentId: STUDENT_ID, session: CLOSED, unlocked: UNLOCKED,
     });

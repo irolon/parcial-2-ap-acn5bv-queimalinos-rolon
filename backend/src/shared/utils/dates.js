@@ -2,7 +2,9 @@
  * Fechas locales del negocio (Buenos Aires). El VPS corre en UTC: el día que
  * vale para rachas y semanas lo define la zona horaria, no el reloj del server.
  */
-import { TIMEZONE } from '../../models/routines/routine.model.js';
+
+/** Zona horaria del negocio (la comparten rutinas, rachas y semanas). */
+export const TIMEZONE = 'America/Argentina/Buenos_Aires';
 
 /** Milisegundos de un día. */
 export const DAY_MS = 86_400_000;

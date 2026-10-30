@@ -553,11 +553,31 @@ Inicia (o cierra, o reintenta) una sesión. Solo alumnos; el `student_id` sale d
 `id` y `started_at` son obligatorios; `finished_at` ≥ `started_at`.
 
 - **`routine_id`:** si no es una rutina del alumno (ajena, o borrada antes de que el celular sincronice) la sesión se guarda con `routine_id = null`; el request no se rechaza.
-- **201** `{ data: session }` si el `id` es nuevo.
+- **201** `{ data: session }` si el `id` es nuevo (con `unlocked_achievements`, ver abajo).
 - **200** si el `id` ya existe y es del alumno (reintento): se completan `finished_at`, `rpe` y `notes` que vengan **solo si en la base están en `null`**: nunca se pisa un valor ya guardado (las correcciones van por `PATCH`), y si no hay nada para completar se devuelve la sesión tal cual. `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran). Un `finished_at` anterior al `started_at` guardado se ignora y se guardan los demás campos.
 - **409** `SESSION_ID_CONFLICT` si el `id` es de otro alumno.
 
 `session` = `{ id, student_id, routine_id, started_at, finished_at, rpe, notes, has_modifications }`.
+
+**Logros:** si la sesión queda **cerrada** (llega con `finished_at`, o el reintento lo completa) el backend evalúa los logros, igual que el `PATCH`, y suma `unlocked_achievements` dentro de `data` (es el flujo del celular offline: sube la sesión ya cerrada). Si queda abierta, o si la evaluación falla (se loguea y la sesión se guarda igual), el arreglo es `[]`.
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "student_id": "uuid",
+    "routine_id": null,
+    "started_at": "2026-10-27T10:00:00-03:00",
+    "finished_at": "2026-10-27T11:00:00-03:00",
+    "rpe": 7,
+    "notes": null,
+    "has_modifications": false,
+    "unlocked_achievements": [
+      { "code": "FIRST_SESSION", "name": "Primera sesión", "category": "milestone" }
+    ]
+  }
+}
+```
 
 ### POST /sessions/:id/sets
 
@@ -593,10 +613,15 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
 {
   "data": {
     "saved": [{ "id": "uuid", "created": true }],
-    "failed": [{ "id": "uuid", "index": 3, "code": "EXERCISE_NOT_FOUND", "message": "…" }]
+    "failed": [{ "id": "uuid", "index": 3, "code": "EXERCISE_NOT_FOUND", "message": "…" }],
+    "unlocked_achievements": [
+      { "code": "FIRST_PR", "name": "Primer récord", "category": "pr" }
+    ]
   }
 }
 ```
+
+`unlocked_achievements` (aditivo, dentro de `data`): si la sesión ya está **cerrada** y se guardó al menos una serie, el backend reevalúa los logros (las series pueden crear récords) y devuelve los recién desbloqueados; en cualquier otro caso (sesión abierta, ninguna serie guardada o evaluación fallida) es `[]`.
 
 `created` es `false` si la serie ya existía en esta sesión (se actualizó). `index` es la posición en `sets`. Los `id` vuelven en minúscula, aunque se hayan mandado en mayúscula.
 
@@ -626,7 +651,25 @@ Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesione
 
 **Body:** al menos uno de `finished_at` (ISO, ≥ `started_at`), `rpe` (entero 1-10) y `notes` (máx. 1000). Se puede repetir (corregir RPE o notas). Los campos en `null` se ignoran (como ausentes); si todos vienen en `null` o el body está vacío, 400.
 
-**Response 200:** `{ data: session }` más `unlocked_achievements`: los logros que se desbloquearon con este cierre, `[{ "code": "FIRST_SESSION", "name": "Primera sesión", "category": "milestone" }]` (arreglo vacío si no hubo o si el body no trae `finished_at`). Si la evaluación de logros falla, el cierre responde igual con `[]` (se loguea). Sesión ajena o inexistente: 404 `SESSION_NOT_FOUND`.
+**Response 200:** `{ data }` con la sesión **más** `unlocked_achievements` dentro de `data`: los logros que se desbloquearon con este cierre (arreglo vacío si no hubo o si el body no trae `finished_at`). Si la evaluación de logros falla, el cierre responde igual con `[]` (se loguea). Sesión ajena o inexistente: 404 `SESSION_NOT_FOUND`.
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "student_id": "uuid",
+    "routine_id": "uuid",
+    "started_at": "2026-10-27T10:00:00-03:00",
+    "finished_at": "2026-10-27T11:00:00-03:00",
+    "rpe": 7,
+    "notes": null,
+    "has_modifications": false,
+    "unlocked_achievements": [
+      { "code": "FIRST_SESSION", "name": "Primera sesión", "category": "milestone" }
+    ]
+  }
+}
+```
 
 ### GET /students/:id/sessions
 
@@ -808,13 +851,13 @@ Solo `trainer` (alumno → 403 `FORBIDDEN`). Crea un desafío propio.
 
 ### PATCH /challenges/:id
 
-Solo `trainer`, sobre un desafío **propio**. Body parcial con cualquiera de los campos de `POST /challenges` (al menos uno, si no 400 `VALIDATION_ERROR`). Un desafío global, de otro entrenador o inexistente → 404 `CHALLENGE_NOT_FOUND`. Editarlo no cambia las asignaciones ya hechas (`ends_at` queda como estaba).
+Solo `trainer`, sobre un desafío **propio**. Body parcial con cualquiera de los campos de `POST /challenges` (al menos uno, si no 400 `VALIDATION_ERROR`). Un desafío global, de otro entrenador o inexistente → 404 `CHALLENGE_NOT_FOUND`. Editarlo no cambia las asignaciones ya hechas (`ends_at` queda como estaba). Si cambia `goal_type` o `goal_value` (con un valor distinto del actual) y el desafío tiene asignaciones **activas** → 409 `CHALLENGE_IN_USE`: la meta nueva recalcularía el progreso de quienes ya lo están haciendo.
 
 **200 OK:** `{ data }` con el desafío actualizado.
 
 ### DELETE /challenges/:id
 
-Solo `trainer`, sobre un desafío propio. Si tiene asignaciones **activas** → 409 `CHALLENGE_IN_USE`. Global, ajeno o inexistente → 404 `CHALLENGE_NOT_FOUND`.
+Solo `trainer`, sobre un desafío propio. Si tiene **alguna** asignación (activa, completada, fallida o abandonada) → 409 `CHALLENGE_IN_USE`, para no perder el historial de los alumnos (`student_challenges` borra en cascada). Global, ajeno o inexistente → 404 `CHALLENGE_NOT_FOUND`.
 
 **204 No Content.**
 

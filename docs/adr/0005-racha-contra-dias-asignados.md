@@ -70,6 +70,7 @@ dependen de ella.
 - `student_streaks` es una tabla derivada: se puede borrar y se reconstruye
   sola (el `GET` la calcula si falta la fila). Corre con RLS activado y sin
   políticas, como el resto (ADR 0001).
+- Si dos evaluaciones del mismo alumno corren a la vez, la que escribe última gana y puede pisar la racha con un valor viejo; la próxima evaluación o el job de las 03:00 la corrige, porque se recalcula siempre desde el historial.
 - Una racha rota se refleja después de la próxima evaluación (post-sesión o
   job diario), no en el instante en que pasa el día.
 - El día se interpreta en hora de Buenos Aires: una sesión cerrada a las 23:30

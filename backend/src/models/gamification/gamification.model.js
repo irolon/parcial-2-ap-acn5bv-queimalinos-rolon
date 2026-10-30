@@ -28,6 +28,9 @@ export const CHALLENGE_STATUS = {
   ABANDONED: 'abandoned',
 };
 
+/** Días de gracia tras `ends_at` antes de marcar `failed`: deja sincronizar sesiones offline tardías. */
+export const CHALLENGE_GRACE_DAYS = 2;
+
 export const ACHIEVEMENT_COLUMNS = 'id, code, name, description, icon_url, category, criteria';
 export const STUDENT_ACHIEVEMENT_COLUMNS = 'id, student_id, achievement_id, unlocked_at, context';
 export const CHALLENGE_COLUMNS =

@@ -68,7 +68,7 @@ export async function addSets(studentId, sessionId, { sets }) {
     });
   }
   if (candidates.length > 0) candidates = await checkExercises(studentId, candidates, failed);
-  if (candidates.length === 0) return { saved: [], failed: sortByIndex(failed) };
+  if (candidates.length === 0) return { saved: [], failed: sortByIndex(failed), unlocked_achievements: [] };
 
   await resolveRoutineLinks(session, candidates);
   const saved = await persistSets(session.id, candidates, existingIds, failed);
@@ -81,14 +81,16 @@ export async function addSets(studentId, sessionId, { sets }) {
   }
 
   // Series sobre una sesión ya cerrada pueden cambiar récords y logros.
+  const unlocked_achievements =
+    session.finished_at && saved.length > 0 ? await safeEvaluate(studentId) : [];
   if (session.finished_at && saved.length > 0) {
-    const unlocked = await safeEvaluate(studentId);
-    await onSessionClosed({ studentId, session, unlocked });
+    await onSessionClosed({ studentId, session, unlocked: unlocked_achievements });
   }
 
   return {
     saved: saved.map(({ value, created }) => ({ id: value.id, created })),
     failed: sortByIndex(failed),
+    unlocked_achievements,
   };
 }
 

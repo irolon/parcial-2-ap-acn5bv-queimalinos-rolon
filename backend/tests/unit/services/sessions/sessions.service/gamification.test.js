@@ -45,20 +45,23 @@ describe('sessions.service · evaluación de logros', () => {
     const res = await service.create(STUDENT_ID, { ...BODY, finished_at: FINISHED });
     expect(res.created).toBe(true);
     expect(mockEvaluate.evaluateStudent).toHaveBeenCalledWith(STUDENT_ID);
+    expect(res.unlocked_achievements).toEqual([BADGE]);
   });
 
   it('POST que crea una sesión abierta no evalúa', async () => {
     mockRepo.findSessionById.mockResolvedValueOnce(null);
     mockRepo.insertSession.mockResolvedValueOnce(STORED);
-    await service.create(STUDENT_ID, BODY);
+    const res = await service.create(STUDENT_ID, BODY);
     expect(mockEvaluate.evaluateStudent).not.toHaveBeenCalled();
+    expect(res.unlocked_achievements).toEqual([]);
   });
 
   it('reintento que completa finished_at evalúa', async () => {
     mockRepo.findSessionById.mockResolvedValueOnce(STORED);
     mockRepo.updateSession.mockResolvedValueOnce({ ...STORED, finished_at: FINISHED });
-    await service.create(STUDENT_ID, { ...BODY, finished_at: FINISHED });
+    const res = await service.create(STUDENT_ID, { ...BODY, finished_at: FINISHED });
     expect(mockEvaluate.evaluateStudent).toHaveBeenCalledTimes(1);
+    expect(res.unlocked_achievements).toEqual([BADGE]);
   });
 
   it('si evaluateStudent tira, POST responde igual', async () => {
@@ -66,6 +69,10 @@ describe('sessions.service · evaluación de logros', () => {
     mockRepo.findSessionById.mockResolvedValueOnce(null);
     mockRepo.insertSession.mockResolvedValueOnce({ ...STORED, finished_at: FINISHED });
     const res = await service.create(STUDENT_ID, { ...BODY, finished_at: FINISHED });
-    expect(res).toEqual({ session: { ...STORED, finished_at: FINISHED }, created: true });
+    expect(res).toEqual({
+      session: { ...STORED, finished_at: FINISHED },
+      created: true,
+      unlocked_achievements: [],
+    });
   });
 });
