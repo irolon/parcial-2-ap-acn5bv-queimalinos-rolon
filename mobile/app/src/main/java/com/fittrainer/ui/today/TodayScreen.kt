@@ -98,9 +98,12 @@ fun TodayBody(
         ) {
             item { TodayHeader(state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine) }
             state.notice?.let { notice -> item { NoticeBanner(notice, onDismissNotice) } }
-            uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
+            val uploadsItem: LazyListScope.() -> Unit = {
+                uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
+            }
+            if (!showsWeek(state.content)) uploadsItem()
             if (showsActiveWorkoutCard(state.content, workoutActive)) item { ActiveWorkoutCard(onContinueWorkout) }
-            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it })
+            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it }, uploadsItem)
         }
     }
     selected?.let { exercise ->
@@ -113,11 +116,13 @@ private fun LazyListScope.todayItems(
     workoutActive: Boolean,
     onStartWorkout: (Routine) -> Unit,
     onExerciseClick: (RoutineExercise) -> Unit,
+    uploadsItem: LazyListScope.() -> Unit,
 ) {
     val today = state.today.dayOfWeek
     when (val content = state.content) {
         is TodayContent.Training -> {
             item { WeekStrip(content.routine.days, today) }
+            uploadsItem() // El aviso de subidas va debajo de la semana (si no hay semana, arriba de todo).
             item { RoutineHeroCard(content.routine, workoutActive) { onStartWorkout(content.routine) } }
             item { SectionLabel("PLAN DE HOY", content.routine.exercises.size.toString()) }
             items(content.routine.exercises, key = { it.id }) { exercise ->
@@ -127,6 +132,7 @@ private fun LazyListScope.todayItems(
         is TodayContent.Rest -> {
             // La unión de todas las rutinas, coherente con "Tu próximo entreno es el …".
             item { WeekStrip(content.trainingDays, today) }
+            uploadsItem()
             item { RestState(content.nextDay) }
         }
         TodayContent.NoRoutine -> item { NoRoutineState() }
@@ -134,3 +140,5 @@ private fun LazyListScope.todayItems(
         null -> Unit
     }
 }
+
+private fun showsWeek(content: TodayContent?) = content is TodayContent.Training || content is TodayContent.Rest

@@ -9,7 +9,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -17,8 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,15 +38,18 @@ import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
 import com.fittrainer.ui.sync.UploadStatusViewModel
 import com.fittrainer.ui.sync.sessionUploadText
 import com.fittrainer.ui.theme.FtColors
+import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.components.ExerciseListSheet
 import com.fittrainer.ui.workout.components.ExitMenu
 import com.fittrainer.ui.workout.components.ExitStep
 import com.fittrainer.ui.workout.components.ManualEntryDialog
 import com.fittrainer.ui.workout.components.ReplaceSheet
 import com.fittrainer.ui.workout.components.WorkoutSummaryView
+import com.fittrainer.ui.workout.service.WorkoutScreenVisibility
 import com.fittrainer.ui.workout.service.WorkoutService
 import com.fittrainer.ui.workout.service.notificationsAllowed
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private enum class Overlay { Edit, Technique, Replace, List }
 
@@ -58,10 +68,11 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
             askPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
-    // Volviendo de Ajustes: el permiso pudo cambiar.
+    // Volviendo de Ajustes: el permiso pudo cambiar. A la vista, el fin del descanso se avisa adentro.
     LifecycleResumeEffect(Unit) {
         notificationsOn = notificationsAllowed(context)
-        onPauseOrDispose { }
+        WorkoutScreenVisibility.visible = true
+        onPauseOrDispose { WorkoutScreenVisibility.visible = false }
     }
     LaunchedEffect(state.closed) { if (state.closed) onExit() }
 
@@ -79,6 +90,10 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
         view.keepScreenOn = state.isResting
         onDispose { view.keepScreenOn = false }
     }
+
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    WorkoutFeedbackEffects(state, viewModel::now, snackbar)
 
     var exit by remember { mutableStateOf<ExitStep?>(null) }
     var overlay by remember { mutableStateOf<Overlay?>(null) }
@@ -109,8 +124,13 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
                     )
                 },
                 onDismissError = viewModel::dismissError,
+                onReplaceLocked = { scope.launch { snackbar.flash(REPLACE_LOCKED) } },
             ),
         )
+        // Encima de Técnica / Reemplazar: el aviso no tapa los botones mientras se ve.
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(start = Spacing.lg, end = Spacing.lg, bottom = 88.dp)) {
+            Snackbar(it, containerColor = FtColors.Elevated, contentColor = FtColors.TextPrimary)
+        }
     }
     val workout = state.workout ?: return
     val exercise = state.exercise ?: return

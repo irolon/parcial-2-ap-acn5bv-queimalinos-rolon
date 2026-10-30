@@ -92,7 +92,8 @@ class WorkoutService : Service() {
         val running = workout.rest?.takeUnless { it.isPaused }?.endsAt
         // La pantalla cerró el descanso al llegar a 0 antes que el service: igual hay que avisar.
         // Si una emisión nueva cancela nextLoad, runningRestEnd sigue sin tocar y la siguiente vuelve a avisar.
-        if (restJustEnded(runningRestEnd, running, now)) WorkoutNotifications.notifyRestDone(this, nextLoad(workout))
+        val ended = runningRestEnd
+        if (ended != null && restJustEnded(ended, running, now)) WorkoutNotifications.notifyRestDone(this, nextLoad(workout), ended)
         // Arrancó otro descanso: el aviso del anterior ya no corresponde.
         if (running != null && running != runningRestEnd) WorkoutNotifications.cancelRestDone(this)
         runningRestEnd = running
@@ -105,7 +106,7 @@ class WorkoutService : Service() {
             awaitRestEnd(
                 left,
                 prepare = { nextLoad(workout) },
-                notify = { WorkoutNotifications.notifyRestDone(this, it) },
+                notify = { WorkoutNotifications.notifyRestDone(this, it, running) },
                 ended = { runningRestEnd = null },
             )
             repository.endRestIfOver(workout.ownerId)

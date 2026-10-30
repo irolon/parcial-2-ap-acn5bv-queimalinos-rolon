@@ -16,6 +16,7 @@ import com.fittrainer.MainActivity
 import com.fittrainer.R
 import com.fittrainer.data.workout.Load
 import com.fittrainer.data.workout.Workout
+import java.time.Instant
 
 /** En Android 13+ hace falta el permiso; antes, alcanza con que el usuario no las haya apagado. */
 fun notificationsAllowed(context: Context): Boolean =
@@ -65,8 +66,11 @@ object WorkoutNotifications {
             .build()
     }
 
-    fun notifyRestDone(context: Context, next: Load) {
-        if (!notificationsAllowed(context)) return
+    /** [restEnd]: el endsAt del descanso que terminó; queda anotado para que la pantalla no lo repita. */
+    fun notifyRestDone(context: Context, next: Load, restEnd: Instant) {
+        // Con la sesión a la vista avisa la pantalla (WorkoutFeedback): sin banner del sistema encima.
+        if (WorkoutScreenVisibility.visible || !notificationsAllowed(context)) return
+        WorkoutScreenVisibility.notifiedRestEnd = restEnd
         val notification = NotificationCompat.Builder(context, CHANNEL_REST_DONE)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle(REST_DONE_TITLE)
