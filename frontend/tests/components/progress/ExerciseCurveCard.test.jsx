@@ -73,6 +73,12 @@ describe('CurveTooltip', () => {
     expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
   });
 
+  it('con el rango en Todo no sugiere probar con Todo', () => {
+    render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="all" totalDays={10} />);
+    expect(screen.queryByText(/probá con Todo/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Llevás 1 de 3/)).toBeInTheDocument();
+  });
+
   it('con menos de 3 días en total mantiene "Llevás N de 3"', () => {
     render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="3m" totalDays={2} />);
     expect(screen.getByText(/Llevás 1 de 3 entrenamientos/)).toBeInTheDocument();
