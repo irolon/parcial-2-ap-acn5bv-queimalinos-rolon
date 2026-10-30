@@ -49,6 +49,25 @@ describe('ProgressPanel', () => {
     fireEvent.change(screen.getByLabelText('Rango'), { target: { value: 'all' } });
     await waitFor(() => expect(progressUrls(fetchMock, 'overview')).toHaveLength(2));
     expect(progressUrls(fetchMock, 'overview')[1]).not.toContain('from=');
+    expect(screen.getByLabelText('Rango')).toHaveValue('all');
+  });
+
+  it('al cambiar el rango se conservan el ejercicio y la métrica elegidos', async () => {
+    const fetchMock = stubProgress();
+    renderWithQuery(<ProgressPanel studentId="st-9" />);
+    await screen.findByRole('img', { name: 'Progresión de Press banca' });
+    fireEvent.change(screen.getByLabelText('Ejercicio'), { target: { value: 'ex-2' } });
+    await waitFor(() => expect(progressUrls(fetchMock, 'exercise')).toHaveLength(2));
+    await screen.findByRole('button', { name: 'Peso máximo' });
+    fireEvent.click(screen.getByRole('button', { name: 'Peso máximo' }));
+
+    fireEvent.change(screen.getByLabelText('Rango'), { target: { value: '1m' } });
+    expect(screen.getByLabelText('Ejercicio')).toHaveValue('ex-2');
+    await waitFor(() => expect(progressUrls(fetchMock, 'overview')).toHaveLength(2));
+    await waitFor(() => expect(progressUrls(fetchMock, 'exercise')).toHaveLength(3));
+    expect(progressUrls(fetchMock, 'exercise')[2]).toContain('/progress/exercise/ex-2');
+    expect(await screen.findByRole('button', { name: 'Peso máximo' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Ejercicio')).toHaveValue('ex-2');
   });
 
   it('cambiar de ejercicio resetea la métrica a la por defecto del nuevo', async () => {

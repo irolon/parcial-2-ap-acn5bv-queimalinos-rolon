@@ -8,6 +8,8 @@ export function useProgressOverview(studentId, range) {
     queryKey: [...PROGRESS_KEY, 'overview', studentId, range?.from ?? null, range?.to ?? null],
     queryFn: () => getOverview(studentId, range),
     enabled: Boolean(studentId),
+    // Al cambiar el rango se mantiene el overview anterior (mismo alumno) para no desmontar la barra.
+    placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[2] === studentId ? prev : undefined),
   });
 }
 

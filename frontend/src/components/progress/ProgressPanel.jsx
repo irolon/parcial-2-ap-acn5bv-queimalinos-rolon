@@ -17,9 +17,8 @@ const EMPTY = {
   text: 'Después de 3 entrenamientos vas a ver tu progresión acá.',
 };
 
-function Content({ studentId, overview, range, onRange, rangeObj, showBody }) {
-  const [chosenId, setChosenId] = useState(null);
-  const [chosenMetric, setChosenMetric] = useState(null);
+function Content({ studentId, overview, sel, rangeObj, showBody }) {
+  const { range, setRange, chosenId, setChosenId, chosenMetric, setChosenMetric } = sel;
   const exerciseId = overview.exercises.some((e) => e.id === chosenId) ? chosenId : overview.exercises[0].id;
   const exerciseQuery = useExerciseProgress(exerciseId, studentId, rangeObj);
   const data = exerciseQuery.data;
@@ -38,7 +37,7 @@ function Content({ studentId, overview, range, onRange, rangeObj, showBody }) {
         exerciseId={exerciseId}
         onExercise={pickExercise}
         range={range}
-        onRange={onRange}
+        onRange={setRange}
       />
       <QueryState query={exerciseQuery}>
         {(d) => (
@@ -56,7 +55,11 @@ function Content({ studentId, overview, range, onRange, rangeObj, showBody }) {
 
 /** Progresión de un alumno: ejercicio y rango elegidos, KPIs, curva, volumen semanal y (alumno) medidas. */
 export default function ProgressPanel({ studentId, showBody = false }) {
+  // La selección vive acá arriba para que sobreviva a los refetch del overview (cambio de rango).
   const [range, setRange] = useState(DEFAULT_RANGE);
+  const [chosenId, setChosenId] = useState(null);
+  const [chosenMetric, setChosenMetric] = useState(null);
+  const sel = { range, setRange, chosenId, setChosenId, chosenMetric, setChosenMetric };
   // El rango se calcula una vez por valor: así la query key no cambia en cada render.
   const rangeObj = useMemo(() => rangeFor(range), [range]);
   const overviewQuery = useProgressOverview(studentId, rangeObj);
@@ -69,8 +72,7 @@ export default function ProgressPanel({ studentId, showBody = false }) {
           <Content
             studentId={studentId}
             overview={overview}
-            range={range}
-            onRange={setRange}
+            sel={sel}
             rangeObj={rangeObj}
             showBody={showBody}
           />
