@@ -17,9 +17,9 @@ import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.summaryText
 
-/** "Sesión terminada · N series · M min". El RPE y las notas son de la tarjeta 12. */
+/** "Sesión terminada · N series · M min" y si ya se subió. El RPE y las notas son de la tarjeta 12. */
 @Composable
-fun WorkoutSummaryView(summary: WorkoutSummary, onBack: () -> Unit) {
+fun WorkoutSummaryView(summary: WorkoutSummary, uploadText: String? = null, onBack: () -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(Spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -27,6 +27,7 @@ fun WorkoutSummaryView(summary: WorkoutSummary, onBack: () -> Unit) {
     ) {
         Text("¡Bien ahí!", style = MaterialTheme.typography.displayMedium, color = FtColors.TextPrimary)
         Text(summaryText(summary), style = MaterialTheme.typography.bodyLarge, color = FtColors.TextSecondary)
+        uploadText?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextSecondary) }
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) { Text("Volver a Hoy") }
     }
 }
