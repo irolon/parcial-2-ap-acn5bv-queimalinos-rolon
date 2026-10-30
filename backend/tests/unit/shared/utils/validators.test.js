@@ -1,4 +1,4 @@
-import { isUuid, isIsoDateTime } from '../../../../src/shared/utils/validators.js';
+import { isUuid, isIsoDateTime, isRealCalendarDate } from '../../../../src/shared/utils/validators.js';
 
 describe('validators — isUuid', () => {
   it('acepta UUID en cualquier caja y rechaza el resto', () => {
@@ -26,5 +26,16 @@ describe('validators — isIsoDateTime', () => {
     expect(isIsoDateTime('2026-10-17T09:30:00-99:00')).toBe(false);
     expect(isIsoDateTime(1700000000)).toBe(false);
     expect(isIsoDateTime(null)).toBe(false);
+  });
+});
+
+describe('validators — isRealCalendarDate', () => {
+  it('acepta fechas reales YYYY-MM-DD y rechaza inexistentes o mal formadas', () => {
+    expect(isRealCalendarDate('2026-10-29')).toBe(true);
+    expect(isRealCalendarDate('2028-02-29')).toBe(true);
+    expect(isRealCalendarDate('2026-02-30')).toBe(false);
+    expect(isRealCalendarDate('29/10/2026')).toBe(false);
+    expect(isRealCalendarDate('2026-1-5')).toBe(false);
+    expect(isRealCalendarDate(undefined)).toBe(false);
   });
 });

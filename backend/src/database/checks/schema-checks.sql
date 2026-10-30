@@ -66,6 +66,18 @@ where not exists (
 )
 
 union all
+select 'falta el índice idx_session_sets_exercise_session'
+where to_regclass('public.idx_session_sets_exercise_session') is null
+
+union all
+select 'falta la función ' || f
+from (values ('exercise_progress'), ('last_session_kg')) v (f)
+where not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname = v.f
+)
+
+union all
 select 'falta la vista student_last_session'
 where to_regclass('public.student_last_session') is null
 
