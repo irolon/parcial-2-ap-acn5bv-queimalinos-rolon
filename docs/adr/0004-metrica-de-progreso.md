@@ -22,8 +22,9 @@ y cuál se grafica por defecto.
 
 1. **El punto del día trae las tres métricas**: `max_kg` (mayor peso),
    `volume_kg` (Σ repeticiones × kg) y `e1rm_kg` (1RM estimado). La respuesta
-   incluye `default_metric` y los clientes eligen cuál graficar. Es `e1rm_kg`,
-   salvo que ningún punto tenga kg (peso corporal): ahí es `reps`.
+   incluye `default_metric` y los clientes eligen cuál graficar. Se elige en
+   escalones: `e1rm_kg` si algún punto lo tiene; si no, `max_kg` si algún
+   punto tiene kg mayor a 0; si no, `reps`. Sin puntos, `e1rm_kg`.
 2. **La métrica por defecto es el 1RM estimado con Epley**, calculado por serie
    y tomando el máximo del día: `reps = 1 → kg`; `reps > 1 → kg × (1 + reps / 30)`.
    **Solo cuentan las series de hasta 12 repeticiones**: las de más aportan
@@ -58,9 +59,14 @@ y cuál se grafica por defecto.
   `pr` marcaría un récord que no existe. Un día con solo series de más de 12
   repeticiones trae `e1rm_kg` en `null`. La curva sirve para ver la tendencia
   de un alumno, no como valor absoluto de su máximo.
-- Los ejercicios de **peso corporal (sin `actual_kg`) no tienen 1RM**: su punto
-  trae `max_kg` y `e1rm_kg` en `null`, y solo `sets`, `reps` y `volume_kg` (0). Como el gráfico por defecto saldría
-  vacío, para esos ejercicios `default_metric` es `reps`.
+- Los ejercicios de **peso corporal no tienen 1RM**: su punto trae `e1rm_kg` en
+  `null`, `max_kg` en `null` (sin `actual_kg`) o en 0 (el celular siempre manda
+  un número y usa 0 como piso), y solo `sets`, `reps` y `volume_kg` (0). Como el
+  gráfico por defecto saldría vacío o plano, para esos ejercicios
+  `default_metric` es `reps`: se mira `max_kg > 0`, no `max_kg` distinto de `null`.
+- Un ejercicio **con peso pero siempre de más de 12 repeticiones** (abdominales
+  con 5 kg × 20) tiene `max_kg` pero `e1rm_kg` en `null` en todos los puntos: su
+  `default_metric` es `max_kg`, para que el gráfico por defecto no quede vacío.
 - Las tres métricas conviven en cada punto, así que cambiar la métrica por
   defecto es un cambio de `default_metric`, sin tocar la base.
 - La sustitución de ejercicios se resuelve por lo realmente hecho: la curva de X

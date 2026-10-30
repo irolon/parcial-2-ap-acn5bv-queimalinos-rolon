@@ -6,6 +6,7 @@
 import { round1 } from '../../shared/utils/numbers.js';
 
 export const DEFAULT_METRIC = 'e1rm_kg';
+export const MAX_KG_METRIC = 'max_kg';
 export const BODYWEIGHT_METRIC = 'reps';
 
 function toDateString(date) {
@@ -40,14 +41,16 @@ export function computePr(points) {
 }
 
 /**
- * Métrica que los clientes grafican por defecto: el 1RM estimado, salvo que
- * ningún punto tenga kg (peso corporal): ahí las repeticiones.
+ * Métrica que los clientes grafican por defecto, en escalones: el 1RM estimado
+ * si algún punto lo tiene; si no, el mayor peso si algún punto tiene kg > 0
+ * (siempre más de 12 repeticiones); si no, las repeticiones (peso corporal,
+ * que el celular manda como 0 kg).
  */
 export function defaultMetricFor(points) {
   if (points.length === 0) return DEFAULT_METRIC;
-  return points.some((p) => p.max_kg !== null && p.max_kg !== undefined)
-    ? DEFAULT_METRIC
-    : BODYWEIGHT_METRIC;
+  if (points.some((p) => p.e1rm_kg !== null && p.e1rm_kg !== undefined)) return DEFAULT_METRIC;
+  if (points.some((p) => p.max_kg > 0)) return MAX_KG_METRIC;
+  return BODYWEIGHT_METRIC;
 }
 
 /** Primera y última medida cargada de cada campo (metricsAsc va de vieja a nueva). */

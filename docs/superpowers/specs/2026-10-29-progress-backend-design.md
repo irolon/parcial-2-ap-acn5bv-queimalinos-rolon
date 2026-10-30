@@ -19,7 +19,7 @@ Convertir las series de `session_sets` en la curva de carga de cada ejercicio y 
 | Fecha del punto | Día calendario de `sessions.started_at` en `America/Argentina/Buenos_Aires` |
 | Series que cuentan | `completed = true` y `actual_reps > 0` |
 | Sustitución | La curva de X usa `exercise_id = X` (lo realmente hecho): la sustituida no ensucia el original y sí suma en el que se hizo |
-| Métrica por defecto | 1RM estimado (Epley) solo con series de hasta 12 repeticiones; `reps` si ningún punto tiene kg (peso corporal) — ADR `docs/adr/0004-metrica-de-progreso.md` |
+| Métrica por defecto | 1RM estimado (Epley) solo con series de hasta 12 repeticiones; si ningún punto tiene 1RM, `max_kg` si alguno tiene kg > 0 y si no `reps` (peso corporal) — ADR `docs/adr/0004-metrica-de-progreso.md` |
 | `/progress/body` | Endpoint fino sobre el service de medidas + resumen por campo |
 | `last_session_kg` | Entra: mayor `actual_kg` de la última sesión en que el alumno hizo ese ejercicio |
 

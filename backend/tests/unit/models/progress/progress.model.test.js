@@ -58,14 +58,22 @@ it('la métrica por defecto es e1rm_kg', () => {
 });
 
 describe('defaultMetricFor', () => {
-  const point = (max_kg) => ({ date: '2026-10-01', max_kg, volume_kg: 0, e1rm_kg: max_kg, sets: 1, reps: 10 });
+  const point = (max_kg, e1rm_kg = max_kg) => ({ date: '2026-10-01', max_kg, volume_kg: 0, e1rm_kg, sets: 1, reps: 10 });
 
   it('sin ningún kg (peso corporal) devuelve reps', () => {
     expect(defaultMetricFor([point(null), point(null)])).toBe('reps');
   });
 
-  it('con algún punto con kg devuelve e1rm_kg', () => {
+  it('con kg en 0 (peso corporal desde el celular) devuelve reps', () => {
+    expect(defaultMetricFor([point(0, null), point(0, null)])).toBe('reps');
+  });
+
+  it('con algún punto con 1RM devuelve e1rm_kg', () => {
     expect(defaultMetricFor([point(null), point(40)])).toBe('e1rm_kg');
+  });
+
+  it('con kg pero sin 1RM (siempre más de 12 repeticiones) devuelve max_kg', () => {
+    expect(defaultMetricFor([point(5, null), point(0, null)])).toBe('max_kg');
   });
 
   it('sin puntos devuelve e1rm_kg', () => {
