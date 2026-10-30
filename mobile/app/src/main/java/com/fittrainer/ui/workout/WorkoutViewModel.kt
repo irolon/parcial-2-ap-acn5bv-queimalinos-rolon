@@ -93,16 +93,15 @@ class WorkoutViewModel @Inject constructor(
         } catch (e: Exception) {
             null
         }
-        val load = w.preload(Cursor(w.cursor.position, setNumber), last)
+        val load = w.preload(Cursor(w.cursor.position, setNumber), last).inRange()
         local.update { it.copy(loaded = true, loadKey = key, load = load) }
     }
 
     fun now(): Instant = clock.instant()
 
-    fun onAdjustKg(delta: Double) = local.update { it.copy(load = it.load.copy(kg = (it.load.kg + delta).coerceAtLeast(0.0))) }
+    fun onAdjustKg(delta: Double) = local.update { it.copy(load = it.load.copy(kg = it.load.kg + delta).inRange()) }
 
-    fun onManualEntry(kg: Double, reps: Int) =
-        local.update { it.copy(load = Load(kg.coerceAtLeast(0.0), reps.coerceAtLeast(0))) }
+    fun onManualEntry(kg: Double, reps: Int) = local.update { it.copy(load = Load(kg, reps).inRange()) }
 
     /** Solo se elige una serie ya hecha (para corregirla) o la del cursor (para volver). */
     fun onSelectSet(setNumber: Int) {

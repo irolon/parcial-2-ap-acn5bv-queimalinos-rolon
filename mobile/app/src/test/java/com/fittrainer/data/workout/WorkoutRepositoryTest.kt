@@ -59,7 +59,7 @@ class WorkoutRepositoryTest {
 
         val summary = repo.finish("u1")
 
-        assertEquals(WorkoutSummary(1, 52), summary)
+        assertEquals(WorkoutSummary(1, 52, "id-0"), summary)
         assertNull(repo.observeActive("u1").first())
         assertEquals(STATUS_FINISHED, dao.state.value.sessions.values.single().status)
     }

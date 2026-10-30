@@ -53,7 +53,7 @@ fun Workout.preload(cursor: Cursor, lastTime: WorkoutSet?): Load {
 fun Workout.lastDoneSet(): WorkoutSet? = sets.maxByOrNull { it.executedAt }
 
 fun Workout.summary(now: Instant): WorkoutSummary =
-    WorkoutSummary(sets.size, Duration.between(startedAt, now).toMinutes())
+    WorkoutSummary(sets.size, Duration.between(startedAt, now).toMinutes(), id)
 
 /** null: el ejercicio no tiene descanso. */
 fun startRest(seconds: Int, now: Instant): Rest? =

@@ -39,7 +39,7 @@ data class WorkoutExercise(
     val restSeconds: Int?,
     val suggestedKg: Double?,
 ) {
-    val totalSets: Int get() = (sets ?: DEFAULT_SETS).coerceAtLeast(1)
+    val totalSets: Int get() = (sets ?: DEFAULT_SETS).coerceIn(1, MAX_SET_NUMBER)
     val targetReps: Int get() = reps ?: DEFAULT_REPS
     val restTotal: Int get() = (restSeconds ?: DEFAULT_REST_SECONDS).coerceAtLeast(0)
 }
@@ -63,6 +63,14 @@ data class Cursor(val position: Int, val setNumber: Int)
 /** endsAt != null: corriendo. pausedRemainingMs != null: en pausa (endsAt queda null). */
 data class Rest(val endsAt: Instant?, val totalSeconds: Int, val pausedRemainingMs: Long?)
 
-data class Load(val kg: Double, val reps: Int)
+/** Topes del backend (session-set.validation.js): fuera de rango la serie se rechazaría para siempre. */
+const val MAX_KG = 1000.0
+const val MAX_REPS = 1000
+const val MAX_SET_NUMBER = 100
 
-data class WorkoutSummary(val sets: Int, val minutes: Long)
+data class Load(val kg: Double, val reps: Int) {
+    /** La misma carga, dentro de lo que acepta el backend. */
+    fun inRange() = Load(kg.coerceIn(0.0, MAX_KG), reps.coerceIn(0, MAX_REPS))
+}
+
+data class WorkoutSummary(val sets: Int, val minutes: Long, val sessionId: String)

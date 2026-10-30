@@ -134,6 +134,8 @@ tests/
 scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en scripts/lib/)
 ```
 
+Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación).
+
 #### Web (`frontend/`)
 
 ```
@@ -155,6 +157,8 @@ main/java/com/fittrainer/
 test/java/com/fittrainer/
   testing/   testing/fakes/   data/<módulo>/   ui/<módulo>/   (mismo árbol que main)
 ```
+
+Excepciones de nombre: `workout` (recurso `sessions`; `session` es la sesión de login) y `sync` (subida offline de `sessions`).
 
 ### Cómo se controla
 

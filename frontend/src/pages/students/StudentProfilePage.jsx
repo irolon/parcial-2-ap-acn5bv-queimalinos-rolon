@@ -4,6 +4,7 @@ import { UserX } from 'lucide-react';
 import AnthropometryCard from '@/components/body-metrics/AnthropometryCard';
 import MetricsHistory from '@/components/body-metrics/MetricsHistory';
 import WeightChart from '@/components/body-metrics/WeightChart';
+import SessionsHistory from '@/components/sessions/SessionsHistory';
 import EmptyState from '@/components/shared/states/EmptyState';
 import ProgressPanel from '@/components/progress/ProgressPanel';
 import ErrorState from '@/components/shared/states/ErrorState';
@@ -104,6 +105,7 @@ export default function StudentProfilePage() {
                 </>
               )}
               <ActiveRoutineCard routine={data.active_routine} />
+              <SessionsHistory studentId={id} />
             </div>
           </div>
           <section aria-labelledby="progreso-titulo" className="flex min-w-0 flex-col gap-3">

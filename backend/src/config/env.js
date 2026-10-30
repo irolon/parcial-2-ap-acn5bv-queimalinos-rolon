@@ -17,6 +17,8 @@ const defaults = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1h',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+  // Jobs programados: activos por defecto, salvo en test o con CRON_ENABLED=false.
+  CRON_ENABLED: !isTest && (process.env.CRON_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
 };
 
 const required = isTest
@@ -58,4 +60,5 @@ export const env = {
   JWT_EXPIRES_IN: defaults.JWT_EXPIRES_IN,
   JWT_REFRESH_EXPIRES_IN: defaults.JWT_REFRESH_EXPIRES_IN,
   FRONTEND_URL: defaults.FRONTEND_URL,
+  CRON_ENABLED: defaults.CRON_ENABLED,
 };

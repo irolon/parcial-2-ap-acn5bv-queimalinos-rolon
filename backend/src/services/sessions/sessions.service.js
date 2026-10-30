@@ -1,4 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
+import { safeEvaluate } from '../gamification/safe-evaluate.js';
 import * as sessionsRepo from '../../repositories/sessions/sessions.repository.js';
 
 const RETRY_UPDATABLE = ['finished_at', 'rpe', 'notes'];
@@ -39,8 +40,17 @@ async function applyRetry(studentId, body, existing) {
  * POST /sessions — idempotente por id. Un routine_id que no es del alumno
  * (ajeno o borrado) nunca rechaza el request: la sesión se crea sin rutina.
  * Si el id ya existe es un reintento (otro alumno: 409).
+ * Devuelve además `unlocked_achievements`: los logros que desbloquea si la
+ * sesión quedó cerrada; si no, [].
  */
 export async function create(studentId, body) {
+  const result = await createOrRetry(studentId, body);
+  // Llegó cerrada (nueva o completada por el reintento): puede desbloquear logros.
+  const unlocked_achievements = result.session.finished_at ? await safeEvaluate(studentId) : [];
+  return { ...result, unlocked_achievements };
+}
+
+async function createOrRetry(studentId, body) {
   const existing = await sessionsRepo.findSessionById(body.id);
   if (existing) return applyRetry(studentId, body, existing);
 
@@ -56,7 +66,10 @@ export async function create(studentId, body) {
   return applyRetry(studentId, body, await sessionsRepo.findSessionById(body.id));
 }
 
-/** PATCH /sessions/:id — cierra la sesión o corrige RPE / notas. */
+/**
+ * PATCH /sessions/:id — cierra la sesión o corrige RPE / notas. Devuelve la
+ * sesión + unlocked_achievements (los logros recién desbloqueados al cerrar).
+ */
 export async function update(studentId, sessionId, body) {
   const session = await getOwnedSession(studentId, sessionId);
   if (body.finished_at && Date.parse(body.finished_at) < Date.parse(session.started_at)) {
@@ -64,5 +77,7 @@ export async function update(studentId, sessionId, body) {
       { field: 'finished_at', message: 'finished_at no puede ser anterior a started_at' },
     ]);
   }
-  return sessionsRepo.updateSession(sessionId, body);
+  const updated = await sessionsRepo.updateSession(sessionId, body);
+  const unlocked_achievements = body.finished_at ? await safeEvaluate(studentId) : [];
+  return { ...updated, unlocked_achievements };
 }

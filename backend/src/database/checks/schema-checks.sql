@@ -7,7 +7,7 @@ with expected (t) as (
          ('invitations'), ('exercises'), ('routine_templates'), ('routines'),
          ('routine_exercises'), ('sessions'), ('session_sets'),
          ('achievements'), ('student_achievements'), ('challenges'),
-         ('student_challenges'), ('chat_messages'),
+         ('student_challenges'), ('student_streaks'), ('chat_messages'),
          ('ai_routine_generations'), ('appointments'), ('notifications')
 )
 select 'falta la tabla ' || t as problema
@@ -93,4 +93,8 @@ from (values ('student_gym_equipment'), ('student_injuries'), ('student_level'))
 where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = 'invitations' and column_name = v.c
-);
+)
+
+union all
+select 'falta la función session_records(uuid, uuid[])'
+where to_regprocedure('public.session_records(uuid, uuid[])') is null;

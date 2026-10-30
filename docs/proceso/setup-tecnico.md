@@ -64,6 +64,7 @@ Completá `backend/.env`:
 | `JWT_EXPIRES_IN` | No | Vida del access token. Por defecto `1h` |
 | `JWT_REFRESH_EXPIRES_IN` | No | Vida del refresh token. Por defecto `30d` |
 | `FRONTEND_URL` | No | Único origen que acepta el CORS. Por defecto `http://localhost:5173` |
+| `CRON_ENABLED` | No | Job diario de gamificación (03:00 Buenos Aires) dentro del server. Por defecto activo; `false` lo apaga. En tests siempre está apagado |
 | `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` | No | Chat IA. Se usan en fases posteriores; dejalas vacías |
 
 Para generar un `JWT_SECRET`:
@@ -142,7 +143,7 @@ npm run lint
 1. Creá el proyecto en [supabase.com](https://supabase.com) y copiá las claves de **Settings → API** al `backend/.env`.
 2. En el **SQL Editor**, ejecutá en orden los archivos de `backend/src/database/schema/`: `01` a `07` (el detalle está en su README).
 3. Ejecutá `backend/src/database/checks/schema-checks.sql`. Tiene que devolver **0 filas**.
-4. Ejecutá `backend/src/database/seeds/exercises.sql` (50 ejercicios globales; se puede re-ejecutar).
+4. Ejecutá los seeds, en este orden (se pueden re-ejecutar): `backend/src/database/seeds/exercises.sql` (50 ejercicios globales), `achievements.sql` (catálogo de logros) y `challenges.sql` (desafíos globales de ejemplo).
 5. Ejecutá `backend/src/database/checks/exercises-checks.sql`. Tiene que devolver **0 filas**.
 6. Las migraciones de `backend/src/database/migrations/` se aplican **solo en bases que ya existían** antes de esos cambios. En una base nueva, el schema ya las incluye.
 

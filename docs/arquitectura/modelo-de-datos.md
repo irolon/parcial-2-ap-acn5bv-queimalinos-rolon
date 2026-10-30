@@ -218,6 +218,20 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | status | enum | active / completed / failed / abandoned |
 | completed_at | timestamptz | |
 
+Índice único parcial `uq_student_challenges_active` sobre (`student_id`, `challenge_id`) donde `status = 'active'`: un alumno no puede tener el mismo desafío activo dos veces (409 `CHALLENGE_ALREADY_ACTIVE`).
+
+**student_streaks** *(racha guardada del alumno; derivada, se recalcula desde el historial, ver [[adr/0005-racha-contra-dias-asignados|ADR 0005]])*
+
+| Campo | Tipo | Clave |
+|---|---|---|
+| student_id | uuid | PK, FK → students (on delete cascade) |
+| current_days | int | racha actual (días asignados seguidos entrenados) |
+| longest_days | int | mejor racha del historial |
+| last_trained_date | date | última fecha (día de Buenos Aires) con sesión cerrada |
+| updated_at | timestamptz | |
+
+Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {value}`, `streak {days}`, `pr_count {value}`, `full_week {count}` y `challenge {}` (este último lo otorga un desafío completado, no el evaluador). Un tipo desconocido se ignora con un log.
+
 ---
 
 ### Chat IA (amarillo)
@@ -306,4 +320,4 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 > - La tabla `session_sets` es donde se persiste todo lo que el alumno ejecutó realmente — es la fuente de verdad para el historial de progreso.
 > - `original_exercise_id` (junto con `exercise_id`) en `session_sets` permite registrar cuando el alumno reemplaza un ejercicio por otro durante la sesión (sugerido por el asistente IA o por decisión propia). Cuando esto ocurre, `sessions.has_modifications = true` y el PT recibe una notificación (llega con la tarjeta 20, push).
 > - `routine_templates` puede ser creada manualmente o por el asistente IA del entrenador (campo `generated_by_ai`). Esto permite reutilizar y refinar rutinas exitosas.
-> - El sistema de gamificación se compone de logros (catálogo + tabla pivote por alumno) y challenges (objetivos con plazo). Los logros se desbloquean por triggers post-sesión; los challenges se evalúan en un cron diario.
+> - El sistema de gamificación se compone de logros (catálogo + tabla pivote por alumno) y challenges (objetivos con plazo). Los logros se evalúan al cerrar una sesión (en el mismo request, sin romper la respuesta si falla) y en el job diario de las 03:00 (hora de Buenos Aires); los challenges actualizan su progreso en esos mismos dos momentos y el job diario marca `failed` los vencidos.
