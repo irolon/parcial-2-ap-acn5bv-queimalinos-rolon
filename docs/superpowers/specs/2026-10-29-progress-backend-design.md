@@ -19,7 +19,7 @@ Convertir las series de `session_sets` en la curva de carga de cada ejercicio y 
 | Fecha del punto | Día calendario de `sessions.started_at` en `America/Argentina/Buenos_Aires` |
 | Series que cuentan | `completed = true` y `actual_reps > 0` |
 | Sustitución | La curva de X usa `exercise_id = X` (lo realmente hecho): la sustituida no ensucia el original y sí suma en el que se hizo |
-| Métrica por defecto | 1RM estimado (Epley) — ADR `docs/adr/0004-metrica-de-progreso.md` |
+| Métrica por defecto | 1RM estimado (Epley) solo con series de hasta 12 repeticiones; `reps` si ningún punto tiene kg (peso corporal) — ADR `docs/adr/0004-metrica-de-progreso.md` |
 | `/progress/body` | Endpoint fino sobre el service de medidas + resumen por campo |
 | `last_session_kg` | Entra: mayor `actual_kg` de la última sesión en que el alumno hizo ese ejercicio |
 
@@ -49,7 +49,7 @@ Respuesta 200:
 ```
 
 - `points` ascendente por `date`; un punto por día con al menos una serie que cuenta.
-- Por punto: `max_kg` = mayor `actual_kg` (o `null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`; kg nulo → la serie no aporta); `sets` y `reps` = cantidad de series y suma de repeticiones. Números redondeados a 1 decimal.
+- Por punto: `max_kg` = mayor `actual_kg` (o `null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`; kg nulo → la serie no aporta; series de más de 12 repeticiones → no aportan al 1RM, solo a `max_kg`, `volume_kg`, `sets` y `reps`, porque Epley sobreestima ahí); `sets` y `reps` = cantidad de series y suma de repeticiones. Números redondeados a 1 decimal.
 - `pr`: el mayor `max_kg` y el mayor `e1rm_kg` del rango con su fecha (el primero en alcanzarse); `null` cada uno si no hay valores. Sin series → `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
 
 ### 3.2 `GET /api/progress/body/:studentId`

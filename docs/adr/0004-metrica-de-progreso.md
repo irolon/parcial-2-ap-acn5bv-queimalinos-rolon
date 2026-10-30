@@ -25,6 +25,9 @@ y cuál se grafica por defecto.
    incluye `default_metric: "e1rm_kg"` y los clientes eligen cuál graficar.
 2. **La métrica por defecto es el 1RM estimado con Epley**, calculado por serie
    y tomando el máximo del día: `reps = 1 → kg`; `reps > 1 → kg × (1 + reps / 30)`.
+   **Solo cuentan las series de hasta 12 repeticiones**: las de más aportan
+   `null` al 1RM estimado (y por lo tanto al `pr.e1rm_kg`), pero siguen
+   sumando en `max_kg`, `volume_kg`, `sets` y `reps`.
 3. **Solo cuentan las series completadas con repeticiones** (`completed` y
    `actual_reps > 0`). Una serie sin peso (`actual_kg` nulo) suma al volumen
    como 0 y no aporta 1RM.
@@ -48,8 +51,12 @@ y cuál se grafica por defecto.
 
 ## Consecuencias
 
-- Epley **sobreestima con más de 12 repeticiones**; la curva sirve para ver la
-  tendencia de un alumno, no como valor absoluto de su máximo.
+- Epley **sobreestima con más de 12 repeticiones**, por eso esas series no
+  entran al 1RM estimado. Sin el tope, un día liviano de 70 kg × 22 daría 121,3
+  y superaría a otro de 100 kg × 5 (116,7): la curva mostraría una suba y el
+  `pr` marcaría un récord que no existe. Un día con solo series de más de 12
+  repeticiones trae `e1rm_kg` en `null`. La curva sirve para ver la tendencia
+  de un alumno, no como valor absoluto de su máximo.
 - Los ejercicios de **peso corporal (sin `actual_kg`) no tienen 1RM**: su punto
   trae `max_kg` y `e1rm_kg` en `null`, y solo `sets`, `reps` y `volume_kg` (0).
 - Las tres métricas conviven en cada punto, así que cambiar la métrica por

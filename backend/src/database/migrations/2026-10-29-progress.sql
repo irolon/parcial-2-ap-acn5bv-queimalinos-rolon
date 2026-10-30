@@ -36,7 +36,8 @@ as $$
     (s.started_at at time zone 'America/Argentina/Buenos_Aires')::date as "date",
     max(ss.actual_kg) as max_kg,
     sum(ss.actual_reps * coalesce(ss.actual_kg, 0)) as volume_kg,
-    max(case when ss.actual_reps = 1 then ss.actual_kg
+    max(case when ss.actual_reps > 12 then null  -- Epley sobreestima: no cuenta
+             when ss.actual_reps = 1 then ss.actual_kg
              else ss.actual_kg * (1 + ss.actual_reps / 30.0) end) as e1rm_kg,
     count(*)::int as sets,
     sum(ss.actual_reps)::int as reps
