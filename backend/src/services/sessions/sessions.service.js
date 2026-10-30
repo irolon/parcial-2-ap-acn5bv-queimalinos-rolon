@@ -40,12 +40,14 @@ async function applyRetry(studentId, body, existing) {
  * POST /sessions — idempotente por id. Un routine_id que no es del alumno
  * (ajeno o borrado) nunca rechaza el request: la sesión se crea sin rutina.
  * Si el id ya existe es un reintento (otro alumno: 409).
+ * Devuelve además `unlocked_achievements`: los logros que desbloquea si la
+ * sesión quedó cerrada; si no, [].
  */
 export async function create(studentId, body) {
   const result = await createOrRetry(studentId, body);
   // Llegó cerrada (nueva o completada por el reintento): puede desbloquear logros.
-  if (result.session.finished_at) await safeEvaluate(studentId);
-  return result;
+  const unlocked_achievements = result.session.finished_at ? await safeEvaluate(studentId) : [];
+  return { ...result, unlocked_achievements };
 }
 
 async function createOrRetry(studentId, body) {

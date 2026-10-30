@@ -36,21 +36,27 @@ export async function update(id, fields) {
   );
 }
 
-/** Borra el desafío; las asignaciones terminadas caen por cascade. */
+/** Borra el desafío (el service lo impide si tiene asignaciones: el cascade borraría el historial). */
 export async function remove(id) {
   unwrap(await supabase.from(CHALLENGES_TABLE).delete().eq('id', id));
 }
 
-/** ¿Hay alguna asignación activa de este desafío? */
-export async function hasActiveAssignments(id) {
-  const { count, error } = await supabase
+async function countAssignments(id, status) {
+  let query = supabase
     .from(STUDENT_CHALLENGES_TABLE)
     .select('id', { count: 'exact', head: true })
-    .eq('challenge_id', id)
-    .eq('status', CHALLENGE_STATUS.ACTIVE);
+    .eq('challenge_id', id);
+  if (status) query = query.eq('status', status);
+  const { count, error } = await query;
   if (error) throw Errors.internal(error.message);
   return count > 0;
 }
+
+/** ¿Hay alguna asignación activa de este desafío? */
+export const hasActiveAssignments = (id) => countAssignments(id, CHALLENGE_STATUS.ACTIVE);
+
+/** ¿Hay alguna asignación, en cualquier estado (activa, completada, fallida o abandonada)? */
+export const hasAssignments = (id) => countAssignments(id);
 
 /** ¿Existe el logro en el catálogo? */
 export async function achievementExists(id) {

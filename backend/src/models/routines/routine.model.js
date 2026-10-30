@@ -3,6 +3,8 @@
  * Estructura, enums y helpers puros. SIN lógica de negocio ni acceso a datos.
  */
 
+import { TIMEZONE } from '../../shared/utils/dates.js';
+
 export const ROUTINES_TABLE = 'routines';
 export const ROUTINE_EXERCISES_TABLE = 'routine_exercises';
 
@@ -30,11 +32,9 @@ export const ROUTINE_EXERCISE_COLUMNS =
 /** ¿La rutina pertenece a este trainer? */
 export const isOwnedBy = (routine, trainerId) => routine?.trainer_id === trainerId;
 
-/**
- * Zona horaria del negocio. El VPS corre en UTC, pero el día que ve el alumno
- * lo define Buenos Aires: sin esto, un domingo 22:30 devuelve 'monday'.
- */
-export const TIMEZONE = 'America/Argentina/Buenos_Aires';
+// El VPS corre en UTC pero el día lo define Buenos Aires (un domingo 22:30 no es 'monday').
+// La constante vive en shared y se re-exporta por compatibilidad.
+export { TIMEZONE };
 
 const weekdayFormatter = new Intl.DateTimeFormat('en-US', {
   timeZone: TIMEZONE,

@@ -11,6 +11,7 @@ export const mockChallenges = {
   update: jest.fn(),
   remove: jest.fn(),
   hasActiveAssignments: jest.fn(),
+  hasAssignments: jest.fn(),
   achievementExists: jest.fn(),
 };
 export const mockStudentChallenges = {

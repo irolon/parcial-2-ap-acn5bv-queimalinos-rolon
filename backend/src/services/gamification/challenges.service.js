@@ -39,13 +39,21 @@ export async function createChallenge(user, fields) {
 }
 
 export async function updateChallenge(user, challengeId, fields) {
-  await getOwnedChallenge(challengeId, user.id);
+  const current = await getOwnedChallenge(challengeId, user.id);
   await assertRewardExists(fields.reward_achievement_id);
+  const goalChanged =
+    (fields.goal_type !== undefined && fields.goal_type !== current.goal_type) ||
+    (fields.goal_value !== undefined && Number(fields.goal_value) !== Number(current.goal_value));
+  // Cambiar la meta recalcularía con otra vara a quienes ya lo están haciendo.
+  if (goalChanged && (await challengesRepo.hasActiveAssignments(challengeId))) {
+    throw Errors.challengeInUse('No se puede cambiar la meta de un desafío con asignaciones activas');
+  }
   return challengesRepo.update(challengeId, fields);
 }
 
 export async function deleteChallenge(user, challengeId) {
   await getOwnedChallenge(challengeId, user.id);
-  if (await challengesRepo.hasActiveAssignments(challengeId)) throw Errors.challengeInUse();
+  // Cualquier asignación (aun terminada) bloquea el borrado: el cascade perdería el historial.
+  if (await challengesRepo.hasAssignments(challengeId)) throw Errors.challengeInUse();
   await challengesRepo.remove(challengeId);
 }

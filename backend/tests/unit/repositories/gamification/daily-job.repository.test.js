@@ -13,7 +13,10 @@ const makeQuery = (table) => {
       calls.update = { table, v };
       return q;
     }),
-    eq: jest.fn(() => q),
+    eq: jest.fn((col, val) => {
+      calls.eq = [col, val];
+      return q;
+    }),
     lt: jest.fn((col, val) => {
       calls.lt = [col, val];
       return q;
@@ -48,11 +51,12 @@ describe('findStudentIdsToEvaluate', () => {
 });
 
 describe('failExpiredAssignments', () => {
-  it('actualiza las activas vencidas a failed y cuenta las filas', async () => {
+  it('falla solo las activas vencidas hace más de 2 días (gracia) y cuenta las filas', async () => {
     rowsByTable = { student_challenges: [{ id: 'a' }, { id: 'b' }] };
     const now = new Date('2026-10-30T06:00:00Z');
     expect(await repo.failExpiredAssignments(now)).toBe(2);
     expect(calls.update.v).toEqual({ status: 'failed' });
-    expect(calls.lt).toEqual(['ends_at', '2026-10-30T06:00:00.000Z']);
+    expect(calls.eq).toEqual(['status', 'active']);
+    expect(calls.lt).toEqual(['ends_at', '2026-10-28T06:00:00.000Z']);
   });
 });

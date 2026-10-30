@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   evaluate, mockGam, mockData, mockHistory, STUDENT_ID, NOW, CATALOG, session, resetMocks,
 } from '../../../helpers/gamification/evaluate.setup.js';
@@ -93,6 +93,44 @@ describe('evaluateStudent', () => {
     mockGam.insertUnlocked.mockRejectedValue(new Error('db caída'));
     await expect(run()).rejects.toThrow('db caída');
     expect(mockData.updateAssignment).not.toHaveBeenCalled();
+  });
+
+  it('si los desafíos tiran, los logros comunes igual se insertan y se informan', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockData.findClosedSessions.mockResolvedValue([session('s-1', 30)]);
+    mockData.findActiveAssignments.mockRejectedValue(new Error('timeout'));
+    const result = await run();
+    expect(codes(result)).toEqual(['FIRST_SESSION']);
+    expect(mockGam.insertUnlocked).toHaveBeenCalledWith([
+      { student_id: STUDENT_ID, achievement_id: 'a-first', context: { session_id: 's-1' } },
+    ]);
+    expect(console.error).toHaveBeenCalledWith('[gamification] desafíos', expect.any(Error));
+  });
+
+  it('desafío vencido hace un día (gracia): una sesión tardía dentro de la ventana lo completa', async () => {
+    mockData.findClosedSessions.mockResolvedValue([session('s-1', 28), session('s-2', 29)]);
+    mockData.findActiveAssignments.mockResolvedValue([
+      assignment(
+        { goal_type: 'sessions_count', goal_value: 2 },
+        { started_at: '2026-10-01T00:00:00Z', ends_at: '2026-10-29T23:00:00Z' }
+      ),
+    ]);
+    await run();
+    expect(mockData.updateAssignment).toHaveBeenCalledWith('sc-1', {
+      current_progress: 2, status: 'completed', completed_at: NOW.toISOString(),
+    });
+  });
+
+  it('desafío vencido: las sesiones posteriores a ends_at no cuentan', async () => {
+    mockData.findClosedSessions.mockResolvedValue([session('s-1', 28), session('s-2', 30)]);
+    mockData.findActiveAssignments.mockResolvedValue([
+      assignment(
+        { goal_type: 'sessions_count', goal_value: 2 },
+        { started_at: '2026-10-01T00:00:00Z', ends_at: '2026-10-29T23:00:00Z' }
+      ),
+    ]);
+    await run();
+    expect(mockData.updateAssignment).toHaveBeenCalledWith('sc-1', { current_progress: 1 });
   });
 
   it('con catálogo precargado no lo vuelve a pedir', async () => {

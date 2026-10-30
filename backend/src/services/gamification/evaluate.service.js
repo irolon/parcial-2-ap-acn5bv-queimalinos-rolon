@@ -62,7 +62,12 @@ export async function evaluateStudent(studentId, { now = new Date(), catalog: pr
     known.add(achievementId);
     for (const r of done) inserted.add(r.achievement_id);
   };
-  await updateActiveChallenges(studentId, { closed, assignedDays, now, grantReward });
+  // Aislado: si los desafíos fallan, los logros comunes igual se insertan.
+  try {
+    await updateActiveChallenges(studentId, { closed, assignedDays, now, grantReward });
+  } catch (err) {
+    console.error('[gamification] desafíos', err);
+  }
 
   for (const r of await gamificationRepo.insertUnlocked(rows)) inserted.add(r.achievement_id);
   const unlocked = catalog
