@@ -101,9 +101,10 @@ fun TodayBody(
             val uploadsItem: LazyListScope.() -> Unit = {
                 uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
             }
-            if (!showsWeek(state.content)) uploadsItem()
-            if (showsActiveWorkoutCard(state.content, workoutActive)) item { ActiveWorkoutCard(onContinueWorkout) }
-            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it }, uploadsItem)
+            val activeCardItem: LazyListScope.() -> Unit = {
+                if (showsActiveWorkoutCard(state.content, workoutActive)) item { ActiveWorkoutCard(onContinueWorkout) }
+            }
+            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it }, uploadsItem, activeCardItem)
         }
     }
     selected?.let { exercise ->
@@ -117,6 +118,7 @@ private fun LazyListScope.todayItems(
     onStartWorkout: (Routine) -> Unit,
     onExerciseClick: (RoutineExercise) -> Unit,
     uploadsItem: LazyListScope.() -> Unit,
+    activeCardItem: LazyListScope.() -> Unit,
 ) {
     val today = state.today.dayOfWeek
     when (val content = state.content) {
@@ -130,15 +132,15 @@ private fun LazyListScope.todayItems(
             }
         }
         is TodayContent.Rest -> {
+            activeCardItem()
             // La unión de todas las rutinas, coherente con "Tu próximo entreno es el …".
             item { WeekStrip(content.trainingDays, today) }
             uploadsItem()
             item { RestState(content.nextDay) }
         }
-        TodayContent.NoRoutine -> item { NoRoutineState() }
-        TodayContent.NeverSynced -> item { NeverSyncedState() }
-        null -> Unit
+        // Sin semana el aviso de subidas va arriba de todo (y antes de volver a la sesión abierta).
+        TodayContent.NoRoutine -> { uploadsItem(); activeCardItem(); item { NoRoutineState() } }
+        TodayContent.NeverSynced -> { uploadsItem(); activeCardItem(); item { NeverSyncedState() } }
+        null -> { uploadsItem(); activeCardItem() }
     }
 }
-
-private fun showsWeek(content: TodayContent?) = content is TodayContent.Training || content is TodayContent.Rest

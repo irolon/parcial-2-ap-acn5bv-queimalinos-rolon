@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fittrainer.ui.theme.FtColors
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.fittrainer.ui.theme.Spacing
 
 /**
@@ -26,7 +28,10 @@ fun BottomActions(canReplace: Boolean, onTechnique: () -> Unit, onReplace: () ->
             onClick = if (canReplace) onReplace else onReplaceLocked,
             colors = if (canReplace) ButtonDefaults.outlinedButtonColors() else ButtonDefaults.outlinedButtonColors(contentColor = FtColors.Ink5),
             border = if (canReplace) ButtonDefaults.outlinedButtonBorder(true) else BorderStroke(1.dp, FtColors.Card),
-            modifier = Modifier.weight(1.3f).heightIn(min = Spacing.minTouchTarget),
+            modifier = Modifier.weight(1.3f).heightIn(min = Spacing.minTouchTarget).then(
+                // Sin `enabled` TalkBack lo leería como botón activo: se avisa que ahora no está disponible.
+                if (canReplace) Modifier else Modifier.semantics { stateDescription = "No disponible" },
+            ),
         ) { Text("Reemplazar") }
         OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.weight(0.7f).heightIn(min = Spacing.minTouchTarget)) { Text("IA") }
     }

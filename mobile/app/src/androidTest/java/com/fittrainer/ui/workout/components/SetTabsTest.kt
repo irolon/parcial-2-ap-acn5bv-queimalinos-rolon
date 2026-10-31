@@ -3,6 +3,7 @@ package com.fittrainer.ui.workout.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -46,5 +47,15 @@ class SetTabsTest {
         compose.waitForIdle()
 
         compose.onNodeWithText("S15").assertIsDisplayed()
+    }
+
+    @Test fun conCincoSeriesOMenosNoHayFilaQueDeslizar() {
+        val short = Workout(
+            "w-1", "u1", "rt-1", "Corta", now, listOf(exercise(0).copy(sets = 4)), emptyList(), Cursor(0, 1), null,
+        )
+        compose.setContent { FitTrainerTheme { SetTabs(short, shownSet = 1, onSelect = {}) } }
+
+        (1..4).forEach { compose.onNodeWithText("S$it").assertIsDisplayed() }
+        compose.onAllNodes(hasScrollAction()).assertCountEquals(0)
     }
 }

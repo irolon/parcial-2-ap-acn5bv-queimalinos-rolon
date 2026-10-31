@@ -53,6 +53,12 @@ import kotlinx.coroutines.launch
 
 private enum class Overlay { Edit, Technique, Replace, List }
 
+/**
+ * Cuánto sube el snackbar desde abajo para no tapar Técnica / Reemplazar / IA (alto de BottomActions + margen).
+ * Es fijo: con la fuente muy agrandada los botones crecen y el aviso puede encimarse.
+ */
+private val SNACKBAR_ABOVE_ACTIONS = 88.dp
+
 /** Guía Mobile p.13-14 · Sesión activa y timer de descanso. */
 @Composable
 fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewModel(), uploads: UploadStatusViewModel = hiltViewModel()) {
@@ -128,7 +134,7 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
             ),
         )
         // Encima de Técnica / Reemplazar: el aviso no tapa los botones mientras se ve.
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(start = Spacing.lg, end = Spacing.lg, bottom = 88.dp)) {
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(start = Spacing.lg, end = Spacing.lg, bottom = SNACKBAR_ABOVE_ACTIONS)) {
             Snackbar(it, containerColor = FtColors.Elevated, contentColor = FtColors.TextPrimary)
         }
     }

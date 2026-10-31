@@ -39,13 +39,15 @@ La pantalla donde el alumno entrena: recorre los ejercicios de la rutina del dí
 **Sesión activa (p.13).**
 - **Arriba:**
   - la ✕;
-  - "EJERCICIO 3 / 6" con el nombre del ejercicio. Tocar el nombre abre la lista de ejercicios de la sesión para saltar a cualquiera;
+  - "EJERCICIO 3 / 6". Tocarlo abre la lista de ejercicios de la sesión para saltar a cualquiera. TalkBack lo anuncia como botón "Ver ejercicios";
   - el cronómetro de la sesión, que cuenta desde `startedAt`;
   - la barra de progreso con un segmento por ejercicio. Un segmento se llena cuando su ejercicio tiene todas las series hechas.
 - **Tabs S1…Sn:**
   - las hechas muestran "kg·reps" y tocarlas permite corregirlas;
   - la actual se ve resaltada;
-  - las que faltan se ven apagadas.
+  - las que faltan se ven apagadas;
+  - hasta 5 pestañas van repartidas en el ancho. Con más, la fila se desliza y sigue a la serie en pantalla, también al cambiar de ejercicio (aunque el número de serie sea el mismo).
+- **Nombre del ejercicio** (`ExerciseHeading`): va debajo de S1…Sn, más grande que el resto. Igual que el contador, es tocable y abre la lista de ejercicios.
 - **Chip:** "SUGERIDO · 70KG × 8" con el plan del PT. No se muestra si no hay `suggestedKg` ni `reps`.
 - **Peso y reps:** en 72 px, precargados según §2.
   - Botones −2.5 / −1 / +1 / +2.5 / +5. Ajustan el peso, que nunca baja de 0.
@@ -74,9 +76,13 @@ La pantalla donde el alumno entrena: recorre los ejercicios de la rutina del dí
 - Al llegar a 0 vuelve sola a la pantalla de la serie.
 - Mientras dura el descanso, la pantalla no se apaga (`keepScreenOn`).
 
+**Avisos en un snackbar** (sobre Técnica / Reemplazar; el último reemplaza al que esté a la vista):
+- **Serie guardada:** al guardar una serie que no arranca un descanso, "Serie N guardada · kg × reps". Si arranca descanso no sale (el timer ya la muestra con ✓). Corregir una serie ya hecha tampoco lo dispara.
+- **Fin del descanso:** ver §5.
+
 **Reemplazar.**
 - Abre una hoja con la biblioteca de Room filtrada por el grupo muscular del ejercicio. Los chips (`MuscleChips`) permiten cambiar de grupo.
-- Se puede reemplazar **solo si el ejercicio no tiene series hechas en esta sesión**. Si ya tiene, el botón queda deshabilitado con el texto "Ya registraste series de este ejercicio".
+- Se puede reemplazar **solo si el ejercicio no tiene series hechas en esta sesión**. Si ya tiene, el botón se ve apagado pero se puede tocar: un snackbar explica "No se puede reemplazar: ya registraste series de este ejercicio" (`REPLACE_LOCKED`). TalkBack lo anuncia como "No disponible".
 - El reemplazo cambia la copia del plan de la sesión, nunca la rutina:
   - `exerciseId`, el nombre, el grupo muscular y el video pasan a ser los del nuevo ejercicio;
   - en `originalExerciseId` queda el ejercicio planificado;
@@ -92,6 +98,7 @@ La pantalla donde el alumno entrena: recorre los ejercicios de la rutina del dí
 **Cierre.**
 - Muestra "Sesión terminada · N series · M min" y el botón "Volver a Hoy".
 - Si se termina sin ninguna serie, la sesión se descarta: no se guardan sesiones vacías.
+- De vuelta en Hoy, el aviso "N entrenamientos sin subir" de la tarjeta 11 va debajo de la card de Semana (si no hay semana, arriba de todo). El detalle está en `2026-10-29-sync-offline-design.md`.
 
 **Datos faltantes en la rutina:**
 - `sets` null → 3;
@@ -156,7 +163,15 @@ Los campos coinciden con `sessions` y `session_sets` del backend, así que la ta
 
 **Fin del descanso.**
 - El service programa una corrutina hasta `restEndsAt`, y la reprograma cada vez que cambia `restEndsAt` o se pausa.
-- Al llegar a `restEndsAt` publica "Descanso terminado · Próxima: 70 kg × 8" en el canal "Fin del descanso" (importancia alta, sonido y vibración), visible con la pantalla bloqueada.
+- Al llegar a `restEndsAt`, según dónde esté el alumno:
+  - **Con la sesión a la vista** (la pantalla entre `onResume` y `onPause`, registrado en `WorkoutScreenVisibility`): el service no publica la notificación. La pantalla avisa adentro con un snackbar, vibración y sonido.
+    - El snackbar dice lo mismo que la notificación: "Descanso terminado · Próxima: 70 kg × 8". Si el que sigue es otro ejercicio, suma el nombre: "Descanso terminado · Remo con barra · Próxima: 60 kg × 10".
+    - La vibración repite el patrón del canal (0, 400, 200, 400 ms). El sonido es el de notificación del celular.
+    - Respeta el celular: el sonido suena solo en modo normal y si el canal "Fin del descanso" no está silenciado (importancia menor a DEFAULT o sin sonido, como en Android); vibra salvo en modo silencio.
+    - Solo avisa si el descanso llegó a 0 (no si lo saltaron ni estaba en pausa) y dentro de los 5 s posteriores a `endsAt`: si la app vuelve mucho después, ya no es noticia.
+    - Con la pantalla en pausa pero visible (cortina de notificaciones, pantalla dividida) avisa solo el service.
+  - **Con el celular bloqueado o la app en segundo plano:** publica "Descanso terminado · Próxima: 70 kg × 8" en el canal "Fin del descanso" (importancia alta, sonido y vibración), visible con la pantalla bloqueada.
+  - **No se repite al volver:** pantalla y service se reparten cada fin de descanso con un reclamo atómico por `endsAt` (`WorkoutScreenVisibility.claimRestEnd`, compareAndSet sobre `notifiedRestEnd`): el primero que lo reclama avisa y el otro no (si la pantalla avisó y enseguida pasa a segundo plano, el service no publica; y viceversa). Un descanso nuevo tiene otro `endsAt` y se reclama de nuevo. Se limpia al arrancar otro descanso o al cerrar la sesión.
 
 **Si Android mata el proceso:** al reabrir se retoma desde Room.
 - Si `restEndsAt` ya pasó, va a la serie siguiente.
