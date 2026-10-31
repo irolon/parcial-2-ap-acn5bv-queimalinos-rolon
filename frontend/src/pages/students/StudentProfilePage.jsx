@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { UserX } from 'lucide-react';
+import AchievementsCard from '@/components/achievements/AchievementsCard';
 import AnthropometryCard from '@/components/body-metrics/AnthropometryCard';
 import MetricsHistory from '@/components/body-metrics/MetricsHistory';
 import WeightChart from '@/components/body-metrics/WeightChart';
@@ -105,6 +106,7 @@ export default function StudentProfilePage() {
                 </>
               )}
               <ActiveRoutineCard routine={data.active_routine} />
+              <AchievementsCard studentId={id} />
               <SessionsHistory studentId={id} />
             </div>
           </div>

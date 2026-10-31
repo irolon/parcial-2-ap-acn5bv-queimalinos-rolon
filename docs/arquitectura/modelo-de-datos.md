@@ -205,6 +205,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | duration_days | int | plazo del desafío |
 | reward_achievement_id | uuid | FK → achievements (logro al completarlo) |
 
+Seed de globales (`seeds/challenges.sql`): «12 sesiones en 30 días», «8 sesiones en 4 semanas», «Racha de 2 semanas» y «10 toneladas en 4 semanas». La migración `2026-10-31-challenge-templates.sql` los deja así en una base existente.
+
 **student_challenges** *(challenges asignados al alumno y su progreso)*
 
 | Campo | Tipo | Clave |
