@@ -64,6 +64,7 @@ describe('invitations.service', () => {
       });
     });
 
+    // Genera dos QR: con la suite completa en paralelo pasa los 5 s por defecto.
     it('guarda student_goal en null si la invitación no trae objetivo', async () => {
       mockRepo.studentEmailExists.mockResolvedValue(false);
       mockRepo.createInvitation.mockResolvedValue(createdRow);
@@ -74,7 +75,7 @@ describe('invitations.service', () => {
       const { goal, ...sinGoal } = BASE_BODY;
       await service.createInvitation('trainer-1', sinGoal);
       expect(mockRepo.createInvitation.mock.calls.at(-1)[0].studentGoal).toBeNull();
-    });
+    }, 15000);
 
     it('con canal "qr" incluye QR pero no link de WhatsApp', async () => {
       mockRepo.studentEmailExists.mockResolvedValue(false);
