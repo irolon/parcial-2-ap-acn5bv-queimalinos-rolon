@@ -98,3 +98,27 @@ export async function updateStudent(id, fields) {
   if (error) throw Errors.internal(error.message);
   return data;
 }
+
+/** Todos los alumnos activos del trainer, por nombre (mensajería: id, name, avatar_url). */
+export async function findActiveStudentsByTrainer(trainerId) {
+  const { data, error } = await supabase
+    .from(STUDENTS_TABLE)
+    .select('id, name, avatar_url')
+    .eq('trainer_id', trainerId)
+    .eq('active', true)
+    .order('name');
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** De los `ids` pedidos, los que son alumnos activos del trainer (para validar un envío masivo). */
+export async function findActiveStudentsByIds(trainerId, ids) {
+  const { data, error } = await supabase
+    .from(STUDENTS_TABLE)
+    .select('id')
+    .eq('trainer_id', trainerId)
+    .eq('active', true)
+    .in('id', ids);
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
