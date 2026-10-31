@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import { usePageHeader } from '@/hooks/shared/usePageHeader';
@@ -26,7 +27,11 @@ function mount(header) {
     ],
     { initialEntries: ['/fijada'] },
   );
-  render(<RouterProvider router={router} />);
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
   return router;
 }
 

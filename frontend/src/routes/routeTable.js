@@ -20,7 +20,7 @@ export const TRAINER_NAV = {
     { path: 'rutinas', label: 'Rutinas', icon: List, subtitle: 'PLANES DE ENTRENAMIENTO' },
     { path: 'biblioteca', label: 'Biblioteca', icon: Dumbbell, subtitle: 'EJERCICIOS' },
     { path: 'agenda', label: 'Agenda', icon: Calendar, subtitle: 'SESIONES PROGRAMADAS' },
-    { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'CONVERSACIONES' },
+    { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'CONVERSACIONES', unread: true },
   ],
 };
 
@@ -31,6 +31,7 @@ export const STUDENT_NAV = {
     { path: 'progreso', label: 'Mi progreso', icon: ChartLine, subtitle: 'MEDIDAS Y MARCAS' },
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
+    { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'TU ENTRENADOR', unread: true },
     { path: 'asistente', label: 'Asistente IA', icon: Sparkles, subtitle: 'CONSULTAS Y SUGERENCIAS' },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
   ],

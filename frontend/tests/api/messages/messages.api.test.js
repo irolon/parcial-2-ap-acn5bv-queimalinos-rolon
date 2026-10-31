@@ -14,6 +14,7 @@ describe('messages.api', () => {
   it('getConversations y getUnreadCount desenvuelven data', async () => {
     const fetchMock = stubFetch(async (url) =>
       jsonResponse(200, { data: url.endsWith('/conversations') ? [{ unread_count: 2 }] : { count: 3 } }),
+      { unread: null },
     );
     await expect(messagesApi.getConversations()).resolves.toEqual([{ unread_count: 2 }]);
     await expect(messagesApi.getUnreadCount()).resolves.toBe(3);

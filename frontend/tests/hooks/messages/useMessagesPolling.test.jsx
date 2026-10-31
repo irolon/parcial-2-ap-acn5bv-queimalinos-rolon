@@ -35,6 +35,7 @@ describe('polling', () => {
         meta: { next_before: null },
         counterpart: null,
       }),
+      { unread: null },
     );
     const { result } = renderHook(
       () => ({ thread: useMessages('s-1'), list: useConversations(), unread: useUnreadCount() }),
