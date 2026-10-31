@@ -311,6 +311,31 @@ RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FC
 
 ---
 
+### Mensajería (celeste)
+
+**messages** *(mensajería interna PT ↔ alumno, tarjeta 48)*
+
+| Campo | Tipo | Clave |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| student_id | uuid | FK → students, `on delete cascade`. Identifica la conversación; el PT es `students.trainer_id`, no se guarda acá |
+| sender_role | varchar(10) | trainer / student (check) |
+| body | text | opcional; si existe, de 1 a 2000 caracteres (check) |
+| image_path | text | opcional; `<student_id>/<uuid>.<ext>` dentro del bucket `message-images`. Nunca sale en la API: se reemplaza por una URL firmada |
+| broadcast_id | uuid | opcional; lo comparten los mensajes de un mismo envío masivo del PT. Sin FK |
+| read_at | timestamptz | null mientras el destinatario no lo leyó |
+| created_at | timestamptz | default `now()` |
+
+Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede haber los dos).
+
+Índices: `idx_messages_student_created` sobre `(student_id, created_at desc)` para el historial paginado y el último mensaje de cada conversación, e `idx_messages_unread` parcial sobre `(student_id, sender_role) where read_at is null` para contar los no leídos. RLS activado sin políticas (ADR 0001). Migración: `backend/src/database/migrations/2026-10-31-messages.sql` (y `schema/06b-messages.sql` + `07-rls.sql` para bases nuevas).
+
+> **No confundir con `chat_messages`:** esa tabla es el historial del asistente IA del alumno (`POST /chat`). `messages` es la mensajería entre personas y no tiene relación con ella.
+
+**Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
+
+---
+
 ## Relaciones principales
 
 | Desde | Cardinalidad | Hacia | Descripción |
