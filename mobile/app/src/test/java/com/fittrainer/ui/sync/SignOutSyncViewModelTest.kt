@@ -1,5 +1,6 @@
 package com.fittrainer.ui.sync
 
+import com.fittrainer.data.db.workout.FEEDBACK_PENDING
 import com.fittrainer.data.db.workout.SYNC_FAILED
 import com.fittrainer.data.db.workout.SYNC_SYNCED
 import com.fittrainer.data.sync.ManualSync
@@ -50,6 +51,16 @@ class SignOutSyncViewModelTest {
 
         vm.cancel()
         assertEquals(SignOutSyncState.Hidden, vm.state.value)
+    }
+
+    @Test fun `con solo comentarios sin subir pregunta con el conteo aparte`() = runTest {
+        dao.state.value = FakeWorkoutDao.State(
+            sessions = mapOf("w1" to finishedSession("w1", syncState = SYNC_SYNCED).copy(rpe = 7, feedbackState = FEEDBACK_PENDING)),
+        )
+
+        vm.request()
+
+        assertEquals(SignOutSyncState.Asking(pending = 0, feedback = 1), vm.state.value)
     }
 
     @Test fun `subir ahora con red sube todo y pide el logout`() = runTest {

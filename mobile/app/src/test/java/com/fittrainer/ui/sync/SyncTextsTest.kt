@@ -66,4 +66,20 @@ class SyncTextsTest {
         assertEquals("Tenés 1 entrenamiento sin subir. Se va a subir cuando vuelvas a entrar.", signOutPendingText(1))
         assertEquals("Tenés 2 entrenamientos sin subir. Se van a subir cuando vuelvas a entrar.", signOutPendingText(2))
     }
+
+    @Test fun `aviso del logout con solo comentarios post-entreno`() {
+        assertEquals("Tenés 1 comentario post-entreno sin subir. Se va a subir cuando vuelvas a entrar.", signOutPendingText(0, 1))
+        assertEquals("Tenés 3 comentarios post-entreno sin subir. Se van a subir cuando vuelvas a entrar.", signOutPendingText(0, 3))
+    }
+
+    @Test fun `aviso del logout con entrenamientos y comentarios`() {
+        assertEquals(
+            "Tenés 1 entrenamiento y 2 comentarios post-entreno sin subir. Se van a subir cuando vuelvas a entrar.",
+            signOutPendingText(1, 2),
+        )
+        assertEquals(
+            "Tenés 2 entrenamientos y 1 comentario post-entreno sin subir. Se van a subir cuando vuelvas a entrar.",
+            signOutPendingText(2, 1),
+        )
+    }
 }

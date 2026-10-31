@@ -54,6 +54,14 @@ const val SIGN_OUT_REJECTED_TEXT =
     "Algunos entrenamientos o series no se pudieron subir y no se van a reintentar. Quedan guardados en el " +
         "celular y los ves en Hoy. ¿Cerrar sesión igual?"
 
-fun signOutPendingText(pending: Int): String =
-    if (pending == 1) "Tenés 1 entrenamiento sin subir. Se va a subir cuando vuelvas a entrar."
-    else "Tenés $pending entrenamientos sin subir. Se van a subir cuando vuelvas a entrar."
+/** Lo que se pierde al salir: entrenamientos sin subir y/o comentarios post-entreno (RPE y nota) sin mandar. */
+fun signOutPendingText(pending: Int, feedback: Int = 0): String {
+    val workouts = if (pending == 1) "1 entrenamiento" else "$pending entrenamientos"
+    val comments = if (feedback == 1) "1 comentario post-entreno" else "$feedback comentarios post-entreno"
+    val (what, one) = when {
+        feedback == 0 -> workouts to (pending == 1)
+        pending == 0 -> comments to (feedback == 1)
+        else -> "$workouts y $comments" to false
+    }
+    return "Tenés $what sin subir. ${if (one) "Se va" else "Se van"} a subir cuando vuelvas a entrar."
+}

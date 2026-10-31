@@ -5,6 +5,7 @@ import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.SessionSetDto
 import com.fittrainer.data.api.SessionSetsRequest
 import com.fittrainer.data.api.SessionSetsResult
+import com.fittrainer.data.api.UpdateSessionRequest
 import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.auth.RequiredUser
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
@@ -49,6 +50,9 @@ private sealed interface Outcome<out T> {
     data class Stop(val reason: StopReason) : Outcome<Nothing>
 }
 
+/** Qué pasó con el PATCH del feedback (spec §5 de la tarjeta 12). */
+enum class FeedbackOutcome { SENT, REJECTED, RETRY, UNAUTHORIZED, KEEP }
+
 /** Sube UNA sesión terminada y sus series, en lotes. No toca Room: devuelve qué pasó con cada serie. */
 class SessionUploader @Inject constructor(private val api: SessionApi) {
 
@@ -65,6 +69,25 @@ class SessionUploader @Inject constructor(private val api: SessionApi) {
             }
         }
         return UploadResult(results)
+    }
+
+    /** PATCH /sessions/:id con el RPE y la nota de una sesión que ya subió. */
+    suspend fun sendFeedback(owner: String, session: WorkoutSessionEntity): FeedbackOutcome = try {
+        api.update(RequiredUser(owner), session.id, UpdateSessionRequest(session.rpe, session.notes))
+        FeedbackOutcome.SENT
+    } catch (e: AccountChangedException) {
+        FeedbackOutcome.KEEP
+    } catch (e: HttpException) {
+        when (e.code()) {
+            400, 404 -> FeedbackOutcome.REJECTED
+            401 -> FeedbackOutcome.UNAUTHORIZED
+            403 -> FeedbackOutcome.KEEP
+            else -> FeedbackOutcome.RETRY
+        }
+    } catch (e: IOException) {
+        FeedbackOutcome.RETRY
+    } catch (e: SerializationException) {
+        FeedbackOutcome.RETRY
     }
 
     private suspend fun <T> attempt(block: suspend () -> T): Outcome<T> = try {
@@ -98,7 +121,7 @@ private fun SessionSetsResult.resolve(batch: List<WorkoutSetEntity>): SetResults
 
 /** Un reloj que vuelve atrás no puede dejar finished_at antes de started_at: el backend rechazaría la sesión. */
 private fun WorkoutSessionEntity.toRequest() =
-    CreateSessionRequest(id, routineId, iso(startedAt), finishedAt?.let { iso(maxOf(it, startedAt)) })
+    CreateSessionRequest(id, routineId, iso(startedAt), finishedAt?.let { iso(maxOf(it, startedAt)) }, rpe, notes)
 
 private fun WorkoutSetEntity.toDto() = SessionSetDto(
     id, exerciseId, originalExerciseId, routineExerciseId, setNumber, actualReps, actualKg, iso(executedAt),

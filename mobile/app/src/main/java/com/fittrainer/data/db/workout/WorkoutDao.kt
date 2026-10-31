@@ -20,6 +20,21 @@ abstract class WorkoutDao {
     @Query("SELECT * FROM workout_sessions WHERE ownerId = :ownerId AND status = '$STATUS_ACTIVE' LIMIT 1")
     abstract suspend fun getActive(ownerId: String): WorkoutWithDetails?
 
+    /**
+     * Lo que el historial suma del celular (tarjeta 12): terminadas que el caché no tiene y que no subieron
+     * o son más nuevas que lo cacheado (subida sin refrescar), más las que tienen feedback sin mandar o ya
+     * mandado (puede que el caché se bajó antes del PATCH y todavía no lo trae).
+     */
+    @Transaction
+    @Query(
+        "SELECT * FROM workout_sessions WHERE ownerId = :ownerId AND status = '$STATUS_FINISHED' AND (" +
+            "feedbackState = '$FEEDBACK_PENDING' OR (feedbackState = '$FEEDBACK_SYNCED' AND (rpe IS NOT NULL OR notes IS NOT NULL)) " +
+            "OR (id NOT IN (SELECT id FROM history_sessions WHERE ownerId = :ownerId) " +
+            "AND (syncState != '$SYNC_SYNCED' OR startedAt > (SELECT COALESCE(MAX(startedAt), 0) FROM history_sessions " +
+            "WHERE ownerId = :ownerId)))) ORDER BY startedAt DESC"
+    )
+    abstract fun observeForHistory(ownerId: String): Flow<List<WorkoutWithDetails>>
+
     /** La última serie del ejercicio en una sesión terminada del mismo alumno ("la última vez"). */
     @Query(
         "SELECT s.* FROM workout_sets s INNER JOIN workout_sessions w ON w.id = s.sessionId " +
@@ -52,10 +67,28 @@ abstract class WorkoutDao {
         "SELECT COALESCE(SUM(syncState = '$SYNC_PENDING'), 0) AS pending, " +
             "COALESCE(SUM(syncState = '$SYNC_FAILED' AND failureSeen = 0), 0) AS failed, " +
             "(SELECT COUNT(*) FROM workout_sets s INNER JOIN workout_sessions w ON w.id = s.sessionId " +
-            "WHERE w.ownerId = :ownerId AND s.syncState = '$SYNC_FAILED' AND s.failureSeen = 0) AS failedSets " +
+            "WHERE w.ownerId = :ownerId AND s.syncState = '$SYNC_FAILED' AND s.failureSeen = 0) AS failedSets, " +
+            "COALESCE(SUM(syncState = '$SYNC_SYNCED' AND feedbackState = '$FEEDBACK_PENDING'), 0) AS pendingFeedback " +
             "FROM workout_sessions WHERE ownerId = :ownerId AND status = '$STATUS_FINISHED'"
     )
     abstract fun observeUploadCounts(ownerId: String): Flow<UploadCounts>
+
+    /** Feedback que falta mandar por PATCH: la sesión ya está en el servidor (tarjeta 12). */
+    @Query(
+        "SELECT * FROM workout_sessions WHERE ownerId = :ownerId AND status = '$STATUS_FINISHED' " +
+            "AND syncState = '$SYNC_SYNCED' AND feedbackState = '$FEEDBACK_PENDING' ORDER BY startedAt"
+    )
+    abstract suspend fun pendingFeedback(ownerId: String): List<WorkoutSessionEntity>
+
+    /** Solo si sigue siendo lo que se mandó: un RPE guardado mientras volaba el pedido queda PENDING. */
+    @Query(
+        "UPDATE workout_sessions SET feedbackState = '$FEEDBACK_SYNCED' WHERE id = :id " +
+            "AND feedbackState = '$FEEDBACK_PENDING' AND rpe IS :rpe AND notes IS :notes"
+    )
+    abstract suspend fun markFeedbackSynced(id: String, rpe: Int?, notes: String?)
+
+    @Query("UPDATE workout_sessions SET feedbackState = '$FEEDBACK_REJECTED' WHERE id = :id")
+    abstract suspend fun markFeedbackRejected(id: String)
 
     @Query("UPDATE workout_sessions SET failureSeen = 1 WHERE ownerId = :ownerId AND syncState = '$SYNC_FAILED'")
     abstract suspend fun markSessionFailuresSeen(ownerId: String)
@@ -92,6 +125,13 @@ abstract class WorkoutDao {
             pendingSets(sessionId).isEmpty() -> setSyncState(sessionId, SYNC_SYNCED)
         }
     }
+
+    /** Feedback post-entreno (tarjeta 12): queda pendiente de subir; si el servidor rechazó la sesión entera, nunca va a poder subirse. */
+    @Query(
+        "UPDATE workout_sessions SET rpe = :rpe, notes = :notes, feedbackState = " +
+            "CASE WHEN syncState = '$SYNC_FAILED' THEN '$FEEDBACK_REJECTED' ELSE '$FEEDBACK_PENDING' END WHERE id = :id"
+    )
+    abstract suspend fun saveFeedback(id: String, rpe: Int?, notes: String?)
 
     @Insert
     abstract suspend fun insertSession(session: WorkoutSessionEntity)

@@ -104,4 +104,15 @@ class SyncTriggerTest {
 
         assertEquals(2, sync.enqueued)
     }
+
+    // Tarjeta 12: guardar el RPE de una sesión ya subida es trabajo nuevo para la pasada.
+    @Test fun `guardar feedback de una sesion subida encola trabajo nuevo`() = runTest {
+        put(finishedSession("w1", syncState = SYNC_SYNCED))
+        trigger.start(backgroundScope + UnconfinedTestDispatcher(testScheduler))
+        assertEquals(0, sync.enqueued)
+
+        dao.saveFeedback("w1", 7, null)
+
+        assertEquals(listOf(true), sync.enqueues)
+    }
 }

@@ -2,11 +2,7 @@ package com.fittrainer.navigation
 
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,7 +12,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -33,6 +28,8 @@ import com.fittrainer.ui.workout.WorkoutEntryViewModel
 import com.fittrainer.ui.workout.WorkoutScreen
 import com.fittrainer.ui.workout.components.ActiveWorkoutSignOutDialog
 import com.fittrainer.ui.workout.components.SignOutFailedDialog
+import com.fittrainer.ui.workout.history.HistoryScreen
+import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 
 /** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → Estado del servidor. */
 @Composable
@@ -82,24 +79,10 @@ fun RoleShell(
     val entryError by entry.error.collectAsStateWithLifecycle()
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
+    val unread = progressUnread(isStudent)
     Scaffold(
         bottomBar = {
-            if (currentRoute != WORKOUT_ROUTE) NavigationBar {
-                tabs.forEach { tab ->
-                    NavigationBarItem(
-                        selected = currentRoute == tab.route,
-                        onClick = {
-                            navController.navigate(tab.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(tab.icon, contentDescription = null) },
-                        label = { Text(tab.label) },
-                    )
-                }
-            }
+            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, currentRoute, navController, unread)
         },
     ) { padding ->
         NavHost(
@@ -119,12 +102,16 @@ fun RoleShell(
                             onOpenWorkout = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } },
                         )
                         tab.route == STUDENT_LIBRARY_ROUTE -> LibraryScreen()
+                        tab.route == STUDENT_PROGRESS_ROUTE -> HistoryScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
                         else -> PlaceholderScreen(tab.label)
                     }
                 }
             }
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
+            }
+            composable(HISTORY_DETAIL_ROUTE) {
+                HistoryDetailScreen(onBack = { navController.popBackStack() })
             }
             composable(WORKOUT_ROUTE) {
                 WorkoutScreen(onExit = { navController.popBackStack(STUDENT_TODAY_ROUTE, inclusive = false) })

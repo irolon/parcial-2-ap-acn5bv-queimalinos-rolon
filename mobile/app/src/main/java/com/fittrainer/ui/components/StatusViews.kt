@@ -46,12 +46,12 @@ fun OfflineIndicator(text: String) {
 }
 
 @Composable
-fun NoticeBanner(message: String, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+fun NoticeBanner(message: String, onDismiss: (() -> Unit)? = null, modifier: Modifier = Modifier) {
     Row(
         modifier
             .fillMaxWidth()
             .background(FtColors.Elevated, MaterialTheme.shapes.medium)
-            .padding(start = Spacing.md),
+            .padding(start = Spacing.md, end = if (onDismiss == null) Spacing.md else Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -60,8 +60,10 @@ fun NoticeBanner(message: String, onDismiss: () -> Unit, modifier: Modifier = Mo
             style = MaterialTheme.typography.bodySmall,
             color = FtColors.TextPrimary,
         )
-        TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-            Text("OK")
+        if (onDismiss != null) {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                Text("OK")
+            }
         }
     }
 }
