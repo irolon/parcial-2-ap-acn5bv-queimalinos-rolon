@@ -42,6 +42,41 @@ describe('ChallengesPage', () => {
     expect(main().getAllByRole('button', { name: 'Nuevo desafío' })).toHaveLength(1);
   });
 
+  it('sin ningún desafío invita a crear el primero y no muestra Plantillas', async () => {
+    stubChallengesApi({ challenges: [] });
+    renderRoute('/pt/desafios');
+    expect(await main().findByText('Todavía no creaste desafíos')).toBeVisible();
+    expect(main().getAllByRole('button', { name: 'Nuevo desafío' })).toHaveLength(1);
+    expect(main().queryByRole('region', { name: 'Plantillas' })).not.toBeInTheDocument();
+  });
+
+  it('sin plantillas no muestra la sección', async () => {
+    stubChallengesApi({ challenges: [challenge()] });
+    renderRoute('/pt/desafios');
+    expect(await main().findByRole('region', { name: 'Mis desafíos' })).toBeVisible();
+    expect(main().queryByRole('region', { name: 'Plantillas' })).not.toBeInTheDocument();
+  });
+
+  it('al crear abre el asignar del nuevo, y "Ahora no" cierra todo', async () => {
+    const created = challenge({ id: 'c-new', name: 'Racha de verano' });
+    stubChallengesApi({ challenges: [template], create: async () => jsonResponse(201, { data: created }) });
+    renderRoute('/pt/desafios');
+    await userEvent.click(await main().findByRole('button', { name: 'Nuevo desafío' }));
+    await userEvent.type(screen.getByLabelText('Nombre'), 'Racha de verano');
+    await userEvent.type(screen.getByLabelText(/^Valor/), '12');
+    await userEvent.click(screen.getByRole('button', { name: 'Crear' }));
+    expect(await screen.findByRole('dialog', { name: 'Asignar "Racha de verano"' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Ahora no' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('"Asignar" de una plantilla abre su diálogo', async () => {
+    stubChallengesApi({ challenges: [template] });
+    renderRoute('/pt/desafios');
+    await userEvent.click(await main().findByRole('button', { name: 'Asignar' }));
+    expect(await screen.findByRole('dialog', { name: 'Asignar "Racha de 7 días"' })).toBeVisible();
+  });
+
   it('con propios ofrece "Nuevo desafío" y "Asignar"', async () => {
     stubChallengesApi({ challenges: [template, challenge()] });
     renderRoute('/pt/desafios');
@@ -55,6 +90,7 @@ describe('ChallengesPage', () => {
     renderRoute('/pt/desafios');
     await confirmDelete();
     await vi.waitFor(() => expect(calls(fetchMock).some(([p, i]) => p === '/challenges/c-1' && i?.method === 'DELETE')).toBe(true));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('si ya está asignado (409) avisa y no cierra', async () => {
@@ -62,6 +98,7 @@ describe('ChallengesPage', () => {
     renderRoute('/pt/desafios');
     await confirmDelete();
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya está asignado a alumnos: no se puede borrar');
+    expect(screen.getByRole('dialog')).toBeVisible();
   });
 
   it('cancelar cierra sin borrar', async () => {

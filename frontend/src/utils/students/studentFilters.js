@@ -6,7 +6,8 @@ export const ORDENES = ['ultima-sesion', 'nombre', 'alta', 'racha'];
 
 const STATUS_BY_ESTADO = { inactivos: 'inactive', 'al-dia': 'active', nuevos: 'new', baja: 'disabled' };
 
-const normalize = (text) =>
+/** Minúsculas, sin tildes ni espacios en los bordes (para buscar por nombre). */
+export const normalize = (text) =>
   text
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')

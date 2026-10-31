@@ -1,9 +1,10 @@
 import { useId } from 'react';
 import ChallengeCard from './ChallengeCard';
 
-/** Sección titulada de desafíos; sin desafíos muestra `empty`. */
+/** Sección titulada de desafíos; sin desafíos muestra `empty`, y sin `empty` no se muestra. */
 export default function ChallengeSection({ title, challenges, empty, onAssign, onDelete }) {
   const titleId = useId();
+  if (challenges.length === 0 && !empty) return null;
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-3">
       <h2 id={titleId} className="font-display text-base font-semibold text-bone0">
