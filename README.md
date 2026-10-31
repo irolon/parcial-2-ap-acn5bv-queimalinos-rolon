@@ -33,7 +33,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Progreso:** curva de carga por ejercicio (1RM estimado, peso máximo y volumen) y evolución corporal.
 
 **Web** (React)
-- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas e historial de sesiones con comentarios del PT.
+- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas, historial de sesiones con comentarios del PT, y racha, logros y desafíos del PT (crear, asignar y seguir el progreso).
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer y **sincronización offline** de sesiones con WorkManager.
