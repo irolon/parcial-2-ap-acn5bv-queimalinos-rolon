@@ -1,5 +1,6 @@
 package com.fittrainer.data.sync
 
+import com.fittrainer.data.db.workout.FEEDBACK_PENDING
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
@@ -34,6 +35,14 @@ class SyncPass @Inject constructor(
             // Si no se llegó a crear, la sesión no existe en el servidor: no se puede dar por subida.
             if (result.created || rejected) {
                 dao.applyUpload(session.id, result.sets.synced, result.sets.failed, rejected)
+                // Sesión rechazada entera: su feedback no tiene dónde ir, se descarta junto con ella.
+                if (rejected && !result.created && session.feedbackState == FEEDBACK_PENDING) {
+                    dao.markFeedbackRejected(session.id)
+                }
+                // El POST llevó el feedback que había al leerla: queda subido si nadie lo cambió mientras tanto.
+                if (result.created && session.feedbackState == FEEDBACK_PENDING) {
+                    dao.markFeedbackSynced(session.id, session.rpe, session.notes)
+                }
             }
             when (result.stop) {
                 StopReason.RETRY -> return PassResult.RETRY
@@ -46,6 +55,21 @@ class SyncPass @Inject constructor(
                 StopReason.FORBIDDEN -> return PassResult.DONE
                 StopReason.ACCOUNT_CHANGED -> return PassResult.DONE
                 StopReason.SESSION_REJECTED, null -> Unit
+            }
+        }
+        return sendFeedback(owner)
+    }
+
+    /** Feedback de sesiones ya subidas (spec §4 de la tarjeta 12): un PATCH por sesión. */
+    private suspend fun sendFeedback(owner: String): PassResult {
+        for (session in dao.pendingFeedback(owner)) {
+            if (currentStudent() != owner) return PassResult.DONE
+            when (uploader.sendFeedback(owner, session)) {
+                FeedbackOutcome.SENT -> dao.markFeedbackSynced(session.id, session.rpe, session.notes)
+                FeedbackOutcome.REJECTED -> dao.markFeedbackRejected(session.id)
+                FeedbackOutcome.RETRY -> return PassResult.RETRY
+                FeedbackOutcome.UNAUTHORIZED -> return if (currentStudent() == owner) PassResult.RETRY else PassResult.DONE
+                FeedbackOutcome.KEEP -> return PassResult.DONE
             }
         }
         return PassResult.DONE

@@ -1,5 +1,8 @@
 package com.fittrainer.testing.fakes.workout
 
+import com.fittrainer.data.db.workout.FEEDBACK_PENDING
+import com.fittrainer.data.db.workout.FEEDBACK_REJECTED
+import com.fittrainer.data.db.workout.FEEDBACK_SYNCED
 import com.fittrainer.data.db.workout.STATUS_ACTIVE
 import com.fittrainer.data.db.workout.STATUS_FINISHED
 import com.fittrainer.data.db.workout.SYNC_FAILED
@@ -51,6 +54,9 @@ class FakeWorkoutDao : WorkoutDao() {
         get() = held.value
         set(value) { held.value = value }
 
+    /** El fake no ve el caché del historial: devuelve todas las terminadas y el filtro lo repite el repositorio. */
+    override fun observeForHistory(ownerId: String): Flow<List<WorkoutWithDetails>> = state.map { st -> historyRows(st, ownerId) }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeActive(ownerId: String): Flow<WorkoutWithDetails?> = held.flatMapLatest { hold ->
         if (hold) emptyFlow() else state.map { activeOf(it, ownerId) }.distinctUntilChanged()
@@ -65,6 +71,11 @@ class FakeWorkoutDao : WorkoutDao() {
             val session = st.sessions[set.sessionId]
             set.exerciseId == exerciseId && session?.ownerId == ownerId && session.status == STATUS_FINISHED
         }.maxByOrNull { it.executedAt }
+    }
+
+    override suspend fun saveFeedback(id: String, rpe: Int?, notes: String?) = write { st ->
+        val s = st.sessions[id] ?: return@write st
+        st.copy(sessions = st.sessions + (id to s.copy(rpe = rpe, notes = notes, feedbackState = if (s.syncState == SYNC_FAILED) FEEDBACK_REJECTED else FEEDBACK_PENDING)))
     }
 
     override suspend fun insertSession(session: WorkoutSessionEntity) =
@@ -114,30 +125,30 @@ class FakeWorkoutDao : WorkoutDao() {
         st.copy(sessions = st.sessions + (id to session.copy(syncState = syncState)))
     }
 
-    override fun observeUploadCounts(ownerId: String): Flow<UploadCounts> = state.map { st ->
-        val done = st.sessions.values.filter { it.ownerId == ownerId && it.status == STATUS_FINISHED }
-        val mine = st.sessions.values.filter { it.ownerId == ownerId }.map { it.id }.toSet()
-        UploadCounts(
-            done.count { it.syncState == SYNC_PENDING },
-            done.count { it.syncState == SYNC_FAILED && !it.failureSeen },
-            st.sets.count { it.sessionId in mine && it.syncState == SYNC_FAILED && !it.failureSeen },
-        )
-    }.distinctUntilChanged()
+    override fun observeUploadCounts(ownerId: String): Flow<UploadCounts> =
+        state.map { it.uploadCounts(ownerId) }.distinctUntilChanged()
 
-    override suspend fun markSessionFailuresSeen(ownerId: String) = write { st ->
-        st.copy(sessions = st.sessions.mapValues { (_, s) ->
-            if (s.ownerId == ownerId && s.syncState == SYNC_FAILED) s.copy(failureSeen = true) else s
-        })
+    override suspend fun markSessionFailuresSeen(ownerId: String) = write { it.withSessionFailuresSeen(ownerId) }
+
+    override suspend fun markSetFailuresSeen(ownerId: String) = write { it.withSetFailuresSeen(ownerId) }
+
+    override fun observeSessionUpload(id: String): Flow<SessionUploadRow?> =
+        state.map { it.sessionUpload(id) }.distinctUntilChanged()
+
+    override suspend fun pendingFeedback(ownerId: String) = state.value.sessions.values
+        .filter { it.ownerId == ownerId && it.status == STATUS_FINISHED && it.syncState == SYNC_SYNCED && it.feedbackState == FEEDBACK_PENDING }
+        .sortedBy { it.startedAt }
+
+    override suspend fun markFeedbackSynced(id: String, rpe: Int?, notes: String?) = write { st ->
+        val s = st.sessions[id]?.takeIf { it.feedbackState == FEEDBACK_PENDING && it.rpe == rpe && it.notes == notes }
+            ?: return@write st
+        st.copy(sessions = st.sessions + (id to s.copy(feedbackState = FEEDBACK_SYNCED)))
     }
 
-    override suspend fun markSetFailuresSeen(ownerId: String) = write { st ->
-        val mine = st.sessions.values.filter { it.ownerId == ownerId }.map { it.id }.toSet()
-        st.copy(sets = st.sets.map { if (it.sessionId in mine && it.syncState == SYNC_FAILED) it.copy(failureSeen = true) else it })
+    override suspend fun markFeedbackRejected(id: String) = write { st ->
+        val s = st.sessions[id] ?: return@write st
+        st.copy(sessions = st.sessions + (id to s.copy(feedbackState = FEEDBACK_REJECTED)))
     }
-
-    override fun observeSessionUpload(id: String): Flow<SessionUploadRow?> = state.map { st ->
-        st.sessions[id]?.let { s -> SessionUploadRow(s.syncState, st.sets.count { it.sessionId == id && it.syncState == SYNC_FAILED }) }
-    }.distinctUntilChanged()
 
     // Atómicos como el @Transaction de Room: el Flow nunca emite un estado a medias.
     override suspend fun start(session: WorkoutSessionEntity, exercises: List<WorkoutExerciseEntity>) {

@@ -88,7 +88,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-04 → CU-02 | `«include»` | Toda gestión de alumnos requiere autenticación previa (representativo de todos los CU protegidos) |
 | CU-05 → CU-06 | `«include»` | Asignar rutina siempre requiere acceder a la biblioteca de ejercicios para seleccionar ítems |
 | CU-14 → CU-13 | `«include»` | Ejecutar sesión siempre parte de ver la rutina del día |
-| CU-14 → CU-16 | `«include»` | Al cerrar la sesión siempre se solicita el feedback (RPE + nota) |
+| CU-14 → CU-16 | `«include»` | Al cerrar la sesión siempre se ofrece el feedback (RPE + nota), que el alumno puede saltear. Viaja en el `POST` de la sesión, o en un `PATCH` si la sesión ya subió |
 | CU-03 → CU-02 | `«include»` | Generar invitación requiere que el PT esté autenticado |
 | CU-05 → CU-08 | `«extend»` | El PT puede opcionalmente partir de una rutina generada por la IA antes de personalizarla |
 | CU-14 → CU-15 | `«extend»` | Consultar al asistente IA durante la sesión es opcional (depende de duda del alumno) |

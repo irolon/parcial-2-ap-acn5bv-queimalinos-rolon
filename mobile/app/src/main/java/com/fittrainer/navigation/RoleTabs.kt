@@ -17,6 +17,15 @@ data class Tab(val route: String, val label: String, val icon: ImageVector, val 
 const val HEALTH_ROUTE = "health"
 const val STUDENT_TODAY_ROUTE = "student/today"
 const val STUDENT_LIBRARY_ROUTE = "student/routines"
+const val STUDENT_PROGRESS_ROUTE = "student/progress"
+
+/** Detalle de una sesión del historial (tarjeta 12). */
+const val HISTORY_DETAIL_ROUTE = "student/history/{sessionId}"
+fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
+
+/** El detalle de una sesión cuelga de Progreso: esa pestaña sigue marcada mientras se ve. */
+fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
+    currentRoute == tabRoute || (tabRoute == STUDENT_PROGRESS_ROUTE && currentRoute?.startsWith("student/history/") == true)
 
 /** Sesión activa: pantalla completa, sin la barra de pestañas. */
 const val WORKOUT_ROUTE = "student/workout"
@@ -24,7 +33,7 @@ const val WORKOUT_ROUTE = "student/workout"
 /** Guía Mobile p.5 — app del alumno. */
 val StudentTabs = listOf(
     Tab(STUDENT_TODAY_ROUTE, "Hoy", Icons.Filled.DateRange),
-    Tab("student/progress", "Progreso", Icons.Filled.Star),
+    Tab(STUDENT_PROGRESS_ROUTE, "Progreso", Icons.Filled.Star),
     Tab(STUDENT_LIBRARY_ROUTE, "Mis rutinas", Icons.AutoMirrored.Filled.List),
     Tab("student/profile", "Perfil", Icons.Filled.Person, isAccountMenu = true),
 )

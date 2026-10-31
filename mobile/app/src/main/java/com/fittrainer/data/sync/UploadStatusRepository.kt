@@ -14,7 +14,8 @@ class UploadStatusRepository @Inject constructor(private val dao: WorkoutDao) {
 
     fun observeSession(sessionId: String): Flow<SessionUploadRow?> = dao.observeSessionUpload(sessionId)
 
-    suspend fun pendingCount(ownerId: String): Int = counts(ownerId).pending
+    /** Lo que se pierde si cierra sesión: sesiones sin subir y feedback sin mandar (tarjeta 12). */
+    suspend fun pendingCount(ownerId: String): Int = counts(ownerId).let { it.pending + it.pendingFeedback }
 
     /** Foto de los conteos: se compara antes y después de forzar una pasada. */
     suspend fun counts(ownerId: String): UploadCounts = dao.observeUploadCounts(ownerId).first()

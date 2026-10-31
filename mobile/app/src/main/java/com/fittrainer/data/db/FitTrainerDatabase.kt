@@ -14,6 +14,11 @@ import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.WorkoutExerciseEntity
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
 import com.fittrainer.data.db.workout.WorkoutSetEntity
+import com.fittrainer.data.db.workout.history.HistoryCommentSeenEntity
+import com.fittrainer.data.db.workout.history.HistoryDao
+import com.fittrainer.data.db.workout.history.HistoryExerciseEntity
+import com.fittrainer.data.db.workout.history.HistorySessionEntity
+import com.fittrainer.data.db.workout.history.HistorySetEntity
 
 @Database(
     entities = [
@@ -26,8 +31,12 @@ import com.fittrainer.data.db.workout.WorkoutSetEntity
         WorkoutSessionEntity::class,
         WorkoutExerciseEntity::class,
         WorkoutSetEntity::class,
+        HistorySessionEntity::class,
+        HistoryExerciseEntity::class,
+        HistorySetEntity::class,
+        HistoryCommentSeenEntity::class,
     ],
-    version = 6,
+    version = 8,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en FitTrainerDatabaseMigrationTest.
@@ -37,6 +46,8 @@ import com.fittrainer.data.db.workout.WorkoutSetEntity
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
+        AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -44,4 +55,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun routineDao(): RoutineDao
     abstract fun libraryDao(): LibraryDao
     abstract fun workoutDao(): WorkoutDao
+    abstract fun historyDao(): HistoryDao
 }
