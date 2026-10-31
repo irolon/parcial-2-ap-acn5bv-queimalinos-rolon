@@ -17,9 +17,10 @@ import kotlinx.coroutines.launch
 
 sealed interface SignOutSyncState {
     data object Hidden : SignOutSyncState
-    data class Asking(val pending: Int) : SignOutSyncState
+    data class Asking(val pending: Int, val feedback: Int = 0) : SignOutSyncState
     data object Uploading : SignOutSyncState
-    data class Failed(val pending: Int) : SignOutSyncState
+    /** Quedó algo sin subir (se ofrece Reintentar); [rejected]: además el servidor rechazó algo en esta pasada. */
+    data class Failed(val pending: Int, val feedback: Int = 0, val rejected: Boolean = false) : SignOutSyncState
 
     /** Subió todo, pero el servidor rechazó algo: se avisa antes de cerrar (queda guardado en el celular). */
     data object Rejected : SignOutSyncState
@@ -43,15 +44,16 @@ class SignOutSyncViewModel @Inject constructor(
         if (_state.value != SignOutSyncState.Hidden) return
         viewModelScope.launch {
             val owner = currentOwner() ?: return@launch close()
-            val pending = status.pendingCount(owner)
-            _state.value = if (pending == 0) SignOutSyncState.SignOut else SignOutSyncState.Asking(pending)
+            val counts = status.counts(owner)
+            _state.value = if (counts.pending + counts.pendingFeedback == 0) SignOutSyncState.SignOut
+            else SignOutSyncState.Asking(counts.pending, counts.pendingFeedback)
         }
     }
 
     fun uploadNow() {
-        val lastPending = when (val current = _state.value) {
-            is SignOutSyncState.Asking -> current.pending
-            is SignOutSyncState.Failed -> current.pending
+        val last = when (val current = _state.value) {
+            is SignOutSyncState.Asking -> SignOutSyncState.Failed(current.pending, current.feedback)
+            is SignOutSyncState.Failed -> current
             else -> return
         }
         // Se marca Uploading antes de lanzar: un segundo toque ya no entra.
@@ -59,17 +61,18 @@ class SignOutSyncViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val owner = currentOwner() ?: return@launch close()
-                when (manualSync.run(owner)) {
+                val outcome = manualSync.run(owner)
+                when (outcome.result) {
                     ManualSyncResult.DONE -> close()
                     ManualSyncResult.REJECTED -> _state.value = SignOutSyncState.Rejected
-                    // Sin red, con error o todavía subiendo: queda pendiente, se ofrece cerrar igual.
-                    else -> _state.value = SignOutSyncState.Failed(status.pendingCount(owner))
+                    // Sin red, con error o todavía subiendo: queda pendiente, se ofrece cerrar igual (y se avisa si hubo rechazo).
+                    else -> _state.value = status.counts(owner).let { SignOutSyncState.Failed(it.pending, it.pendingFeedback, outcome.rejected) }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 // El alumno nunca queda atrapado en la ruedita.
-                _state.value = SignOutSyncState.Failed(lastPending)
+                _state.value = last
             }
         }
     }

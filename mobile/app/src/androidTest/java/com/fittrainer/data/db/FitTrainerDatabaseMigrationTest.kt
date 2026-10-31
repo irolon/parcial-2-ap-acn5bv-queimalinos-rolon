@@ -127,6 +127,41 @@ class FitTrainerDatabaseMigrationTest {
         }
     }
 
+    @Test fun migra6a7ConElFeedbackVacioYElHistorialSinFilas() {
+        helper.createDatabase(DB, 6).apply {
+            execSQL(
+                "INSERT INTO workout_sessions (id, ownerId, routineId, routineName, startedAt, finishedAt, status, " +
+                    "syncState, currentPosition, currentSet, failureSeen) " +
+                    "VALUES ('w1', 'u1', 'rt-1', 'Push', 1, 2, 'FINISHED', 'SYNCED', 0, 1, 0)"
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(DB, 7, true)
+        db.query("SELECT rpe, notes, feedbackState FROM workout_sessions WHERE id = 'w1'").use {
+            assertTrue(it.moveToFirst())
+            assertTrue(it.isNull(0))
+            assertTrue(it.isNull(1))
+            assertEquals("NONE", it.getString(2))
+        }
+        db.query("SELECT COUNT(*) FROM history_sessions").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
+    }
+
+    @Test fun migra7a8ConservandoElHistorialYConLaTablaDeLeidosVacia() {
+        helper.createDatabase(DB, 7).apply {
+            execSQL(
+                "INSERT INTO history_sessions (id, ownerId, startedAt, hasModifications, sets, volumeKg, hasPr, inLatest, detailLoaded, trainerComment) " +
+                    "VALUES ('h1', 'u1', 1, 0, 3, 300.0, 0, 1, 0, 'Bien')"
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(DB, 8, true)
+        db.query("SELECT trainerComment FROM history_sessions WHERE id = 'h1'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Bien", it.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM history_comment_seen").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
+    }
+
     // La base real (la del DatabaseModule, sin borrado destructivo) abre una v1 existente.
     @Test fun laBaseRealAbreUnaV1Existente() {
         helper.createDatabase(DB, 1).close()
