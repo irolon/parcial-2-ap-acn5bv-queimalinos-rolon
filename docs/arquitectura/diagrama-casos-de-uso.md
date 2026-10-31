@@ -134,6 +134,7 @@ rectangle "FitTrainer" {
   usecase "CU-09\nComentar sesión\ndel alumno" as CU09
   usecase "CU-10\nGestionar agenda" as CU10
   usecase "CU-11\nEnviar mensaje\nal alumno" as CU11
+  usecase "CU-25\nCrear y asignar\ndesafío" as CU25
 
   ' --- Alumno ---
   usecase "CU-12\nRegistrarse\nvía invitación" as CU12
