@@ -33,6 +33,13 @@ describe('notify', () => {
     expect(mockTokens.findTokensForUser).not.toHaveBeenCalled();
   });
 
+  it('si la fila ya existía (otro lote de la misma sesión), no la repite ni manda push', async () => {
+    mockNotifications.insert.mockResolvedValue(null);
+    await expect(notify(INPUT)).resolves.toBeNull();
+    expect(mockTokens.findTokensForUser).not.toHaveBeenCalled();
+    expect(mockFcm.sendToToken).not.toHaveBeenCalled();
+  });
+
   it('si la BD falla, lanza', async () => {
     mockNotifications.insert.mockRejectedValue(new Error('db'));
     await expect(notify(INPUT)).rejects.toThrow('db');

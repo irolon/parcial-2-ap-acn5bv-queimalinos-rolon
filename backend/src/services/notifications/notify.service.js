@@ -16,7 +16,7 @@ async function pushToUser(userId, userRole, payload) {
 
 /**
  * Guarda la notificación (fuente de verdad; si falla la BD, lanza) y, si corresponde,
- * intenta el push en best-effort: ningún error del push se propaga.
+ * intenta el push en best-effort: ningún error del push se propaga. Devuelve null si ya existía.
  */
 export async function notify({ userId, userRole, type, title, body = null, data = {}, push = true }) {
   let notification = await notificationsRepo.insert({
@@ -27,6 +27,8 @@ export async function notify({ userId, userRole, type, title, body = null, data 
     body,
     data,
   });
+  // Ya estaba avisada (otro lote de la misma sesión ganó la carrera): ni fila nueva ni push.
+  if (!notification) return null;
   if (!push || !isFcmEnabled()) return notification;
   let dead = [];
   try {

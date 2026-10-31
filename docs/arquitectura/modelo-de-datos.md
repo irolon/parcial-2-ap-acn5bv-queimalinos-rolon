@@ -293,6 +293,8 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 
 Índice parcial `idx_notifications_inactivity` sobre `(created_at desc) where type = 'inactivity'`: lo usa el job nocturno para traer los avisos recientes y respetar el máximo de un aviso de inactividad por alumno cada 7 días. La tabla es la fuente de verdad; el push es un aviso best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
 
+Índice único parcial `uq_notifications_session` sobre `(type, user_id, data->>'session_id') where type in ('pr', 'routine_modified')`: un aviso de récords y uno de "rutina modificada" por sesión y destinatario, aunque dos lotes de series de la misma sesión disparen el aviso a la vez.
+
 **push_tokens** *(dispositivos que reciben push)*
 
 | Campo | Tipo | Clave |

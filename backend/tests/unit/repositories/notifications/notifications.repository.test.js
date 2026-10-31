@@ -25,6 +25,11 @@ describe('notifications.repository', () => {
     expect(q.insert).toHaveBeenCalledWith({ title: 'T' });
   });
 
+  it('insert devuelve null si la fila ya existe (índice único por sesión)', async () => {
+    result.current = { data: null, error: { code: '23505', message: 'duplicate key' } };
+    await expect(notifications.insert({ type: 'pr' })).resolves.toBeNull();
+  });
+
   it('setPushSent actualiza push_sent_at', async () => {
     result.current = { data: { id: 'n-1' }, error: null };
     await notifications.setPushSent('n-1', 'ts');
