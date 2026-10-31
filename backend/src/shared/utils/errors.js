@@ -79,6 +79,11 @@ export const Errors = {
       'EXERCISE_IN_USE',
       'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno'
     ),
+  messageEmpty: () =>
+    new AppError(400, 'MESSAGE_EMPTY', 'Escribí un mensaje o adjuntá una foto'),
+  imageTooLarge: () => new AppError(413, 'IMAGE_TOO_LARGE', 'La foto supera 5 MB'),
+  imageTypeInvalid: () =>
+    new AppError(415, 'IMAGE_TYPE_INVALID', 'La foto tiene que ser JPG, PNG o WebP'),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };
