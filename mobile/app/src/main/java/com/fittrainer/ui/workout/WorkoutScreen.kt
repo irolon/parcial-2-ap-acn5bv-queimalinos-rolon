@@ -40,8 +40,8 @@ import com.fittrainer.ui.sync.sessionUploadText
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.components.ExerciseListSheet
-import com.fittrainer.ui.workout.components.ExitMenu
-import com.fittrainer.ui.workout.components.ExitStep
+import com.fittrainer.ui.workout.components.exit.ExitMenu
+import com.fittrainer.ui.workout.components.exit.ExitStep
 import com.fittrainer.ui.workout.components.ManualEntryDialog
 import com.fittrainer.ui.workout.components.ReplaceSheet
 import com.fittrainer.ui.workout.components.WorkoutSummaryView
@@ -142,7 +142,12 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
     val exercise = state.exercise ?: return
     exit?.let { step ->
         ExitMenu(
-            step, workout.pendingSets(), onStep = { exit = it },
+            step, workout.pendingSets(),
+            progress = workout.pendingSets().let { pending ->
+                val total = workout.exercises.sumOf { it.totalSets }
+                setsProgressText(total - pending, total)
+            },
+            onStep = { exit = it },
             onFinish = { exit = null; viewModel.onFinish() },
             onDiscard = { exit = null; viewModel.onDiscard() },
         )
