@@ -6,6 +6,7 @@ import {
   STUDENT_DETAIL_COLUMNS,
   STUDENT_LAST_SESSION_VIEW,
 } from '../../models/students/student.model.js';
+import { STUDENT_STREAKS_TABLE } from '../../models/gamification/gamification.model.js';
 
 /** Lista (paginada) los alumnos de un trainer, con filtros opcionales. */
 export async function findStudentsByTrainer({ trainerId, active, search, page, limit }) {
@@ -82,6 +83,16 @@ export async function findLastSessionDates(studentIds) {
   const { data, error } = await supabase
     .from(STUDENT_LAST_SESSION_VIEW)
     .select('student_id, last_session_at')
+    .in('student_id', studentIds);
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** Racha de cada alumno pedido. Los que todavía no la tienen calculada no vienen. */
+export async function findStreaks(studentIds) {
+  const { data, error } = await supabase
+    .from(STUDENT_STREAKS_TABLE)
+    .select('student_id, current_days, longest_days, last_trained_date')
     .in('student_id', studentIds);
   if (error) throw Errors.internal(error.message);
   return data;

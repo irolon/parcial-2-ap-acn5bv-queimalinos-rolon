@@ -189,13 +189,14 @@ Lista los alumnos del trainer autenticado (rol: trainer).
   "data": [
     { "id": "uuid", "name": "Tomás Rivera", "email": "t@mail.com", "goal": "hypertrophy",
       "active": true, "avatar_url": null, "created_at": "2026-10-17T12:00:00Z",
-      "last_session_at": "2026-10-20T10:00:00Z" }
+      "last_session_at": "2026-10-20T10:00:00Z",
+      "streak": { "current_days": 12, "longest_days": 20, "last_trained_date": "2026-10-30" } }
   ],
   "meta": { "total": 1, "page": 1, "limit": 20, "total_pages": 1 }
 }
 ```
 
-> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. El listado no trae `level`, `gym_equipment` ni `injuries`.
+> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. `streak` sale de `student_streaks` y es `null` si todavía no se calculó. El listado no trae `level`, `gym_equipment` ni `injuries`.
 
 ### GET /students/:id
 
