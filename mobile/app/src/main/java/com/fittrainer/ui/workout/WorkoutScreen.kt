@@ -141,12 +141,11 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
     val workout = state.workout ?: return
     val exercise = state.exercise ?: return
     exit?.let { step ->
+        val pending = workout.pendingSets()
+        val total = workout.exercises.sumOf { it.totalSets }
         ExitMenu(
-            step, workout.pendingSets(),
-            progress = workout.pendingSets().let { pending ->
-                val total = workout.exercises.sumOf { it.totalSets }
-                setsProgressText(total - pending, total)
-            },
+            step, pending,
+            progress = setsProgressText(total - pending, total),
             onStep = { exit = it },
             onFinish = { exit = null; viewModel.onFinish() },
             onDiscard = { exit = null; viewModel.onDiscard() },
