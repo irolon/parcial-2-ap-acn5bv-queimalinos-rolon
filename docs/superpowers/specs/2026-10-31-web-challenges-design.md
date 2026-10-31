@@ -105,3 +105,10 @@ Editar desafíos, ver participantes por desafío, cancelar asignaciones, logros 
 - Backend (Jest): `list` con `streak` (con y sin fila, página vacía); `GET /challenges` con conteos para el trainer y sin conteos para el alumno; `GET /challenges/:id/active-students` (propio, global, ajeno → 404, rol alumno → 403).
 - Web (Vitest + Testing Library): `StreakLabel` (3 casos), orden "racha", página de desafíos (plantillas, propios, borrar visible solo sin asignaciones), formulario (validación, errores del 400, abre asignar al guardar), diálogo de asignar (buscador, máximo 50, aviso con `skipped`), card de la ficha (vacíos y con datos).
 - E2E en el navegador integrado contra el backend real con la cuenta QA: el criterio de aceptación cronometrado.
+
+**E2E del 2026-10-31** (capturas en `assets/43/`):
+- Panel ordenado por "Racha": Martín "🔥 1 día", Lucía "Sin racha · mejor: 18 días", Nora "Sin racha".
+- Desafíos → "12 sesiones en 30 días" → Asignar → Martín, Lucía y Nora → "Asignado a 3 alumnos", en menos de un minuto. La card pasa a "3 activos" y, al reabrir, los tres aparecen como "Ya lo tiene": el join con `students` filtra bien contra Supabase.
+- Nuevo desafío → Crear abre Asignar con "Ahora no"; el desafío propio sin asignaciones se borra.
+- Ficha de Lucía: racha actual y mejor, 7 logros con fecha y el desafío activo con su fin.
+- Sin errores en la consola. La migración de plantillas no estaba aplicada todavía, así que se vieron los 3 globales con el nombre viejo.
