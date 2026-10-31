@@ -29,7 +29,10 @@ beforeEach(() => vi.clearAllMocks());
 describe('AchievementsCard', () => {
   it('muestra la racha actual y la mejor', () => {
     setup();
-    expect(screen.getByText('Racha actual 12 días · Mejor 20 días')).toBeVisible();
+    const line = screen.getByText('Racha actual 12 días · Mejor 20 días');
+    expect(line).toBeVisible();
+    expect(line).toHaveClass('text-hot');
+    expect(line.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('lista logros con nombre, fecha en hora argentina e ícono oculto', () => {

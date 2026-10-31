@@ -4,6 +4,8 @@ import { formatDayMonthAR } from '@/utils/dates';
 
 const STATUS_LABEL = { completed: 'Completado', failed: 'Vencido', abandoned: 'Abandonado' };
 
+const BAR_COLOR = { active: 'bg-accentText', completed: 'bg-good', failed: 'bg-ink5', abandoned: 'bg-ink5' };
+
 function ChallengeRow({ assignment }) {
   const { challenge, status, ends_at: endsAt, progress_pct: pct } = assignment;
   const active = status === 'active';
@@ -24,7 +26,7 @@ function ChallengeRow({ assignment }) {
         aria-valuenow={pct}
         className="h-1.5 overflow-hidden rounded-pill bg-ink3"
       >
-        <div className={`h-full ${status === 'completed' ? 'bg-good' : 'bg-accentText'}`} style={{ width: `${pct}%` }} />
+        <div className={`h-full ${BAR_COLOR[status]}`} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
       </div>
     </li>
   );

@@ -1,3 +1,4 @@
+import { categoryIcon } from '@/components/achievements/categoryIcon';
 import AchievementList from '@/components/achievements/AchievementList';
 import ChallengeProgressList from '@/components/achievements/ChallengeProgressList';
 import ErrorState from '@/components/shared/states/ErrorState';
@@ -9,6 +10,8 @@ import {
   useStudentStreakQuery,
 } from '@/hooks/achievements/useStudentGamification';
 import { durationLabel } from '@/utils/challenges/challengeFormat';
+
+const { Icon: StreakIcon } = categoryIcon('streak');
 
 /** Un bloque con su propia carga y error. */
 function Block({ title, query, children }) {
@@ -34,16 +37,17 @@ export default function AchievementsCard({ studentId }) {
       <div className="flex flex-col gap-5">
         <Block title="Racha" query={streak}>
           {(s) => (
-            <p className="font-display text-sm font-semibold text-bone0">
+            <p className="flex items-center gap-2 font-display text-sm font-semibold text-hot">
+              <StreakIcon size={18} className="shrink-0" aria-hidden="true" />
               Racha actual {durationLabel(s.current_days)} · Mejor {durationLabel(s.longest_days)}
             </p>
           )}
         </Block>
-        <Block title="Desafíos" query={challenges}>
-          {(items) => <ChallengeProgressList items={items} />}
-        </Block>
         <Block title="Logros" query={achievements}>
           {(items) => <AchievementList items={items} />}
+        </Block>
+        <Block title="Desafíos" query={challenges}>
+          {(items) => <ChallengeProgressList items={items} />}
         </Block>
       </div>
     </Card>
