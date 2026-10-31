@@ -174,7 +174,7 @@ Roles `trainer` y `student`. El alumno puede omitir `student_id` (por defecto es
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/progress/exercise/:exerciseId` | Curva de carga: un punto por día con `max_kg`, `volume_kg`, `e1rm_kg` (Epley), `sets` y `reps`; más `pr` y `default_metric`. Query `student_id`, `from`, `to`. Ejercicio no visible para el alumno → 404 `EXERCISE_NOT_FOUND`. Ver [ADR 0004](../docs/adr/0004-metrica-de-progreso.md) |
-| GET | `/api/progress/overview` | Ejercicios entrenados (`id`, `name`, `muscle_group`, `days`, `last_date`) y volumen semanal (`week_start` lunes AR, `volume_kg`, `sessions`; semanas vacías en 0). Query `student_id`, `from`, `to`. Ver [contrato](../docs/arquitectura/contratos-api.md) |
+| GET | `/api/progress/overview` | Ejercicios entrenados (`id`, `name`, `muscle_group`, `days`, `last_date`) y volumen semanal (`week_start` lunes AR, `volume_kg`, `sessions`; semanas vacías en 0). Query `student_id`, `from`, `to`; 400 si `to` es posterior a mañana (hora AR). Ver [contrato](../docs/arquitectura/contratos-api.md) |
 | GET | `/api/progress/body/:studentId` | Historial de medidas (como `/students/:id/metrics`) más `summary` por campo (`first`, `last`, `delta`) |
 
 ### Gamificación — Fase 5
