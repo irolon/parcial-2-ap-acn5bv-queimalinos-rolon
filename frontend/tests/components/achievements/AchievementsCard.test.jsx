@@ -18,7 +18,7 @@ const assignment = (id, name, status, extra = {}) => ({
 });
 
 function setup({ streak, achievements = [], challenges = [] } = {}) {
-  hooks.useStudentStreakQuery.mockReturnValue(streak ?? ok({ current_days: 12, longest_days: 20 }));
+  hooks.useStudentStreakQuery.mockReturnValue(streak ?? ok({ current_streak_days: 12, longest_streak_days: 20, last_session_date: null }));
   hooks.useStudentAchievementsQuery.mockReturnValue(Array.isArray(achievements) ? ok(achievements) : achievements);
   hooks.useStudentChallengesQuery.mockReturnValue(Array.isArray(challenges) ? ok(challenges) : challenges);
   return render(<AchievementsCard studentId="st-1" />);

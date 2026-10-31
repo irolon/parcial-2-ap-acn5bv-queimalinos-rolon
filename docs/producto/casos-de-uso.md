@@ -312,21 +312,20 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 | Campo | Detalle |
 |---|---|
 | Precondiciones | El PT está autenticado en la web. |
-| Postcondiciones | Se crea un desafío en `challenges` (propio del PT). Si lo asigna a alumnos, se crean registros en `student_challenges`. |
+| Postcondiciones | Si crea un desafío, se guarda en `challenges` (propio del PT). Si asigna una plantilla o un desafío propio a alumnos, se crean registros en `student_challenges`. |
 
 **Flujo principal**
 
-1. El PT entra a "Desafíos" del menú. La página tiene dos secciones: "Plantillas" (los desafíos globales que vienen con la app, por ejemplo "12 sesiones en 30 días", "Racha de 2 semanas", "10 toneladas en 4 semanas" y "8 sesiones en 4 semanas") y "Mis desafíos" (los que creó él).
-2. Crea un desafío nuevo, desde cero o partiendo de una plantilla (que se copia, no se modifica): nombre, tipo de meta (sesiones, racha, volumen), valor meta, duración en días y descripción opcional.
-3. El premio es siempre el logro "Desafío cumplido", que el alumno recibe **la primera vez** que completa un desafío. Los siguientes no lo repiten.
-4. Al crearlo, se abre directamente la pantalla de asignación.
-5. El PT elige alumnos con un buscador (hasta 50 por vez) y confirma. El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
-6. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. La vista del alumno (desafío activo y progreso) está pendiente: tarjeta 22 en la web y la mobile.
+1. El PT entra a "Desafíos" del menú. La página tiene dos secciones: "Plantillas" (los 4 desafíos globales que vienen con la app: "12 sesiones en 30 días", "Racha de 2 semanas", "10 toneladas en 4 semanas" y "8 sesiones en 4 semanas") y "Mis desafíos" (los que creó él).
+2. En "Plantillas" elige una y toca "Asignar". Las plantillas se asignan directamente, sin copiarse ni modificarse.
+3. El PT elige alumnos con un buscador (hasta 50 por vez) y confirma con "Asignar". El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
+4. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. La vista del alumno (desafío activo y progreso) está pendiente: tarjeta 50 (paridad de rol, vistas del alumno en la web) y la mobile.
 
 **Flujos alternativos**
 
-- **4a:** El PT elige "Ahora no" → el desafío queda en "Mis desafíos", disponible para asignar más tarde.
-- **5a:** Algún alumno elegido ya tiene ese desafío activo → aparece marcado "Ya lo tiene", no se le vuelve a asignar y al confirmar un aviso lista a los alumnos salteados.
+- **2a:** El PT crea un desafío nuevo desde cero: nombre, tipo de meta (sesiones, racha, volumen o peso corporal), valor meta, duración en días y descripción opcional. El premio "Desafío cumplido" es opcional (viene activado por defecto) y el alumno lo recibe **solo la primera vez** que completa un desafío; los siguientes no lo repiten. Al crearlo se abre "Asignar" (paso 3).
+- **2b:** Al crear, el PT elige "Ahora no" → el desafío queda en "Mis desafíos", disponible para asignar más tarde.
+- **3a:** Algún alumno elegido ya tiene ese desafío activo → aparece marcado "Ya lo tiene", no se le vuelve a asignar y al confirmar un aviso lista a los alumnos salteados.
 - **6a:** El PT borra un desafío propio → solo se permite si no tiene asignaciones. Las plantillas globales no se pueden borrar.
 
 **Flujos de error**

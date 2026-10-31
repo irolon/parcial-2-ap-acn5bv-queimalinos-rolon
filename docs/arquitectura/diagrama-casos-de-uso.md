@@ -55,7 +55,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-09 | Comentar sesión del alumno | Dejar notas y feedback sobre sesiones completadas del alumno | PT-08 |
 | CU-10 | Gestionar agenda | Cargar disponibilidad horaria, aceptar/rechazar turnos solicitados por alumnos | PT-11 |
 | CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes | PT-13 |
-| CU-25 | Crear y asignar desafío | Crea un desafío (o parte de una plantilla), lo asigna a uno o varios alumnos y sigue su progreso desde la ficha | AL-11 |
+| CU-25 | Crear y asignar desafío | Asigna una plantilla (Desafíos → Plantillas → Asignar) o un desafío propio nuevo (metas de sesiones, racha, volumen o peso corporal; premio "Desafío cumplido" opcional, solo la primera vez) a uno o varios alumnos y sigue su progreso desde la ficha | AL-11 |
 
 ### Alumno
 

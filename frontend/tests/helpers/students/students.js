@@ -41,7 +41,7 @@ export function stubStudents({
       return jsonResponse(200, { data: (typeof progress === 'function' ? progress(path) : progress) ?? { exercises: [], weekly_volume: [] } });
     }
     if (method === 'GET' && /^\/students\/[^/]+\/streak/.test(path)) {
-      return jsonResponse(200, { data: { current_days: 0, longest_days: 0, last_trained_date: null } });
+      return jsonResponse(200, { data: { current_streak_days: 0, longest_streak_days: 0, last_session_date: null } });
     }
     if (method === 'GET' && /^\/students\/[^/]+\/(achievements|challenges)/.test(path)) return jsonResponse(200, { data: [] });
     if (method === 'GET' && /^\/students\/[^/]+\/metrics/.test(path)) {

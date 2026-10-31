@@ -39,7 +39,7 @@ export default function AchievementsCard({ studentId }) {
           {(s) => (
             <p className="flex items-center gap-2 font-display text-sm font-semibold text-hot">
               <StreakIcon size={18} className="shrink-0" aria-hidden="true" />
-              Racha actual {durationLabel(s.current_days)} · Mejor {durationLabel(s.longest_days)}
+              Racha actual {durationLabel(s.current_streak_days)} · Mejor {durationLabel(s.longest_streak_days)}
             </p>
           )}
         </Block>
