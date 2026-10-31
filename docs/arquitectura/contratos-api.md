@@ -732,6 +732,37 @@ El entrenador comenta una sesión de uno de sus alumnos. Solo `trainer` (alumno 
 
 Roles `trainer` y `student`. La autorización vive en el service (ADR 0001). Métrica por defecto: ver [ADR 0004](../adr/0004-metrica-de-progreso.md).
 
+### GET /progress/overview
+
+Resumen para la vista de progreso: los ejercicios que el alumno entrenó y su volumen semanal. Mismas reglas de permiso que `GET /progress/exercise/:exerciseId`.
+
+**Query:** `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, hora argentina; opcionales).
+
+- **Alumno:** `student_id` opcional (por defecto, él mismo); el de otro alumno → 403.
+- **Trainer:** `student_id` obligatorio (400 `VALIDATION_ERROR` si falta) y tiene que ser alumno suyo (si no, 403).
+- UUID o fecha mal formados, o `from > to` → 400 `VALIDATION_ERROR`.
+- `from` no puede quedar a más de 3 años (1095 días) de `to`, o de hoy en hora argentina si no hay `to` → 400 `VALIDATION_ERROR` sobre `from` ("El rango no puede superar 3 años"). Acota las filas de `weekly_volume` (una por semana). `GET /progress/exercise` no tiene este tope.
+- `to` no puede ser posterior a mañana en hora argentina (un día de margen) → 400 `VALIDATION_ERROR` sobre `to` ("La fecha `to` no puede ser futura"). Junto con el tope de `from`, acota `weekly_volume` aunque no se mande `from` (`?to=9999-12-31` se rechaza).
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "exercises": [
+      { "id": "uuid", "name": "Press de banca", "muscle_group": "chest", "days": 18, "last_date": "2026-10-27" }
+    ],
+    "weekly_volume": [
+      { "week_start": "2026-10-20", "volume_kg": 5230.5, "sessions": 3 },
+      { "week_start": "2026-10-27", "volume_kg": 0, "sessions": 0 }
+    ]
+  }
+}
+```
+
+- `exercises`: todos los ejercicios con al menos una serie que cuenta (`completed` y `actual_reps > 0`), **sin filtrar por rango**. `days` = días distintos (hora argentina) con ese ejercicio. Orden: `last_date` descendente y después `name`.
+- `weekly_volume`: una fila por semana completa (lunes a domingo, hora argentina), ascendente, desde la semana de `from` hasta la de `to` (o la actual). La primera y la última semana incluyen todo su volumen aunque `from`/`to` caigan a mitad de semana (la web alinea `from` al lunes). Sin `from`, arranca en la semana de la primera serie que cuenta (`completed` y `actual_reps > 0`). `volume_kg` = Σ `actual_reps × actual_kg` de las series que cuentan (kg nulo cuenta 0), a 1 decimal; `sessions` = sesiones distintas con alguna serie que cuenta. Las semanas sin series vienen en 0. Sin ninguna sesión y sin `from` → `[]`.
+
 ### GET /progress/exercise/:exerciseId
 
 Curva de carga de un ejercicio: un punto por día con series que cuentan (`completed` y `actual_reps > 0`), agrupado por día calendario argentino de `sessions.started_at`.

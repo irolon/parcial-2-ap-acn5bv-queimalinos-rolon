@@ -125,7 +125,7 @@ src/
   routes/<módulo>/        controllers/<módulo>/   services/<módulo>/
   repositories/<módulo>/  validations/<módulo>/   models/<módulo>/
   shared/middlewares/     shared/utils/
-  database/schema/        (01-…sql a 07-…sql, en orden de ejecución)
+  database/schema/        (01-…sql a 07-…sql, en orden de ejecución; 04b-progress-overview.sql corre después de 04-progress.sql)
   database/migrations/    database/checks/        database/seeds/
 tests/
   unit/<capa>/<módulo>/   (mismo árbol que src; unit/scripts/lib/ espeja scripts/lib/, sin módulo)

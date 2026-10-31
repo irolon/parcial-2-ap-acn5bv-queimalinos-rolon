@@ -115,7 +115,7 @@ describe('StudentProfilePage: navegación entre alumnos', () => {
     });
     expect(await screen.findByRole('button', { name: /Siguiente/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Anterior/ })).toBeDisabled();
-    expect(screen.queryByText(/ de \d/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ de \d+$/)).not.toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(router.state.location.pathname).toBe('/pt/alumnos/st-dani');
   });

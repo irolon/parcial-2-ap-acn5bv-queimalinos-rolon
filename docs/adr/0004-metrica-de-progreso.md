@@ -36,7 +36,13 @@ y cuál se grafica por defecto.
    `e1rm_kg` es `null`, no 0, así el `pr.e1rm_kg` tampoco queda en 0.
 4. **Día calendario argentino**: el punto se agrupa por la fecha de
    `sessions.started_at` en `America/Argentina/Buenos_Aires`.
-5. **La agregación vive en Postgres** (función `exercise_progress`, llamada con
+5. **El volumen semanal** (`GET /progress/overview`, tarjeta 34) suma
+   `volume_kg` con la misma regla de series que cuentan y agrupa por semana que
+   empieza el lunes, en hora argentina (`date_trunc('week', …)` sobre la fecha
+   local). Las semanas sin series vienen en 0 (se generan con `generate_series`)
+   para que el gráfico no tenga huecos; `sessions` cuenta sesiones distintas con
+   al menos una serie que cuenta.
+6. **La agregación vive en Postgres** (función `exercise_progress`, llamada con
    `supabase.rpc`) y el redondeo a 1 decimal, en el modelo.
 
 ## Alternativas

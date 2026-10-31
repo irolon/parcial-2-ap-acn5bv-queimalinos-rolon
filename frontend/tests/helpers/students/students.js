@@ -12,6 +12,7 @@ export const daysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
  * Stub de la API de alumnos sobre `stubFetch`.
  * - `list`: respuesta de `GET /students` (activos); `disabled`: la de `?active=false` (o funciones que la arman en cada GET).
  * - `detail`: ficha de `GET /students/:id` (o función que la arma en cada GET) (`detailError`: status de error, 403 o 400 con `:id` inválido); `metrics`: respuesta de `GET /students/:id/metrics`.
+ * - `progress`: respuesta de `GET /progress/*` (o función `path => data`; por defecto, un overview vacío).
  * - `sessions`, `sessionDetails`, `handlers.comment`: historial de sesiones (ver `sessionsRoute`); por defecto, vacío.
  * - `handlers`: `{ update, createMetric, deleteMetric }` para el resto; lo que no se maneja devuelve 500.
  */
@@ -22,6 +23,7 @@ export function stubStudents({
   detailError,
   metrics = [],
   metricsError,
+  progress,
   sessions,
   sessionDetails,
   handlers = {},
@@ -33,6 +35,9 @@ export function stubStudents({
     if (method === 'GET' && path.startsWith('/students?')) {
       const data = path.includes('active=false') ? disabled : list;
       return jsonResponse(200, { data: typeof data === 'function' ? data() : data });
+    }
+    if (method === 'GET' && path.startsWith('/progress/')) {
+      return jsonResponse(200, { data: (typeof progress === 'function' ? progress(path) : progress) ?? { exercises: [], weekly_volume: [] } });
     }
     if (method === 'GET' && /^\/students\/[^/]+\/metrics/.test(path)) {
       if (metricsError) return errorResponse(metricsError, 'INTERNAL');

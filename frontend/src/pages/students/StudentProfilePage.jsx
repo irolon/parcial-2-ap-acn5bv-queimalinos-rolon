@@ -6,6 +6,7 @@ import MetricsHistory from '@/components/body-metrics/MetricsHistory';
 import WeightChart from '@/components/body-metrics/WeightChart';
 import SessionsHistory from '@/components/sessions/SessionsHistory';
 import EmptyState from '@/components/shared/states/EmptyState';
+import ProgressPanel from '@/components/progress/ProgressPanel';
 import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
 import Button from '@/components/shared/ui/Button';
@@ -107,6 +108,12 @@ export default function StudentProfilePage() {
               <SessionsHistory studentId={id} />
             </div>
           </div>
+          <section aria-labelledby="progreso-titulo" className="flex min-w-0 flex-col gap-3">
+            <h2 id="progreso-titulo" className="font-display text-lg font-semibold text-bone0">
+              Progreso
+            </h2>
+            <ProgressPanel key={id} studentId={id} />
+          </section>
           <StudentDialogs dialog={dialog} student={data} metrics={metrics} onClose={close} />
         </div>
       )}

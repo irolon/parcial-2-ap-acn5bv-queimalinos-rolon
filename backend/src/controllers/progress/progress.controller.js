@@ -12,3 +12,9 @@ export const bodyProgress = asyncHandler(async (req, res) => {
   const data = await progressService.bodyProgress(req.user, req.params.studentId);
   res.json({ data });
 });
+
+/** GET /progress/overview — 200 → { data } */
+export const overview = asyncHandler(async (req, res) => {
+  const data = await progressService.overview(req.user, req.query);
+  res.json({ data });
+});

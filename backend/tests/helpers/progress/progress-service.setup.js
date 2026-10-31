@@ -6,7 +6,11 @@ import { fileURLToPath } from 'node:url';
 // tiene que resolver al MISMO archivo que importa el service.
 const src = (p) => fileURLToPath(new URL(`../../../src/${p}`, import.meta.url));
 
-export const mockProgressRepo = { fetchExerciseProgress: jest.fn() };
+export const mockProgressRepo = {
+  fetchExerciseProgress: jest.fn(),
+  fetchProgressExercises: jest.fn(),
+  fetchWeeklyVolume: jest.fn(),
+};
 export const mockRoutinesRepo = { findAccessibleExerciseIds: jest.fn() };
 export const mockExercisesRepo = { findExerciseById: jest.fn() };
 export const mockAccess = { assertCanAccessStudent: jest.fn() };
@@ -28,4 +32,11 @@ export const STUDENT_ROW = { id: STUDENT.id, trainer_id: TRAINER.id };
 export const ROWS = [
   { date: '2026-10-20', max_kg: '60', volume_kg: '1800.00', e1rm_kg: '72.04', sets: 3, reps: 30 },
   { date: '2026-10-27', max_kg: '62.5', volume_kg: '1875', e1rm_kg: '79.17', sets: 3, reps: 30 },
+];
+export const EXERCISE_ROWS = [
+  { exercise_id: EXERCISE_ID, name: 'Press de banca', muscle_group: 'chest', days: 18, last_date: '2026-10-27' },
+];
+export const WEEK_ROWS = [
+  { week_start: '2026-10-20', volume_kg: '5230.45', sessions: 3 },
+  { week_start: '2026-10-27', volume_kg: '0', sessions: 0 },
 ];

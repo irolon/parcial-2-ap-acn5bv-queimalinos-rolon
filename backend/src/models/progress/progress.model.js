@@ -68,3 +68,21 @@ export function bodySummary(metricsAsc, fields) {
   }
   return summary;
 }
+
+/** Filas crudas de progress_exercises y weekly_volume → overview con números redondeados. */
+export function toOverview(exerciseRows, weekRows) {
+  return {
+    exercises: exerciseRows.map((row) => ({
+      id: row.exercise_id,
+      name: row.name,
+      muscle_group: row.muscle_group,
+      days: Number(row.days),
+      last_date: toDateString(row.last_date),
+    })),
+    weekly_volume: weekRows.map((row) => ({
+      week_start: toDateString(row.week_start),
+      volume_kg: round1(row.volume_kg) ?? 0,
+      sessions: Number(row.sessions),
+    })),
+  };
+}

@@ -52,3 +52,26 @@ export function validateExerciseProgressQuery(query) {
   throwIfAny(details);
   return result;
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_OVERVIEW_DAYS = 1095; // 3 años: tope del rango de /progress/overview (una fila por semana)
+const AR_OFFSET_MS = 3 * 60 * 60 * 1000; // Argentina es UTC-3 todo el año
+
+const dayNumber = (iso) => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;
+const todayAr = (now) => new Date(now.getTime() - AR_OFFSET_MS).toISOString().slice(0, 10);
+
+/**
+ * Query de GET /progress/overview: las reglas de /exercise y además `from` no puede
+ * quedar a más de 3 años de `to` (o de hoy en Argentina si no hay `to`), y `to` no puede ser
+ * posterior a mañana en Argentina (un día de margen).
+ */
+export function validateProgressOverviewQuery(query, now = new Date()) {
+  const result = validateExerciseProgressQuery(query);
+  if (result.to && dayNumber(result.to) - dayNumber(todayAr(now)) > 1) {
+    throw Errors.validation('Error de validación', [{ field: 'to', message: 'La fecha `to` no puede ser futura' }]);
+  }
+  if (result.from && dayNumber(result.to ?? todayAr(now)) - dayNumber(result.from) > MAX_OVERVIEW_DAYS) {
+    throw Errors.validation('Error de validación', [{ field: 'from', message: 'El rango no puede superar 3 años' }]);
+  }
+  return result;
+}

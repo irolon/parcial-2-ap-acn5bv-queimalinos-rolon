@@ -7,6 +7,7 @@ import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import RoutineEditorPage from '@/pages/routines/RoutineEditorPage';
 import RoutinesPage from '@/pages/routines/RoutinesPage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
+import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
@@ -64,6 +65,6 @@ export const routes = [
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,
   }),
-  roleSection(ROLES.STUDENT, STUDENT_NAV),
+  roleSection(ROLES.STUDENT, STUDENT_NAV, [], { progreso: <MyProgressPage /> }),
   { path: '*', element: <NotFoundPage /> },
 ];
