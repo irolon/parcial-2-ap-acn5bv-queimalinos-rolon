@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
- * Encola una pasada cada vez que cambia lo pendiente del alumno logueado (spec §4). Leyendo Room
+ * Encola una pasada cada vez que cambia lo pendiente del alumno logueado (sesiones y feedback, tarjeta 12; spec §4). Leyendo Room
  * cubre los tres casos del spec: terminar una sesión, iniciar sesión y abrir la app.
  */
 @Singleton
@@ -36,7 +36,7 @@ class SyncTrigger @Inject constructor(
             .distinctUntilChanged()
             .flatMapLatest { owner ->
                 // Por dueño: al volver a entrar el conteo se vuelve a evaluar desde cero.
-                if (owner == null) emptyFlow() else dao.observeUploadCounts(owner).map { it.pending }.distinctUntilChanged().withPrevious()
+                if (owner == null) emptyFlow() else dao.observeUploadCounts(owner).map { it.pending + it.pendingFeedback }.distinctUntilChanged().withPrevious()
             }
             .filter { (_, pending) -> pending > 0 }
             // Solo es trabajo nuevo si crecieron las pendientes (se terminó una sesión). La primera lectura

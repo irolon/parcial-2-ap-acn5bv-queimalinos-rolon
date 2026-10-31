@@ -17,6 +17,14 @@ const val SYNC_SYNCED = "SYNCED"
 /** El servidor la rechazó para siempre (spec §5 de la tarjeta 11): no se reintenta. */
 const val SYNC_FAILED = "FAILED"
 
+/** Feedback post-entreno (tarjeta 12): sin cargar o salteado. */
+const val FEEDBACK_NONE = "NONE"
+/** Guardado en el celular, falta subirlo. */
+const val FEEDBACK_PENDING = "PENDING"
+const val FEEDBACK_SYNCED = "SYNCED"
+/** El servidor lo rechazó (400/404): no se reintenta. */
+const val FEEDBACK_REJECTED = "REJECTED"
+
 /**
  * Sesión de entrenamiento. Mismos datos que `sessions` del backend más el cursor (dónde está el
  * alumno) para retomar. No es un caché: no se borra en el logout (spec §4).
@@ -38,6 +46,11 @@ data class WorkoutSessionEntity(
     val restPausedRemainingMs: Long?,
     /** El alumno ya vio y descartó en Hoy que no se pudo subir (v6): deja de contarse en el aviso. */
     @ColumnInfo(defaultValue = "0") val failureSeen: Boolean = false,
+    /** RPE 1-10 del feedback post-entreno (v7). */
+    val rpe: Int? = null,
+    /** Nota libre del feedback, hasta 1000 caracteres (v7). */
+    val notes: String? = null,
+    @ColumnInfo(defaultValue = FEEDBACK_NONE) val feedbackState: String = FEEDBACK_NONE,
 )
 
 /** Copia del plan al empezar: que Hoy refresque la rutina no cambia la sesión. */

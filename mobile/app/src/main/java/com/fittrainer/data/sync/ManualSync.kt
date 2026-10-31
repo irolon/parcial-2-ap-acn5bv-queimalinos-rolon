@@ -35,9 +35,11 @@ class ManualSync @Inject constructor(
         val finished = sync.syncNow(TIMEOUT_MS)
         val after = status.counts(owner)
         // Una sesión rechazada deja de estar pendiente (queda FAILED): "sin pendientes" no alcanza para el éxito.
+        // El feedback sin mandar (tarjeta 12) también es pendiente: un PATCH caído no puede dar DONE.
+        val left = after.pending + after.pendingFeedback
         return when {
-            after.pending > 0 && !finished -> ManualSyncResult.STILL_UPLOADING
-            after.pending > 0 -> ManualSyncResult.FAILED
+            left > 0 && !finished -> ManualSyncResult.STILL_UPLOADING
+            left > 0 -> ManualSyncResult.FAILED
             after.rejections > before.rejections -> ManualSyncResult.REJECTED
             else -> ManualSyncResult.DONE
         }

@@ -23,7 +23,7 @@ fun PendingUploadsSignOutDialog(
         is SignOutSyncState.Asking -> AlertDialog(
             onDismissRequest = onCancel,
             title = { Text("Entrenamientos sin subir") },
-            text = { Text(signOutPendingText(state.pending)) },
+            text = { Text(signOutPendingText(state.pending, state.feedback)) },
             confirmButton = { TextButton(onClick = onUpload) { Text("Subir ahora") } },
             dismissButton = {
                 Row {
@@ -41,7 +41,7 @@ fun PendingUploadsSignOutDialog(
         is SignOutSyncState.Failed -> AlertDialog(
             onDismissRequest = onCancel,
             title = { Text("No se pudo subir") },
-            text = { Text("¿Cerrar sesión igual? ${signOutPendingText(state.pending)}") },
+            text = { Text("¿Cerrar sesión igual? ${signOutPendingText(state.pending, state.feedback)}") },
             confirmButton = { TextButton(onClick = onUpload) { Text("Reintentar") } },
             dismissButton = {
                 Row {
