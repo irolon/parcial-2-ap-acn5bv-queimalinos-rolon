@@ -10,7 +10,7 @@ El schema de FitTrainer está repartido por dominio en ocho archivos SQL.
 | `04-progress.sql` | `body_metrics`, `sessions`, la vista `student_last_session`, `session_sets`, el índice `idx_session_sets_exercise_session` y las funciones `exercise_progress`, `last_session_kg` y `session_records` |
 | `04b-progress-overview.sql` | las funciones `progress_exercises` y `weekly_volume` (overview de progreso); corre después de `04-progress.sql` |
 | `05-gamification.sql` | `achievements`, `student_achievements`, `challenges`, `student_challenges`, `student_streaks` y el índice único de desafíos activos |
-| `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `notifications` |
+| `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `notifications`, `push_tokens` |
 | `07-rls.sql` | Row Level Security (activado sin políticas en todas las tablas) |
 
 ## Cómo correrlos

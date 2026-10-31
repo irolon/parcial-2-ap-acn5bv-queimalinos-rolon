@@ -1,6 +1,7 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repo from '../../repositories/sessions/session-history.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository.js';
+import { onSessionCommented } from '../notifications/triggers.service.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import { toSessionSummary, groupSetsByExercise } from '../../models/sessions/session-history.model.js';
 
@@ -83,6 +84,12 @@ export async function commentSession(user, sessionId, { trainer_comment }) {
   if (!student || student.trainer_id !== user.id) throw Errors.sessionNotFound();
 
   const updated = await repo.updateTrainerComment(sessionId, trainer_comment);
+  void onSessionCommented({
+    session: updated,
+    studentId: row.student_id,
+    previousComment: row.trainer_comment,
+    comment: trainer_comment,
+  });
   const [sets, records, [withRoutine]] = await Promise.all([
     repo.findSetsForSessions([sessionId]),
     repo.fetchSessionRecords(row.student_id, [sessionId]),

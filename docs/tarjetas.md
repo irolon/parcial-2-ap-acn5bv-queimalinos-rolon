@@ -26,6 +26,7 @@ tags: [indice]
 | 33 | [Historial de sesiones y comentarios del PT](https://trello.com/c/6NlX3ee6) | [[superpowers/specs/2026-10-29-sessions-history-design\|spec]] | [[superpowers/plans/2026-10-29-sessions-history\|plan]] | [[arquitectura/contratos-api\|Contratos de API]] |
 | 34 | [Vista de progreso en la web](https://trello.com/c/IkcYj8pl) | [[superpowers/specs/2026-10-30-web-progress-design\|spec]] | [[superpowers/plans/2026-10-30-web-progress\|plan]] | [[arquitectura/adrs\|ADRs]], [[arquitectura/contratos-api\|Contratos de API]] |
 | 41 | [Gamificación backend](https://trello.com/c/v4zsogFe) | [[superpowers/specs/2026-10-30-gamification-backend-design\|spec]] | [[superpowers/plans/2026-10-30-gamification-backend\|plan]] | [[arquitectura/adrs\|ADRs]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
+| 44 | [Notificaciones (FCM + inactividad)](https://trello.com/c/rHdVyMV6) | [[superpowers/specs/2026-10-30-notifications-design\|spec]] | [[superpowers/plans/2026-10-30-notifications\|plan]] | [[arquitectura/adrs\|ADRs]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
 | — | Límite de 200 líneas y orden (mobile) | — | [[superpowers/plans/2026-10-17-orden-y-limite-200-mobile\|plan]] | Regla de `CONTRIBUTING.md` |
 
 Volver a [[inicio]].

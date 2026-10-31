@@ -22,6 +22,19 @@ const mondayOf = (str) => addDays(str, -((toUtc(str).getUTCDay() + 6) % 7));
 const assignedSet = (assignedDays) => new Set(assignedDays?.length ? assignedDays : DAYS);
 
 /**
+ * Días asignados que se salteó el alumno: los que van desde el día siguiente a
+ * `lastDate` hasta ayer (hoy todavía no terminó). Vacío = todos los días.
+ */
+export function missedAssignedDays({ lastDate, assignedDays, today }) {
+  const assigned = assignedSet(assignedDays);
+  let missed = 0;
+  for (let day = addDays(lastDate, 1); day < today; day = addDays(day, 1)) {
+    if (assigned.has(weekdayOf(day))) missed += 1;
+  }
+  return missed;
+}
+
+/**
  * Racha contra los días asignados.
  * - Día entrenado: suma 1 (esté o no asignado).
  * - Día asignado sin entrenar: corta, salvo hoy (todavía no terminó).

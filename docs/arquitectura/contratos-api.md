@@ -643,7 +643,7 @@ Un `routine_exercise_id` que no pertenece a la rutina de la sesión (o la sesió
 
 **Errores del request:** 400 `VALIDATION_ERROR` si `sets` no es un arreglo de 1 a 100; 404 `SESSION_NOT_FOUND` si la sesión no existe o es de otro alumno.
 
-> **Sustitución:** si alguna serie guardada tiene `original_exercise_id` no nulo y distinto de `exercise_id`, la sesión queda con `has_modifications = true` (nunca vuelve a `false` sola). La notificación al PT llega con la tarjeta de push.
+> **Sustitución:** si alguna serie guardada tiene `original_exercise_id` no nulo y distinto de `exercise_id`, la sesión queda con `has_modifications = true` (nunca vuelve a `false` sola). Al pasar a `true` por primera vez se crea la notificación `routine_modified` para el PT (ver Módulo: Notificaciones).
 
 ### PATCH /sessions/:id
 
@@ -1042,15 +1042,95 @@ Envía un mensaje al asistente IA en sesión.
 
 ## Módulo: Notificaciones
 
+La tabla `notifications` es la fuente de verdad; el push al celular es un aviso aparte y best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]). Todos los endpoints piden `Authorization: Bearer <token>`, roles `trainer` y `student`, y trabajan **solo con las notificaciones y tokens del usuario autenticado**. Sin token → 401 `UNAUTHORIZED`; con un dato inválido → 400 `VALIDATION_ERROR`.
+
 ### GET /notifications
 
-Lista notificaciones del usuario. Query: `unread_only`, `limit`.
+Lista las notificaciones propias, las más nuevas primero (`created_at` desc).
 
-Tipos: `inactivity`, `appointment`, `comment`, `pr`, `achievement`, `routine_modified`.
+**Query (todos opcionales)**
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `unread_only` | `"true"` o `"false"` | Solo las no leídas. Por defecto `false` |
+| `limit` | entero 1–100 | Tamaño de página. Por defecto 20 |
+| `before` | ISO 8601 con zona | Cursor: solo las creadas **antes** de esa fecha (exclusivo). Se obtiene de `meta.next_before` |
+
+**200 OK**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "type": "inactivity",
+      "title": "Juan Pérez no entrena hace 10 días",
+      "body": "Se salteó 4 días de su rutina. Escribile para retomar.",
+      "data": { "student_id": "uuid", "missed_days": 4, "days_since": 10 },
+      "read": false,
+      "created_at": "2026-10-30T06:00:00.123456+00:00"
+    }
+  ],
+  "meta": { "unread_count": 3, "next_before": "2026-10-29T06:00:00.123456+00:00" }
+}
+```
+
+- `body` puede ser `null`.
+- `meta.unread_count` es el total de no leídas del usuario, sin importar `unread_only`, `limit` ni `before` (sirve para el globito de la campanita).
+- `meta.next_before` es el `created_at` de la última notificación de la página cuando la página vino llena (`data.length === limit`); `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada.
+- **`next_before` termina en `+00:00`: el `+` hay que codificarlo en la URL (`%2B`)**; si no, el servidor lo lee como un espacio y responde 400 `VALIDATION_ERROR`. Con `URLSearchParams` o `encodeURIComponent` se resuelve solo: `?before=2026-10-29T06%3A00%3A00.123456%2B00%3A00`.
+- Errores de validación: `unread_only` distinto de `true`/`false`, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona.
+
+**Tipos y cuándo se crean**
+
+| `type` | Cuándo se crea | Para quién | Push | `data` |
+|---|---|---|---|---|
+| `inactivity` | Job nocturno (03:00 ART): el alumno (con rutina activa) acumula 3 o más días asignados sin entrenar; máximo una por alumno cada 7 días, contados por fecha de Buenos Aires (ver CU-10 en [[producto/casos-de-uso\|Casos de uso]]) | PT del alumno | PT | `student_id`, `missed_days`, `days_since` |
+| `routine_modified` | Una sesión pasa a tener sustituciones (`has_modifications`); una sola vez por sesión | PT del alumno | PT | `student_id`, `session_id` |
+| `pr` | Se cierra una sesión con récords; una por sesión | Alumno y PT del alumno | Alumno (el PT solo la ve en la lista) | `student_id`, `session_id`, `exercise_ids` |
+| `achievement` | Se desbloquea un logro al cerrar una sesión; una por logro, para el alumno y para el PT. Los que desbloquea el job nocturno quedan solo en la base | Alumno y PT del alumno | Alumno (con varios logros en la sesión, un único push resumen); el PT solo la ve en la lista | `student_id`, `achievement_code` |
+| `comment` | El PT guarda un comentario de sesión no vacío y distinto del anterior (`PATCH /sessions/:id/comment`) | Alumno | Alumno | `session_id` |
+| `appointment` | Reservado para la agenda (otra tarjeta); todavía no se crea | — | — | — |
+
+El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
+
+**Payload del push.** El mensaje FCM lleva `notification` (`title`, `body`) y un `data` con el de la fila más dos campos: `type` (el tipo de la notificación, para elegir la pantalla) y `notification_id` (el id de la fila, para llamar a `PATCH /notifications/:id/read` al tocarla). Todos los valores viajan como texto, como exige FCM: los arrays y objetos van serializados en JSON (por ejemplo, `exercise_ids` llega como `"[\"uuid-1\",\"uuid-2\"]"` y hay que parsearlo en la app). El push resumen de varios logros no tiene fila: lleva `type: "achievement"` y `student_id`, sin `notification_id`. La fila guardada no cambia: `type` ya es una columna y el id es el de la fila.
+
+### PATCH /notifications/read-all
+
+Marca como leídas todas las no leídas del usuario. **204 No Content**, también si no había ninguna.
+
+> Está declarada antes que `/:id/read` para que no se confunda con el parámetro.
 
 ### PATCH /notifications/:id/read
 
-Marca como leída. **204 No Content**
+Marca una notificación como leída. **204 No Content** (idempotente).
+
+**Errores:** 400 `VALIDATION_ERROR` (`id` no es UUID), 404 `NOTIFICATION_NOT_FOUND` (no existe o es de otro usuario; no se distingue).
+
+### POST /notifications/tokens
+
+Registra el token de FCM del dispositivo para recibir push. Es un upsert por `token`: si el token ya existía (incluso de otro usuario, por ejemplo cuando dos personas usan el mismo celular) pasa a ser del usuario actual y se actualiza `last_seen_at`. Conviene llamarlo en cada login y cuando FCM renueva el token.
+
+**Body**
+
+```json
+{ "token": "string (1–4096 chars)", "platform": "android | web" }
+```
+
+**201 Created** si el token era nuevo, **200 OK** si ya existía. En ambos casos:
+
+```json
+{ "data": { "token": "…", "platform": "android" } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR` (`token` vacío o de más de 4096 caracteres; `platform` distinto de `android`/`web`).
+
+### DELETE /notifications/tokens/:token
+
+Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
+
+> El backend también borra solo los tokens que FCM da por inválidos (`UNREGISTERED` o token mal formado); el cliente no tiene que hacer nada.
 
 ---
 

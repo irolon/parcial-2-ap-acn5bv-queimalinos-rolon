@@ -345,3 +345,4 @@ Decisiones registradas como archivos en `docs/adr/` (numeración propia, distint
 - **0003** — Las plantillas de rutina se copian al asignarlas (no son referencia viva): [[adr/0003-plantillas-se-copian]].
 - **0004** — La curva de progreso usa el 1RM estimado (Epley) como métrica por defecto: [[adr/0004-metrica-de-progreso]].
 - **0005** — La racha se mide contra los días asignados, no contra días corridos (reemplaza el "días consecutivos" del ADR-007): [[adr/0005-racha-contra-dias-asignados]].
+- **0006** — Notificaciones: la tabla es la fuente de verdad, el push es best-effort sin reintentos y va por FCM HTTP v1 con cuenta de servicio (reemplaza la server key legacy de la tarjeta): [[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1]].

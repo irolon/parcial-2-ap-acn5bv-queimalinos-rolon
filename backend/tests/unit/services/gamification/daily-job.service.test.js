@@ -6,9 +6,11 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 const mockDaily = { findStudentIdsToEvaluate: jest.fn(), failExpiredAssignments: jest.fn() };
 const mockGam = { findCatalog: jest.fn() };
 const mockEvaluate = { evaluateStudent: jest.fn() };
+const mockTriggers = { onAchievementsFromJob: jest.fn() };
 jest.unstable_mockModule(src('repositories/gamification/daily-job.repository.js'), () => mockDaily);
 jest.unstable_mockModule(src('repositories/gamification/gamification.repository.js'), () => mockGam);
 jest.unstable_mockModule(src('services/gamification/evaluate.service.js'), () => mockEvaluate);
+jest.unstable_mockModule(src('services/notifications/triggers.service.js'), () => mockTriggers);
 
 const { runDailyGamification } = await import('../../../../src/services/gamification/daily-job.service.js');
 
@@ -20,6 +22,7 @@ beforeEach(() => {
   mockDaily.failExpiredAssignments.mockResolvedValue(0);
   mockGam.findCatalog.mockResolvedValue(CATALOG);
   mockEvaluate.evaluateStudent.mockResolvedValue({ unlocked: [], streak: {} });
+  mockTriggers.onAchievementsFromJob.mockResolvedValue(undefined);
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -36,7 +39,10 @@ describe('runDailyGamification', () => {
   it('falla los vencidos después de evaluar y devuelve la cantidad', async () => {
     mockDaily.findStudentIdsToEvaluate.mockResolvedValue(['s-1']);
     const order = [];
-    mockEvaluate.evaluateStudent.mockImplementation(async () => order.push('evaluate'));
+    mockEvaluate.evaluateStudent.mockImplementation(async () => {
+      order.push('evaluate');
+      return { unlocked: [] };
+    });
     mockDaily.failExpiredAssignments.mockImplementation(async () => {
       order.push('fail');
       return 3;
@@ -51,10 +57,20 @@ describe('runDailyGamification', () => {
     mockDaily.findStudentIdsToEvaluate.mockResolvedValue(['s-1', 's-2', 's-3']);
     mockEvaluate.evaluateStudent.mockImplementation(async (id) => {
       if (id === 's-2') throw new Error('boom');
+      return { unlocked: [] };
     });
     const result = await runDailyGamification({ now: NOW });
     expect(result).toEqual({ failedChallenges: 0, evaluated: 2, errors: 1 });
     expect(mockEvaluate.evaluateStudent).toHaveBeenCalledTimes(3);
     expect(console.error).toHaveBeenCalled();
+  });
+
+  it('notifica (solo BD) los logros que desbloqueó cada alumno', async () => {
+    mockDaily.findStudentIdsToEvaluate.mockResolvedValue(['s-1', 's-2']);
+    const unlocked = [{ code: 'first', name: 'Primera' }];
+    mockEvaluate.evaluateStudent.mockImplementation(async (id) => ({ unlocked: id === 's-1' ? unlocked : [] }));
+    await runDailyGamification({ now: NOW });
+    expect(mockTriggers.onAchievementsFromJob).toHaveBeenCalledWith({ studentId: 's-1', unlocked });
+    expect(mockTriggers.onAchievementsFromJob).toHaveBeenCalledWith({ studentId: 's-2', unlocked: [] });
   });
 });

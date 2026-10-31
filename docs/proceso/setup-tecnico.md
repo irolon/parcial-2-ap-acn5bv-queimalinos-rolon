@@ -64,7 +64,9 @@ Completá `backend/.env`:
 | `JWT_EXPIRES_IN` | No | Vida del access token. Por defecto `1h` |
 | `JWT_REFRESH_EXPIRES_IN` | No | Vida del refresh token. Por defecto `30d` |
 | `FRONTEND_URL` | No | Único origen que acepta el CORS. Por defecto `http://localhost:5173` |
-| `CRON_ENABLED` | No | Job diario de gamificación (03:00 Buenos Aires) dentro del server. Por defecto activo; `false` lo apaga. En tests siempre está apagado |
+| `CRON_ENABLED` | No | Jobs nocturnos (03:00 Buenos Aires) dentro del server: gamificación y luego alerta de inactividad. Por defecto activo; `false` los apaga. En tests siempre están apagados |
+| `FCM_SERVICE_ACCOUNT_PATH` | No | Ruta al JSON de la cuenta de servicio de Firebase (desarrollo local, fuera del repo). Ver [Firebase / FCM](#firebase--fcm-push) |
+| `FCM_SERVICE_ACCOUNT_JSON` | No | El mismo JSON en base64 (VPS). Si están las dos, gana la ruta. Sin ninguna, el push queda apagado y las notificaciones se guardan igual |
 | `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` | No | Chat IA. Se usan en fases posteriores; dejalas vacías |
 
 Para generar un `JWT_SECRET`:
@@ -76,6 +78,23 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 Cada uno puede tener su propio `JWT_SECRET`: solo firma tokens de tu server local.
 
 > Nunca pegues claves en el chat de un asistente, en un issue ni en un commit. Si se filtra una, avisá al equipo para rotarla.
+
+### Firebase / FCM (push)
+
+Las notificaciones push usan Firebase Cloud Messaging con la API **HTTP v1** y una cuenta de servicio (no existe `FCM_SERVER_KEY`: Google apagó esa API en 2024; ver [[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]). Es opcional: **sin credenciales el push queda deshabilitado** (el backend avisa una vez en el log) y las notificaciones se siguen guardando en la base, así que podés desarrollar todo lo demás sin Firebase.
+
+Pasos (los hace una sola persona del equipo, una vez):
+
+1. Entrá a la [consola de Firebase](https://console.firebase.google.com/) y creá el proyecto (por ejemplo `fittrainer`). Google Analytics no hace falta.
+2. Generá la clave de la cuenta de servicio: **Configuración del proyecto → Cuentas de servicio → Generar nueva clave privada**. Se descarga un JSON con `project_id`, `client_email` y `private_key`.
+3. Guardá ese JSON **fuera del repo** (por ejemplo `C:\secretos\fittrainer-firebase.json`). Es una credencial: no se commitea, no se pega en chats ni issues. Si se filtra, se revoca en la misma pantalla y se genera otra.
+4. Configurá el backend:
+   - **Local:** en `backend/.env`, `FCM_SERVICE_ACCOUNT_PATH=C:\secretos\fittrainer-firebase.json`.
+   - **VPS:** codificá el JSON en base64 y pegalo en `FCM_SERVICE_ACCOUNT_JSON`. En Linux: `base64 -w0 fittrainer-firebase.json`. En PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("fittrainer-firebase.json"))`.
+5. Agregá la app Android al proyecto (**Configuración del proyecto → Tus apps → Android**) con el nombre de paquete `com.fittrainer`, descargá `google-services.json` y pasáselo a Igna para el módulo mobile (lo integra él en la app).
+6. Reiniciá el backend. Si la credencial es válida no aparece el aviso `FCM deshabilitado`; si falta un campo o el JSON es ilegible, el aviso lo dice y el push sigue apagado.
+
+El push real al celular se prueba cuando la app Android registre su token (`POST /notifications/tokens`); mientras tanto el backend puede verificarse contra FCM con `validate_only` y con un token inválido (se espera `UNREGISTERED` y que el token se borre).
 
 ---
 
@@ -266,6 +285,8 @@ Todos se corren desde `backend/`.
 | `npm run lint:fix` | ESLint con autofix |
 | `npm run format` | Prettier sobre `src`, `tests` y `scripts` |
 | `npm run db:check-anon` | Verifica que la clave `anon` no vea filas por la API pública (lee `SUPABASE_URL` y `SUPABASE_ANON_KEY` del `.env`) |
+| `npm run gamification:daily` | Corre una vez el job diario de gamificación (idempotente) |
+| `npm run notifications:inactivity` | Corre una vez la alerta de inactividad: avisa al PT de los alumnos con 3 o más días asignados sin entrenar (máximo un aviso por alumno cada 7 días) |
 
 Antes de abrir una PR: `npm test` y `npm run lint` en verde, y probar a mano lo que tocaste. Reglas de código y ramas: ver `CONTRIBUTING.md`.
 

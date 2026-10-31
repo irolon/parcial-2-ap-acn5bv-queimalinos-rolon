@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fileURLToPath } from 'node:url';
-
-const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
-jest.unstable_mockModule(src('services/gamification/daily-job.service.js'), () => ({
-  runDailyGamification: jest.fn(),
-}));
-
-const { msUntilNextRun, startScheduler } = await import('../../../../src/services/gamification/scheduler.js');
+import { msUntilNextRun, startScheduler } from '../../../../src/shared/utils/scheduler.js';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -40,29 +33,36 @@ describe('startScheduler', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('corre el job a las 03:00 AR y se reagenda', async () => {
-    const run = jest.fn().mockResolvedValue({ failedChallenges: 0, evaluated: 1, errors: 0 });
-    const stop = startScheduler({ run });
+  it('corre los jobs a las 03:00 AR en orden y se reagenda', async () => {
+    const calls = [];
+    const a = jest.fn(async () => { calls.push('a'); return { ok: 1 }; });
+    const b = jest.fn(async () => { calls.push('b'); return {}; });
+    const stop = startScheduler({ jobs: [{ name: 'a', run: a }, { name: 'b', run: b }] });
     await jest.advanceTimersByTimeAsync(HOUR);
-    expect(run).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual(['a', 'b']);
     await jest.advanceTimersByTimeAsync(24 * HOUR);
-    expect(run).toHaveBeenCalledTimes(2);
+    expect(calls).toEqual(['a', 'b', 'a', 'b']);
+    expect(console.log).toHaveBeenCalledWith('[jobs] a: inicio');
+    expect(console.log).toHaveBeenCalledWith('[jobs] a: fin', { ok: 1 });
     stop();
   });
 
-  it('un error del job no sale del timer y la próxima corrida sigue agendada', async () => {
-    const run = jest.fn().mockRejectedValue(new Error('boom'));
-    const stop = startScheduler({ run });
+  it('corre el segundo job aunque el primero falle, y sigue agendado', async () => {
+    const a = jest.fn().mockRejectedValue(new Error('boom'));
+    const b = jest.fn().mockResolvedValue({});
+    const stop = startScheduler({ jobs: [{ name: 'a', run: a }, { name: 'b', run: b }] });
     await jest.advanceTimersByTimeAsync(HOUR);
+    expect(b).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith('[jobs] a: falló', expect.any(Error));
     await jest.advanceTimersByTimeAsync(24 * HOUR);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenCalled();
+    expect(a).toHaveBeenCalledTimes(2);
+    expect(b).toHaveBeenCalledTimes(2);
     stop();
   });
 
   it('stop() cancela las corridas futuras', async () => {
     const run = jest.fn().mockResolvedValue({});
-    const stop = startScheduler({ run });
+    const stop = startScheduler({ jobs: [{ name: 'a', run }] });
     stop();
     await jest.advanceTimersByTimeAsync(48 * HOUR);
     expect(run).not.toHaveBeenCalled();

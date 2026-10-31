@@ -4,6 +4,7 @@ import { findAccessibleExerciseIds } from '../../repositories/routines/routines.
 import { findStudentById } from '../../repositories/students/students.repository.js';
 import { isSubstitution } from '../../models/sessions/session.model.js';
 import { safeEvaluate } from '../gamification/safe-evaluate.js';
+import { onSessionClosed, onSessionModified } from '../notifications/triggers.service.js';
 import { parseBatch, failure } from './classify-sets.js';
 import { persistSets } from './persist-sets.js';
 
@@ -71,11 +72,20 @@ export async function addSets(studentId, sessionId, { sets }) {
 
   await resolveRoutineLinks(session, candidates);
   const saved = await persistSets(session.id, candidates, existingIds, failed);
-  if (saved.some(({ value }) => isSubstitution(value))) await setsRepo.markSessionModified(session.id);
+  const substitutions = saved
+    .filter(({ value }) => isSubstitution(value))
+    .map(({ value }) => ({ from: value.original_exercise_id, to: value.exercise_id }));
+  if (substitutions.length > 0) {
+    await setsRepo.markSessionModified(session.id);
+    void onSessionModified({ studentId, session, substitutions });
+  }
 
   // Series sobre una sesión ya cerrada pueden cambiar récords y logros.
-  const unlocked_achievements =
-    session.finished_at && saved.length > 0 ? await safeEvaluate(studentId) : [];
+  const closedWithSets = session.finished_at && saved.length > 0;
+  const unlocked_achievements = closedWithSets ? await safeEvaluate(studentId) : [];
+  if (closedWithSets) {
+    void onSessionClosed({ studentId, session, unlocked: unlocked_achievements });
+  }
 
   return {
     saved: saved.map(({ value, created }) => ({ id: value.id, created })),

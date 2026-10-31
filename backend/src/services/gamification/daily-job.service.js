@@ -1,6 +1,7 @@
 import * as dailyRepo from '../../repositories/gamification/daily-job.repository.js';
 import * as gamificationRepo from '../../repositories/gamification/gamification.repository.js';
 import { evaluateStudent } from './evaluate.service.js';
+import { onAchievementsFromJob } from '../notifications/triggers.service.js';
 
 /**
  * Job diario de gamificación. Primero recalcula a cada alumno activo con
@@ -17,8 +18,10 @@ export async function runDailyGamification({ now = new Date() } = {}) {
   let errors = 0;
   for (const studentId of studentIds) {
     try {
-      await evaluateStudent(studentId, { now, catalog });
+      const { unlocked } = await evaluateStudent(studentId, { now, catalog });
       evaluated += 1;
+      // Logros del job: solo filas en la BD, sin push (nunca lanza).
+      await onAchievementsFromJob({ studentId, unlocked });
     } catch (err) {
       errors += 1;
       console.error(`[gamification] job diario: falló el alumno ${studentId}`, err);

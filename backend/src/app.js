@@ -16,6 +16,7 @@ import sessionsRoutes from './routes/sessions/sessions.routes.js';
 import progressRoutes from './routes/progress/progress.routes.js';
 import achievementsRoutes from './routes/gamification/achievements.routes.js';
 import challengesRoutes from './routes/gamification/challenges.routes.js';
+import notificationsRoutes from './routes/notifications/notifications.routes.js';
 
 export function createApp() {
   const app = express();
@@ -40,6 +41,7 @@ export function createApp() {
   app.use('/api/progress', progressRoutes);
   app.use('/api/achievements', achievementsRoutes);
   app.use('/api/challenges', challengesRoutes);
+  app.use('/api/notifications', notificationsRoutes);
 
   // 404 + manejador central de errores (siempre al final).
   app.use(notFoundHandler);
