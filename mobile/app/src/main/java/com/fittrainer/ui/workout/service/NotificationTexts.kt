@@ -15,3 +15,6 @@ fun ongoingText(w: Workout): String {
 }
 
 fun restDoneText(next: Load): String = "Próxima: ${formatKg(next.kg)} × ${next.reps}"
+
+/** Patrón del canal "Fin del descanso"; el aviso de adentro de la app vibra igual para que se sienta lo mismo. */
+val REST_DONE_VIBRATION: LongArray = longArrayOf(0, 400, 200, 400)

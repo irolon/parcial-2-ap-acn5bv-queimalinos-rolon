@@ -16,6 +16,7 @@ import com.fittrainer.MainActivity
 import com.fittrainer.R
 import com.fittrainer.data.workout.Load
 import com.fittrainer.data.workout.Workout
+import java.time.Instant
 
 /** En Android 13+ hace falta el permiso; antes, alcanza con que el usuario no las haya apagado. */
 fun notificationsAllowed(context: Context): Boolean =
@@ -39,7 +40,7 @@ object WorkoutNotifications {
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_REST_DONE, "Fin del descanso", NotificationManager.IMPORTANCE_HIGH).apply {
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 400, 200, 400)
+                vibrationPattern = REST_DONE_VIBRATION
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             },
         )
@@ -65,8 +66,12 @@ object WorkoutNotifications {
             .build()
     }
 
-    fun notifyRestDone(context: Context, next: Load) {
-        if (!notificationsAllowed(context)) return
+    /** [restEnd]: el endsAt del descanso que terminó; se reclama para que la pantalla no lo repita. */
+    fun notifyRestDone(context: Context, next: Load, restEnd: Instant) {
+        // Con la sesión a la vista avisa la pantalla (WorkoutFeedback): sin banner del sistema encima.
+        if (WorkoutScreenVisibility.visible || !notificationsAllowed(context)) return
+        // El reclamo es atómico: si la pantalla avisó justo antes de pasar a segundo plano, no se repite.
+        if (!shouldPostRestDone(WorkoutScreenVisibility.visible, WorkoutScreenVisibility.claimRestEnd(restEnd))) return
         val notification = NotificationCompat.Builder(context, CHANNEL_REST_DONE)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle(REST_DONE_TITLE)
@@ -89,7 +94,18 @@ object WorkoutNotifications {
      * Saca "Descanso terminado" de la bandeja: al cerrar la sesión (terminar, descartar, logout) o al
      * arrancar otro descanso. No en onDestroy: si Android mata el service, el aviso tiene que quedar.
      */
-    fun cancelRestDone(context: Context) = NotificationManagerCompat.from(context).cancel(ID_REST_DONE)
+    fun cancelRestDone(context: Context) {
+        NotificationManagerCompat.from(context).cancel(ID_REST_DONE)
+        // Ese aviso ya no corresponde a ningún descanso (la sesión cerró o arrancó otro).
+        WorkoutScreenVisibility.notifiedRestEnd.set(null)
+    }
+
+    /** El alumno apagó o silenció el canal "Fin del descanso": el aviso de adentro tampoco suena. */
+    fun restDoneChannelSilenced(context: Context): Boolean {
+        val channel = context.getSystemService(NotificationManager::class.java).getNotificationChannel(CHANNEL_REST_DONE)
+            ?: return false
+        return channelSilenced(channel.importance, channel.sound != null)
+    }
 
     private fun ongoingBuilder(context: Context) = NotificationCompat.Builder(context, CHANNEL_ONGOING)
         .setSmallIcon(R.drawable.ic_stat_workout)
@@ -108,3 +124,7 @@ object WorkoutNotifications {
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 }
+
+/** Android no hace sonar un canal con importancia menor a DEFAULT (NONE, MIN, LOW), ni uno sin sonido. */
+fun channelSilenced(importance: Int, hasSound: Boolean): Boolean =
+    importance < NotificationManager.IMPORTANCE_DEFAULT || !hasSound

@@ -126,7 +126,7 @@ Los `id` vuelven en minúscula; los del celular ya lo son (`UUID.toString()`), p
   - "Subido ✓" (`SYNCED`, sin series fallidas);
   - "Subido · N series no se pudieron subir" (`SYNCED` con series `FAILED`);
   - "No se pudo subir este entrenamiento" (`FAILED`).
-- **Hoy** (`ui/today/` + `ui/sync/components/UploadsNotice.kt`): un aviso chico arriba, solo si hace falta: "N entrenamientos sin subir", "N entrenamientos no se pudieron subir" y/o "N series no se pudieron subir". Lo arma `UploadStatusViewModel` desde Room.
+- **Hoy** (`ui/today/` + `ui/sync/components/UploadsNotice.kt`): un aviso chico debajo de la card de Semana (si no hay semana, arriba de todo), solo si hace falta: "N entrenamientos sin subir", "N entrenamientos no se pudieron subir" y/o "N series no se pudieron subir". Lo arma `UploadStatusViewModel` desde Room.
   - Con rechazos lleva una **X**: los marca como vistos y el aviso deja de contarlos.
   - Con pendientes lleva **Subir ahora**: llama a `syncNow()` (tope de 15 s) con una ruedita. Si queda todo subido, muestra "Subido ✓" unos segundos. Si la pasada terminó con pendientes, o si no hay red, "No se pudo subir, se reintenta solo cuando haya conexión". Si no terminó en el tope, "Sigue subiendo en segundo plano". Si el servidor rechazó algo en esa pasada (una sesión `FAILED` deja de estar pendiente, así que no alcanza con "sin pendientes"), no hay "Subido ✓": queda el aviso del rechazo. El resultado se borra cuando cambian las pendientes, para que no aparezca después hablando de otra sesión.
 - **Carga de una serie:** el peso y las repeticiones quedan entre 0 y 1000, y una rutina con más de 100 series se corta en 100. Son los topes del backend: fuera de ellos la serie se rechazaría para siempre.

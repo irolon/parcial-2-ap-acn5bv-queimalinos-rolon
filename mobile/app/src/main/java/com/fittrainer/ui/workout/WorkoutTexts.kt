@@ -17,7 +17,7 @@ const val REST_SAVE_FAILED = "No pudimos actualizar el descanso. Probá de nuevo
 const val START_FAILED = "No pudimos abrir la sesión. Probá de nuevo"
 const val FINISH_FAILED = "No pudimos terminar la sesión. Probá de nuevo"
 const val NO_NOTIFICATIONS = "Sin notificaciones no vas a escuchar el fin del descanso con el celular bloqueado"
-const val REPLACE_LOCKED = "Ya registraste series de este ejercicio"
+const val REPLACE_LOCKED = "No se puede reemplazar: ya registraste series de este ejercicio"
 const val LIBRARY_NEVER_SYNCED = "Conectate una vez para bajar la biblioteca"
 
 /** 90_000 → "1:30". Redondea para arriba: 0:01 hasta que de verdad llega a 0. */

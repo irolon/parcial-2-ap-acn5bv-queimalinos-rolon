@@ -24,6 +24,7 @@ import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.components.BottomActions
+import com.fittrainer.ui.workout.components.ExerciseHeading
 import com.fittrainer.ui.workout.components.LoadPanel
 import com.fittrainer.ui.workout.components.RestTimer
 import com.fittrainer.ui.workout.components.SetTabs
@@ -45,6 +46,8 @@ class WorkoutActions(
     val onRestSkip: () -> Unit,
     val onOpenSettings: () -> Unit,
     val onDismissError: () -> Unit,
+    /** Tocaron Reemplazar con series ya registradas: se explica por qué no se puede. */
+    val onReplaceLocked: () -> Unit = {},
 )
 
 /** Serie (mockup p.13) o timer a pantalla completa (p.14). Sin scroll para completar una serie. */
@@ -78,7 +81,7 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
         Modifier.fillMaxSize().padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
     ) {
-        WorkoutTopBar(workout, exercise.name, formatElapsed(workout.startedAt, now), actions.onClose, actions.onOpenList)
+        WorkoutTopBar(workout, formatElapsed(workout.startedAt, now), actions.onClose, actions.onOpenList)
         if (!notificationsOn) {
             // Tocar el aviso abre los Ajustes de notificaciones de la app.
             Text(
@@ -90,14 +93,12 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
         }
         state.error?.let { NoticeBanner(it, actions.onDismissError) }
         SetTabs(workout, state.shownSet, actions.onSelectSet)
+        ExerciseHeading(exercise.name, actions.onOpenList)
         LoadPanel(suggestedChip(exercise), state.load, actions.onAdjustKg, actions.onEdit)
         Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
             Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
         }
         Spacer(Modifier.weight(1f))
-        if (!workout.canReplace(workout.cursor.position)) {
-            Text(REPLACE_LOCKED, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
-        }
-        BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace)
+        BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace, actions.onReplaceLocked)
     }
 }
