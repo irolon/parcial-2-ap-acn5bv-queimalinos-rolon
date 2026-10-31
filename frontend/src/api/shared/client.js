@@ -66,7 +66,9 @@ async function readBody(res) {
 
 async function send(path, { method, body, auth, signal }) {
   const headers = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // Con FormData el navegador pone `multipart/form-data` con su boundary: no se pisa.
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   const token = auth ? hooks.getToken() : null;
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -75,7 +77,7 @@ async function send(path, { method, body, auth, signal }) {
     res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined || isForm ? body : JSON.stringify(body),
       signal,
     });
   } catch (err) {
@@ -95,7 +97,7 @@ async function send(path, { method, body, auth, signal }) {
 }
 
 /**
- * Hace una llamada JSON a la API.
+ * Hace una llamada JSON a la API (o multipart si el `body` es un `FormData`).
  * - `auth` (default true): manda `Authorization: Bearer <token>` si hay token.
  * - `refresh` (default true): ante 401 `UNAUTHORIZED`, renueva una vez y reintenta.
  *   Las rutas de `/auth/*` lo apagan para no entrar en bucle.
