@@ -1,6 +1,6 @@
 # Schema de la base de datos
 
-El schema de FitTrainer está repartido por dominio en ocho archivos SQL.
+El schema de FitTrainer está repartido por dominio en nueve archivos SQL.
 
 | Archivo | Contenido |
 |---|---|
@@ -11,11 +11,12 @@ El schema de FitTrainer está repartido por dominio en ocho archivos SQL.
 | `04b-progress-overview.sql` | las funciones `progress_exercises` y `weekly_volume` (overview de progreso); corre después de `04-progress.sql` |
 | `05-gamification.sql` | `achievements`, `student_achievements`, `challenges`, `student_challenges`, `student_streaks` y el índice único de desafíos activos |
 | `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `notifications`, `push_tokens` |
+| `06b-messages.sql` | `messages` y el bucket privado `message-images` de Storage |
 | `07-rls.sql` | Row Level Security (activado sin políticas en todas las tablas) |
 
 ## Cómo correrlos
 
-- En orden, del 01 al 07 (el 04b va después del 04), en el SQL Editor de Supabase o con el MCP. Cada
+- En orden, del 01 al 07 (el 04b va después del 04 y el 06b después del 06), en el SQL Editor de Supabase o con el MCP. Cada
   archivo depende de tablas creadas en él o en los anteriores.
 - Todos se pueden volver a correr: usan `if not exists` y los `alter` van en
   bloques idempotentes.
