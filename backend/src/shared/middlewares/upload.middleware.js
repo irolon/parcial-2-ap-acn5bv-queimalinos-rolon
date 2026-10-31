@@ -9,15 +9,22 @@ const upload = multer({
 });
 const single = upload.single('image');
 
-/** Traduce los errores de multer al formato de error de la API. */
+const invalidForm = () =>
+  Errors.validation('Formulario inválido', [{ field: 'image', message: 'Formulario inválido' }]);
+
+/**
+ * Traduce los errores del parseo multipart (multer y busboy, p. ej. "Unexpected end of form")
+ * al formato de error de la API. Solo se llama con errores que vienen de multer.
+ */
 function translate(err) {
-  if (!(err instanceof multer.MulterError)) return err;
+  if (!(err instanceof multer.MulterError)) return invalidForm();
   if (err.code === 'LIMIT_FILE_SIZE') return Errors.imageTooLarge();
-  const message =
-    err.code === 'LIMIT_UNEXPECTED_FILE' || err.code === 'LIMIT_FILE_COUNT'
-      ? 'Enviá un solo archivo, en el campo "image"'
-      : err.message;
-  return Errors.validation('Error de validación', [{ field: 'image', message }]);
+  if (err.code === 'LIMIT_UNEXPECTED_FILE' || err.code === 'LIMIT_FILE_COUNT') {
+    return Errors.validation('Error de validación', [
+      { field: 'image', message: 'Enviá un solo archivo, en el campo "image"' },
+    ]);
+  }
+  return invalidForm();
 }
 
 /** multipart/form-data con un solo archivo opcional `image`; deja `req.file` y `req.body`. */

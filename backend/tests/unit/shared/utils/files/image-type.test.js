@@ -1,4 +1,4 @@
-import { detectImageType } from '../../../../src/shared/utils/image-type.js';
+import { detectImageType } from '../../../../../src/shared/utils/files/image-type.js';
 
 const bytes = (...b) => Buffer.from(b);
 const ascii = (s) => [...s].map((c) => c.charCodeAt(0));
@@ -23,6 +23,10 @@ describe('detectImageType', () => {
 
   it('RIFF que no es WebP (WAVE) da null', () => {
     expect(detectImageType(bytes(...ascii('RIFF'), 0, 0, 0, 0, ...ascii('WAVE')))).toBeNull();
+  });
+
+  it('RIFF + tamaño sin WEBP (8 bytes) da null', () => {
+    expect(detectImageType(bytes(...ascii('RIFF'), 0x24, 0, 0, 0))).toBeNull();
   });
 
   it('PDF da null', () => {

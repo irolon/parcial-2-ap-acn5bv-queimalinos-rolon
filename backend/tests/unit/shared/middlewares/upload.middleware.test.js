@@ -68,4 +68,19 @@ describe('uploadImage', () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe('VALIDATION_ERROR');
   });
+
+  it('un multipart cortado da 400 Formulario inválido, no 500', async () => {
+    const truncated =
+      '--XB\r\nContent-Disposition: form-data; name="image"; filename="a.png"\r\n' +
+      'Content-Type: image/png\r\n\r\nabc';
+    const res = await fetch(`${base}/up`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'multipart/form-data; boundary=XB' },
+      body: truncated,
+    });
+    expect(res.status).toBe(400);
+    const { error } = await res.json();
+    expect(error.code).toBe('VALIDATION_ERROR');
+    expect(error.message).toBe('Formulario inválido');
+  });
 });
