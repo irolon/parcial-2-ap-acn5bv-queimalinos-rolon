@@ -165,8 +165,8 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 4. Al completar una serie: ingresa el peso real y las reps → el sistema guarda en `session_sets`.
 5. La app inicia el timer de descanso automáticamente.
 6. Al terminar todos los ejercicios, el alumno toca "Finalizar sesión".
-7. La app pide el RPE (1-10) y una nota opcional.
-8. El sistema actualiza `sessions` con `finished_at = now`, rpe y notes.
+7. La app pide el RPE (1-10) y una nota opcional; el alumno puede saltearlo con un toque.
+8. El sistema actualiza `sessions` con `finished_at = now` y, si el alumno lo cargó, rpe y notes. El feedback viaja en el `POST` de la sesión si todavía no subió, o en un `PATCH /sessions/:id` si ya estaba subida.
 9. Sistema dispara la evaluación de logros y challenges (CU-08).
 
 **Flujos alternativos**

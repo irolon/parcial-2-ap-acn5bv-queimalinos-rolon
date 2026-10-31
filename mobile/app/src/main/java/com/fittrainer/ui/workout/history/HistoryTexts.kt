@@ -1,6 +1,7 @@
 package com.fittrainer.ui.workout.history
 
 import com.fittrainer.data.workout.history.HistoryItem
+import com.fittrainer.data.workout.history.HistoryOrigin
 import com.fittrainer.data.workout.history.HistorySet
 import com.fittrainer.ui.workout.kgNumber
 import java.text.NumberFormat
@@ -49,8 +50,18 @@ fun planLine(sets: Int?, reps: Int?, kg: Double?): String? {
     return text.takeIf { it.isNotEmpty() }?.let { "Plan: $it" }
 }
 
+/** Marca de una sesión del celular: "Sin subir" (se va a reintentar) o "No se pudo subir" (rechazada); null si no lleva. */
+fun syncMarkText(origin: HistoryOrigin): String? = when (origin) {
+    HistoryOrigin.LOCAL_PENDING -> "Sin subir"
+    HistoryOrigin.LOCAL_FAILED -> "No se pudo subir"
+    HistoryOrigin.SERVER, HistoryOrigin.LOCAL_SYNCED -> null
+}
+
 /** Número del badge de Progreso: de 10 para arriba, "9+". */
 fun unreadBadgeText(count: Int): String = if (count > 9) "9+" else count.toString()
+
+/** Lo que lee TalkBack en el badge (el número solo no dice qué cuenta). */
+fun unreadBadgeDescription(count: Int): String = if (count == 1) "1 comentario nuevo" else "$count comentarios nuevos"
 
 /** "45 min", "2 h 40 min", "2 h". */
 fun durationText(minutes: Int): String = when {

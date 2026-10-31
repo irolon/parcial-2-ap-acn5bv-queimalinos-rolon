@@ -25,12 +25,25 @@ abstract class HistoryDao {
     @Upsert
     abstract suspend fun upsertSessions(sessions: List<HistorySessionEntity>)
 
-    /** "Ver más": las que ya están (entre las 20) no se tocan. */
+    /** "Ver más": las que ya están no se pisan (las de fuera de las 20 se actualizan aparte, con upsertSessions). */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertIfAbsent(sessions: List<HistorySessionEntity>)
 
     @Query("DELETE FROM history_sessions WHERE ownerId = :ownerId AND id NOT IN (:keep)")
     abstract suspend fun deleteOthers(ownerId: String, keep: List<String>)
+
+    /** Las que no vinieron pero caen dentro de la ventana (orden startedAt DESC, id DESC) hasta la más vieja que vino. */
+    @Query(
+        "DELETE FROM history_sessions WHERE ownerId = :ownerId AND id NOT IN (:keep) " +
+            "AND (startedAt > :oldestStartedAt OR (startedAt = :oldestStartedAt AND id > :oldestId))",
+    )
+    abstract suspend fun deleteOthersInWindow(ownerId: String, keep: List<String>, oldestStartedAt: Long, oldestId: String)
+
+    @Query("UPDATE history_sessions SET inLatest = 0 WHERE ownerId = :ownerId AND id NOT IN (:keep)")
+    abstract suspend fun markOutOfLatest(ownerId: String, keep: List<String>)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM history_sessions WHERE id = :sessionId)")
+    abstract suspend fun exists(sessionId: String): Boolean
 
     @Query("DELETE FROM history_exercises WHERE sessionId = :sessionId")
     abstract suspend fun deleteExercises(sessionId: String)
@@ -88,20 +101,33 @@ abstract class HistoryDao {
     @Transaction
     open suspend fun inTransaction(block: suspend () -> Unit) = block()
 
-    /** Las 20 más recientes reemplazan al caché del dueño (las de "Ver más" se van). Upsert: no borra el detalle. */
+    /**
+     * Las 20 más recientes pisan al caché del dueño (upsert: no borra el detalle). Solo se borran las que caen dentro
+     * de esa ventana y ya no vinieron (se borraron en el servidor); las más viejas, las de "Ver más", quedan hasta el
+     * logout. Si [complete] (el servidor no tiene más que estas) o no vino ninguna, se borran todas las que no vinieron.
+     * Si ninguna de las que vinieron estaba guardada (entraron más de 20 nuevas), también: entre las nuevas y las
+     * guardadas puede haber un hueco que el cursor de "Ver más" no pediría nunca.
+     */
     @Transaction
-    open suspend fun replaceLatest(ownerId: String, latest: List<HistorySessionEntity>) {
-        deleteOthers(ownerId, latest.map { it.id })
+    open suspend fun replaceLatest(ownerId: String, latest: List<HistorySessionEntity>, complete: Boolean) {
+        val keep = latest.map { it.id }
+        val oldest = latest.minWithOrNull(compareBy<HistorySessionEntity> { it.startedAt }.thenBy { it.id })
+        val known = sessions(ownerId).map { it.id }.toSet()
+        val gap = known.isNotEmpty() && keep.none { it in known }
+        if (complete || oldest == null || gap) deleteOthers(ownerId, keep) else deleteOthersInWindow(ownerId, keep, oldest.startedAt, oldest.id)
+        markOutOfLatest(ownerId, keep)
         upsertSessions(latest)
     }
 
-    /** Ejercicios y series de una sesión, de una vez. */
+    /** Ejercicios y series de una sesión, de una vez. Si la sesión ya no está en el caché no escribe nada y devuelve false. */
     @Transaction
-    open suspend fun replaceDetail(sessionId: String, exercises: List<HistoryExerciseEntity>, sets: List<HistorySetEntity>) {
+    open suspend fun replaceDetail(sessionId: String, exercises: List<HistoryExerciseEntity>, sets: List<HistorySetEntity>): Boolean {
+        if (!exists(sessionId)) return false
         deleteExercises(sessionId)
         deleteSets(sessionId)
         insertExercises(exercises)
         insertSets(sets)
         markDetailLoaded(sessionId)
+        return true
     }
 }

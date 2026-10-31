@@ -10,6 +10,8 @@ enum class HistoryOrigin {
     LOCAL_PENDING,
     /** Del celular, ya subida pero el historial todavía no se refrescó. */
     LOCAL_SYNCED,
+    /** Del celular, rechazada por el servidor (FAILED, no se reintenta): la UI muestra "No se pudo subir". */
+    LOCAL_FAILED,
 }
 
 data class HistoryItem(
@@ -47,3 +49,15 @@ data class HistoryDetail(
     val exercises: List<HistoryExercise>,
     val detailLoaded: Boolean,
 )
+
+/**
+ * Resultado de "Ver más": la última página guardada (si el servidor tiene más y cuál pedir después) o descartada
+ * porque un refresh pasó mientras bajaba.
+ */
+sealed interface LoadMoreResult {
+    data class Page(val hasMore: Boolean, val nextPage: Int) : LoadMoreResult
+    data object Stale : LoadMoreResult
+}
+
+/** Sesiones de la página 1 sin detalle guardado; gen ata la fase 2 a la misma cuenta/limpieza que la fase 1. */
+class PendingDetails internal constructor(val ids: List<String>, internal val gen: Int)

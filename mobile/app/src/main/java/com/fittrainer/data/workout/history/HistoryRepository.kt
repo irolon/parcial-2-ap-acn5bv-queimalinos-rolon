@@ -1,6 +1,7 @@
 package com.fittrainer.data.workout.history
 
 import com.fittrainer.data.api.SessionApi
+import com.fittrainer.data.api.history.HistorySummaryDto
 import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.db.workout.FEEDBACK_PENDING
 import com.fittrainer.data.db.workout.FEEDBACK_SYNCED
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import retrofit2.HttpException
 import java.io.IOException
 import kotlinx.serialization.SerializationException
 import javax.inject.Inject
@@ -29,15 +29,6 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /** Las que se guardan con detalle para verlas offline (spec §2). */
 const val HISTORY_PAGE_SIZE = 20
-
-/** Resultado de "Ver más": la página guardada (con si quedan más) o descartada porque un refresh pasó mientras bajaba. */
-sealed interface LoadMoreResult {
-    data class Page(val hasMore: Boolean) : LoadMoreResult
-    data object Stale : LoadMoreResult
-}
-
-/** Sesiones de la página 1 sin detalle guardado; gen ata la fase 2 a la misma cuenta/limpieza que la fase 1. */
-class PendingDetails internal constructor(val ids: List<String>, internal val gen: Int)
 
 /**
  * Historial del alumno (spec §4 de la tarjeta 12). La UI observa Room; refresh() trae las 20 más
@@ -52,8 +43,8 @@ class HistoryRepository @Inject constructor(
     private val sessionProvider: Provider<SessionRepository>,
 ) : UserDataCleaner {
 
-    /** Lo dice la última página 1 que trajo refresh(): si hay sesiones más viejas que las 20. */
-    @Volatile var hasMoreAfterRefresh: Boolean = false
+    /** Páginas que dijo tener el servidor en la última página 1 que trajo refresh() ("hay más" si la próxima entra). */
+    @Volatile var totalPagesAfterRefresh: Int = 0
         private set
 
     /** Sube con cada limpieza: un pedido que arrancó antes del logout no escribe aunque el token siga (spec §6). */
@@ -103,13 +94,14 @@ class HistoryRepository @Inject constructor(
     private suspend fun loadList(ownerId: String): PendingDetails {
         val gen = clearGeneration
         val page = api.history(ownerId, 1, HISTORY_PAGE_SIZE)
-        hasMoreAfterRefresh = 1 < page.meta.totalPages
+        totalPagesAfterRefresh = page.meta.totalPages
         val cached = dao.sessions(ownerId).associateBy { it.id }
         val stale = page.data.filterNot { cached[it.id]?.detailMatches(it) == true }.map { it.id }.toSet()
         checkOwner(ownerId, gen)
         // El aviso va en la misma transacción que el reemplazo: un "Ver más" no puede colarse entre los dos.
         dao.inTransaction {
-            dao.replaceLatest(ownerId, page.data.map { it.toEntity(ownerId, inLatest = true, detailLoaded = it.id !in stale) })
+            val latest = page.data.map { it.toEntity(ownerId, inLatest = true, detailLoaded = it.id !in stale) }
+            dao.replaceLatest(ownerId, latest, complete = page.meta.totalPages <= 1)
             _refreshGeneration.update { it + 1 }
         }
         return PendingDetails(page.data.map { it.id }.filter { it in stale }, gen)
@@ -126,29 +118,51 @@ class HistoryRepository @Inject constructor(
                 throw e // sin red (o cuenta cambiada): seguir sería esperar timeouts de balde
             } catch (e: SerializationException) {
                 throw e
-            } catch (e: HttpException) {
-                failure = failure ?: e
             } catch (e: Exception) {
-                failure = failure ?: e
+                failure = failure ?: e // HTTP (o lo que sea) en un detalle: se sigue con los demás
             }
         }
         failure?.let { throw it }
     }
 
-    /** "Ver más": guarda la página sin detalle. Stale (sin escribir) si un refresh reemplazó la página 1 mientras bajaba. */
-    suspend fun loadMore(ownerId: String, page: Int): Result<LoadMoreResult> = guard {
+    /**
+     * "Ver más" desde [startPage], sin detalle. Si una página no suma ninguna sesión nueva, sigue con la siguiente
+     * (el toque nunca "no hace nada"). Stale, sin escribir, si un refresh reemplazó la página 1 mientras bajaba.
+     */
+    suspend fun loadMore(ownerId: String, startPage: Int): Result<LoadMoreResult> = guard {
         val gen = clearGeneration
         val refreshGen = _refreshGeneration.value
-        val result = api.history(ownerId, page, HISTORY_PAGE_SIZE)
-        // Chequeos + escritura en una transacción: si un refresh está reemplazando la página 1, esperamos y vemos su aviso.
-        var outcome: LoadMoreResult = LoadMoreResult.Stale
-        dao.inTransaction {
-            checkOwner(ownerId, gen)
-            if (_refreshGeneration.value != refreshGen) return@inTransaction
-            dao.insertIfAbsent(result.data.map { it.toEntity(ownerId, inLatest = false, detailLoaded = false) })
-            outcome = LoadMoreResult.Page(hasMore = page < result.meta.totalPages)
+        var page = startPage
+        var outcome: LoadMoreResult? = null
+        while (outcome == null) {
+            val result = api.history(ownerId, page, HISTORY_PAGE_SIZE)
+            // Chequeos + escritura en una transacción: si un refresh está reemplazando la página 1, esperamos y vemos su aviso.
+            var added: Int? = null
+            dao.inTransaction {
+                checkOwner(ownerId, gen)
+                if (_refreshGeneration.value == refreshGen) added = savePage(ownerId, result.data)
+            }
+            val hasMore = page < result.meta.totalPages
+            val n = added
+            outcome = when {
+                n == null -> LoadMoreResult.Stale
+                n > 0 || !hasMore -> LoadMoreResult.Page(hasMore, nextPage = page + 1)
+                else -> null.also { page++ }
+            }
         }
         outcome
+    }
+
+    /**
+     * Una página de "Ver más" a Room; devuelve cuántas nuevas sumó. No toca las de las 20 (inLatest, son del refresco);
+     * actualiza las demás que ya estaban (comentario, etc.) y conserva su detalle si el resumen no cambió.
+     */
+    private suspend fun savePage(ownerId: String, data: List<HistorySummaryDto>): Int {
+        val cached = dao.sessions(ownerId).associateBy { it.id }
+        val (known, fresh) = data.filterNot { cached[it.id]?.inLatest == true }.partition { it.id in cached }
+        dao.insertIfAbsent(fresh.map { it.toEntity(ownerId, inLatest = false, detailLoaded = false) })
+        if (known.isNotEmpty()) dao.upsertSessions(known.map { it.toEntity(ownerId, inLatest = false, detailLoaded = cached.getValue(it.id).detailMatches(it)) })
+        return fresh.size
     }
 
     /** Detalle de una sesión que no lo tiene guardado (las de "Ver más"). */
@@ -157,6 +171,7 @@ class HistoryRepository @Inject constructor(
     private suspend fun saveDetail(ownerId: String, sessionId: String, gen: Int) {
         val detail = api.historyDetail(ownerId, sessionId).data
         checkOwner(ownerId, gen)
+        // false: la sesión ya no está en el caché (la borró un refresco); no hay a qué colgarle el detalle.
         dao.replaceDetail(sessionId, detail.exerciseEntities(), detail.setEntities())
     }
 

@@ -22,27 +22,35 @@ enum class ManualSyncResult {
     STILL_UPLOADING,
 }
 
+/**
+ * Cómo quedó "Subir ahora": [result] sale de lo que quedó pendiente (REJECTED solo si no queda nada) y [rejected]
+ * dice si además el servidor rechazó algo nuevo. Las dos señales por separado: ninguna tapa a la otra (PR #40).
+ */
+data class ManualSyncOutcome(val result: ManualSyncResult, val rejected: Boolean = false)
+
 /** Fuerza una pasada y dice cómo quedó. Lo usan el aviso de Hoy y el del logout. */
 class ManualSync @Inject constructor(
     private val status: UploadStatusRepository,
     private val sync: SessionSync,
     private val connectivity: ConnectivityObserver,
 ) {
-    suspend fun run(owner: String): ManualSyncResult {
+    suspend fun run(owner: String): ManualSyncOutcome {
         // Sin red no tiene sentido esperar el tope: se avisa enseguida.
-        if (!connectivity.isOnline.first()) return ManualSyncResult.OFFLINE
+        if (!connectivity.isOnline.first()) return ManualSyncOutcome(ManualSyncResult.OFFLINE)
         val before = status.counts(owner)
         val finished = sync.syncNow(TIMEOUT_MS)
         val after = status.counts(owner)
         // Una sesión rechazada deja de estar pendiente (queda FAILED): "sin pendientes" no alcanza para el éxito.
         // El feedback sin mandar (tarjeta 12) también es pendiente: un PATCH caído no puede dar DONE.
         val left = after.pending + after.pendingFeedback
-        return when {
+        val rejected = after.rejections > before.rejections
+        val result = when {
             left > 0 && !finished -> ManualSyncResult.STILL_UPLOADING
             left > 0 -> ManualSyncResult.FAILED
-            after.rejections > before.rejections -> ManualSyncResult.REJECTED
+            rejected -> ManualSyncResult.REJECTED
             else -> ManualSyncResult.DONE
         }
+        return ManualSyncOutcome(result, rejected)
     }
 
     companion object {

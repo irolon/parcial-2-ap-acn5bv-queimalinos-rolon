@@ -9,6 +9,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -16,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.fittrainer.ui.workout.history.badge.ProgressBadgeViewModel
+import com.fittrainer.ui.workout.history.unreadBadgeDescription
 import com.fittrainer.ui.workout.history.unreadBadgeText
 
 /**
@@ -54,7 +57,8 @@ fun RoleNavigationBar(tabs: List<Tab>, currentRoute: String?, navController: Nav
                 icon = {
                     if (tab.route == STUDENT_PROGRESS_ROUTE && progressUnread > 0) {
                         // Corrido hacia arriba y a la derecha: así no tapa la estrella.
-                        BadgedBox(badge = { Badge(Modifier.offset(x = 8.dp, y = (-6).dp)) { Text(unreadBadgeText(progressUnread)) } }) { Icon(tab.icon, contentDescription = null) }
+                        val badge = Modifier.offset(x = 8.dp, y = (-6).dp).clearAndSetSemantics { contentDescription = unreadBadgeDescription(progressUnread) }
+                        BadgedBox(badge = { Badge(badge) { Text(unreadBadgeText(progressUnread)) } }) { Icon(tab.icon, contentDescription = null) }
                     } else {
                         Icon(tab.icon, contentDescription = null)
                     }

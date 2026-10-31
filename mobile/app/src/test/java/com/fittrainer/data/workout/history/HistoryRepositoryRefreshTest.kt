@@ -116,14 +116,40 @@ class HistoryRepositoryRefreshTest {
         assertTrue(dao.state.value.sets.isEmpty())
     }
 
-    @Test fun elRefrescoBorraLasDeVerMas() = runTest {
-        api.historyPages = mapOf(1 to page(summary("a", 2), totalPages = 2), 2 to page(summary("viejo", 1), totalPages = 2))
-        api.details = mapOf("a" to detail("a", 2))
+    @Test fun elRefrescoNoBorraLasDeVerMasPeroSiLasQueSeBorraronDentroDeLaVentana() = runTest {
+        api.historyPages = mapOf(1 to page(summary("a", 4), summary("borrada", 3), summary("b", 2), totalPages = 2), 2 to page(summary("viejo", 1), totalPages = 2))
+        api.details = mapOf("a" to detail("a", 4), "borrada" to detail("borrada", 3), "b" to detail("b", 2))
         repository.refresh("u1")
-        assertEquals(LoadMoreResult.Page(hasMore = false), repository.loadMore("u1", 2).getOrThrow())
-        assertTrue("viejo" in dao.state.value.sessions)
+        repository.loadMore("u1", 2)
+        api.historyPages = mapOf(1 to page(summary("a", 4), summary("b", 2), totalPages = 2))
         repository.refresh("u1")
-        assertFalse("viejo" in dao.state.value.sessions)
+        assertEquals(setOf("a", "b", "viejo"), dao.state.value.sessions.keys)
+        assertFalse(dao.state.value.sessions.getValue("viejo").inLatest)
+    }
+
+    @Test fun siElServidorNoTieneMasQueEstasBorraTodasLasQueNoVinieron() = runTest {
+        api.historyPages = mapOf(1 to page(summary("a", 3), totalPages = 2), 2 to page(summary("viejo", 1), totalPages = 2))
+        api.details = mapOf("a" to detail("a", 3))
+        repository.refresh("u1")
+        repository.loadMore("u1", 2)
+        api.historyPages = mapOf(1 to page(summary("a", 3), totalPages = 1))
+        repository.refresh("u1")
+        assertEquals(setOf("a"), dao.state.value.sessions.keys)
+    }
+
+    @Test fun siNingunaDeLasQueVinieronEstabaGuardadaBorraTodasPorqueNoSeSabeSiHayHueco() = runTest {
+        api.historyPages = mapOf(1 to page(summary("a", 2), totalPages = 3))
+        api.details = mapOf("a" to detail("a", 2), "n" to detail("n", 9))
+        repository.refresh("u1")
+        api.historyPages = mapOf(1 to page(summary("n", 9), totalPages = 3)) // más de 20 nuevas: "a" quedó en la página 2
+        repository.refresh("u1")
+        assertEquals(setOf("n"), dao.state.value.sessions.keys)
+    }
+
+    @Test fun elDetalleDeUnaSesionQueYaNoEstaNoEscribeNiFalla() = runTest {
+        api.details = mapOf("fantasma" to detail("fantasma", 2))
+        assertTrue(repository.loadDetail("u1", "fantasma").isSuccess)
+        assertTrue(dao.state.value.sets.isEmpty())
     }
 
     @Test fun verMasNoDuplicaNiPisaUnaDeLasVeinte() = runTest {
@@ -139,12 +165,12 @@ class HistoryRepositoryRefreshTest {
         api.historyPages = mapOf(1 to page(summary("a", 2), totalPages = 2))
         api.details = mapOf("a" to detail("a", 2))
         repository.refresh("u1")
-        assertTrue(repository.hasMoreAfterRefresh)
+        assertEquals(2, repository.totalPagesAfterRefresh)
     }
 
     @Test fun verMasDiceSiHayMasPaginas() = runTest {
         api.historyPages = mapOf(2 to page(summary("x", 1), totalPages = 3))
-        assertEquals(LoadMoreResult.Page(hasMore = true), repository.loadMore("u1", 2).getOrThrow())
+        assertEquals(LoadMoreResult.Page(hasMore = true, nextPage = 3), repository.loadMore("u1", 2).getOrThrow())
     }
 
     @Test fun sinRedFallaConOfflineYNoTocaElCache() = runTest {

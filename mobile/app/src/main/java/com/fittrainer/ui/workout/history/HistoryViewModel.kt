@@ -47,16 +47,22 @@ class HistoryViewModel @Inject constructor(
     private val _events = MutableSharedFlow<HistoryEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<HistoryEvent> = _events
     private var job: Job? = null
+    /** Próxima página de "Ver más"; cada refresco la vuelve a la 2. */
     private var nextPage = 2
     private var lastRefreshOkAt: Long? = null
     private var lastRefreshFailed = false
+    /** Ya se eligió el filtro de arranque (o lo cambió el alumno): no se vuelve a decidir (decisión D, PR #40). */
+    private var filterDecided = false
+    /** Pull que llegó durante la fase 2: corre otro refresco al terminar. */
+    private var refreshQueued = false
 
     init {
-        // Cualquier refresh del repositorio (también el del badge) reemplaza la página 1 y borra las filas de "Ver más".
+        // Cualquier refresh del repositorio (también el del badge) reemplaza la página 1: "Ver más" vuelve a la 2 (las
+        // posiciones pudieron correrse) y "hay más" es lo que dice el servidor, aunque esas páginas ya estén guardadas.
         viewModelScope.launch {
             repository.refreshGeneration.drop(1).collect {
                 nextPage = 2
-                local.update { it.copy(hasMore = repository.hasMoreAfterRefresh) }
+                local.update { it.copy(hasMore = repository.totalPagesAfterRefresh > 1) }
             }
         }
         // Volvió la red: si el último refresco no salió (o nunca salió), se reintenta sin esperar al pull.
@@ -74,9 +80,15 @@ class HistoryViewModel @Inject constructor(
         combine(owner.filterNotNull().flatMapLatest { repository.observe(it) }, online, local) { items, isOnline, l ->
             val (weekStart, weekEnd) = weekBounds(clock.instant(), clock.zone)
             val hasPending = items.any { it.origin == HistoryOrigin.LOCAL_PENDING }
-            // "Sin subir" solo existe mientras haya algo sin subir: si se vació estando elegido, vuelve a "Esta semana".
-            val filter = if (l.filter == HistoryFilter.PENDING && !hasPending) HistoryFilter.WEEK else l.filter
-            if (filter != l.filter) local.update { if (it.filter == HistoryFilter.PENDING) it.copy(filter = HistoryFilter.WEEK) else it }
+            // El filtro de arranque se decide una vez, con la primera lista no vacía; mientras tanto, "Todos".
+            val chosen = when {
+                filterDecided -> l.filter
+                items.isEmpty() -> HistoryFilter.ALL
+                else -> defaultFilter(items, weekStart, weekEnd).also { filterDecided = true }
+            }
+            // "Sin subir" solo existe mientras haya algo sin subir: si se vació estando elegido, vuelve al de por defecto.
+            val filter = if (chosen == HistoryFilter.PENDING && !hasPending) defaultFilter(items, weekStart, weekEnd) else chosen
+            if (filter != l.filter) local.update { if (it.filter == l.filter) it.copy(filter = filter) else it }
             l.copy(
                 items = items, filter = filter, hasPending = hasPending, unreadComments = items.count { it.commentUnread }, isOffline = !isOnline,
                 visibleItems = filterHistory(items, filter, weekStart, weekEnd),
@@ -92,39 +104,59 @@ class HistoryViewModel @Inject constructor(
         refresh()
     }
 
-    fun onPullToRefresh() = refresh()
-    fun onFilterSelected(filter: HistoryFilter) = local.update { it.copy(filter = filter) }
+    /** Si están bajando los detalles (fase 2), no se ignora: spinner y un refresco más apenas termine (uno solo). */
+    fun onPullToRefresh() {
+        if (job?.isActive == true && local.value.detailsLoading) {
+            refreshQueued = true
+            local.update { it.copy(isRefreshing = true) }
+            return
+        }
+        refresh()
+    }
+
+    fun onFilterSelected(filter: HistoryFilter) {
+        filterDecided = true // lo eligió el alumno: no se vuelve a decidir
+        local.update { it.copy(filter = filter) }
+    }
+
     fun dismissRefreshError() = local.update { it.copy(refreshFailed = false) }
 
     private fun refresh() {
         if (job?.isActive == true) return
         job = viewModelScope.launch {
-            val id = owner.filterNotNull().first()
-            local.update { it.copy(isRefreshing = true, refreshFailed = false) }
-            // Fase 1: la lista. Apenas está en Room se baja el spinner; los detalles siguen abajo, sin spinner.
-            val list = repository.refreshList(id)
-            val offline = list.isOffline()
-            if (list.isSuccess) lastRefreshOkAt = clock.millis()
-            lastRefreshFailed = list.isFailure
-            local.update {
-                it.copy(
-                    isRefreshing = false,
-                    // Sin red no es un error: se ve lo guardado con el aviso de "sin conexión".
-                    refreshFailed = list.isFailure && !offline,
-                    everLoaded = it.everLoaded || list.isSuccess,
-                )
-            }
-            val pending = list.getOrNull() ?: return@launch
-            local.update { it.copy(detailsLoading = true) }
-            val details = try {
-                repository.refreshDetails(id, pending)
-            } finally {
-                local.update { it.copy(detailsLoading = false) }
-            }
-            if (details.isFailure) {
-                lastRefreshFailed = true
-                if (!details.isOffline()) local.update { it.copy(refreshFailed = true) }
-            }
+            do {
+                refreshQueued = false
+                refreshOnce()
+            } while (refreshQueued)
+        }
+    }
+
+    private suspend fun refreshOnce() {
+        val id = owner.filterNotNull().first()
+        local.update { it.copy(isRefreshing = true, refreshFailed = false) }
+        // Fase 1: la lista. Apenas está en Room se baja el spinner; los detalles siguen abajo, sin spinner.
+        val list = repository.refreshList(id)
+        val offline = list.isOffline()
+        if (list.isSuccess) lastRefreshOkAt = clock.millis()
+        lastRefreshFailed = list.isFailure
+        local.update {
+            it.copy(
+                isRefreshing = false,
+                // Sin red no es un error: se ve lo guardado con el aviso de "sin conexión".
+                refreshFailed = list.isFailure && !offline,
+                everLoaded = it.everLoaded || list.isSuccess,
+            )
+        }
+        val pending = list.getOrNull() ?: return
+        local.update { it.copy(detailsLoading = true) }
+        val details = try {
+            repository.refreshDetails(id, pending)
+        } finally {
+            local.update { it.copy(detailsLoading = false) }
+        }
+        if (details.isFailure) {
+            lastRefreshFailed = true
+            if (!details.isOffline()) local.update { it.copy(refreshFailed = true) }
         }
     }
 
@@ -144,7 +176,7 @@ class HistoryViewModel @Inject constructor(
             // Si un refresh reemplazó la página 1 mientras bajaba, la respuesta es de antes del reinicio: no se aplica.
             result.onSuccess { r ->
                 if (r is LoadMoreResult.Page && repository.refreshGeneration.value == refreshGen) {
-                    nextPage++
+                    nextPage = r.nextPage
                     local.update { it.copy(hasMore = r.hasMore) }
                 }
             }

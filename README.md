@@ -35,6 +35,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer y **sincronización offline** de sesiones con WorkManager.
+- [x] **Historial de sesiones** offline (con los comentarios del entrenador) y **feedback post-entreno** (RPE y nota) — PR #40.
 
 **En revisión (PRs abiertas):** historial de sesiones con comentarios del PT (#33), vista de progreso en la web (#34), gamificación —logros, rachas y desafíos— (#35) y notificaciones con push FCM y alerta de inactividad (#36).
 

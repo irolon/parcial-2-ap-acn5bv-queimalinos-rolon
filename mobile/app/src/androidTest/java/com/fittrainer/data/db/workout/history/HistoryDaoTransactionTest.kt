@@ -48,7 +48,7 @@ class HistoryDaoTransactionTest {
         }
         moreChecked.await()
         val refresh = async(Dispatchers.IO) {
-            dao.inTransaction { dao.replaceLatest("u1", listOf(session("a"))); generation.incrementAndGet() }
+            dao.inTransaction { dao.replaceLatest("u1", listOf(session("a")), complete = true); generation.incrementAndGet() }
         }
         delay(200) // sin serialización el refresh terminaría acá, y "c" sobreviviría
         release.complete(Unit)

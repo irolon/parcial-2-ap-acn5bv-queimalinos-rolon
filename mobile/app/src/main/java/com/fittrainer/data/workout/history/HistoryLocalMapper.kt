@@ -1,5 +1,6 @@
 package com.fittrainer.data.workout.history
 
+import com.fittrainer.data.db.workout.SYNC_FAILED
 import com.fittrainer.data.db.workout.SYNC_SYNCED
 import com.fittrainer.data.db.workout.WorkoutWithDetails
 import com.fittrainer.data.db.workout.history.HistorySessionEntity
@@ -9,8 +10,16 @@ import java.time.Instant
 /** Volumen como el backend: reps × kg, a 1 decimal. */
 private fun volume(pairs: List<Pair<Int, Double>>): Double = Math.round(pairs.sumOf { (r, kg) -> r * kg } * 10) / 10.0
 
-/** Reloj atrasado (finishedAt < startedAt): 0 min, nunca negativo. */
-private fun minutes(startedAt: Long, finishedAt: Long?): Int? = finishedAt?.let { ((it - startedAt).coerceAtLeast(0) / 60_000).toInt() }
+/** Minutos redondeados como el backend (Math.round de JS: ,5 para arriba). Reloj atrasado: 0 min, nunca negativo. */
+private fun minutes(startedAt: Long, finishedAt: Long?): Int? =
+    finishedAt?.let { Math.round((it - startedAt).coerceAtLeast(0) / 60_000.0).toInt() }
+
+/** Rechazada por el servidor (FAILED): no se reintenta, así que no es "Sin subir" sino "No se pudo subir". */
+private fun originOf(syncState: String) = when (syncState) {
+    SYNC_SYNCED -> HistoryOrigin.LOCAL_SYNCED
+    SYNC_FAILED -> HistoryOrigin.LOCAL_FAILED
+    else -> HistoryOrigin.LOCAL_PENDING
+}
 
 fun WorkoutWithDetails.toHistoryItem(): HistoryItem {
     val done = sets.filter { it.actualReps > 0 }
@@ -19,7 +28,7 @@ fun WorkoutWithDetails.toHistoryItem(): HistoryItem {
         durationMin = minutes(session.startedAt, session.finishedAt), routineName = session.routineName,
         sets = done.size, volumeKg = volume(done.map { it.actualReps to it.actualKg }), rpe = session.rpe,
         hasPr = false, hasComment = false,
-        origin = if (session.syncState == SYNC_SYNCED) HistoryOrigin.LOCAL_SYNCED else HistoryOrigin.LOCAL_PENDING,
+        origin = originOf(session.syncState),
     )
 }
 

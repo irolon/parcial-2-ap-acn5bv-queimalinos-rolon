@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,18 +31,57 @@ class HistoryDaoTest {
         assertEquals(listOf("b", "a"), dao.observeSessions("u1").first().map { it.id })
     }
 
-    @Test fun replaceLatestBorraLasDeVerMasYConservaElDetalle() = runBlocking {
-        dao.upsertSessions(listOf(session("a"), session("viejo", inLatest = false)))
+    @Test fun replaceLatestConservaElDetalle() = runBlocking {
+        dao.upsertSessions(listOf(session("a")))
         dao.replaceDetail("a", listOf(exercise("a")), listOf(set("s1", "a")))
-        dao.replaceLatest("u1", listOf(session("a")))
-        val detail = dao.observeDetail("u1", "a").first()!!
+        dao.replaceLatest("u1", listOf(session("a")), complete = true)
+        assertEquals(1, dao.observeDetail("u1", "a").first()!!.sets.size)
+    }
+
+    @Test fun replaceLatestNoBorraLasDeVerMasMasViejasQueLaVentana() = runBlocking {
+        dao.upsertSessions(listOf(session("b", startedAt = 20), session("a", startedAt = 10), session("viejo", startedAt = 5, inLatest = false)))
+        dao.replaceDetail("viejo", listOf(exercise("viejo")), listOf(set("s1", "viejo")))
+        dao.replaceLatest("u1", listOf(session("c", startedAt = 30), session("b", startedAt = 20)), complete = false)
+        assertEquals(listOf("c", "b", "a", "viejo"), dao.observeSessions("u1").first().map { it.id })
+        assertEquals(1, dao.observeDetail("u1", "viejo").first()!!.sets.size)
+        assertEquals(setOf("c", "b"), dao.sessions("u1").filter { it.inLatest }.map { it.id }.toSet())
+    }
+
+    @Test fun replaceLatestBorraLaQueEstabaDentroDeLaVentanaYNoVino() = runBlocking {
+        dao.upsertSessions(listOf(session("b", startedAt = 20), session("borrada", startedAt = 15), session("a", startedAt = 10), session("viejo", startedAt = 5)))
+        dao.replaceLatest("u1", listOf(session("b", startedAt = 20), session("a", startedAt = 10)), complete = false)
+        assertEquals(listOf("b", "a", "viejo"), dao.observeSessions("u1").first().map { it.id })
+    }
+
+    @Test fun replaceLatestDesempataPorIdEnElBordeDeLaVentana() = runBlocking {
+        // Orden startedAt DESC, id DESC: con el mismo inicio, "m" va antes que "k" (dentro) y "e" después (fuera).
+        dao.upsertSessions(listOf(session("m", startedAt = 10), session("k", startedAt = 10), session("e", startedAt = 10)))
+        dao.replaceLatest("u1", listOf(session("k", startedAt = 10)), complete = false)
+        assertEquals(listOf("k", "e"), dao.observeSessions("u1").first().map { it.id })
+    }
+
+    @Test fun replaceLatestCompletaOVaciaBorraTodasLasQueNoVinieron() = runBlocking {
+        dao.upsertSessions(listOf(session("a", startedAt = 10), session("viejo", startedAt = 5)))
+        dao.replaceLatest("u1", listOf(session("a", startedAt = 10)), complete = true)
         assertEquals(listOf("a"), dao.sessions("u1").map { it.id })
-        assertEquals(1, detail.sets.size)
+        dao.replaceLatest("u1", emptyList(), complete = false)
+        assertTrue(dao.sessions("u1").isEmpty())
+    }
+
+    @Test fun replaceLatestSinNingunaConocidaBorraTodasPorqueNoSabeSiHayHueco() = runBlocking {
+        dao.upsertSessions(listOf(session("a", startedAt = 10), session("viejo", startedAt = 5)))
+        dao.replaceLatest("u1", listOf(session("n", startedAt = 30)), complete = false)
+        assertEquals(listOf("n"), dao.sessions("u1").map { it.id })
+    }
+
+    @Test fun replaceDetailDeUnaSesionQueYaNoEstaNoHaceNada() = runBlocking {
+        assertFalse(dao.replaceDetail("fantasma", listOf(exercise("fantasma")), listOf(set("s1", "fantasma"))))
+        db.query("SELECT COUNT(*) FROM history_sets", null).use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
     }
 
     @Test fun replaceLatestNoTocaAOtroDueno() = runBlocking {
         dao.upsertSessions(listOf(session("x", owner = "u2")))
-        dao.replaceLatest("u1", listOf(session("a")))
+        dao.replaceLatest("u1", listOf(session("a")), complete = true)
         assertEquals(listOf("x"), dao.sessions("u2").map { it.id })
     }
 

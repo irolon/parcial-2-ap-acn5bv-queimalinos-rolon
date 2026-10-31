@@ -87,6 +87,15 @@ class SignOutSyncViewModelTest {
         assertEquals(SignOutSyncState.SignOut, vm.state.value)
     }
 
+    // Revisión de la PR #40: con un rechazo y algo todavía pendiente se ofrece Reintentar y se avisan las dos cosas.
+    @Test fun `con un rechazo y algo pendiente ofrece reintentar y avisa el rechazo`() = runTest {
+        pending("w1", "w2")
+        sync.onSyncNow = { dao.setSyncState("w1", SYNC_FAILED) }
+        vm.request()
+        vm.uploadNow()
+        assertEquals(SignOutSyncState.Failed(1, rejected = true), vm.state.value)
+    }
+
     @Test fun `con el aviso de rechazo cancelar no cierra`() = runTest {
         pending("w1")
         sync.onSyncNow = { dao.setSyncState("w1", SYNC_FAILED) }

@@ -13,17 +13,21 @@ import androidx.compose.ui.draw.clip
 import com.fittrainer.data.workout.history.HistoryDetail
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import com.fittrainer.ui.workout.history.components.SyncMark
 import com.fittrainer.ui.workout.history.historyLine
 import com.fittrainer.ui.workout.rpeLabel
 
-/** Rutina, resumen, RPE y la nota del alumno. */
+/** Rutina, si no se subió, resumen, RPE (si está en rango) y la nota del alumno. */
 @Composable
 fun DetailHeader(detail: HistoryDetail) {
     val item = detail.item
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Text(item.routineName ?: "Sin rutina", style = MaterialTheme.typography.titleLarge, color = FtColors.TextPrimary)
+        SyncMark(item.origin)
         Text(historyLine(item.durationMin, item.sets, item.volumeKg), style = MaterialTheme.typography.bodyMedium, color = FtColors.TextSecondary)
-        item.rpe?.let { Text("RPE $it · ${rpeLabel(it)}", style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary) }
+        item.rpe?.let { rpe ->
+            rpeLabel(rpe)?.let { Text("RPE $rpe · $it", style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary) }
+        }
         detail.notes?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary) }
     }
 }

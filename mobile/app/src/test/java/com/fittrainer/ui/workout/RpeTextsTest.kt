@@ -1,6 +1,7 @@
 package com.fittrainer.ui.workout
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RpeTextsTest {
@@ -15,6 +16,9 @@ class RpeTextsTest {
         )
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun fueraDeRangoFalla() { rpeLabel(0) }
+    /** Un RPE inválido que venga del servidor no tira la pantalla: no se muestra etiqueta. */
+    @Test fun fueraDeRangoDevuelveNull() {
+        assertNull(rpeLabel(0))
+        assertNull(rpeLabel(11))
+    }
 }

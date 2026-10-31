@@ -56,6 +56,13 @@ class FakeHistoryDao : HistoryDao() {
         st.copy(sessions = st.sessions + sessions.filter { it.id !in st.sessions }.associateBy { it.id })
     }
     override suspend fun deleteOthers(ownerId: String, keep: List<String>) = drop { it.ownerId == ownerId && it.id !in keep }
+    override suspend fun deleteOthersInWindow(ownerId: String, keep: List<String>, oldestStartedAt: Long, oldestId: String) = drop {
+        it.ownerId == ownerId && it.id !in keep && (it.startedAt > oldestStartedAt || (it.startedAt == oldestStartedAt && it.id > oldestId))
+    }
+    override suspend fun markOutOfLatest(ownerId: String, keep: List<String>) = state.update { st ->
+        st.copy(sessions = st.sessions.mapValues { (_, s) -> if (s.ownerId == ownerId && s.id !in keep) s.copy(inLatest = false) else s })
+    }
+    override suspend fun exists(sessionId: String) = sessionId in state.value.sessions
     override suspend fun deleteExercises(sessionId: String) = state.update { st -> st.copy(exercises = st.exercises.filterNot { it.sessionId == sessionId }) }
     override suspend fun deleteSets(sessionId: String) = state.update { st -> st.copy(sets = st.sets.filterNot { it.sessionId == sessionId }) }
     override suspend fun insertExercises(exercises: List<HistoryExerciseEntity>) = state.update { it.copy(exercises = it.exercises + exercises) }

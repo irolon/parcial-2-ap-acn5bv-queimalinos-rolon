@@ -8,7 +8,8 @@ import com.fittrainer.data.workout.history.HistoryItem
  */
 data class HistoryUiState(
     val items: List<HistoryItem> = emptyList(),
-    val filter: HistoryFilter = HistoryFilter.WEEK,
+    /** Hasta la primera lista no vacía, "Todos"; después lo decide defaultFilter (o el alumno). */
+    val filter: HistoryFilter = HistoryFilter.ALL,
     val visibleItems: List<HistoryItem> = emptyList(),
     val weekSummary: String = weekSummaryText(emptyList()),
     val hasPending: Boolean = false,

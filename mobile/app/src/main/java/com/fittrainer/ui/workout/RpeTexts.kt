@@ -7,7 +7,5 @@ private val RPE_LABELS = listOf(
     "Muy difícil, te quedaban 1-2 reps", "Casi al fallo, te quedaba 1 rep", "Al fallo, no salía ni una más",
 )
 
-fun rpeLabel(rpe: Int): String {
-    require(rpe in 1..10) { "RPE fuera de rango: $rpe" }
-    return RPE_LABELS[rpe - 1]
-}
+/** Etiqueta del RPE 1-10; null si viene fuera de rango (un dato raro del servidor no tira la pantalla). */
+fun rpeLabel(rpe: Int): String? = RPE_LABELS.getOrNull(rpe - 1)

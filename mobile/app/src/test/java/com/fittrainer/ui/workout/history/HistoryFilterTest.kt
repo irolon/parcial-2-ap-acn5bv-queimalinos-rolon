@@ -56,6 +56,7 @@ class HistoryFilterTest {
             item("pr", "2026-10-30T00:00:00Z", pr = true),
             item("loc", "2026-10-30T00:00:00Z", origin = HistoryOrigin.LOCAL_PENDING),
             item("ok", "2026-10-30T00:00:00Z", origin = HistoryOrigin.LOCAL_SYNCED),
+            item("rechazada", "2026-10-30T00:00:00Z", origin = HistoryOrigin.LOCAL_FAILED),
         )
         assertEquals(listOf("pr"), ids(items, HistoryFilter.RECORDS))
         assertEquals(listOf("loc"), ids(items, HistoryFilter.PENDING))
@@ -89,5 +90,10 @@ class HistoryFilterTest {
 
     @Test fun resumenSemanalSinEntrenamientos() {
         assertEquals("Esta semana todavía no entrenaste", weekSummaryText(emptyList()))
+    }
+
+    @Test fun porDefectoEstaSemanaSiHaySesionesEstaSemanaYSiNoTodos() {
+        assertEquals(HistoryFilter.WEEK, defaultFilter(listOf(item("a", "2026-10-29T00:00:00Z"), item("b", "2026-01-01T00:00:00Z")), week.first, week.second))
+        assertEquals(HistoryFilter.ALL, defaultFilter(listOf(item("b", "2026-01-01T00:00:00Z")), week.first, week.second))
     }
 }

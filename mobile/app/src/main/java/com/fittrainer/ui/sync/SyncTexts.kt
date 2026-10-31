@@ -54,6 +54,13 @@ const val SIGN_OUT_REJECTED_TEXT =
     "Algunos entrenamientos o series no se pudieron subir y no se van a reintentar. Quedan guardados en el " +
         "celular y los ves en Hoy. ¿Cerrar sesión igual?"
 
+/** Título del aviso del logout: no dice "Entrenamientos" si lo único que queda son comentarios post-entreno. */
+fun signOutPendingTitle(pending: Int, feedback: Int): String = when {
+    feedback == 0 -> "Entrenamientos sin subir"
+    pending == 0 -> "Comentarios sin subir"
+    else -> "Datos sin subir"
+}
+
 /** Lo que se pierde al salir: entrenamientos sin subir y/o comentarios post-entreno (RPE y nota) sin mandar. */
 fun signOutPendingText(pending: Int, feedback: Int = 0): String {
     val workouts = if (pending == 1) "1 entrenamiento" else "$pending entrenamientos"
@@ -65,3 +72,8 @@ fun signOutPendingText(pending: Int, feedback: Int = 0): String {
     }
     return "Tenés $what sin subir. ${if (one) "Se va" else "Se van"} a subir cuando vuelvas a entrar."
 }
+
+/** Aviso del logout cuando no subió todo; si además hubo un rechazo, lo dice antes (PR #40: ninguno tapa al otro). */
+fun signOutFailedText(pending: Int, feedback: Int, rejected: Boolean): String =
+    (if (rejected) "El servidor rechazó parte de lo subido; lo ves en Hoy. " else "") +
+        "¿Cerrar sesión igual? ${signOutPendingText(pending, feedback)}"

@@ -32,9 +32,9 @@ Cerrar el ciclo de la sesión:
 - **El feedback viaja en la subida de la tarjeta 11.** Si la sesión no subió, va en el `POST /sessions`; si ya subió, en un `PATCH /sessions/:id`. Se descartó frenar la subida hasta que el alumno guarde o saltee: si cierra la app en la pantalla final, la sesión no subiría.
 - **Fuera de alcance:** editar el RPE después desde el historial (§8).
 
-## 3. Datos: Room v7
+## 3. Datos: Room v7 → v8
 
-Migración automática v6 → v7, sin pérdida de datos. `7.json` exportado.
+Migración automática v6 → v7, sin pérdida de datos. `7.json` exportado. La base termina en **v8**: la migración automática v7 → v8 solo agrega `history_comment_seen` (§9); `8.json` exportado.
 
 **`workout_sessions` (`data/db/workout/`) suma tres columnas:**
 - `rpe` (`INTEGER`, nulo): 1 a 10.
@@ -49,7 +49,7 @@ Migración automática v6 → v7, sin pérdida de datos. `7.json` exportado.
 
 - **`history_sessions`**: el resumen del servidor, una fila por sesión.
   - Campos: `id` (PK), `ownerId`, `startedAt`, `finishedAt`, `durationMin`, `routineName`, `rpe`, `notes`, `trainerComment`, `hasModifications`, `sets`, `volumeKg`, `hasPr`, `inLatest`, `detailLoaded`.
-  - `inLatest`: está entre las 20 más recientes del último refresco.
+  - `inLatest`: está entre las 20 más recientes del último refresco. "Ver más" la usa para no pisar las filas del refresco (§10).
   - `detailLoaded`: sus ejercicios y series ya están guardados.
   - Índice por (`ownerId`, `startedAt`).
 - **`history_exercises`**: un ejercicio por sesión.
@@ -75,18 +75,18 @@ Migración automática v6 → v7, sin pérdida de datos. `7.json` exportado.
 - Cómo arma la lista `observe`:
   1. Primero, las sesiones terminadas de `workout_sessions` cuyo `id` no está en `history_sessions`. Llevan `pendingUpload = true` si su `syncState` no es `SYNCED`, y entonces la UI muestra "Sin subir". Los totales (series, volumen, duración) se calculan con sus series locales.
   2. Después, `history_sessions` por `startedAt` descendente y `id`.
-  3. Si en `workout_sessions` hay feedback `PENDING` para una sesión, ese `rpe` y esa `notes` reemplazan a los del caché.
+  3. Si en `workout_sessions` hay feedback `PENDING` o `SYNCED` para una sesión, ese `rpe` y esa `notes` reemplazan a los del caché: con `SYNCED` el caché puede ser de antes del `PATCH`, hasta que un refresco lo traiga.
 - `refresh`:
   1. `GET page=1, limit=20`.
-  2. En una transacción: upsert de los 20 con `inLatest = true` y borrado de las filas del dueño que no están en esa página. Un upsert no borra el detalle ya guardado.
+  2. En una transacción: upsert de los 20 con `inLatest = true`. Se borran solo las filas del dueño que no vinieron y caen dentro de esa ventana (orden `startedAt` desc, `id` desc, hasta la más vieja que vino): se borraron en el servidor. Las más viejas (las de "Ver más") quedan hasta el logout; si el servidor no tiene más que esa página, o no trajo ninguna, se borran todas las que no vinieron. Un upsert no borra el detalle ya guardado (§10, decisión A).
   3. Detalle (`GET …/:sessionId`) de cada una de las 20 que sea nueva, que tenga `detailLoaded = false` o que haya cambiado `sets`, `volumeKg`, `hasPr`, `hasModifications` o `finishedAt` respecto del caché. Se pide de a una; cada detalle se guarda en su propia transacción (borra y vuelve a insertar sus ejercicios y series y marca `detailLoaded = true`).
   4. Si un detalle falla, lo ya guardado queda y el resto se intenta en el próximo refresco.
 - `loadMore(page)`: `GET page=N, limit=20`, upsert con `inLatest = false` y sin detalle. Devuelve si hay más páginas (`meta.total_pages`).
 - `loadDetail(id)`: para una sesión sin detalle (las de "Ver más"), lo pide y lo guarda.
-- Las sesiones locales se ven en el detalle con sus series de `workout_sets` (sin plan, récords ni comentario, que calcula el servidor).
+- Las sesiones locales se ven en el detalle con sus series de `workout_sets` y el plan copiado al empezar (`workout_exercises`), sin récords ni comentario, que calcula el servidor. Tampoco muestran "en lugar de…": Room guarda el id del ejercicio original, no su nombre.
 
 **Feedback (`data/workout/`):**
-- `WorkoutRepository.saveFeedback(sessionId, rpe, notes)`: escribe `rpe`, `notes` (recortada; vacía pasa a nulo) y `feedbackState = PENDING`. Si no hay ni RPE ni nota, no escribe nada.
+- `WorkoutRepository.saveFeedback(sessionId, rpe, notes)`: escribe `rpe`, `notes` (recortada; vacía pasa a nulo) y `feedbackState = PENDING`. Si no hay ni RPE ni nota, no escribe nada. Si la sesión ya estaba `FAILED` (el servidor la rechazó), el feedback queda `REJECTED`: no hay sesión a la que mandárselo.
 
 **Subida (`data/sync/`), ampliación de la tarjeta 11:**
 - `SessionUploader`: el `POST /sessions` lleva el `rpe` y la `notes` de la entidad leída. Devuelve qué feedback mandó.
@@ -220,7 +220,21 @@ Migración automática v6 → v7, sin pérdida de datos. `7.json` exportado.
 - **El spinner no espera los detalles.** El refresco se separa en dos fases: la lista (20 sesiones) y después los detalles en segundo plano. "Ver más" queda deshabilitado mientras bajan.
 - **Título y filtros.**
   - Título "Progreso" con el resumen de la semana ("Esta semana: N entrenamientos · duración · volumen").
-  - Chips **Esta semana** (por defecto), **Todos**, **Comentados 💬** (no leídos primero), **Récords 🏆** y **Sin subir** (solo si hay).
+  - Chips **Esta semana** (por defecto; desde la PR #40, solo si hay sesiones esta semana, §10), **Todos**, **Comentados 💬** (no leídos primero), **Récords 🏆** y **Sin subir** (solo si hay).
   - Los filtros trabajan sobre lo guardado y funcionan offline; "Ver más" solo aparece con Todos.
 - **Fuera de esta tarjeta:** el descanso ajustable por el alumno y registrado en el historial ([tarjeta aparte](https://trello.com/c/dwQI3sGR), depende del backend).
+
+## 10. Decisiones de la revisión de Pablo en la PR #40 (31/10)
+
+- **A. El refresco no borra las sesiones de "Ver más".** Solo borra las que caen dentro de la ventana de las 20 que trajo el servidor y no vinieron. Si el servidor tiene menos de una página completa, o ninguna sesión, se borran todas las que no vinieron. Las de "Ver más" quedan hasta el logout. Después de cada refresco, "Ver más" vuelve a la página 2, porque las posiciones pudieron correrse. Un toque re-pide las páginas: actualiza las que ya estaban fuera de las 20 y, si una página no suma ninguna sesión nueva, sigue con la siguiente hasta traer alguna o llegar al final. "Hay más" sale de las páginas que dice el servidor, no de lo guardado (ronda 3, hallazgos H3 y H4 de Codex). Un detalle que llega para una sesión que ya no está en el caché no se escribe. Si ninguna de las 20 que vinieron estaba guardada (entraron más de 20 nuevas), se borran todas las que no vinieron, porque podría quedar un hueco. `inLatest` marca de quién es cada fila: las de las 20 las actualiza el refresco; las demás, "Ver más", que actualiza su resumen (por ejemplo, un comentario nuevo del entrenador) y vuelve a bajar el detalle solo si el resumen cambió.
+- **B. El badge refresca al abrir la app en frío.** El dueño se espera dentro del pedido, porque la sesión todavía no salió de DataStore en el primer `onAppStart`.
+- **C. "No se pudo subir".** Una sesión del celular que el servidor rechazó (`FAILED`) lleva esa marca, en la tarjeta y en el detalle, con el color de error. No cuenta para el chip "Sin subir".
+- **D. Filtro por defecto.** Arranca en "Esta semana" si hay sesiones esta semana y en "Todos" si no. Se decide una vez, con la primera lista no vacía; hasta entonces muestra "Todos". Si el alumno cambia el filtro a mano, se respeta.
+- **Menores.**
+  - Un RPE fuera de 1-10 no muestra etiqueta ni rompe la pantalla.
+  - La duración de las sesiones del celular redondea como el backend.
+  - El aviso de logout dice "Comentarios sin subir" o "Datos sin subir" cuando corresponde.
+  - "Subir ahora" devuelve las dos señales por separado: lo que quedó pendiente y si hubo un rechazo nuevo. El logout ofrece "Reintentar" si queda algo pendiente y avisa también el rechazo. En Hoy, lo pendiente no se muestra como rechazado.
+  - Accesibilidad: descripción del badge, "Ver detalle" en la tarjeta y los RPE como grupo de selección única.
+  - Un pull durante la bajada de los detalles muestra el spinner y refresca una vez al terminar.
 

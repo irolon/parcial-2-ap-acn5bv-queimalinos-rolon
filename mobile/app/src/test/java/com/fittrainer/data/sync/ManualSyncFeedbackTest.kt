@@ -1,6 +1,7 @@
 package com.fittrainer.data.sync
 
 import com.fittrainer.data.db.workout.FEEDBACK_PENDING
+import com.fittrainer.data.db.workout.SYNC_FAILED
 import com.fittrainer.data.db.workout.SYNC_SYNCED
 import com.fittrainer.data.db.workout.UploadCounts
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
@@ -28,19 +29,19 @@ class ManualSyncFeedbackTest {
 
     @Test fun `solo feedback pendiente y la pasada termina sin mandarlo queda FAILED`() = runTest {
         put(uploadedWithFeedback)
-        assertEquals(ManualSyncResult.FAILED, manual.run("u1"))
+        assertEquals(ManualSyncResult.FAILED, manual.run("u1").result)
     }
 
     @Test fun `solo feedback pendiente y la pasada no termina queda STILL_UPLOADING`() = runTest {
         put(uploadedWithFeedback)
         sync.syncNowResult = false
-        assertEquals(ManualSyncResult.STILL_UPLOADING, manual.run("u1"))
+        assertEquals(ManualSyncResult.STILL_UPLOADING, manual.run("u1").result)
     }
 
     @Test fun `si la pasada manda el feedback es DONE`() = runTest {
         put(uploadedWithFeedback)
         sync.onSyncNow = { dao.markFeedbackSynced("w1", 7, null) }
-        assertEquals(ManualSyncResult.DONE, manual.run("u1"))
+        assertEquals(ManualSyncResult.DONE, manual.run("u1").result)
     }
 
     @Test fun `una sesion sin subir con feedback cuenta una vez`() = runTest {
@@ -53,5 +54,18 @@ class ManualSyncFeedbackTest {
         put(uploadedWithFeedback)
         assertEquals(UploadCounts(pending = 0, pendingFeedback = 1), dao.observeUploadCounts("u1").first())
         assertEquals(1, status.pendingCount("u1"))
+    }
+
+    // Revisión de la PR #40: lo pendiente y el rechazo van los dos en el resultado; ninguno tapa al otro.
+    @Test fun `un rechazo nuevo con feedback trabado de otra sesion queda FAILED y avisa el rechazo`() = runTest {
+        put(uploadedWithFeedback, finishedSession("w2"))
+        sync.onSyncNow = { dao.setSyncState("w2", SYNC_FAILED) }
+        assertEquals(ManualSyncOutcome(ManualSyncResult.FAILED, rejected = true), manual.run("u1"))
+    }
+
+    @Test fun `un rechazo sin nada pendiente es REJECTED`() = runTest {
+        put(finishedSession("w2"))
+        sync.onSyncNow = { dao.setSyncState("w2", SYNC_FAILED) }
+        assertEquals(ManualSyncOutcome(ManualSyncResult.REJECTED, rejected = true), manual.run("u1"))
     }
 }

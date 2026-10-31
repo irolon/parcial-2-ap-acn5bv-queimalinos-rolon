@@ -13,6 +13,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -43,13 +45,15 @@ class ProgressBadgeViewModel @Inject constructor(
         .flatMapLatest { id -> id?.let(repository::observeUnreadComments) ?: flowOf(0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
-    /** Cada vez que la app pasa a primer plano. */
+    /**
+     * Cada vez que la app pasa a primer plano. En frío la sesión todavía no salió de DataStore: el dueño se espera
+     * adentro del launch. Si nunca hay alumno (entrenador o sin sesión) el job queda esperando y se cancela con el scope.
+     */
     fun onAppStart() {
-        val id = owner.value ?: return
         val last = lastRefreshAt
         if (!online.value || job?.isActive == true || (last != null && clock.millis() - last < FRESH_MS)) return
         lastRefreshAt = clock.millis()
-        job = viewModelScope.launch { repository.refresh(id) }
+        job = viewModelScope.launch { repository.refresh(owner.filterNotNull().first()) }
     }
 
     private companion object {

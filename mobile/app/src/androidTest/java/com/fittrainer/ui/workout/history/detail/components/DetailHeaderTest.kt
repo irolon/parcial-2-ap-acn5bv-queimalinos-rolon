@@ -32,6 +32,18 @@ class DetailHeaderTest {
         compose.onNodeWithText("Me costó el último press").assertIsDisplayed()
     }
 
+    @Test fun unRpeFueraDeRangoNoSeMuestraNiRompe() {
+        compose.setContent { FitTrainerTheme { DetailHeader(detail.copy(item = detail.item.copy(rpe = 15))) } }
+        compose.onNodeWithText("Push").assertIsDisplayed()
+        compose.onNodeWithText("RPE", substring = true).assertDoesNotExist()
+    }
+
+    @Test fun unaRechazadaPorElServidorDiceNoSePudoSubir() {
+        compose.setContent { FitTrainerTheme { DetailHeader(detail.copy(item = detail.item.copy(origin = HistoryOrigin.LOCAL_FAILED))) } }
+        compose.onNodeWithText("No se pudo subir").assertIsDisplayed()
+        compose.onNodeWithText("Sin subir").assertDoesNotExist()
+    }
+
     @Test fun muestraElComentarioDelEntrenador() {
         compose.setContent { FitTrainerTheme { TrainerCommentCard(detail.trainerComment!!) } }
         compose.onNodeWithText("Comentario de tu entrenador").assertIsDisplayed()

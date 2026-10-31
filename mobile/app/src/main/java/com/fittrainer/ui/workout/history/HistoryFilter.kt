@@ -7,7 +7,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
-/** Chips de Progreso. WEEK es el de por defecto. */
+/** Chips de Progreso. El de por defecto lo decide [defaultFilter]. */
 enum class HistoryFilter(val label: String) {
     WEEK("Esta semana"),
     ALL("Todos"),
@@ -31,3 +31,10 @@ fun filterHistory(items: List<HistoryItem>, filter: HistoryFilter, weekStart: In
     HistoryFilter.COMMENTED -> items.filter { it.hasComment }
         .sortedWith(compareByDescending<HistoryItem> { it.commentUnread }.thenByDescending { it.startedAt })
 }
+
+/**
+ * Filtro con el que arranca el historial (revisión de la PR #40): "Esta semana" si hay sesiones esta semana y si no
+ * "Todos", para no mostrar "Sin entrenamientos esta semana" a quien tiene sesiones más viejas.
+ */
+fun defaultFilter(items: List<HistoryItem>, weekStart: Instant, weekEnd: Instant): HistoryFilter =
+    if (filterHistory(items, HistoryFilter.WEEK, weekStart, weekEnd).isNotEmpty()) HistoryFilter.WEEK else HistoryFilter.ALL

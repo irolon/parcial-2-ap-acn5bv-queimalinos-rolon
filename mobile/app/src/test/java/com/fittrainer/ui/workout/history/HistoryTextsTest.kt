@@ -1,5 +1,6 @@
 package com.fittrainer.ui.workout.history
 
+import com.fittrainer.data.workout.history.HistoryOrigin
 import com.fittrainer.data.workout.history.HistorySet
 import java.time.Instant
 import java.time.ZoneId
@@ -35,5 +36,17 @@ class HistoryTextsTest {
         assertEquals("1", unreadBadgeText(1))
         assertEquals("9", unreadBadgeText(9))
         assertEquals("9+", unreadBadgeText(10))
+    }
+
+    @Test fun marcaDeSubidaSegunElOrigen() {
+        assertEquals("Sin subir", syncMarkText(HistoryOrigin.LOCAL_PENDING))
+        assertEquals("No se pudo subir", syncMarkText(HistoryOrigin.LOCAL_FAILED))
+        assertNull(syncMarkText(HistoryOrigin.LOCAL_SYNCED))
+        assertNull(syncMarkText(HistoryOrigin.SERVER))
+    }
+
+    @Test fun descripcionDelBadgeParaTalkBack() {
+        assertEquals("1 comentario nuevo", unreadBadgeDescription(1))
+        assertEquals("12 comentarios nuevos", unreadBadgeDescription(12))
     }
 }

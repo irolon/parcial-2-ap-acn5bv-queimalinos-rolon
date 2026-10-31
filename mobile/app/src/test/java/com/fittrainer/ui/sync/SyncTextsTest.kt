@@ -82,4 +82,18 @@ class SyncTextsTest {
             signOutPendingText(2, 1),
         )
     }
+
+    @Test fun `titulo del aviso del logout segun lo que quede`() {
+        assertEquals("Entrenamientos sin subir", signOutPendingTitle(2, 0))
+        assertEquals("Comentarios sin subir", signOutPendingTitle(0, 1))
+        assertEquals("Datos sin subir", signOutPendingTitle(1, 1))
+    }
+
+    @Test fun `aviso del logout que no pudo subir todo, con y sin rechazo`() {
+        assertEquals("¿Cerrar sesión igual? Tenés 1 entrenamiento sin subir. Se va a subir cuando vuelvas a entrar.", signOutFailedText(1, 0, rejected = false))
+        assertEquals(
+            "El servidor rechazó parte de lo subido; lo ves en Hoy. ¿Cerrar sesión igual? Tenés 1 entrenamiento sin subir. Se va a subir cuando vuelvas a entrar.",
+            signOutFailedText(1, 0, rejected = true),
+        )
+    }
 }

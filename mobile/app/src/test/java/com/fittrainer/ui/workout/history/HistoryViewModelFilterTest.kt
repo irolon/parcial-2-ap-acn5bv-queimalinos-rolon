@@ -4,6 +4,7 @@ import com.fittrainer.data.api.history.HistoryDetailDto
 import com.fittrainer.data.api.history.HistoryMetaDto
 import com.fittrainer.data.api.history.HistoryPageDto
 import com.fittrainer.data.api.history.HistorySummaryDto
+import com.fittrainer.data.db.workout.SYNC_FAILED
 import com.fittrainer.data.db.workout.SYNC_SYNCED
 import com.fittrainer.data.workout.history.HistoryRepository
 import com.fittrainer.testing.MainDispatcherRule
@@ -18,6 +19,7 @@ import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -148,5 +150,41 @@ class HistoryViewModelFilterTest {
         repo.markCommentSeen("u1", "otra", "Dale")
         advanceUntilIdle()
         assertEquals(1, vm.uiState.value.unreadComments)
+    }
+
+    // D (revisión de la PR #40): "Esta semana" solo si hay sesiones esta semana; se decide una vez, con la primera lista.
+    private fun TestScope.startWith(vararg s: HistorySummaryDto) {
+        load(*s)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        vm.onStart()
+    }
+
+    @Test fun sinSesionesEstaSemanaArrancaEnTodos() = runTest {
+        startWith(old); advanceUntilIdle()
+        assertEquals(HistoryFilter.ALL, vm.uiState.value.filter)
+        assertEquals(listOf("vieja"), vm.uiState.value.visibleItems.map { it.id })
+    }
+
+    @Test fun conSesionesEstaSemanaArrancaEnEstaSemanaYNoSeVuelveADecidir() = runTest {
+        startWith(inWeek, old); advanceUntilIdle()
+        assertEquals(HistoryFilter.WEEK, vm.uiState.value.filter)
+        load(old); vm.onPullToRefresh(); advanceUntilIdle()
+        assertEquals(HistoryFilter.WEEK, vm.uiState.value.filter)
+    }
+
+    @Test fun siElAlumnoEligeUnFiltroConLaListaVaciaSeRespetaAlLlegarLaPrimera() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        vm.onFilterSelected(HistoryFilter.WEEK) // todavía sin decidir: la lista está vacía
+        load(old); vm.onStart(); advanceUntilIdle() // sin sesiones esta semana: por defecto sería "Todos"
+        assertEquals(HistoryFilter.WEEK, vm.uiState.value.filter)
+    }
+
+    @Test fun unaRechazadaPorElServidorNoCuentaComoSinSubir() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        val at = Instant.parse("2026-10-29T12:00:00Z").toEpochMilli()
+        workoutDao.state.value = FakeWorkoutDao.State(sessions = mapOf("w1" to finishedSession(startedAt = at, syncState = SYNC_FAILED)))
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.hasPending)
+        assertEquals(listOf("w1"), vm.uiState.value.visibleItems.map { it.id })
     }
 }

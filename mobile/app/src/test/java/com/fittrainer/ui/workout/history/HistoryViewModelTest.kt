@@ -171,4 +171,19 @@ class HistoryViewModelTest {
         advanceUntilIdle()
         assertEquals(3, api.historyRequests.size)
     }
+
+    @Test fun unPullMientrasBajanLosDetallesMuestraElSpinnerYRefrescaUnaVezAlTerminar() = runTest {
+        api.historyPages = mapOf(1 to page("a"))
+        api.details = mapOf("a" to HistoryDetailDto("a", "2026-10-29T12:00:00Z"))
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>().also { api.detailGate = it }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        vm.onStart(); advanceUntilIdle()
+        assertTrue(vm.uiState.value.detailsLoading)
+        vm.onPullToRefresh(); vm.onPullToRefresh(); advanceUntilIdle()
+        assertTrue(vm.uiState.value.isRefreshing)
+        assertEquals(listOf(1), api.historyRequests)
+        gate.complete(Unit); advanceUntilIdle()
+        assertEquals(listOf(1, 1), api.historyRequests)
+        assertFalse(vm.uiState.value.isRefreshing)
+    }
 }
