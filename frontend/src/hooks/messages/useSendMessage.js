@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { sendMessage } from '@/api/messages/messages.api';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { conversationsKey } from './messageKeys';
+import { conversationsKey, messagesKey } from './messageKeys';
 import { insertConfirmed, pendingStore } from './pending';
 
 let counter = 0;
@@ -33,7 +33,7 @@ function makeTemp(studentId, role, { body, file }) {
  */
 export function useSendMessage(studentId) {
   const queryClient = useQueryClient();
-  const role = useAuthStore((s) => s.user?.role ?? 'trainer');
+  const role = useAuthStore((s) => s.user?.role ?? null);
 
   const deliver = useCallback(
     async (tmp) => {
@@ -41,6 +41,8 @@ export function useSendMessage(studentId) {
       store.patch(tmp.id, { status: 'sending', error: null });
       try {
         const message = await sendMessage(studentId, { body: tmp.body, file: tmp.file });
+        // Un refetch en vuelo traería el historial sin este mensaje y lo pisaría.
+        await queryClient.cancelQueries({ queryKey: messagesKey(studentId) });
         insertConfirmed(queryClient, studentId, message);
         store.remove(tmp);
         queryClient.invalidateQueries({ queryKey: conversationsKey });
@@ -62,7 +64,13 @@ export function useSendMessage(studentId) {
     [queryClient, studentId, role, deliver],
   );
 
+  // Doble click en "Reintentar": si el temporal ya se está enviando, no se manda otra vez.
+  const retry = useCallback(
+    (tmp) => (pendingStore(queryClient, studentId).get(tmp.id)?.status === 'sending' ? Promise.resolve(null) : deliver(tmp)),
+    [queryClient, studentId, deliver],
+  );
+
   const discard = useCallback((tmp) => pendingStore(queryClient, studentId).remove(tmp), [queryClient, studentId]);
 
-  return { send, retry: deliver, discard };
+  return { send, retry, discard };
 }

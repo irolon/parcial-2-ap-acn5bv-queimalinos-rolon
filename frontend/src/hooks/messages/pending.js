@@ -25,6 +25,7 @@ export function pendingStore(queryClient, studentId) {
     if (tmp.image_url?.startsWith('blob:')) URL.revokeObjectURL?.(tmp.image_url);
   };
   return {
+    get: (id) => read().find((m) => m.id === id),
     add: (tmp) => queryClient.setQueryData(key, [...read(), tmp]),
     patch: (id, changes) => queryClient.setQueryData(key, read().map((m) => (m.id === id ? { ...m, ...changes } : m))),
     remove: (tmp) => {
