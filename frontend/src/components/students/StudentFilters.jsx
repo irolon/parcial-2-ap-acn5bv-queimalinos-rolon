@@ -14,6 +14,7 @@ const ORDENES = [
   { value: 'ultima-sesion', label: 'Última sesión' },
   { value: 'nombre', label: 'Nombre' },
   { value: 'alta', label: 'Alta reciente' },
+  { value: 'racha', label: 'Racha' },
 ];
 
 /** Buscador y selects del panel; `onChange` recibe los filtros completos. */

@@ -2,7 +2,7 @@ import { activityStatus, daysWithoutTraining } from './activity';
 
 export const DEFAULT_FILTERS = { estado: 'todos', objetivo: '', orden: 'ultima-sesion', q: '' };
 export const ESTADOS = ['todos', 'inactivos', 'al-dia', 'nuevos', 'baja'];
-export const ORDENES = ['ultima-sesion', 'nombre', 'alta'];
+export const ORDENES = ['ultima-sesion', 'nombre', 'alta', 'racha'];
 
 const STATUS_BY_ESTADO = { inactivos: 'inactive', 'al-dia': 'active', nuevos: 'new', baja: 'disabled' };
 
@@ -47,10 +47,19 @@ export function filterStudents(students, filters, now) {
 const byCreated = (a, b) => new Date(a.created_at) - new Date(b.created_at);
 const byName = (a, b) => a.name.localeCompare(b.name, 'es');
 
+const streakOf = (s) => [s.streak?.current_days ?? -1, s.streak?.longest_days ?? -1];
+
+const byStreak = (a, b) => {
+  const [aCurrent, aLongest] = streakOf(a);
+  const [bCurrent, bLongest] = streakOf(b);
+  return bCurrent - aCurrent || bLongest - aLongest || byName(a, b);
+};
+
 const comparators = (now) => ({
   'ultima-sesion': (a, b) => daysWithoutTraining(b, now) - daysWithoutTraining(a, now) || byName(a, b),
   nombre: byName,
   alta: (a, b) => byCreated(b, a),
+  racha: byStreak,
 });
 
 /** Copia ordenada; "ultima-sesion" pone primero a quienes llevan más días sin entrenar. */
