@@ -96,7 +96,9 @@ class HistoryRepository @Inject constructor(
         val page = api.history(ownerId, 1, HISTORY_PAGE_SIZE)
         totalPagesAfterRefresh = page.meta.totalPages
         val cached = dao.sessions(ownerId).associateBy { it.id }
-        val stale = page.data.filterNot { cached[it.id]?.detailMatches(it) == true }.map { it.id }.toSet()
+        // Los detalles guardados antes de la v9 no tienen exerciseId (tarjeta 13): se vuelven a bajar.
+        val stale = page.data.filterNot { cached[it.id]?.detailMatches(it) == true }.map { it.id }.toSet() +
+            dao.sessionIdsMissingExerciseId(ownerId)
         checkOwner(ownerId, gen)
         // El aviso va en la misma transacción que el reemplazo: un "Ver más" no puede colarse entre los dos.
         dao.inTransaction {

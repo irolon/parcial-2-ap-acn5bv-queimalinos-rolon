@@ -22,6 +22,13 @@ abstract class HistoryDao {
     @Query("SELECT * FROM history_sessions WHERE ownerId = :ownerId")
     abstract suspend fun sessions(ownerId: String): List<HistorySessionEntity>
 
+    /** Sesiones con detalle guardado antes de la v9: algún ejercicio sin exerciseId. Hay que volver a bajarlas. */
+    @Query(
+        "SELECT s.id FROM history_sessions s WHERE s.ownerId = :ownerId AND s.detailLoaded = 1 " +
+            "AND EXISTS (SELECT 1 FROM history_exercises e WHERE e.sessionId = s.id AND e.exerciseId IS NULL)",
+    )
+    abstract suspend fun sessionIdsMissingExerciseId(ownerId: String): List<String>
+
     @Upsert
     abstract suspend fun upsertSessions(sessions: List<HistorySessionEntity>)
 

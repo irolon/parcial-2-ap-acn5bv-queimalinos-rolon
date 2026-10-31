@@ -162,6 +162,19 @@ class FitTrainerDatabaseMigrationTest {
         db.query("SELECT COUNT(*) FROM history_comment_seen").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
     }
 
+    @Test fun migra8a9ConElIdDelEjercicioNuloYLasTablasDeProgresoVacias() {
+        helper.createDatabase(DB, 8).apply {
+            execSQL("INSERT INTO history_sessions (id, ownerId, startedAt, hasModifications, sets, volumeKg, hasPr, inLatest, detailLoaded) VALUES ('h1', 'u1', 1, 0, 3, 300.0, 0, 1, 1)")
+            execSQL("INSERT INTO history_exercises (sessionId, position, exerciseName, isPr) VALUES ('h1', 0, 'Press', 0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(DB, 9, true)
+        db.query("SELECT exerciseName, exerciseId FROM history_exercises WHERE sessionId = 'h1'").use {
+            assertTrue(it.moveToFirst()); assertEquals("Press", it.getString(0)); assertTrue(it.isNull(1))
+        }
+        db.query("SELECT COUNT(*) FROM progress_exercise_points").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
+    }
+
     // La base real (la del DatabaseModule, sin borrado destructivo) abre una v1 existente.
     @Test fun laBaseRealAbreUnaV1Existente() {
         helper.createDatabase(DB, 1).close()

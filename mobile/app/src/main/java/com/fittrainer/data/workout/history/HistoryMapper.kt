@@ -23,7 +23,7 @@ fun HistorySessionEntity.detailMatches(dto: HistorySummaryDto): Boolean =
         hasModifications == dto.hasModifications && finishedAt == dto.finishedAt?.let(::millis)
 
 fun HistoryDetailDto.exerciseEntities(): List<HistoryExerciseEntity> = exercises.mapIndexed { i, e ->
-    HistoryExerciseEntity(id, i, e.exercise.name, e.originalExercise?.name, e.planned?.sets, e.planned?.reps, e.planned?.suggestedKg, e.isPr)
+    HistoryExerciseEntity(id, i, e.exercise.name, e.originalExercise?.name, e.planned?.sets, e.planned?.reps, e.planned?.suggestedKg, e.isPr, e.exercise.id)
 }
 
 fun HistoryDetailDto.setEntities(): List<HistorySetEntity> = exercises.flatMapIndexed { i, e ->
