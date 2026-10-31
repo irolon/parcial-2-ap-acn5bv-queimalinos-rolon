@@ -878,6 +878,36 @@ Logros desbloqueados por el alumno, el más reciente primero. Roles: `trainer` (
 
 `context` depende del logro: `{ session_id }` en general y `{ session_id, exercise_id }` en los de récords. Un logro se desbloquea una sola vez por alumno.
 
+### GET /students/:id/achievements/progress
+
+Progreso del alumno en cada logro del catálogo. Mismos roles y permisos. **Solo lee**: no guarda la racha ni otorga logros (eso pasa al cerrar una sesión y en el job diario). La racha se calcula en el momento con la misma regla que `GET /streak` (ADR 0005).
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "streak": { "current_streak_days": 6, "longest_streak_days": 9, "last_session_date": "2026-10-30" },
+    "facts": { "sessions_count": 3, "longest_streak": 9, "pr_sessions": 1, "full_weeks": 0 },
+    "assigned_days": ["monday", "thursday"],
+    "achievements": [
+      {
+        "id": "uuid", "code": "SESSIONS_10", "name": "10 sesiones", "description": "…",
+        "category": "milestone", "icon_url": null, "criteria_type": "sessions_count",
+        "current": 3, "target": 10, "unlocked_at": null
+      }
+    ]
+  }
+}
+```
+
+- `achievements`: todo el catálogo, en el orden de `GET /achievements`.
+- `target`: `value` (`sessions_count`, `pr_count`), `days` (`streak`), `count` (`full_week`); `challenge`, un `criteria.type` desconocido o un goal inválido → 1.
+- `current`: el dato de `facts` que corresponde, recortado a `target`. Un logro desbloqueado vale `target` aunque el dato haya bajado. `challenge` y los tipos desconocidos valen 1 solo si están desbloqueados; si no, 0.
+- `criteria_type` es `criteria.type` del catálogo (`sessions_count | streak | pr_count | full_week | challenge`), o `null` si el logro no tiene criterio.
+- `facts` son los valores sin recortar: `longest_streak` es la mayor racha del historial y `pr_sessions` las sesiones con al menos un récord.
+- `assigned_days`: los días asignados (unión de las rutinas activas, en inglés) con los que se calculó la racha; `[]` = sin rutina activa (todos los días cuentan, ADR 0005). El celular los usa para seguir la racha offline sobre esta foto.
+
 ### GET /students/:id/streak
 
 Racha del alumno (ver ADR 0005). Mismos roles y permisos. Lee `student_streaks`; si el alumno todavía no tiene fila, la calcula y la guarda.
@@ -1151,6 +1181,7 @@ Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra 
 > - Añadidos `PATCH` y `DELETE /routines/:id/exercises/:routineExerciseId`.
 > - Añadido módulo completo de Asistente IA del entrenador (`/trainer-ai/*`).
 > - Añadido módulo completo de Gamificación (`/students/:id/achievements`, `/streak`, `/challenges`).
+> - Añadido `GET /students/:id/achievements/progress` (progreso de logros, solo lectura; tarjeta 15).
 > - Modificado `POST /invitations` para soportar canal `whatsapp | qr | both`.
 > - Las series se registran con `POST /sessions/:id/sets` (lote, con sustituciones vía `original_exercise_id`).
 > - Cualquier cambio futuro en endpoints existentes debe ser discutido entre los integrantes para no romper el cliente que ya lo usa.

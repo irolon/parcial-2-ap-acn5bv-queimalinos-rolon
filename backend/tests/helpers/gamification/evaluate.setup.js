@@ -30,6 +30,7 @@ jest.unstable_mockModule(src('services/students/student-access.service.js'), () 
 
 export const evaluate = await import(src('services/gamification/evaluate.service.js'));
 export const achievements = await import(src('services/gamification/achievements.service.js'));
+export const progress = await import(src('services/gamification/progress/achievement-progress.service.js'));
 
 export const STUDENT_ID = 'st-1';
 export const NOW = new Date('2026-10-30T15:00:00Z'); // viernes 12:00 AR

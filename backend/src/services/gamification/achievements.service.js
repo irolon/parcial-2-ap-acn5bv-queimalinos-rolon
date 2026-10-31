@@ -11,7 +11,8 @@ export async function listStudentAchievements(user, studentId) {
   return gamificationRepo.findStudentAchievements(studentId);
 }
 
-const toStreakView = (row) => ({
+/** Forma pública de la racha (la usa también el endpoint de progreso). */
+export const toStreakView = (row) => ({
   current_streak_days: row.current_days,
   longest_streak_days: row.longest_days,
   last_session_date: row.last_trained_date,
