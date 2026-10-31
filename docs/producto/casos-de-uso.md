@@ -321,7 +321,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 3. El premio es siempre el logro "Desafío cumplido", que el alumno recibe **la primera vez** que completa un desafío. Los siguientes no lo repiten.
 4. Al crearlo, se abre directamente la pantalla de asignación.
 5. El PT elige alumnos con un buscador (hasta 50 por vez) y confirma. El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
-6. Los alumnos ven el desafío activo con su progreso, y el PT lo ve en la card "Logros y racha" de la ficha de cada alumno.
+6. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. La vista del alumno (desafío activo y progreso) está pendiente: tarjeta 22 en la web y la mobile.
 
 **Flujos alternativos**
 

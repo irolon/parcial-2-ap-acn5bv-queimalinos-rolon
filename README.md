@@ -40,7 +40,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 
 **En revisión (PRs abiertas):** vista de progreso en la web (#34), notificaciones con push FCM y alerta de inactividad (#36) y mejoras de la sesión activa en el celular (#38).
 
-**Pendiente:** IA (asistente del alumno y del PT, con n8n), logros en la web, agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
+**Pendiente:** IA (asistente del alumno y del PT, con n8n), agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
 
 > DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
 
