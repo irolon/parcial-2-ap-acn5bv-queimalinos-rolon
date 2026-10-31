@@ -23,6 +23,11 @@ export const remove = asyncHandler(async (req, res) => {
   res.status(204).end();
 });
 
+/** GET /challenges/:id/active-students — 200 → { data: string[] } */
+export const activeStudents = asyncHandler(async (req, res) => {
+  res.json({ data: await challengesService.activeStudents(req.user, req.params.id) });
+});
+
 /** POST /challenges/:id/assignments — 201 → { data: { created, skipped } } */
 export const assignMany = asyncHandler(async (req, res) => {
   const data = await assignmentsService.assignToMany(req.user, req.params.id, req.body.student_ids);

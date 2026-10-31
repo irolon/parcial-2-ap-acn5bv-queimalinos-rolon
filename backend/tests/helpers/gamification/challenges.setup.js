@@ -13,6 +13,8 @@ export const mockChallenges = {
   hasActiveAssignments: jest.fn(),
   hasAssignments: jest.fn(),
   achievementExists: jest.fn(),
+  countByChallenge: jest.fn(),
+  findActiveStudentIds: jest.fn(),
 };
 export const mockStudentChallenges = {
   findByStudent: jest.fn(),
@@ -68,5 +70,6 @@ export function resetMocks() {
   mockAccess.assertCanAccessStudent.mockResolvedValue({ id: 'st-1', trainer_id: 'tr-1' });
   mockData.findWeights.mockResolvedValue([]);
   mockChallenges.hasActiveAssignments.mockResolvedValue(false);
+  mockChallenges.countByChallenge.mockResolvedValue([]);
   mockChallenges.achievementExists.mockResolvedValue(true);
 }

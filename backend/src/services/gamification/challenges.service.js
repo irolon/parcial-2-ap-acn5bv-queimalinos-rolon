@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as challengesRepo from '../../repositories/gamification/challenges.repository.js';
+import { CHALLENGE_STATUS } from '../../models/gamification/gamification.model.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 
 /** Desafío visible para ese entrenador (global o suyo); si no, 404. */
@@ -30,7 +31,23 @@ async function assertRewardExists(rewardId) {
 export async function listChallenges(user, { goal_type: goalType } = {}) {
   let trainerId = user.id;
   if (user.role === 'student') trainerId = (await assertCanAccessStudent(user, user.id)).trainer_id;
-  return challengesRepo.findVisible(trainerId, goalType);
+  const list = await challengesRepo.findVisible(trainerId, goalType);
+  if (user.role === 'student') return list;
+  const rows = await challengesRepo.countByChallenge(trainerId, list.map((c) => c.id));
+  return list.map((c) => {
+    const mine = rows.filter((r) => r.challenge_id === c.id);
+    return {
+      ...c,
+      assignments_count: mine.length,
+      active_count: mine.filter((r) => r.status === CHALLENGE_STATUS.ACTIVE).length,
+    };
+  });
+}
+
+/** Ids de los alumnos del entrenador con el desafío activo (para deshabilitarlos al asignar). */
+export async function activeStudents(user, challengeId) {
+  await getVisibleChallenge(challengeId, user.id);
+  return challengesRepo.findActiveStudentIds(challengeId, user.id);
 }
 
 export async function createChallenge(user, fields) {

@@ -911,10 +911,19 @@ Desafíos que puede ver el usuario: globales (`trainer_id: null`) y los del entr
     "id": "uuid", "trainer_id": null, "name": "12 sesiones en 30 días",
     "description": "Cerrá 12 sesiones de entrenamiento en 30 días.",
     "goal_type": "sessions_count", "goal_value": 12, "duration_days": 30,
-    "reward_achievement_id": null
+    "reward_achievement_id": null,
+    "assignments_count": 3, "active_count": 1
   }]
 }
 ```
+
+Solo para `trainer`, cada desafío suma `assignments_count` (asignaciones en cualquier estado) y `active_count` (las activas), contando únicamente a sus propios alumnos. Para `student` esas claves no vienen.
+
+### GET /challenges/:id/active-students
+
+Solo `trainer`. Ids de los alumnos suyos que tienen el desafío (global o propio) **activo**; sirve para deshabilitarlos al asignar.
+
+**200 OK:** `{ "data": ["uuid", …] }`. Desafío inexistente o de otro entrenador → 404 `CHALLENGE_NOT_FOUND`.
 
 ### POST /challenges
 

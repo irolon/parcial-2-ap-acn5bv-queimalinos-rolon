@@ -58,6 +58,31 @@ export const hasActiveAssignments = (id) => countAssignments(id, CHALLENGE_STATU
 /** ¿Hay alguna asignación, en cualquier estado (activa, completada, fallida o abandonada)? */
 export const hasAssignments = (id) => countAssignments(id);
 
+/** Asignaciones (challenge_id, status) de los alumnos de ese entrenador para esos desafíos; el service las agrupa. */
+export async function countByChallenge(trainerId, challengeIds) {
+  if (challengeIds.length === 0) return [];
+  return unwrap(
+    await supabase
+      .from(STUDENT_CHALLENGES_TABLE)
+      .select('challenge_id, status, students!inner(trainer_id)')
+      .eq('students.trainer_id', trainerId)
+      .in('challenge_id', challengeIds)
+  );
+}
+
+/** Ids de los alumnos del entrenador que tienen el desafío activo. */
+export async function findActiveStudentIds(challengeId, trainerId) {
+  const rows = unwrap(
+    await supabase
+      .from(STUDENT_CHALLENGES_TABLE)
+      .select('student_id, students!inner(trainer_id)')
+      .eq('challenge_id', challengeId)
+      .eq('status', CHALLENGE_STATUS.ACTIVE)
+      .eq('students.trainer_id', trainerId)
+  );
+  return rows.map((r) => r.student_id);
+}
+
 /** ¿Existe el logro en el catálogo? */
 export async function achievementExists(id) {
   const row = unwrap(await supabase.from(ACHIEVEMENTS_TABLE).select('id').eq('id', id).maybeSingle());
