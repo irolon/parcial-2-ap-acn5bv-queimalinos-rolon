@@ -34,14 +34,14 @@ export async function listChallenges(user, { goal_type: goalType } = {}) {
   const list = await challengesRepo.findVisible(trainerId, goalType);
   if (user.role === 'student') return list;
   const rows = await challengesRepo.countByChallenge(trainerId, list.map((c) => c.id));
-  return list.map((c) => {
-    const mine = rows.filter((r) => r.challenge_id === c.id);
-    return {
-      ...c,
-      assignments_count: mine.length,
-      active_count: mine.filter((r) => r.status === CHALLENGE_STATUS.ACTIVE).length,
-    };
-  });
+  const counts = new Map();
+  for (const r of rows) {
+    const acc = counts.get(r.challenge_id) ?? { assignments_count: 0, active_count: 0 };
+    acc.assignments_count += 1;
+    if (r.status === CHALLENGE_STATUS.ACTIVE) acc.active_count += 1;
+    counts.set(r.challenge_id, acc);
+  }
+  return list.map((c) => ({ ...c, ...(counts.get(c.id) ?? { assignments_count: 0, active_count: 0 }) }));
 }
 
 /** Ids de los alumnos del entrenador con el desafío activo (para deshabilitarlos al asignar). */
