@@ -942,7 +942,7 @@ Solo `trainer` (alumno → 403 `FORBIDDEN`). Crea un desafío propio.
 }
 ```
 
-- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0. `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
+- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0; entero si `goal_type` es `sessions_count` o `streak` (`volume` y `weight_target` admiten decimales). `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
 - Campo inválido → 400 `VALIDATION_ERROR` con `details`; un `reward_achievement_id` que no existe también.
 
 **201 Created:** `{ data }` con el desafío (misma forma que un ítem de `GET /challenges`, con `trainer_id` del entrenador).
