@@ -21,6 +21,8 @@ import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.progress.ProgressScreen
+import com.fittrainer.ui.routines.RoutinesScreen
+import com.fittrainer.ui.routines.detail.RoutineDetailScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -31,7 +33,7 @@ import com.fittrainer.ui.workout.components.ActiveWorkoutSignOutDialog
 import com.fittrainer.ui.workout.components.SignOutFailedDialog
 import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 
-/** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → Estado del servidor. */
+/** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → pantalla hija (Estado del servidor, detalle del historial, detalle de rutina, biblioteca). */
 @Composable
 fun RoleShell(
     tabs: List<Tab>,
@@ -80,6 +82,7 @@ fun RoleShell(
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
     val unread = progressUnread(isStudent)
+    val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
             if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, currentRoute, navController, unread)
@@ -98,10 +101,12 @@ fun RoleShell(
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
                             onSignOut = guardedSignOut,
                         )
-                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
-                            onOpenWorkout = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } },
+                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(onOpenWorkout = openWorkout)
+                        tab.route == STUDENT_ROUTINES_ROUTE -> RoutinesScreen(
+                            // Un doble toque no apila dos veces la misma pantalla.
+                            onOpenRoutine = { navController.navigate(routineDetailRoute(it)) { launchSingleTop = true } },
+                            onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
                         )
-                        tab.route == STUDENT_LIBRARY_ROUTE -> LibraryScreen()
                         tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
                         else -> PlaceholderScreen(tab.label)
                     }
@@ -113,8 +118,21 @@ fun RoleShell(
             composable(HISTORY_DETAIL_ROUTE) {
                 HistoryDetailScreen(onBack = { navController.popBackStack() })
             }
-            composable(WORKOUT_ROUTE) {
-                WorkoutScreen(onExit = { navController.popBackStack(STUDENT_TODAY_ROUTE, inclusive = false) })
+            composable(ROUTINE_DETAIL_ROUTE) {
+                RoutineDetailScreen(onBack = { navController.popBackStack() }, onOpenWorkout = openWorkout)
+            }
+            composable(STUDENT_LIBRARY_ROUTE) {
+                LibraryScreen(onBack = { navController.popBackStack() })
+            }
+            composable(WORKOUT_ROUTE) { entry ->
+                // Vuelve a donde se entró (Hoy o el detalle de una rutina). Varios disparadores pueden llamar onExit:
+                // solo sale si la sesión sigue arriba, así un segundo disparo no saca también la pantalla de abajo.
+                // Hoy es el inicio del grafo y siempre está abajo; el navigate es solo por si algún día no lo está.
+                WorkoutScreen(onExit = {
+                    if (navController.currentBackStackEntry?.id == entry.id && !navController.popBackStack()) {
+                        navController.navigate(STUDENT_TODAY_ROUTE)
+                    }
+                })
             }
         }
     }

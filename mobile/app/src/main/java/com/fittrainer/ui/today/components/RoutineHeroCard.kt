@@ -21,11 +21,16 @@ import androidx.compose.ui.unit.dp
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import com.fittrainer.ui.today.StartAction
 import com.fittrainer.ui.today.heroSummary
+import com.fittrainer.ui.today.startActionHint
 
-/** CTA único: "Empezar", o "Continuar sesión" si hay una abierta. Sin ejercicios no se puede empezar. */
+/**
+ * CTA único: "Empezar", o "Continuar sesión" si la abierta es de esta rutina. Con la de otra o sin ejercicios
+ * se apaga y dice por qué (a la otra sesión se vuelve con la ActiveWorkoutCard de arriba).
+ */
 @Composable
-fun RoutineHeroCard(routine: Routine, workoutActive: Boolean, onStart: () -> Unit) {
+fun RoutineHeroCard(routine: Routine, action: StartAction, onStart: () -> Unit, onContinue: () -> Unit) {
     val shape = MaterialTheme.shapes.large
     Column(
         Modifier
@@ -38,13 +43,14 @@ fun RoutineHeroCard(routine: Routine, workoutActive: Boolean, onStart: () -> Uni
         Text(routine.name, style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
         Text(heroSummary(routine), style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
         Button(
-            onClick = onStart,
-            enabled = workoutActive || routine.exercises.isNotEmpty(),
+            onClick = if (action == StartAction.Continue) onContinue else onStart,
+            enabled = action == StartAction.Start || action == StartAction.Continue,
             modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget).padding(top = Spacing.sm),
         ) {
             Icon(Icons.Filled.PlayArrow, contentDescription = null)
             Spacer(Modifier.width(Spacing.sm))
-            Text(if (workoutActive) "Continuar sesión" else "Empezar")
+            Text(if (action == StartAction.Continue) "Continuar sesión" else "Empezar")
         }
+        startActionHint(action)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary) }
     }
 }
