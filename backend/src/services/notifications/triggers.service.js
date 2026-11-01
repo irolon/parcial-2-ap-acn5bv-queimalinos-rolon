@@ -145,3 +145,35 @@ export function onAchievementsFromJob({ studentId, unlocked = [] }) {
     }
   });
 }
+
+// Evento de turno → a quién avisa y con qué texto (la política de push decide si sale al celular).
+const APPOINTMENT_EVENTS = {
+  confirmed: { to: 'student', text: 'appointmentConfirmed' },
+  cancelledByTrainer: { to: 'student', text: 'appointmentCancelled' },
+  createdByTrainer: { to: 'student', text: 'appointmentCreatedByTrainer' },
+  requested: { to: 'trainer', text: 'appointmentRequested' },
+  cancelledByStudent: { to: 'trainer', text: 'appointmentCancelledByStudent' },
+};
+
+/**
+ * Cambio en un turno (`appointment` es el turno público): avisa a la otra parte. Al alumno le llega con
+ * push; al entrenador solo le queda la fila. Nunca lanza.
+ */
+export function onAppointmentChanged(event, appointment) {
+  return safely(`appointment ${event}`, async () => {
+    const { to, text } = APPOINTMENT_EVENTS[event];
+    const { title, body } = texts[text]({
+      studentName: appointment.student.name,
+      scheduledAt: appointment.scheduled_at,
+    });
+    await notify({
+      userId: to === 'student' ? appointment.student.id : appointment.trainer_id,
+      userRole: to,
+      type: 'appointment',
+      title,
+      body,
+      data: { appointment_id: appointment.id },
+      push: shouldPush('appointment', to),
+    });
+  });
+}
