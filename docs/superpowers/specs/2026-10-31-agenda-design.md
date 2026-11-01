@@ -62,7 +62,7 @@ revoke all on function replace_trainer_availability(uuid, jsonb) from public, an
 grant execute on function replace_trainer_availability(uuid, jsonb) to service_role;
 ```
 
-- `appointments` no cambia de forma: `duration_min` queda en 60, que es lo que crea el backend.
+- `appointments` no cambia de forma: `duration_min` queda en 60, que es lo que crea el backend. Desde el seguimiento (§8) la base lo exige con checks de 60 min y hora en punto.
 - Las horas de `trainer_availability` son de Argentina (UTC-3 fijo, sin horario de verano). `scheduled_at` es `timestamptz` (UTC). La conversión usa un offset fijo UTC-3 (Argentina no tiene horario de verano), verificado contra Intl en los tests.
 
 ## 4. API
@@ -159,6 +159,20 @@ Pantalla del alumno (mobile, Igna; web en la tarjeta 22), feriados y excepciones
 - La grilla agrega filas fuera de la disponibilidad para mostrar los turnos manuales que caen ahí.
 - El panel del turno muestra las iniciales del alumno: `Avatar` no soporta imagen.
 - Los módulos de la agenda van en `agenda/` en todas las capas (excepción anotada en CONTRIBUTING.md).
+
+### Seguimiento de la review de la #49 (01/11, migración `2026-11-01-agenda-followup.sql`)
+
+- **Checks en `appointments`:** `duration_min = 60` (reemplaza a `> 0`) y hora en punto (`mod(extract(epoch from scheduled_at), 3600) = 0`; en UTC, que con Argentina en UTC-3 fijo da lo mismo). Así el índice único por `scheduled_at` alcanza para que no haya solapamientos aunque el turno entre por un seed o SQL a mano. La migración corta con error si ya hay filas que los violen y agrega los checks `not valid` + `validate constraint`.
+- **Disponibilidad simultánea:** `replace_trainer_availability` toma `pg_advisory_xact_lock(hashtext(p_trainer::text))` al empezar; dos guardados del mismo PT van en fila.
+- **Tope de pendientes:** un alumno puede tener hasta 3 turnos `pending` a futuro; el 4.º `POST /appointments` da 409 `APPOINTMENT_LIMIT`. No aplica a lo que agenda el PT. El conteo no es atómico (dos pedidos simultáneos podrían dejar 4): alcanza como freno.
+- **Tope de 1 año** (los dos roles): el día de Argentina del turno no puede pasar de hoy + 365 días (400 `SLOT_UNAVAILABLE`). En "Nuevo turno" el selector de fecha tiene `max` y una fecha posterior da error sin mandar nada.
+- **Baja de un alumno:** al desactivarlo (`PATCH /students/:id` con `active: false`), sus turnos futuros `pending` o `confirmed` pasan a `cancelled` y liberan el horario, sin notificaciones. Se hace antes de guardar la baja, igual que la revocación de tokens: si falla, la baja no se guarda y el reintento la completa. Reactivarlo no los recupera.
+- **44 px en la vista angosta:** en < 768 px los botones `sm` de la agenda, la ✕ de quitar franja y "+ Agregar franja" tienen 44 px de toque (`components/agenda/touch.js`).
+
+### Límites (a propósito)
+
+- La disponibilidad llega hasta las 23 h: la última franja es de 22 a 23 (no se carga de 23 a 24).
+- Un alumno sin entrenador recibe 403 en `POST /appointments` y `[]` en `/availability/free`.
 
 ## 9. Resultado del E2E (31/10, contra Supabase dev, por API)
 

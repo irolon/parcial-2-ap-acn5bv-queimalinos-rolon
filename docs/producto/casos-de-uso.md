@@ -350,6 +350,9 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - **2b:** El alumno pide un horario fuera de la disponibilidad del PT o a más de 28 días → 400 `SLOT_UNAVAILABLE`.
 - **2c:** El horario ya pasó o no es una hora en punto → 400 `SLOT_UNAVAILABLE`.
 - **2d:** El alumno está inactivo → 403 al pedir un turno y al consultar `/availability/free`. Sí puede cancelar los que ya tiene.
+- **2e:** El alumno ya tiene 3 turnos `pending` a futuro → el 4.º pedido da 409 `APPOINTMENT_LIMIT`.
+- **2f:** El turno cae a más de 1 año (hoy + 365 días), lo pida el alumno o lo agende el PT → 400 `SLOT_UNAVAILABLE`.
+- **2g:** El PT da de baja a un alumno → sus turnos futuros `pending` o `confirmed` pasan a `cancelled` y liberan el horario.
 - **4a:** El estado cambió en el medio (por ejemplo, el alumno canceló mientras el PT confirmaba) → 409 `INVALID_STATUS_TRANSITION` y la pantalla se refresca.
 - **4b:** El turno ya pasó → 409 `APPOINTMENT_PAST`; no se puede cambiar.
 - **5a:** El alumno cancela su propio turno (`pending` o `confirmed`) → pasa a `cancelled` y el PT recibe una notificación (sin push).
