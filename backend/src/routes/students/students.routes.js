@@ -19,6 +19,9 @@ const router = Router();
 // Lista de alumnos del trainer autenticado.
 router.get('/', authenticate, requireRole('trainer'), validate(validateListQuery, 'query'), studentsController.list);
 
+// Inicio del entrenador. Va ANTES de /:id: si no, "overview" se tomaría como un id.
+router.get('/overview', authenticate, requireRole('trainer'), studentsController.overview);
+
 // Alta del alumno desde invitación — público (lo ejecuta el alumno con su token).
 router.post('/', validate(validateRegisterFromInvitation), studentsController.registerFromInvitation);
 

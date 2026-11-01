@@ -17,6 +17,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fittrainer.ui.health.HealthScreen
+import com.fittrainer.ui.students.overview.HomeNavigation
+import com.fittrainer.ui.students.overview.TrainerHomeScreen
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
@@ -45,6 +47,8 @@ fun RoleShell(
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    val stack by navController.currentBackStack.collectAsStateWithLifecycle()
+    val stackRoutes = stack.map { it.destination.route }
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
@@ -86,7 +90,7 @@ fun RoleShell(
     val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
-            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, currentRoute, navController, unread)
+            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, stackRoutes, navController, unread)
         },
     ) { padding ->
         NavHost(
@@ -112,6 +116,13 @@ fun RoleShell(
                         tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen(
                             onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
                             onOpen = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
+                        )
+                        tab.route == TRAINER_HOME_ROUTE -> TrainerHomeScreen(
+                            HomeNavigation(
+                                onStudent = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
+                                onSession = { s, id -> navController.navigate(trainerStudentSessionRoute(s, id)) { launchSingleTop = true } },
+                                onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                            ),
                         )
                         else -> PlaceholderScreen(tab.label)
                     }
