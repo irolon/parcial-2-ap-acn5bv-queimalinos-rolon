@@ -1,5 +1,9 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
+import { fetchAll } from '../../shared/utils/supabase-query.js';
+import { localDate } from '../../shared/utils/dates.js';
+import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
+import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';
 import {
   STUDENTS_TABLE,
   STUDENT_LIST_COLUMNS,
@@ -97,4 +101,40 @@ export async function updateStudent(id, fields) {
     .single();
   if (error) throw Errors.internal(error.message);
   return data;
+}
+
+/** Agrupa filas por student_id; cada alumno pedido arranca con []. */
+const groupByStudent = (studentIds, rows, pick) => {
+  const out = new Map(studentIds.map((id) => [id, []]));
+  for (const row of rows) out.get(row.student_id)?.push(pick(row));
+  return out;
+};
+
+/** Días de las rutinas activas de cada alumno (unión, sin repetidos). */
+export async function findActiveRoutineDays(studentIds) {
+  // PostgREST corta en 1000 filas: se pagina con orden estable.
+  const rows = await fetchAll(() =>
+    supabase
+      .from(ROUTINES_TABLE)
+      .select('id, student_id, days')
+      .in('student_id', studentIds)
+      .eq('active', true)
+      .order('id')
+  );
+  const grouped = groupByStudent(studentIds, rows, (r) => r.days ?? []);
+  return new Map([...grouped].map(([id, lists]) => [id, [...new Set(lists.flat())]]));
+}
+
+/** Fechas locales AR ('YYYY-MM-DD') de las sesiones terminadas desde `fromIso`, por alumno. */
+export async function findFinishedSessionDates(studentIds, fromIso) {
+  const rows = await fetchAll(() =>
+    supabase
+      .from(SESSIONS_TABLE)
+      .select('id, student_id, started_at')
+      .in('student_id', studentIds)
+      .gte('started_at', fromIso)
+      .not('finished_at', 'is', null)
+      .order('id')
+  );
+  return groupByStudent(studentIds, rows, (r) => localDate(r.started_at));
 }

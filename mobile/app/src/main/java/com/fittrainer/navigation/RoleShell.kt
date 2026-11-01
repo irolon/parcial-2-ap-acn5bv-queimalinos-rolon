@@ -22,6 +22,7 @@ import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
+import com.fittrainer.ui.students.StudentsScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -108,6 +109,7 @@ fun RoleShell(
                             onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
                         )
                         tab.route == STUDENT_PROGRESS_ROUTE -> HistoryScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
+                        tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen()
                         else -> PlaceholderScreen(tab.label)
                     }
                 }

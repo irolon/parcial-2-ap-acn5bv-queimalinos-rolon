@@ -10,6 +10,9 @@ import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.routine.RoutineEntity
 import com.fittrainer.data.db.routine.RoutineExerciseEntity
 import com.fittrainer.data.db.routine.RoutineSyncEntity
+import com.fittrainer.data.db.students.TrainerStudentEntity
+import com.fittrainer.data.db.students.TrainerStudentsDao
+import com.fittrainer.data.db.students.TrainerStudentsSyncEntity
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.WorkoutExerciseEntity
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
@@ -35,8 +38,10 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         HistoryExerciseEntity::class,
         HistorySetEntity::class,
         HistoryCommentSeenEntity::class,
+        TrainerStudentEntity::class,
+        TrainerStudentsSyncEntity::class,
     ],
-    version = 9,
+    version = 12,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -49,6 +54,9 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9),
+        // La 10 y la 11 quedan para las PR #44 (gráficos) y #48 (notificaciones), que van antes en el merge:
+        // cuando entren, esta pasa a AutoMigration(from = 11, to = 12) y se regenera 12.json.
+        AutoMigration(from = 9, to = 12),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -57,4 +65,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun historyDao(): HistoryDao
+    abstract fun trainerStudentsDao(): TrainerStudentsDao
 }

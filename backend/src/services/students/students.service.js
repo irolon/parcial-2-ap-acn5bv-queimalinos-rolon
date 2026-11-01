@@ -8,11 +8,14 @@ import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
+import { localDate } from '../../shared/utils/dates.js';
+import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
- * sesión. Por defecto solo activos. La última sesión sale de una segunda
- * consulta a la vista student_last_session (ver student.model.js).
+ * sesión, los días por semana de su rutina activa y la adherencia de los
+ * últimos 7 días (models/students/adherence.js). Por defecto solo activos.
+ * Cada dato extra sale de UNA consulta por lote para toda la página.
  */
 export async function list(trainerId, { active = true, search, page = 1, limit = 20 } = {}) {
   const { data: rows, total } = await studentsRepo.findStudentsByTrainer({
@@ -22,17 +25,30 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
     page,
     limit,
   });
+  const meta = { total, page, limit, total_pages: Math.ceil(total / limit) };
 
   // .in('student_id', []) es inválido en PostgREST: con la página vacía no se consulta.
-  const lastSessions = rows.length
-    ? await studentsRepo.findLastSessionDates(rows.map((s) => s.id))
-    : [];
+  if (!rows.length) return { data: [], meta };
+
+  const ids = rows.map((s) => s.id);
+  const today = localDate();
+  const [lastSessions, routineDays, finishedDates] = await Promise.all([
+    studentsRepo.findLastSessionDates(ids),
+    studentsRepo.findActiveRoutineDays(ids),
+    studentsRepo.findFinishedSessionDates(ids, `${adherenceWindowStart(today)}T00:00:00-03:00`),
+  ]);
   const lastByStudent = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
 
-  return {
-    data: rows.map((s) => ({ ...s, last_session_at: lastByStudent.get(s.id) ?? null })),
-    meta: { total, page, limit, total_pages: Math.ceil(total / limit) },
-  };
+  const data = rows.map((s) => {
+    const assignedDays = routineDays.get(s.id) ?? [];
+    return {
+      ...s,
+      last_session_at: lastByStudent.get(s.id) ?? null,
+      days_per_week: daysPerWeek(assignedDays),
+      adherence_7d: adherence7d({ assignedDays, finishedDates: finishedDates.get(s.id), today }),
+    };
+  });
+  return { data, meta };
 }
 
 /** Arma la ficha: fila del alumno + última medida (con IMC) + rutina activa + última sesión. */
