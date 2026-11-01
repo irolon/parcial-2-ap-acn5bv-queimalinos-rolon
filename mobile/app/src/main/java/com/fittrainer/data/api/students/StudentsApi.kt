@@ -28,6 +28,14 @@ interface StudentsApi {
     @PATCH("students/{id}")
     suspend fun update(@Path("id") id: String, @Body body: JsonObject): StudentDetailResponse
 
+    /** GET /students/:id/attendance: resumen y asistencia del mes (month = YYYY-MM, no futuro). */
+    @GET("students/{id}/attendance")
+    suspend fun attendance(@Path("id") id: String, @Query("month") month: String): AttendanceResponse
+
+    /** GET /students/:id/streak: racha contra los días asignados (ADR 0005). */
+    @GET("students/{id}/streak")
+    suspend fun streak(@Path("id") id: String): StreakResponse
+
     companion object {
         /** El máximo que acepta el backend. */
         const val PAGE_LIMIT = 100
