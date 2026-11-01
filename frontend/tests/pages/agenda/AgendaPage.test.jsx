@@ -77,6 +77,24 @@ describe('AgendaPage', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('tras un 409 el panel muestra el turno refrescado', async () => {
+    let cancelled = false;
+    stubFetch(async (url, init) => {
+      if (url.includes('/availability')) return jsonResponse(200, { data: AVAILABILITY });
+      if (init?.method === 'PATCH') {
+        cancelled = true;
+        return errorResponse(409, 'INVALID_STATUS_TRANSITION', 'No se puede pasar el turno a ese estado');
+      }
+      return jsonResponse(200, { data: [appt(cancelled ? { status: 'cancelled' } : {})] });
+    });
+    renderRoute('/pt/agenda');
+    const u = user();
+    await u.click(await screen.findByRole('button', { name: /Lucía QA/ }));
+    await u.click(await screen.findByRole('button', { name: 'Confirmar' }));
+    expect(await screen.findByText('No se puede pasar el turno a ese estado')).toBeVisible();
+    await vi.waitFor(() => expect(screen.queryByRole('button', { name: 'Confirmar' })).not.toBeInTheDocument());
+  });
+
   it('oculta los cancelados hasta prender el toggle', async () => {
     stubAgenda({ appointments: [appt({ status: 'cancelled' })] });
     renderRoute('/pt/agenda');

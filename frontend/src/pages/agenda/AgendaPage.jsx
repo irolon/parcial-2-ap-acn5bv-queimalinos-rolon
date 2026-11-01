@@ -28,7 +28,9 @@ export default function AgendaPage() {
   const isDesktop = useIsDesktop();
   const week = weekFrom(from);
   usePageHeader({ title: 'Agenda', subtitle: weekTitle(week.from, week.to) });
-  const appointments = useAppointments(week.from, week.to);
+  const appointments = useAppointments(week.from, week.to, { keepPrevious: true });
+  // Tras un 409 se refrescan los turnos: el panel muestra la versión nueva.
+  const current = appointments.data?.find((a) => a.id === selected?.id) ?? selected;
   const availability = useAvailability();
   const loading = appointments.isPending || availability.isPending;
   const failed = appointments.isError || availability.isError;
@@ -61,7 +63,7 @@ export default function AgendaPage() {
         />
       )}
       <Legend />
-      <AppointmentDialog appointment={selected} onClose={() => setSelected(null)} />
+      <AppointmentDialog appointment={current} onClose={() => setSelected(null)} />
       <AvailabilityDialog open={dialog === 'availability'} onClose={() => setDialog(null)} />
       <NewAppointmentDialog open={dialog === 'new'} onClose={() => setDialog(null)} />
     </div>

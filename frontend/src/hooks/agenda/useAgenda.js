@@ -15,13 +15,16 @@ export const freeKey = (from, to) => [...AVAILABILITY_KEY, 'free', from, to];
 
 const FREE_PREFIX = [...AVAILABILITY_KEY, 'free'];
 
-/** Turnos propios de `from` a `to` (`YYYY-MM-DD`). */
-export function useAppointments(from, to) {
+/**
+ * Turnos propios de `from` a `to` (`YYYY-MM-DD`). Con `keepPrevious`, al cambiar de rango
+ * deja los datos anteriores como placeholder (`isPlaceholderData`); sin él queda cargando.
+ */
+export function useAppointments(from, to, { keepPrevious = false } = {}) {
   return useQuery({
     queryKey: appointmentsKey(from, to),
     queryFn: () => listAppointments(from, to),
     enabled: Boolean(from && to),
-    placeholderData: keepPreviousData,
+    placeholderData: keepPrevious ? keepPreviousData : undefined,
   });
 }
 

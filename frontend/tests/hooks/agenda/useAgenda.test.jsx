@@ -53,6 +53,26 @@ describe('queries', () => {
     await waitFor(() => expect(free.result.current.data).toEqual([{ starts_at: 'x' }]));
   });
 
+  it('useAppointments al cambiar de rango queda cargando, sin los turnos del anterior', async () => {
+    stubFetch(async (url) => {
+      if (url.includes('2026-11-09')) return new Promise(() => {});
+      return jsonResponse(200, { data: [{ id: 'a-1' }] });
+    });
+    const appts = renderHook(({ range }) => useAppointments(...range), { wrapper, initialProps: { range: RANGE } });
+    await waitFor(() => expect(appts.result.current.data).toEqual([{ id: 'a-1' }]));
+    appts.rerender({ range: ['2026-11-09', '2026-11-15'] });
+    expect(appts.result.current.isLoading).toBe(true);
+    expect(appts.result.current.data).toBeUndefined();
+  });
+
+  it('useAppointments con keepPrevious marca los datos anteriores como placeholder', async () => {
+    stubFetch(async (url) => (url.includes('2026-11-09') ? new Promise(() => {}) : jsonResponse(200, { data: [{ id: 'a-1' }] })));
+    const appts = renderHook(({ range }) => useAppointments(...range, { keepPrevious: true }), { wrapper, initialProps: { range: RANGE } });
+    await waitFor(() => expect(appts.result.current.data).toEqual([{ id: 'a-1' }]));
+    appts.rerender({ range: ['2026-11-09', '2026-11-15'] });
+    expect(appts.result.current.isPlaceholderData).toBe(true);
+  });
+
   it('no consulta sin from/to', () => {
     const fetchMock = stubFetch(async () => jsonResponse(200, { data: [] }));
     renderHook(() => useAppointments(null, null), { wrapper });
