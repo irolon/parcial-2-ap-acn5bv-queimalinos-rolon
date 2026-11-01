@@ -6,8 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
-import com.fittrainer.ui.workout.bottomActionsY
-import com.fittrainer.ui.workout.cardFits
 
 private const val CARD = "card"
 private const val CTA = "cta"

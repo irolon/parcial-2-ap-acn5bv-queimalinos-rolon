@@ -31,6 +31,7 @@ import com.fittrainer.ui.workout.components.SetTabs
 import com.fittrainer.ui.workout.components.WorkoutTopBar
 import com.fittrainer.ui.workout.components.muscle.CardIfFitsLayout
 import com.fittrainer.ui.workout.components.muscle.MuscleCard
+import com.fittrainer.ui.workout.components.muscle.showsMuscleCard
 import java.time.Instant
 
 /** Todo lo que la pantalla le pide al VM o abre (diálogos, hojas). */

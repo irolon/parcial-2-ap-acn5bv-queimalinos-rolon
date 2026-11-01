@@ -1,4 +1,4 @@
-package com.fittrainer.ui.workout
+package com.fittrainer.ui.workout.components.muscle
 
 import com.fittrainer.data.workout.WorkoutExercise
 import org.junit.Assert.assertEquals
@@ -29,7 +29,7 @@ class WorkoutMusclesTest {
     @Test fun `las acciones van al fondo pero nunca encima del boton`() {
         assertEquals(300, bottomActionsY(height = 400, ctaBottom = 150, gap = 48, bottom = 100)) // sobra: al fondo
         assertEquals(198, bottomActionsY(height = 200, ctaBottom = 150, gap = 48, bottom = 100)) // no entra: debajo del botón
-        assertEquals(104, bottomActionsY(height = 80, ctaBottom = 56, gap = 48, bottom = 48)) // escenario de Codex: sin solape
+        assertEquals(104, bottomActionsY(height = 80, ctaBottom = 56, gap = 48, bottom = 48)) // pantalla más chica que botón + acciones: debajo del botón, sin taparlo
     }
 
     @Test fun `linea de equipo y series`() {

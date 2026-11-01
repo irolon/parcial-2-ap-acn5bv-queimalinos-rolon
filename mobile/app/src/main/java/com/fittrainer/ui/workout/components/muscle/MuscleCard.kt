@@ -23,7 +23,6 @@ import com.fittrainer.ui.components.bodymap.partsFor
 import com.fittrainer.ui.components.exercise.muscleLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
-import com.fittrainer.ui.workout.muscleCardLine
 
 /** El cuerpo de frente y de espalda con el músculo del ejercicio pintado, y qué se trabaja. */
 @Composable

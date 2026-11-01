@@ -1,4 +1,4 @@
-package com.fittrainer.ui.workout
+package com.fittrainer.ui.workout.components.muscle
 
 import com.fittrainer.data.workout.WorkoutExercise
 import com.fittrainer.ui.components.bodymap.paints
