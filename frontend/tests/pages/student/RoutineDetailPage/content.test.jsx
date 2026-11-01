@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { calls } from '../../../helpers/shared/fetchMock';
 import { mineRoutine, routineExercise } from '../../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 const NEVER = () => new Promise(() => {});
 const ROUTINE = mineRoutine({
@@ -40,7 +43,7 @@ describe('RoutineDetailPage', () => {
     expect(items[0]).toHaveTextContent('Press banca');
     expect(items[0]).toHaveTextContent('4 × 10 · Descanso 90 s · Tempo 3-1-1');
     expect(items[0]).toHaveTextContent('Pausa abajo');
-    expect(within(items[0]).getByRole('link', { name: 'Ver video' })).toHaveAttribute('href', 'https://youtu.be/abc');
+    expect(within(items[0]).getByRole('link', { name: 'Ver video de Press banca (se abre en otra pestaña)' })).toHaveAttribute('href', 'https://youtu.be/abc');
     expect(items[1]).toHaveTextContent('Remo con barra');
     expect(items[1]).toHaveTextContent('3 × 12 · Descanso 60 s');
     expect(within(items[1]).queryByRole('link')).not.toBeInTheDocument();

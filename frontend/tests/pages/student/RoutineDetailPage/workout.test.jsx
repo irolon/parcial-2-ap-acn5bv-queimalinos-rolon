@@ -6,6 +6,9 @@ import { WORKOUT_PATH } from '@/routes/routeTable';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
 import { finishedWorkout, freshWorkout } from '../../../helpers/workout/workout';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 beforeEach(() => signInStudent());
 afterEach(cleanUpStudent);
@@ -64,10 +67,14 @@ describe('RoutineDetailPage: con una sesión en curso', () => {
     expect(readWorkout('s-1').id).not.toBe('session-1');
   });
 
-  it('no ofrece Descartar si la sesión ya está terminada (sube o espera subir)', async () => {
+  it('con la sesión terminada y sin guardar dice "Terminar de guardar", entra a la sesión y no ofrece Descartar', async () => {
     writeWorkout('s-1', finishedWorkout(3));
-    open();
-    expect(await screen.findByRole('button', { name: 'Continuar la que tenés abierta' })).toBeInTheDocument();
+    const { pathname } = open();
+    const button = await screen.findByRole('button', { name: 'Terminar de guardar' });
+    expect(screen.queryByRole('button', { name: /Continuar la que tenés abierta|Empezar esta rutina/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Descartar' })).not.toBeInTheDocument();
+    await userEvent.setup().click(button);
+    expect(pathname()).toBe(WORKOUT_PATH);
+    expect(readWorkout('s-1')).toMatchObject({ id: 'session-1' });
   });
 });

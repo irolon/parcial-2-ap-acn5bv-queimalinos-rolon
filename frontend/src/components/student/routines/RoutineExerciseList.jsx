@@ -35,6 +35,7 @@ export default function RoutineExerciseList({ exercises }) {
                 href={videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`Ver video de ${rows[index].name} (se abre en otra pestaña)`}
                 className="shrink-0 font-display text-[13px] font-semibold text-accentText hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText"
               >
                 Ver video

@@ -160,8 +160,14 @@ describe('weekSummary', () => {
     expect(summary(['monday'], [MONDAY])).toBe('1 de 1 entrenamiento');
   });
 
-  it('un día entrenado que no tocaba suma igual', () => {
-    expect(summary(['monday', 'wednesday'], [MONDAY, TUESDAY, done('2026-10-28T13:00:00Z')])).toBe('3 de 2 entrenamientos');
+  it('nunca dice más entrenamientos que los que tocan: lo de más va aparte, como "+N extra"', () => {
+    const wednesday = done('2026-10-28T13:00:00Z');
+    expect(summary(['monday', 'wednesday'], [MONDAY, TUESDAY, wednesday])).toBe('2 de 2 entrenamientos · +1 extra');
+    expect(summary(['monday'], [MONDAY, TUESDAY, wednesday])).toBe('1 de 1 entrenamiento · +2 extra');
+  });
+
+  it('cuenta entrenamientos, no días puntuales: entrenar un martes en vez del lunes cumple igual', () => {
+    expect(summary(['monday', 'wednesday'], [TUESDAY, done('2026-10-28T13:00:00Z')])).toBe('2 de 2 entrenamientos');
   });
 
   it('sin días planificados no dice "0 de 0"', () => {

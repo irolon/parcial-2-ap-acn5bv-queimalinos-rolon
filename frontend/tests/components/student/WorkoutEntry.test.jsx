@@ -9,6 +9,9 @@ import { STUDENT, setSession } from '../../helpers/routes/renderRoute';
 import { mineRoutine, routineExercise, todayRoutine } from '../../helpers/routines/studentRoutines';
 import { renderInRouter } from '../../helpers/student/render';
 import { finishedWorkout, freshWorkout } from '../../helpers/workout/workout';
+import { allowSlowScreens } from '../../helpers/student/patience';
+
+allowSlowScreens();
 
 const START = 'Empezar entrenamiento';
 const CONTINUE = 'Continuar entrenamiento';
@@ -109,11 +112,32 @@ describe('WorkoutEntry: descartar', () => {
     expect(screen.getByRole('button', { name: START })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Descartar' })).not.toBeInTheDocument();
   });
+});
 
-  it('no ofrece Descartar si la sesión ya está terminada: sube o espera subir', () => {
-    writeWorkout('s-1', finishedWorkout(3));
+// Terminó de entrenar pero no se guardó (sube, falló o se cortó): la pantalla de la sesión la guarda, la reintenta o la descarta.
+describe('WorkoutEntry: con la sesión terminada y sin guardar', () => {
+  beforeEach(() => writeWorkout('s-1', finishedWorkout(3)));
+
+  it('dice "Terminar de guardar" en vez de Continuar y entra a la sesión sin tocarla', async () => {
+    const { pathname } = renderInRouter(entry());
+    expect(screen.queryByRole('button', { name: CONTINUE })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: START })).not.toBeInTheDocument();
+    expect(screen.getByText('Sin guardar: Push · día 3')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Terminar de guardar' }));
+    expect(pathname()).toBe(WORKOUT_PATH);
+    expect(readWorkout('s-1')).toMatchObject({ id: 'session-1', routineId: 'r-1' });
+  });
+
+  it('no ofrece Descartar desde acá: puede estar subiéndose', () => {
     renderInRouter(entry());
-    expect(screen.getByRole('button', { name: CONTINUE })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Descartar' })).not.toBeInTheDocument();
+  });
+
+  it('se puede entrar aunque la rutina que se mira no traiga ejercicios, o no haya rutina', () => {
+    const { unmount } = renderInRouter(entry(todayRoutine({ exercises: [] })));
+    expect(screen.getByRole('button', { name: 'Terminar de guardar' })).toBeEnabled();
+    unmount();
+    renderInRouter(entry(null));
+    expect(screen.getByRole('button', { name: 'Terminar de guardar' })).toBeEnabled();
   });
 });

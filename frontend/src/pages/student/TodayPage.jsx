@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
@@ -37,13 +39,26 @@ function RoutineSection({ today, routines, now }) {
   );
 }
 
+// La racha se corta al pasar un día sin entrenar: cuando `useToday` cambia de día, se pide de nuevo. `now` es el mismo
+// objeto mientras sea el mismo día, así que al montar la pantalla no hace nada. La clave es la de `useStudentStreakQuery`.
+function useRefreshStreakOnNewDay(now, studentId) {
+  const queryClient = useQueryClient();
+  const seen = useRef(now);
+  useEffect(() => {
+    if (seen.current === now) return;
+    seen.current = now;
+    queryClient.invalidateQueries({ queryKey: ['student-streak', studentId] });
+  }, [now, studentId, queryClient]);
+}
+
 /** Hoy: el saludo con la racha, la rutina del día (o por qué no hay) con su plan, y la semana. */
 export default function TodayPage() {
   const user = useAuthStore((state) => state.user);
   const now = useToday();
-  const today = useTodayRoutine();
+  const today = useTodayRoutine(now);
   const routines = useMyRoutines();
   const streak = useStudentStreakQuery(user?.id);
+  useRefreshStreakOnNewDay(now, user?.id);
 
   return (
     <div className="flex flex-col gap-5">

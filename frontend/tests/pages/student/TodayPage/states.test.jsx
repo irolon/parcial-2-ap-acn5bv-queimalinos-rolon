@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { sessionItem, sessionsPage } from '../../../helpers/sessions/sessions';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 const NEVER = () => new Promise(() => {});
 const MONDAY = '2026-10-26T13:00:00Z';

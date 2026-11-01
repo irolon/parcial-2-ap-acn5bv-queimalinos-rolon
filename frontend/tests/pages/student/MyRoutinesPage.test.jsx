@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { calls } from '../../helpers/shared/fetchMock';
 import { mineRoutine, routineExercise } from '../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../helpers/student/today';
+import { allowSlowScreens } from '../../helpers/student/patience';
+
+allowSlowScreens();
 
 const LEG_DAY = mineRoutine({
   routine_id: 'r-2',
@@ -29,6 +32,8 @@ describe('MyRoutinesPage', () => {
       expect.stringMatching(/Pierna.*Mar · Mié · Vie.*3 ejercicios/),
     ]);
     expect(list.map((link) => link.getAttribute('href'))).toEqual(['/alumno/rutinas/r-1', '/alumno/rutinas/r-2']);
+    // El h1 es el de la topbar: cada rutina es un h2.
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual(['Push · día 3', 'Pierna']);
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/routines/mine']);
   });
 

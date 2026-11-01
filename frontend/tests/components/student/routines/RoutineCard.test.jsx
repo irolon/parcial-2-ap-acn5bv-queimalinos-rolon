@@ -4,11 +4,15 @@ import userEvent from '@testing-library/user-event';
 import RoutineCard from '@/components/student/routines/RoutineCard';
 import { mineRoutine } from '../../../helpers/routines/studentRoutines';
 import { renderInRouter } from '../../../helpers/student/render';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 describe('RoutineCard', () => {
   it('muestra el nombre, los días abreviados y la cantidad de ejercicios, y lleva al detalle', async () => {
     const { pathname } = renderInRouter(<RoutineCard routine={mineRoutine({ days: ['friday', 'monday', 'wednesday'] })} />);
     const link = screen.getByRole('link', { name: /Push · día 3/ });
+    expect(screen.getByRole('heading', { level: 2, name: 'Push · día 3' })).toBeInTheDocument(); // debajo del h1 de la topbar
     expect(link).toHaveAttribute('href', '/alumno/rutinas/r-1');
     expect(link).toHaveTextContent('Lun · Mié · Vie');
     expect(link).toHaveTextContent('2 ejercicios');

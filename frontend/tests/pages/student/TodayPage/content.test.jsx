@@ -5,6 +5,9 @@ import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRout
 import { sessionItem, sessionsPage } from '../../../helpers/sessions/sessions';
 import { streakData } from '../../../helpers/student/home';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 // Hoy es domingo 1/11 (10:00 en Argentina). La semana va del lunes 26/10 a hoy.
 const finished = (startedAt) => sessionItem({ started_at: startedAt, finished_at: startedAt });
@@ -51,16 +54,16 @@ describe('TodayPage: la rutina del día', () => {
 describe('TodayPage: la semana', () => {
   it('marca los días de las rutinas, los entrenados y hoy', async () => {
     open({ today: todayRoutine(), mine: [mineRoutine()], sessions: sessionsPage([finished(MONDAY)]) });
-    expect(await screen.findByLabelText('Lunes: entrenaste')).toBeInTheDocument();
-    expect(screen.getByLabelText('Martes: descanso')).toBeInTheDocument();
-    expect(screen.getByLabelText('Jueves: día de entrenamiento')).toBeInTheDocument();
-    expect(screen.getByLabelText('Domingo: descanso, hoy')).toBeInTheDocument();
+    expect(await screen.findByText('Lunes: entrenaste')).toBeInTheDocument();
+    expect(screen.getByText('Martes: descanso')).toBeInTheDocument();
+    expect(screen.getByText('Jueves: día de entrenamiento')).toBeInTheDocument();
+    expect(screen.getByText('Domingo: descanso, hoy')).toBeInTheDocument();
   });
 
   it('junta los días de todas las rutinas activas', async () => {
     open({ mine: [mineRoutine({ days: ['monday'] }), mineRoutine({ routine_id: 'r-2', days: ['wednesday', 'friday'] })] });
     expect(await screen.findByText('0 de 3 entrenamientos')).toBeInTheDocument();
-    expect(screen.getByLabelText('Miércoles: día de entrenamiento')).toBeInTheDocument();
+    expect(screen.getByText('Miércoles: día de entrenamiento')).toBeInTheDocument();
   });
 
   it('solo cuentan las sesiones terminadas de esta semana', async () => {
@@ -74,7 +77,7 @@ describe('TodayPage: la semana', () => {
 
   it('una sesión del domingo a las 23:59 es del domingo, no del lunes (en UTC ya es lunes)', async () => {
     open({ mine: [mineRoutine()], sessions: sessionsPage([finished('2026-11-02T02:59:00Z')]) });
-    expect(await screen.findByLabelText('Domingo: entrenaste, hoy')).toBeInTheDocument();
+    expect(await screen.findByText('Domingo: entrenaste, hoy')).toBeInTheDocument();
   });
 });
 

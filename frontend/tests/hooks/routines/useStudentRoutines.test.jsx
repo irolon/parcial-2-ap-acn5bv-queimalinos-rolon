@@ -126,6 +126,36 @@ describe('useTodayRoutine: la pestaña queda abierta de un día para otro', () =
     expect(result.current.isSuccess).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  // Un solo reloj: Hoy le pasa el `now` de `useToday` y la clave sigue esa fecha, no la de la máquina.
+  it('la fecha de la clave es la del `now` que le pasan, no la del reloj', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-01T13:00:00Z')); // el reloj dice domingo
+    stubStudentRoutines({ today: todayRoutine() });
+    const monday = new Date('2026-11-02T13:00:00Z');
+    const { result, client } = renderQuery(() => useTodayRoutine(monday));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(client.getQueryData([...TODAY_ROUTINE_KEY, 's-1', '2026-11-02'])).toBeDefined();
+    expect(client.getQueryData([...TODAY_ROUTINE_KEY, 's-1', '2026-11-01'])).toBeUndefined();
+  });
+
+  it('con el `now` que le pasan, un cambio de día lo pide de nuevo y otra hora del mismo día no', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-05T13:00:00Z')); // un reloj que ya está más adelante que `now`
+    const fetchMock = stubStudentRoutines({ today: todayRoutine() });
+    let now = new Date('2026-11-01T13:00:00Z'); // domingo 10:00
+    const { result, rerender } = renderQuery(() => useTodayRoutine(now));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    now = new Date('2026-11-02T02:59:00Z'); // domingo 23:59
+    rerender();
+    await act(() => Promise.resolve());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    now = new Date('2026-11-02T03:00:00Z'); // lunes 00:00
+    rerender();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
 });
 
 describe('useMyRoutines', () => {

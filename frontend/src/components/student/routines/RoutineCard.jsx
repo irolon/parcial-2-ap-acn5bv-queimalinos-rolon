@@ -14,7 +14,7 @@ export default function RoutineCard({ routine }) {
         className="flex items-center gap-3 rounded-xl border border-ink2 bg-ink1 p-5 transition-colors hover:border-ink4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText"
       >
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-[17px] font-semibold text-bone0">{routine.name}</h3>
+          <h2 className="truncate font-display text-[17px] font-semibold text-bone0">{routine.name}</h2>
           {days && <p className="mt-1 font-mono text-[11px] text-ink6">{days}</p>}
           <p className="mt-1 font-body text-sm text-ink6">{exerciseCount(routine.exercises)}</p>
         </div>

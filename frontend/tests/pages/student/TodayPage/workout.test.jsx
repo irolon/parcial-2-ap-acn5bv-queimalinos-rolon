@@ -6,6 +6,9 @@ import { WORKOUT_PATH } from '@/routes/routeTable';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
 import { finishedWorkout, freshWorkout } from '../../../helpers/workout/workout';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 beforeEach(() => signInStudent());
 afterEach(cleanUpStudent);
@@ -51,12 +54,25 @@ describe('TodayPage: con una sesión en curso', () => {
     expect(await screen.findByRole('button', { name: 'Empezar entrenamiento' })).toBeEnabled();
   });
 
-  it('no ofrece Descartar si la sesión ya está terminada (sube o espera subir)', async () => {
+  // Terminó de entrenar y no se guardó (sube, falló o se cortó): la pantalla de la sesión la guarda, la reintenta o la descarta.
+  it('con la sesión terminada y sin guardar dice "Terminar de guardar", entra a la sesión y no ofrece Descartar', async () => {
     writeWorkout('s-1', finishedWorkout(3));
-    open({ today: todayRoutine(), mine: [mineRoutine()] });
+    const { pathname } = open({ today: todayRoutine(), mine: [mineRoutine()] });
     await screen.findByRole('heading', { level: 2, name: 'Push · día 3' });
-    expect(screen.getByRole('button', { name: 'Continuar entrenamiento' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Continuar entrenamiento|Empezar entrenamiento/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Descartar' })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Terminar de guardar' }));
+    expect(pathname()).toBe(WORKOUT_PATH);
+    expect(readWorkout('s-1')).not.toBeNull();
+  });
+
+  it('en un día de descanso la tarjeta dice que hay un entrenamiento sin guardar y deja guardarlo', async () => {
+    writeWorkout('s-1', finishedWorkout(3));
+    const { pathname } = open({ today: null, mine: [mineRoutine({ days: ['thursday'] })] });
+    expect(await screen.findByText('Tenés un entrenamiento sin guardar')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Descartar' })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Terminar de guardar' }));
+    await waitFor(() => expect(pathname()).toBe(WORKOUT_PATH));
   });
 
   it.each([

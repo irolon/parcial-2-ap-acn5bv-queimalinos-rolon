@@ -50,7 +50,8 @@ describe('RoutineExerciseList', () => {
       second({ routine_exercise_id: 're-3', exercise: { id: 'e-3', name: 'Dominadas', video_url: 'javascript:alert(1)' } }),
     ];
     render(<RoutineExerciseList exercises={exercises} />);
-    const link = screen.getByRole('link', { name: 'Ver video' });
+    const link = screen.getByRole('link', { name: 'Ver video de Press banca (se abre en otra pestaña)' });
+    expect(link).toHaveTextContent('Ver video');
     expect(link).toHaveAttribute('href', 'https://youtu.be/abc');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));

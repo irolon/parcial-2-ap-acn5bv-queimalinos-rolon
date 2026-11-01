@@ -11,7 +11,9 @@ import { WORKOUT_PATH } from '@/routes/routeTable';
  * Cómo se entra a la sesión de entrenamiento desde Hoy y desde una rutina.
  * - Sin sesión abierta, el botón la empieza con `routine` (`startLabel`) y entra.
  * - Con una abierta, de esta u otra rutina, el botón dice `continueLabel` y entra a esa sin pisarla; se la puede
- *   descartar, con confirmación. Una sesión terminada (sube o espera subir) no se descarta desde acá.
+ *   descartar, con confirmación.
+ * - Con una ya terminada pero sin guardar (sube, falló o se cortó), dice "Terminar de guardar" y entra igual: la
+ *   pantalla de la sesión la guarda, la reintenta o la descarta. Desde acá no se descarta, puede estar subiéndose.
  */
 export default function WorkoutEntry({ routine, startLabel, continueLabel, size = 'lg' }) {
   const studentId = useAuthStore((state) => state.user?.id);
@@ -20,7 +22,11 @@ export default function WorkoutEntry({ routine, startLabel, continueLabel, size 
   const [confirming, setConfirming] = useState(false);
   const [failed, setFailed] = useState(false);
   const hasExercises = (routine?.exercises ?? []).length > 0;
-  const canDiscard = Boolean(workout) && workout.finishedAt == null;
+  const unsaved = Boolean(workout) && workout.finishedAt != null;
+  const canDiscard = Boolean(workout) && !unsaved;
+  let label = startLabel;
+  if (unsaved) label = 'Terminar de guardar';
+  else if (workout) label = continueLabel;
 
   function enter() {
     setFailed(false);
@@ -41,7 +47,7 @@ export default function WorkoutEntry({ routine, startLabel, continueLabel, size 
       <div className="flex flex-wrap items-center gap-3">
         <Button size={size} className="whitespace-nowrap" disabled={!workout && !hasExercises} onClick={enter}>
           <Play size={18} aria-hidden="true" />
-          {workout ? continueLabel : startLabel}
+          {label}
         </Button>
         {canDiscard && (
           <Button variant="ghost" size={size} className="whitespace-nowrap" onClick={() => setConfirming(true)}>
@@ -49,7 +55,11 @@ export default function WorkoutEntry({ routine, startLabel, continueLabel, size 
           </Button>
         )}
       </div>
-      {workout && <p className="font-body text-sm text-ink6">En curso: {workout.routineName}</p>}
+      {workout && (
+        <p className="font-body text-sm text-ink6">
+          {unsaved ? 'Sin guardar' : 'En curso'}: {workout.routineName}
+        </p>
+      )}
       {!workout && !hasExercises && (
         <p className="font-body text-sm text-ink6">Esta rutina todavía no tiene ejercicios.</p>
       )}
