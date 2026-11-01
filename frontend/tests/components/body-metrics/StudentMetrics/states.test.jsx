@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StudentMetrics from '@/components/body-metrics/StudentMetrics';
 import { calls } from '../../../helpers/shared/fetchMock';
@@ -56,5 +56,17 @@ describe('StudentMetrics: carga, error y vacío', () => {
     show({ metrics: [] });
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Registrar medición' }));
     expect(await screen.findByRole('dialog', { name: 'Registrar medición' })).toBeVisible();
+  });
+
+  it('un refetch que falla no borra lo ya cargado: se siguen viendo las medidas y no aparece el aviso', async () => {
+    let attempts = 0;
+    const fetchMock = stubSelf({ metrics: () => (attempts++ === 0 ? ONE() : 500) });
+    const { queryClient } = renderOwn(<StudentMetrics studentId="s-1" />);
+    expect(await screen.findByRole('table', { name: 'Historial de medidas' })).toBeVisible();
+    await queryClient.invalidateQueries();
+    await waitFor(() => expect(metricsGets(fetchMock)).toHaveLength(2));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('table', { name: 'Historial de medidas' })).toBeVisible();
   });
 });

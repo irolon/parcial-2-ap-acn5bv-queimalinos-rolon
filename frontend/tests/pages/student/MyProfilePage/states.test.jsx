@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import { calls } from '../../../helpers/shared/fetchMock';
@@ -86,5 +86,24 @@ describe('MyProfilePage: cada bloque con su carga y su error', () => {
     await retry(PROFILE_ERROR);
     expect(await screen.findByRole('heading', { level: 2, name: 'Tomás Ruiz' })).toBeVisible();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('un refetch que falla no borra lo ya cargado: la ficha y las medidas siguen y no aparece ningún aviso', async () => {
+    let profileAttempts = 0;
+    let metricsAttempts = 0;
+    const fetchMock = stubSelf({
+      profile: () => (profileAttempts++ === 0 ? selfDetail() : 500),
+      metrics: () => (metricsAttempts++ === 0 ? ONE() : 500),
+    });
+    const { queryClient } = renderOwn(<MyProfilePage />);
+    expect(await screen.findByRole('heading', { level: 2, name: 'Tomás Ruiz' })).toBeVisible();
+    expect(await screen.findByText('Medidas actuales')).toBeVisible();
+    await queryClient.invalidateQueries();
+    await waitFor(() => expect(gets(fetchMock, '/students/s-1')).toHaveLength(2));
+    await waitFor(() => expect(gets(fetchMock, '/students/s-1/metrics')).toHaveLength(2));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'Tomás Ruiz' })).toBeVisible();
+    expect(screen.getByText('Medidas actuales')).toBeVisible();
   });
 });

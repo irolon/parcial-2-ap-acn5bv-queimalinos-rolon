@@ -23,7 +23,7 @@ function Body({ query, onRegister, onDelete }) {
       </Card>
     );
   }
-  if (query.isError) {
+  if (query.isError && !query.data) {
     return (
       <Card>
         <ErrorState message="No pudimos cargar tus medidas." onRetry={() => query.refetch()} />

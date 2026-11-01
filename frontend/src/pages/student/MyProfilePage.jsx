@@ -16,7 +16,7 @@ function ProfileBlock({ query }) {
       </Card>
     );
   }
-  if (query.isError) {
+  if (query.isError && !query.data) {
     return (
       <Card>
         <ErrorState message="No pudimos cargar tu perfil." onRetry={() => query.refetch()} />
