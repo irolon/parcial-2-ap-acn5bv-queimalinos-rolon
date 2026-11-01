@@ -1,9 +1,14 @@
+---
+tags: [spec]
+tarjeta: 9b
+---
 # Mis rutinas del alumno (mobile) — diseño
 
-- **Tarjeta:** https://trello.com/c/MxVrMpdq (tablero personal, S5, ~7 h, no depende de Pablo)
-- **Rama:** `feature/android-mis-rutinas`, sale de `feature/android-historial` (PR #40). Worktree
-  `C:\Users\igna_\Desktop\fittrainer-mis-rutinas`. La PR se abre cuando la #40 entre a develop.
-- **Fecha:** 31/10/2026
+- **Tarjeta:** https://trello.com/c/MxVrMpdq (tablero personal, S5, ~7 h, no depende de Pablo). En el tablero
+  de equipo es la continuación de la 9 (Biblioteca de ejercicios), sin tarjeta propia: en el índice figura
+  como **9b**.
+- **Rama:** `feature/android-mis-rutinas`, base `develop` (rebasada después del merge de la #40). PR #46.
+- **Fecha:** 31/10/2026 · actualizado el 01/11 con las correcciones de la revisión de la PR #46.
 
 ## 1. Objetivo
 
@@ -79,13 +84,29 @@ la que elige Hoy (la más nueva), para que las dos pestañas digan lo mismo.
   El nombre de la otra rutina es el `routineName` de la sesión abierta (`Workout`), copiado al
   empezarla: se ve aunque esa rutina ya no esté activa.
 - "Empezar" llama a `WorkoutRepository.start` y **recién después** navega a la sesión. Si Room falla,
-  aviso de error y no navega (como Hoy).
+  aviso de error y no navega (como Hoy). Es la misma entrada que usa Hoy: `WorkoutEntryViewModel.start`,
+  no un segundo `try/catch` en el ViewModel del detalle.
 - **Rutina que ya no está** (no existe en el caché, o desapareció mientras se miraba porque el
   entrenador la desactivó): "Esta rutina ya no está disponible" y botón para volver.
 
 ### 3.3 Biblioteca — `student/library`
 
 La `LibraryScreen` actual, con flecha atrás (parámetro `onBack` opcional; sin él se ve como hoy).
+
+### 3.4 Hoy con una sesión abierta de otra rutina
+
+Como ahora se puede entrenar una rutina que no es la del día, Hoy puede tener abierta una sesión de otra
+rutina (agregado en la revisión de la PR #46). El hero de Hoy usa el mismo `startAction` que el detalle:
+
+| Caso | Hero | Arriba del hero |
+|---|---|---|
+| Sin sesión abierta | **"Empezar"** | — |
+| Sesión abierta de la rutina de hoy | **"Continuar sesión"** (vuelve a la sesión, no crea otra) | — |
+| Sesión abierta de otra rutina (o con `routineId` nulo) | Botón deshabilitado + "Tenés una sesión abierta de *<rutina>*, terminala primero" | Tarjeta **"Sesión en curso de *<rutina>*"** con "Continuar sesión" |
+| Rutina de hoy sin ejercicios | Botón deshabilitado + "Esta rutina no tiene ejercicios" | — |
+
+En descanso, sin rutina, sin datos o cargando, la tarjeta "Sesión en curso de *<rutina>*" aparece siempre
+que haya una sesión abierta (como antes).
 
 ## 4. Arquitectura
 
@@ -106,9 +127,12 @@ ui/routines/
   RoutinesScreen.kt, RoutinesViewModel.kt, RoutinesUiState.kt
   components/   (tarjeta de rutina, entrada a la biblioteca, estados)
   detail/
-    RoutineDetailScreen.kt, RoutineDetailViewModel.kt, RoutineDetailUiState.kt, StartAction.kt
+    RoutineDetailScreen.kt, RoutineDetailViewModel.kt, RoutineDetailUiState.kt, DetailTexts.kt
     components/ (fila de ejercicio, barra de acción)
 ```
+
+`StartAction.kt` vive en `ui/today/` porque lo usan Hoy y el detalle (el detalle ya importa de `ui.today`;
+al revés sería una dependencia circular entre paquetes).
 
 - Los textos reutilizan `ui/today/RoutineTexts.kt` (`dayInitial`, `setsReps`, `toDetail`) por import;
   no se mueve el archivo, para no chocar con la rama de la 13.
@@ -118,7 +142,7 @@ ui/routines/
 
 ### 4.3 `startAction`
 
-Función pura en `ui/routines/detail/StartAction.kt`:
+Función pura en `ui/today/StartAction.kt`, compartida por el hero de Hoy (§3.4) y la barra del detalle (§3.2):
 
 ```kotlin
 sealed interface StartAction {
@@ -128,6 +152,7 @@ sealed interface StartAction {
     data object NoExercises : StartAction
 }
 fun startAction(routine: Routine, active: Workout?): StartAction
+fun startActionHint(action: StartAction): String?   // texto de Blocked / NoExercises, null en el resto
 ```
 
 Orden: si hay sesión con `routineId == routine.id` → `Continue` (aunque hoy tenga 0 ejercicios); si hay
@@ -152,11 +177,16 @@ ejercicios → `NoExercises`; si no → `Start`.
 
 Unitarios (JUnit + fakes, como los de Hoy), espejando el árbol de `ui/routines/`:
 
-- `startAction`: los cuatro casos, más sesión abierta con `routineId` nulo → `Blocked`.
+- `startAction`: los cuatro casos, más sesión abierta con `routineId` nulo → `Blocked`; `startActionHint`.
+- `showsActiveWorkoutCard`: Training con sesión de otra rutina → sí; de la misma → no; `routineId` nulo → sí;
+  fuera de Training con sesión → sí; sin sesión → no.
+- Compose (`androidTest/.../ui/today/TodayBodyTest.kt`): Hoy toca Piernas con una sesión de Pecho abierta →
+  "Empezar" deshabilitado, el aviso de Pecho, "Sesión en curso de Pecho" y "Continuar sesión" vuelve a la
+  sesión sin crear otra.
 - Marca "Hoy" y chips de días (orden lunes→domingo, rutina sin días).
 - `RoutinesViewModel`: nunca sincronizó, sin rutinas, con rutinas, offline con caché.
-- `RoutineDetailViewModel`: rutina inexistente, rutina que desaparece, bloqueado por otra sesión,
-  "Empezar" navega solo si Room no falla.
+- `RoutineDetailViewModel`: rutina inexistente, rutina que desaparece, continuar la de esta rutina, bloqueado
+  por otra sesión. "Empezar" navega solo si Room no falla: lo cubre `WorkoutEntryViewModelTest`.
 - Clase de refresco extraída: no dispara dos pedidos a la vez; los tests de Hoy siguen verdes.
 - Salida de la sesión: con pila vacía cae a Hoy (test de la función de navegación, o prueba manual
   documentada si no es testeable sin Compose).
@@ -171,6 +201,12 @@ Unitarios (JUnit + fakes, como los de Hoy), espejando el árbol de `ui/routines/
   3. "Empezar" → sesión activa → salir → vuelve al detalle.
   4. Con esa sesión abierta, entrar a la otra rutina → botón bloqueado e "Ir a la sesión" funciona.
   5. Modo avión: la lista y el detalle se ven desde Room; la biblioteca abre.
+  6. Con la sesión de la rutina que no toca hoy abierta, ir a Hoy → hero deshabilitado con el aviso y la
+     tarjeta "Sesión en curso de …" arriba, que vuelve a esa sesión.
+- **Prueba manual de la salida de la sesión** (§4.4, no testeable sin Compose y navegación reales): entrar
+  desde el detalle, terminar la sesión y en el resumen tocar **dos veces seguidas "Saltar"** → se vuelve una
+  sola vez, al detalle de la rutina (el segundo toque no saca también el detalle). Hecha en el emulador
+  con `alumna.card8` (ver la PR #46).
 - Prueba en celular físico: queda pendiente, como en las tarjetas anteriores.
 
 ## 7. Riesgos
