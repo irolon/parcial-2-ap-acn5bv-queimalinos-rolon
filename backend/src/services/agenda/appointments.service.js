@@ -32,7 +32,10 @@ export async function changeStatus(user, id, { status }) {
   if (!row || !ownsAppointment(user, row)) throw Errors.forbidden();
   if (new Date(row.scheduled_at).getTime() <= Date.now()) throw Errors.appointmentPast();
   if (!canTransition(user.role, row.status, status)) throw Errors.invalidStatusTransition();
-  const appointment = toAppointment(await repo.updateStatus(id, status));
+  const updated = await repo.updateStatus(id, row.status, status);
+  // Alguien cambió el estado entre la lectura y la escritura: no se pisa ni se notifica.
+  if (!updated) throw Errors.invalidStatusTransition();
+  const appointment = toAppointment(updated);
   await triggers.onAppointmentChanged(EVENTS[user.role][status], appointment);
   return appointment;
 }

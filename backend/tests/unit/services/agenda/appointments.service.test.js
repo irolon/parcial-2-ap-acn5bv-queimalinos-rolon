@@ -13,7 +13,7 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
   mockNotify.notify.mockResolvedValue({ id: 'n-1' });
   mockAppointments.findAppointmentById.mockResolvedValue(apptRow());
-  mockAppointments.updateStatus.mockImplementation(async (_id, status) => apptRow({ status }));
+  mockAppointments.updateStatus.mockImplementation(async (_id, _from, status) => apptRow({ status }));
 });
 afterEach(() => jest.useRealTimers());
 
@@ -42,7 +42,7 @@ describe('changeStatus · notificaciones', () => {
   it('el PT confirma: avisa al alumno con push', async () => {
     const result = await service.changeStatus(TRAINER, APPT_ID, { status: 'confirmed' });
     expect(result.status).toBe('confirmed');
-    expect(mockAppointments.updateStatus).toHaveBeenCalledWith(APPT_ID, 'confirmed');
+    expect(mockAppointments.updateStatus).toHaveBeenCalledWith(APPT_ID, 'pending', 'confirmed');
     expect(mockNotify.notify).toHaveBeenCalledWith({
       userId: STUDENT.id, userRole: 'student', type: 'appointment',
       title: 'Tu turno del vie 06/11 a las 18:00 quedó confirmado', body: null,
@@ -114,6 +114,16 @@ describe('changeStatus · transiciones (Review Focus 3)', () => {
       code: 'APPOINTMENT_PAST',
     });
     expect(mockAppointments.updateStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe('changeStatus · carrera', () => {
+  it('si el estado cambió en el medio (updateStatus devuelve null): 409 y no se notifica', async () => {
+    mockAppointments.updateStatus.mockResolvedValue(null);
+    await expect(service.changeStatus(TRAINER, APPT_ID, { status: 'confirmed' })).rejects.toMatchObject({
+      statusCode: 409, code: 'INVALID_STATUS_TRANSITION',
+    });
+    expect(mockNotify.notify).not.toHaveBeenCalled();
   });
 });
 

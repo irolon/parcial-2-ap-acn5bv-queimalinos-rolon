@@ -63,6 +63,7 @@ function handleAppointments(calls) {
   const update = calls.find(([m]) => m === 'update');
   const rows = selectAppointments(calls);
   if (update) {
+    if (!rows[0]) return { data: null, error: null };
     Object.assign(rows[0], update[1][0]);
     return { data: embed(rows[0]), error: null };
   }

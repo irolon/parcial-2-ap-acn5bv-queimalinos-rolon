@@ -48,9 +48,18 @@ export async function findAppointmentById(id) {
   );
 }
 
-/** Cambia el estado y devuelve el turno actualizado. */
-export async function updateStatus(id, status) {
+/**
+ * Cambia el estado solo si el turno sigue en `fromStatus` (condición optimista).
+ * Devuelve el turno actualizado, o null si nadie lo actualizó porque el estado cambió en el medio.
+ */
+export async function updateStatus(id, fromStatus, toStatus) {
   return unwrap(
-    await supabase.from(APPOINTMENTS_TABLE).update({ status }).eq('id', id).select(APPOINTMENT_COLUMNS).single()
+    await supabase
+      .from(APPOINTMENTS_TABLE)
+      .update({ status: toStatus })
+      .eq('id', id)
+      .eq('status', fromStatus)
+      .select(APPOINTMENT_COLUMNS)
+      .maybeSingle()
   );
 }

@@ -52,11 +52,17 @@ describe('appointments.repository', () => {
     expect(q.in).toHaveBeenCalledWith('status', ['pending', 'confirmed']);
   });
 
-  it('updateStatus actualiza el estado por id', async () => {
+  it('updateStatus filtra por id y por el estado previo y devuelve la fila', async () => {
     result.current = { data: { id: 'a-1', status: 'cancelled' }, error: null };
-    await expect(repo.updateStatus('a-1', 'cancelled')).resolves.toEqual({ id: 'a-1', status: 'cancelled' });
+    await expect(repo.updateStatus('a-1', 'pending', 'cancelled')).resolves.toEqual({ id: 'a-1', status: 'cancelled' });
     expect(q.update).toHaveBeenCalledWith({ status: 'cancelled' });
     expect(q.eq).toHaveBeenCalledWith('id', 'a-1');
+    expect(q.eq).toHaveBeenCalledWith('status', 'pending');
+  });
+
+  it('updateStatus devuelve null si el estado ya no era el esperado', async () => {
+    result.current = { data: null, error: null };
+    await expect(repo.updateStatus('a-1', 'pending', 'confirmed')).resolves.toBeNull();
   });
 
   it('findAppointmentById devuelve null si no existe', async () => {
