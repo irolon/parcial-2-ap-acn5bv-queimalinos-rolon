@@ -3,6 +3,9 @@ package com.fittrainer.ui.routines.trainer.editor
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.exercises.trainer.TrainerExercisesRepository
 import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
+import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
+import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesApi
+import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesDao
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.exercises.FakeTrainerExercisesApi
 import com.fittrainer.testing.fakes.exercises.FakeTrainerExercisesDao
@@ -40,8 +43,9 @@ class RoutineEditorOfflineTest {
     private val connectivity = FakeConnectivityObserver()
     private val repo = TrainerRoutinesRepository(api, FakeTrainerRoutinesDao(), Clock.systemUTC())
     private val catalog = TrainerExercisesRepository(FakeTrainerExercisesApi(), FakeTrainerExercisesDao())
+    private val templates = TrainerTemplatesRepository(FakeTrainerTemplatesApi(), FakeTrainerTemplatesDao(), repo, Clock.systemUTC())
     private val vm by lazy {
-        RoutineEditorViewModel(repo, catalog, FakeTrainerSession(), connectivity, SavedStateHandle(mapOf(ROUTINE_ID_ARG to "r1")))
+        RoutineEditorViewModel(repo, catalog, templates, FakeTrainerSession(), connectivity, SavedStateHandle(mapOf(ROUTINE_ID_ARG to "r1")))
     }
 
     private fun TestScope.started() {

@@ -15,14 +15,23 @@ import androidx.compose.ui.Modifier
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
-/** Pestaña Perfil (alumno) / Más (entrenador): por ahora, estado del servidor y cerrar sesión. */
+/** Un acceso del menú (Plantillas, Biblioteca, …). */
+data class MenuLink(val label: String, val onClick: () -> Unit)
+
+/** Pestaña Perfil (alumno) / Más (entrenador): los accesos del rol, el estado del servidor y cerrar sesión. */
 @Composable
-fun AccountMenuScreen(title: String, onServerStatus: () -> Unit, onSignOut: () -> Unit) {
+fun AccountMenuScreen(title: String, onServerStatus: () -> Unit, onSignOut: () -> Unit, links: List<MenuLink> = emptyList()) {
     Column(
         modifier = Modifier.fillMaxSize().padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         Text(title, style = MaterialTheme.typography.displayMedium)
+        links.forEach { link ->
+            OutlinedButton(
+                onClick = link.onClick,
+                modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+            ) { Text(link.label) }
+        }
         OutlinedButton(
             onClick = onServerStatus,
             modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),

@@ -31,6 +31,9 @@ import com.fittrainer.data.db.students.progress.TrainerAttendanceEntity
 import com.fittrainer.data.db.students.sessions.TrainerSessionEntity
 import com.fittrainer.data.db.students.sessions.TrainerSessionsDao
 import com.fittrainer.data.db.students.sessions.TrainerSessionsSyncEntity
+import com.fittrainer.data.db.templates.trainer.TrainerTemplateEntity
+import com.fittrainer.data.db.templates.trainer.TrainerTemplatesDao
+import com.fittrainer.data.db.templates.trainer.TrainerTemplatesSyncEntity
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.WorkoutExerciseEntity
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
@@ -69,8 +72,10 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         TrainerRoutineExerciseEntity::class,
         TrainerRoutinesSyncEntity::class,
         TrainerExerciseEntity::class,
+        TrainerTemplateEntity::class,
+        TrainerTemplatesSyncEntity::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -92,6 +97,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 15, to = 16),
         AutoMigration(from = 16, to = 17),
         AutoMigration(from = 17, to = 18),
+        AutoMigration(from = 18, to = 19),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -108,4 +114,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun trainerOverviewDao(): TrainerOverviewDao
     abstract fun trainerRoutinesDao(): TrainerRoutinesDao
     abstract fun trainerExercisesDao(): TrainerExercisesDao
+    abstract fun trainerTemplatesDao(): TrainerTemplatesDao
 }
