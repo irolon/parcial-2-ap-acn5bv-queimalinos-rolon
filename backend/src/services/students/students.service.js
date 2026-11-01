@@ -32,20 +32,23 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
 
   const ids = rows.map((s) => s.id);
   const today = localDate();
-  const [lastSessions, routineDays, finishedDates] = await Promise.all([
+  const [lastSessions, schedules, finishedDates] = await Promise.all([
     studentsRepo.findLastSessionDates(ids),
-    studentsRepo.findActiveRoutineDays(ids),
+    studentsRepo.findActiveRoutineSchedules(ids),
+    // AR = UTC-3 fijo (sin horario de verano), la misma zona que TIMEZONE de shared/utils/dates.js.
     studentsRepo.findFinishedSessionDates(ids, `${adherenceWindowStart(today)}T00:00:00-03:00`),
   ]);
   const lastByStudent = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
 
   const data = rows.map((s) => {
-    const assignedDays = routineDays.get(s.id) ?? [];
+    const { days: assignedDays, daySince } = schedules.get(s.id) ?? { days: [], daySince: new Map() };
+    // Los días anteriores al alta o a la rutina no cuentan como faltados.
+    const since = s.created_at ? localDate(s.created_at) : null;
     return {
       ...s,
       last_session_at: lastByStudent.get(s.id) ?? null,
       days_per_week: daysPerWeek(assignedDays),
-      adherence_7d: adherence7d({ assignedDays, finishedDates: finishedDates.get(s.id), today }),
+      adherence_7d: adherence7d({ assignedDays, finishedDates: finishedDates.get(s.id), today, since, daySince }),
     };
   });
   return { data, meta };
