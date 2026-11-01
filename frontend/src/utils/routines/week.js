@@ -1,4 +1,5 @@
 import { argentinaDate } from '@/utils/dates';
+import { plural } from '@/utils/shared/plural';
 import { DAY_OPTIONS } from '@/utils/students/routineDays';
 
 // 'monday' → 1 … 'sunday' → 7 (los días de una rutina vienen en inglés).
@@ -28,21 +29,22 @@ export function weekStrip({ routineDays = [], sessions = [], now = new Date() } 
   }));
 }
 
-const workouts = (n) => `${n} ${n === 1 ? 'entrenamiento' : 'entrenamientos'}`;
+const workouts = (n) => plural(n, 'entrenamiento', 'entrenamientos');
 
 /**
- * Lo que dice "Esta semana" debajo de los días: "2 de 4 entrenamientos" (los entrenados contra los que tocan). Cuenta
- * entrenamientos, no días puntuales, y nunca pasa de los que tocan: lo de más va aparte ("2 de 2 entrenamientos · +1
+ * Lo que dice "Esta semana" debajo de los días: "2 de 3 entrenamientos" (los días de la rutina entrenados contra los
+ * que tocan). Entrenar un día que no es de la rutina no cuenta en el "N de M": va aparte ("2 de 3 entrenamientos · +1
  * extra"). Sin días planificados no hay "de M": "1 entrenamiento".
  */
 export function weekSummary(strip = []) {
-  const trained = strip.filter((day) => day.trained).length;
+  const trained = strip.filter((day) => day.trained);
   const planned = strip.filter((day) => day.planned).length;
   if (planned > 0) {
-    const extra = Math.max(trained - planned, 0);
-    return `${trained - extra} de ${workouts(planned)}${extra ? ` · +${extra} extra` : ''}`;
+    const done = trained.filter((day) => day.planned).length;
+    const extra = trained.length - done;
+    return `${done} de ${workouts(planned)}${extra ? ` · +${extra} extra` : ''}`;
   }
-  return trained > 0 ? workouts(trained) : 'Sin entrenamientos planificados';
+  return trained.length > 0 ? workouts(trained.length) : 'Sin entrenamientos planificados';
 }
 
 /**

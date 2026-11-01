@@ -36,7 +36,7 @@ describe('WeekCard', () => {
   it('un día entrenado que no tocaba figura como entrenado', () => {
     render(<WeekCard strip={strip(['monday'], [done('2026-10-27T13:00:00Z')])} />);
     expect(screen.getByText('Martes: entrenaste')).toBeInTheDocument();
-    expect(screen.getByText('1 de 1 entrenamiento')).toBeInTheDocument();
+    expect(screen.getByText('0 de 1 entrenamiento · +1 extra')).toBeInTheDocument();
   });
 
   it('marca hoy en un solo día', () => {

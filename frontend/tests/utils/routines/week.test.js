@@ -160,14 +160,25 @@ describe('weekSummary', () => {
     expect(summary(['monday'], [MONDAY])).toBe('1 de 1 entrenamiento');
   });
 
-  it('nunca dice más entrenamientos que los que tocan: lo de más va aparte, como "+N extra"', () => {
+  it('los días entrenados que no son de la rutina no cuentan en el "N de M": van aparte, como "+K extra"', () => {
     const wednesday = done('2026-10-28T13:00:00Z');
     expect(summary(['monday', 'wednesday'], [MONDAY, TUESDAY, wednesday])).toBe('2 de 2 entrenamientos · +1 extra');
     expect(summary(['monday'], [MONDAY, TUESDAY, wednesday])).toBe('1 de 1 entrenamiento · +2 extra');
   });
 
-  it('cuenta entrenamientos, no días puntuales: entrenar un martes en vez del lunes cumple igual', () => {
-    expect(summary(['monday', 'wednesday'], [TUESDAY, done('2026-10-28T13:00:00Z')])).toBe('2 de 2 entrenamientos');
+  it('plan lunes-miércoles-viernes: entrenó lunes y sábado → "1 de 3 entrenamientos · +1 extra"', () => {
+    const saturday = done('2026-10-31T13:00:00Z');
+    expect(summary(['monday', 'wednesday', 'friday'], [MONDAY, saturday])).toBe('1 de 3 entrenamientos · +1 extra');
+  });
+
+  it('entrenar un martes en vez del lunes no cumple el lunes: es un extra', () => {
+    expect(summary(['monday', 'wednesday'], [TUESDAY, done('2026-10-28T13:00:00Z')])).toBe(
+      '1 de 2 entrenamientos · +1 extra',
+    );
+  });
+
+  it('un día de la rutina entrenado dos veces cuenta una sola vez', () => {
+    expect(summary(['monday', 'wednesday'], [MONDAY, done('2026-10-26T20:00:00Z')])).toBe('1 de 2 entrenamientos');
   });
 
   it('sin días planificados no dice "0 de 0"', () => {
