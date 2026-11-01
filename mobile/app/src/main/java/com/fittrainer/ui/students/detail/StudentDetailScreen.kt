@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fittrainer.data.students.detail.StudentDetail
 import com.fittrainer.ui.components.InfoCard
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
@@ -50,7 +51,7 @@ fun StudentDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onGone: () -> Unit,
-    extraSections: LazyListScope.(Boolean) -> Unit = {},
+    extraSections: LazyListScope.(offline: Boolean, detail: StudentDetail) -> Unit = { _, _ -> },
     viewModel: StudentDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,7 +94,7 @@ fun StudentDetailScreen(
                 item { DetailHeader(detail.name, state.header, state.status) }
                 item { RoutineCard(detail) }
                 item { LatestMetricsCard(detail) }
-                extraSections(state.offline)
+                extraSections(state.offline, detail)
                 item { DataCard(detail) }
                 item { Actions(state, onEdit, viewModel::onDisable, viewModel::onReactivate) }
             }

@@ -22,8 +22,8 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onEdit = { navController.navigate(trainerStudentEditRoute(id)) { launchSingleTop = true } },
             onGone = { navController.popBackStack() },
-            extraSections = {
-                item { StudentProgressSection() }
+            extraSections = { _, detail ->
+                item { StudentProgressSection(detail.createdAt) }
                 item {
                     LatestSessionsSection(
                         onOpenAll = { navController.navigate(trainerStudentSessionsRoute(id)) { launchSingleTop = true } },

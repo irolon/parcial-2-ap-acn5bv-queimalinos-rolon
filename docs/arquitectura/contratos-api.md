@@ -245,7 +245,7 @@ Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la 
 
 - `days` trae todos los días del mes, en orden. `status`: `trained` (al menos una sesión terminada ese día, asignado o no), `missed` (día asignado, anterior a hoy, sin entrenar), `rest` (no asignado y sin entrenar) o `upcoming` (hoy sin entrenar todavía, o un día futuro).
 - `sessions`: sesiones terminadas del mes. `assigned_days`: días asignados del mes hasta hoy inclusive. `prs`: sesiones del mes con al menos un récord (función SQL `session_records`).
-- Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos.
+- Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos. Los días anteriores al alta del alumno o a la creación de la rutina que asigna ese día de la semana no cuentan como asignados (son `rest`), igual que en la adherencia de `GET /students`.
 
 ### PATCH /students/:id
 

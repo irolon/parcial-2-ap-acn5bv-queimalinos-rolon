@@ -1,15 +1,15 @@
 import { jest } from '@jest/globals';
 
-const mockStudentsRepo = { findStudentById: jest.fn(), findFinishedSessionsBetween: jest.fn() };
-const mockEvaluateData = { findAssignedDays: jest.fn() };
+const mockStudentsRepo = { findStudentById: jest.fn(), findFinishedSessionsBetween: jest.fn(), findActiveRoutineSchedules: jest.fn() };
 const mockHistoryRepo = { fetchSessionRecords: jest.fn() };
 jest.unstable_mockModule('../../../../src/repositories/students/students.repository.js', () => mockStudentsRepo);
-jest.unstable_mockModule('../../../../src/repositories/gamification/evaluate-data.repository.js', () => mockEvaluateData);
 jest.unstable_mockModule('../../../../src/repositories/sessions/session-history.repository.js', () => mockHistoryRepo);
 
 const { attendance } = await import('../../../../src/services/students/attendance.service.js');
+const { scheduleOf } = await import('../../../../src/models/students/adherence.js');
 
-const STUDENT = { id: 'student-1', trainer_id: 'trainer-1', name: 'Ana', active: true };
+const STUDENT = { id: 'student-1', trainer_id: 'trainer-1', name: 'Ana', active: true, created_at: '2026-01-10T12:00:00Z' };
+const MWF = (since) => new Map([['student-1', scheduleOf([{ days: ['monday', 'wednesday', 'friday'], since }])]]);
 const TRAINER = { id: 'trainer-1', role: 'trainer' };
 
 beforeEach(() => {
@@ -17,7 +17,7 @@ beforeEach(() => {
   // Hoy: miércoles 2026-11-04 a las 13 en Argentina.
   jest.useFakeTimers({ now: new Date('2026-11-04T16:00:00Z'), doNotFake: ['nextTick', 'setImmediate'] });
   mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT);
-  mockEvaluateData.findAssignedDays.mockResolvedValue(['monday', 'wednesday', 'friday']);
+  mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(MWF('2026-01-10'));
   mockStudentsRepo.findFinishedSessionsBetween.mockResolvedValue([]);
   mockHistoryRepo.fetchSessionRecords.mockResolvedValue([]);
 });
@@ -43,6 +43,24 @@ describe('attendance.service', () => {
     expect(r).toMatchObject({ month: '2026-11', sessions: 1, assigned_days: 2, prs: 1 });
     expect(r.days.find((d) => d.date === '2026-11-02').status).toBe('trained');
     expect(r.days.find((d) => d.date === '2026-11-04').status).toBe('upcoming');
+  });
+
+  it('los días anteriores al alta son rest y no suman a assigned_days (alta a mitad de mes)', async () => {
+    // Alta el 25/10 con L/X/V: en octubre solo cuentan el 26 (lun), 28 (mié) y 30 (vie).
+    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, created_at: '2026-10-25T15:00:00Z' });
+    mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(MWF('2026-10-25'));
+    const r = await attendance(TRAINER, 'student-1', '2026-10');
+    expect(mockStudentsRepo.findActiveRoutineSchedules).toHaveBeenCalledWith(['student-1']);
+    expect(r.assigned_days).toBe(3);
+    expect(r.days.find((d) => d.date === '2026-10-05').status).toBe('rest');
+    expect(r.days.find((d) => d.date === '2026-10-26').status).toBe('missed');
+  });
+
+  it('un mes entero antes del alta queda todo en rest', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, created_at: '2026-10-25T15:00:00Z' });
+    const r = await attendance(TRAINER, 'student-1', '2026-09');
+    expect(r.assigned_days).toBe(0);
+    expect(r.days.every((d) => d.status === 'rest')).toBe(true);
   });
 
   it('sin sesiones no consulta los récords', async () => {

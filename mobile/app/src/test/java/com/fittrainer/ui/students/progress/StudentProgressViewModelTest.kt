@@ -137,4 +137,33 @@ class StudentProgressViewModelTest {
         assertFalse(StudentProgressUiState(FIRST_MONTH, YearMonth.of(2026, 11)).canGoPrevious)
         assertTrue(StudentProgressUiState(FIRST_MONTH.plusMonths(1), YearMonth.of(2026, 11)).canGoPrevious)
     }
+
+    @Test fun `la flecha no pasa del mes del alta (hora argentina)`() = runTest {
+        started()
+        // 01/10 01:00Z es el 30/09 a las 22 en Argentina: el alta es de septiembre.
+        vm.setCreatedAt(Instant.parse("2026-10-01T01:00:00Z"))
+        vm.onPreviousMonth()
+        advanceUntilIdle()
+        vm.onPreviousMonth()
+        advanceUntilIdle()
+        assertEquals(YearMonth.of(2026, 9), vm.uiState.value.month)
+        assertFalse(vm.uiState.value.canGoPrevious)
+        vm.onPreviousMonth()
+        advanceUntilIdle()
+        assertEquals(YearMonth.of(2026, 9), vm.uiState.value.month)
+    }
+
+    @Test fun `volver a la seccion enseguida no vuelve a pedir el mes`() = runTest {
+        started()
+        vm.onStart()
+        advanceUntilIdle()
+        assertEquals(listOf("2026-11"), api.months)
+    }
+
+    @Test fun `un alta de este mes deja la flecha apagada desde el arranque`() = runTest {
+        started()
+        vm.setCreatedAt(Instant.parse("2026-11-20T12:00:00Z"))
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.canGoPrevious)
+    }
 }

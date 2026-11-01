@@ -14,6 +14,7 @@ import com.fittrainer.data.students.progress.StudentProgressRepository
 import com.fittrainer.ui.students.detail.STUDENT_ID_ARG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
+import java.time.Instant
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,9 +41,11 @@ data class StudentProgressUiState(
     val offline: Boolean = false,
     val refreshing: Boolean = false,
     val loadError: String? = null,
+    /** El mes del alta del alumno: antes no hay nada que mirar. */
+    val firstMonth: YearMonth = FIRST_MONTH,
 ) {
     val canGoNext: Boolean get() = month < current
-    val canGoPrevious: Boolean get() = month > FIRST_MONTH
+    val canGoPrevious: Boolean get() = month > firstMonth
 }
 
 /** El backend no acepta meses anteriores (no hay datos de la app antes). */
@@ -64,15 +67,18 @@ class StudentProgressViewModel @Inject constructor(
     private val trainerId = sessionRepository.session.map { (it as? Session.Trainer)?.user?.id }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val month = MutableStateFlow(current.value)
+    private val firstMonth = MutableStateFlow(FIRST_MONTH)
     private val local = MutableStateFlow(Local())
     private var refreshJob: Job? = null
+    /** Último refresh OK de cada mes: la sección vuelve a STARTED cada vez que reaparece al scrollear la ficha. */
+    private val lastOkAt = mutableMapOf<YearMonth, Long>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val cache = combine(trainerId.filterNotNull(), month) { t, m -> t to m }
         .flatMapLatest { (t, m) -> repository.observeMonth(t, studentId, m).map { m to Loaded(it) }.onStart { emit(m to Loaded(null, false)) } }
 
-    val uiState: StateFlow<StudentProgressUiState> = combine(cache, current, connectivity.isOnline, local) { (m, c), cur, online, l ->
-        StudentProgressUiState(m, cur, c.loaded, c.progress, !online, l.refreshing, l.loadError)
+    val uiState: StateFlow<StudentProgressUiState> = combine(cache, current, connectivity.isOnline, local, firstMonth) { (m, c), cur, online, l, first ->
+        StudentProgressUiState(m, cur, c.loaded, c.progress, !online, l.refreshing, l.loadError, first)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StudentProgressUiState(current.value, current.value))
 
     /** Al volver a la pantalla: si cambió el mes y se estaba mirando el que era el actual, se pasa al nuevo. */
@@ -82,13 +88,20 @@ class StudentProgressViewModel @Inject constructor(
             if (month.value == current.value) month.value = now
             current.value = now
         }
+        val last = lastOkAt[month.value]
+        if (last != null && clock.millis() - last < FRESH_MS) return
         refresh()
     }
 
     fun onRetry() = refresh()
 
+    /** El alta del alumno (de la ficha): la flecha no pasa de ese mes ni de [FIRST_MONTH]. */
+    fun setCreatedAt(createdAt: Instant) {
+        firstMonth.value = maxOf(FIRST_MONTH, minOf(YearMonth.from(createdAt.atZone(ARGENTINA)), current.value))
+    }
+
     fun onPreviousMonth() {
-        if (month.value > FIRST_MONTH) go(month.value.minusMonths(1))
+        if (month.value > firstMonth.value) go(month.value.minusMonths(1))
     }
 
     fun onNextMonth() {
@@ -109,9 +122,14 @@ class StudentProgressViewModel @Inject constructor(
         refreshJob = viewModelScope.launch {
             local.update { it.copy(refreshing = true, loadError = null) }
             val error = repository.refreshMonth(trainerId.filterNotNull().first(), studentId, target).exceptionOrNull()
+            if (error == null) lastOkAt[target] = clock.millis()
             val offline = (error as? DataException)?.error == DataError.Offline
             local.update { it.copy(refreshing = false, loadError = if (error != null && !offline) PROGRESS_REFRESH_FAILED else null) }
         }
+    }
+
+    private companion object {
+        const val FRESH_MS = 5 * 60_000L
     }
 
     private data class Loaded(val progress: MonthProgress?, val loaded: Boolean = true)
