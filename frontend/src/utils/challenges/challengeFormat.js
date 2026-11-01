@@ -1,10 +1,11 @@
 import { formatKg, formatVolume } from '@/utils/progress/format';
+import { plural } from '@/utils/shared/plural';
 
 /** `30 días` (`1 día`). */
-export const durationLabel = (days) => `${days} ${days === 1 ? 'día' : 'días'}`;
+export const durationLabel = (days) => plural(days, 'día', 'días');
 
 const GOAL_LABELS = {
-  sessions_count: (value) => `${value} sesiones`,
+  sessions_count: (value) => plural(value, 'sesión', 'sesiones'),
   streak: (value) => `Racha de ${durationLabel(value)}`,
   volume: (value) => `${formatVolume(value)} de volumen`,
   weight_target: (value) => `Llegar a ${formatKg(value)}`,

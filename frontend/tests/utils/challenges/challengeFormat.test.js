@@ -4,6 +4,11 @@ import { durationLabel, goalLabel } from '@/utils/challenges/challengeFormat';
 const goal = (goal_type, goal_value) => ({ goal_type, goal_value });
 
 describe('goalLabel', () => {
+  it('1 sesión va en singular', () => {
+    expect(goalLabel(goal('sessions_count', 1))).toBe('1 sesión');
+    expect(goalLabel(goal('streak', 1))).toBe('Racha de 1 día');
+  });
+
   it('sesiones, racha y peso objetivo', () => {
     expect(goalLabel(goal('sessions_count', 12))).toBe('12 sesiones');
     expect(goalLabel(goal('streak', 14))).toBe('Racha de 14 días');

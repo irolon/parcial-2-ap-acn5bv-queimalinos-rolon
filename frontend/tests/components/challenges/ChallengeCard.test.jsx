@@ -23,6 +23,11 @@ describe('ChallengeCard', () => {
     expect(screen.getByText('3 activos')).toBeVisible();
   });
 
+  it('un solo activo va en singular', () => {
+    setup({ active_count: 1 });
+    expect(screen.getByText('1 activo')).toBeVisible();
+  });
+
   it('sin premio ni activos no muestra esas marcas', () => {
     setup();
     expect(screen.queryByText('Desafío cumplido')).not.toBeInTheDocument();

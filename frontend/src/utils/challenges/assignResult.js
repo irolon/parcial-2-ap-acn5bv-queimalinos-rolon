@@ -1,4 +1,4 @@
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+import { plural } from '@/utils/shared/plural';
 
 /** Nombres conocidos entre paréntesis: ` (Lucía, Pedro)`; vacío si no se conoce ninguno. */
 function names(skipped, studentsById) {

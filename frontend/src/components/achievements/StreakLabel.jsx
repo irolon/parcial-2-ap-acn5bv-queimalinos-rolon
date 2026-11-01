@@ -1,4 +1,6 @@
-const days = (n) => `${n} ${n === 1 ? 'día' : 'días'}`;
+import { plural } from '@/utils/shared/plural';
+
+const days = (n) => plural(n, 'día', 'días');
 
 /** Racha del alumno: "🔥 12 días", o "Sin racha" (con su mejor marca si la tuvo). */
 export default function StreakLabel({ streak }) {

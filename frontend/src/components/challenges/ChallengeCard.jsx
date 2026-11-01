@@ -1,5 +1,6 @@
 import Button from '@/components/shared/ui/Button';
 import Pill from '@/components/shared/ui/Pill';
+import { plural } from '@/utils/shared/plural';
 import { durationLabel, goalLabel } from '@/utils/challenges/challengeFormat';
 
 /** Un desafío con su meta, duración y marcas; "Borrar" solo en propios sin asignaciones. */
@@ -13,7 +14,7 @@ export default function ChallengeCard({ challenge, onAssign, onDelete }) {
         <span className="text-ink6">{`${goalLabel(challenge)} · ${durationLabel(challenge.duration_days)}`}</span>
         <div className="flex flex-wrap gap-2 empty:hidden">
           {challenge.reward_achievement_id && <Pill tone="good">Desafío cumplido</Pill>}
-          {challenge.active_count > 0 && <Pill tone="cool">{`${challenge.active_count} activos`}</Pill>}
+          {challenge.active_count > 0 && <Pill tone="cool">{plural(challenge.active_count, 'activo', 'activos')}</Pill>}
         </div>
       </div>
       <div className="flex gap-2">
