@@ -159,3 +159,18 @@ Pantalla del alumno (mobile, Igna; web en la tarjeta 22), feriados y excepciones
 - La grilla agrega filas fuera de la disponibilidad para mostrar los turnos manuales que caen ahí.
 - El panel del turno muestra las iniciales del alumno: `Avatar` no soporta imagen.
 - Los módulos de la agenda van en `agenda/` en todas las capas (excepción anotada en CONTRIBUTING.md).
+
+## 9. Resultado del E2E (31/10, contra Supabase dev, por API)
+
+PT QA (`qa.card26…`) con sus alumnas Lucía y Martín QA. Disponibilidad de lunes a viernes, de 08 a 12 y de 17 a 21.
+
+- `PUT /availability` responde 200. Si dos franjas del mismo día se solapan, responde 400 `VALIDATION_ERROR` con el detalle por franja.
+- La alumna ve 40 franjas libres en la semana del 2 al 8 de noviembre. La primera es el lunes 02/11 a las 08:00 de Argentina (11:00Z).
+- **Dos solicitudes simultáneas al mismo horario** (jue 05/11, 18:00 AR): una responde 201 `pending` y la otra 409 `SLOT_TAKEN`. Las corta el índice único de la base, no el código.
+- La segunda alumna pide otro horario (vie 06/11, 09:00): 201 `pending`. Un pedido fuera de la disponibilidad responde 400 `SLOT_UNAVAILABLE`.
+- El PT ve los dos pendientes de la semana, confirma uno y cancela el otro. Reconfirmar el cancelado responde 409 `INVALID_STATUS_TRANSITION`.
+- Notificaciones:
+  - A las alumnas les llegan "Tu turno del jue 05/11 a las 18:00 quedó confirmado" y "Tu turno del vie 06/11 a las 09:00 fue cancelado", con push según la política.
+  - Al PT le llegan "… pidió un turno para el …", sin push.
+- La franja del turno cancelado vuelve a quedar libre en `/availability/free`.
+- **Pendiente:** la verificación visual en el navegador. Hay que cargar la disponibilidad, confirmar y cancelar desde el calendario, ver la vista mobile y sacar las capturas para `assets/46/`. El agente no puede iniciar sesión con la contraseña de QA (modo automático), así que queda para hacerla con Pablo.
