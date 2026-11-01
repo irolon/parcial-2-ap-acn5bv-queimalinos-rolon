@@ -18,9 +18,9 @@ data class ProgressExercisePointEntity(
 )
 
 /**
- * Métrica por defecto, récords y momento de la última bajada de un ejercicio. [historyMarker] es el último
- * `startedAt` del ejercicio en el historial guardado al momento del pedido: si el historial trae una sesión más
- * nueva, lo guardado deja de estar fresco aunque no hayan pasado 5 minutos.
+ * Métrica por defecto, récords y momento de la última bajada de un ejercicio. [trainedMarker] es el "última fecha/días"
+ * del ejercicio en la lista del overview al momento del pedido: si la lista trae un día entrenado más nuevo, lo guardado
+ * deja de estar fresco aunque no hayan pasado 5 minutos.
  */
 @Entity(tableName = "progress_exercise_meta", primaryKeys = ["ownerId", "exerciseId"])
 data class ProgressExerciseMetaEntity(
@@ -32,7 +32,7 @@ data class ProgressExerciseMetaEntity(
     val prE1rmKg: Double?,
     val prE1rmDate: String?,
     val fetchedAt: Long,
-    val historyMarker: Long? = null,
+    val trainedMarker: String? = null,
 )
 
 @Entity(tableName = "progress_body_points", indices = [Index(value = ["ownerId", "recordedAt"])])
@@ -56,9 +56,29 @@ data class ProgressBodyMetaEntity(
     val fetchedAt: Long,
 )
 
-/** Ejercicio que el alumno ya entrenó, para el desplegable. Es resultado de consulta, no tabla. */
+/** Un ejercicio que el alumno ya entrenó, de `GET /progress/overview`: la lista del desplegable. Es caché, por dueño. */
+@Entity(tableName = "progress_exercises", primaryKeys = ["ownerId", "exerciseId"])
+data class ProgressExerciseEntity(
+    val ownerId: String,
+    val exerciseId: String,
+    val name: String,
+    /** Días distintos en los que lo entrenó. */
+    val days: Int,
+    /** YYYY-MM-DD del último día que lo entrenó, tal como llega del servidor. */
+    val lastDate: String,
+)
+
+/** Cuándo se bajó la lista de ejercicios del dueño. Sin fila, nunca se bajó: no es lo mismo que una lista vacía. */
+@Entity(tableName = "progress_exercises_meta")
+data class ProgressExercisesMetaEntity(
+    @PrimaryKey val ownerId: String,
+    val fetchedAt: Long,
+)
+
+/** Un ejercicio del desplegable (consulta sobre progress_exercises, sin el dueño). */
 data class TrainedExercise(
     val exerciseId: String,
     val name: String,
-    val lastTrainedAt: Long,
+    val days: Int,
+    val lastDate: String,
 )

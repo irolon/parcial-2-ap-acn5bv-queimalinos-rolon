@@ -1,4 +1,4 @@
-package com.fittrainer.data.progress
+package com.fittrainer.data.progress.progressrepository
 
 import com.fittrainer.data.api.progress.BodyPointDto
 import com.fittrainer.data.api.progress.BodyProgressDto
@@ -9,6 +9,7 @@ import com.fittrainer.data.api.progress.PrDto
 import com.fittrainer.data.api.progress.PrValueDto
 import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.db.progress.TrainedExercise
+import com.fittrainer.data.progress.ProgressRepository
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.testing.fakes.auth.MutableClock
 import com.fittrainer.testing.fakes.progress.FakeProgressApi
@@ -66,11 +67,11 @@ class ProgressRepositoryTest {
         assertEquals(2, api.exerciseCalls)
     }
 
-    @Test fun mismoMarcadorDelHistorialYMenosDeCincoMinutosNoPide() = runTest {
+    @Test fun mismoMarcadorDeLaListaYMenosDeCincoMinutosNoPide() = runTest {
         api.exercises = mapOf("ex1" to dto())
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "Sentadilla", 500L)))
+        dao.seedTrained("u1", TrainedExercise("ex1", "Sentadilla", 3, "2026-10-02"))
         repository.refreshExercise("u1", "ex1")
-        assertEquals(500L, dao.state.value.metas.single().historyMarker)
+        assertEquals("2026-10-02/3", dao.state.value.metas.single().trainedMarker)
         clock.millis += 60_000L
         repository.refreshExercise("u1", "ex1")
         assertEquals(1, api.exerciseCalls)
@@ -78,14 +79,14 @@ class ProgressRepositoryTest {
 
     @Test fun marcadorDistintoPideAunqueSeaMenosDeCincoMinutos() = runTest {
         api.exercises = mapOf("ex1" to dto())
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "Sentadilla", 500L)))
+        dao.seedTrained("u1", TrainedExercise("ex1", "Sentadilla", 3, "2026-10-02"))
         repository.refreshExercise("u1", "ex1")
-        // Terminó una sesión nueva del ejercicio: el historial trae un startedAt más nuevo.
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "Sentadilla", 900L)))
+        // Lo entrenó otro día: el overview trae una fecha más nueva y un día más.
+        dao.seedTrained("u1", TrainedExercise("ex1", "Sentadilla", 4, "2026-10-05"))
         clock.millis += 60_000L
         repository.refreshExercise("u1", "ex1")
         assertEquals(2, api.exerciseCalls)
-        assertEquals(900L, dao.state.value.metas.single().historyMarker)
+        assertEquals("2026-10-05/4", dao.state.value.metas.single().trainedMarker)
         repository.refreshExercise("u1", "ex1")
         assertEquals(2, api.exerciseCalls) // con el marcador nuevo guardado, vuelve a estar fresco
     }
@@ -110,14 +111,17 @@ class ProgressRepositoryTest {
 
     @Test fun notFoundBorraYSacaElEjercicioDeLaLista() = runTest {
         api.exercises = mapOf("ex1" to dto())
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "Sentadilla", 5L), TrainedExercise("ex2", "Press", 4L)))
+        dao.seedTrained("u1", TrainedExercise("ex1", "Sentadilla", 5, "2026-10-02"), TrainedExercise("ex2", "Press", 4, "2026-10-01"))
         repository.refreshExercise("u1", "ex1")
         api.error = httpErrorWithCode(404, "EXERCISE_NOT_FOUND")
         assertTrue(repository.refreshExercise("u1", "ex1", force = true).isSuccess)
         val chart = repository.observeExercise("u1", "ex1").first()
         assertTrue(chart.points.isEmpty())
         assertNull(chart.meta)
-        assertEquals(listOf("ex2"), repository.observeTrainedExercises("u1").first().map { it.exerciseId })
+        assertEquals(listOf("ex2"), repository.observeTrainedExercises("u1").first().items.map { it.exerciseId })
+        // Sale de Room, no de la memoria: un arranque en frío (otro repositorio, misma base) tampoco lo muestra.
+        val coldStart = ProgressRepository(api, dao, { session }, clock)
+        assertEquals(listOf("ex2"), coldStart.observeTrainedExercises("u1").first().items.map { it.exerciseId })
     }
 
     @Test fun respuestaQueLlegaDespuesDelLogoutNoEscribe() = runTest {

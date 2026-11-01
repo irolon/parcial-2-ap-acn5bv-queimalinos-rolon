@@ -36,7 +36,7 @@ private val TABS = listOf("Historial", "Gráficos")
 fun ProgressScreen(onOpen: (String) -> Unit, historyViewModel: HistoryViewModel = hiltViewModel()) {
     val state by historyViewModel.uiState.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    // El refresco del historial corre al entrar a Progreso con cualquier solapa: Gráficos lee sus ejercicios de esa caché.
+    // El refresco del historial corre al entrar a Progreso con cualquier solapa: el resumen de la semana de arriba sale de ahí.
     LifecycleStartEffect(historyViewModel) {
         historyViewModel.onStart()
         onStopOrDispose { }

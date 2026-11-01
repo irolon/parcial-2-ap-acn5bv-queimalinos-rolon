@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class XAxisPlanTest {
+class DayAxisItemPlacerTest {
     private val day = UNITS_PER_DAY.toDouble()
 
     @Test

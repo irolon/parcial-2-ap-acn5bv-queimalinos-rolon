@@ -1,14 +1,18 @@
-package com.fittrainer.data.progress
+package com.fittrainer.data.progress.progressrepository
 
 import com.fittrainer.data.api.progress.BodyPointDto
 import com.fittrainer.data.api.progress.BodyProgressDto
 import com.fittrainer.data.api.progress.ExercisePointDto
 import com.fittrainer.data.api.progress.ExerciseProgressDto
 import com.fittrainer.data.api.progress.ExerciseRefDto
+import com.fittrainer.data.api.progress.OverviewExerciseDto
+import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
+import com.fittrainer.data.db.progress.ProgressExerciseEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
 import com.fittrainer.data.db.progress.TrainedExercise
+import com.fittrainer.data.progress.ProgressRepository
 import com.fittrainer.testing.fakes.auth.MutableClock
 import com.fittrainer.testing.fakes.progress.FakeProgressApi
 import com.fittrainer.testing.fakes.progress.FakeProgressDao
@@ -24,6 +28,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,6 +39,11 @@ private class RacingDao : FakeProgressDao() {
     override suspend fun replaceExercise(meta: ProgressExerciseMetaEntity, points: List<ProgressExercisePointEntity>) {
         beforeWrite?.invoke()
         super.replaceExercise(meta, points)
+    }
+
+    override suspend fun replaceExercises(ownerId: String, rows: List<ProgressExerciseEntity>, fetchedAt: Long) {
+        beforeWrite?.invoke()
+        super.replaceExercises(ownerId, rows, fetchedAt)
     }
 
     override suspend fun replaceBody(ownerId: String, points: List<ProgressBodyPointEntity>, fetchedAt: Long) {
@@ -77,41 +87,56 @@ class ProgressRepositoryRaceTest {
     }
 
     @Test fun unNotFoundDeUnDuenoNoEscondeElEjercicioDeOtro() = runTest {
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "S", 1L)), "u2" to listOf(TrainedExercise("ex1", "S", 1L)))
+        dao.seedTrained("u1", TrainedExercise("ex1", "S", 1, "2026-10-01"))
+        dao.seedTrained("u2", TrainedExercise("ex1", "S", 1, "2026-10-01"))
         api.error = httpErrorWithCode(404, "EXERCISE_NOT_FOUND")
         repository.refreshExercise("u1", "ex1")
-        assertTrue(repository.observeTrainedExercises("u1").first().isEmpty())
-        assertEquals(1, repository.observeTrainedExercises("u2").first().size)
+        assertTrue(repository.observeTrainedExercises("u1").first().items.isEmpty())
+        assertEquals(1, repository.observeTrainedExercises("u2").first().items.size)
     }
 
-    @Test fun clearUserDataReseteaLosNotFound() = runTest {
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "S", 1L)))
-        api.error = httpErrorWithCode(404, "EXERCISE_NOT_FOUND")
-        repository.refreshExercise("u1", "ex1")
+    @Test fun clearUserDataBorraLaListaDelDuenoYSuFecha() = runTest {
+        dao.seedTrained("u1", TrainedExercise("ex1", "S", 1, "2026-10-01"), fetchedAt = 5L)
+        dao.seedTrained("u2", TrainedExercise("ex2", "P", 1, "2026-10-01"), fetchedAt = 5L)
         repository.clearUserData("u1")
-        assertEquals(1, repository.observeTrainedExercises("u1").first().size)
+        val list = repository.observeTrainedExercises("u1").first()
+        assertTrue(list.items.isEmpty())
+        assertNull(list.fetchedAt)
+        assertEquals(5L, repository.observeTrainedExercises("u2").first().fetchedAt)
+        repository.clearUserData(null)
+        assertTrue(dao.state.value.exercises.isEmpty() && dao.state.value.exercisesMetas.isEmpty())
     }
 
-    @Test fun unNotFoundQueLlegaTrasElLogoutNoSeAnota() = runTest {
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "S", 1L)))
+    @Test fun unNotFoundQueLlegaTrasElLogoutNoEscribe() = runTest {
+        dao.seedTrained("u1", TrainedExercise("ex1", "S", 1, "2026-10-01"))
         api.error = httpErrorWithCode(404, "EXERCISE_NOT_FOUND")
         val gate = CompletableDeferred<Unit>()
         api.gate = gate
         val result = async { repository.refreshExercise("u1", "ex1") }
         runCurrent()
         repository.clearUserData("u1")
+        dao.seedTrained("u1", TrainedExercise("ex1", "S", 1, "2026-10-01")) // lo que bajó la sesión nueva
         gate.complete(Unit)
-        assertTrue(result.await().isFailure)
-        assertEquals(1, repository.observeTrainedExercises("u1").first().size)
+        assertTrue(result.await().exceptionOrNull()?.cause is AccountChangedException)
+        assertEquals(1, repository.observeTrainedExercises("u1").first().items.size)
     }
 
     @Test fun otro404SinElCodigoNoTocaElCacheNiLaLista() = runTest {
         api.exercises = mapOf("ex1" to dto())
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("ex1", "S", 1L)))
+        dao.seedTrained("u1", TrainedExercise("ex1", "S", 1, "2026-10-01"))
         repository.refreshExercise("u1", "ex1")
         api.error = httpErrorWithCode(404, "ROUTE_NOT_FOUND")
         assertTrue(repository.refreshExercise("u1", "ex1", force = true).isFailure)
         assertEquals(1, repository.observeExercise("u1", "ex1").first().points.size)
-        assertEquals(1, repository.observeTrainedExercises("u1").first().size)
+        assertEquals(1, repository.observeTrainedExercises("u1").first().items.size)
+    }
+
+    @Test fun unLogoutEntreElChequeoYLaEscrituraDeLaListaNoDejaFilas() = runTest {
+        api.trained = listOf(OverviewExerciseDto("ex1", "Sentadilla", 2, "2026-10-01"))
+        val scope = CoroutineScope(coroutineContext)
+        dao.beforeWrite = { scope.launch { repository.clearUserData("u1") }; yield() }
+        repository.refreshExercises("u1")
+        advanceUntilIdle()
+        assertTrue(dao.state.value.exercises.isEmpty() && dao.state.value.exercisesMetas.isEmpty())
     }
 }

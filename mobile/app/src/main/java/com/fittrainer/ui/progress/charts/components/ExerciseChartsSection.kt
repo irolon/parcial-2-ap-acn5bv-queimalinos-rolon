@@ -37,12 +37,11 @@ fun ExerciseChartsSection(
     onRetry: () -> Unit,
 ) {
     val content = ChartsEmptyState.exercises(state)
-    if (content == ChartsContent.NO_EXERCISES) return CenteredMessage(ChartsTexts.NO_EXERCISES)
-    // Room todavía no emitió la lista: ni desplegable vacío ni "Terminá tu primera sesión", solo la carga.
-    if (!state.exercisesLoaded) return ChartLoading()
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
-        ExercisePicker(state, onExercise)
+        // Sin lista (Room no emitió, nunca se bajó o está vacía) no hay desplegable vacío: solo el estado.
+        if (state.exercises.isNotEmpty()) ExercisePicker(state, onExercise)
         when (content) {
+            ChartsContent.NO_EXERCISES -> CenteredMessage(ChartsTexts.NO_EXERCISES)
             ChartsContent.NEVER_LOADED -> CenteredMessage(ChartsTexts.NEVER_LOADED)
             ChartsContent.NO_DATA -> CenteredMessage(ChartsTexts.NO_DATA)
             ChartsContent.LOADING -> ChartLoading()
@@ -72,7 +71,10 @@ private fun ExerciseBody(
             CenteredMessage(ChartsTexts.ONE_POINT)
         }
         else -> {
-            LineChart(state.exerciseSeries, state.record?.date, FtColors.Brand)
+            val name = state.exercises.firstOrNull { it.exerciseId == state.selectedExerciseId }?.name.orEmpty()
+            val subject = state.metric?.let { "${ChartsTexts.metricLabel(it)} de $name" } ?: name
+            val description = ChartsTexts.chartDescription(subject, state.range, state.exerciseSeries, unit)
+            LineChart(state.exerciseSeries, state.record?.date, FtColors.Brand, description)
             val delta = state.exerciseDelta
             ChartStats(
                 firstLabel = "Récord 🏆",

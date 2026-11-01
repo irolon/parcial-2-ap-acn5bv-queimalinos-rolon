@@ -6,8 +6,10 @@ enum class ChartsContent { NO_EXERCISES, LOADING, NEVER_LOADED, LOAD_FAILED, NO_
 object ChartsEmptyState {
     fun exercises(s: ChartsUiState): ChartsContent = when {
         !s.exercisesLoaded -> ChartsContent.LOADING
+        // Lista nunca bajada: no se sabe si entrenó (el historial del celular no alcanza), así que nada de "Terminá tu primera sesión".
+        !s.exercisesEverLoaded -> neverLoaded(s.listRefreshing, s.listRefreshAttempted, s.isOffline)
         s.exercises.isEmpty() -> ChartsContent.NO_EXERCISES
-        !s.exerciseEverLoaded -> neverLoaded(s)
+        !s.exerciseEverLoaded -> neverLoaded(s.isRefreshing, s.refreshAttempted, s.isOffline)
         s.totalExerciseDays == 0 -> ChartsContent.NO_DATA
         s.exerciseSeries.isEmpty() -> ChartsContent.EMPTY_PERIOD
         // Por días entrenados (§3.4), no por puntos de la métrica: si la métrica tiene pocos, se dibuja lo que hay.
@@ -16,7 +18,7 @@ object ChartsEmptyState {
     }
 
     fun body(s: ChartsUiState): ChartsContent = when {
-        !s.bodyEverLoaded -> neverLoaded(s)
+        !s.bodyEverLoaded -> neverLoaded(s.isRefreshing, s.refreshAttempted, s.isOffline)
         s.bodyFields.isEmpty() -> ChartsContent.NO_BODY
         s.bodySeries.isEmpty() -> ChartsContent.EMPTY_PERIOD
         else -> ChartsContent.CHART
@@ -26,9 +28,9 @@ object ChartsEmptyState {
      * Nunca bajado: carga mientras corre o antes del primer intento. Después, sin red → "Conectate una vez"; con red →
      * falla con Reintentar en la sección (no depende del banner, que se puede cerrar).
      */
-    private fun neverLoaded(s: ChartsUiState): ChartsContent = when {
-        s.isRefreshing || !s.refreshAttempted -> ChartsContent.LOADING
-        s.isOffline -> ChartsContent.NEVER_LOADED
+    private fun neverLoaded(running: Boolean, attempted: Boolean, offline: Boolean): ChartsContent = when {
+        running || !attempted -> ChartsContent.LOADING
+        offline -> ChartsContent.NEVER_LOADED
         else -> ChartsContent.LOAD_FAILED
     }
 }

@@ -3,21 +3,18 @@ package com.fittrainer.ui.progress.charts
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fittrainer.data.auth.AccountChangedException
-import com.fittrainer.data.db.progress.TrainedExercise
 import com.fittrainer.data.network.ConnectivityObserver
-import com.fittrainer.data.progress.BodyChart
 import com.fittrainer.data.progress.BodyField
 import com.fittrainer.data.progress.ChartMetric
 import com.fittrainer.data.progress.ChartRange
 import com.fittrainer.data.progress.DEFAULT_RANGE
 import com.fittrainer.data.progress.ProgressRepository
-import com.fittrainer.data.repository.DataError
-import com.fittrainer.data.repository.DataException
+import com.fittrainer.data.progress.TrainedExercises
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.ui.progress.charts.ChartsKeys.BODY_FIELD
 import com.fittrainer.ui.progress.charts.ChartsKeys.EXERCISE_ID
+import com.fittrainer.ui.progress.charts.ChartsKeys.LIST_KEY
 import com.fittrainer.ui.progress.charts.ChartsKeys.METRIC
 import com.fittrainer.ui.progress.charts.ChartsKeys.RANGE
 import com.fittrainer.ui.progress.charts.ChartsKeys.VIEW
@@ -27,8 +24,6 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -39,7 +34,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -56,15 +50,11 @@ class ChartsViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
 ) : ViewModel() {
 
-    /** Por clave: corriendo, con error (banner) y ya intentado al menos una vez (sin datos → falla en la sección). */
-    private data class Refresh(val running: Set<String> = emptySet(), val failed: Set<String> = emptySet(), val attempted: Set<String> = emptySet())
-
     private val owner: StateFlow<String?> = sessionRepository.session
         .map { (it as? Session.Student)?.user?.id }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
-    private val refreshState = MutableStateFlow(Refresh())
-    private val jobs = mutableMapOf<String, Job>()
+    private val refreshes = ChartsRefreshes(viewModelScope) { online.value }
 
     private val view = savedState.getStateFlow<String?>(VIEW, null).map { enumOr(it, ChartsView.LOADS) }
     private val savedExercise = savedState.getStateFlow<String?>(EXERCISE_ID, null)
@@ -77,21 +67,21 @@ class ChartsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, ChartsPrefs(ChartsView.LOADS, null, DEFAULT_RANGE, null))
 
     /** null hasta que Room emite la primera lista: mientras tanto se ve la carga, no "Terminá tu primera sesión". */
-    private val exercises: StateFlow<List<TrainedExercise>?> = owner.filterNotNull()
+    private val exercises: StateFlow<TrainedExercises?> = owner.filterNotNull()
         .flatMapLatest { repository.observeTrainedExercises(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** El elegido; si no existe (nunca eligió o el 404 lo sacó de la lista), el primero que quede. */
     private val selectedId: StateFlow<String?> = combine(exercises, savedExercise) { list, saved ->
-        list.orEmpty().let { l -> l.firstOrNull { it.exerciseId == saved }?.exerciseId ?: l.firstOrNull()?.exerciseId }
+        list?.items.orEmpty().let { l -> l.firstOrNull { it.exerciseId == saved }?.exerciseId ?: l.firstOrNull()?.exerciseId }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
         // Cada ejercicio que queda elegido (el de entrada, el que toca el alumno o el siguiente tras un 404) se actualiza,
-        // y también cuando el historial trae una sesión más nueva del elegido (el repositorio decide si vuelve a pedir).
+        // y también cuando la lista dice que lo entrenó otro día (el repositorio decide si vuelve a pedir).
         viewModelScope.launch {
             var previous: String? = null
-            combine(selectedId, exercises) { id, list -> id to list?.firstOrNull { it.exerciseId == id }?.lastTrainedAt }
+            combine(selectedId, exercises) { id, list -> id to list?.items?.firstOrNull { it.exerciseId == id } }
                 .distinctUntilChanged()
                 .collect { (id, _) ->
                     if (id == null) return@collect
@@ -99,7 +89,7 @@ class ChartsViewModel @Inject constructor(
                     // La primera emisión no: tras rotar, la métrica restaurada se respeta.
                     if (previous != null && previous != id) savedState[METRIC] = null
                     previous = id
-                    if (currentView() == ChartsView.LOADS) refresh(force = false, view = ChartsView.LOADS, exerciseId = id)
+                    if (currentView() == ChartsView.LOADS) refreshExercise(id, force = false)
                 }
         }
         // Volvió la red: se refresca lo que se ve (si nunca se bajó, sale de "Conectate una vez" sin tocar nada).
@@ -121,9 +111,9 @@ class ChartsViewModel @Inject constructor(
         owner.filterNotNull().flatMapLatest { repository.observeBody(it) },
     ) { list, id, chart, body -> ChartsData(list, id, chart, body) }
 
-    val uiState: StateFlow<ChartsUiState> = combine(data, prefs, online, refreshState) { d, p, isOnline, r ->
-        val key = refreshKey(p.view, d.selectedId)
-        buildChartsState(d, p, !isOnline, RefreshFlags(key in r.running, key in r.failed, key in r.attempted), LocalDate.now(clock), clock.zone)
+    val uiState: StateFlow<ChartsUiState> = combine(data, prefs, online, refreshes.state) { d, p, isOnline, r ->
+        val flags = r.flags(refreshKey(p.view, d.selectedId))
+        buildChartsState(d, p, !isOnline, flags, LocalDate.now(clock), clock.zone, list = r.flags(LIST_KEY))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChartsUiState())
 
     fun onStart() = refresh(force = false)
@@ -153,35 +143,30 @@ class ChartsViewModel @Inject constructor(
     }
 
     fun dismissRefreshError() {
-        val key = refreshKey(currentView(), resolveExercise()) ?: return
-        refreshState.update { it.copy(failed = it.failed - key) }
+        val view = currentView()
+        refreshes.dismiss(refreshKey(view, resolveExercise()), LIST_KEY.takeIf { view == ChartsView.LOADS })
     }
 
     /** Lee el SavedStateHandle directo: los StateFlow derivados pueden ir un paso atrás de una escritura recién hecha. */
     private fun currentView(): ChartsView = enumOr(savedState.get<String?>(VIEW), ChartsView.LOADS)
 
     private fun resolveExercise(): String? {
-        val list = exercises.value.orEmpty()
+        val list = exercises.value?.items.orEmpty()
         return list.firstOrNull { it.exerciseId == savedState.get<String?>(EXERCISE_ID) }?.exerciseId ?: list.firstOrNull()?.exerciseId
     }
 
-    /** Refresca lo que se está viendo. Nunca dos pedidos de lo mismo a la vez. */
-    private fun refresh(force: Boolean, view: ChartsView = currentView(), exerciseId: String? = resolveExercise()) {
-        val key = refreshKey(view, exerciseId) ?: return
-        if (jobs[key]?.isActive == true) return
-        jobs[key] = viewModelScope.launch {
-            val id = owner.filterNotNull().first()
-            refreshState.update { it.copy(running = it.running + key) }
-            val result = if (view == ChartsView.BODY) repository.refreshBody(id, force) else repository.refreshExercise(id, exerciseId!!, force)
-            val cause = result.exceptionOrNull()
-            // Sin red no es un error (se ve lo guardado con el aviso de "sin conexión"); un cambio de cuenta tampoco.
-            // Pero un "Offline" con la conectividad diciendo que hay red es el backend inalcanzable: eso sí es falla.
-            val offline = (cause as? DataException)?.error == DataError.Offline && !online.value
-            val failed = cause != null && !offline && cause.cause !is AccountChangedException
-            refreshState.update {
-                it.copy(running = it.running - key, failed = if (failed) it.failed + key else it.failed - key, attempted = it.attempted + key)
-            }
+    /** Refresca lo que se está viendo; en Cargas, la lista del desplegable y el ejercicio elegido. */
+    private fun refresh(force: Boolean, view: ChartsView = currentView()) {
+        if (view == ChartsView.BODY) {
+            refreshes.launch(refreshKey(view, null)!!) { repository.refreshBody(ownerId(), force) }
+            return
         }
+        refreshes.launch(LIST_KEY) { repository.refreshExercises(ownerId(), force) }
+        resolveExercise()?.let { refreshExercise(it, force) }
     }
 
+    private fun refreshExercise(id: String, force: Boolean) =
+        refreshes.launch(refreshKey(ChartsView.LOADS, id)!!) { repository.refreshExercise(ownerId(), id, force) }
+
+    private suspend fun ownerId(): String = owner.filterNotNull().first()
 }

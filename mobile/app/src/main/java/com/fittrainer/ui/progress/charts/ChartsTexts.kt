@@ -2,6 +2,7 @@ package com.fittrainer.ui.progress.charts
 
 import com.fittrainer.data.progress.BodyField
 import com.fittrainer.data.progress.ChartMetric
+import com.fittrainer.data.progress.ChartPoint
 import com.fittrainer.data.progress.ChartRange
 import java.time.LocalDate
 import java.util.Locale
@@ -64,10 +65,28 @@ object ChartsTexts {
         BodyField.BMI -> ""
     }
 
-    fun formatShortDate(date: LocalDate): String = "${date.dayOfMonth} ${months[date.monthValue - 1]}"
+    /** "12 mar"; con el año si no es el actual ("12 mar 2025"), para que "Todo" y el récord no queden ambiguos. */
+    fun formatShortDate(date: LocalDate, today: LocalDate = LocalDate.now()): String {
+        val short = "${date.dayOfMonth} ${months[date.monthValue - 1]}"
+        return if (date.year == today.year) short else "$short ${date.year}"
+    }
 
     /** Detalle de "En el período": desde qué fecha se mide la diferencia (el primer punto del período). */
-    fun formatSince(date: LocalDate): String = "desde ${formatShortDate(date)}"
+    fun formatSince(date: LocalDate, today: LocalDate = LocalDate.now()): String = "desde ${formatShortDate(date, today)}"
+
+    /** Lo que lee TalkBack del gráfico: qué, en qué período y de dónde a dónde ("1RM est. de Press en 3 meses: de 80 kg a 95 kg"). */
+    fun chartDescription(subject: String, range: ChartRange, points: List<ChartPoint>, unit: String): String {
+        val period = when (range) {
+            ChartRange.M1 -> "en el último mes"
+            ChartRange.M3 -> "en 3 meses"
+            ChartRange.M6 -> "en 6 meses"
+            ChartRange.ALL -> "en todo el historial"
+        }
+        val first = points.firstOrNull() ?: return "$subject $period: sin datos"
+        val last = points.last()
+        val values = if (points.size == 1) formatValue(first.value, unit) else "de ${formatValue(first.value, unit)} a ${formatValue(last.value, unit)}"
+        return "$subject $period: $values"
+    }
 
     const val NO_EXERCISES = "Terminá tu primera sesión para ver tus gráficos"
     const val ONE_POINT = "Entrená otra vez este ejercicio para ver tu curva"

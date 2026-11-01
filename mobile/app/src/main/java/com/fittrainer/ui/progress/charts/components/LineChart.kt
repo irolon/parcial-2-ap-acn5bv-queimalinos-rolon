@@ -7,6 +7,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.progress.ChartPoint
 import com.fittrainer.ui.progress.charts.ChartsTexts
@@ -39,12 +41,16 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 
-/** Gráfico de línea (un punto por día en Cargas, por medición en Medidas). Único archivo que usa Vico. El récord (si está en la serie) va en ámbar. */
+/**
+ * Gráfico de línea (un punto por día en Cargas, por medición en Medidas). Único archivo que usa Vico. El récord (si está
+ * en la serie) va en ámbar. Vico dibuja en un canvas sin semántica: [description] es lo que lee TalkBack.
+ */
 @Composable
 fun LineChart(
     points: List<ChartPoint>,
     highlight: LocalDate?,
     lineColor: Color,
+    description: String,
     modifier: Modifier = Modifier,
 ) {
     val producer = remember { CartesianChartModelProducer() }
@@ -102,7 +108,7 @@ fun LineChart(
             ),
         ),
         modelProducer = producer,
-        modifier = modifier.fillMaxWidth().height(220.dp),
+        modifier = modifier.fillMaxWidth().height(220.dp).semantics { contentDescription = description },
         // Todo el período entra en el ancho: sin scroll ni zoom (si no, con "Todo" el récord queda fuera de pantalla).
         scrollState = rememberVicoScrollState(scrollEnabled = false),
         zoomState = rememberVicoZoomState(zoomEnabled = false, initialZoom = Zoom.Content),

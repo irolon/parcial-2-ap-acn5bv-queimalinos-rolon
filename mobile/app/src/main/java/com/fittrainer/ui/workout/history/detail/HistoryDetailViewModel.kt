@@ -59,7 +59,7 @@ class HistoryDetailViewModel @Inject constructor(
             ownerId = id
             // Sin red el error ya no vale: al volver la conexión se reintenta solo.
             if (!online && err) error.value = false
-            if (d != null && (!d.detailLoaded || d.missingExerciseIds) && d.item.origin == HistoryOrigin.SERVER && online && !requested && !err) fetch(id)
+            if (d != null && !d.detailLoaded && d.item.origin == HistoryOrigin.SERVER && online && !requested && !err) fetch(id)
             HistoryDetailUiState(d, isOffline = !online, loading = l, missing = d == null, error = err)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryDetailUiState())
 

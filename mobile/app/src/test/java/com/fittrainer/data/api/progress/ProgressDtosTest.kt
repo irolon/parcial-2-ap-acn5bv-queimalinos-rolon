@@ -71,4 +71,22 @@ class ProgressDtosTest {
         val body = """{"data":{"points":[],"summary":{}}}"""
         assertEquals(0, json.decodeFromString(BodyProgressResponse.serializer(), body).data.points.size)
     }
+
+    /** Mismo Json que NetworkModule (ignoreUnknownKeys): muscle_group y weekly_volume no rompen. */
+    @Test fun parseaElOverviewIgnorandoElGrupoMuscularYElVolumenSemanal() {
+        val body = """{"data":{"exercises":[
+            {"id":"e1","name":"Press de banca","muscle_group":"chest","days":12,"last_date":"2026-10-30"},
+            {"id":"e2","name":"Dominadas","muscle_group":null,"days":1,"last_date":"2026-04-02"}],
+            "weekly_volume":[{"week_start":"2026-10-26","volume_kg":5400.5,"sessions":3}]}}"""
+        val exercises = json.decodeFromString(ProgressOverviewResponse.serializer(), body).data.exercises
+        assertEquals(listOf("e1", "e2"), exercises.map { it.id })
+        assertEquals("Press de banca", exercises[0].name)
+        assertEquals(12, exercises[0].days)
+        assertEquals("2026-04-02", exercises[1].lastDate)
+    }
+
+    @Test fun parseaElOverviewSinEjercicios() {
+        val body = """{"data":{"exercises":[],"weekly_volume":[]}}"""
+        assertEquals(0, json.decodeFromString(ProgressOverviewResponse.serializer(), body).data.exercises.size)
+    }
 }

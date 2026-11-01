@@ -3,6 +3,7 @@ package com.fittrainer.data.progress
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
+import com.fittrainer.data.db.progress.TrainedExercise
 import java.time.LocalDate
 
 /** Período del gráfico. Uno solo para Cargas y Medidas. */
@@ -30,6 +31,9 @@ data class ExerciseChart(
     val points: List<ProgressExercisePointEntity>,
     val meta: ProgressExerciseMetaEntity?,
 )
+
+/** El desplegable tal como está en Room; `fetchedAt` es null si el overview nunca se bajó (no se sabe si está vacío). */
+data class TrainedExercises(val items: List<TrainedExercise>, val fetchedAt: Long?)
 
 /** Medidas del alumno tal como están en Room; `fetchedAt` es null si nunca se bajaron. */
 data class BodyChart(val points: List<ProgressBodyPointEntity>, val fetchedAt: Long?)

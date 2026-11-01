@@ -11,20 +11,37 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 abstract class ProgressDao {
 
-    /** Del historial guardado; el nombre es el de la sesión más reciente (columna sin agregar junto a MAX). */
+    /** El desplegable: lo bajado del overview, el último entrenado primero (como lo ordena el backend). */
     @Query(
-        "SELECT e.exerciseId AS exerciseId, e.exerciseName AS name, MAX(s.startedAt) AS lastTrainedAt " +
-            "FROM history_exercises e JOIN history_sessions s ON s.id = e.sessionId " +
-            "WHERE s.ownerId = :ownerId AND e.exerciseId IS NOT NULL GROUP BY e.exerciseId ORDER BY lastTrainedAt DESC",
+        "SELECT exerciseId, name, days, lastDate FROM progress_exercises WHERE ownerId = :ownerId " +
+            "ORDER BY lastDate DESC, name ASC",
     )
     abstract fun observeTrainedExercises(ownerId: String): Flow<List<TrainedExercise>>
 
-    /** El marcador del historial: último startedAt del ejercicio en lo guardado (null si no aparece). */
-    @Query(
-        "SELECT MAX(s.startedAt) FROM history_exercises e JOIN history_sessions s ON s.id = e.sessionId " +
-            "WHERE s.ownerId = :ownerId AND e.exerciseId = :exerciseId",
-    )
-    abstract suspend fun lastTrainedAt(ownerId: String, exerciseId: String): Long?
+    /** De dónde sale el marcador del caché de un ejercicio (null si no está en la lista). */
+    @Query("SELECT exerciseId, name, days, lastDate FROM progress_exercises WHERE ownerId = :ownerId AND exerciseId = :exerciseId")
+    abstract suspend fun trainedExercise(ownerId: String, exerciseId: String): TrainedExercise?
+
+    @Query("SELECT * FROM progress_exercises_meta WHERE ownerId = :ownerId")
+    abstract fun observeExercisesMeta(ownerId: String): Flow<ProgressExercisesMetaEntity?>
+
+    @Query("SELECT * FROM progress_exercises_meta WHERE ownerId = :ownerId")
+    abstract suspend fun exercisesMeta(ownerId: String): ProgressExercisesMetaEntity?
+
+    @Insert
+    abstract suspend fun insertExercises(rows: List<ProgressExerciseEntity>)
+
+    @Upsert
+    abstract suspend fun upsertExercisesMeta(meta: ProgressExercisesMetaEntity)
+
+    @Query("DELETE FROM progress_exercises WHERE ownerId = :ownerId")
+    abstract suspend fun deleteExercises(ownerId: String)
+
+    @Query("DELETE FROM progress_exercises WHERE ownerId = :ownerId AND exerciseId = :exerciseId")
+    abstract suspend fun deleteTrainedExercise(ownerId: String, exerciseId: String)
+
+    @Query("DELETE FROM progress_exercises_meta WHERE ownerId = :ownerId")
+    abstract suspend fun deleteExercisesMeta(ownerId: String)
 
     @Query("SELECT * FROM progress_exercise_points WHERE ownerId = :ownerId AND exerciseId = :exerciseId ORDER BY date ASC")
     abstract fun observePoints(ownerId: String, exerciseId: String): Flow<List<ProgressExercisePointEntity>>
@@ -86,6 +103,20 @@ abstract class ProgressDao {
     @Query("DELETE FROM progress_body_meta")
     abstract suspend fun deleteEveryBodyMeta()
 
+    @Query("DELETE FROM progress_exercises")
+    abstract suspend fun deleteEveryExercise()
+
+    @Query("DELETE FROM progress_exercises_meta")
+    abstract suspend fun deleteEveryExercisesMeta()
+
+    /** La lista nueva reemplaza a la del dueño y se anota cuándo se bajó, todo junto. */
+    @Transaction
+    open suspend fun replaceExercises(ownerId: String, rows: List<ProgressExerciseEntity>, fetchedAt: Long) {
+        deleteExercises(ownerId)
+        insertExercises(rows)
+        upsertExercisesMeta(ProgressExercisesMetaEntity(ownerId, fetchedAt))
+    }
+
     /** Los puntos nuevos reemplazan a los del ejercicio y la meta se actualiza, todo junto. */
     @Transaction
     open suspend fun replaceExercise(meta: ProgressExerciseMetaEntity, points: List<ProgressExercisePointEntity>) {
@@ -94,11 +125,12 @@ abstract class ProgressDao {
         upsertMeta(meta)
     }
 
-    /** Un 404: el ejercicio ya no existe para el alumno. */
+    /** Un 404: el ejercicio ya no existe para el alumno; sale también del desplegable. */
     @Transaction
     open suspend fun deleteExercise(ownerId: String, exerciseId: String) {
         deletePoints(ownerId, exerciseId)
         deleteMeta(ownerId, exerciseId)
+        deleteTrainedExercise(ownerId, exerciseId)
     }
 
     @Transaction
@@ -115,6 +147,8 @@ abstract class ProgressDao {
         deleteAllMeta(ownerId)
         deleteBodyPoints(ownerId)
         deleteBodyMeta(ownerId)
+        deleteExercises(ownerId)
+        deleteExercisesMeta(ownerId)
     }
 
     @Transaction
@@ -123,6 +157,8 @@ abstract class ProgressDao {
         deleteEveryMeta()
         deleteEveryBodyPoint()
         deleteEveryBodyMeta()
+        deleteEveryExercise()
+        deleteEveryExercisesMeta()
     }
 
     /** Corre el bloque en una sola transacción de Room. */

@@ -21,8 +21,7 @@ class HistoryDaoTest {
     private fun session(id: String, owner: String = "u1", startedAt: Long = 1L, inLatest: Boolean = true) =
         HistorySessionEntity(id, owner, startedAt, startedAt + 60_000, 1, "Push", null, null, null, false, 3, 300.0, false, inLatest, false)
 
-    private fun exercise(sessionId: String, exerciseId: String? = null, position: Int = 0) =
-        HistoryExerciseEntity(sessionId, position, "Press", null, 3, 10, 40.0, false, exerciseId)
+    private fun exercise(sessionId: String) = HistoryExerciseEntity(sessionId, 0, "Press", null, 3, 10, 40.0, false)
     private fun set(id: String, sessionId: String) = HistorySetEntity(id, sessionId, 0, 1, 10, 40.0, 1L)
 
     @After fun close() = db.close()
@@ -129,14 +128,5 @@ class HistoryDaoTest {
         assertTrue(dao.observeSeen("u1").first().isEmpty())
         dao.clearAll()
         assertTrue(dao.observeSeen("u2").first().isEmpty())
-    }
-
-    @Test fun sesionesSinIdDeEjercicioSoloDelDuenoConDetalleYConAlgunNulo() = runBlocking {
-        dao.upsertSessions(listOf(session("a"), session("ok"), session("sinDetalle"), session("x", owner = "u2")))
-        dao.replaceDetail("a", listOf(exercise("a", "e1", 0), exercise("a", null, 1), exercise("a", null, 2)), emptyList())
-        dao.replaceDetail("ok", listOf(exercise("ok", "e1")), emptyList())
-        dao.replaceDetail("x", listOf(exercise("x")), emptyList())
-        dao.insertExercises(listOf(exercise("sinDetalle")))
-        assertEquals(listOf("a"), dao.sessionIdsMissingExerciseId("u1"))
     }
 }

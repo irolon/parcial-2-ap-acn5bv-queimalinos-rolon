@@ -4,19 +4,17 @@ import com.fittrainer.data.api.errorCode
 import com.fittrainer.data.api.progress.ProgressApi
 import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.db.progress.ProgressDao
-import com.fittrainer.data.db.progress.TrainedExercise
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.repository.toDataError
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.data.session.UserDataCleaner
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import retrofit2.HttpException
 import java.time.Clock
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -25,12 +23,15 @@ import kotlin.coroutines.cancellation.CancellationException
 /** Código del backend para un ejercicio borrado (spec §3.4). */
 private const val EXERCISE_NOT_FOUND = "EXERCISE_NOT_FOUND"
 
+/** El backend valida las fechas del overview en hora de Argentina. */
+private val ARGENTINA: ZoneId = ZoneId.of("America/Argentina/Buenos_Aires")
+
 /** Lo guardado se considera fresco este tiempo; antes de eso solo "Reintentar" (force) vuelve a bajar. */
 const val PROGRESS_FRESH_MS = 5 * 60_000L
 
 /**
- * Gráficos de progreso (tarjeta 13). Baja el historial completo de un ejercicio o de las medidas, reemplaza el
- * caché de Room y expone Flows de Room: el ViewModel nunca ve Retrofit.
+ * Gráficos de progreso (tarjeta 13). Baja la lista de ejercicios entrenados (overview), el historial completo de un
+ * ejercicio o el de las medidas, reemplaza el caché de Room y expone Flows de Room: el ViewModel nunca ve Retrofit.
  */
 @Singleton
 class ProgressRepository @Inject constructor(
@@ -44,12 +45,9 @@ class ProgressRepository @Inject constructor(
     /** Un pedido que arrancó antes del logout no escribe aunque el token siga (mismo patrón que el historial). */
     @Volatile private var clearGeneration = 0
 
-    /** Por dueño: ejercicios que el servidor dijo que ya no existen (EXERCISE_NOT_FOUND); salen del desplegable hasta el logout. */
-    private val notFound = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
-
-    fun observeTrainedExercises(ownerId: String): Flow<List<TrainedExercise>> =
-        combine(dao.observeTrainedExercises(ownerId), notFound) { list, gone ->
-            list.filterNot { it.exerciseId in gone[ownerId].orEmpty() }
+    fun observeTrainedExercises(ownerId: String): Flow<TrainedExercises> =
+        combine(dao.observeTrainedExercises(ownerId), dao.observeExercisesMeta(ownerId)) { list, meta ->
+            TrainedExercises(list, meta?.fetchedAt)
         }
 
     fun observeExercise(ownerId: String, exerciseId: String): Flow<ExerciseChart> =
@@ -61,22 +59,38 @@ class ProgressRepository @Inject constructor(
         combine(dao.observeBody(ownerId), dao.observeBodyMeta(ownerId)) { points, meta -> BodyChart(points, meta?.fetchedAt) }
 
     /**
+     * La lista del desplegable, de `GET /progress/overview`: todos los ejercicios entrenados, sin filtrar por rango (el
+     * historial guardado solo tiene las últimas 20 sesiones). `from` = hoy para que el volumen semanal, que no se usa,
+     * venga corto. Mismos 5 minutos que el resto; un error deja Room como estaba.
+     */
+    suspend fun refreshExercises(ownerId: String, force: Boolean = false): Result<Unit> = guard {
+        val gen = clearGeneration
+        if (!force && isFresh(dao.exercisesMeta(ownerId)?.fetchedAt)) return@guard
+        val from = clock.instant().atZone(ARGENTINA).toLocalDate().toString()
+        val rows = api.overview(from).data.exercises.map { it.toEntity(ownerId) }
+        dao.inTransaction {
+            checkOwner(ownerId, gen)
+            dao.replaceExercises(ownerId, rows, clock.millis())
+        }
+    }
+
+    /**
      * Un 404 borra el caché del ejercicio y lo saca de la lista (éxito). Cualquier otro error deja Room como estaba.
-     * Fresco = menos de 5 min y el mismo marcador del historial: si entrenó el ejercicio después del pedido, se vuelve a pedir.
+     * Fresco = menos de 5 min y el mismo marcador de la lista: si lo entrenó otro día desde el pedido, se vuelve a pedir.
      */
     suspend fun refreshExercise(ownerId: String, exerciseId: String, force: Boolean = false): Result<Unit> = guard {
         val gen = clearGeneration
-        val marker = dao.lastTrainedAt(ownerId, exerciseId)
+        val marker = dao.trainedExercise(ownerId, exerciseId)?.marker()
         val cached = dao.meta(ownerId, exerciseId)
-        if (!force && isFresh(cached?.fetchedAt) && cached?.historyMarker == marker) return@guard
+        if (!force && isFresh(cached?.fetchedAt) && cached?.trainedMarker == marker) return@guard
         val dto = try {
             api.exercise(exerciseId).data
         } catch (e: HttpException) {
             if (e.code() != 404 || e.errorCode() != EXERCISE_NOT_FOUND) throw e
+            // Sale de la lista en Room (no en memoria): matar la app no lo vuelve a mostrar.
             dao.inTransaction {
                 checkOwner(ownerId, gen)
                 dao.deleteExercise(ownerId, exerciseId)
-                notFound.update { it + (ownerId to it[ownerId].orEmpty() + exerciseId) }
             }
             return@guard
         }
@@ -84,8 +98,7 @@ class ProgressRepository @Inject constructor(
         // Chequeo y escritura en la misma transacción: clearUserData no puede colarse entre los dos.
         dao.inTransaction {
             checkOwner(ownerId, gen)
-            dao.replaceExercise(meta.copy(historyMarker = marker), points)
-            notFound.update { it + (ownerId to it[ownerId].orEmpty() - exerciseId) }
+            dao.replaceExercise(meta.copy(trainedMarker = marker), points)
         }
     }
 
@@ -110,7 +123,6 @@ class ProgressRepository @Inject constructor(
 
     override suspend fun clearUserData(ownerId: String?) {
         clearGeneration++
-        notFound.update { if (ownerId == null) emptyMap() else it - ownerId }
         if (ownerId == null) dao.clearAll() else dao.clear(ownerId)
     }
 

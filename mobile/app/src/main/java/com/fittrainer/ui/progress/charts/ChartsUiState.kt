@@ -15,6 +15,8 @@ data class ChartsUiState(
     val view: ChartsView = ChartsView.LOADS,
     /** Room ya emitió la lista de ejercicios entrenados (antes de eso no se sabe si está vacía). */
     val exercisesLoaded: Boolean = false,
+    /** La lista se bajó alguna vez del servidor (overview): recién ahí una lista vacía quiere decir "no entrenó nada". */
+    val exercisesEverLoaded: Boolean = false,
     val exercises: List<TrainedExercise> = emptyList(),
     val selectedExerciseId: String? = null,
     val metrics: List<ChartMetric> = emptyList(),
@@ -38,4 +40,7 @@ data class ChartsUiState(
     val refreshFailed: Boolean = false,
     /** Ya terminó al menos un refresco de lo que se ve (ejercicio elegido o medidas), con o sin éxito. */
     val refreshAttempted: Boolean = false,
+    /** Refresco de la lista de ejercicios: corriendo y ya terminado alguno (para la lista nunca bajada). */
+    val listRefreshing: Boolean = false,
+    val listRefreshAttempted: Boolean = false,
 )
