@@ -106,3 +106,23 @@ describe('inactiveStudents', () => {
     expect(result).toEqual([never[1], trained[1], trained[2], trained[0], trained[3]]);
   });
 });
+
+describe('sortStudents por racha', () => {
+  const withStreak = (name, current, longest) =>
+    student({ name, streak: { current_days: current, longest_days: longest, last_trained_date: null } });
+
+  it('mayor racha actual primero, luego mejor marca, sin dato al final y empate por nombre', () => {
+    const twelve = withStreak('Doce', 12, 12);
+    const three = withStreak('Tres', 3, 9);
+    const zeroBest20 = withStreak('Cero20', 0, 20);
+    const zeroBest5 = withStreak('Cero5', 0, 5);
+    const none = student({ name: 'Nulo', streak: null });
+    const tieB = withStreak('Beto', 3, 9);
+    const sorted = sortStudents([none, zeroBest5, three, zeroBest20, twelve, tieB], 'racha');
+    expect(sorted).toEqual([twelve, tieB, three, zeroBest20, zeroBest5, none]);
+  });
+
+  it('parseStudentFilters acepta orden=racha', () => {
+    expect(parse('orden=racha').orden).toBe('racha');
+  });
+});

@@ -55,6 +55,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-09 | Comentar sesión del alumno | Dejar notas y feedback sobre sesiones completadas del alumno | PT-08 |
 | CU-10 | Gestionar agenda | Cargar disponibilidad horaria, aceptar/rechazar turnos solicitados por alumnos | PT-11 |
 | CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes | PT-13 |
+| CU-25 | Crear y asignar desafío | Asigna una plantilla (Desafíos → Plantillas → Asignar) o un desafío propio nuevo (metas de sesiones, racha, volumen o peso corporal; premio "Desafío cumplido" opcional, solo la primera vez) a uno o varios alumnos y sigue su progreso desde la ficha | AL-11 |
 
 ### Alumno
 
@@ -133,6 +134,7 @@ rectangle "FitTrainer" {
   usecase "CU-09\nComentar sesión\ndel alumno" as CU09
   usecase "CU-10\nGestionar agenda" as CU10
   usecase "CU-11\nEnviar mensaje\nal alumno" as CU11
+  usecase "CU-25\nCrear y asignar\ndesafío" as CU25
 
   ' --- Alumno ---
   usecase "CU-12\nRegistrarse\nvía invitación" as CU12
@@ -163,6 +165,7 @@ PT --> CU08
 PT --> CU09
 PT --> CU10
 PT --> CU11
+PT --> CU25
 
 ' --- Asociaciones Alumno ---
 AL --> CU12

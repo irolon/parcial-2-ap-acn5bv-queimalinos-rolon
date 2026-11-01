@@ -2,6 +2,7 @@ import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import ChallengesPage from '@/pages/challenges/ChallengesPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import RoutineEditorPage from '@/pages/routines/RoutineEditorPage';
@@ -79,6 +80,7 @@ export const routes = [
     alumnos: <StudentsPage />,
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,
+    desafios: <ChallengesPage />,
   }),
   // Fuera del menú del alumno: el detalle de una rutina y la sesión activa (se entra desde Mis rutinas y Hoy).
   roleSection(ROLES.STUDENT, STUDENT_NAV, [

@@ -11,8 +11,9 @@ import { assertCanAccessStudent } from './student-access.service.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
- * sesión. Por defecto solo activos. La última sesión sale de una segunda
- * consulta a la vista student_last_session (ver student.model.js).
+ * sesión y su racha. Por defecto solo activos. La última sesión sale de una segunda
+ * consulta a la vista student_last_session (ver student.model.js) y la racha de
+ * student_streaks (null si todavía no se calculó).
  */
 export async function list(trainerId, { active = true, search, page = 1, limit = 20 } = {}) {
   const { data: rows, total } = await studentsRepo.findStudentsByTrainer({
@@ -24,13 +25,21 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
   });
 
   // .in('student_id', []) es inválido en PostgREST: con la página vacía no se consulta.
-  const lastSessions = rows.length
-    ? await studentsRepo.findLastSessionDates(rows.map((s) => s.id))
-    : [];
+  const ids = rows.map((s) => s.id);
+  const [lastSessions, streaks] = ids.length
+    ? await Promise.all([studentsRepo.findLastSessionDates(ids), studentsRepo.findStreaks(ids)])
+    : [[], []];
   const lastByStudent = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
+  const streakByStudent = new Map(
+    streaks.map(({ student_id, ...streak }) => [student_id, streak])
+  );
 
   return {
-    data: rows.map((s) => ({ ...s, last_session_at: lastByStudent.get(s.id) ?? null })),
+    data: rows.map((s) => ({
+      ...s,
+      last_session_at: lastByStudent.get(s.id) ?? null,
+      streak: streakByStudent.get(s.id) ?? null,
+    })),
     meta: { total, page, limit, total_pages: Math.ceil(total / limit) },
   };
 }

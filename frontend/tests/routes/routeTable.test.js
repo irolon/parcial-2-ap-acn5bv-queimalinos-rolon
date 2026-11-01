@@ -19,7 +19,7 @@ import {
 describe('tabla de rutas', () => {
   it('tiene los ítems del entrenador en el orden del prototipo', () => {
     expect(TRAINER_NAV.items.map((i) => i.label)).toEqual([
-      'Dashboard', 'Alumnos', 'Rutinas', 'Biblioteca', 'Agenda', 'Mensajes',
+      'Dashboard', 'Alumnos', 'Rutinas', 'Biblioteca', 'Desafíos', 'Agenda', 'Mensajes',
     ]);
   });
 

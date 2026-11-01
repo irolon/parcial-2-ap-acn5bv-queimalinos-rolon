@@ -1,6 +1,8 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { isUuid } from '../../shared/utils/validators.js';
-import { GOAL_TYPES } from '../../models/gamification/gamification.model.js';
+import { GOAL_TYPE, GOAL_TYPES } from '../../models/gamification/gamification.model.js';
+
+const INTEGER_GOAL_TYPES = [GOAL_TYPE.SESSIONS_COUNT, GOAL_TYPE.STREAK];
 
 const fail = (details) => {
   throw Errors.validation('Error de validación', details);
@@ -39,6 +41,11 @@ function parseChallenge(body, partial) {
     if (typeof body.goal_value !== 'number' || !Number.isFinite(body.goal_value) || body.goal_value <= 0) {
       details.push({ field: 'goal_value', message: 'goal_value debe ser un número mayor a 0' });
     } else out.goal_value = body.goal_value;
+  }
+  // Sesiones y días de racha se cuentan de a uno: solo el volumen y el peso admiten decimales.
+  if (INTEGER_GOAL_TYPES.includes(out.goal_type) && out.goal_value !== undefined && !Number.isInteger(out.goal_value)) {
+    details.push({ field: 'goal_value', message: 'goal_value debe ser un entero para metas de sesiones o racha' });
+    delete out.goal_value;
   }
   if (present('duration_days')) {
     const n = body.duration_days;

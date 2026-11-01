@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { argentinaDate, greetingDate, localInputValue, pad, todayString } from '@/utils/dates';
+import {
+  argentinaDate,
+  formatDateAR,
+  formatDayMonthAR,
+  greetingDate,
+  localInputValue,
+  pad,
+  todayString,
+} from '@/utils/dates';
 
 describe('argentinaDate', () => {
   // Argentina es UTC-3 todo el año: las 23:59 de allá son las 02:59 UTC del día siguiente.
@@ -95,5 +103,11 @@ describe('dates', () => {
 
   it('localInputValue da aaaa-mm-ddThh:mm en hora local', () => {
     expect(localInputValue(new Date(2026, 9, 5, 8, 7))).toBe('2026-10-05T08:07');
+  });
+
+  it('formatDateAR y formatDayMonthAR usan hora argentina en el límite de medianoche', () => {
+    expect(formatDateAR('2026-10-31T01:30:00Z')).toBe('30/10/2026');
+    expect(formatDayMonthAR('2026-10-31T01:30:00Z')).toBe('30/10');
+    expect(formatDateAR('2026-10-31T03:00:00Z')).toBe('31/10/2026');
   });
 });

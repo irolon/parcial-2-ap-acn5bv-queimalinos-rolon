@@ -15,6 +15,7 @@ export const mockStudentsRepo = {
   createStudent: jest.fn(),
   findStudentsByTrainer: jest.fn(),
   findLastSessionDates: jest.fn(),
+  findStreaks: jest.fn(),
   findStudentById: jest.fn(),
   updateStudent: jest.fn(),
 };

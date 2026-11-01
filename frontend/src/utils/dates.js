@@ -38,3 +38,14 @@ export function greetingDate(now = new Date()) {
   const { weekday, day, month } = argentinaDate(now);
   return `${DAY_OPTIONS[weekday - 1].label} ${day} de ${MONTHS[month - 1]}`;
 }
+
+const AR_ZONE = 'America/Argentina/Buenos_Aires';
+const arParts = (options) => new Intl.DateTimeFormat('es-AR', { timeZone: AR_ZONE, ...options });
+const FULL_DATE = arParts({ day: '2-digit', month: '2-digit', year: 'numeric' });
+const DAY_MONTH = arParts({ day: '2-digit', month: '2-digit' });
+
+/** `dd/mm/aaaa` de un ISO, en hora de Argentina. */
+export const formatDateAR = (iso) => FULL_DATE.format(new Date(iso));
+
+/** `dd/mm` de un ISO, en hora de Argentina. */
+export const formatDayMonthAR = (iso) => DAY_MONTH.format(new Date(iso));

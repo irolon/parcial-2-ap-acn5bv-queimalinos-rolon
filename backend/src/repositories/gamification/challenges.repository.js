@@ -1,6 +1,6 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
-import { unwrap } from '../../shared/utils/supabase-query.js';
+import { fetchAll, unwrap } from '../../shared/utils/supabase-query.js';
 import {
   ACHIEVEMENTS_TABLE,
   CHALLENGES_TABLE,
@@ -57,6 +57,33 @@ export const hasActiveAssignments = (id) => countAssignments(id, CHALLENGE_STATU
 
 /** ¿Hay alguna asignación, en cualquier estado (activa, completada, fallida o abandonada)? */
 export const hasAssignments = (id) => countAssignments(id);
+
+/** Asignaciones (challenge_id, status) de los alumnos de ese entrenador para esos desafíos; el service las agrupa. */
+export async function countByChallenge(trainerId, challengeIds) {
+  if (challengeIds.length === 0) return [];
+  // Una fila por asignación: PostgREST corta en 1000, así que se pagina (con orden estable por id).
+  return fetchAll(() =>
+    supabase
+      .from(STUDENT_CHALLENGES_TABLE)
+      .select('id, challenge_id, status, students!inner(trainer_id)')
+      .eq('students.trainer_id', trainerId)
+      .in('challenge_id', challengeIds)
+      .order('id')
+  );
+}
+
+/** Ids de los alumnos del entrenador que tienen el desafío activo. */
+export async function findActiveStudentIds(challengeId, trainerId) {
+  const rows = unwrap(
+    await supabase
+      .from(STUDENT_CHALLENGES_TABLE)
+      .select('student_id, students!inner(trainer_id)')
+      .eq('challenge_id', challengeId)
+      .eq('status', CHALLENGE_STATUS.ACTIVE)
+      .eq('students.trainer_id', trainerId)
+  );
+  return rows.map((r) => r.student_id);
+}
 
 /** ¿Existe el logro en el catálogo? */
 export async function achievementExists(id) {
