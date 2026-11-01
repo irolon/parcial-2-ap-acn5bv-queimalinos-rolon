@@ -12,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,11 +23,13 @@ import com.fittrainer.ui.students.detail.components.SectionCard
 import com.fittrainer.ui.students.sessions.components.RetryRow
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import java.time.Instant
 
-/** Sección de la ficha (E3): SESIONES / RACHA / PRS del mes y el calendario de asistencia. */
+/** Sección de la ficha (E3): SESIONES / RACHA / PRS del mes y el calendario de asistencia. createdAt: el alta (piso de la flecha). */
 @Composable
-fun StudentProgressSection(viewModel: StudentProgressViewModel = hiltViewModel()) {
+fun StudentProgressSection(createdAt: Instant, viewModel: StudentProgressViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(createdAt) { viewModel.setCreatedAt(createdAt) }
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
         onStopOrDispose { }

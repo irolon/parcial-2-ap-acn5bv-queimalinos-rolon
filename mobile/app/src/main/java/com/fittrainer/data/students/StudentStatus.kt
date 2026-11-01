@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit
 /** Estados de la web (frontend/src/utils/students/activity.js). */
 enum class StudentStatus { ACTIVE, INACTIVE, NEW, DISABLED }
 
-/** Filtros de la lista. ALL = todos menos los dados de baja; NEW = nunca entrenó (cualquier antigüedad). */
+/** Filtros de la lista. ALL = todos menos los dados de baja; cada otro filtro coincide con la etiqueta de la fila. */
 enum class StudentFilter { ALL, ACTIVE, AT_RISK, NEW, DISABLED }
 
 /** Días sin entrenar desde los que un alumno está "en riesgo". */
@@ -30,7 +30,7 @@ fun TrainerStudent.matches(filter: StudentFilter, today: LocalDate): Boolean = w
     StudentFilter.ALL -> active
     StudentFilter.ACTIVE -> status(today) == StudentStatus.ACTIVE
     StudentFilter.AT_RISK -> status(today) == StudentStatus.INACTIVE
-    StudentFilter.NEW -> active && lastSessionAt == null
+    StudentFilter.NEW -> status(today) == StudentStatus.NEW
     StudentFilter.DISABLED -> !active
 }
 

@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { scheduleOf } from '../../../../../src/models/students/adherence.js';
 import {
   mockStudentsRepo,
   service,
@@ -9,7 +10,7 @@ const fakeNow = (iso) => jest.useFakeTimers({ now: new Date(iso), doNotFake: ['n
 describe('students.service — list', () => {
   beforeEach(() => {
     mockStudentsRepo.findLastSessionDates.mockResolvedValue([]);
-    mockStudentsRepo.findActiveRoutineDays.mockResolvedValue(new Map());
+    mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(new Map());
     mockStudentsRepo.findFinishedSessionDates.mockResolvedValue(new Map());
   });
 
@@ -24,8 +25,8 @@ describe('students.service — list', () => {
       data: [{ id: 's1' }, { id: 's2' }],
       total: 2,
     });
-    mockStudentsRepo.findActiveRoutineDays.mockResolvedValue(
-      new Map([['s1', ['monday', 'wednesday', 'friday']], ['s2', []]])
+    mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(
+      new Map([['s1', scheduleOf([{ days: ['monday', 'wednesday', 'friday'], since: '2026-09-01' }])], ['s2', scheduleOf([])]])
     );
     mockStudentsRepo.findFinishedSessionDates.mockResolvedValue(
       new Map([['s1', ['2026-10-30', '2026-11-02']], ['s2', []]])
@@ -33,8 +34,8 @@ describe('students.service — list', () => {
 
     const r = await service.list('trainer-1', {});
 
-    expect(mockStudentsRepo.findActiveRoutineDays).toHaveBeenCalledTimes(1);
-    expect(mockStudentsRepo.findActiveRoutineDays).toHaveBeenCalledWith(['s1', 's2']);
+    expect(mockStudentsRepo.findActiveRoutineSchedules).toHaveBeenCalledTimes(1);
+    expect(mockStudentsRepo.findActiveRoutineSchedules).toHaveBeenCalledWith(['s1', 's2']);
     expect(mockStudentsRepo.findFinishedSessionDates).toHaveBeenCalledTimes(1);
     expect(mockStudentsRepo.findFinishedSessionDates).toHaveBeenCalledWith(
       ['s1', 's2'],
@@ -42,6 +43,36 @@ describe('students.service — list', () => {
     );
     expect(r.data[0]).toMatchObject({ days_per_week: 3, adherence_7d: { assigned: 3, done: 2, pct: 67 } });
     expect(r.data[1]).toMatchObject({ days_per_week: 0, adherence_7d: { assigned: 0, done: 0, pct: null } });
+  });
+
+  it('los días anteriores al alta y a la rutina no cuentan (alumno nuevo no arranca en 0 %)', async () => {
+    // Jueves 05/11; ventana 29/10-04/11. L/X/V: 30/10, 02/11 y 04/11.
+    fakeNow('2026-11-05T16:00:00Z');
+    mockStudentsRepo.findStudentsByTrainer.mockResolvedValue({
+      data: [
+        // Alta el 03/11: solo cuenta el 04/11, y entrenó.
+        { id: 'nueva', created_at: '2026-11-03T12:00:00Z' },
+        // Alta vieja, rutina creada el 01/11: cuentan 02/11 y 04/11.
+        { id: 'cambio', created_at: '2026-01-10T12:00:00Z' },
+        // Alta el 03/11 con la rutina creada hoy.
+        { id: 'sin', created_at: '2026-11-03T12:00:00Z' },
+      ],
+      total: 3,
+    });
+    const lxv = (since) => scheduleOf([{ days: ['monday', 'wednesday', 'friday'], since }]);
+    mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(
+      new Map([['nueva', lxv('2026-11-03')], ['cambio', lxv('2026-11-01')], ['sin', lxv('2026-11-05')]])
+    );
+    mockStudentsRepo.findFinishedSessionDates.mockResolvedValue(
+      new Map([['nueva', ['2026-11-04']], ['cambio', ['2026-11-02']]])
+    );
+
+    const r = await service.list('trainer-1', {});
+
+    expect(r.data[0].adherence_7d).toEqual({ assigned: 1, done: 1, pct: 100 });
+    expect(r.data[1].adherence_7d).toEqual({ assigned: 2, done: 1, pct: 50 });
+    // Ningún día de la ventana es posterior a la rutina: sin plan todavía, no 0 %.
+    expect(r.data[2].adherence_7d).toEqual({ assigned: 0, done: 0, pct: null });
   });
 
   it('a las 23:30 en Argentina (02:30Z del día siguiente) el día es el argentino', async () => {

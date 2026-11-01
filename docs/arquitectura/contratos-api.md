@@ -199,7 +199,7 @@ Lista los alumnos del trainer autenticado (rol: trainer).
 
 > `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. El listado no trae `level`, `gym_equipment` ni `injuries`.
 >
-> `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma.
+> `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
 
 ### GET /students/:id
 
@@ -245,7 +245,7 @@ Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la 
 
 - `days` trae todos los días del mes, en orden. `status`: `trained` (al menos una sesión terminada ese día, asignado o no), `missed` (día asignado, anterior a hoy, sin entrenar), `rest` (no asignado y sin entrenar) o `upcoming` (hoy sin entrenar todavía, o un día futuro).
 - `sessions`: sesiones terminadas del mes. `assigned_days`: días asignados del mes hasta hoy inclusive. `prs`: sesiones del mes con al menos un récord (función SQL `session_records`).
-- Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos.
+- Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos. Los días anteriores al alta del alumno o a la creación de la rutina que asigna ese día de la semana no cuentan como asignados (son `rest`), igual que en la adherencia de `GET /students`.
 
 ### PATCH /students/:id
 
