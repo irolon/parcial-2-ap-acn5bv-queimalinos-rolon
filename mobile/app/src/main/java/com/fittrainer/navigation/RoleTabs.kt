@@ -54,10 +54,12 @@ val StudentTabs = listOf(
     Tab("student/profile", "Perfil", Icons.Filled.Person, isAccountMenu = true),
 )
 
+const val TRAINER_STUDENTS_ROUTE = "trainer/students"
+
 /** Guía Mobile p.5 — app del entrenador. */
 val TrainerTabs = listOf(
     Tab("trainer/home", "Inicio", Icons.Filled.Home),
-    Tab("trainer/students", "Alumnos", Icons.Filled.Face),
+    Tab(TRAINER_STUDENTS_ROUTE, "Alumnos", Icons.Filled.Face),
     Tab("trainer/messages", "Mensajes", Icons.Filled.Email),
     Tab("trainer/more", "Más", Icons.Filled.Menu, isAccountMenu = true),
 )
