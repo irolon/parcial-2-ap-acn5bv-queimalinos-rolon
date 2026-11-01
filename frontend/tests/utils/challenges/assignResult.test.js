@@ -10,7 +10,8 @@ const students = new Map(
     ['s-5', 'Pedro'],
   ].map(([id, name]) => [id, { id, name }]),
 );
-const created = (...ids) => ids.map((id) => ({ student_id: id }));
+// Como el backend: las asignaciones creadas no traen `student_id`.
+const created = (...ids) => ids.map((id) => ({ id: `sc-${id}`, status: 'active' }));
 const active = (...ids) => ids.map((id) => ({ student_id: id, reason: 'already_active' }));
 
 describe('assignResultText', () => {

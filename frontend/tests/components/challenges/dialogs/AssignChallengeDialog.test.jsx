@@ -74,7 +74,7 @@ describe('AssignChallengeDialog', () => {
     await check('Tomás');
     await check('Lucía');
     await userEvent.dblClick(assignButton());
-    resolve(jsonResponse(201, { data: { created: [{ student_id: 's-1' }], skipped: [{ student_id: 's-3', reason: 'already_active' }] } }));
+    resolve(jsonResponse(201, { data: { created: [{ id: 'sc-1', status: 'active' }], skipped: [{ student_id: 's-3', reason: 'already_active' }] } }));
     expect(await screen.findByRole('status')).toHaveTextContent('Asignado a 1 alumno · 1 ya lo tenía activo (Lucía Pérez)');
     expect(assignCalls(fetchMock)).toHaveLength(1);
     expect(bodyOf(assignCalls(fetchMock)[0][1])).toEqual({ student_ids: ['s-1', 's-3'] });

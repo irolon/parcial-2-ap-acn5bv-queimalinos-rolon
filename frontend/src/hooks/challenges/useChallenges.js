@@ -39,16 +39,23 @@ export function useDeleteChallenge() {
   });
 }
 
-/** Asigna a varios alumnos; refresca desafíos, alumnos y los desafíos de cada alumno creado. */
+/**
+ * Asigna a varios alumnos; refresca desafíos, alumnos y la ficha de cada alumno pedido que no se salteó
+ * (las asignaciones de `created` no traen `student_id`, por eso se parte de los ids de la mutación).
+ */
 export function useAssignChallenge() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, studentIds }) => assignChallenge(id, studentIds),
-    onSuccess: (result) =>
-      Promise.all([
+    onSuccess: (result, { studentIds }) => {
+      const skipped = new Set(result.skipped.map((s) => s.student_id));
+      return Promise.all([
         queryClient.invalidateQueries({ queryKey: CHALLENGES_KEY }),
         queryClient.invalidateQueries({ queryKey: STUDENTS_KEY }),
-        ...result.created.map((c) => queryClient.invalidateQueries({ queryKey: ['student-challenges', c.student_id] })),
-      ]),
+        ...studentIds
+          .filter((id) => !skipped.has(id))
+          .map((id) => queryClient.invalidateQueries({ queryKey: ['student-challenges', id] })),
+      ]);
+    },
   });
 }

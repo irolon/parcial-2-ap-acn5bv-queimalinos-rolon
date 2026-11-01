@@ -14,7 +14,7 @@ const SKIP_REASONS = [
 /**
  * Aviso tras asignar: "Asignado a 3 alumnos · 1 ya lo tenía activo (Lucía)". Si no se creó ninguno,
  * "Ningún alumno nuevo: 2 ya lo tenían activo (…)" (nunca "Asignado a 0 alumnos").
- * @param {{ created: { student_id: string }[], skipped: { student_id: string, reason: string }[] }} result
+ * @param {{ created: object[], skipped: { student_id: string, reason: string }[] }} result
  * @param {Map<string, { name: string }>} studentsById
  */
 export function assignResultText({ created, skipped }, studentsById) {
