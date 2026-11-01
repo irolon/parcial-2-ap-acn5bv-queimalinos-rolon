@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MY_ROUTINES_PATH,
   NEW_ROUTINE,
   NEW_STUDENT,
   ROUTINES_PATH,
@@ -31,6 +32,7 @@ describe('tabla de rutas', () => {
 
   it('arma los links del alumno que no están en el menú', () => {
     expect(WORKOUT_PATH).toBe('/alumno/entrenar');
+    expect(MY_ROUTINES_PATH).toBe('/alumno/rutinas');
     expect(STUDENT_ROUTINE.path).toBe('/alumno/rutinas/:id');
     expect(studentRoutineHref('r-1')).toBe('/alumno/rutinas/r-1');
     const menuLinks = STUDENT_NAV.items.map((i) => `${STUDENT_NAV.base}/${i.path}`);
