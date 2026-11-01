@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.google.services) apply false
 }
 
 // Regla del proyecto (CONTRIBUTING.md): ningún .kt/.kts pasa de 200 líneas físicas.

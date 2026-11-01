@@ -47,6 +47,8 @@ import com.fittrainer.ui.workout.WorkoutEntryViewModel
 @Composable
 fun TodayScreen(
     onOpenWorkout: () -> Unit,
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
     uploads: UploadStatusViewModel = hiltViewModel(),
@@ -72,6 +74,8 @@ fun TodayScreen(
         uploads = uploadsNoticeUi(uploadCounts, manualUpload),
         onUploadNow = uploads::uploadNow,
         onDismissFailures = uploads::dismissFailures,
+        unreadNotifications = unreadNotifications,
+        onOpenNotifications = onOpenNotifications,
     )
 }
 
@@ -87,6 +91,8 @@ fun TodayBody(
     uploads: UploadsNoticeUi? = null,
     onUploadNow: () -> Unit = {},
     onDismissFailures: () -> Unit = {},
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
     // La clave es la rutina de hoy (null si no toca entrenar): al cambiar o desaparecer, la hoja vuelve a cerrada.
@@ -102,7 +108,12 @@ fun TodayBody(
             contentPadding = PaddingValues(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            item { TodayHeader(state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine) }
+            item {
+                TodayHeader(
+                    state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine,
+                    unreadNotifications = unreadNotifications, onOpenNotifications = onOpenNotifications,
+                )
+            }
             state.notice?.let { notice -> item { NoticeBanner(notice, onDismissNotice) } }
             val uploadsItem: LazyListScope.() -> Unit = {
                 uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
