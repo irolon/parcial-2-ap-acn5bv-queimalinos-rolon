@@ -1,4 +1,4 @@
-import { errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
+import { errorResponse, reply, stubFetch } from '../shared/fetchMock';
 import { sessionsRoute } from '../sessions/sessions';
 
 /** Respuesta de GET /students/:id/streak con `days` de racha actual (y `longest` de récord). */
@@ -7,12 +7,6 @@ export const streakData = (days = 0, longest = days) => ({
   longest_streak_days: longest,
   last_session_date: days > 0 ? '2026-10-31' : null,
 });
-
-// Cada respuesta es el dato, un status de error o una función (también async) que lo arma en cada GET.
-async function reply(answer) {
-  const value = await (typeof answer === 'function' ? answer() : answer);
-  return typeof value === 'number' ? errorResponse(value, 'INTERNAL') : jsonResponse(200, { data: value });
-}
 
 /**
  * Lo que la web del alumno pide al abrir Hoy: `(method, path, init, url) => Response | null` (null si el pedido es de otra cosa).

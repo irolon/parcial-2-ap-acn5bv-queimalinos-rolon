@@ -2,11 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore } from '../auth/authStore';
-import { errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
+import { STUDENT } from '../routes/renderRoute';
+import { errorResponse, reply, stubFetch } from '../shared/fetchMock';
 import { studentDetail } from './fixtures';
 
 /** El alumno que inició sesión en los tests de sus pantallas (el mismo `STUDENT` de las rutas). */
-export const SELF = { id: 's-1', email: 'tomas@fit.com', name: 'Tomás Ruiz', role: 'student' };
+export const SELF = STUDENT;
 
 /** Su ficha, como la devuelve `GET /students/s-1`. */
 export const selfDetail = (overrides = {}) =>
@@ -23,12 +24,6 @@ export function renderOwn(ui) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const utils = render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
   return { ...utils, queryClient };
-}
-
-// Cada respuesta es el dato, un status de error o una función (también async) que lo arma en cada pedido.
-async function reply(answer) {
-  const value = await (typeof answer === 'function' ? answer() : answer);
-  return typeof value === 'number' ? errorResponse(value, 'INTERNAL') : jsonResponse(200, { data: value });
 }
 
 /**
