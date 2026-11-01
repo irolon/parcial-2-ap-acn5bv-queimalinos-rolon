@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CHALLENGE_FORM, GOAL_OPTIONS, toChallengeBody, validateChallengeForm } from '@/utils/challenges/challengeForm';
+import {
+  DEFAULT_CHALLENGE_FORM,
+  GOAL_OPTIONS,
+  toChallengeBody,
+  toNumber,
+  validateChallengeForm,
+} from '@/utils/challenges/challengeForm';
 
 const valid = { ...DEFAULT_CHALLENGE_FORM, name: 'Mes de fuerza', goal_value: '12' };
 
@@ -25,6 +31,43 @@ describe('validateChallengeForm', () => {
   });
 
   it('acepta decimales con coma en el valor', () => {
+    expect(validateChallengeForm({ ...valid, goal_type: 'weight_target', goal_value: '72,5' })).toEqual({});
+  });
+});
+
+describe('toNumber (es-AR)', () => {
+  it.each([
+    ['10.000', 10000],
+    ['1.500', 1500],
+    ['72,5', 72.5],
+    ['10.000,5', 10000.5],
+    ['1,5', 1.5],
+    ['15', 15],
+    [' 15 ', 15],
+  ])('%s → %s', (text, expected) => {
+    expect(toNumber(text)).toBe(expected);
+  });
+
+  it.each(['', '  ', 'abc', '1,2,3', '1.2.3', '72.5', '10..000', '1.50', '12a'])('inválido %j → NaN', (text) => {
+    expect(toNumber(text)).toBeNaN();
+  });
+
+  it('el punto de miles no se toma como decimal al validar ni al armar el body', () => {
+    const values = { ...valid, goal_type: 'volume', goal_value: '10.000' };
+    expect(validateChallengeForm(values)).toEqual({});
+    expect(toChallengeBody(values, null).goal_value).toBe(10000);
+  });
+});
+
+describe('goal_value entero en sesiones y racha', () => {
+  it.each(['sessions_count', 'streak'])('%s rechaza decimales', (goal_type) => {
+    const errors = validateChallengeForm({ ...valid, goal_type, goal_value: '2,5' });
+    expect(Object.keys(errors)).toEqual(['goal_value']);
+    expect(errors.goal_value).toMatch(/entero/);
+  });
+
+  it('volumen y peso objetivo aceptan decimales', () => {
+    expect(validateChallengeForm({ ...valid, goal_type: 'volume', goal_value: '2,5' })).toEqual({});
     expect(validateChallengeForm({ ...valid, goal_type: 'weight_target', goal_value: '72,5' })).toEqual({});
   });
 });

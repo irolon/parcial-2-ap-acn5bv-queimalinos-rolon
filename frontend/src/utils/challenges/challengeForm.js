@@ -18,8 +18,15 @@ export const DEFAULT_CHALLENGE_FORM = {
 export const MAX_NAME = 100;
 export const MAX_DESCRIPTION = 1000;
 
-/** Número desde el texto del input, aceptando coma decimal; `NaN` si está vacío o no es número. */
-const toNumber = (text) => (String(text).trim() === '' ? NaN : Number(String(text).trim().replace(',', '.')));
+// "1234", "1.234", "10.000,5", "72,5": puntos de miles (grupos de 3) y coma decimal, como se escribe en es-AR.
+const AR_NUMBER = /^(\d+|\d{1,3}(\.\d{3})+)(,\d+)?$/;
+const INTEGER_GOALS = ['sessions_count', 'streak'];
+
+/** Número desde el texto del input en es-AR (`10.000` = 10000, `72,5` = 72.5); `NaN` si está vacío o no es válido. */
+export function toNumber(text) {
+  const clean = String(text).trim();
+  return AR_NUMBER.test(clean) ? Number(clean.replaceAll('.', '').replace(',', '.')) : NaN;
+}
 
 /** Las mismas reglas que el backend. Devuelve `{ campo: mensaje }` (vacío si está todo bien). */
 export function validateChallengeForm(values) {
@@ -30,6 +37,9 @@ export function validateChallengeForm(values) {
 
   const value = toNumber(values.goal_value);
   if (!Number.isFinite(value) || value <= 0) errors.goal_value = 'Tiene que ser un número mayor a 0';
+  else if (INTEGER_GOALS.includes(values.goal_type) && !Number.isInteger(value)) {
+    errors.goal_value = 'Tiene que ser un número entero, sin decimales';
+  }
 
   const days = toNumber(values.duration_days);
   if (!Number.isInteger(days) || days < 1 || days > 365) errors.duration_days = 'Entre 1 y 365 días, sin decimales';
