@@ -5,6 +5,9 @@ import { bodyOf, calls } from '../../../helpers/shared/fetchMock';
 import { heldResponse, stubUpload } from '../../../helpers/workout/activeWorkout';
 import { finishedWorkout } from '../../../helpers/workout/workout';
 import { cleanUpBrowser, renderWorkoutPage, stored } from '../../../helpers/workout/workoutPage';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 afterEach(cleanUpBrowser);
 

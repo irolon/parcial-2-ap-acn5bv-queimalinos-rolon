@@ -6,7 +6,7 @@ import { WORKOUT_PATH } from '@/routes/routeTable';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
 import { finishedWorkout, freshWorkout } from '../../../helpers/workout/workout';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 allowSlowScreens();
 

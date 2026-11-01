@@ -3,6 +3,9 @@ import { screen, within } from '@testing-library/react';
 import WorkoutSummary from '@/components/workout/result/WorkoutSummary';
 import { renderAt } from '../../../helpers/workout/router';
 import { freshWorkout, isoAt, withSets } from '../../../helpers/workout/workout';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 // Press banca: 62,5 kg × 10 dos veces (1250 kg) y Remo con barra: 40 kg × 12 (480 kg); 54 minutos.
 const finished = (upload = {}) => {

@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import HistoryPage from '@/pages/student/HistoryPage';
 import { calls, stubFetch } from '../../helpers/shared/fetchMock';
-import { allowSlowScreens } from '../../helpers/student/patience';
+import { allowSlowScreens } from '../../helpers/shared/patience';
 import {
   renderWithQuery,
   sessionDetailItem,

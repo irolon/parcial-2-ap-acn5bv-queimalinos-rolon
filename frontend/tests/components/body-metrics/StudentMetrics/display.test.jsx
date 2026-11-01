@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import StudentMetrics from '@/components/body-metrics/StudentMetrics';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 import { metric } from '../../../helpers/students/fixtures';
 import { renderOwn, stubSelf } from '../../../helpers/students/self';
 

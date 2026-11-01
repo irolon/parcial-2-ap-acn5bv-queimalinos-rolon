@@ -3,6 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { setCursor } from '@/utils/workout/workoutState';
 import { PanelHarness, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout, withSets } from '../../../../helpers/workout/workout';
+import { allowSlowScreens } from '../../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 describe('ExercisePanel: lo que muestra', () => {
   it('el ejercicio, su objetivo y "SERIE n DE m · SUGERIDO X KG × R"', () => {

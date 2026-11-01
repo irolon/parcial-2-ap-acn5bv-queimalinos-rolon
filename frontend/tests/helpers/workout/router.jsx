@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import './patience';
 
 export const WORKOUT_URL = '/alumno/entrenar';
 export const TODAY_URL = '/alumno/hoy';

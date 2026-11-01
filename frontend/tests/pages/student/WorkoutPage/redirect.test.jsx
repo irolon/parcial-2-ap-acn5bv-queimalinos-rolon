@@ -4,6 +4,9 @@ import { writeWorkout } from '@/hooks/workout/workoutStore';
 import { TODAY_URL, WORKOUT_URL } from '../../../helpers/workout/router';
 import { freshWorkout } from '../../../helpers/workout/workout';
 import { STUDENT_ID, cleanUpBrowser, renderWorkoutPage } from '../../../helpers/workout/workoutPage';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 afterEach(cleanUpBrowser);
 

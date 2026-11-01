@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import { calls } from '../../../helpers/shared/fetchMock';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 import { metric } from '../../../helpers/students/fixtures';
 import { renderOwn, selfDetail, signInSelf, stubSelf } from '../../../helpers/students/self';
 

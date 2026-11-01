@@ -8,7 +8,7 @@ import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { STUDENT, setSession } from '../../../helpers/routes/renderRoute';
 import { renderInRouter } from '../../../helpers/student/render';
 import { finishedWorkout, freshWorkout } from '../../../helpers/workout/workout';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 allowSlowScreens();
 

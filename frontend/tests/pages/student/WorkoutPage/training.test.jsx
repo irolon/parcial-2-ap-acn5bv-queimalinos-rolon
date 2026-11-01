@@ -5,6 +5,9 @@ import { at } from '../../../helpers/workout/workout';
 import {
   MINUS, cleanUpBrowser, registerButton, renderWorkoutPage, reloadWorkoutPage, stored,
 } from '../../../helpers/workout/workoutPage';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 // 22:14 después de que empezó la sesión (T0 + 22 min 14 s).
 const NOW = 22 * 60 + 14;

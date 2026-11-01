@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { calls } from '../../../helpers/shared/fetchMock';
 import { mineRoutine, routineExercise } from '../../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 allowSlowScreens();
 

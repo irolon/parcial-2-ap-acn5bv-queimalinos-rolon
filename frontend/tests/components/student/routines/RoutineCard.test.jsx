@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import RoutineCard from '@/components/student/routines/RoutineCard';
 import { mineRoutine } from '../../../helpers/routines/studentRoutines';
 import { renderInRouter } from '../../../helpers/student/render';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 allowSlowScreens();
 

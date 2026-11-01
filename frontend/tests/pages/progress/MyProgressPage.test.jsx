@@ -7,7 +7,7 @@ import { resetAuthStore } from '../../helpers/auth/authStore';
 import { BODY, EMPTY_BODY, progressUrls, stubProgress } from '../../helpers/progress/progress';
 import { STUDENT, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 import { calls, errorResponse } from '../../helpers/shared/fetchMock';
-import { allowSlowScreens } from '../../helpers/student/patience';
+import { allowSlowScreens } from '../../helpers/shared/patience';
 
 vi.mock('recharts', async (importOriginal) => {
   const { cloneElement } = await import('react');

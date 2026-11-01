@@ -6,6 +6,9 @@ import { stubUpload } from '../../../helpers/workout/activeWorkout';
 import { TODAY_URL, WORKOUT_URL } from '../../../helpers/workout/router';
 import { finishedWorkout } from '../../../helpers/workout/workout';
 import { cleanUpBrowser, renderWorkoutPage, stored } from '../../../helpers/workout/workoutPage';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 afterEach(cleanUpBrowser);
 

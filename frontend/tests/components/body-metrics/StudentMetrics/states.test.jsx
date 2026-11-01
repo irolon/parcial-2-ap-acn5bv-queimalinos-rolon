@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StudentMetrics from '@/components/body-metrics/StudentMetrics';
 import { calls } from '../../../helpers/shared/fetchMock';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 import { metric } from '../../../helpers/students/fixtures';
 import { renderOwn, stubSelf } from '../../../helpers/students/self';
 

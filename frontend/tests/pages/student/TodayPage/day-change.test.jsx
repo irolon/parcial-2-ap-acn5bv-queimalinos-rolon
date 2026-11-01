@@ -6,7 +6,7 @@ import { calls } from '../../../helpers/shared/fetchMock';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { streakData } from '../../../helpers/student/home';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 allowSlowScreens();
 

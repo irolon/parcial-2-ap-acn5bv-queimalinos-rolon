@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { setCursor } from '@/utils/workout/workoutState';
 import { PanelHarness, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout } from '../../../../helpers/workout/workout';
+import { allowSlowScreens } from '../../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 const MINUS = '−';
 

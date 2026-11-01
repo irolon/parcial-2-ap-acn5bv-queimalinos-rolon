@@ -5,6 +5,9 @@ import ExercisePanel from '@/components/workout/session/ExercisePanel';
 import { removeSet, setCursor } from '@/utils/workout/workoutState';
 import { PanelHarness, register, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout } from '../../../../helpers/workout/workout';
+import { allowSlowScreens } from '../../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 // Lo que hace la página fuera del panel: pasar de ejercicio y borrar la última serie.
 const around = (setWorkout) => (

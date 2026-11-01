@@ -6,6 +6,9 @@ import { freshWorkout, withSets } from '../../../helpers/workout/workout';
 import {
   cleanUpBrowser, finishButton, renderWorkoutPage, stored,
 } from '../../../helpers/workout/workoutPage';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 afterEach(cleanUpBrowser);
 

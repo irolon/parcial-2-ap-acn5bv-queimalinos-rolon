@@ -8,7 +8,6 @@ import { resetAuthStore } from '../auth/authStore';
 import { STUDENT, setSession } from '../routes/renderRoute';
 import { renderAt } from './router';
 import { freshWorkout } from './workout';
-import './patience';
 
 export const STUDENT_ID = STUDENT.id;
 export const MINUS = '−';

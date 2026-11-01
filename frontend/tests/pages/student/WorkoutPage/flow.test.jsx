@@ -7,6 +7,9 @@ import { at, isoAt } from '../../../helpers/workout/workout';
 import {
   cleanUpBrowser, finishButton, registerButton, renderWorkoutPage, stored,
 } from '../../../helpers/workout/workoutPage';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
+
+allowSlowScreens();
 
 // La sesión empezó en T0; el alumno registra a los 30 minutos y termina un minuto después (solo se congela la fecha:
 // los timers son de verdad).

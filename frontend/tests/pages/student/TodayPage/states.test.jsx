@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { sessionItem, sessionsPage } from '../../../helpers/sessions/sessions';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
-import { allowSlowScreens } from '../../../helpers/student/patience';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 allowSlowScreens();
 

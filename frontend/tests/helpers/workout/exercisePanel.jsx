@@ -3,7 +3,6 @@ import { screen } from '@testing-library/react';
 import ExercisePanel from '@/components/workout/session/ExercisePanel';
 import { registerSet } from '@/utils/workout/workoutState';
 import { freshWorkout } from './workout';
-import './patience';
 
 /** Hace de página: guarda la sesión y registra con el motor, como lo hace `useActiveWorkout`. */
 export function PanelHarness({ initial = freshWorkout(), spy, children }) {
