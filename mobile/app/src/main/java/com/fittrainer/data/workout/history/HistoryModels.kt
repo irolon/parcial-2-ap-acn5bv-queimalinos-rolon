@@ -29,7 +29,8 @@ data class HistoryItem(
     val commentUnread: Boolean = false,
 )
 
-data class HistorySet(val setNumber: Int, val reps: Int?, val kg: Double?)
+/** restSeconds: descanso real después de la serie (null = sin dato). */
+data class HistorySet(val setNumber: Int, val reps: Int?, val kg: Double?, val restSeconds: Int? = null)
 
 data class HistoryExercise(
     val name: String,
@@ -39,6 +40,8 @@ data class HistoryExercise(
     val plannedKg: Double?,
     val isPr: Boolean,
     val sets: List<HistorySet>,
+    /** Descanso del plan del entrenador, en segundos (sin el que eligió el alumno). */
+    val plannedRestSeconds: Int? = null,
 )
 
 /** detailLoaded = false: solo el resumen (las de "Ver más" hasta abrirlas con red). */

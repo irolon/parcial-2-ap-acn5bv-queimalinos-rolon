@@ -52,7 +52,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
     version = 9,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
-    // Cada versión nueva suma su migración y su caso en FitTrainerDatabaseMigrationTest.
+    // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
