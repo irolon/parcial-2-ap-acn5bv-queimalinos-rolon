@@ -105,6 +105,48 @@ describe('SessionDetail', () => {
     expect(within(table).getByText('no hecha')).toBeVisible();
   });
 
+  it('muestra el descanso real de cada serie: en ámbar con el plan si difiere, solo el real si coincide', async () => {
+    await expand(
+      sessionDetailItem({
+        exercises: [
+          exerciseItem({
+            planned: { sets: 3, reps: 10, suggested_kg: 60, rest_seconds: 90 },
+            sets: [
+              setItem({ id: 'a', set_number: 1, rest_seconds: 120 }),
+              setItem({ id: 'b', set_number: 2, rest_seconds: 90 }),
+              setItem({ id: 'c', set_number: 3, rest_seconds: null }),
+              setItem({ id: 'd', set_number: 4, completed: false, rest_seconds: null }),
+            ],
+          }),
+        ],
+      }),
+    );
+    const table = await screen.findByRole('table', { name: 'Series de Press de banca' });
+    const [header, first, second, third, fourth] = within(table).getAllByRole('row');
+    expect(within(header).getByRole('columnheader', { name: 'Desc.' })).toBeVisible();
+    expect(within(first).getByText('2:00')).toHaveClass('text-warn');
+    expect(within(first).getByText('(plan 1:30)', { exact: false })).toBeVisible();
+    expect(within(second).getByText('1:30')).toHaveClass('text-bone0');
+    expect(within(second).queryByText(/plan/)).toBeNull();
+    expect(within(third).getAllByRole('cell').at(-1)).toHaveTextContent('—');
+    expect(within(fourth).getByText('no hecha')).toHaveAttribute('colspan', '3');
+  });
+
+  it('sin plan muestra solo el real; sin descansos registrados (sesión vieja) no hay columna', async () => {
+    await expand(
+      sessionDetailItem({
+        exercises: [
+          exerciseItem({ planned: null, sets: [setItem({ id: 'a', rest_seconds: 75 })] }),
+          exerciseItem({ exercise: { id: 'e-2', name: 'Remo con barra' }, sets: [setItem({ id: 'b' })] }),
+        ],
+      }),
+    );
+    const withRest = await screen.findByRole('table', { name: 'Series de Press de banca' });
+    expect(within(withRest).getByText('1:15')).toHaveClass('text-bone0');
+    const old = screen.getByRole('table', { name: 'Series de Remo con barra' });
+    expect(within(old).queryByRole('columnheader', { name: 'Desc.' })).toBeNull();
+  });
+
   it('la tabla de series scrollea dentro de su caja', async () => {
     await expand(sessionDetailItem());
     const table = await screen.findByRole('table');

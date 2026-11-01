@@ -24,7 +24,11 @@ export function sessionBody(state) {
   return body;
 }
 
-/** Una serie de POST /sessions/:id/sets como SessionSetDto: sin sustitución en la web y peso corporal = 0 kg. */
+/**
+ * Una serie de POST /sessions/:id/sets como SessionSetDto: sin sustitución en la web y peso corporal = 0 kg.
+ * `rest_seconds` es el descanso real después de la serie; null si no hay (última serie, Terminar con el descanso
+ * abierto, ejercicio sin descanso o sesión guardada antes de que existiera el campo).
+ */
 export const setBody = (set) => ({
   id: set.id,
   exercise_id: set.exerciseId,
@@ -34,6 +38,7 @@ export const setBody = (set) => ({
   actual_reps: set.reps,
   actual_kg: set.kg ?? 0,
   executed_at: set.executedAt,
+  rest_seconds: Number.isInteger(set.restSeconds) ? set.restSeconds : null,
 });
 
 /** Series que faltan subir (ni confirmadas ni rechazadas), por executedAt y después por id, como el celular. */

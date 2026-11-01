@@ -7,6 +7,7 @@ import { suggestedKg } from '@/utils/routines/suggestedKg';
 export const MAX_KG = 1000;
 export const MAX_REPS = 1000;
 export const MAX_SET_NUMBER = 100;
+export const MAX_REST_SECONDS = 3600;
 
 const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 const round = (n, decimals) => Math.round(n * 10 ** decimals) / 10 ** decimals;

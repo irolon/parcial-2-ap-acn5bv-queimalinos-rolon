@@ -31,7 +31,7 @@ Que un alumno pueda usar la web con la funcionalidad central de la app: rutina d
 
 **Endpoints que usa** (todos con el token del alumno; el `studentId` es `user.id`):
 - `GET /routines/today` (rutina del día o `null`) y `GET /routines/mine` (rutinas activas).
-- `POST /sessions` y `POST /sessions/:id/sets` (lotes de hasta 100). Mismos campos que el celular (`SessionUploader.kt`): la sesión lleva `id`, `routine_id`, `started_at`, `finished_at`, `rpe?` y `notes?`; cada serie lleva `id`, `exercise_id`, `routine_exercise_id`, `set_number`, `actual_reps`, `actual_kg` y `executed_at`, como el celular manda hoy.
+- `POST /sessions` y `POST /sessions/:id/sets` (lotes de hasta 100). Mismos campos que el celular (`SessionUploader.kt`): la sesión lleva `id`, `routine_id`, `started_at`, `finished_at`, `rpe?` y `notes?`; cada serie lleva `id`, `exercise_id`, `routine_exercise_id`, `set_number`, `actual_reps`, `actual_kg`, `executed_at` y `rest_seconds` (descanso real después de la serie, ver §8), como el celular manda hoy.
 - `GET /students/:id/sessions` y `/:sessionId` (historial).
 - `/progress/*` (ya en Mi progreso).
 - `GET /achievements`, `/students/:id/achievements`, `/students/:id/achievements/progress`, `/students/:id/streak` y `/students/:id/challenges`.
@@ -43,10 +43,11 @@ Que un alumno pueda usar la web con la funcionalidad central de la app: rutina d
 ```
 { id, routineId, routineName, startedAt,
   exercises: [{ routineExerciseId, exerciseId, name, sets, reps, restSeconds, suggestedKg, lastKg }],
-  sets: [{ id, exerciseId, routineExerciseId, setNumber, reps, kg, executedAt }],
+  sets: [{ id, exerciseId, routineExerciseId, setNumber, reps, kg, executedAt, restSeconds? }],
   cursor,               // índice del ejercicio a la vista
   restEndsAt,           // ISO o null
   restTotalSeconds,     // total del descanso en curso, para la barra (null sin descanso; falta en sesiones viejas)
+  restSetId,            // serie que disparó el descanso abierto, que se lleva el descanso real (null; falta en sesiones viejas)
   feedback: { rpe, notes } | null,
   upload: { sessionCreated, sentSetIds } }
 ```
@@ -147,6 +148,8 @@ Lo que cambió respecto de lo de arriba al construirlo (lo implementado manda):
 - **401 en la subida es reintentable:** llega si no se pudo renovar la sesión; después de volver a entrar, Reintentar sigue desde donde quedó.
 - **Descartar ante un error reintentable:** además de Reintentar hay un **Descartar** secundario, con confirmación ("¿Descartar el entrenamiento? No se va a guardar." · "Las series que todavía no se subieron se pierden."). Borra la copia del navegador y vuelve a Hoy; si la sesión ya estaba creada, lo que se subió queda en el servidor. Así, con el backend caído por horas, el alumno puede volver a entrenar.
 - **Barra del descanso:** se mide contra el total guardado al arrancarlo (`restTotalSeconds`, que ±15″ también mueve), no contra el ejercicio a la vista. Una sesión guardada sin el campo usa el `restSeconds` del ejercicio a la vista, como antes.
+- **Descanso real por serie (follow-up de la #51):** la serie que dispara un descanso se lleva `restSeconds`, los segundos que corrió desde que se registró hasta que dejó de correr, con los ±15″ incluidos (0 a 3600, el tope del backend). Lo cierra **Saltar** (hasta ese momento) o **Registrar** la serie siguiente, de cualquier ejercicio (hasta ese momento, o hasta el fin si ya había vencido: una pestaña olvidada no suma). **Terminar** con un descanso abierto no lo anota, porque no hay otra serie que esperar (en el celular la última serie queda `null`). Borrar la serie que lo disparó lo cierra sin anotar nada. Viaja como `rest_seconds` en `POST /sessions/:id/sets`; `null` si no hay dato (ejercicio con descanso 0, Terminar con el descanso abierto o una sesión guardada en el navegador antes de que existiera el campo, que sigue subiendo igual). Misma regla que `closingRest` del celular (`WorkoutRules.kt`), que además cuenta la pausa (la web no tiene).
+- **Descanso en el detalle de sesión:** la tabla de series (ficha del alumno del PT e historial del alumno) suma la columna **Desc.** si alguna serie del ejercicio trae `rest_seconds`: "2:00"; si difiere de `planned.rest_seconds`, en ámbar y con "(plan 1:30)", como el historial del celular ("desc. 2:00 (plan 1:30)"). Sin plan o igual al plan, solo el real; serie sin dato, "—". Sesiones viejas (sin ningún descanso) no muestran la columna.
 - **Peso de más de 1000 kg:** no se recorta. "1250" da "El peso no puede pasar de 1000 kg." y no se registra (el motor también lo rechaza). El peso sugerido del plan sí se propone con tope de 1000.
 - **Doble clic en Registrar serie:** el segundo clic de un doble clic no vuelve a registrar. Dos clics separados son dos series.
 - **Último peso desde Mis rutinas:** `/routines/mine` no trae `last_session_kg`. Si la rutina que se empieza desde su detalle es la de hoy y `/routines/today` ya está en caché (se pasó por Hoy), se toma de ahí, sin pedirla. Si no está en caché, se precarga el peso del entrenador.

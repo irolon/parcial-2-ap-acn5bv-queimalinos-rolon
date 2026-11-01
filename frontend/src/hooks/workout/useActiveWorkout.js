@@ -66,7 +66,7 @@ export function useActiveWorkout(studentId) {
   const next = useCallback(() => change((s) => setCursor(s, s.cursor + 1)), [change]);
   const prev = useCallback(() => change((s) => setCursor(s, s.cursor - 1)), [change]);
   const adjust = useCallback((seconds) => change((s) => adjustRest(s, seconds, new Date())), [change]);
-  const skip = useCallback(() => change(skipRest), [change]);
+  const skip = useCallback(() => change((s) => skipRest(s, new Date())), [change]);
   const finish = useCallback(() => change((s) => finishWorkout(s, new Date())), [change]);
   const feedback = useCallback((value) => change((s) => setFeedback(s, value)), [change]);
 
