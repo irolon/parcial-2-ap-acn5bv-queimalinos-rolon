@@ -17,7 +17,7 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`.
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`, `agenda` (disponibilidad y turnos).
 
 ```
 src/
@@ -216,6 +216,24 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 **Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno).
 
 **Job de inactividad.** `runInactivityAlerts` recorre los alumnos activos y avisa al PT de los que tienen rutina activa y acumulan 3 o más días asignados sin entrenar desde su última sesión cerrada (desde el alta si nunca entrenaron), como máximo una vez cada 7 días por alumno. Corre a las 03:00 ART justo después del job de gamificación, bajo el mismo `CRON_ENABLED`. A mano: `npm run notifications:inactivity`; correrlo de nuevo es seguro (el límite de 7 días evita duplicados).
+
+### Agenda — Fase 6
+
+Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de la disponibilidad son de Argentina (UTC-3 fijo) y los turnos duran 60 min. El anti-solapamiento lo garantiza el índice único parcial `uq_appointments_trainer_slot` (turno vivo = `pending` o `confirmed`). Body, errores y ejemplos en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+| Método | Ruta | Rol | Descripción |
+|--------|------|-----|-------------|
+| GET | `/api/availability` | trainer | Franjas semanales propias (`weekday` 1-7, `start_time`, `end_time` `HH:MM`) |
+| PUT | `/api/availability` | trainer | `{ slots }` (0 a 50, horas en punto, sin superponerse). Reemplaza todo de forma atómica (RPC `replace_trainer_availability`); 400 `VALIDATION_ERROR` con `details` por franja |
+| GET | `/api/availability/free?from=&to=` | trainer / student | Horarios libres `{ starts_at }` (UTC), rango de 1 a 31 días. El alumno ve a su PT hasta 28 días adelante; alumno inactivo: 403 |
+| GET | `/api/appointments?from=&to=` | trainer / student | Turnos propios de todos los estados, rango de 1 a 62 días (días de Argentina) |
+| POST | `/api/appointments` | student | `{ scheduled_at, notes? }`. 201 `pending` dentro de la disponibilidad y hasta 28 días; 400 `SLOT_UNAVAILABLE`, 403 sin PT o inactivo, 409 `SLOT_TAKEN`. Notifica al PT |
+| POST | `/api/appointments` | trainer | `{ student_id, scheduled_at, notes? }`. 201 `confirmed`, sin exigir disponibilidad. 403 si el alumno es de otro PT o está inactivo. Push al alumno |
+| PATCH | `/api/appointments/:id` | trainer / student | `{ status }` con `confirmed` o `cancelled`. PT: `pending`→`confirmed`, cualquier vivo→`cancelled`; alumno: solo cancelar. 409 `APPOINTMENT_PAST` si ya pasó, 409 `INVALID_STATUS_TRANSITION`; ajeno o inexistente 403 |
+
+**Migración.** `src/database/migrations/2026-10-31-agenda.sql` (tabla `trainer_availability`, índice único parcial de `appointments` y la RPC); es re-ejecutable y también está en `schema/06-ai-and-agenda.sql`. Correrla en el SQL Editor de Supabase en las bases ya creadas.
+
+**Notificaciones.** Tipo `appointment` con `data: { appointment_id }`: al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
 
 ### Autenticación
 
