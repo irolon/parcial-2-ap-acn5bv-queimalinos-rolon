@@ -10,7 +10,7 @@ export default function MyProgressPage() {
   const user = useAuthStore((s) => s.user);
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <ProgressPanel studentId={user.id} showBody />
+      <ProgressPanel studentId={user.id} showBody viewer="student" />
       <MyAchievements studentId={user.id} />
     </div>
   );

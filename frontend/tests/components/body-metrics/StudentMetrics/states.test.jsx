@@ -55,6 +55,6 @@ describe('StudentMetrics: carga, error y vacío', () => {
   it('el botón del estado vacío abre el formulario de la medida', async () => {
     show({ metrics: [] });
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Registrar medición' }));
-    expect(await screen.findByRole('dialog', { name: 'Cargar medida' })).toBeVisible();
+    expect(await screen.findByRole('dialog', { name: 'Registrar medición' })).toBeVisible();
   });
 });

@@ -42,6 +42,9 @@ export const WORKOUT_PATH = `${STUDENT_NAV.base}/entrenar`;
 /** Lista de rutinas del alumno (el ítem `rutinas` de su menú). */
 export const MY_ROUTINES_PATH = `${STUDENT_NAV.base}/rutinas`;
 
+/** Mi perfil del alumno (el ítem `perfil` de su menú). */
+export const MY_PROFILE_PATH = `${STUDENT_NAV.base}/perfil`;
+
 // Detalle de una rutina del alumno: fuera del menú. El `handle` de router.jsx es el título por defecto;
 // la página puede pisarlo con `usePageHeader`.
 export const STUDENT_ROUTINE = { path: `${STUDENT_NAV.base}/rutinas/:id` };

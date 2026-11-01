@@ -20,7 +20,7 @@ const EMPTY = {
 /** El más reciente con datos suficientes para la curva; si ninguno llega, el más reciente. */
 const defaultExercise = (exercises) => exercises.find((e) => e.days >= MIN_POINTS) ?? exercises[0];
 
-function Content({ studentId, overview, sel, rangeObj, showBody }) {
+function Content({ studentId, overview, sel, rangeObj, showBody, viewer }) {
   const { range, setRange, chosenId, setChosenId, chosenMetric, setChosenMetric } = sel;
   const exerciseId = overview.exercises.some((e) => e.id === chosenId) ? chosenId : defaultExercise(overview.exercises).id;
   const exerciseQuery = useExerciseProgress(exerciseId, studentId, rangeObj);
@@ -51,13 +51,16 @@ function Content({ studentId, overview, sel, rangeObj, showBody }) {
         )}
       </QueryState>
       <WeeklyVolumeCard weeks={overview.weekly_volume} />
-      {showBody && <BodyProgressCard studentId={studentId} />}
+      {showBody && <BodyProgressCard studentId={studentId} viewer={viewer} />}
     </div>
   );
 }
 
-/** Progresión de un alumno: ejercicio y rango elegidos, KPIs, curva, volumen semanal y (alumno) medidas. */
-export default function ProgressPanel({ studentId, showBody = false }) {
+/**
+ * Progresión de un alumno: ejercicio y rango elegidos, KPIs, curva, volumen semanal y (alumno) medidas.
+ * `viewer` (`'trainer'` por defecto o `'student'`) es quién mira y solo llega a los textos de las medidas.
+ */
+export default function ProgressPanel({ studentId, showBody = false, viewer = 'trainer' }) {
   // La selección vive acá arriba para que sobreviva a los refetch del overview (cambio de rango).
   const [range, setRange] = useState(DEFAULT_RANGE);
   const [chosenId, setChosenId] = useState(null);
@@ -72,7 +75,7 @@ export default function ProgressPanel({ studentId, showBody = false }) {
         overview.exercises.length === 0 ? (
           <div className="flex min-w-0 flex-col gap-5">
             <EmptyState {...EMPTY} />
-            {showBody && <BodyProgressCard studentId={studentId} />}
+            {showBody && <BodyProgressCard studentId={studentId} viewer={viewer} />}
           </div>
         ) : (
           <Content
@@ -81,6 +84,7 @@ export default function ProgressPanel({ studentId, showBody = false }) {
             sel={sel}
             rangeObj={rangeObj}
             showBody={showBody}
+            viewer={viewer}
           />
         )
       }

@@ -71,7 +71,12 @@ export default function StudentMetrics({ studentId }) {
     <div className="flex min-w-0 flex-col gap-5">
       <Body query={query} onRegister={() => setRegistering(true)} onDelete={setDeleting} />
       {registering && (
-        <MetricFormDialog studentId={studentId} metrics={query.data ?? []} onClose={() => setRegistering(false)} />
+        <MetricFormDialog
+          studentId={studentId}
+          metrics={query.data ?? []}
+          title="Registrar medición"
+          onClose={() => setRegistering(false)}
+        />
       )}
       {deleting && <DeleteMetricDialog studentId={studentId} metric={deleting} onClose={() => setDeleting(null)} />}
     </div>

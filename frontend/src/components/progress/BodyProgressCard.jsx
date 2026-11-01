@@ -1,9 +1,11 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Link } from 'react-router';
 import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
 import Stat from '@/components/shared/ui/Stat';
 import { useBodyProgress } from '@/hooks/progress/useProgress';
+import { MY_PROFILE_PATH } from '@/routes/routeTable';
 import { formatDelta, formatNumber, formatWeight, weightSeries } from '@/utils/body-metrics/metrics';
 import { todayString } from '@/utils/dates';
 import { formatLongDate, formatShortDate } from '@/utils/progress/format';
@@ -39,8 +41,29 @@ function Deltas({ summary }) {
   );
 }
 
-/** Peso en el tiempo y variación de peso, % de grasa y cintura (primera vs. última medida). */
-export default function BodyProgressCard({ studentId }) {
+function NoMetrics({ viewer }) {
+  return (
+    <p className="font-body text-sm text-ink6">
+      Todavía no hay medidas cargadas.{' '}
+      {viewer === 'student' ? (
+        <>
+          Podés cargarlas desde{' '}
+          <Link to={MY_PROFILE_PATH} className="font-semibold text-accentText hover:underline">
+            Mi perfil
+          </Link>
+        </>
+      ) : (
+        'Tu entrenador o vos pueden cargarlas desde la app'
+      )}
+    </p>
+  );
+}
+
+/**
+ * Peso en el tiempo y variación de peso, % de grasa y cintura (primera vs. última medida). `viewer` es quién mira
+ * (`'trainer'` por defecto o `'student'`) y solo cambia lo que dice sin medidas: el alumno las carga desde Mi perfil.
+ */
+export default function BodyProgressCard({ studentId, viewer = 'trainer' }) {
   const query = useBodyProgress(studentId);
   const title = 'Peso corporal y medidas';
   if (query.isPending) return <Card title={title}><LoadingState /></Card>;
@@ -54,9 +77,7 @@ export default function BodyProgressCard({ studentId }) {
   return (
     <Card title={title}>
       {!hasAny ? (
-        <p className="font-body text-sm text-ink6">
-          Todavía no hay medidas cargadas. Tu entrenador o vos pueden cargarlas desde la app
-        </p>
+        <NoMetrics viewer={viewer} />
       ) : (
         <div className="flex flex-col gap-4">
           <Deltas summary={summary} />

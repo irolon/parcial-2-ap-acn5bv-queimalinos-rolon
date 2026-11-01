@@ -53,11 +53,12 @@ describe('MyProgressPage', () => {
     expect(within(card).getByText('−3 cm desde el inicio')).toBeInTheDocument();
   });
 
-  it('sin medidas muestra el mensaje de estado vacío', async () => {
+  it('sin medidas ofrece cargarlas desde Mi perfil, con el link a Mi perfil', async () => {
     load({ body: EMPTY_BODY });
-    expect(
-      await screen.findByText('Todavía no hay medidas cargadas. Tu entrenador o vos pueden cargarlas desde la app'),
-    ).toBeInTheDocument();
+    const hint = await screen.findByText(/Todavía no hay medidas cargadas\./);
+    expect(hint).toHaveTextContent('Todavía no hay medidas cargadas. Podés cargarlas desde Mi perfil');
+    expect(hint).not.toHaveTextContent('Tu entrenador o vos');
+    expect(within(hint).getByRole('link', { name: 'Mi perfil' })).toHaveAttribute('href', '/alumno/perfil');
   });
 
   it('sin entrenamientos muestra el estado vacío y, debajo, las medidas del alumno', async () => {
@@ -65,6 +66,13 @@ describe('MyProgressPage', () => {
     expect(await screen.findByText('Todavía no hay entrenamientos registrados')).toBeInTheDocument();
     expect(await screen.findByText('Peso corporal y medidas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Ejercicio')).not.toBeInTheDocument();
+  });
+
+  it('sin entrenamientos ni medidas también ofrece cargarlas desde Mi perfil', async () => {
+    load({ overview: { exercises: [], weekly_volume: [] }, body: EMPTY_BODY });
+    const hint = await screen.findByText(/Todavía no hay medidas cargadas\./);
+    expect(hint).toHaveTextContent('Podés cargarlas desde Mi perfil');
+    expect(within(hint).getByRole('link', { name: 'Mi perfil' })).toHaveAttribute('href', '/alumno/perfil');
   });
 });
 

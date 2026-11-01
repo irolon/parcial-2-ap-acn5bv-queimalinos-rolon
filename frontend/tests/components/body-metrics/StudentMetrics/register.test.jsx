@@ -45,7 +45,7 @@ async function open({ rows = [BY_TRAINER], createMetric } = {}) {
   const fetchMock = stubSelf({ metrics: () => rows, createMetric });
   const utils = renderOwn(<StudentMetrics studentId="s-1" />);
   await user.click(await screen.findByRole('button', { name: 'Registrar medición' }));
-  return { user, fetchMock, ...utils, dialog: await screen.findByRole('dialog', { name: 'Cargar medida' }) };
+  return { user, fetchMock, ...utils, dialog: await screen.findByRole('dialog', { name: 'Registrar medición' }) };
 }
 
 const save = (user, dialog, weight) =>
@@ -98,7 +98,7 @@ describe('StudentMetrics: Registrar medición', () => {
     stubSelf({ metrics: () => rows, createMetric });
     renderOwn(<StudentMetrics studentId="s-1" />);
     await user.click(await screen.findByRole('button', { name: 'Registrar medición' }));
-    await save(user, await screen.findByRole('dialog', { name: 'Cargar medida' }), '79.5');
+    await save(user, await screen.findByRole('dialog', { name: 'Registrar medición' }), '79.5');
     expect(await screen.findByText('Medidas actuales')).toBeVisible();
     expect(screen.getByRole('table', { name: 'Historial de medidas' })).toBeVisible();
     expect(screen.queryByText('Todavía no hay medidas. Registrá la primera.')).toBeNull();
@@ -110,7 +110,7 @@ describe('StudentMetrics: Registrar medición', () => {
     queryClient.setQueryData(BODY_KEY, { points: [], summary: {} });
     await save(user, dialog, '81');
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('No pudimos guardar la medida');
-    expect(screen.getByRole('dialog', { name: 'Cargar medida' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Registrar medición' })).toBeVisible();
     expect(queryClient.getQueryState(BODY_KEY).isInvalidated).toBe(false);
   });
 });
