@@ -27,18 +27,25 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-/** Fecha de nacimiento: selector sin fechas futuras y "Borrar". El DatePicker trabaja en UTC. */
+/** Selector de fecha sin fechas futuras (con "Borrar" si [clearable]). El DatePicker trabaja en UTC. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BirthDateField(value: LocalDate?, today: LocalDate, error: String?, onChange: (LocalDate?) -> Unit) {
+fun BirthDateField(
+    value: LocalDate?,
+    today: LocalDate,
+    error: String?,
+    label: String = "FECHA DE NACIMIENTO",
+    clearable: Boolean = true,
+    onChange: (LocalDate?) -> Unit,
+) {
     var open by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        FieldLabel("FECHA DE NACIMIENTO")
+        FieldLabel(label)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             OutlinedButton(onClick = { open = true }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
                 Text(dateLabel(value))
             }
-            if (value != null) {
+            if (value != null && clearable) {
                 TextButton(onClick = { onChange(null) }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text("Borrar") }
             }
         }

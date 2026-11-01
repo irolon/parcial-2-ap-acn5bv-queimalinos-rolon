@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -47,22 +49,36 @@ fun RoutineCard(detail: StudentDetail) = SectionCard("RUTINA ACTIVA") {
     }
 }
 
+/** onHistory/onNew en null: sin acciones (E6 las suma). canWrite: "+ Nueva medida" pide red. */
 @Composable
-fun LatestMetricsCard(detail: StudentDetail) = SectionCard("ÚLTIMA MEDICIÓN") {
+fun LatestMetricsCard(
+    detail: StudentDetail,
+    onHistory: (() -> Unit)? = null,
+    onNew: (() -> Unit)? = null,
+    canWrite: Boolean = true,
+) = SectionCard("ÚLTIMA MEDICIÓN") {
     val metrics = detail.latestMetrics
     if (metrics == null) {
         Text(NO_METRICS, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextSecondary)
-        return@SectionCard
+    } else {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+            metricValues(metrics).forEach { (label, value) ->
+                Column {
+                    Text(value, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary)
+                    Text(label, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+                }
+            }
+        }
+        Text(dateLabel(metrics.recordedAt), style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
-        metricValues(metrics).forEach { (label, value) ->
-            Column {
-                Text(value, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary)
-                Text(label, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+    if (onHistory != null || onNew != null) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            onHistory?.let { TextButton(onClick = it, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text("Ver historial") } }
+            onNew?.let {
+                TextButton(onClick = it, enabled = canWrite, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text("+ Nueva medida") }
             }
         }
     }
-    Text(dateLabel(metrics.recordedAt), style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
