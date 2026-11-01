@@ -70,7 +70,9 @@ Los nombres en castellano salen de lo que ya existe en `ui/components/exercise/E
 
 - Un composable reutilizable que recibe **qué partes pintar** (o los grupos) y **qué vista** (frente, espalda o ambas lado a lado) y se dibuja en un `Canvas`, con los trazos parseados una sola vez (`PathParser().parsePathString(d).toPath()`) y escalados al tamaño que le den.
 - Colores (de `FtColors`): músculo `#343B39`, neutro `#232927`, pintado `Brand` (`#2952D9`), borde entre partes del color de fondo (`#0B0D0C`), contorno `#3A4240`. Los dos grises nuevos se agregan a `Color.kt` con nombre.
-- Accesibilidad: `contentDescription` con lo que se pinta ("Músculo trabajado: Pecho", "Músculos de hoy: pecho, hombros y tríceps").
+- Accesibilidad:
+  - En la sesión, el cuerpo de la tarjeta es decorativo y TalkBack lee la tarjeta entera junta (`mergeDescendants`): "TRABAJÁS, Pecho, Barra · 4 series". El texto ya dice el músculo, así que repetirlo en el dibujo sobraba.
+  - En Hoy, la miniatura de la fila también es decorativa (la fila se lee como botón), y el cuerpo de la hoja lleva `contentDescription` con lo que se pinta: "Músculos de hoy: Pecho, Hombros, Tríceps".
 - La carga del JSON es de solo lectura y no toca la red. Si el asset no se puede leer, el componente no dibuja nada (la pantalla sigue funcionando).
 
 ## 6. Sesión activa (`ui/workout/`)
