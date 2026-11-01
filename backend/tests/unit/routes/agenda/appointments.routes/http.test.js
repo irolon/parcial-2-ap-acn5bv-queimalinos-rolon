@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest 
 import {
   db, resetDb, mockNotify, request, startServer, stopServer, tokenFor,
   TRAINER_ID, STUDENT_ID, STUDENT2_ID, OTHER_TRAINER_ID,
-} from '../../../helpers/agenda/http.setup.js';
+} from '../../../../helpers/agenda/http.setup.js';
 
 // Miércoles 04/11/2026 12:00 en Argentina. Solo se falsea Date: el servidor y fetch usan timers reales.
 const NOW = new Date('2026-11-04T15:00:00.000Z');
