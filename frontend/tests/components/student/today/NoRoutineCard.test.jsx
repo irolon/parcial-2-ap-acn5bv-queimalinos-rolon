@@ -47,4 +47,11 @@ describe('NoRoutineCard', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(routines.refetch).toHaveBeenCalledTimes(1);
   });
+
+  it('un refetch fallido que conserva las rutinas no tapa la tarjeta con el error', () => {
+    render(<NoRoutineCard routines={query({ isError: true, data: [routine('thursday')] })} now={WEDNESDAY} />);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByText('Hoy es descanso')).toBeInTheDocument();
+    expect(screen.getByText('Próximo: jueves')).toBeInTheDocument();
+  });
 });

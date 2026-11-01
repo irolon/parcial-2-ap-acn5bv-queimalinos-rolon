@@ -9,15 +9,17 @@ import { weekStrip } from '@/utils/routines/week';
 
 /**
  * "Esta semana" con sus datos: los días de las rutinas activas y las sesiones del historial (alcanza con la
- * primera página, de a 20). Tiene su propia carga y su propio error con Reintentar.
+ * primera página, de a 20). Tiene su propia carga y su propio error con Reintentar (solo si falta algún dato).
  */
 export default function WeekSection({ now }) {
   const studentId = useAuthStore((state) => state.user?.id);
   const routines = useMyRoutines();
   const sessions = useSessionsInfinite(studentId);
 
-  if (routines.isError || sessions.isError) {
-    const retry = () => [routines, sessions].filter((query) => query.isError).forEach((query) => query.refetch());
+  // Un refetch fallido no tapa la semana que ya cargó: solo se ve el error si a alguna consulta le faltan los datos.
+  const failed = [routines, sessions].filter((query) => query.isError && query.data === undefined);
+  if (failed.length > 0) {
+    const retry = () => failed.forEach((query) => query.refetch());
     return <Card title="Esta semana"><ErrorState message="No pudimos cargar tu semana." onRetry={retry} /></Card>;
   }
   if (routines.isPending || sessions.isPending) {

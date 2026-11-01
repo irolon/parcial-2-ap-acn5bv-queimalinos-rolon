@@ -13,7 +13,8 @@ export default function NoRoutineCard({ routines, now }) {
   if (routines.isPending) {
     return <Card><LoadingState rows={1} label="Cargando tus rutinas…" /></Card>;
   }
-  if (routines.isError) {
+  // Un refetch fallido no tapa las rutinas que ya cargaron: solo se ve el error si no hay nada que mostrar.
+  if (routines.isError && routines.data == null) {
     return <Card><ErrorState message="No pudimos cargar tus rutinas." onRetry={() => routines.refetch()} /></Card>;
   }
   const assigned = routines.data ?? [];
