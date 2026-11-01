@@ -36,4 +36,16 @@ class TabNavigationTest {
     @Test fun sinPestanaEnElBackStackUsaLaMadreDeLaRuta() {
         assertEquals(STUDENT_PROGRESS_ROUTE, selectedTab(StudentTabs.map { it.route }, listOf(historyDetailRoute("a"))))
     }
+
+    @Test fun plantillasDesdeMasDejanMarcadoMasYTocarloVuelve() {
+        val stack = listOf(null, home, TRAINER_MORE_ROUTE, TRAINER_TEMPLATES_ROUTE, TRAINER_TEMPLATE_ROUTE)
+        assertEquals(TRAINER_MORE_ROUTE, selectedTab(trainer, stack))
+        assertEquals(TabAction.PopTo(TRAINER_MORE_ROUTE), tabAction(TRAINER_MORE_ROUTE, trainer, stack))
+        assertEquals(TRAINER_MORE_ROUTE, selectedTab(trainer, listOf(TRAINER_TEMPLATE_ROUTE)))
+    }
+
+    @Test fun plantillasDesdeLaFichaDejanMarcadoAlumnos() {
+        val stack = listOf(null, home, students, ficha, TRAINER_STUDENT_TEMPLATES_ROUTE, TRAINER_STUDENT_TEMPLATE_ROUTE)
+        assertEquals(students, selectedTab(trainer, stack))
+    }
 }

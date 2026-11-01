@@ -37,6 +37,7 @@ private fun parentTab(route: String): String? = when {
     route.startsWith("student/history/") -> STUDENT_PROGRESS_ROUTE
     route.startsWith("$STUDENT_ROUTINES_ROUTE/") || route == STUDENT_LIBRARY_ROUTE -> STUDENT_ROUTINES_ROUTE
     route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE
+    route == TRAINER_TEMPLATES_ROUTE || route.startsWith("$TRAINER_TEMPLATES_ROUTE/") -> TRAINER_MORE_ROUTE
     else -> null
 }
 
@@ -53,6 +54,7 @@ val StudentTabs = listOf(
 
 const val TRAINER_HOME_ROUTE = "trainer/home"
 const val TRAINER_STUDENTS_ROUTE = "trainer/students"
+const val TRAINER_MORE_ROUTE = "trainer/more"
 
 /** Invitar alumno (tarjeta E2): cuelga de la pestaña Alumnos. */
 const val TRAINER_INVITE_ROUTE = "trainer/students/invite"
@@ -78,5 +80,5 @@ val TrainerTabs = listOf(
     Tab(TRAINER_HOME_ROUTE, "Inicio", Icons.Filled.Home),
     Tab(TRAINER_STUDENTS_ROUTE, "Alumnos", Icons.Filled.Face),
     Tab("trainer/messages", "Mensajes", Icons.Filled.Email),
-    Tab("trainer/more", "Más", Icons.Filled.Menu, isAccountMenu = true),
+    Tab(TRAINER_MORE_ROUTE, "Más", Icons.Filled.Menu, isAccountMenu = true),
 )

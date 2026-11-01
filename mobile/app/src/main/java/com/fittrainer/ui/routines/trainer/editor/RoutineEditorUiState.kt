@@ -75,3 +75,11 @@ internal fun Throwable.exerciseErrors(): Map<ExerciseField, String> =
 /** Un 400 del backend, por campo de la cabecera. */
 internal fun Throwable.headerErrors(): Map<RoutineField, String> =
     (this as? RoutineRejectedException)?.fields.orEmpty().mapNotNull { (k, v) -> routineFieldOf(k)?.let { it to v } }.toMap()
+
+/** Los ids con [id] un lugar más arriba ([up]) o más abajo; null si no se puede mover (primero ↑, último ↓). */
+internal fun List<String>.moved(id: String, up: Boolean): List<String>? {
+    val from = indexOf(id)
+    val to = if (up) from - 1 else from + 1
+    if (from < 0 || to !in indices) return null
+    return toMutableList().apply { add(to, removeAt(from)) }
+}

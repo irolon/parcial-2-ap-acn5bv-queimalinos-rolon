@@ -105,6 +105,7 @@ fun RoleShell(
                             title = tab.label,
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
                             onSignOut = guardedSignOut,
+                            links = if (isStudent) emptyList() else trainerMenuLinks(navController),
                         )
                         tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(onOpenWorkout = openWorkout)
                         tab.route == STUDENT_ROUTINES_ROUTE -> RoutinesScreen(
@@ -139,6 +140,7 @@ fun RoleShell(
             }
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
+            trainerTemplateRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }
