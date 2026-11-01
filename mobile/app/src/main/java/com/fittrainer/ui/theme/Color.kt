@@ -22,6 +22,11 @@ object FtColors {
     val Coral = Color(0xFFFF5C3A)
     val Cyan = Color(0xFF36C6FF)
     val Amber = Color(0xFFFFB020)
+
+    // Mapa muscular
+    val BodyMuscle = Color(0xFF343B39)
+    val BodyNeutral = Color(0xFF232927)
+    val BodyOutline = Color(0xFF3A4240)
 }
 
 internal val FtColorScheme = darkColorScheme(

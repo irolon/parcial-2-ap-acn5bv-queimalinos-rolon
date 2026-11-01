@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +39,7 @@ import com.fittrainer.ui.today.components.NoRoutineState
 import com.fittrainer.ui.today.components.RestState
 import com.fittrainer.ui.today.components.RoutineHeroCard
 import com.fittrainer.ui.today.components.TodayHeader
+import com.fittrainer.ui.today.components.TodayMusclesSheet
 import com.fittrainer.ui.today.components.WeekStrip
 import com.fittrainer.ui.workout.WorkoutEntryViewModel
 
@@ -87,6 +89,9 @@ fun TodayBody(
     onDismissFailures: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
+    // La clave es la rutina de hoy (null si no toca entrenar): al cambiar o desaparecer, la hoja vuelve a cerrada.
+    val musclesKey = (state.content as? TodayContent.Training)?.routine?.id
+    var musclesOpen by rememberSaveable(musclesKey) { mutableStateOf(false) }
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
         onRefresh = onRefresh,
@@ -109,7 +114,13 @@ fun TodayBody(
             }
             val heroItem: LazyListScope.(Routine) -> Unit = { routine ->
                 item {
-                    RoutineHeroCard(routine, startAction(routine, activeWorkout), { onStartWorkout(routine) }, onContinueWorkout)
+                    RoutineHeroCard(
+                        routine,
+                        startAction(routine, activeWorkout),
+                        onStart = { onStartWorkout(routine) },
+                        onContinue = onContinueWorkout,
+                        onOpenMuscles = { musclesOpen = true },
+                    )
                 }
             }
             todayItems(state, onExerciseClick = { selected = it }, uploadsItem, activeCardItem, heroItem)
@@ -117,6 +128,9 @@ fun TodayBody(
     }
     selected?.let { exercise ->
         ExerciseDetailSheet(exercise.toDetail(), canOpenVideo = !state.isOffline, onDismiss = { selected = null })
+    }
+    musclesSheetRoutine(state.content, musclesOpen)?.let { routine ->
+        TodayMusclesSheet(routine.name, remember(routine) { todayMuscles(routine) }) { musclesOpen = false }
     }
 }
 

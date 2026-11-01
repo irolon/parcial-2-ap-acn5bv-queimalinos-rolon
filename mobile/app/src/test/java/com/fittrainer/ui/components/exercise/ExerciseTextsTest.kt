@@ -23,4 +23,12 @@ class ExerciseTextsTest {
             MUSCLE_ORDER,
         )
     }
+
+    @Test fun `equipo traducido, desconocido tal cual y nulo vacio`() {
+        assertEquals("Barra", equipmentLabel("barbell"))
+        assertEquals("Peso corporal", equipmentLabel("bodyweight"))
+        assertEquals("Polea", equipmentLabel("cable"))
+        assertEquals("trx", equipmentLabel("trx"))
+        assertEquals("", equipmentLabel(null))
+    }
 }

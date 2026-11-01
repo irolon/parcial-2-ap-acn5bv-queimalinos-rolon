@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -15,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.workout.canReplace
 import com.fittrainer.data.workout.isPaused
@@ -30,6 +30,9 @@ import com.fittrainer.ui.workout.components.rest.RestPicker
 import com.fittrainer.ui.workout.components.rest.RestTimer
 import com.fittrainer.ui.workout.components.SetTabs
 import com.fittrainer.ui.workout.components.WorkoutTopBar
+import com.fittrainer.ui.workout.components.muscle.CardIfFitsLayout
+import com.fittrainer.ui.workout.components.muscle.MuscleCard
+import com.fittrainer.ui.workout.components.muscle.showsMuscleCard
 import java.time.Instant
 
 /** Todo lo que la pantalla le pide al VM o abre (diálogos, hojas). */
@@ -100,10 +103,19 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
         LoadPanel(suggestedChip(exercise), state.load, actions.onAdjustKg, actions.onEdit)
         // Al corregir una serie hecha no se muestra: el descanso es de las series que faltan.
         if (!state.isCorrecting) RestPicker(exercise, actions.onPlannedRestAdjust)
-        Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-            Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
-        }
-        Spacer(Modifier.weight(1f))
-        BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace, actions.onReplaceLocked)
+        // La tarjeta se mide contra el alto que de verdad sobra (fuente grande, banners): si no entra, no se pone.
+        CardIfFitsLayout(
+            gap = with(LocalDensity.current) { Spacing.lg.roundToPx() },
+            card = if (showsMuscleCard(exercise.muscleGroup)) ({ MuscleCard(exercise) }) else null,
+            cta = {
+                Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
+                }
+            },
+            bottom = {
+                BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace, actions.onReplaceLocked)
+            },
+            modifier = Modifier.weight(1f),
+        )
     }
 }
