@@ -8,7 +8,7 @@ import { useMarkRead } from '@/hooks/messages/useMarkRead';
 import { useMessages } from '@/hooks/messages/useMessages';
 import { useUnreadCount } from '@/hooks/messages/useUnreadCount';
 import { conversationsKey, messagesKey, unreadKey } from '@/hooks/messages/messageKeys';
-import { calls, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { calls, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 let queryClient;
 const wrapper = ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;

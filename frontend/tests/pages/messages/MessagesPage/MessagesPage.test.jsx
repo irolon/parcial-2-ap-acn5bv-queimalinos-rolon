@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../../helpers/auth/authStore';
-import { stub, stubDesktop } from '../../helpers/messages/ptMessages';
-import { calls, errorResponse } from '../../helpers/shared/fetchMock';
-import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { stub, stubDesktop } from '../../../helpers/messages/ptMessages';
+import { calls, errorResponse } from '../../../helpers/shared/fetchMock';
+import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
 
 beforeEach(() => {
   resetAuthStore();

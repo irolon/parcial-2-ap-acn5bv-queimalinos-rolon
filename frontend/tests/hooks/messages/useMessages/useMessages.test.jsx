@@ -5,7 +5,7 @@ import { configureClient } from '@/api/shared/client';
 import { useMessages } from '@/hooks/messages/useMessages';
 import { useSendMessage } from '@/hooks/messages/useSendMessage';
 import { messagesKey } from '@/hooks/messages/messageKeys';
-import { calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 const CURSOR = '2026-10-31T14:00:00.123456+00:00';
 const msg = (id, extra) => ({

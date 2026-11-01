@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import { studentDetail } from '../../../helpers/students/fixtures';
-import { loadProfile } from '../../../helpers/students/profile';
-import { OVERVIEW, exerciseData, progressUrls } from '../../../helpers/progress/progress';
+import { studentDetail } from '../../../../helpers/students/fixtures';
+import { loadProfile } from '../../../../helpers/students/profile';
+import { OVERVIEW, exerciseData, progressUrls } from '../../../../helpers/progress/progress';
 
 vi.mock('recharts', async (importOriginal) => {
   const { cloneElement } = await import('react');

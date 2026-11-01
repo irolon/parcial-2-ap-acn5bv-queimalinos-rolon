@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { bodyOf, jsonResponse } from '../../../helpers/shared/fetchMock';
-import { studentDetail } from '../../../helpers/students/fixtures';
-import { callsWith, loadProfile } from '../../../helpers/students/profile';
+import { bodyOf, jsonResponse } from '../../../../helpers/shared/fetchMock';
+import { studentDetail } from '../../../../helpers/students/fixtures';
+import { callsWith, loadProfile } from '../../../../helpers/students/profile';
 
 afterEach(() => {
   vi.restoreAllMocks();

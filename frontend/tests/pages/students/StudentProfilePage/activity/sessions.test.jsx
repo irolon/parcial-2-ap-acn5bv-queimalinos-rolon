@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { sessionDetailItem, sessionItem, sessionsPage } from '../../../helpers/sessions/sessions';
-import { studentDetail } from '../../../helpers/students/fixtures';
-import { loadProfile } from '../../../helpers/students/profile';
+import { sessionDetailItem, sessionItem, sessionsPage } from '../../../../helpers/sessions/sessions';
+import { studentDetail } from '../../../../helpers/students/fixtures';
+import { loadProfile } from '../../../../helpers/students/profile';
 
 afterEach(() => {
   vi.unstubAllGlobals();

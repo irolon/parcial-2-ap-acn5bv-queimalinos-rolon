@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api, configureClient } from '@/api/shared/client';
-import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 let token;
 

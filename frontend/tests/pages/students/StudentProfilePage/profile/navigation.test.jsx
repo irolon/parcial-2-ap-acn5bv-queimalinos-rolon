@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
-import { student, studentDetail } from '../../../helpers/students/fixtures';
-import { loadProfile } from '../../../helpers/students/profile';
-import { daysAgo } from '../../../helpers/students/students';
+import { student, studentDetail } from '../../../../helpers/students/fixtures';
+import { loadProfile } from '../../../../helpers/students/profile';
+import { daysAgo } from '../../../../helpers/students/students';
 
 afterEach(() => {
   vi.restoreAllMocks();

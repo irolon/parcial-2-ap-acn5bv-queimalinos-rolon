@@ -5,7 +5,7 @@ import { configureClient } from '@/api/shared/client';
 import { useMessages } from '@/hooks/messages/useMessages';
 import { useSendMessage } from '@/hooks/messages/useSendMessage';
 import { messagesKey } from '@/hooks/messages/messageKeys';
-import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 const msg = (id, image_url) => ({
   id,

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import { studentDetail } from '../../../helpers/students/fixtures';
-import { loadProfile } from '../../../helpers/students/profile';
+import { studentDetail } from '../../../../helpers/students/fixtures';
+import { loadProfile } from '../../../../helpers/students/profile';
 
 afterEach(() => {
   vi.unstubAllGlobals();

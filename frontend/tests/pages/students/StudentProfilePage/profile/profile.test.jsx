@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
-import { metric, studentDetail } from '../../../helpers/students/fixtures';
-import { loadProfile } from '../../../helpers/students/profile';
-import { daysAgo, stubStudents } from '../../../helpers/students/students';
+import { resetAuthStore } from '../../../../helpers/auth/authStore';
+import { TRAINER, renderRoute, setSession } from '../../../../helpers/routes/renderRoute';
+import { metric, studentDetail } from '../../../../helpers/students/fixtures';
+import { loadProfile } from '../../../../helpers/students/profile';
+import { daysAgo, stubStudents } from '../../../../helpers/students/students';
 
 afterEach(() => {
   vi.restoreAllMocks();

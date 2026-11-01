@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { jsonResponse } from '../../../helpers/shared/fetchMock';
-import { metric, studentDetail } from '../../../helpers/students/fixtures';
-import { callsWith, loadProfile } from '../../../helpers/students/profile';
+import { jsonResponse } from '../../../../helpers/shared/fetchMock';
+import { metric, studentDetail } from '../../../../helpers/students/fixtures';
+import { callsWith, loadProfile } from '../../../../helpers/students/profile';
 
 vi.mock('recharts', async (importOriginal) => {
   const { cloneElement } = await import('react');

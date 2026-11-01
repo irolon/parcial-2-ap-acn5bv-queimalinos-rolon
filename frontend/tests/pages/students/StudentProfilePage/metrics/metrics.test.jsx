@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
-import { metric, studentDetail } from '../../../helpers/students/fixtures';
-import { loadProfile } from '../../../helpers/students/profile';
+import { metric, studentDetail } from '../../../../helpers/students/fixtures';
+import { loadProfile } from '../../../../helpers/students/profile';
 
 // jsdom no mide el layout: ResponsiveContainer renderiza 0×0 (y avisa por consola).
 // Se lo reemplaza por un contenedor de tamaño fijo que le pasa width/height al gráfico.
