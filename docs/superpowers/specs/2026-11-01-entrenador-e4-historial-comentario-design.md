@@ -39,7 +39,7 @@ El entrenador ve cómo entrenó cada alumno, serie por serie (con el descanso re
 - Título con el nombre del alumno.
 - Tarjetas como las del historial del alumno: fecha, rutina, "N min · N series · N kg", RPE, 🏆 y 💬.
 - "Ver más" al final cuando hay más páginas (solo con red).
-- **Estados:** cargando, vacío ("Todavía no entrenó"), sin red con caché (aviso) y error sin caché.
+- **Estados:** cargando, vacío ("Todavía no registró sesiones."), sin red con caché (aviso) y error sin caché.
 
 ### 3.3 Detalle (`trainer/students/{studentId}/sessions/{sessionId}`)
 
@@ -49,12 +49,12 @@ El entrenador ve cómo entrenó cada alumno, serie por serie (con el descanso re
   - un bloque por ejercicio con el plan y las series, con el descanso real ("desc. 2:00 (plan 1:30)" en ámbar si difiere).
 - Abajo, "TU COMENTARIO":
   - campo multilínea con el comentario actual y contador "N/1000";
-  - "Guardar comentario" y, si hay uno guardado, "Borrar".
+  - "Guardar" y, si hay uno guardado, "Borrar".
   - Tras guardar: "Comentario guardado".
 
 ## 4. Datos
 
-> Actualizado al implementar (01/11, auditoría de Codex rondas 1 y 2).
+> Actualizado al implementar (01/11) y con la revisión de la #55.
 
 - **Room (v14), dos tablas:**
   - `trainer_sessions` (PK `trainerId, id`): `studentId`, los campos del resumen, `listed` (se muestra en la lista) y `exercisesJson` (el detalle del GET de detalle como JSON, reusando `HistoryExerciseDto`; `null` = nunca se abrió).
@@ -63,7 +63,7 @@ El entrenador ve cómo entrenó cada alumno, serie por serie (con el descanso re
   - Al refrescar la página 1, las filas que salen de la lista y nunca se abrieron se borran. El detalle se conserva si no cambiaron las series, el volumen, el PR, las modificaciones ni el fin.
 - **`StudentSessionsRepository`** en `data/students/sessions/`:
   - `observeLatest(trainerId, studentId): Flow<SessionsCache(items, fetchedAt, hasMore)>`;
-  - `refreshLatest(trainerId, studentId)`: página 1, `replaceLatest` transaccional;
+  - `refreshLatest(trainerId, studentId)`: página 1, `replaceLatest` transaccional. El ViewModel no lo llama al volver a la pantalla si el último refresh OK es de hace menos de 5 min o si se trajo más con "Ver más" (si no, volver de un detalle cortaba la lista a la página 1); "Reintentar" siempre baja;
   - `loadMore(trainerId, studentId)`: la página `nextPage`, `appendPage` transaccional;
   - `observeDetail(trainerId, sessionId)` y `refreshDetail(trainerId, studentId, sessionId)`;
   - `saveComment(trainerId, studentId, sessionId, text)`: guarda la respuesta del PATCH, conservando el detalle;

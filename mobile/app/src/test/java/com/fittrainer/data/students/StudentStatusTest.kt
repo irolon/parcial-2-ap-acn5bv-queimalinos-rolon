@@ -42,10 +42,11 @@ class StudentStatusTest {
         assertTrue(trainerStudent(active = false).matches(StudentFilter.DISABLED, today))
     }
 
-    @Test fun `NEW es nunca entreno, aunque tenga mucha antiguedad`() {
+    @Test fun `NEW coincide con la etiqueta - el que nunca entreno y ya esta en riesgo va solo en riesgo`() {
         val old = trainerStudent(lastSessionAt = null, createdAt = Instant.parse("2026-01-01T12:00:00Z"))
-        assertTrue(old.matches(StudentFilter.NEW, today))
+        assertFalse(old.matches(StudentFilter.NEW, today))
         assertTrue(old.matches(StudentFilter.AT_RISK, today))
+        assertTrue(trainerStudent(lastSessionAt = null, createdAt = Instant.parse("2026-11-08T12:00:00Z")).matches(StudentFilter.NEW, today))
         assertFalse(trainerStudent(lastSessionAt = nov(9)).matches(StudentFilter.NEW, today))
     }
 

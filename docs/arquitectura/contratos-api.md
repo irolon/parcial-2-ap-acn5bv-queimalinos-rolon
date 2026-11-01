@@ -199,7 +199,7 @@ Lista los alumnos del trainer autenticado (rol: trainer).
 
 > `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. El listado no trae `level`, `gym_equipment` ni `injuries`.
 >
-> `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma.
+> `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
 
 ### GET /students/:id
 

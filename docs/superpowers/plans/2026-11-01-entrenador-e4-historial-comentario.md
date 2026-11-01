@@ -8,7 +8,7 @@ tarjeta: E4
 
 **Goal:** el entrenador ve las sesiones de un alumno (lista y detalle, con el descanso real) y deja o borra su comentario, que el alumno ve en su historial.
 
-**Architecture:** `StudentSessionsRepository` cachea en Room (v14) la lista de cada alumno (página 1 y "Ver más") y los detalles abiertos, en `trainer_sessions` (detalle como JSON) y `trainer_sessions_sync` (paginación). Así quedó tras la auditoría de Codex: ver spec §4, que manda sobre las Tasks de abajo. Reusa los DTOs, mappers y componentes visuales del historial del alumno sin tocar `HistoryRepository`. El comentario es un `PATCH` online que actualiza el caché con la respuesta.
+**Architecture:** `StudentSessionsRepository` cachea en Room (v14) la lista de cada alumno (página 1 y "Ver más") y los detalles abiertos, en `trainer_sessions` (detalle como JSON) y `trainer_sessions_sync` (paginación). Así quedó al implementar: ver spec §4, que manda sobre las Tasks de abajo. Reusa los DTOs, mappers y componentes visuales del historial del alumno sin tocar `HistoryRepository`. El comentario es un `PATCH` online que actualiza el caché con la respuesta.
 
 **Spec:** `docs/superpowers/specs/2026-11-01-entrenador-e4-historial-comentario-design.md`
 
