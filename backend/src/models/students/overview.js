@@ -18,9 +18,19 @@ function averagePct(results) {
   return pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
 }
 
-function adherenceKpi(students, routineDays, datesByStudent, today) {
-  const at = (day) => students.map((s) =>
-    adherence7d({ assignedDays: routineDays.get(s.id) ?? [], finishedDates: datesByStudent.get(s.id) ?? [], today: day }));
+/**
+ * Promedio de la adherencia de 7 días y su variación contra la semana anterior. Con los mismos pisos que
+ * GET /students (alta del alumno y fecha de la rutina): un alumno que todavía no existía o no tenía la rutina
+ * no cuenta como 0 % en esa semana, queda null y afuera del promedio.
+ */
+function adherenceKpi(students, routineDays, daySince, datesByStudent, today) {
+  const at = (day) => students.map((s) => adherence7d({
+    assignedDays: routineDays.get(s.id) ?? [],
+    finishedDates: datesByStudent.get(s.id) ?? [],
+    today: day,
+    since: s.created_at ? localDate(s.created_at) : null,
+    daySince: daySince.get(s.id) ?? null,
+  }));
   const pct = averagePct(at(today));
   const previous = averagePct(at(addDays(today, -7)));
   return { pct, delta: pct !== null && previous !== null ? pct - previous : null };
@@ -47,10 +57,11 @@ function attention(students, sessions, nameById, today) {
 
 /**
  * students: activos con { id, name, created_at, last_session_at }. routineDays: Map id → días.
+ * daySince (opcional): Map id → (Map día de la semana → desde qué fecha vale), de scheduleOf.
  * sessions: terminadas desde hoy-14, con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
  * recent: las últimas terminadas (ya ordenadas y con tope), con la misma forma.
  */
-export function buildOverview({ students, routineDays, sessions, recent, today }) {
+export function buildOverview({ students, routineDays, daySince = new Map(), sessions, recent, today }) {
   const nameById = new Map(students.map((s) => [s.id, s.name]));
   const datesByStudent = new Map();
   for (const s of sessions) {
@@ -59,6 +70,7 @@ export function buildOverview({ students, routineDays, sessions, recent, today }
     datesByStudent.set(s.student_id, list);
   }
   const todayWeekday = weekdayOf(today);
+  const plannedToday = new Set(students.filter((s) => (routineDays.get(s.id) ?? []).includes(todayWeekday)).map((s) => s.id));
   const newSince = addDays(today, -6);
   return {
     active_students: {
@@ -66,11 +78,14 @@ export function buildOverview({ students, routineDays, sessions, recent, today }
       new_7d: students.filter((s) => localDate(s.created_at) >= newSince).length,
     },
     sessions_today: {
-      // Sesiones TERMINADAS hoy: una que empezó ayer a las 23:30 y terminó hoy cuenta hoy.
-      done: new Set(sessions.filter((s) => localDate(s.finished_at) === today).map((s) => s.student_id)).size,
-      expected: students.filter((s) => (routineDays.get(s.id) ?? []).includes(todayWeekday)).length,
+      // De los que tienen hoy asignado (expected), cuántos TERMINARON una sesión hoy: una que empezó ayer
+      // a las 23:30 y terminó hoy cuenta hoy. Así nunca da "9 de 8" (revisión de la #58).
+      done: new Set(
+        sessions.filter((s) => localDate(s.finished_at) === today && plannedToday.has(s.student_id)).map((s) => s.student_id)
+      ).size,
+      expected: plannedToday.size,
     },
-    adherence_7d: adherenceKpi(students, routineDays, datesByStudent, today),
+    adherence_7d: adherenceKpi(students, routineDays, daySince, datesByStudent, today),
     at_risk: students.filter((s) => activityStatus(s, today) === 'inactive').length,
     attention: attention(students, sessions, nameById, today),
     recent: recent.map((s) => ({

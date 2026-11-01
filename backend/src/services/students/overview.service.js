@@ -28,8 +28,8 @@ export async function overview(trainerId) {
 
   const ids = students.map((s) => s.id);
   const today = localDate();
-  const [routineDays, lastSessions, sessions, recent] = await Promise.all([
-    studentsRepo.findActiveRoutineDays(ids),
+  const [schedules, lastSessions, sessions, recent] = await Promise.all([
+    studentsRepo.findActiveRoutineSchedules(ids),
     studentsRepo.findLastSessionDates(ids),
     overviewRepo.findFinishedSessionsSince(ids, `${addDays(today, -WINDOW_DAYS)}T00:00:00-03:00`),
     overviewRepo.findRecentFinished(ids, RECENT_LIMIT),
@@ -37,7 +37,8 @@ export async function overview(trainerId) {
   const lastById = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
   return buildOverview({
     students: students.map((s) => ({ ...s, active: true, last_session_at: lastById.get(s.id) ?? null })),
-    routineDays,
+    routineDays: new Map([...schedules].map(([id, sc]) => [id, sc.days])),
+    daySince: new Map([...schedules].map(([id, sc]) => [id, sc.daySince])),
     sessions,
     recent,
     today,

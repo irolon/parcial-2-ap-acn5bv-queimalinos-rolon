@@ -29,20 +29,22 @@ describe('models/students/overview', () => {
     expect(r.active_students).toEqual({ count: 3, new_7d: 1 });
   });
 
-  it('sesiones de hoy: done cuenta aunque hoy no esté asignado; expected solo los que tienen hoy', () => {
+  it('sesiones de hoy: done cuenta solo a los que tienen hoy asignado (nunca más que expected)', () => {
     const r = buildOverview({
       ...base,
-      students: [student('a'), student('b')],
-      routineDays: new Map([['a', ['thursday']], ['b', ['monday']]]),
-      sessions: [session('s1', 'b', '11-05')],
+      students: [student('a'), student('b'), student('c')],
+      routineDays: new Map([['a', ['thursday']], ['b', ['monday']], ['c', ['thursday']]]),
+      // b entrenó sin tenerlo asignado: no suma; a terminó hoy y c todavía no.
+      sessions: [session('s1', 'b', '11-05'), session('s2', 'a', '11-05')],
     });
-    expect(r.sessions_today).toEqual({ done: 1, expected: 1 });
+    expect(r.sessions_today).toEqual({ done: 1, expected: 2 });
   });
 
   it('sesiones de hoy cuentan por la hora de fin: empezó ayer a las 23:30 y terminó hoy a las 00:30', () => {
     const r = buildOverview({
       ...base,
       students: [student('a'), student('b')],
+      routineDays: new Map([['a', ['thursday']], ['b', ['thursday']]]),
       sessions: [
         // 04/11 23:30 AR → 05/11 00:30 AR.
         session('cruce', 'a', '11-05', { started_at: '2026-11-05T02:30:00Z', finished_at: '2026-11-05T03:30:00Z' }),
@@ -97,5 +99,30 @@ describe('models/students/overview', () => {
     expect(r.recent).toEqual([
       { student_id: 'a', name: 'Alumno a', session_id: 'x', routine_name: 'Push', rpe: null, finished_at: at('11-05', 16) },
     ]);
+  });
+
+  it('un alta reciente no baja la adherencia ni inventa la variación (pisos de alta y rutina)', () => {
+    // a: alumno viejo L/X/V, 67 % esta semana y 33 % la anterior (el caso de arriba).
+    // n: alta el 03/11 con L/X/V desde ese día; esta semana solo cuenta el 04/11 y entrenó; la anterior no existía.
+    const mwf = ['monday', 'wednesday', 'friday'];
+    const r = buildOverview({
+      ...base,
+      students: [student('a'), student('n', { created_at: at('11-03'), last_session_at: at('11-04') })],
+      routineDays: new Map([['a', mwf], ['n', mwf]]),
+      daySince: new Map([['n', new Map(mwf.map((d) => [d, '2026-11-03']))]]),
+      sessions: [session('1', 'a', '10-30'), session('2', 'a', '11-02'), session('3', 'a', '10-26'), session('4', 'n', '11-04')],
+    });
+    // Esta semana: (67 + 100) / 2 = 84 (redondeado). La anterior: solo a (33); n queda afuera, no en 0 %.
+    expect(r.adherence_7d).toEqual({ pct: 84, delta: 51 });
+  });
+
+  it('sin daySince usa solo el alta como piso', () => {
+    const r = buildOverview({
+      ...base,
+      students: [student('n', { created_at: at('11-03') })],
+      routineDays: new Map([['n', ['monday', 'wednesday', 'friday']]]),
+    });
+    // 04/11 asignado sin entrenar: 0 %; la semana anterior no existía: delta null.
+    expect(r.adherence_7d).toEqual({ pct: 0, delta: null });
   });
 });

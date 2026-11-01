@@ -13,7 +13,7 @@ tarjeta: E7
 > - `trainer_overview` guarda la respuesta entera como JSON (`dataJson`, PK `trainerId`) en lugar de columnas por KPI más dos JSON: es chica y se reemplaza entera.
 > - Después de comentar en E4, el Inicio no se refresca desde `StudentSessionsRepository`: se refresca solo cada vez que la pestaña vuelve a estar visible (`LifecycleStartEffect`), así al volver de comentar el aviso ya no está. Evita acoplar los dos repositorios.
 > - La UI va en `ui/students/overview/` (no en `ui/home/`): el Inicio sale del recurso students (`GET /students/overview`) y la organización es por recurso de la API (CONTRIBUTING.md).
-> - `sessions_today.done` cuenta por la fecha argentina de `finished_at` (sesiones terminadas hoy); la adherencia sigue usando `started_at`.
+> - `sessions_today.done` cuenta, de los alumnos con hoy asignado (`expected`), los que terminaron una sesión hoy por la fecha argentina de `finished_at`; nunca supera a `expected` (revisión de la #58). La adherencia sigue usando `started_at`, con los pisos de alta y rutina de E1.
 > - Las reglas de estado del backend quedaron en `models/students/activity.js`, con las mismas reglas que la web y el celular.
 
 ## 1. Objetivo
@@ -29,7 +29,7 @@ Al abrir la app, el entrenador ve de un vistazo cómo vienen sus alumnos y a qui
 | KPI | Valor | Variación |
 |---|---|---|
 | ALUMNOS ACTIVOS | alumnos con `active = true` | "+N": dados de alta en los últimos 7 días |
-| SESIONES HOY | alumnos activos con al menos una sesión terminada hoy | "de M": alumnos activos con hoy asignado |
+| SESIONES HOY | de los alumnos activos con hoy asignado, los que terminaron al menos una sesión hoy (por `finished_at`) | "de M": alumnos activos con hoy asignado |
 | ADHERENCIA | promedio de la adherencia de 7 días de E1 entre los alumnos con días asignados (`null` si nadie tiene plan) | "±N%" contra los 7 días anteriores |
 | EN RIESGO | alumnos activos en estado "en riesgo" (7 días o más sin entrenar, como E1) | — |
 
@@ -78,13 +78,13 @@ Las últimas 10 sesiones terminadas de sus alumnos: nombre, "<rutina> · RPE N" 
 ## 4. Mobile
 
 - **Room:**
-  - tabla `trainer_overview` (una fila por entrenador): KPIs, `attentionJson` y `recentJson` (listas chicas, como JSON con `TypeConverter`) y `fetchedAt`;
+  - tabla `trainer_overview` (una fila por entrenador): `dataJson` (la respuesta entera de `GET /students/overview`) y `fetchedAt`;
   - migración a la versión siguiente.
 - **`TrainerOverviewRepository`** en `data/students/overview/`:
   - `observe(trainerId)`;
   - `refresh(trainerId)`;
   - es parte del `UserDataCleaner`.
-- **UI** en `ui/home/`:
+- **UI** en `ui/students/overview/`:
   - `TrainerHomeScreen`, ViewModel, UiState y textos;
   - `components/` (`KpiGrid`, `AttentionList`, `RecentActivity`);
   - pull-to-refresh y refresco al volver a la pestaña.

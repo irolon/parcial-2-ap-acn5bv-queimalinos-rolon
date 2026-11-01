@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 
 const mockOverviewRepo = { findActiveStudents: jest.fn(), findFinishedSessionsSince: jest.fn(), findRecentFinished: jest.fn() };
-const mockStudentsRepo = { findActiveRoutineDays: jest.fn(), findLastSessionDates: jest.fn() };
+const mockStudentsRepo = { findActiveRoutineSchedules: jest.fn(), findLastSessionDates: jest.fn() };
 jest.unstable_mockModule('../../../../src/repositories/students/overview.repository.js', () => mockOverviewRepo);
 jest.unstable_mockModule('../../../../src/repositories/students/students.repository.js', () => mockStudentsRepo);
 
@@ -10,7 +10,7 @@ const { overview, RECENT_LIMIT } = await import('../../../../src/services/studen
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: new Date('2026-11-05T16:00:00Z'), doNotFake: ['nextTick', 'setImmediate'] });
-  mockStudentsRepo.findActiveRoutineDays.mockResolvedValue(new Map());
+  mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(new Map());
   mockStudentsRepo.findLastSessionDates.mockResolvedValue([]);
   mockOverviewRepo.findFinishedSessionsSince.mockResolvedValue([]);
   mockOverviewRepo.findRecentFinished.mockResolvedValue([]);
@@ -30,7 +30,7 @@ describe('overview.service', () => {
     mockStudentsRepo.findLastSessionDates.mockResolvedValue([{ student_id: 'a', last_session_at: '2026-10-20T15:00:00Z' }]);
     const r = await overview('t1');
     expect(mockOverviewRepo.findActiveStudents).toHaveBeenCalledWith('t1');
-    expect(mockStudentsRepo.findActiveRoutineDays).toHaveBeenCalledWith(['a']);
+    expect(mockStudentsRepo.findActiveRoutineSchedules).toHaveBeenCalledWith(['a']);
     expect(mockOverviewRepo.findFinishedSessionsSince).toHaveBeenCalledWith(['a'], '2026-10-22T00:00:00-03:00');
     expect(mockOverviewRepo.findRecentFinished).toHaveBeenCalledWith(['a'], RECENT_LIMIT);
     // Última sesión hace 16 días: en riesgo.

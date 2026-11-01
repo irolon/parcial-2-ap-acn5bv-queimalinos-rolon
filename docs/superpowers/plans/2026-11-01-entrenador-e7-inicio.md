@@ -18,7 +18,7 @@ tarjeta: E7
 > - `trainer_overview` guarda la respuesta entera como JSON (`dataJson`, PK `trainerId`) en lugar de columnas por KPI más dos JSON: es chica y se reemplaza entera.
 > - Después de comentar en E4, el Inicio no se refresca desde `StudentSessionsRepository`: se refresca solo cada vez que la pestaña vuelve a estar visible (`LifecycleStartEffect`), así al volver de comentar el aviso ya no está. Evita acoplar los dos repositorios.
 > - La UI va en `ui/students/overview/` (no en `ui/home/`): el Inicio sale del recurso students (`GET /students/overview`) y la organización es por recurso de la API (CONTRIBUTING.md).
-> - `sessions_today.done` cuenta por la fecha argentina de `finished_at` (sesiones terminadas hoy); la adherencia sigue usando `started_at`.
+> - `sessions_today.done` cuenta, de los alumnos con hoy asignado (`expected`), los que terminaron una sesión hoy por la fecha argentina de `finished_at`; nunca supera a `expected` (revisión de la #58). La adherencia sigue usando `started_at`, con los pisos de alta y rutina de E1.
 > - Las reglas de estado del backend quedaron en `models/students/activity.js`, con las mismas reglas que la web y el celular.
 
 ## Global Constraints
@@ -56,7 +56,7 @@ tarjeta: E7
 - [ ] **Tests:**
   - KPIs con y sin plan;
   - `new_7d`;
-  - `sessions_today` con un alumno que entrenó sin tener hoy asignado (`done` lo cuenta, `expected` no);
+  - `sessions_today` con un alumno que entrenó sin tener hoy asignado (no suma ni a `done` ni a `expected`);
   - variación de la adherencia;
   - "atención": orden (riesgo por días desc, después avisos por `finished_at` desc), tope de 10, comentada que no aparece, dado de baja excluido;
   - `recent` ordenado;

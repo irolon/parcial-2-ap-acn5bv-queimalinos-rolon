@@ -224,7 +224,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
 ```
 
 - `active_students.new_7d`: altas de los últimos 7 días (hoy incluido).
-- `sessions_today.done`: alumnos con al menos una sesión terminada hoy (asignado o no). `expected`: alumnos con hoy asignado.
+- `sessions_today.expected`: alumnos con hoy asignado. `done`: de esos, cuántos terminaron al menos una sesión hoy (por la hora de fin), así nunca supera a `expected`.
 - `adherence_7d.pct`: promedio de la adherencia de 7 días de `GET /students` entre los alumnos con días asignados. `delta`: contra los 7 días anteriores. Los dos son `null` si nadie tiene plan.
 - `at_risk`: alumnos con 7 días o más sin entrenar (desde la última sesión o el alta), las mismas reglas que la web.
 - `attention` (hasta 10): primero `inactive` (de más días a menos; `never_trained` si nunca entrenó), después `feedback_pending`: sesiones terminadas en los últimos 7 días (hoy incluido) sin `trainer_comment`, de la más nueva a la más vieja.
