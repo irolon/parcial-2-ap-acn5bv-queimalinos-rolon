@@ -55,6 +55,30 @@ fun Workout.lastDoneSet(): WorkoutSet? = sets.maxByOrNull { it.executedAt }
 fun Workout.summary(now: Instant): WorkoutSummary =
     WorkoutSummary(sets.size, Duration.between(startedAt, now).toMinutes(), id)
 
+/** Tope del backend para el descanso real (session-set.validation.js). */
+const val MAX_REST_SECONDS = 3600
+/** El control de la pantalla de la serie: de 0 a 10:00, de a 15″ (spec §4.2). */
+const val MAX_REST_PICK_SECONDS = 600
+const val REST_STEP_SECONDS = 15
+
+/** El descanso elegido ±[deltaSeconds], de 0 a 10:00 (o hasta el del plan, si el entrenador puso más). */
+fun WorkoutExercise.withRestPick(deltaSeconds: Int): WorkoutExercise =
+    copy(restOverrideSeconds = (restTotal + deltaSeconds).coerceIn(0, maxOf(MAX_REST_PICK_SECONDS, plannedRest)))
+
+/** Cuándo dejó de correr: si venció, cuando vencía (la app pudo estar cerrada); si no, ahora (saltar, −15″, terminar). */
+fun Rest.endedAt(now: Instant): Instant = if (isOver(now)) endsAt ?: now else now
+
+/**
+ * La serie que disparó el descanso en curso con el descanso real anotado (spec §4.3): desde que se confirmó
+ * hasta que el descanso dejó de correr, con la pausa incluida. null si no hay descanso corriendo.
+ */
+fun Workout.closingRest(now: Instant): WorkoutSet? {
+    val r = rest ?: return null
+    val set = lastDoneSet() ?: return null
+    val ms = Duration.between(set.executedAt, r.endedAt(now)).toMillis()
+    return set.copy(restSeconds = Math.round(ms / 1_000.0).toInt().coerceIn(0, MAX_REST_SECONDS))
+}
+
 /** null: el ejercicio no tiene descanso. */
 fun startRest(seconds: Int, now: Instant): Rest? =
     if (seconds <= 0) null else Rest(now.plusSeconds(seconds.toLong()), seconds, null)

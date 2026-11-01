@@ -26,7 +26,8 @@ import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.components.BottomActions
 import com.fittrainer.ui.workout.components.ExerciseHeading
 import com.fittrainer.ui.workout.components.LoadPanel
-import com.fittrainer.ui.workout.components.RestTimer
+import com.fittrainer.ui.workout.components.rest.RestPicker
+import com.fittrainer.ui.workout.components.rest.RestTimer
 import com.fittrainer.ui.workout.components.SetTabs
 import com.fittrainer.ui.workout.components.WorkoutTopBar
 import com.fittrainer.ui.workout.components.muscle.CardIfFitsLayout
@@ -51,6 +52,8 @@ class WorkoutActions(
     val onDismissError: () -> Unit,
     /** Tocaron Reemplazar con series ya registradas: se explica por qué no se puede. */
     val onReplaceLocked: () -> Unit = {},
+    /** −15″ / +15″ del descanso del ejercicio, antes de arrancar la serie. */
+    val onPlannedRestAdjust: (Int) -> Unit = {},
 )
 
 /** Serie (mockup p.13) o timer a pantalla completa (p.14). Sin scroll para completar una serie. */
@@ -98,6 +101,8 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
         SetTabs(workout, state.shownSet, actions.onSelectSet)
         ExerciseHeading(exercise.name, actions.onOpenList)
         LoadPanel(suggestedChip(exercise), state.load, actions.onAdjustKg, actions.onEdit)
+        // Al corregir una serie hecha no se muestra: el descanso es de las series que faltan.
+        if (!state.isCorrecting) RestPicker(exercise, actions.onPlannedRestAdjust)
         // La tarjeta se mide contra el alto que de verdad sobra (fuente grande, banners): si no entra, no se pone.
         CardIfFitsLayout(
             gap = with(LocalDensity.current) { Spacing.lg.roundToPx() },

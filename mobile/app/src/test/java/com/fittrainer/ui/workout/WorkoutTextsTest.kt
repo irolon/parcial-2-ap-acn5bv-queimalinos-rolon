@@ -20,6 +20,13 @@ class WorkoutTextsTest {
         assertEquals("1:02:03", formatElapsed(T0, T0.plusSeconds(3_723)))
     }
 
+    @Test fun `fila del descanso elegido con el plan al lado si difiere`() {
+        assertEquals("Descanso 1:30", restPickerLabel(90, 90))
+        assertEquals("Descanso 2:00 · plan 1:30", restPickerLabel(120, 90))
+        assertEquals("Sin descanso · plan 1:30", restPickerLabel(0, 90))
+        assertEquals("Sin descanso", restPickerLabel(0, 0))
+    }
+
     @Test fun `numeros de peso con coma y tabs hechas`() {
         assertEquals("65", kgNumber(65.0))
         assertEquals("62,5", kgNumber(62.5))

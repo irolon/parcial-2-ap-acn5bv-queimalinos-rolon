@@ -1,10 +1,11 @@
-package com.fittrainer.data.db
+package com.fittrainer.data.db.migration
 
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.fittrainer.data.db.FitTrainerDatabase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -13,7 +14,8 @@ import org.junit.runner.RunWith
 
 /**
  * Las bases de los usuarios se migran, nunca se borran: desde la cola offline (S3) Room guarda
- * registros pendientes de subir. Cada versión nueva suma su caso acá.
+ * registros pendientes de subir. Cada versión nueva suma su caso en esta carpeta (v9 en adelante:
+ * [MigrationV9Test]).
  */
 @RunWith(AndroidJUnit4::class)
 class FitTrainerDatabaseMigrationTest {

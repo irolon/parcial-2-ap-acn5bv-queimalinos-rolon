@@ -24,6 +24,18 @@ class HistoryMapperTest {
         assertEquals(base + 5 * 60_000 + 654, detail.setEntities().single().executedAt)
     }
 
+    @Test fun `el descanso real y el del plan pasan al cache, y sin el campo quedan null`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val detail = json.decodeFromString<HistoryDetailDto>(
+            """{"id":"a","started_at":"2026-10-30T01:00:00Z","exercises":[{"exercise":{"id":"e","name":"Press"},
+            "planned":{"sets":4,"rest_seconds":90},"sets":[
+            {"id":"s1","set_number":1,"executed_at":"2026-10-30T01:05:00Z","rest_seconds":120},
+            {"id":"s2","set_number":2,"executed_at":"2026-10-30T01:08:00Z"}]}]}""",
+        )
+        assertEquals(90, detail.exerciseEntities().single().plannedRestSeconds)
+        assertEquals(listOf(120, null), detail.setEntities().map { it.restSeconds })
+    }
+
     @Test fun `fechas con Z siguen andando`() {
         val dto = HistorySummaryDto("a", "2026-10-30T01:00:00Z", "2026-10-30T01:50:00.250Z")
         val entity = dto.toEntity("u1", inLatest = true, detailLoaded = false)

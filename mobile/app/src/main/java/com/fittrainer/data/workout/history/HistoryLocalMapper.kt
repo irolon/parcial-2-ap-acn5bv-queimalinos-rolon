@@ -39,7 +39,9 @@ fun WorkoutWithDetails.toHistoryDetail(): HistoryDetail = HistoryDetail(
         HistoryExercise(
             name = plan?.name ?: "Ejercicio ${position + 1}", originalName = null,
             plannedSets = plan?.sets, plannedReps = plan?.reps, plannedKg = plan?.suggestedKg, isPr = false,
-            sets = list.sortedBy { it.setNumber }.map { HistorySet(it.setNumber, it.actualReps, it.actualKg) },
+            sets = list.sortedBy { it.setNumber }.map { HistorySet(it.setNumber, it.actualReps, it.actualKg, it.restSeconds) },
+            // El plan del entrenador tal como se copió al empezar: el elegido por el alumno no es el plan.
+            plannedRestSeconds = plan?.restSeconds,
         )
     },
 )
@@ -56,7 +58,9 @@ fun HistoryWithDetails.toHistoryDetail(rpeOverride: Int?, notesOverride: String?
     exercises = exercises.sortedBy { it.position }.map { e ->
         HistoryExercise(
             e.exerciseName, e.originalExerciseName, e.plannedSets, e.plannedReps, e.plannedKg, e.isPr,
-            sets.filter { it.exercisePosition == e.position }.sortedBy { it.setNumber }.map { HistorySet(it.setNumber, it.reps, it.kg) },
+            sets.filter { it.exercisePosition == e.position }.sortedBy { it.setNumber }
+                .map { HistorySet(it.setNumber, it.reps, it.kg, it.restSeconds) },
+            e.plannedRestSeconds,
         )
     },
 )
