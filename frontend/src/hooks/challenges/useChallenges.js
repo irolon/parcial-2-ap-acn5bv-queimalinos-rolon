@@ -36,6 +36,8 @@ export function useDeleteChallenge() {
   return useMutation({
     mutationFn: deleteChallenge,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CHALLENGES_KEY }),
+    // 409: ya tiene asignaciones y la lista quedó vieja; que la card deje de ofrecer "Borrar".
+    onError: (err) => (err?.status === 409 ? queryClient.invalidateQueries({ queryKey: CHALLENGES_KEY }) : undefined),
   });
 }
 
