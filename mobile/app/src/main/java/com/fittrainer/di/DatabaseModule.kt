@@ -1,11 +1,14 @@
 package com.fittrainer.di
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
+import com.fittrainer.data.db.notifications.NotificationDao
+import com.fittrainer.data.db.progress.ProgressDao
 import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
 import com.fittrainer.data.db.students.TrainerStudentDetailDao
@@ -24,8 +27,19 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.time.Clock
+import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
+/** El único scope que vive lo que el proceso: para trabajo que tiene que sobrevivir a un servicio o una pantalla. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
+
+/** Room y sus DAO, más lo que es uno solo por proceso: el reloj y el [ApplicationScope]. */
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -82,6 +96,20 @@ object DatabaseModule {
     fun provideTrainerChallengesDao(db: FitTrainerDatabase): TrainerChallengesDao = db.trainerChallengesDao()
 
     @Provides
+    fun provideProgressDao(db: FitTrainerDatabase): ProgressDao = db.progressDao()
+
+    @Provides
+    fun provideNotificationDao(db: FitTrainerDatabase): NotificationDao = db.notificationDao()
+
+    @Provides
     @Singleton
     fun provideClock(): Clock = Clock.systemDefaultZone()
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO +
+            CoroutineExceptionHandler { _, e -> Log.e("ApplicationScope", "Falló una tarea de fondo", e) },
+    )
 }
