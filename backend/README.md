@@ -141,6 +141,7 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina, después de los existentes |
 | PATCH | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Edita un ejercicio de la rutina (`sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes`; al menos uno). Devuelve la rutina completa |
 | DELETE | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Quita un ejercicio de la rutina. 204; 409 `ROUTINE_NEEDS_EXERCISE` si es el último |
+| PUT | `/api/routines/:id/exercises/order` | trainer | Reordena los ejercicios: `routine_exercise_ids` con **todos** los de la rutina en el orden nuevo. Devuelve la rutina completa |
 | GET | `/api/routines/today` | student | Rutina activa del alumno para hoy; cada ejercicio trae `last_session_kg` (mayor peso de la última sesión en que lo hizo, o `null`) |
 | GET | `/api/routines/mine` | student | Rutinas activas del alumno con sus ejercicios (caché offline de mobile) |
 
@@ -277,6 +278,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 - **Nuevo `GET /routines/mine`** (solo alumno): devuelve `{ data: [...] }` con **todas** las rutinas activas del alumno, cada una con `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises` (la misma forma que en `/today`, sin `last_session_kg`), la más nueva primero; `[]` si no tiene. Lo usa la app mobile para guardar la rutina offline y resolver el día en el teléfono: `/today` no distingue "día de descanso" de "sin rutina" y no sirve para un caché que se usa otro día.
 - `GET /routines/today` no cambia.
+- **Nuevo `PUT /routines/:id/exercises/order`** (solo trainer, tarjeta E8 del celular): body `{ "routine_exercise_ids": [...] }` con exactamente los ejercicios de la rutina, en el orden nuevo (1 a 100, sin repetidos; si falta o sobra alguno → 400 `VALIDATION_ERROR` en `routine_exercise_ids`). Deja `order_index` = posición y devuelve el detalle como `GET /routines/:id`. Se agregó para que el entrenador reordene desde el celular; antes el orden solo se fijaba al crear. **Web:** el editor de rutinas puede usarlo para el drag & drop sobre una rutina ya asignada (opcional). Es atómico: lo hace la función SQL `reorder_routine_exercises` (valida el conjunto y guarda todo en una transacción con la rutina bloqueada). **Migración:** `src/database/migrations/2026-11-01-routines-reorder.sql` (también en `schema/03-routines.sql`); ya está aplicada en Supabase dev. En el código, el service se dividió en la carpeta `services/routines/routines.service/`: `routines.service.js` (de 178 a 119 líneas), `routine-exercises.service.js` (ejercicios de una rutina asignada) y `routine-access.service.js` (ownership). `routines.service.js` re-exporta todo; cambia la ruta del import en el controller y en `routine-templates.service.js`.
 
 ### Lo que le toca a la web
 

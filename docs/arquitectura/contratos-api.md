@@ -453,6 +453,10 @@ Personaliza un ejercicio de una rutina asignada (trainer dueño). Body: `sets`, 
 
 Quita un ejercicio de la rutina. **204**. Mismo 404 que el PATCH. Si es el único ejercicio de la rutina → **409 `ROUTINE_NEEDS_EXERCISE`** ("La rutina tiene que tener al menos un ejercicio").
 
+### PUT /routines/:id/exercises/order
+
+Reordena los ejercicios de una rutina propia (trainer dueño). Body: `{ "routine_exercise_ids": ["uuid", …] }`, de 1 a 100 ids sin repetidos, que tienen que ser **exactamente** los ejercicios de la rutina (si falta o sobra alguno → 400 `VALIDATION_ERROR` con `field: "routine_exercise_ids"`). Cada uno queda con `order_index` = su posición. **200 OK** devuelve la rutina completa (forma de `GET /routines/:id`). Ajena → 403, inexistente → 404. Es atómico: la función SQL `reorder_routine_exercises` valida el conjunto y guarda todo en una transacción con la rutina bloqueada, así que nunca queda un orden a medias ni dos reorders se pisan. Es idempotente: el body es el estado final.
+
 ### GET /routines/today
 
 Rutina activa del alumno para hoy. Solo alumnos.

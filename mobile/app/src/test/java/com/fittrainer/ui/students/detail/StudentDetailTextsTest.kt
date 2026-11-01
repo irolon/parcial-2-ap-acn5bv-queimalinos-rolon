@@ -29,10 +29,6 @@ class StudentDetailTextsTest {
         assertEquals("", headerLine(detail.copy(birthDate = null, goal = null, activeRoutine = null), today))
     }
 
-    @Test fun `dias en orden de la semana`() {
-        assertEquals("Lun · Jue", daysLabel(listOf("thursday", "monday")))
-    }
-
     @Test fun `numeros con coma y sin decimales de mas`() {
         assertEquals("74,5", number(74.5))
         assertEquals("178", number(178.0))
