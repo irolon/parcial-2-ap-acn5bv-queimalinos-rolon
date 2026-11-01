@@ -35,7 +35,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 
 **Web** (React)
 - [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas, historial de sesiones con comentarios del PT, vista de progreso con gráficos (Recharts), y racha, logros y desafíos del PT (crear, asignar y seguir el progreso).
-- [x] **Portal del alumno:** Hoy con la rutina del día, sesión activa simplificada (se guarda en el navegador y se sube al terminar), Mis rutinas, Historial, Mi progreso con logros y Mi perfil con medidas. Offline, push, reemplazar ejercicio y pedir turno quedan solo en el celular.
+- [x] **Portal del alumno:** Hoy con la rutina del día, sesión activa simplificada (se guarda en el navegador y se sube al terminar), Mis rutinas, Historial, Mi progreso con logros y Mi perfil con medidas. Offline y reemplazar ejercicio están solo en el celular; push y pedir turno están pendientes.
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.

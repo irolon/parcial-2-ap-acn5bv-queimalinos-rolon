@@ -66,12 +66,12 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-14 | Ejecutar sesión de entrenamiento | Realiza el entrenamiento registrando peso y reps por serie, con timer de descanso | AL-03, AL-04 | Web (simplificada, se sube al terminar) y mobile (completa, con modo offline) |
 | CU-15 | Consultar asistente IA | Chat para reemplazar ejercicios, consultar técnica o calentamientos durante la sesión | AL-05 | Pendiente en ambas |
 | CU-16 | Registrar feedback post-entreno | Indica cómo se sintió (RPE 1-10) y nota libre al cerrar la sesión | AL-08 | Web y mobile |
-| CU-17 | Ver historial y progreso | Consulta sesiones pasadas, evolución de cargas, volumen total y gráficos por ejercicio | AL-06 | Web y mobile |
-| CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 | Web y mobile |
-| CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 | Solo mobile |
-| CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 | Web y mobile |
+| CU-17 | Ver historial y progreso | Consulta sesiones pasadas, evolución de cargas, volumen total y gráficos por ejercicio | AL-06 | Web; mobile: historial (gráficos pendientes) |
+| CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 | Web (mobile pendiente) |
+| CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 | Pendiente (mobile) |
+| CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 | Web (mobile pendiente) |
 
-La web no tiene sesión offline, push, reemplazo de ejercicio ni pedido de turno; el detalle está en [[producto/casos-de-uso#Qué hace el alumno en cada plataforma|Qué hace el alumno en cada plataforma]].
+La web no tiene sesión offline ni reemplazo de ejercicio, y push y pedido de turno están pendientes en las dos; la mobile todavía no tiene medidas, progreso ni logros del alumno; el detalle está en [[producto/casos-de-uso#Qué hace el alumno en cada plataforma|Qué hace el alumno en cada plataforma]].
 
 ### Sistema (actor secundario)
 

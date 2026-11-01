@@ -24,10 +24,25 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 ## Qué hace el alumno en cada plataforma
 
-El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero **no hacen lo mismo**: la mobile es la experiencia completa (es la que se usa en el gym) y la web cubre lo central. Lo que no llega a la web queda dicho acá.
+El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero **no hacen lo mismo**: la mobile es la que se usa en el gym (sesión completa, con modo offline y reemplazo de ejercicios) y la web cubre lo central, además de lo que en la mobile todavía está pendiente. La columna Mobile refleja lo que hay hoy en el código de la mobile de `develop`; "Pendiente (en revisión)" es lo que tiene una PR abierta sin mergear.
 
 | Función | Web | Mobile |
 |---|---|---|
+| Hoy: rutina del día, plan y semana (CU-13) | Sí | Sí |
+| Mis rutinas (solo lectura) y biblioteca de ejercicios | Sí | Sí |
+| Ejecutar una sesión (CU-05 / CU-14) | **Simplificada:** un ejercicio por vez, descanso con cuenta regresiva y borrar series antes de subir. Se guarda en el navegador y se sube entera al terminar; necesita red para subir | Completa, con modo offline y sincronización |
+| Feedback post-entreno, RPE y nota (CU-16) | Sí | Sí |
+| Reemplazar un ejercicio | No | Sí |
+| Sesión libre (sin rutina) | No | No |
+| Historial de sesiones, con el comentario del entrenador en solo lectura (CU-17) | Sí | Sí |
+| Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Pendiente (en revisión) |
+| Gráficos de progreso (CU-17) | Sí | Pendiente (en revisión) |
+| Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Pendiente (en revisión): hoy el perfil solo tiene Estado del servidor y Cerrar sesión |
+| Notificaciones push | No | Pendiente |
+| Pedir turno al entrenador (CU-19) | No | Pendiente (tarjeta de Igna) |
+| Asistente IA (CU-06 / CU-15) | **Pendiente** (tarjetas de IA pospuestas) | **Pendiente** |
+
+---|---|---|
 | Hoy: rutina del día, plan y semana (CU-13) | Sí | Sí |
 | Mis rutinas (solo lectura) | Sí | Sí |
 | Ejecutar una sesión (CU-05 / CU-14) | **Simplificada:** un ejercicio por vez, descanso con cuenta regresiva y borrar series antes de subir. Se guarda en el navegador y se sube entera al terminar; necesita red para subir | Completa, con modo offline y sincronización |
@@ -195,7 +210,7 @@ El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero 
 - **1a:** El alumno entrena otra rutina (no la del día) desde Mis rutinas → abre su detalle y toca "Empezar"; sigue en el paso 3. Si ya tiene una sesión abierta de otra rutina, primero tiene que terminarla.
 - **4a:** El alumno saltea una serie → la marca como omitida (`completed = false`).
 - **4b:** El alumno reemplaza un ejercicio (máquina ocupada o no disponible) → abre el chat IA o lo selecciona manualmente. Se registra `substituted_exercise_id` y `has_modifications = true`.
-- **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente, puede retomar más tarde desde cualquier dispositivo.
+- **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente y puede retomarla más tarde, pero en el mismo dispositivo: la de la web vive en ese navegador y la del celular, en el celular (no pasa de uno a otro).
 - **W1 (web):** la sesión vive en el navegador (`localStorage`) y se sube entera al terminar, con el mismo contrato de la mobile. Si queda una a medias, Hoy ofrece "Continuar" o "Descartar"; no incluye 4b (reemplazar ejercicio).
 
 **Flujos de error**
