@@ -29,6 +29,7 @@ export default function MessageList({
       onLoadCapture={onImageLoad}
       role="log"
       aria-live="polite"
+      aria-busy={isFetchingOlder}
       aria-label="Mensajes"
       className="flex flex-1 flex-col gap-3 overflow-y-auto p-4"
     >

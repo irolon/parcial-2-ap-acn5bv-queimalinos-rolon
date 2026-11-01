@@ -43,7 +43,6 @@ function stubApi({ first, older, extra = () => null }) {
     const custom = extra(url, init);
     if (custom) return custom;
     if (url.endsWith('/read')) return jsonResponse(200, { data: { updated: 1 } });
-    if (url.endsWith('/unread-count')) return jsonResponse(200, { data: { count: 0 } });
     const body = url.includes('before=') ? older : first;
     return jsonResponse(200, { data: body.data, meta: { next_before: body.next ?? null }, counterpart });
   });
@@ -122,6 +121,9 @@ describe('Conversation', () => {
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
     document.dispatchEvent(new Event('visibilitychange'));
     await waitFor(() => expect(readCalls(fetchMock)).toHaveLength(1));
+
+    document.dispatchEvent(new Event('visibilitychange')); // otra vez antes del próximo poll: no repite
+    expect(readCalls(fetchMock)).toHaveLength(1);
   });
 
   it('en la última propia muestra ✓ y, leída, ✓✓', async () => {

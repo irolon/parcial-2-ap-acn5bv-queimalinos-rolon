@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useMarkRead } from './useMarkRead';
 
 /**
@@ -12,10 +12,14 @@ export function useAutoRead(studentId, viewerRole, messages) {
     [messages, viewerRole],
   );
 
+  const marked = useRef(null); // último id ya marcado: no se repite el POST antes del próximo poll
+
   useEffect(() => {
     if (!lastUnreadId) return undefined;
     const markIfVisible = () => {
-      if (document.visibilityState === 'visible') mutate();
+      if (document.visibilityState !== 'visible' || marked.current === lastUnreadId) return;
+      marked.current = lastUnreadId;
+      mutate();
     };
     markIfVisible();
     document.addEventListener('visibilitychange', markIfVisible);

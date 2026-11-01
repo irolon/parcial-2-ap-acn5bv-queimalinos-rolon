@@ -46,7 +46,7 @@ export default function MessageComposer({ onSend }) {
   };
 
   const onKeyDown = (event) => {
-    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.keyCode === 229) return;
     event.preventDefault();
     submit();
   };

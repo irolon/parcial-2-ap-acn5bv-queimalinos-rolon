@@ -26,7 +26,8 @@ function mountWith(count) {
 describe('UnreadBadge', () => {
   it('con no leídos muestra el número', async () => {
     mountWith(3);
-    expect(await screen.findByText('3')).toHaveAttribute('aria-label', '3 sin leer');
+    expect(await screen.findByText('3 sin leer')).toHaveClass('sr-only');
+    expect(screen.getByText('3')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('de 10 en adelante muestra 9+', async () => {
@@ -38,6 +39,6 @@ describe('UnreadBadge', () => {
     const client = mountWith(0);
     await waitFor(() => expect(client.getQueryState(unreadKey)?.status).toBe('success'));
     expect(screen.queryByText('0')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/sin leer/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/sin leer/)).not.toBeInTheDocument();
   });
 });
