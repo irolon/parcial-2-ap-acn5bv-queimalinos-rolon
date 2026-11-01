@@ -7,6 +7,8 @@ import com.fittrainer.data.api.FitTrainerApi
 import com.fittrainer.data.api.InvitationApi
 import com.fittrainer.data.api.RoutineApi
 import com.fittrainer.data.api.SessionApi
+import com.fittrainer.data.api.notifications.NotificationsApi
+import com.fittrainer.data.api.progress.ProgressApi
 import com.fittrainer.data.api.students.StudentsApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
@@ -68,6 +70,16 @@ object NetworkModule {
     @Singleton
     fun provideSessionApi(client: OkHttpClient, json: Json): SessionApi =
         retrofit(client, json).create(SessionApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideProgressApi(client: OkHttpClient, json: Json): ProgressApi =
+        retrofit(client, json).create(ProgressApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNotificationsApi(client: OkHttpClient, json: Json): NotificationsApi =
+        retrofit(client, json).create(NotificationsApi::class.java)
 
     @Provides
     @Singleton

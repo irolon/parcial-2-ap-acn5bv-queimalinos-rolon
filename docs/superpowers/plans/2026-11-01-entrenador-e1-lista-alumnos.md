@@ -35,7 +35,7 @@ tarjeta: E1
 
 ### Task 0: Reacomodar la cadena (PR #51) antes de arrancar
 
-> **Cambio del 01/11 al arrancar:** Pablo mergeó la #51 a `develop` (Room v9) antes del loop, así que este paso no se hizo. La rama sale de `develop` y la PR apunta a `develop`. E1 usa **Room v12 con `AutoMigration(9, 12)`**: la 10 y la 11 quedan para la #44 y la #48, que tienen que renumerar igual porque `develop` ya usa la 9. Cuando entren, E1 pasa a `AutoMigration(11, 12)` y se regenera `12.json`.
+> **Cambio del 01/11 al arrancar:** Pablo mergeó la #51 a `develop` (Room v9) antes del loop, así que este paso no se hizo. La rama sale de `develop` y la PR apunta a `develop`. E1 usa **Room v12 con `AutoMigration(9, 12)`**: la 10 y la 11 quedan para la #44 y la #48, que tienen que renumerar igual porque `develop` ya usa la 9. Cuando entren, E1 pasa a `AutoMigration(11, 12)` y se regenera `12.json` (hecho al mergear `develop` con las dos adentro).
 
 La #44 (v9) y la #48 (v10) ya usan esas versiones de Room; la #51 también usaba v9.
 

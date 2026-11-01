@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 
 /**
  * v12 (lista de alumnos del entrenador): suma trainer_students y trainer_students_sync vacías, sin tocar
- * lo del alumno. Hoy migra desde la 9; cuando entren la #44 (v10) y la #48 (v11), desde la 11.
+ * lo del alumno. Migra desde la 11 (la #44 es la v10 y la #48, la v11).
  */
 @RunWith(AndroidJUnit4::class)
 class MigrationV12Test {
@@ -20,8 +20,8 @@ class MigrationV12Test {
     @get:Rule
     val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), FitTrainerDatabase::class.java)
 
-    @Test fun migra9a12ConLasTablasDelEntrenadorVacias() {
-        helper.createDatabase(DB, 9).apply {
+    @Test fun migra11a12ConLasTablasDelEntrenadorVacias() {
+        helper.createDatabase(DB, 11).apply {
             execSQL(
                 "INSERT INTO history_sessions (id, ownerId, startedAt, hasModifications, sets, volumeKg, hasPr, inLatest, detailLoaded) " +
                     "VALUES ('h1', 'u1', 1, 0, 1, 320.0, 0, 1, 1)"

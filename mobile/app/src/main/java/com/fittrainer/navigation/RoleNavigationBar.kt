@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.ui.notifications.bell.NotificationBellViewModel
 import com.fittrainer.ui.workout.history.badge.ProgressBadgeViewModel
 import com.fittrainer.ui.workout.history.unreadBadgeDescription
 import com.fittrainer.ui.workout.history.unreadBadgeText
@@ -34,6 +35,18 @@ fun progressUnread(isStudent: Boolean): Int {
         onStopOrDispose {}
     }
     return badge.unread.collectAsStateWithLifecycle().value
+}
+
+/** Avisos sin leer (campana de Hoy). Mismo criterio que [progressUnread]: solo el shell del alumno pide el ViewModel. */
+@Composable
+fun notificationsUnread(isStudent: Boolean): Int {
+    if (!isStudent) return 0
+    val bell: NotificationBellViewModel = hiltViewModel()
+    LifecycleStartEffect(bell) {
+        bell.onAppStart()
+        onStopOrDispose {}
+    }
+    return bell.unread.collectAsStateWithLifecycle().value
 }
 
 /** Barra de pestañas del rol. Progreso lleva el badge rojo si hay comentarios sin leer. */
