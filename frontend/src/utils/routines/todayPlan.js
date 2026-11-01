@@ -1,6 +1,7 @@
 import { formatKg } from '@/utils/progress/format';
 import { DEFAULT_REPS, DEFAULT_REST_SECONDS, DEFAULT_SETS } from '@/utils/routines/defaults';
 import { suggestedKg } from '@/utils/routines/suggestedKg';
+import { plural } from '@/utils/shared/plural';
 
 // Lo que tarda una serie sin contar el descanso (el backend no lo informa).
 const WORK_SECONDS_PER_SET = 45;
@@ -22,17 +23,15 @@ export function estimatedMinutes(exercises = []) {
   return Math.round(seconds / 60);
 }
 
-const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-
 /** Cantidad de ejercicios de la rutina: "6 ejercicios" ("1 ejercicio"). */
-export const exerciseCount = (exercises) => count((exercises ?? []).length, 'ejercicio', 'ejercicios');
+export const exerciseCount = (exercises) => plural((exercises ?? []).length, 'ejercicio', 'ejercicios');
 
 /** Lo que dice la tarjeta de la rutina del día: "6 EJERCICIOS · 18 SERIES · ~55 MIN". */
 export function planSummary(exercises) {
   const list = exercises ?? [];
   return [
-    count(list.length, 'EJERCICIO', 'EJERCICIOS'),
-    count(totalSets(list), 'SERIE', 'SERIES'),
+    plural(list.length, 'EJERCICIO', 'EJERCICIOS'),
+    plural(totalSets(list), 'SERIE', 'SERIES'),
     `~${estimatedMinutes(list)} MIN`,
   ].join(' · ');
 }

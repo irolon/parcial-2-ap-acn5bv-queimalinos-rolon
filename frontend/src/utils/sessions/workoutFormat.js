@@ -1,8 +1,7 @@
 // Cómo se muestran los números de la sesión activa (es-AR: coma decimal, sin separador de miles).
+import { pad } from '@/utils/dates';
 
 const KG = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2, useGrouping: false });
-
-const pad = (n) => String(n).padStart(2, '0');
 
 /** Peso de una serie como texto de campo: 62.5 → "62,5", 70 → "70"; sin peso (peso corporal), vacío. */
 export const kgText = (kg) => (kg === null || kg === undefined ? '' : KG.format(kg));

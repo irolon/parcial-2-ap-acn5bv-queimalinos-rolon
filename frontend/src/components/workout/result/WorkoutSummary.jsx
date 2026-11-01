@@ -5,12 +5,11 @@ import Card from '@/components/shared/ui/Card';
 import { FOCUS_RING } from '@/components/shared/layout/compact';
 import { ROLES, STUDENT_NAV, homeFor } from '@/routes/routeTable';
 import { formatKg } from '@/utils/progress/format';
+import { plural } from '@/utils/shared/plural';
 import { totals } from '@/utils/workout/workoutState';
 
 const HISTORY_PATH = `${STUDENT_NAV.base}/historial`;
 const LINK = `inline-flex h-11 items-center justify-center rounded-lg border px-[18px] font-display text-sm font-semibold ${FOCUS_RING}`;
-
-const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 /**
  * El resumen cuando el entrenamiento ya se guardó: "N series · X kg · Y min" (las que el servidor rechazó no
@@ -34,7 +33,7 @@ export default function WorkoutSummary({ result }) {
           ¡Entrenamiento guardado!
         </h2>
         <p className="font-mono text-sm text-ink6">
-          {`${count(sets, 'serie', 'series')} · ${formatKg(volumeKg)} · ${minutes} min`}
+          {`${plural(sets, 'serie', 'series')} · ${formatKg(volumeKg)} · ${minutes} min`}
         </p>
         {result.unlocked.length > 0 && (
           <section className="w-full rounded-lg border border-ink3 bg-ink2 p-4 text-left">
