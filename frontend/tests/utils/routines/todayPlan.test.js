@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { estimatedMinutes, planRows, planSummary, totalSets } from '@/utils/routines/todayPlan';
+import { estimatedMinutes, exerciseCount, planRows, planSummary, totalSets } from '@/utils/routines/todayPlan';
 import { routineExercise } from '../../helpers/routines/studentRoutines';
 
 const exercise = (overrides = {}) => ({ ...routineExercise(), last_session_kg: null, ...overrides });
@@ -128,5 +128,19 @@ describe('planSummary', () => {
   it('sin ejercicios no se rompe', () => {
     expect(planSummary([])).toBe('0 EJERCICIOS · 0 SERIES · ~0 MIN');
     expect(planSummary()).toBe('0 EJERCICIOS · 0 SERIES · ~0 MIN');
+    expect(planSummary(null)).toBe('0 EJERCICIOS · 0 SERIES · ~0 MIN');
+  });
+});
+
+describe('exerciseCount', () => {
+  it('cuenta los ejercicios, en singular con uno', () => {
+    expect(exerciseCount([exercise(), exercise(), exercise()])).toBe('3 ejercicios');
+    expect(exerciseCount([exercise()])).toBe('1 ejercicio');
+  });
+
+  it('sin ejercicios (también en null) son 0', () => {
+    expect(exerciseCount([])).toBe('0 ejercicios');
+    expect(exerciseCount(null)).toBe('0 ejercicios');
+    expect(exerciseCount()).toBe('0 ejercicios');
   });
 });

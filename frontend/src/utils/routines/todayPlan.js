@@ -24,12 +24,16 @@ export function estimatedMinutes(exercises = []) {
 
 const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
+/** Cantidad de ejercicios de la rutina: "6 ejercicios" ("1 ejercicio"). */
+export const exerciseCount = (exercises) => count((exercises ?? []).length, 'ejercicio', 'ejercicios');
+
 /** Lo que dice la tarjeta de la rutina del día: "6 EJERCICIOS · 18 SERIES · ~55 MIN". */
-export function planSummary(exercises = []) {
+export function planSummary(exercises) {
+  const list = exercises ?? [];
   return [
-    count(exercises.length, 'EJERCICIO', 'EJERCICIOS'),
-    count(totalSets(exercises), 'SERIE', 'SERIES'),
-    `~${estimatedMinutes(exercises)} MIN`,
+    count(list.length, 'EJERCICIO', 'EJERCICIOS'),
+    count(totalSets(list), 'SERIE', 'SERIES'),
+    `~${estimatedMinutes(list)} MIN`,
   ].join(' · ');
 }
 
