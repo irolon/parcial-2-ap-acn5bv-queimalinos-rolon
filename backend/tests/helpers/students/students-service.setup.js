@@ -35,6 +35,7 @@ jest.unstable_mockModule(src('services/auth/auth.service.js'), () => ({
 export const mockAuthRepo = { revokeAllForUser: jest.fn() };
 export const mockRoutinesRepo = { findActiveRoutineSummary: jest.fn() };
 export const mockBodyMetricsService = { latestForStudent: jest.fn() };
+export const mockAppointmentsService = { cancelFutureForStudent: jest.fn() };
 
 jest.unstable_mockModule(
   src('repositories/auth/auth.repository.js'),
@@ -47,6 +48,10 @@ jest.unstable_mockModule(
 jest.unstable_mockModule(
   src('services/body-metrics/body-metrics.service.js'),
   () => mockBodyMetricsService
+);
+jest.unstable_mockModule(
+  src('services/agenda/appointments.service.js'),
+  () => mockAppointmentsService
 );
 
 export const service = await import(src('services/students/students.service.js'));

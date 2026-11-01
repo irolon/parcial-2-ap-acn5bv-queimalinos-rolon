@@ -5,7 +5,7 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 
 const result = { current: { data: [], error: null } };
 const q = {};
-for (const m of ['select', 'eq', 'in', 'gte', 'lt', 'order', 'insert', 'update', 'single', 'maybeSingle']) {
+for (const m of ['select', 'eq', 'in', 'gte', 'gt', 'lt', 'order', 'insert', 'update', 'single', 'maybeSingle']) {
   q[m] = jest.fn(() => q);
 }
 q.then = (resolve) => resolve(result.current);
@@ -63,6 +63,26 @@ describe('appointments.repository', () => {
   it('updateStatus devuelve null si el estado ya no era el esperado', async () => {
     result.current = { data: null, error: null };
     await expect(repo.updateStatus('a-1', 'pending', 'confirmed')).resolves.toBeNull();
+  });
+
+  it('countFuturePending cuenta los pending del alumno posteriores a ahora', async () => {
+    result.current = { data: null, count: 3, error: null };
+    await expect(repo.countFuturePending('s-1', FROM)).resolves.toBe(3);
+    expect(q.select).toHaveBeenCalledWith('id', { count: 'exact', head: true });
+    expect(q.eq).toHaveBeenCalledWith('student_id', 's-1');
+    expect(q.eq).toHaveBeenCalledWith('status', 'pending');
+    expect(q.gt).toHaveBeenCalledWith('scheduled_at', FROM.toISOString());
+    result.current = { data: null, count: null, error: { message: 'boom' } };
+    await expect(repo.countFuturePending('s-1', FROM)).rejects.toMatchObject({ statusCode: 500 });
+  });
+
+  it('cancelFutureForStudent cancela los pending y confirmed futuros del alumno y devuelve cuántos', async () => {
+    result.current = { data: [{ id: 'a-1' }, { id: 'a-2' }], error: null };
+    await expect(repo.cancelFutureForStudent('s-1', FROM)).resolves.toBe(2);
+    expect(q.update).toHaveBeenCalledWith({ status: 'cancelled' });
+    expect(q.eq).toHaveBeenCalledWith('student_id', 's-1');
+    expect(q.in).toHaveBeenCalledWith('status', ['pending', 'confirmed']);
+    expect(q.gt).toHaveBeenCalledWith('scheduled_at', FROM.toISOString());
   });
 
   it('findAppointmentById devuelve null si no existe', async () => {

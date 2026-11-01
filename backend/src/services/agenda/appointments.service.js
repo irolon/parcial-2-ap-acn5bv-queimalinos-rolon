@@ -17,6 +17,14 @@ export function create(user, input) {
   return user.role === 'trainer' ? createForTrainer(user, input) : createForStudent(user, input);
 }
 
+/**
+ * Baja de un alumno: sus turnos futuros pending o confirmed pasan a cancelled y liberan el horario.
+ * Sin avisos: el alumno ya no entra a la app y la baja la hizo el PT. Idempotente.
+ */
+export function cancelFutureForStudent(studentId) {
+  return repo.cancelFutureForStudent(studentId, new Date());
+}
+
 const ownsAppointment = (user, row) =>
   user.role === 'trainer' ? row.trainer_id === user.id : row.student_id === user.id;
 

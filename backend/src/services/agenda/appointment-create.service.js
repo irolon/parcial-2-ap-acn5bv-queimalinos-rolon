@@ -7,17 +7,23 @@ import { Errors } from '../../shared/utils/errors.js';
 import { isOnTheHour, nextHourUtc, utcToArgentina } from '../../shared/utils/dates/argentina.js';
 import {
   APPOINTMENT_DURATION_MIN,
+  MAX_DAYS_AHEAD,
   STATUS,
+  STUDENT_MAX_PENDING,
   STUDENT_MAX_DAYS_AHEAD,
   studentHorizonMs,
+  lastBookableDate,
   toAppointment,
 } from '../../models/agenda/appointment.model.js';
 import { hourOf } from '../../models/agenda/availability.model.js';
 
-/** Hora en punto y posterior a ahora: vale para los dos roles. */
+/** Hora en punto, posterior a ahora y hasta 1 año (día de Argentina): vale para los dos roles. */
 function assertOnTheHourAndFuture(scheduledAt, now) {
   if (!isOnTheHour(scheduledAt)) throw Errors.slotUnavailable('El turno tiene que empezar en una hora en punto');
   if (new Date(scheduledAt) < nextHourUtc(now)) throw Errors.slotUnavailable('El turno tiene que ser a futuro');
+  if (utcToArgentina(scheduledAt).date > lastBookableDate(now)) {
+    throw Errors.slotUnavailable(`Solo se puede agendar hasta ${MAX_DAYS_AHEAD} días adelante`);
+  }
 }
 
 /** ¿El horario cae dentro de alguna franja semanal (en hora de Argentina)? */
@@ -47,6 +53,11 @@ export async function createForStudent(user, input) {
   const availability = await availabilityRepo.findAvailability(student.trainer_id);
   if (!isWithinAvailability(input.scheduled_at, availability)) {
     throw Errors.slotUnavailable('Ese horario está fuera de la disponibilidad de tu entrenador');
+  }
+  // Tope de pedidos sin confirmar: que un alumno no le llene la agenda al resto. No es atómico (dos
+  // POST simultáneos podrían dejar 4); alcanza como freno y el PT puede cancelar.
+  if ((await appointmentsRepo.countFuturePending(student.id, now)) >= STUDENT_MAX_PENDING) {
+    throw Errors.appointmentLimit(STUDENT_MAX_PENDING);
   }
   const row = await appointmentsRepo.insertAppointment(
     baseRow(student.trainer_id, student.id, input, STATUS.PENDING)

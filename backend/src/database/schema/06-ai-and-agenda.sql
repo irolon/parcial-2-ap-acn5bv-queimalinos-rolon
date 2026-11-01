@@ -39,11 +39,13 @@ create table if not exists appointments (
   trainer_id   uuid not null references trainers (id) on delete cascade,
   student_id   uuid not null references students (id) on delete cascade,
   scheduled_at timestamptz not null,
-  duration_min int not null default 60 check (duration_min > 0),
+  duration_min int not null default 60 constraint appointments_duration_60 check (duration_min = 60),
   status       varchar(20) not null default 'pending'
                check (status in ('pending', 'confirmed', 'cancelled')),
   notes        text,
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  -- Tarjeta 46: hora en punto (en UTC; Argentina es UTC-3 fijo, da lo mismo).
+  constraint appointments_on_the_hour check (mod(extract(epoch from scheduled_at), 3600) = 0)
 );
 
 create index if not exists idx_appointments_trainer on appointments (trainer_id, scheduled_at);
@@ -71,10 +73,12 @@ create unique index if not exists uq_availability_slot on trainer_availability (
 create unique index if not exists uq_appointments_trainer_slot
   on appointments (trainer_id, scheduled_at) where status <> 'cancelled';
 
--- Reemplazo atómico de la disponibilidad (supabase-js no tiene transacciones).
+-- Reemplazo atómico de la disponibilidad (supabase-js no tiene transacciones). El
+-- advisory lock por PT pone en fila dos guardados simultáneos (2026-11-01-agenda-followup.sql).
 create or replace function replace_trainer_availability(p_trainer uuid, p_slots jsonb)
 returns setof trainer_availability language plpgsql security invoker set search_path = public as $$
 begin
+  perform pg_advisory_xact_lock(hashtext(p_trainer::text));
   delete from trainer_availability where trainer_id = p_trainer;
   insert into trainer_availability (trainer_id, weekday, start_time, end_time)
   select p_trainer, (s->>'weekday')::smallint, (s->>'start_time')::time, (s->>'end_time')::time

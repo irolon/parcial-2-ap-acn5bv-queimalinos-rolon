@@ -83,6 +83,8 @@ export const Errors = {
   slotUnavailable: (message) => new AppError(400, 'SLOT_UNAVAILABLE', message),
   invalidStatusTransition: () =>
     new AppError(409, 'INVALID_STATUS_TRANSITION', 'No se puede pasar el turno a ese estado'),
+  appointmentLimit: (max) =>
+    new AppError(409, 'APPOINTMENT_LIMIT', `Ya tenés ${max} turnos pendientes: esperá a que tu entrenador los confirme`),
   appointmentPast: () => new AppError(409, 'APPOINTMENT_PAST', 'El turno ya pasó'),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),

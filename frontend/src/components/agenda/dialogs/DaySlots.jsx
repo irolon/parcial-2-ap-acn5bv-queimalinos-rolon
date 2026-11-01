@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { hourLabel } from '@/utils/agenda';
+import { TOUCH_ICON } from '../touch';
 import { DAY_NAMES, hourOptions } from './availabilityForm';
 
 const FROM_OPTIONS = hourOptions(0, 22);
@@ -31,7 +32,7 @@ function SlotRow({ slot, position, day, error, autoFocus, onChange, onRemove }) 
           type="button"
           aria-label={`Quitar franja ${slot.start_time} a ${slot.end_time} del ${day}`}
           onClick={onRemove}
-          className="cursor-pointer rounded p-0.5 text-ink6 hover:text-hot"
+          className={`${TOUCH_ICON} cursor-pointer rounded p-0.5 text-ink6 hover:text-hot`}
         >
           <X size={14} aria-hidden="true" />
         </button>
@@ -76,7 +77,7 @@ export default function DaySlots({ weekday, slots, errors, onAdd, onChange, onRe
           onAdd(weekday);
         }}
         aria-label={`Agregar franja al ${day}`}
-        className="cursor-pointer self-start font-mono text-xs text-accentText hover:underline"
+        className="cursor-pointer self-start font-mono text-xs text-accentText hover:underline max-md:min-h-11"
       >
         + Agregar franja
       </button>

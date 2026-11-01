@@ -152,3 +152,12 @@ describe('changeStatus · acceso', () => {
     });
   });
 });
+
+describe('cancelFutureForStudent', () => {
+  it('cancela desde ahora los turnos futuros del alumno (lo filtra el repositorio) y devuelve cuántos', async () => {
+    mockAppointments.cancelFutureForStudent.mockResolvedValue(2);
+    await expect(service.cancelFutureForStudent(STUDENT.id)).resolves.toBe(2);
+    expect(mockAppointments.cancelFutureForStudent).toHaveBeenCalledWith(STUDENT.id, NOW);
+    expect(mockNotify.notify).not.toHaveBeenCalled();
+  });
+});

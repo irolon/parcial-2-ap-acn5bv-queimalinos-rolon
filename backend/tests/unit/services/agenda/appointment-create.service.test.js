@@ -19,6 +19,7 @@ beforeEach(() => {
   mockAvailability.findAvailability.mockResolvedValue(AVAILABILITY);
   mockAppointments.insertAppointment.mockImplementation(async (row) => apptRow(row));
   mockNotify.notify.mockResolvedValue({ id: 'n-1' });
+  mockAppointments.countFuturePending.mockResolvedValue(2);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -103,6 +104,18 @@ describe('createForStudent', () => {
     mockNotify.notify.mockRejectedValue(new Error('db'));
     await expect(createForStudent(STUDENT, input)).resolves.toMatchObject({ status: 'pending' });
   });
+
+  it('con 2 pendientes a futuro deja pedir el 3.º (cuenta los del alumno desde ahora)', async () => {
+    await expect(createForStudent(STUDENT, input)).resolves.toMatchObject({ status: 'pending' });
+    expect(mockAppointments.countFuturePending).toHaveBeenCalledWith(STUDENT.id, NOW);
+  });
+
+  it('con 3 pendientes a futuro el 4.º da 409 APPOINTMENT_LIMIT y no inserta ni avisa', async () => {
+    mockAppointments.countFuturePending.mockResolvedValue(3);
+    await expect(createForStudent(STUDENT, input)).rejects.toMatchObject({ statusCode: 409, code: 'APPOINTMENT_LIMIT' });
+    expect(mockAppointments.insertAppointment).not.toHaveBeenCalled();
+    expect(mockNotify.notify).not.toHaveBeenCalled();
+  });
 });
 
 describe('createForTrainer', () => {
@@ -145,6 +158,19 @@ describe('createForTrainer', () => {
     await expect(
       createForTrainer(TRAINER, { ...input, scheduled_at: '2026-12-18T21:00:00.000Z' })
     ).resolves.toBeDefined();
+  });
+
+  it('el tope de pendientes no aplica al PT', async () => {
+    mockAppointments.countFuturePending.mockResolvedValue(10);
+    await expect(createForTrainer(TRAINER, input)).resolves.toMatchObject({ status: 'confirmed' });
+    expect(mockAppointments.countFuturePending).not.toHaveBeenCalled();
+  });
+
+  it('tope de 1 año: acepta el día de hoy + 365 (hora de Argentina) y rechaza el siguiente con 400', async () => {
+    // Hoy 04/11/2026 → último día 04/11/2027. 22:00 AR = 01:00 UTC del 05/11 y sigue valiendo.
+    await expect(createForTrainer(TRAINER, { ...input, scheduled_at: '2027-11-05T01:00:00.000Z' })).resolves.toBeDefined();
+    await expect(createForTrainer(TRAINER, { ...input, scheduled_at: '2027-11-05T09:00:00.000Z' })).rejects.toEqual(unavailable);
+    await expect(createForTrainer(TRAINER, { ...input, scheduled_at: '9999-01-01T15:00:00.000Z' })).rejects.toEqual(unavailable);
   });
 
   it('SLOT_TAKEN se propaga', async () => {

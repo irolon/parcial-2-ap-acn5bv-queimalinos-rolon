@@ -271,8 +271,8 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | id | uuid | PK |
 | trainer_id | uuid | FK → trainers |
 | student_id | uuid | FK → students |
-| scheduled_at | timestamptz | |
-| duration_min | int | default 60 |
+| scheduled_at | timestamptz | hora en punto (check `appointments_on_the_hour`) |
+| duration_min | int | default 60, siempre 60 (check `appointments_duration_60`) |
 | status | enum | pending / confirmed / cancelled |
 | notes | text | |
 | created_at | timestamptz | |

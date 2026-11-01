@@ -43,6 +43,11 @@ describe('AppointmentDialog', () => {
     expect(button('Cancelar turno')).toBeInTheDocument();
   });
 
+  it('en la vista angosta los botones llegan a 44 px de toque', () => {
+    setup(appt());
+    for (const name of ['Confirmar', 'Cancelar turno']) expect(button(name)).toHaveClass('max-md:h-11', 'max-md:min-w-11');
+  });
+
   it('confirmado y futuro: solo Cancelar turno', () => {
     setup(appt({ status: 'confirmed' }));
     expect(button('Confirmar')).not.toBeInTheDocument();

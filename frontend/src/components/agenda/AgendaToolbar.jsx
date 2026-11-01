@@ -1,4 +1,5 @@
 import Button from '@/components/shared/ui/Button';
+import { TOUCH_SM } from './touch';
 
 /** Navegación de semanas, toggle de cancelados y accesos a los diálogos de disponibilidad y nuevo turno. */
 export default function AgendaToolbar({
@@ -13,9 +14,9 @@ export default function AgendaToolbar({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" aria-label="Semana anterior" onClick={onPrev}>‹</Button>
-        <Button variant="ghost" size="sm" onClick={onToday}>Hoy</Button>
-        <Button variant="ghost" size="sm" aria-label="Semana siguiente" onClick={onNext}>›</Button>
+        <Button variant="ghost" size="sm" className={TOUCH_SM} aria-label="Semana anterior" onClick={onPrev}>‹</Button>
+        <Button variant="ghost" size="sm" className={TOUCH_SM} onClick={onToday}>Hoy</Button>
+        <Button variant="ghost" size="sm" className={TOUCH_SM} aria-label="Semana siguiente" onClick={onNext}>›</Button>
       </div>
       <label className="flex cursor-pointer items-center gap-2 font-body text-sm text-bone2">
         <input
@@ -27,8 +28,8 @@ export default function AgendaToolbar({
         Mostrar cancelados
       </label>
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onOpenAvailability}>Disponibilidad</Button>
-        <Button variant="primary" size="sm" onClick={onOpenNew}>Nuevo turno</Button>
+        <Button variant="ghost" size="sm" className={TOUCH_SM} onClick={onOpenAvailability}>Disponibilidad</Button>
+        <Button variant="primary" size="sm" className={TOUCH_SM} onClick={onOpenNew}>Nuevo turno</Button>
       </div>
     </div>
   );

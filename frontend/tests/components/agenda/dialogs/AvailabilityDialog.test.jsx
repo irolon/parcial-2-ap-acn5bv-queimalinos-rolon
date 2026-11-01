@@ -36,6 +36,12 @@ async function addSlot(user, day, from, to, position = 1) {
 }
 
 describe('AvailabilityDialog', () => {
+  it('en la vista angosta la ✕ de quitar franja y Agregar franja llegan a 44 px de toque', async () => {
+    setup();
+    expect(await screen.findByRole('button', { name: 'Quitar franja 08:00 a 12:00 del lunes' })).toHaveClass('max-md:size-11');
+    expect(screen.getByRole('button', { name: 'Agregar franja al lunes' })).toHaveClass('max-md:min-h-11');
+  });
+
   it('muestra las franjas guardadas en su día', async () => {
     setup();
     const monday = await screen.findByRole('region', { name: 'Lunes' });
