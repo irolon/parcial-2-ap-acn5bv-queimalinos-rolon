@@ -1,18 +1,22 @@
 import { DEFAULT_REPS, DEFAULT_REST_SECONDS, DEFAULT_SETS } from '@/utils/routines/defaults';
 import { positiveKg } from '@/utils/routines/suggestedKg';
+import { closeRest, startRest } from './workoutRest';
 import { MAX_REPS, MAX_SET_NUMBER, exerciseSets, toSetKg, toSetReps } from './workoutSets';
 
 // La sesión en curso como datos puros (spec §3): cada función recibe el estado y devuelve uno nuevo, o el mismo si
 // no cambia nada. Las horas son ISO absolutas, así que recargar la página no corre el descanso ni las series.
-// Es la única puerta para las páginas: también re-exporta las lecturas de las series (workoutSets.js).
+// Es la única puerta para las páginas: también re-exporta las lecturas de las series (workoutSets.js) y el descanso
+// (workoutRest.js).
 export {
   exerciseSets, missingSets, planLoad, prefill, toSetKg, toSetReps, totals,
 } from './workoutSets';
+export {
+  adjustRest, closeRest, restRemaining, restTotal, skipRest, startRest,
+} from './workoutRest';
 
 const MAX_NOTES = 1000;
 
 const iso = (time) => new Date(time).toISOString();
-const ms = (time) => new Date(time).getTime();
 const intIn = (value, fallback, min, max) => (Number.isInteger(value) ? Math.min(Math.max(value, min), max) : fallback);
 
 /** crypto.randomUUID solo existe en contextos seguros (https o localhost) y navegadores nuevos; si no, un v4 a mano. */
@@ -57,23 +61,15 @@ export function startWorkout(routine, { now = new Date(), newId = newUuid } = {}
     cursor: 0,
     restEndsAt: null,
     restTotalSeconds: null,
+    restSetId: null,
     feedback: null,
     upload: { sessionCreated: false, sentSetIds: [], failed: [], unlocked: [] },
   };
 }
 
 /**
- * Descanso del ejercicio a la vista con fin absoluto (`restEndsAt`), desde `now`. 0 s = sin descanso. Guarda también
- * su total (`restTotalSeconds`), así la barra no depende del ejercicio que se ponga a la vista después.
- */
-export function startRest(state, now = new Date()) {
-  const seconds = state.exercises[state.cursor]?.restSeconds ?? 0;
-  if (seconds <= 0) return { ...state, restEndsAt: null, restTotalSeconds: null };
-  return { ...state, restEndsAt: iso(ms(now) + seconds * 1000), restTotalSeconds: seconds };
-}
-
-/**
- * Registra una serie del ejercicio a la vista (`set_number` = su posición en el ejercicio) y arranca el descanso.
+ * Registra una serie del ejercicio a la vista (`set_number` = su posición en el ejercicio) y arranca el descanso. Si
+ * había uno abierto, antes lo cierra y lo anota en la serie anterior (`closeRest`).
  * Sin efecto si la sesión ya terminó, si las reps no son un número, si el peso no está vacío y es ilegible
  * (`toSetKg` da NaN) o si el ejercicio ya tiene 100 series.
  */
@@ -84,6 +80,7 @@ export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId 
   if (state.finishedAt || !exercise || actualReps === null || Number.isNaN(actualKg)) return state;
   const done = exerciseSets(state).length;
   if (done >= MAX_SET_NUMBER) return state;
+  const rested = closeRest(state, now);
   const set = {
     id: newId(),
     exerciseId: exercise.exerciseId,
@@ -93,7 +90,7 @@ export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId 
     kg: actualKg,
     executedAt: iso(now),
   };
-  return startRest({ ...state, sets: [...state.sets, set] }, now);
+  return startRest({ ...rested, sets: [...rested.sets, set] }, now, set.id);
 }
 
 /** Borra una serie y renumera las de su ejercicio (si se borra la 2 de 3, la 3 pasa a ser la 2). */
@@ -123,41 +120,12 @@ export function setCursor(state, index) {
   return cursor === state.cursor ? state : { ...state, cursor };
 }
 
-const restEnd = (state) => (state.restEndsAt ? Date.parse(state.restEndsAt) : Number.NaN);
-
-/** Segundos que le quedan al descanso contra `now`, redondeados para arriba y nunca negativos; null sin descanso. */
-export function restRemaining(state, now = new Date()) {
-  const end = restEnd(state);
-  return Number.isNaN(end) ? null : Math.max(0, Math.ceil((end - ms(now)) / 1000));
-}
-
 /**
- * El total del descanso en curso, para la barra. Una sesión guardada antes de que existiera `restTotalSeconds` usa el
- * descanso del ejercicio a la vista, como antes.
+ * Terminar: fija la hora la primera vez (un reintento horas después no la cambia) y corta el descanso. El que estaba
+ * abierto no se anota: después de la última serie no hay otra que esperar (en el celular queda null).
  */
-export function restTotal(state) {
-  const total = state.restTotalSeconds;
-  return Number.isFinite(total) && total > 0 ? total : (state.exercises[state.cursor]?.restSeconds ?? 0);
-}
-
-/**
- * ±segundos (los botones de ±15) sobre lo que le queda ahora al descanso en curso; nunca baja de 0. El total se mueve
- * lo mismo, sin quedar por debajo de lo que queda (la barra nunca pasa de llena).
- */
-export function adjustRest(state, deltaSeconds, now = new Date()) {
-  const end = restEnd(state);
-  if (Number.isNaN(end) || !Number.isFinite(deltaSeconds)) return state;
-  const left = Math.max(0, Math.max(0, end - ms(now)) + deltaSeconds * 1000);
-  const total = Math.max(restTotal(state) + deltaSeconds, Math.ceil(left / 1000));
-  return { ...state, restEndsAt: iso(ms(now) + left), restTotalSeconds: total };
-}
-
-/** Saltea el descanso en curso. */
-export const skipRest = (state) => (state.restEndsAt === null ? state : { ...state, restEndsAt: null });
-
-/** Terminar: fija la hora la primera vez (un reintento horas después no la cambia) y corta el descanso. */
 export function finishWorkout(state, now = new Date()) {
-  return state.finishedAt ? state : { ...state, finishedAt: iso(now), restEndsAt: null };
+  return state.finishedAt ? state : { ...state, finishedAt: iso(now), restEndsAt: null, restSetId: null };
 }
 
 /**
