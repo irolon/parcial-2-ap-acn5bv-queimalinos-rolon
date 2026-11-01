@@ -95,6 +95,13 @@ select 'falta el índice uq_appointments_trainer_slot'
 where to_regclass('public.uq_appointments_trainer_slot') is null
 
 union all
+select 'falta el check ' || c || ' en appointments'
+from (values ('appointments_duration_60'), ('appointments_on_the_hour')) v (c)
+where not exists (
+  select 1 from pg_constraint where conrelid = to_regclass('public.appointments') and conname = v.c
+)
+
+union all
 select 'falta la vista student_last_session'
 where to_regclass('public.student_last_session') is null
 
