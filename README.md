@@ -31,16 +31,17 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Historial de sesiones** con comentarios del PT.
 - [x] **Gamificación:** logros, rachas y desafíos.
 - [x] **Progreso:** curva de carga por ejercicio (1RM estimado, peso máximo y volumen) y evolución corporal.
+- [x] **Notificaciones:** tabla como fuente de verdad, push FCM (HTTP v1), alerta de inactividad del PT y avisos de récords, rutina modificada y logros.
 
 **Web** (React)
-- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas e historial de sesiones con comentarios del PT.
+- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas e historial de sesiones con comentarios del PT y vista de progreso con gráficos (Recharts).
 
 **Mobile** (Android)
-- [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer y **sincronización offline** de sesiones con WorkManager.
-- [x] **Historial de sesiones** offline (con los comentarios del entrenador) y **feedback post-entreno** (RPE y nota) — PR #40.
-- [x] **Mis rutinas:** todas las rutinas asignadas con su detalle, offline, y se puede entrenar una rutina que no es la del día (la biblioteca pasa a ser una entrada dentro de Mis rutinas) — PR #46.
+- [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.
+- [x] **Historial de sesiones** offline (con los comentarios del entrenador) y **feedback post-entreno** (RPE y nota).
+- [x] **Mis rutinas:** todas las rutinas asignadas con su detalle, offline, y se puede entrenar una rutina que no es la del día (la biblioteca pasa a ser una entrada dentro de Mis rutinas).
 
-**En revisión (PRs abiertas):** vista de progreso en la web (#34), notificaciones con push FCM y alerta de inactividad (#36) y mejoras de la sesión activa en el celular (#38).
+**En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42).
 
 **Pendiente:** IA (asistente del alumno y del PT, con n8n), logros en la web, agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
 

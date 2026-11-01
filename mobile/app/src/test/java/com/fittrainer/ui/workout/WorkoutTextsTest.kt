@@ -44,6 +44,8 @@ class WorkoutTextsTest {
     @Test fun `mensajes de cierre`() {
         assertEquals("Te falta 1 serie, ¿terminar igual?", missingSetsMessage(1))
         assertEquals("Te faltan 6 series, ¿terminar igual?", missingSetsMessage(6))
+        assertEquals("Llevás 12 de 20 series", setsProgressText(12, 20))
+        assertEquals("Llevás 1 de 1 serie", setsProgressText(1, 1))
         assertEquals("Sesión terminada · 18 series · 52 min", summaryText(WorkoutSummary(18, 52, "w-1")))
         assertEquals("EJERCICIO 2 / 2", exerciseCounter(workout(cursor = Cursor(1, 1))))
     }
