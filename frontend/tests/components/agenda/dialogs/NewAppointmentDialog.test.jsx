@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NewAppointmentDialog from '@/components/agenda/dialogs/NewAppointmentDialog';
@@ -18,13 +18,14 @@ const FREE = [{ starts_at: '2026-11-04T16:00:00.000Z' }, { starts_at: '2026-11-0
 const BUSY = appt({ scheduled_at: '2026-11-04T18:00:00.000Z' });
 const CANCELLED = appt({ id: 'a-2', scheduled_at: '2026-11-04T19:00:00.000Z', status: 'cancelled' });
 
-function setup({ post } = {}) {
+function setup({ post, students = [{ id: 's-1', name: 'Lucía QA' }], failFree = false } = {}) {
   const fetchMock = stubFetch(async (url, init) => {
     const path = url.replace(/^.*\/api/, '');
     if (init?.method === 'POST') return post ? post(init) : jsonResponse(201, { data: BUSY });
     if (path.startsWith('/students')) {
-      return jsonResponse(200, { data: [{ id: 's-1', name: 'Lucía QA' }], meta: { total_pages: 1 } });
+      return jsonResponse(200, { data: students, meta: { total_pages: 1 } });
     }
+    if (path.startsWith('/availability/free') && failFree) return errorResponse(500, 'INTERNAL', 'Falló');
     if (path.startsWith('/availability/free')) return jsonResponse(200, { data: FREE });
     return jsonResponse(200, { data: [BUSY, CANCELLED] });
   });
@@ -93,5 +94,37 @@ describe('NewAppointmentDialog', () => {
     await fill(u, '14');
     await u.click(screen.getByRole('button', { name: 'Agendar turno' }));
     expect(await screen.findByText('No podés agendar a ese alumno')).toBeInTheDocument();
+  });
+
+  it('fecha pasada: error y no manda nada', async () => {
+    const u = user();
+    const { fetchMock } = setup();
+    await fill(u, '13');
+    fireEvent.change(screen.getByLabelText('Fecha'), { target: { value: '2026-11-03' } });
+    await u.click(screen.getByRole('button', { name: 'Agendar turno' }));
+    expect(screen.getByText('Elegí una fecha desde hoy')).toBeInTheDocument();
+    expect(calls(fetchMock).some(([, init]) => init?.method === 'POST')).toBe(false);
+  });
+
+  it('doble click en Agendar manda un solo POST', async () => {
+    const u = user();
+    const { fetchMock } = setup({ post: async () => new Promise((resolve) => setTimeout(() => resolve(jsonResponse(201, { data: BUSY })), 50)) });
+    await fill(u, '13');
+    await u.dblClick(screen.getByRole('button', { name: 'Agendar turno' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Agendar turno' })).toBeEnabled());
+    expect(calls(fetchMock).filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+  });
+
+  it('sin alumnos activos avisa y deshabilita el select', async () => {
+    setup({ students: [] });
+    expect(await screen.findByText('No tenés alumnos activos')).toBeInTheDocument();
+    expect(screen.getByLabelText('Alumno')).toBeDisabled();
+  });
+
+  it('si fallan los horarios muestra el error con Reintentar y la hora deshabilitada', async () => {
+    setup({ failFree: true });
+    expect(await screen.findByText('No pudimos cargar los datos del turno.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Hora')).toBeDisabled();
   });
 });

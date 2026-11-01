@@ -1,81 +1,84 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import Button from '@/components/shared/ui/Button';
-import Select from '@/components/shared/ui/Select';
-import { validateSlots } from '@/utils/agenda';
 import { DAY_NAMES, hourLabel, hourOptions } from './availability';
 
 const FROM_OPTIONS = hourOptions(0, 22);
 const TO_OPTIONS = hourOptions(1, 23);
+const SELECT_CLASS =
+  'h-9 rounded-md border border-ink3 bg-ink1 px-2 font-mono text-sm text-bone0 outline-none focus:border-accentText';
 
-function Draft({ weekday, onAdd, onCancel }) {
-  const [start, setStart] = useState('9');
-  const [end, setEnd] = useState('10');
-  const [error, setError] = useState(null);
-  const day = DAY_NAMES[weekday - 1].toLowerCase();
+const hourOf = (time) => String(Number(time.slice(0, 2)));
 
-  function add() {
-    const slot = { weekday, start_time: hourLabel(Number(start)), end_time: hourLabel(Number(end)) };
-    const [message] = Object.values(validateSlots([slot]));
-    if (message) setError(message);
-    else onAdd(slot);
-  }
+function Options({ options }) {
+  return options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>);
+}
 
+function SlotRow({ slot, position, day, error, autoFocus, onChange, onRemove }) {
+  const set = (key) => (e) => onChange({ ...slot, [key]: hourLabel(Number(e.target.value)) });
+  const where = `franja ${position} del ${day}`;
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-end gap-2">
-        <Select label={`Desde (${day})`} options={FROM_OPTIONS} value={start} onChange={(e) => setStart(e.target.value)} className="flex-1" />
-        <Select label={`Hasta (${day})`} options={TO_OPTIONS} value={end} onChange={(e) => setEnd(e.target.value)} className="flex-1" />
+    <li className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <select aria-label={`Desde, ${where}`} autoFocus={autoFocus} value={hourOf(slot.start_time)} onChange={set('start_time')} className={SELECT_CLASS}>
+          <Options options={FROM_OPTIONS} />
+        </select>
+        <span className="font-mono text-sm text-ink6" aria-hidden="true">–</span>
+        <select aria-label={`Hasta, ${where}`} value={hourOf(slot.end_time)} onChange={set('end_time')} className={SELECT_CLASS}>
+          <Options options={TO_OPTIONS} />
+        </select>
+        <button
+          type="button"
+          aria-label={`Quitar franja ${slot.start_time} a ${slot.end_time} del ${day}`}
+          onClick={onRemove}
+          className="cursor-pointer rounded p-0.5 text-ink6 hover:text-hot"
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
       </div>
-      {error && <p role="alert" className="font-mono text-[11px] text-hot">{error}</p>}
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={onCancel}>Cancelar</Button>
-        <Button size="sm" onClick={add}>{`Agregar franja del ${day}`}</Button>
-      </div>
-    </div>
+      {error && <span role="alert" className="font-mono text-[11px] text-hot">{error}</span>}
+    </li>
   );
 }
 
-/** Una fila de día: sus franjas con ✕, errores por franja y el alta de una nueva. */
-export default function DaySlots({ weekday, slots, errors, onAdd, onRemove }) {
-  const [adding, setAdding] = useState(false);
-  const day = DAY_NAMES[weekday - 1];
+/** Una fila de día: sus franjas editables con ✕, errores por franja y el alta de una nueva. */
+export default function DaySlots({ weekday, slots, errors, onAdd, onChange, onRemove }) {
+  const [focusLast, setFocusLast] = useState(false);
+  const addRef = useRef(null);
+  const name = DAY_NAMES[weekday - 1];
+  const day = name.toLowerCase();
   return (
-    <section aria-label={day} className="flex flex-col gap-2 border-b border-ink3 py-3 last:border-b-0">
-      <h3 className="font-display text-sm font-semibold text-bone0">{day}</h3>
-      <ul className="flex flex-col gap-1.5">
-        {slots.map(({ slot, index }) => {
-          const range = `${slot.start_time} – ${slot.end_time}`;
-          return (
-            <li key={index} className="flex flex-col">
-              <span className="flex items-center gap-2 font-mono text-sm text-bone1">
-                {range}
-                <button
-                  type="button"
-                  aria-label={`Quitar franja ${slot.start_time} a ${slot.end_time} del ${day.toLowerCase()}`}
-                  onClick={() => onRemove(index)}
-                  className="cursor-pointer rounded p-0.5 text-ink6 hover:text-hot"
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </span>
-              {errors[index] && <span role="alert" className="font-mono text-[11px] text-hot">{errors[index]}</span>}
-            </li>
-          );
-        })}
+    <section aria-label={name} className="flex flex-col gap-2 border-b border-ink3 py-3 last:border-b-0">
+      <h3 className="font-display text-sm font-semibold text-bone0">{name}</h3>
+      <ul className="flex flex-col gap-2">
+        {slots.map(({ slot, index }, i) => (
+          <SlotRow
+            key={index}
+            slot={slot}
+            position={i + 1}
+            day={day}
+            error={errors[index]}
+            autoFocus={focusLast && i === slots.length - 1}
+            onChange={(next) => onChange(index, next)}
+            onRemove={() => {
+              setFocusLast(false);
+              onRemove(index);
+              addRef.current?.focus();
+            }}
+          />
+        ))}
       </ul>
-      {adding ? (
-        <Draft weekday={weekday} onAdd={(slot) => { onAdd(slot); setAdding(false); }} onCancel={() => setAdding(false)} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          aria-label={`Agregar franja al ${day.toLowerCase()}`}
-          className="cursor-pointer self-start font-mono text-xs text-accentText hover:underline"
-        >
-          + Agregar franja
-        </button>
-      )}
+      <button
+        ref={addRef}
+        type="button"
+        onClick={() => {
+          setFocusLast(true);
+          onAdd(weekday);
+        }}
+        aria-label={`Agregar franja al ${day}`}
+        className="cursor-pointer self-start font-mono text-xs text-accentText hover:underline"
+      >
+        + Agregar franja
+      </button>
     </section>
   );
 }

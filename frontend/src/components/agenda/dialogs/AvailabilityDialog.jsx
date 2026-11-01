@@ -5,16 +5,15 @@ import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
 import { useAvailability, useSaveAvailability } from '@/hooks/agenda/useAgenda';
 import { validateSlots } from '@/utils/agenda';
-import { DAY_NAMES, normalizeSlots, serverErrors } from './availability';
+import { DAY_NAMES, NEW_SLOT, normalizeSlots, serverErrors } from './availability';
 import DaySlots from './DaySlots';
 
 const DAYS = DAY_NAMES.map((_, i) => i + 1);
 
-function Form({ initial, onClose }) {
+function Form({ initial, save, onClose }) {
   const [slots, setSlots] = useState(() => normalizeSlots(initial));
   const [errors, setErrors] = useState({});
   const [general, setGeneral] = useState(null);
-  const save = useSaveAvailability();
 
   const edit = (next) => {
     setSlots(next);
@@ -48,7 +47,8 @@ function Form({ initial, onClose }) {
           weekday={weekday}
           slots={slots.map((slot, index) => ({ slot, index })).filter(({ slot }) => slot.weekday === weekday)}
           errors={errors}
-          onAdd={(slot) => edit([...slots, slot])}
+          onAdd={(day) => edit([...slots, { weekday: day, ...NEW_SLOT }])}
+          onChange={(index, slot) => edit(slots.map((s, i) => (i === index ? slot : s)))}
           onRemove={(index) => edit(slots.filter((_, i) => i !== index))}
         />
       ))}
@@ -64,11 +64,12 @@ function Form({ initial, onClose }) {
 /** Franjas semanales del entrenador: agregar y quitar por día, validar y guardar. */
 export default function AvailabilityDialog({ open, onClose }) {
   const availability = useAvailability();
+  const save = useSaveAvailability();
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()} title="Disponibilidad">
+    <Dialog open={open} dismissible={!save.isPending} onOpenChange={(next) => !next && onClose()} title="Disponibilidad">
       {availability.isPending && <LoadingState rows={2} />}
       {availability.isError && <ErrorState onRetry={availability.refetch} />}
-      {availability.isSuccess && <Form initial={availability.data} onClose={onClose} />}
+      {availability.isSuccess && <Form initial={availability.data} save={save} onClose={onClose} />}
     </Dialog>
   );
 }

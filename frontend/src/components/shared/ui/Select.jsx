@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-/** Select con el mismo estilo que `Input`. `options`: `[{ value, label }]`. */
+/** Select con el mismo estilo que `Input`. `options`: `[{ value, label, disabled? }]`. */
 export default function Select({ label, options, error, hint, id, className = '', ...rest }) {
   const autoId = useId();
   const selectId = id ?? autoId;
@@ -26,7 +26,7 @@ export default function Select({ label, options, error, hint, id, className = ''
         {...rest}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}

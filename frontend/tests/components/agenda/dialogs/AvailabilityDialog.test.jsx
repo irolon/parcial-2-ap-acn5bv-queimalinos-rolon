@@ -29,18 +29,18 @@ function setup({ put } = {}) {
 
 const puts = (fetchMock) => calls(fetchMock).filter(([, init]) => init?.method === 'PUT');
 
-async function addSlot(user, day, from, to) {
+async function addSlot(user, day, from, to, position = 1) {
   await user.click(screen.getByRole('button', { name: `Agregar franja al ${day}` }));
-  await user.selectOptions(screen.getByLabelText(`Desde (${day})`), from);
-  await user.selectOptions(screen.getByLabelText(`Hasta (${day})`), to);
-  await user.click(screen.getByRole('button', { name: `Agregar franja del ${day}` }));
+  await user.selectOptions(screen.getByLabelText(`Desde, franja ${position} del ${day}`), from);
+  await user.selectOptions(screen.getByLabelText(`Hasta, franja ${position} del ${day}`), to);
 }
 
 describe('AvailabilityDialog', () => {
   it('muestra las franjas guardadas en su día', async () => {
     setup();
     const monday = await screen.findByRole('region', { name: 'Lunes' });
-    expect(within(monday).getByText('08:00 – 12:00')).toBeInTheDocument();
+    expect(within(monday).getByLabelText('Desde, franja 1 del lunes')).toHaveValue('8');
+    expect(within(monday).getByLabelText('Hasta, franja 1 del lunes')).toHaveValue('12');
     expect(screen.getByRole('region', { name: 'Domingo' })).toBeInTheDocument();
   });
 
@@ -56,9 +56,8 @@ describe('AvailabilityDialog', () => {
   it('agregar una franja y guardar manda HH:00', async () => {
     const user = userEvent.setup();
     const { fetchMock } = setup();
-    await screen.findByText('08:00 – 12:00');
+    await screen.findByLabelText('Desde, franja 1 del lunes');
     await addSlot(user, 'martes', '14:00', '18:00');
-    expect(screen.getByText('14:00 – 18:00')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(puts(fetchMock)).toHaveLength(1));
     expect(bodyOf(puts(fetchMock)[0][1]).slots).toEqual([
@@ -67,19 +66,58 @@ describe('AvailabilityDialog', () => {
     ]);
   });
 
-  it('inicio igual o posterior al fin no se agrega y muestra el mensaje', async () => {
+  it('inicio igual al fin: error junto a la franja al guardar y no se guarda', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = setup();
+    await screen.findByLabelText('Desde, franja 1 del lunes');
+    await addSlot(user, 'jueves', '09:00', '09:00');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+    const thursday = screen.getByRole('region', { name: 'Jueves' });
+    expect(within(thursday).getByRole('alert')).toHaveTextContent('La hora de inicio tiene que ser anterior a la de fin');
+    expect(puts(fetchMock)).toHaveLength(0);
+  });
+
+  it('editar una franja guardada con los selects', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = setup();
+    await user.selectOptions(await screen.findByLabelText('Hasta, franja 1 del lunes'), '13:00');
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(puts(fetchMock)).toHaveLength(1));
+    expect(bodyOf(puts(fetchMock)[0][1]).slots).toEqual([{ weekday: 1, start_time: '08:00', end_time: '13:00' }]);
+  });
+
+  it('agregar enfoca el Desde de la franja nueva y quitar devuelve el foco al "+ Agregar franja"', async () => {
     const user = userEvent.setup();
     setup();
-    await screen.findByText('08:00 – 12:00');
-    await addSlot(user, 'jueves', '09:00', '09:00');
-    expect(screen.getByRole('alert')).toHaveTextContent('La hora de inicio tiene que ser anterior a la de fin');
+    await screen.findByLabelText('Desde, franja 1 del lunes');
+    await user.click(screen.getByRole('button', { name: 'Agregar franja al martes' }));
+    expect(screen.getByLabelText('Desde, franja 1 del martes')).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Quitar franja 09:00 a 10:00 del martes' }));
+    expect(screen.getByRole('button', { name: 'Agregar franja al martes' })).toHaveFocus();
+  });
+
+  it('reabrir arranca de nuevo desde lo guardado', async () => {
+    const user = userEvent.setup();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    stubFetch(async () => jsonResponse(200, { data: SAVED }));
+    const ui = (open) => (
+      <QueryClientProvider client={client}>
+        <AvailabilityDialog open={open} onClose={() => {}} />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(ui(true));
+    await user.click(await screen.findByRole('button', { name: 'Quitar franja 08:00 a 12:00 del lunes' }));
+    expect(screen.queryByLabelText('Desde, franja 1 del lunes')).not.toBeInTheDocument();
+    rerender(ui(false));
+    rerender(ui(true));
+    expect(await screen.findByLabelText('Desde, franja 1 del lunes')).toHaveValue('8');
   });
 
   it('franjas superpuestas: error junto a la franja y no se guarda', async () => {
     const user = userEvent.setup();
     const { fetchMock } = setup();
-    await screen.findByText('08:00 – 12:00');
-    await addSlot(user, 'lunes', '10:00', '14:00');
+    await screen.findByLabelText('Desde, franja 1 del lunes');
+    await addSlot(user, 'lunes', '10:00', '14:00', 2);
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(screen.getAllByText('La franja se superpone con otra del mismo día')).toHaveLength(2);
     expect(puts(fetchMock)).toHaveLength(0);
@@ -94,6 +132,17 @@ describe('AvailabilityDialog', () => {
     await user.click(await screen.findByRole('button', { name: 'Guardar' }));
     const monday = screen.getByRole('region', { name: 'Lunes' });
     expect(await within(monday).findByText('Franja rechazada')).toBeInTheDocument();
+  });
+
+  it('400 con details de campo (slots[0].end_time): queda junto a la franja', async () => {
+    const user = userEvent.setup();
+    setup({
+      put: async () =>
+        errorResponse(400, 'VALIDATION_ERROR', 'Datos inválidos', [{ field: 'slots[0].end_time', message: 'end_time inválido' }]),
+    });
+    await user.click(await screen.findByRole('button', { name: 'Guardar' }));
+    const monday = screen.getByRole('region', { name: 'Lunes' });
+    expect(await within(monday).findByText('end_time inválido')).toBeInTheDocument();
   });
 
   it('400 sin details mapeables: mensaje general y no cierra', async () => {

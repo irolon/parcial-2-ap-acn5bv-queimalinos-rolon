@@ -1,6 +1,8 @@
+import { WEEKDAYS_LONG } from '@/utils/agenda';
 import { pad } from '@/utils/dates';
 
-export const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+export const DAY_NAMES = WEEKDAYS_LONG.map((name) => name[0].toUpperCase() + name.slice(1));
+export const NEW_SLOT = { start_time: '09:00', end_time: '10:00' };
 
 export const hourLabel = (hour) => `${pad(hour)}:00`;
 
@@ -16,7 +18,7 @@ export const normalizeSlots = (slots) =>
     end_time: end_time.slice(0, 5),
   }));
 
-const FIELD_INDEX = /^slots\[(\d+)\]$/;
+const FIELD_INDEX = /^slots\[(\d+)\]/;
 
 /**
  * Errores de un 400 del servidor: mensajes por franja (índice) si los `details` se pueden mapear,
