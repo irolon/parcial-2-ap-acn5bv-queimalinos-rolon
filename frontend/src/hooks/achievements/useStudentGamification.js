@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  getAchievementProgress,
   getStudentAchievements,
   getStudentChallenges,
   getStudentStreak,
@@ -11,6 +12,7 @@ import {
 export const STUDENT_STREAK_KEY = ['student-streak'];
 export const STUDENT_ACHIEVEMENTS_KEY = ['student-achievements'];
 export const STUDENT_CHALLENGES_KEY = ['student-challenges'];
+export const ACHIEVEMENT_PROGRESS_KEY = ['student-achievement-progress'];
 
 export function useAchievementsCatalog() {
   return useQuery({ queryKey: ['achievements'], queryFn: listAchievements });
@@ -32,6 +34,15 @@ export function useStudentChallengesQuery(id) {
   return useQuery({
     queryKey: [...STUDENT_CHALLENGES_KEY, id],
     queryFn: () => getStudentChallenges(id),
+    enabled: Boolean(id),
+  });
+}
+
+/** El avance de cada logro del catálogo (con `unlocked_at` los que ya tiene), más la racha y los hechos de los que sale. */
+export function useAchievementProgressQuery(id) {
+  return useQuery({
+    queryKey: [...ACHIEVEMENT_PROGRESS_KEY, id],
+    queryFn: () => getAchievementProgress(id),
     enabled: Boolean(id),
   });
 }

@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from '@testing-library/react';
+import {
+  ACHIEVEMENT_PROGRESS_KEY, STUDENT_ACHIEVEMENTS_KEY, STUDENT_CHALLENGES_KEY, STUDENT_STREAK_KEY,
+} from '@/hooks/achievements/useStudentGamification';
 import { resetWorkoutStore } from '@/hooks/workout/workoutStore';
 import { loadWorkout } from '@/utils/workout/workoutStorage';
 import { bodyOf, calls } from '../../../helpers/shared/fetchMock';
@@ -40,9 +43,10 @@ describe('useActiveWorkout: upload', () => {
       ['sessions', STUDENT],
       ['progress'],
       ['routines', 'today'],
-      ['student-streak', STUDENT],
-      ['student-achievements', STUDENT],
-      ['student-challenges', STUDENT],
+      [...STUDENT_STREAK_KEY, STUDENT],
+      [...STUDENT_ACHIEVEMENTS_KEY, STUDENT],
+      [...STUDENT_CHALLENGES_KEY, STUDENT],
+      [...ACHIEVEMENT_PROGRESS_KEY, STUDENT],
     ]);
   });
 
