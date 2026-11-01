@@ -10,6 +10,9 @@ export const MESSAGE_IMAGES_BUCKET = 'message-images';
 export const MESSAGE_COLUMNS =
   'id, student_id, sender_role, body, image_path, broadcast_id, read_at, created_at';
 
+/** Roles que pueden firmar un mensaje. */
+export const SENDER_ROLES = { TRAINER: 'trainer', STUDENT: 'student' };
+
 /** Mismos límites que los checks del schema y del bucket. */
 export const MAX_BODY = 2000;
 export const MAX_IMAGE_BYTES = 5242880; // 5 MB
@@ -30,5 +33,16 @@ export const toMessage = (row, imageUrl = null) => ({
   image_url: imageUrl ?? null,
   broadcast_id: row.broadcast_id ?? null,
   read_at: row.read_at ?? null,
+  created_at: row.created_at,
+});
+
+/** Forma pública de la persona del otro lado de la conversación. */
+export const toPublicPerson = (row) => ({ id: row.id, name: row.name, avatar_url: row.avatar_url ?? null });
+
+/** Resumen del último mensaje para la lista de conversaciones: nunca expone `image_path`. */
+export const toLastMessage = (row) => ({
+  body: row.body ?? null,
+  has_image: Boolean(row.image_path),
+  sender_role: row.sender_role,
   created_at: row.created_at,
 });

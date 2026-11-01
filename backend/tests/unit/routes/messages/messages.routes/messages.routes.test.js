@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
-import router from '../../../../src/routes/messages/messages.routes.js';
-import { authenticate } from '../../../../src/shared/middlewares/auth.middleware.js';
-import { uploadImage } from '../../../../src/shared/middlewares/upload.middleware.js';
+import router from '../../../../../src/routes/messages/messages.routes.js';
+import { authenticate } from '../../../../../src/shared/middlewares/auth.middleware.js';
+import { parseImageUpload } from '../../../../../src/shared/middlewares/upload.middleware.js';
 
 const layers = router.stack.filter((l) => l.route);
 const find = (path, method) => layers.find((l) => l.route.path === path && l.route.methods[method]);
@@ -46,11 +46,11 @@ describe('orden', () => {
     expect(order.indexOf('post /broadcast')).toBeLessThan(order.indexOf('post /:studentId'));
   });
 
-  it('uploadImage corre antes de validar el body de POST /:studentId', () => {
+  it('parseImageUpload corre antes de validar el body de POST /:studentId', () => {
     const handlers = find('/:studentId', 'post').route.stack.map((l) => l.handle);
-    const upload = handlers.indexOf(uploadImage);
+    const upload = handlers.indexOf(parseImageUpload);
     expect(upload).toBeGreaterThan(-1);
-    // authenticate, requireRole, validate(params), uploadImage, validate(body), controller
+    // authenticate, requireRole, validate(params), parseImageUpload, validate(body), controller
     expect(handlers).toHaveLength(6);
     expect(upload).toBe(3);
   });
@@ -59,7 +59,7 @@ describe('orden', () => {
 describe('montaje en app', () => {
   it('app.js monta /api/messages', async () => {
     const { readFileSync } = await import('node:fs');
-    const app = readFileSync(new URL('../../../../src/app.js', import.meta.url), 'utf8');
+    const app = readFileSync(new URL('../../../../../src/app.js', import.meta.url), 'utf8');
     expect(app).toContain("app.use('/api/messages', messagesRoutes)");
   });
 });

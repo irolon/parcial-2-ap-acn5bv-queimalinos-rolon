@@ -28,6 +28,6 @@ function translate(err) {
 }
 
 /** multipart/form-data con un solo archivo opcional `image`; deja `req.file` y `req.body`. */
-export const uploadImage = (req, res, next) => {
+export const parseImageUpload = (req, res, next) => {
   single(req, res, (err) => next(err ? translate(err) : undefined));
 };

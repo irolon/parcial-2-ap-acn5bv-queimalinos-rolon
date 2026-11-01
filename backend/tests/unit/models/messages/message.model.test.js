@@ -8,7 +8,10 @@ import {
   MAX_LIMIT,
   MAX_BROADCAST,
   SIGNED_URL_SECONDS,
+  SENDER_ROLES,
   toMessage,
+  toPublicPerson,
+  toLastMessage,
 } from '../../../../src/models/messages/message.model.js';
 
 describe('message.model', () => {
@@ -47,5 +50,19 @@ describe('message.model', () => {
       expect(msg.body).toBeNull();
       expect(msg.broadcast_id).toBe('b1');
     });
+  });
+
+  it('SENDER_ROLES', () => {
+    expect(SENDER_ROLES).toEqual({ TRAINER: 'trainer', STUDENT: 'student' });
+  });
+
+  it('toPublicPerson deja solo id, name y avatar_url (null si falta)', () => {
+    expect(toPublicPerson({ id: 'a', name: 'Ana', email: 'x@y.z' })).toEqual({ id: 'a', name: 'Ana', avatar_url: null });
+    expect(toPublicPerson({ id: 'a', name: 'Ana', avatar_url: 'u' }).avatar_url).toBe('u');
+  });
+
+  it('toLastMessage resume el mensaje sin exponer image_path', () => {
+    const last = toLastMessage({ body: null, image_path: 's/x.png', sender_role: 'student', created_at: 't', id: 'm' });
+    expect(last).toEqual({ body: null, has_image: true, sender_role: 'student', created_at: 't' });
   });
 });

@@ -6,15 +6,14 @@ import * as messagesRepo from '../../repositories/messages/messages.repository.j
 import * as imagesRepo from '../../repositories/messages/message-images.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
-import { toMessage } from '../../models/messages/message.model.js';
+import { SENDER_ROLES, toMessage, toPublicPerson } from '../../models/messages/message.model.js';
 
-const pickPublic = ({ id, name, avatar_url: avatarUrl }) => ({ id, name, avatar_url: avatarUrl ?? null });
-const otherRole = (role) => (role === 'trainer' ? 'student' : 'trainer');
+const otherRole = (role) => (role === SENDER_ROLES.TRAINER ? SENDER_ROLES.STUDENT : SENDER_ROLES.TRAINER);
 
 /** Con quién habla el usuario: el PT ve al alumno; el alumno, a su PT. */
 async function counterpartOf(user, student) {
-  if (user.role === 'trainer') return pickPublic(student);
-  return pickPublic(await authRepo.findTrainerById(student.trainer_id));
+  if (user.role === SENDER_ROLES.TRAINER) return toPublicPerson(student);
+  return toPublicPerson(await authRepo.findTrainerById(student.trainer_id));
 }
 
 /** Historial paginado por cursor, en orden cronológico, con las fotos ya firmadas. */
@@ -72,10 +71,10 @@ export async function markRead(user, studentId) {
 
 /** Sin leer del usuario: el PT, los de sus alumnos activos; el alumno, los de su PT. */
 export async function unreadCount(user) {
-  if (user.role === 'student') {
-    return { count: await messagesRepo.countUnread({ studentIds: [user.id], senderRole: 'trainer' }) };
+  if (user.role === SENDER_ROLES.STUDENT) {
+    return { count: await messagesRepo.countUnread({ studentIds: [user.id], senderRole: SENDER_ROLES.TRAINER }) };
   }
   const students = await studentsRepo.findActiveStudentsByTrainer(user.id);
   const studentIds = students.map((s) => s.id);
-  return { count: await messagesRepo.countUnread({ studentIds, senderRole: 'student' }) };
+  return { count: await messagesRepo.countUnread({ studentIds, senderRole: SENDER_ROLES.STUDENT }) };
 }

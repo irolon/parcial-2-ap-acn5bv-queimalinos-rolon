@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import { authenticate } from '../../shared/middlewares/auth.middleware.js';
 import { requireRole } from '../../shared/middlewares/role.middleware.js';
-import { uploadImage } from '../../shared/middlewares/upload.middleware.js';
+import { parseImageUpload } from '../../shared/middlewares/upload.middleware.js';
 import {
   validateStudentIdParam,
   validateHistoryQuery,
@@ -22,8 +22,8 @@ router.get('/conversations', ...trainerOnly, controller.conversations);
 router.get('/unread-count', ...both, controller.unreadCount);
 router.post('/broadcast', ...trainerOnly, validate(validateBroadcast), controller.broadcast);
 router.get('/:studentId', ...both, studentId, validate(validateHistoryQuery, 'query'), controller.history);
-// uploadImage parsea el multipart: el body recién existe después de él.
-router.post('/:studentId', ...both, studentId, uploadImage, validate(validateSendBody), controller.send);
+// parseImageUpload parsea el multipart: el body recién existe después de él.
+router.post('/:studentId', ...both, studentId, parseImageUpload, validate(validateSendBody), controller.send);
 router.post('/:studentId/read', ...both, studentId, controller.markRead);
 
 export default router;

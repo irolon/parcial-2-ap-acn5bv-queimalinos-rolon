@@ -12,12 +12,12 @@ import {
   messageRow,
   PNG,
   PDF,
-} from '../../../helpers/messages/messages.setup.js';
+} from '../../../../helpers/messages/messages.setup.js';
 
 // Router, controller y services reales sobre un servidor mínimo; solo los repositorios están mockeados.
-const { default: router } = await import('../../../../src/routes/messages/messages.routes.js');
-const { errorHandler } = await import('../../../../src/shared/middlewares/error.middleware.js');
-const { signAccessToken } = await import('../../../../src/shared/utils/jwt.js');
+const { default: router } = await import('../../../../../src/routes/messages/messages.routes.js');
+const { errorHandler } = await import('../../../../../src/shared/middlewares/error.middleware.js');
+const { signAccessToken } = await import('../../../../../src/shared/utils/jwt.js');
 
 let server;
 let base;

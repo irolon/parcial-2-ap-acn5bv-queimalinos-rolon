@@ -1,5 +1,5 @@
 import express from 'express';
-import { uploadImage } from '../../../../src/shared/middlewares/upload.middleware.js';
+import { parseImageUpload } from '../../../../src/shared/middlewares/upload.middleware.js';
 import { errorHandler } from '../../../../src/shared/middlewares/error.middleware.js';
 
 // App mínima con un servidor real en un puerto libre (supertest no está en devDependencies);
@@ -9,7 +9,7 @@ let base;
 
 beforeAll(async () => {
   const app = express();
-  app.post('/up', uploadImage, (req, res) =>
+  app.post('/up', parseImageUpload, (req, res) =>
     res.json({ size: req.file?.size ?? null, name: req.file?.fieldname ?? null, body: req.body.body ?? null })
   );
   app.use(errorHandler);
@@ -24,7 +24,7 @@ afterAll(() => new Promise((resolve) => server.close(resolve)));
 const post = (form) => fetch(`${base}/up`, { method: 'POST', body: form });
 const file = (size) => new Blob([Buffer.alloc(size, 1)], { type: 'image/png' });
 
-describe('uploadImage', () => {
+describe('parseImageUpload', () => {
   it('deja el archivo en req.file y el texto en req.body', async () => {
     const form = new FormData();
     form.append('body', 'hola');

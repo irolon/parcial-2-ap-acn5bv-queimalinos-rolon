@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Errors } from '../../shared/utils/errors.js';
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
+import { SENDER_ROLES } from '../../models/messages/message.model.js';
 
 /**
  * Envío masivo del PT: una fila por alumno con el mismo broadcast_id. Si algún id no es
@@ -14,7 +15,7 @@ export async function broadcast(trainerId, { studentIds, body }) {
   await messagesRepo.insertMany(
     studentIds.map((id) => ({
       student_id: id,
-      sender_role: 'trainer',
+      sender_role: SENDER_ROLES.TRAINER,
       body,
       broadcast_id: broadcastId,
     }))

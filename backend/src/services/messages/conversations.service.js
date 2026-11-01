@@ -1,5 +1,6 @@
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
+import { SENDER_ROLES, toLastMessage, toPublicPerson } from '../../models/messages/message.model.js';
 
 /**
  * Conversaciones del PT (solo alumnos activos): primero las que tienen mensajes, por
@@ -10,20 +11,13 @@ export async function listConversations(trainerId) {
   const ids = students.map((s) => s.id);
   const [lasts, unread] = await Promise.all([
     messagesRepo.findLastByStudents(ids),
-    messagesRepo.countUnreadByStudents(ids, 'student'),
+    messagesRepo.countUnreadByStudents(ids, SENDER_ROLES.STUDENT),
   ]);
   const items = students.map((s) => {
     const last = lasts.get(s.id);
     return {
-      student: { id: s.id, name: s.name, avatar_url: s.avatar_url ?? null },
-      last_message: last
-        ? {
-            body: last.body ?? null,
-            has_image: Boolean(last.image_path),
-            sender_role: last.sender_role,
-            created_at: last.created_at,
-          }
-        : null,
+      student: toPublicPerson(s),
+      last_message: last ? toLastMessage(last) : null,
       unread_count: unread.get(s.id) ?? 0,
     };
   });
