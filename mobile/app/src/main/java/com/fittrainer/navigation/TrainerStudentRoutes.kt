@@ -6,6 +6,8 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
 import com.fittrainer.ui.invitations.InviteScreen
+import com.fittrainer.ui.routines.trainer.section.AssignRoutineButton
+import com.fittrainer.ui.routines.trainer.section.RoutinesSection
 import com.fittrainer.ui.students.detail.StudentDetailScreen
 import com.fittrainer.ui.students.edit.EditStudentScreen
 import com.fittrainer.ui.students.metrics.OPEN_NEW_ARG
@@ -15,7 +17,7 @@ import com.fittrainer.ui.students.sessions.LatestSessionsSection
 import com.fittrainer.ui.students.sessions.StudentSessionsScreen
 import com.fittrainer.ui.students.sessions.detail.StudentSessionDetailScreen
 
-/** Pantallas que cuelgan de la pestaña Alumnos del entrenador (E2-E6): invitar, ficha, edición y sesiones. */
+/** Pantallas que cuelgan de la pestaña Alumnos del entrenador (E2-E6, E8): invitar, ficha, edición y sesiones. */
 fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
     composable(TRAINER_INVITE_ROUTE) {
         InviteScreen(onBack = { navController.popBackStack() })
@@ -28,12 +30,21 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
             onGone = { navController.popBackStack() },
             onOpenMetrics = { openNew -> navController.navigate(trainerStudentMetricsRoute(id, openNew)) { launchSingleTop = true } },
             extraSections = { _, detail ->
+                item { RoutinesSection(onOpen = { navController.navigate(trainerRoutineRoute(it)) { launchSingleTop = true } }) }
                 item { StudentProgressSection(detail.createdAt) }
                 item {
                     LatestSessionsSection(
                         onOpenAll = { navController.navigate(trainerStudentSessionsRoute(id)) { launchSingleTop = true } },
                         onOpenSession = { navController.navigate(trainerStudentSessionRoute(id, it)) { launchSingleTop = true } },
                     )
+                }
+            },
+            headerActions = { offline, detail ->
+                // A un alumno dado de baja no se le crea una rutina nueva (se puede ver y editar la que tiene).
+                if (detail.active) {
+                    AssignRoutineButton(enabled = !offline) {
+                        navController.navigate(trainerNewRoutineRoute(id)) { launchSingleTop = true }
+                    }
                 }
             },
         )

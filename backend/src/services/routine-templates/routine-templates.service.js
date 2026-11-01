@@ -4,7 +4,7 @@ import {
   createWithExercises,
   findMissingExerciseIds,
   assertExercisesAccessible,
-} from '../routines/routines.service.js';
+} from '../routines/routines.service/routines.service.js';
 import * as routinesRepository from '../../repositories/routines/routines.repository.js';
 import { isOwnedBy, toRoutineDetail } from '../../models/routines/routine.model.js';
 import { assertValidStructure } from '../../validations/routine-templates/routine-templates.validation.js';

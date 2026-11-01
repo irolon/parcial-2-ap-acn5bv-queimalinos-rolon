@@ -7,6 +7,7 @@ import {
   validateUpdateRoutine,
   validateAddExercises,
   validateUpdateRoutineExercise,
+  validateReorderExercises,
   validateRoutineExerciseParams,
   validateListQuery,
   validateIdParam,
@@ -43,6 +44,14 @@ router.post(
   validate(validateIdParam, 'params'),
   validate(validateAddExercises),
   routinesController.addExercises
+);
+// Antes de '/:id/exercises/:routineExerciseId': 'order' no es un UUID.
+router.put(
+  '/:id/exercises/order',
+  requireRole('trainer'),
+  validate(validateIdParam, 'params'),
+  validate(validateReorderExercises),
+  routinesController.reorderExercises
 );
 router.patch(
   '/:id/exercises/:routineExerciseId',

@@ -34,7 +34,7 @@ export const mockRoutinesService = {
   assertExercisesAccessible: jest.fn(),
 };
 jest.unstable_mockModule(
-  src('services/routines/routines.service.js'),
+  src('services/routines/routines.service/routines.service.js'),
   () => mockRoutinesService
 );
 

@@ -1,5 +1,5 @@
 import { asyncHandler } from '../../shared/utils/asyncHandler.js';
-import * as routinesService from '../../services/routines/routines.service.js';
+import * as routinesService from '../../services/routines/routines.service/routines.service.js';
 
 /** POST /routines — crea y asigna una rutina. 201 → { data } */
 export const create = asyncHandler(async (req, res) => {
@@ -43,6 +43,16 @@ export const removeExercise = asyncHandler(async (req, res) => {
   const { id, routineExerciseId } = req.params;
   await routinesService.removeExercise(req.user.id, id, routineExerciseId);
   res.status(204).end();
+});
+
+/** PUT /routines/:id/exercises/order — reordena los ejercicios; devuelve el detalle. */
+export const reorderExercises = asyncHandler(async (req, res) => {
+  const data = await routinesService.reorderExercises(
+    req.user.id,
+    req.params.id,
+    req.body.routine_exercise_ids
+  );
+  res.json({ data });
 });
 
 /** GET /routines/today — rutina del día del alumno (solo alumnos). */

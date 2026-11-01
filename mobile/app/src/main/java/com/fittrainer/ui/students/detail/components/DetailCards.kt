@@ -21,9 +21,7 @@ import com.fittrainer.ui.invitations.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.students.detail.EMPTY_VALUE
 import com.fittrainer.ui.students.detail.NO_METRICS
-import com.fittrainer.ui.students.detail.NO_ROUTINE
 import com.fittrainer.ui.students.detail.dateLabel
-import com.fittrainer.ui.students.detail.daysLabel
 import com.fittrainer.ui.students.detail.metricValues
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
@@ -40,16 +38,6 @@ fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-@Composable
-fun RoutineCard(detail: StudentDetail) = SectionCard("RUTINA ACTIVA") {
-    val routine = detail.activeRoutine
-    Text(routine?.name ?: NO_ROUTINE, style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary)
-    if (routine != null && routine.days.isNotEmpty()) {
-        Text(daysLabel(routine.days), style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
-    }
-}
-
-/** onHistory/onNew en null: sin acciones (E6 las suma). canWrite: "+ Nueva medida" pide red. */
 @Composable
 fun LatestMetricsCard(
     detail: StudentDetail,

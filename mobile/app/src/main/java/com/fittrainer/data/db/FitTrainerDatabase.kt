@@ -3,6 +3,8 @@ package com.fittrainer.data.db
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.fittrainer.data.db.exercises.trainer.TrainerExerciseEntity
+import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.library.LibraryExerciseEntity
 import com.fittrainer.data.db.library.LibrarySyncEntity
@@ -10,6 +12,10 @@ import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.routine.RoutineEntity
 import com.fittrainer.data.db.routine.RoutineExerciseEntity
 import com.fittrainer.data.db.routine.RoutineSyncEntity
+import com.fittrainer.data.db.routines.trainer.TrainerRoutineEntity
+import com.fittrainer.data.db.routines.trainer.TrainerRoutineExerciseEntity
+import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
+import com.fittrainer.data.db.routines.trainer.TrainerRoutinesSyncEntity
 import com.fittrainer.data.db.students.TrainerStudentDetailDao
 import com.fittrainer.data.db.students.TrainerStudentDetailEntity
 import com.fittrainer.data.db.students.TrainerStudentEntity
@@ -59,8 +65,12 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         TrainerStudentMetricEntity::class,
         TrainerStudentMetricsSyncEntity::class,
         TrainerOverviewEntity::class,
+        TrainerRoutineEntity::class,
+        TrainerRoutineExerciseEntity::class,
+        TrainerRoutinesSyncEntity::class,
+        TrainerExerciseEntity::class,
     ],
-    version = 17,
+    version = 18,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -81,6 +91,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 14, to = 15),
         AutoMigration(from = 15, to = 16),
         AutoMigration(from = 16, to = 17),
+        AutoMigration(from = 17, to = 18),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -95,4 +106,6 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun trainerAttendanceDao(): TrainerAttendanceDao
     abstract fun trainerStudentMetricsDao(): TrainerStudentMetricsDao
     abstract fun trainerOverviewDao(): TrainerOverviewDao
+    abstract fun trainerRoutinesDao(): TrainerRoutinesDao
+    abstract fun trainerExercisesDao(): TrainerExercisesDao
 }

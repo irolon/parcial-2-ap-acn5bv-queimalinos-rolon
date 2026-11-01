@@ -8,6 +8,8 @@ import com.fittrainer.data.api.InvitationApi
 import com.fittrainer.data.api.RoutineApi
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.invitation.TrainerInvitationApi
+import com.fittrainer.data.api.exercises.TrainerExercisesApi
+import com.fittrainer.data.api.routines.TrainerRoutinesApi
 import com.fittrainer.data.api.students.StudentsApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
@@ -74,6 +76,16 @@ object NetworkModule {
     @Singleton
     fun provideStudentsApi(client: OkHttpClient, json: Json): StudentsApi =
         retrofit(client, json).create(StudentsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTrainerRoutinesApi(client: OkHttpClient, json: Json): TrainerRoutinesApi =
+        retrofit(client, json).create(TrainerRoutinesApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTrainerExercisesApi(client: OkHttpClient, json: Json): TrainerExercisesApi =
+        retrofit(client, json).create(TrainerExercisesApi::class.java)
 
     // A diferencia de InvitationApi, crear invitaciones necesita la sesión del entrenador.
     @Provides

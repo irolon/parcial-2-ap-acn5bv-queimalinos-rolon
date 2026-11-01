@@ -36,6 +36,7 @@ export const mockRoutineExercisesRepo = {
   findMaxOrderIndex: jest.fn(),
   updateRoutineExercise: jest.fn(),
   deleteRoutineExercise: jest.fn(),
+  reorderRoutineExercises: jest.fn(),
 };
 jest.unstable_mockModule(
   src('repositories/routines/routine-exercises.repository.js'),
@@ -48,7 +49,7 @@ jest.unstable_mockModule(
   () => mockProgressRepo
 );
 
-export const service = await import(src('services/routines/routines.service.js'));
+export const service = await import(src('services/routines/routines.service/routines.service.js'));
 
 export const TRAINER_ID = 'trainer-1';
 export const ROUTINE = { id: 'rt-1', trainer_id: TRAINER_ID, student_id: 'st-1', name: 'Full body', goal: 'hypertrophy', days: ['monday'] };
