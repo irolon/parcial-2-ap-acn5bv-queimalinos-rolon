@@ -4,15 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -20,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -35,7 +40,7 @@ import com.fittrainer.ui.theme.Spacing
 
 /** Pestaña Alumnos del entrenador (prototipo EM_Alumnos). */
 @Composable
-fun StudentsScreen(viewModel: StudentsViewModel = hiltViewModel()) {
+fun StudentsScreen(onInvite: () -> Unit = {}, viewModel: StudentsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
@@ -43,7 +48,9 @@ fun StudentsScreen(viewModel: StudentsViewModel = hiltViewModel()) {
     }
     StudentsBody(
         state,
-        StudentsActions(viewModel::onPullToRefresh, viewModel::onRetry, viewModel::onFilter, viewModel::onQuery, viewModel::dismissError),
+        StudentsActions(
+            viewModel::onPullToRefresh, viewModel::onRetry, viewModel::onFilter, viewModel::onQuery, viewModel::dismissError, onInvite,
+        ),
     )
 }
 
@@ -53,6 +60,7 @@ class StudentsActions(
     val onFilter: (StudentFilter) -> Unit,
     val onQuery: (String) -> Unit,
     val onDismissError: () -> Unit,
+    val onInvite: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,7 +83,7 @@ fun StudentsBody(state: StudentsUiState, actions: StudentsActions) {
                 !state.loaded -> Unit
                 state.showErrorScreen -> item { ErrorState(state.error.orEmpty(), actions.onRetry) }
                 !state.everSynced -> Unit
-                !state.hasStudents -> item { InfoCard(STUDENTS_EMPTY_TITLE, STUDENTS_EMPTY_BODY) }
+                !state.hasStudents -> item { EmptyState(actions.onInvite) }
                 state.students.isEmpty() -> item { InfoCard("Sin resultados", STUDENTS_NO_MATCH) }
                 else -> items(state.students, key = { it.id }) { StudentRow(it) }
             }
@@ -93,7 +101,12 @@ private fun Header(state: StudentsUiState, actions: StudentsActions) {
                 color = FtColors.TextSecondary,
             )
         }
-        Text(STUDENTS_TITLE, style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(STUDENTS_TITLE, Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
+            FilledIconButton(onClick = actions.onInvite, modifier = Modifier.size(Spacing.minTouchTarget)) {
+                Icon(Icons.Filled.Add, contentDescription = STUDENTS_INVITE)
+            }
+        }
         if (state.offline) OfflineIndicator(state.syncedLabel?.let { "Sin conexión · $it" } ?: "Sin conexión")
         OutlinedTextField(
             value = state.query,
@@ -104,6 +117,16 @@ private fun Header(state: StudentsUiState, actions: StudentsActions) {
             singleLine = true,
         )
         StudentFilters(state.filter, actions.onFilter)
+    }
+}
+
+@Composable
+private fun EmptyState(onInvite: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        InfoCard(STUDENTS_EMPTY_TITLE, STUDENTS_EMPTY_BODY)
+        Button(onClick = onInvite, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+            Text(STUDENTS_INVITE_FIRST)
+        }
     }
 }
 

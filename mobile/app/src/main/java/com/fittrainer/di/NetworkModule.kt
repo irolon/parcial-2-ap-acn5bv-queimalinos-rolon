@@ -7,6 +7,7 @@ import com.fittrainer.data.api.FitTrainerApi
 import com.fittrainer.data.api.InvitationApi
 import com.fittrainer.data.api.RoutineApi
 import com.fittrainer.data.api.SessionApi
+import com.fittrainer.data.api.invitation.TrainerInvitationApi
 import com.fittrainer.data.api.students.StudentsApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
@@ -73,6 +74,12 @@ object NetworkModule {
     @Singleton
     fun provideStudentsApi(client: OkHttpClient, json: Json): StudentsApi =
         retrofit(client, json).create(StudentsApi::class.java)
+
+    // A diferencia de InvitationApi, crear invitaciones necesita la sesión del entrenador.
+    @Provides
+    @Singleton
+    fun provideTrainerInvitationApi(client: OkHttpClient, json: Json): TrainerInvitationApi =
+        retrofit(client, json).create(TrainerInvitationApi::class.java)
 
     // AuthApi tiene que quedar en @AuthClient: en el cliente principal el refresh reentraría al TokenAuthenticator y se trabaría en su Mutex.
     @Provides

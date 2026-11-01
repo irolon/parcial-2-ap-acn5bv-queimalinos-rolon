@@ -36,6 +36,7 @@ fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
 private fun parentTab(route: String): String? = when {
     route.startsWith("student/history/") -> STUDENT_PROGRESS_ROUTE
     route.startsWith("$STUDENT_ROUTINES_ROUTE/") || route == STUDENT_LIBRARY_ROUTE -> STUDENT_ROUTINES_ROUTE
+    route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE
     else -> null
 }
 
@@ -51,6 +52,9 @@ val StudentTabs = listOf(
 )
 
 const val TRAINER_STUDENTS_ROUTE = "trainer/students"
+
+/** Invitar alumno (tarjeta E2): cuelga de la pestaña Alumnos. */
+const val TRAINER_INVITE_ROUTE = "trainer/students/invite"
 
 /** Guía Mobile p.5 — app del entrenador. */
 val TrainerTabs = listOf(
