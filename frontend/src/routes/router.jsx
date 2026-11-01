@@ -11,10 +11,25 @@ import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
+import HistoryPage from '@/pages/student/HistoryPage';
+import MyProfilePage from '@/pages/student/MyProfilePage';
+import MyRoutinesPage from '@/pages/student/MyRoutinesPage';
+import RoutineDetailPage from '@/pages/student/RoutineDetailPage';
+import TodayPage from '@/pages/student/TodayPage';
+import WorkoutPage from '@/pages/student/WorkoutPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
-import { NEW_ROUTINE, NEW_STUDENT, ROLES, STUDENT_NAV, STUDENT_PROFILE, TRAINER_NAV } from './routeTable';
+import {
+  NEW_ROUTINE,
+  NEW_STUDENT,
+  ROLES,
+  STUDENT_NAV,
+  STUDENT_PROFILE,
+  STUDENT_ROUTINE,
+  TRAINER_NAV,
+  WORKOUT_PATH,
+} from './routeTable';
 
 // Cada ítem del sidebar es una página "Próximamente" hasta que llegue su tarjeta;
 // `pages` suma las páginas reales de la sección y `elements` reemplaza el placeholder de un ítem
@@ -65,6 +80,24 @@ export const routes = [
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,
   }),
-  roleSection(ROLES.STUDENT, STUDENT_NAV, [], { progreso: <MyProgressPage /> }),
+  // Fuera del menú del alumno: el detalle de una rutina y la sesión activa (se entra desde Mis rutinas y Hoy).
+  roleSection(ROLES.STUDENT, STUDENT_NAV, [
+    {
+      path: STUDENT_ROUTINE.path,
+      handle: { title: 'Mis rutinas', subtitle: 'DETALLE DE LA RUTINA' },
+      element: <RoutineDetailPage />,
+    },
+    {
+      path: WORKOUT_PATH,
+      handle: { title: 'Entrenamiento', subtitle: 'SESIÓN EN CURSO' },
+      element: <WorkoutPage />,
+    },
+  ], {
+    hoy: <TodayPage />,
+    progreso: <MyProgressPage />,
+    rutinas: <MyRoutinesPage />,
+    historial: <HistoryPage />,
+    perfil: <MyProfilePage />,
+  }),
   { path: '*', element: <NotFoundPage /> },
 ];

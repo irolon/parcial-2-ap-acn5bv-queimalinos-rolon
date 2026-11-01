@@ -5,7 +5,6 @@ import {
   House,
   List,
   MessageSquare,
-  Sparkles,
   User,
 } from 'lucide-react';
 
@@ -31,10 +30,18 @@ export const STUDENT_NAV = {
     { path: 'progreso', label: 'Mi progreso', icon: ChartLine, subtitle: 'MEDIDAS Y MARCAS' },
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
-    { path: 'asistente', label: 'Asistente IA', icon: Sparkles, subtitle: 'CONSULTAS Y SUGERENCIAS' },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
   ],
 };
+
+/** Sesión activa del alumno: fuera del menú, se entra desde Hoy o desde Mis rutinas. */
+export const WORKOUT_PATH = `${STUDENT_NAV.base}/entrenar`;
+
+// Detalle de una rutina del alumno: fuera del menú; la página fija su propio título con `usePageHeader`.
+export const STUDENT_ROUTINE = { path: `${STUDENT_NAV.base}/rutinas/:id` };
+
+/** Link al detalle de una de las rutinas del alumno. */
+export const studentRoutineHref = (id) => `${STUDENT_NAV.base}/rutinas/${id}`;
 
 /** Panel de alumnos (el ítem `alumnos` del menú del entrenador). */
 export const STUDENTS_PATH = `${TRAINER_NAV.base}/alumnos`;

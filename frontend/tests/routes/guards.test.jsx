@@ -45,7 +45,23 @@ describe('guard de rutas privadas', () => {
     setSession(STUDENT);
     const { pathname } = renderRoute('/pt/dashboard');
     expect(await heading('Hoy')).toBeInTheDocument();
+    expect(screen.queryByText('Próximamente')).not.toBeInTheDocument();
     expect(pathname()).toBe('/alumno/hoy');
+  });
+
+  // La sesión activa y el detalle de una rutina no están en el menú, pero son solo del alumno.
+  it.each(['/alumno/entrenar', '/alumno/rutinas/r-1'])('%s con sesión de entrenador manda a su home', async (path) => {
+    setSession(TRAINER);
+    const { pathname } = renderRoute(path);
+    expect(await heading('Dashboard')).toBeInTheDocument();
+    expect(pathname()).toBe('/pt/dashboard');
+  });
+
+  it.each(['/alumno/entrenar', '/alumno/rutinas/r-1'])('%s sin sesión manda a /login', async (path) => {
+    setSession(null);
+    const { pathname } = renderRoute(path);
+    expect(await screen.findByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
+    expect(pathname()).toBe('/login');
   });
 
   it('con su rol deja pasar y muestra la página', async () => {
