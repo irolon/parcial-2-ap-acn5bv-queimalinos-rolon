@@ -1,4 +1,4 @@
-import { DAY_MS } from './dates.js';
+import { DAY_MS } from './dates/dates.js';
 
 // Buenos Aires es UTC-3 todo el año (sin horario de verano).
 const AR_UTC_OFFSET_HOURS = 3;

@@ -1,5 +1,5 @@
 import { evaluateCriteria } from '../../models/gamification/criteria.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import * as gamificationRepo from '../../repositories/gamification/gamification.repository.js';
 import * as dataRepo from '../../repositories/gamification/evaluate-data.repository.js';
 import { fetchSessionRecords } from '../../repositories/sessions/session-history.repository.js';

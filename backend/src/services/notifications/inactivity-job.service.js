@@ -8,7 +8,7 @@ import {
   INACTIVITY_COOLDOWN_DAYS,
 } from '../../models/notifications/notification.model.js';
 import { missedAssignedDays, addDays } from '../../models/gamification/streak.js';
-import { localDate, DAY_MS } from '../../shared/utils/dates.js';
+import { localDate, DAY_MS } from '../../shared/utils/dates/dates.js';
 
 const toUtc = (str) => new Date(`${str}T00:00:00Z`).getTime();
 

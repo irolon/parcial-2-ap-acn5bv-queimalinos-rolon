@@ -1,5 +1,5 @@
 import { computeStreak, countFullWeeks } from '../../models/gamification/streak.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 
 /**
  * Datos del evaluador a partir del historial (puro).

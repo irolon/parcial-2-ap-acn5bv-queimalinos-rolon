@@ -1,7 +1,7 @@
 import { notify, pushOnly } from './notify.service.js';
 import { texts } from '../../models/notifications/texts.js';
 import { shouldPush } from '../../models/notifications/push-policy.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import * as triggerData from '../../repositories/notifications/trigger-data.repository.js';
 import { fetchSessionRecords } from '../../repositories/sessions/session-history.repository.js';
 

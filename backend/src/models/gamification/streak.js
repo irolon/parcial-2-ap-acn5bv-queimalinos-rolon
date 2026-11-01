@@ -1,10 +1,10 @@
 /**
  * Racha y semanas completas. Funciones puras: reciben fechas locales
- * 'YYYY-MM-DD' (ver shared/utils/dates.js) y devuelven números. La aritmética
+ * 'YYYY-MM-DD' (ver shared/utils/dates/dates.js) y devuelven números. La aritmética
  * de fechas se hace sobre Date en UTC-medianoche para no depender del TZ del server.
  */
 import { DAYS } from '../routines/routine.model.js';
-import { DAY_MS } from '../../shared/utils/dates.js';
+import { DAY_MS } from '../../shared/utils/dates/dates.js';
 
 const toUtc = (str) => new Date(`${str}T00:00:00Z`);
 
