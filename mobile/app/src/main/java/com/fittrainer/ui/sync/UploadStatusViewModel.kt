@@ -69,7 +69,7 @@ class UploadStatusViewModel @Inject constructor(
                 return@launch
             }
             val result = try {
-                manualSync.run(owner).toManualUpload()
+                manualSync.run(owner).result.toManualUpload() // lo pendiente manda: el rechazo ya se ve en el aviso por los conteos
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

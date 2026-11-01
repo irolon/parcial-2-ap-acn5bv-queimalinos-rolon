@@ -15,6 +15,9 @@ import kotlinx.coroutines.sync.withLock
 
 enum class SaveOutcome { Corrected, Advanced, AllDone }
 
+/** Límite de la nota del feedback: el mismo que valida el backend (PATCH /sessions/:id). */
+const val MAX_NOTES = 1000
+
 /**
  * Única puerta a las sesiones (spec §4). La usan la pantalla y el WorkoutService: cada operación
  * relee la sesión de Room adentro de un Mutex, así ninguno pisa lo que acaba de escribir el otro.
@@ -124,6 +127,18 @@ class WorkoutRepository @Inject constructor(
     }
 
     suspend fun discard(ownerId: String) = withActive(ownerId) { dao.deleteSession(it.id) }
+
+    /**
+     * Feedback post-entreno (spec §4 de la tarjeta 12). La nota se recorta y vacía pasa a null; sin RPE
+     * ni nota no se escribe nada (es lo mismo que saltear). Lo sube la pasada de sync-sessions.
+     */
+    suspend fun saveFeedback(sessionId: String, rpe: Int?, notes: String?) {
+        require(rpe == null || rpe in 1..10) { "RPE fuera de rango" }
+        val note = notes?.trim()?.takeIf { it.isNotEmpty() }
+        require(note == null || note.length <= MAX_NOTES) { "Nota de más de $MAX_NOTES caracteres" }
+        if (rpe == null && note == null) return
+        dao.saveFeedback(sessionId, rpe, note)
+    }
 
     private suspend fun updateRest(ownerId: String, change: (Rest) -> Rest?) = withActive(ownerId) { w ->
         val rest = w.rest ?: return@withActive
