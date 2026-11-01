@@ -27,6 +27,9 @@ fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
 /** Lista de avisos del alumno (tarjeta 17): se abre desde la campana de Hoy. */
 const val NOTIFICATIONS_ROUTE = "student/notifications"
 
+/** Centro de notificaciones del entrenador (E12): cuelga de Inicio, como el del alumno de Hoy. */
+const val TRAINER_NOTIFICATIONS_ROUTE = "trainer/notifications"
+
 /** Mis rutinas → una rutina, y Mis rutinas → biblioteca (la biblioteca no cuelga de student/routines/ para no chocar con {routineId}). */
 const val ROUTINE_DETAIL_ROUTE = "student/routines/{$ROUTINE_ID_ARG}"
 fun routineDetailRoute(routineId: String) = "student/routines/$routineId"
@@ -44,6 +47,7 @@ private fun parentTab(route: String): String? = when {
     route == TRAINER_EXERCISES_ROUTE || route.startsWith("$TRAINER_EXERCISES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == TRAINER_CHALLENGES_ROUTE || route.startsWith("$TRAINER_CHALLENGES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == NOTIFICATIONS_ROUTE -> STUDENT_TODAY_ROUTE
+    route == TRAINER_NOTIFICATIONS_ROUTE -> TRAINER_HOME_ROUTE
     else -> null
 }
 

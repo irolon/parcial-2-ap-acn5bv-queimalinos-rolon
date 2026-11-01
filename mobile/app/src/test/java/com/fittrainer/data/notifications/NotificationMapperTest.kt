@@ -12,9 +12,15 @@ class NotificationMapperTest {
     private fun dto(type: String = "pr", data: String = "{}", at: String = "2026-10-30T06:00:00.123456+00:00") =
         NotificationDto("n1", type, "t", null, Json.parseToJsonElement(data) as JsonObject, false, at)
 
-    @Test fun soloGuardaLosTiposDelAlumno() {
-        val saved = listOf("comment", "pr", "achievement", "inactivity", "otro").map { dto(it).toEntity("u1") != null }
+    @Test fun soloGuardaLosTiposConocidos() {
+        val saved = listOf("comment", "pr", "achievement", "appointment", "otro").map { dto(it).toEntity("u1") != null }
         assertEquals(listOf(true, true, true, false, false), saved)
+    }
+
+    // E12: los avisos del entrenador también se guardan.
+    @Test fun guardaLosTiposDelEntrenador() {
+        val saved = listOf("inactivity", "routine_modified").map { dto(it).toEntity("t1")?.toModel()?.type }
+        assertEquals(listOf(NotificationType.INACTIVITY, NotificationType.ROUTINE_MODIFIED), saved)
     }
 
     @Test fun fechaConZYConOffsetDanElMismoInstante() {
@@ -34,6 +40,6 @@ class NotificationMapperTest {
     }
 
     @Test fun tipoDesconocidoNoSeConvierteAModelo() {
-        assertNull(dto().toEntity("u1")!!.copy(type = "inactivity").toModel())
+        assertNull(dto().toEntity("u1")!!.copy(type = "appointment").toModel())
     }
 }

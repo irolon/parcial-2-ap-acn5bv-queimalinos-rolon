@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 
-/** Null si el tipo no es de alumno (comment, pr, achievement) o si `created_at` no se puede leer: esa fila no se guarda. */
+/** Null si el tipo no es uno de [NotificationType] o si `created_at` no se puede leer: esa fila no se guarda. */
 fun NotificationDto.toEntity(ownerId: String): NotificationEntity? {
     if (NotificationType.fromWire(type) == null) return null
     val created = createdAtMillis() ?: return null

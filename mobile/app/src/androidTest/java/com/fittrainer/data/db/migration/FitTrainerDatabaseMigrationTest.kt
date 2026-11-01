@@ -164,13 +164,13 @@ class FitTrainerDatabaseMigrationTest {
         db.query("SELECT COUNT(*) FROM history_comment_seen").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
     }
 
-    // La base real (la del DatabaseModule, sin borrado destructivo) abre una v1 existente.
+    // La base real (la del DatabaseModule, sin borrado destructivo y con sus migraciones manuales) abre una v1 existente.
     @Test fun laBaseRealAbreUnaV1Existente() {
         helper.createDatabase(DB, 1).close()
 
         val db = Room.databaseBuilder(
             ApplicationProvider.getApplicationContext(), FitTrainerDatabase::class.java, DB,
-        ).build()
+        ).addMigrations(MIGRATION_20_21).build()
         db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM library_sync").use {
             assertTrue(it.moveToFirst())
         }

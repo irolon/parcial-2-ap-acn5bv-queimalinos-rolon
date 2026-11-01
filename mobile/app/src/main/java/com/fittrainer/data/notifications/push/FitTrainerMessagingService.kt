@@ -10,7 +10,6 @@ import com.fittrainer.R
 import com.fittrainer.data.auth.tokenstore.TokenStore
 import com.fittrainer.data.notifications.NotificationsRepository
 import com.fittrainer.data.notifications.notificationsAllowed
-import com.fittrainer.data.session.Role
 import com.fittrainer.di.ApplicationScope
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -21,7 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * Recibe los push del entrenador. Mostrar la notificación y refrescar Room son dos caminos al mismo
+ * Recibe los push (al alumno, del entrenador; al entrenador, de sus alumnos). Mostrar la notificación y refrescar Room son dos caminos al mismo
  * destino: si el usuario no toca el push, la lista igual se pone al día.
  */
 @AndroidEntryPoint
@@ -40,7 +39,7 @@ class FitTrainerMessagingService : FirebaseMessagingService() {
         show(message)
         // Termina después de que el servicio muere: por eso el scope de la app y no el del servicio.
         appScope.launch {
-            val user = tokenStore.current()?.user?.takeIf { it.role == Role.STUDENT } ?: return@launch
+            val user = tokenStore.current()?.user ?: return@launch
             repository.refresh(user.id)
         }
     }

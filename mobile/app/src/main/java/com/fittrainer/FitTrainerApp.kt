@@ -39,6 +39,6 @@ class FitTrainerApp : Application(), Configuration.Provider {
         syncTrigger.start(appScope)
         // Un solo disparador del alta del token: cada vez que la sesión pasa a ser de un alumno nuevo
         // (arranque con sesión guardada o login). Los errores los traga el registro.
-        appScope.launch { pushTokens.registerOnStudentSessions(sessionRepository.session) }
+        appScope.launch { pushTokens.registerOnSessions(sessionRepository.session) }
     }
 }

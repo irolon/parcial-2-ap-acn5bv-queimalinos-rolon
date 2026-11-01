@@ -32,6 +32,19 @@ fun navSteps(nav: PendingNav, currentRoute: String?): List<NavStep> = when (val 
     NavTarget.Notifications ->
         if (currentRoute == NOTIFICATIONS_ROUTE) emptyList()
         else listOf(NavStep.Tab(STUDENT_TODAY_ROUTE), NavStep.Push(NOTIFICATIONS_ROUTE))
+    is NavTarget.TrainerSession -> {
+        val session = NavStep.Push(trainerStudentSessionRoute(target.studentId, target.sessionId))
+        // Desde un push: Alumnos → ficha → sesión, así atrás vuelve a la ficha.
+        if (nav.fromList) listOf(session)
+        else listOf(NavStep.Tab(TRAINER_STUDENTS_ROUTE), NavStep.Push(trainerStudentDetailRoute(target.studentId)), session)
+    }
+    is NavTarget.TrainerStudent -> {
+        val profile = NavStep.Push(trainerStudentDetailRoute(target.studentId))
+        if (nav.fromList) listOf(profile) else listOf(NavStep.Tab(TRAINER_STUDENTS_ROUTE), profile)
+    }
+    NavTarget.TrainerNotifications ->
+        if (currentRoute == TRAINER_NOTIFICATIONS_ROUTE) emptyList()
+        else listOf(NavStep.Tab(TRAINER_HOME_ROUTE), NavStep.Push(TRAINER_NOTIFICATIONS_ROUTE))
     NavTarget.None -> emptyList()
 }
 
@@ -41,7 +54,7 @@ fun navSteps(nav: PendingNav, currentRoute: String?): List<NavStep> = when (val 
  */
 fun holdsNavigation(currentRoute: String?): Boolean = currentRoute == WORKOUT_ROUTE
 
-/** Navega al destino resuelto de un aviso tocado (push o lista) y lo da por consumido. Solo en el shell del alumno. */
+/** Navega al destino resuelto de un aviso tocado (push o lista) y lo da por consumido. En los dos shells (E12). */
 @Composable
 fun NotificationLaunchEffect(launches: NotificationLaunchViewModel, navController: NavController) {
     val target by launches.target.collectAsStateWithLifecycle()

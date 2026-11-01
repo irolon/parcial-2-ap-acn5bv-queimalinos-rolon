@@ -4,6 +4,7 @@ import com.fittrainer.data.notifications.LaunchSources
 import com.fittrainer.data.notifications.NotificationDestination
 import com.fittrainer.data.notifications.PendingLaunch
 import com.fittrainer.data.session.Session
+import com.fittrainer.data.session.userId
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Cuánto espera un tap en un comentario a que baje el historial antes de caer a Progreso → Historial. */
@@ -15,21 +16,37 @@ sealed interface NavTarget {
     data object ProgressHistory : NavTarget
     data class ProgressCharts(val exerciseId: String) : NavTarget
     data object Notifications : NavTarget
+    /** Entrenador (E12): la sesión de un alumno (ficha → sesión) y su ficha. */
+    data class TrainerSession(val studentId: String, val sessionId: String) : NavTarget
+    data class TrainerStudent(val studentId: String) : NavTarget
+    data object TrainerNotifications : NavTarget
     data object None : NavTarget
 }
 
 /**
- * Reglas de la spec §3.3. Sin sesión de alumno (sin sesión, leyendo o entrenador) el destino se descarta sin
- * tocar la API ni Room. Si hay [PendingLaunch.notificationId] se marca leído.
+ * Reglas de la spec §3.3. Sin sesión, o con un destino que no es del rol logueado (un push viejo de otra cuenta),
+ * se descarta sin tocar la API ni Room. Si hay [PendingLaunch.notificationId] se marca leído.
  */
 suspend fun resolve(launch: PendingLaunch, session: Session?, sources: LaunchSources): NavTarget {
-    val owner = (session as? Session.Student)?.user?.id ?: return NavTarget.None
+    val owner = session.userId ?: return NavTarget.None
+    val trainer = session is Session.Trainer
+    val destination = launch.destination
+    if (!fitsRole(destination, trainer)) return NavTarget.None
     launch.notificationId?.let { sources.markRead(owner, it) }
-    return when (val destination = launch.destination) {
+    return when (destination) {
         is NotificationDestination.SessionDetail -> sessionTarget(owner, destination.sessionId, sources)
         is NotificationDestination.ExerciseChart -> NavTarget.ProgressCharts(destination.exerciseId)
-        NotificationDestination.NotificationsList -> NavTarget.Notifications
+        is NotificationDestination.StudentSession -> NavTarget.TrainerSession(destination.studentId, destination.sessionId)
+        is NotificationDestination.StudentProfile -> NavTarget.TrainerStudent(destination.studentId)
+        NotificationDestination.NotificationsList -> if (trainer) NavTarget.TrainerNotifications else NavTarget.Notifications
     }
+}
+
+/** Los destinos del historial propio son del alumno; los de un alumno a cargo, del entrenador. La lista, de los dos. */
+private fun fitsRole(destination: NotificationDestination, trainer: Boolean): Boolean = when (destination) {
+    is NotificationDestination.SessionDetail, is NotificationDestination.ExerciseChart -> !trainer
+    is NotificationDestination.StudentSession, is NotificationDestination.StudentProfile -> trainer
+    NotificationDestination.NotificationsList -> true
 }
 
 /**

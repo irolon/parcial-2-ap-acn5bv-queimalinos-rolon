@@ -44,7 +44,7 @@ fun LazyListScope.NotificationsStates(state: NotificationsUiState, onRetry: () -
     if (state.groups.isNotEmpty() || state.isRefreshing) return
     when {
         !state.everLoaded && state.isOffline -> item { InfoCard(NotificationTexts.NEVER_LOADED, "") }
-        state.everLoaded -> item { InfoCard(NotificationTexts.EMPTY, NotificationTexts.EMPTY_HINT) }
+        state.everLoaded -> item { InfoCard(NotificationTexts.EMPTY, if (state.forTrainer) NotificationTexts.EMPTY_HINT_TRAINER else NotificationTexts.EMPTY_HINT) }
     }
 }
 

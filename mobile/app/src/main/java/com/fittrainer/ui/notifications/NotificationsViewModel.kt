@@ -9,8 +9,10 @@ import com.fittrainer.data.notifications.NotificationsRepository
 import com.fittrainer.data.notifications.destinationOf
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
-import com.fittrainer.data.session.Session
+import com.fittrainer.data.session.Role
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.data.session.role
+import com.fittrainer.data.session.userId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Instant
@@ -53,7 +55,11 @@ class NotificationsViewModel @Inject constructor(
     private data class Stored(val items: List<AppNotification>, val everLoaded: Boolean, val hasMore: Boolean)
 
     private val owner: StateFlow<String?> = sessionRepository.session
-        .map { (it as? Session.Student)?.user?.id }
+        .map { it.userId }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    /** El rol decide a dónde lleva un `pr` o un `achievement` (E12). */
+    private val role: StateFlow<Role?> = sessionRepository.session
+        .map { it.role }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     private val local = MutableStateFlow(Local())
@@ -84,6 +90,7 @@ class NotificationsViewModel @Inject constructor(
             isLoadingMore = l.loadingMore,
             loadMoreFailed = l.moreFailed,
             notificationsEnabled = l.enabled,
+            forTrainer = role.value == Role.TRAINER,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotificationsUiState())
 
@@ -151,7 +158,7 @@ class NotificationsViewModel @Inject constructor(
             val id = owner.filterNotNull().first()
             try {
                 if (!item.read) repository.markReadLocal(id, item.id)
-                _events.tryEmit(NotificationsEvent.Open(destinationOf(item.type.wire, item.data)))
+                _events.tryEmit(NotificationsEvent.Open(destinationOf(item.type.wire, item.data, role.value ?: Role.STUDENT)))
             } finally {
                 opening.remove(item.id)
             }

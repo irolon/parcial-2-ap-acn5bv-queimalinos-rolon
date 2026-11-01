@@ -17,9 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -32,7 +29,6 @@ import com.fittrainer.ui.students.overview.components.DayCard
 import com.fittrainer.ui.students.overview.components.FeedbackRow
 import com.fittrainer.ui.students.overview.components.FilterGrid
 import com.fittrainer.ui.students.overview.components.HomeHeader
-import com.fittrainer.ui.students.overview.components.PendingTodaySheet
 import com.fittrainer.ui.students.overview.components.RiskRow
 import com.fittrainer.ui.students.overview.components.StudentRow
 import com.fittrainer.ui.students.overview.components.TodayRow
@@ -40,27 +36,28 @@ import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
 /** Adónde llevan las filas: la ficha (E3) o el detalle de una sesión para comentar (E4). */
-class HomeNavigation(val onStudent: (String) -> Unit, val onSession: (studentId: String, sessionId: String) -> Unit, val onInvite: () -> Unit)
+class HomeNavigation(
+    val onStudent: (String) -> Unit,
+    val onSession: (studentId: String, sessionId: String) -> Unit,
+    val onInvite: () -> Unit,
+    val onNotifications: () -> Unit,
+)
 
-/** Inicio del entrenador: el día primero (tarjeta del día) y una lista por filtro. La campana real es de E12. */
+/** Inicio del entrenador: el día primero (tarjeta del día) y una lista por filtro. La campana abre el centro de avisos (E12). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TrainerHomeScreen(nav: HomeNavigation, viewModel: TrainerHomeViewModel = hiltViewModel()) {
+fun TrainerHomeScreen(nav: HomeNavigation, unreadNotifications: Int, viewModel: TrainerHomeViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
         onStopOrDispose { }
     }
     val showToday = { viewModel.onFilter(HomeFilter.TODAY) }
-    var bellOpen by rememberSaveable { mutableStateOf(false) }
-    if (bellOpen) {
-        PendingTodaySheet(state.overview?.missingToday.orEmpty(), { bellOpen = false; nav.onStudent(it) }, { bellOpen = false })
-    }
     PullToRefreshBox(state.refreshing, viewModel::onPullToRefresh, Modifier.fillMaxSize().background(FtColors.Background)) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
             val o = state.overview
             item {
-                HomeHeader(state.today?.let(::headerDate), greeting(state.name), o?.missingToday?.size ?: 0, { bellOpen = true }) {
+                HomeHeader(state.today?.let(::headerDate), greeting(state.name), unreadNotifications, nav.onNotifications) {
                     if (state.offline) OfflineIndicator(state.syncedLabel?.let { "Sin conexión · $it" } ?: "Sin conexión")
                 }
             }

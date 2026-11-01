@@ -7,6 +7,7 @@ import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
+import com.fittrainer.data.db.migration.MIGRATION_20_21
 import com.fittrainer.data.db.notifications.NotificationDao
 import com.fittrainer.data.db.progress.ProgressDao
 import com.fittrainer.data.db.routine.RoutineDao
@@ -48,7 +49,9 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FitTrainerDatabase =
         // Sin fallbackToDestructiveMigration: las versiones se migran (ver FitTrainerDatabase).
-        Room.databaseBuilder(context, FitTrainerDatabase::class.java, "fittrainer.db").build()
+        Room.databaseBuilder(context, FitTrainerDatabase::class.java, "fittrainer.db")
+            .addMigrations(MIGRATION_20_21)
+            .build()
 
     @Provides
     fun provideHealthDao(db: FitTrainerDatabase): HealthDao = db.healthDao()

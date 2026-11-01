@@ -55,7 +55,7 @@ fun RoleShell(
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
-    if (isStudent) NotificationLaunchEffect(launches, navController)
+    NotificationLaunchEffect(launches, navController)
     val progressOpen by launches.progressOpen.collectAsStateWithLifecycle()
     LaunchedEffect(openRequested) {
         if (openRequested) {
@@ -92,7 +92,7 @@ fun RoleShell(
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
     val unread = progressUnread(isStudent)
-    val unreadNotifications = notificationsUnread(isStudent)
+    val unreadNotifications = notificationsUnread()
     val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
@@ -137,7 +137,9 @@ fun RoleShell(
                                 onStudent = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
                                 onSession = { s, id -> navController.navigate(trainerStudentSessionRoute(s, id)) { launchSingleTop = true } },
                                 onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                                onNotifications = { navController.navigate(TRAINER_NOTIFICATIONS_ROUTE) { launchSingleTop = true } },
                             ),
+                            unreadNotifications = unreadNotifications,
                         )
                         else -> PlaceholderScreen(tab.label)
                     }
@@ -145,6 +147,9 @@ fun RoleShell(
             }
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
+            }
+            composable(TRAINER_NOTIFICATIONS_ROUTE) {
+                TrainerNotificationsRoute(navController, launches)
             }
             composable(NOTIFICATIONS_ROUTE) {
                 NotificationsScreen(

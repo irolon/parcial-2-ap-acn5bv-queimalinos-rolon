@@ -28,7 +28,7 @@ class NotificationsRepositoryTest {
     private fun ids() = dao.rows.value.keys
 
     @Test fun refrescoGuardaSoloLosTiposDelAlumno() = runTest {
-        api.pages = mapOf(null to api.page(notificationDto("a", "comment"), notificationDto("b", "inactivity"), notificationDto("c", "pr")))
+        api.pages = mapOf(null to api.page(notificationDto("a", "comment"), notificationDto("b", "appointment"), notificationDto("c", "pr")))
         assertTrue(repository.refresh("u1").isSuccess)
         assertEquals(setOf("a", "c"), ids())
         assertTrue(repository.everLoaded("u1").first())
