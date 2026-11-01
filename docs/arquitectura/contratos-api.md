@@ -1136,7 +1136,7 @@ Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra 
 
 ## Módulo: Mensajes
 
-Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Una conversación por alumno: el PT es siempre `students.trainer_id`, no se guarda en el mensaje. No es el chat con el asistente IA (`POST /chat`, tabla `chat_messages`). Todos los endpoints piden `Authorization: Bearer <token>`; sin token → 401 `UNAUTHORIZED`. Se actualiza por polling (cada 15 s), no hay tiempo real.
+Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Una conversación por alumno: el PT es siempre `students.trainer_id`, no se guarda en el mensaje. No es el chat con el asistente IA (`POST /chat`, tabla `chat_messages`). Todos los endpoints piden `Authorization: Bearer <token>`; sin token → 401 `UNAUTHORIZED`. Se actualiza por polling, no hay tiempo real: cada 4 s en la conversación abierta y cada 15 s en la lista de conversaciones y en el badge de no leídos.
 
 **Mensaje** (forma pública, la misma en todas las respuestas):
 
@@ -1271,12 +1271,15 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 | Status | Código | Cuándo |
 |---|---|---|
 | 400 | `MESSAGE_EMPTY` | Sin texto (o solo espacios) y sin foto |
-| 400 | `VALIDATION_ERROR` | `body` de más de 2000 caracteres o que no es texto; más de un archivo o archivo en un campo que no es `image`; multipart mal formado (mensaje "Formulario inválido") |
+| 400 | `VALIDATION_ERROR` | `body` de más de 2000 caracteres o que no es texto; más de un archivo o archivo en un campo que no es `image`; multipart mal formado o con más de un campo de texto, un campo de más de 16 KB o más de 2 partes (mensaje "Formulario inválido") |
 | 403 | `FORBIDDEN` | Conversación ajena o inexistente |
+| 409 | `STUDENT_INACTIVE` | El alumno está dado de baja ("El alumno está dado de baja"); vale para el PT y para el alumno. Leer el historial sigue permitido |
 | 413 | `IMAGE_TOO_LARGE` | La foto supera 5 MB |
 | 415 | `IMAGE_TYPE_INVALID` | La foto no es JPG, PNG ni WebP (por ejemplo un PDF con `Content-Type: image/png`) |
 
 > Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
+>
+> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
 
 ### POST /messages/:studentId/read
 

@@ -150,6 +150,17 @@ Editar o borrar mensajes, varias fotos por mensaje, fotos en el envío masivo, p
 - Envío masivo con selector propio y aviso inline: no hay toasts en la app.
 - El botón "Mensaje" de la ficha aparece solo para alumnos activos.
 - El cursor `before` se basa en `created_at` (microsegundos); un empate dentro de una misma conversación es prácticamente imposible, queda como limitación conocida.
+- `POST /api/messages/:studentId` a un alumno inactivo da 409 `STUDENT_INACTIVE` ("El alumno está dado de baja"), para PT y alumno; leer el historial sigue permitido.
+- La firma de la URL de la foto después del insert es best-effort: si falla, responde 201 con `image_url: null` (y se loguea) para que Reintentar no duplique el mensaje.
+- multer limita `fields: 1`, `fieldSize: 16 KB` y `parts: 2` (el `body` + la `image`): un formulario con más partes da 400 antes de bufferear.
+- La web vacía la caché de TanStack Query al cerrar sesión o entrar con otro usuario (las claves no llevan el usuario). Un poll que falla con datos muestra un aviso arriba y deja montado el composer; el error de pantalla completa es solo para la primera carga. Un mensaje de solo foto sin URL firmada se dibuja como "Foto no disponible".
+
+### Deuda técnica conocida
+
+- `findLastByStudents` hace una consulta por alumno en cada poll de la lista (unas 42 cada 15 s con 40 alumnos); con muchos alumnos conviene una función SQL `distinct on (student_id)` llamada por `rpc`.
+- `countUnread` pasa todos los ids de alumnos en un solo `.in()`: es teórico (límite de largo de URL con miles de alumnos).
+- Las fotos de un alumno borrado quedan en el bucket `message-images` (Q15); habría que limpiarlas al borrarlo o con un job.
+- Si falla la firma en el historial (`GET`), el pedido entero da 500 en vez de mostrar "Foto no disponible" (solo el envío es best-effort).
 
 ## 9. Resultado del E2E (31/10, contra Supabase dev)
 
