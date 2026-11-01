@@ -1,6 +1,7 @@
 import { asyncHandler } from '../../shared/utils/asyncHandler.js';
 import * as studentsService from '../../services/students/students.service.js';
 import * as attendanceService from '../../services/students/attendance.service.js';
+import * as overviewService from '../../services/students/overview.service.js';
 
 /** GET /students — lista los alumnos del trainer. 200 → { data, meta } */
 export const list = asyncHandler(async (req, res) => {
@@ -32,5 +33,11 @@ export const update = asyncHandler(async (req, res) => {
 /** GET /students/:id/attendance?month=YYYY-MM — resumen y asistencia del mes (trainer dueño o el propio alumno). */
 export const attendance = asyncHandler(async (req, res) => {
   const data = await attendanceService.attendance(req.user, req.params.id, req.query.month);
+  res.json({ data });
+});
+
+/** GET /students/overview — Inicio del entrenador: KPIs, requieren atención y actividad reciente. */
+export const overview = asyncHandler(async (req, res) => {
+  const data = await overviewService.overview(req.user.id);
   res.json({ data });
 });

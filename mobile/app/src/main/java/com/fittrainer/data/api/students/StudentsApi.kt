@@ -51,6 +51,10 @@ interface StudentsApi {
     @DELETE("students/{id}/metrics/{metricId}")
     suspend fun deleteMetric(@Path("id") id: String, @Path("metricId") metricId: String): Response<Unit>
 
+    /** GET /students/overview: Inicio del entrenador (KPIs, requieren atención y actividad reciente). */
+    @GET("students/overview")
+    suspend fun overview(): OverviewResponse
+
     companion object {
         /** El máximo que acepta el backend. */
         const val PAGE_LIMIT = 100

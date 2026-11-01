@@ -201,6 +201,36 @@ Lista los alumnos del trainer autenticado (rol: trainer).
 >
 > `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma.
 
+### GET /students/overview
+
+Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:id` en el router. Solo cuentan sus alumnos **activos**.
+
+**200 OK**
+
+```json
+{ "data": {
+  "active_students": { "count": 23, "new_7d": 2 },
+  "sessions_today": { "done": 8, "expected": 11 },
+  "adherence_7d": { "pct": 87, "delta": 4 },
+  "at_risk": 3,
+  "attention": [
+    { "kind": "inactive", "student_id": "uuid", "name": "Diego Ocampo", "days": 9, "never_trained": false },
+    { "kind": "feedback_pending", "student_id": "uuid", "name": "Lucía Méndez", "session_id": "uuid",
+      "routine_name": "Push", "finished_at": "ISO" }
+  ],
+  "recent": [ { "student_id": "uuid", "name": "Tomás Rivera", "session_id": "uuid", "routine_name": "Push día 3",
+                "rpe": 8, "finished_at": "ISO" } ]
+} }
+```
+
+- `active_students.new_7d`: altas de los últimos 7 días (hoy incluido).
+- `sessions_today.done`: alumnos con al menos una sesión terminada hoy (asignado o no). `expected`: alumnos con hoy asignado.
+- `adherence_7d.pct`: promedio de la adherencia de 7 días de `GET /students` entre los alumnos con días asignados. `delta`: contra los 7 días anteriores. Los dos son `null` si nadie tiene plan.
+- `at_risk`: alumnos con 7 días o más sin entrenar (desde la última sesión o el alta), las mismas reglas que la web.
+- `attention` (hasta 10): primero `inactive` (de más días a menos; `never_trained` si nunca entrenó), después `feedback_pending`: sesiones terminadas en los últimos 7 días (hoy incluido) sin `trainer_comment`, de la más nueva a la más vieja.
+- `recent`: las últimas 10 sesiones terminadas, de la más nueva a la más vieja. `routine_name` y `rpe` pueden ser `null`.
+- Todo en hora argentina.
+
 ### GET /students/:id
 
 Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
