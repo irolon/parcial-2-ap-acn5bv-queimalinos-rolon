@@ -1,6 +1,9 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createSession, uploadSets } from '@/api/sessions/sessions.api';
+import {
+  STUDENT_ACHIEVEMENTS_KEY, STUDENT_CHALLENGES_KEY, STUDENT_STREAK_KEY,
+} from '@/hooks/achievements/useStudentGamification';
 import { PROGRESS_KEY } from '@/hooks/progress/useProgress';
 import { TODAY_ROUTINE_KEY } from '@/hooks/routines/useStudentRoutines';
 import { SESSIONS_KEY } from '@/hooks/sessions/useSessions';
@@ -13,14 +16,14 @@ import { readWorkout, subscribeWorkout, trackUpload, writeWorkout } from './work
 const api = { createSession, uploadSets };
 
 // Lo que cambia al guardar un entrenamiento: historial, progreso, la rutina del día (`last_session_kg`) y racha,
-// logros y desafíos. Las tres últimas son las claves de la #42 (`hooks/achievements/useStudentGamification.js`).
+// logros y desafíos (las claves de `hooks/achievements/useStudentGamification.js`).
 const staleAfterUpload = (studentId) => [
   [...SESSIONS_KEY, studentId],
   PROGRESS_KEY,
   TODAY_ROUTINE_KEY,
-  ['student-streak', studentId],
-  ['student-achievements', studentId],
-  ['student-challenges', studentId],
+  [...STUDENT_STREAK_KEY, studentId],
+  [...STUDENT_ACHIEVEMENTS_KEY, studentId],
+  [...STUDENT_CHALLENGES_KEY, studentId],
 ];
 
 /**

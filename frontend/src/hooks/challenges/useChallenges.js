@@ -6,6 +6,7 @@ import {
   getActiveStudents,
   listChallenges,
 } from '@/api/challenges/challenges.api';
+import { STUDENT_CHALLENGES_KEY } from '@/hooks/achievements/useStudentGamification';
 import { STUDENTS_KEY } from '@/hooks/students/useStudents';
 
 export const CHALLENGES_KEY = ['challenges'];
@@ -56,7 +57,7 @@ export function useAssignChallenge() {
         queryClient.invalidateQueries({ queryKey: STUDENTS_KEY }),
         ...studentIds
           .filter((id) => !skipped.has(id))
-          .map((id) => queryClient.invalidateQueries({ queryKey: ['student-challenges', id] })),
+          .map((id) => queryClient.invalidateQueries({ queryKey: [...STUDENT_CHALLENGES_KEY, id] })),
       ]);
     },
   });

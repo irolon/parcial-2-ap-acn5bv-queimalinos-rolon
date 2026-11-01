@@ -9,7 +9,7 @@ import PlanTable from '@/components/student/today/PlanTable';
 import RoutineHero from '@/components/student/today/RoutineHero';
 import TodayHeader from '@/components/student/today/TodayHeader';
 import WeekSection from '@/components/student/today/WeekSection';
-import { useStudentStreakQuery } from '@/hooks/achievements/useStudentGamification';
+import { STUDENT_STREAK_KEY, useStudentStreakQuery } from '@/hooks/achievements/useStudentGamification';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useMyRoutines, useTodayRoutine } from '@/hooks/routines/useStudentRoutines';
 import { useToday } from '@/hooks/shared/useToday';
@@ -47,7 +47,7 @@ function useRefreshStreakOnNewDay(now, studentId) {
   useEffect(() => {
     if (seen.current === now) return;
     seen.current = now;
-    queryClient.invalidateQueries({ queryKey: ['student-streak', studentId] });
+    queryClient.invalidateQueries({ queryKey: [...STUDENT_STREAK_KEY, studentId] });
   }, [now, studentId, queryClient]);
 }
 
