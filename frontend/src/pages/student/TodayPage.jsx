@@ -43,11 +43,11 @@ export default function TodayPage() {
   const now = useToday();
   const today = useTodayRoutine();
   const routines = useMyRoutines();
-  const streak = useStudentStreakQuery(user.id);
+  const streak = useStudentStreakQuery(user?.id);
 
   return (
     <div className="flex flex-col gap-5">
-      <TodayHeader name={user.name} now={now} streakDays={streak.data?.current_streak_days} />
+      <TodayHeader name={user?.name} now={now} streakDays={streak.data?.current_streak_days} />
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(230px,1fr)]">
         <div className="flex min-w-0 flex-col gap-3.5">
           <RoutineSection today={today} routines={routines} now={now} />
