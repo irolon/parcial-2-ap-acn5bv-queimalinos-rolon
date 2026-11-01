@@ -3,7 +3,7 @@ import { authenticate } from '../../shared/middlewares/auth.middleware.js';
 import { requireRole } from '../../shared/middlewares/role.middleware.js';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import { LIST_MAX_DAYS } from '../../models/agenda/appointment.model.js';
-import { validateRangeQuery } from '../../validations/agenda/availability.validation.js';
+import { validateRangeQuery } from '../../validations/agenda/range.validation.js';
 import {
   validateStudentRequest,
   validateTrainerCreate,

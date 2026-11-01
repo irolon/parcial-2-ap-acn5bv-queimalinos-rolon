@@ -65,7 +65,6 @@ create table if not exists trainer_availability (
                                                   and extract(minute from end_time) = 0 and extract(second from end_time) = 0)
 );
 create unique index if not exists uq_availability_slot on trainer_availability (trainer_id, weekday, start_time);
-alter table trainer_availability enable row level security;
 
 -- Anti-solapamiento: un horario ocupado (pending o confirmed) por entrenador. La
 -- segunda solicitud simultánea falla acá con 23505 y el backend responde 409.

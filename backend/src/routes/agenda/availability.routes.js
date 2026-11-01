@@ -3,10 +3,8 @@ import { authenticate } from '../../shared/middlewares/auth.middleware.js';
 import { requireRole } from '../../shared/middlewares/role.middleware.js';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import { FREE_MAX_DAYS } from '../../models/agenda/availability.model.js';
-import {
-  validateAvailabilityBody,
-  validateRangeQuery,
-} from '../../validations/agenda/availability.validation.js';
+import { validateAvailabilityBody } from '../../validations/agenda/availability.validation.js';
+import { validateRangeQuery } from '../../validations/agenda/range.validation.js';
 import * as controller from '../../controllers/agenda/availability.controller.js';
 
 // Montado en /availability.
