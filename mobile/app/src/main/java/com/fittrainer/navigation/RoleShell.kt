@@ -24,6 +24,8 @@ import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
 import com.fittrainer.ui.students.StudentsScreen
+import com.fittrainer.ui.students.detail.StudentDetailScreen
+import com.fittrainer.ui.students.edit.EditStudentScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -112,6 +114,7 @@ fun RoleShell(
                         tab.route == STUDENT_PROGRESS_ROUTE -> HistoryScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
                         tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen(
                             onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                            onOpen = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
                         )
                         else -> PlaceholderScreen(tab.label)
                     }
@@ -128,6 +131,21 @@ fun RoleShell(
             }
             composable(TRAINER_INVITE_ROUTE) {
                 InviteScreen(onBack = { navController.popBackStack() })
+            }
+            composable(TRAINER_STUDENT_DETAIL_ROUTE) { entry ->
+                val id = entry.arguments?.getString("studentId").orEmpty()
+                StudentDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate(trainerStudentEditRoute(id)) { launchSingleTop = true } },
+                    onGone = { navController.popBackStack() },
+                )
+            }
+            composable(TRAINER_STUDENT_EDIT_ROUTE) {
+                EditStudentScreen(
+                    onBack = { navController.popBackStack() },
+                    // El alumno ya no es del entrenador: la ficha tampoco existe, se vuelve directo a la lista.
+                    onGone = { navController.popBackStack(TRAINER_STUDENTS_ROUTE, inclusive = false) },
+                )
             }
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })

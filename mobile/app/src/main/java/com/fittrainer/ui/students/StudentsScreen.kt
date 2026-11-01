@@ -40,7 +40,7 @@ import com.fittrainer.ui.theme.Spacing
 
 /** Pestaña Alumnos del entrenador (prototipo EM_Alumnos). */
 @Composable
-fun StudentsScreen(onInvite: () -> Unit = {}, viewModel: StudentsViewModel = hiltViewModel()) {
+fun StudentsScreen(onInvite: () -> Unit = {}, onOpen: (String) -> Unit = {}, viewModel: StudentsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
@@ -49,7 +49,7 @@ fun StudentsScreen(onInvite: () -> Unit = {}, viewModel: StudentsViewModel = hil
     StudentsBody(
         state,
         StudentsActions(
-            viewModel::onPullToRefresh, viewModel::onRetry, viewModel::onFilter, viewModel::onQuery, viewModel::dismissError, onInvite,
+            viewModel::onPullToRefresh, viewModel::onRetry, viewModel::onFilter, viewModel::onQuery, viewModel::dismissError, onInvite, onOpen,
         ),
     )
 }
@@ -61,6 +61,7 @@ class StudentsActions(
     val onQuery: (String) -> Unit,
     val onDismissError: () -> Unit,
     val onInvite: () -> Unit,
+    val onOpen: (String) -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,7 +86,7 @@ fun StudentsBody(state: StudentsUiState, actions: StudentsActions) {
                 !state.everSynced -> Unit
                 !state.hasStudents -> item { EmptyState(actions.onInvite) }
                 state.students.isEmpty() -> item { InfoCard("Sin resultados", STUDENTS_NO_MATCH) }
-                else -> items(state.students, key = { it.id }) { StudentRow(it) }
+                else -> items(state.students, key = { it.id }) { row -> StudentRow(row, onClick = { actions.onOpen(row.id) }) }
             }
         }
     }
