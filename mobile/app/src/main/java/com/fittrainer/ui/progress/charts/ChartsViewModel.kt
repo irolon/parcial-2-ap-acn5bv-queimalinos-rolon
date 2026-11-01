@@ -140,6 +140,12 @@ class ChartsViewModel @Inject constructor(
         savedState[EXERCISE_ID] = id
     }
 
+    /** Desde un aviso de récord: Cargas con ese ejercicio si está en el desplegable; si no, la elección queda como estaba. */
+    fun openExercise(id: String) {
+        onViewSelected(ChartsView.LOADS)
+        viewModelScope.launch { if (exercises.filterNotNull().first().any { it.exerciseId == id }) onExerciseSelected(id) }
+    }
+
     fun onMetricSelected(metric: ChartMetric) {
         savedState[METRIC] = metric.name
     }
@@ -183,5 +189,4 @@ class ChartsViewModel @Inject constructor(
             }
         }
     }
-
 }

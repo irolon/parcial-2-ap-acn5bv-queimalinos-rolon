@@ -11,10 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.data.session.Session
+import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 
-/** Ramifica por rol desde la raíz: cada rol tiene su propia barra de pestañas. */
+/**
+ * Ramifica por rol desde la raíz: cada rol tiene su propia barra de pestañas.
+ * [launches] se pide acá (dueño: la actividad) para que viva sin sesión y descarte el tap de un push (tarjeta 17).
+ */
 @Composable
-fun AppNavHost(viewModel: RootViewModel = hiltViewModel()) {
+fun AppNavHost(viewModel: RootViewModel = hiltViewModel(), launches: NotificationLaunchViewModel = hiltViewModel()) {
     val session by viewModel.session.collectAsStateWithLifecycle()
     val signOutWarning by viewModel.signOutWarning.collectAsStateWithLifecycle()
     val pendingToken by viewModel.pendingInvitation.collectAsStateWithLifecycle()
@@ -27,8 +31,8 @@ fun AppNavHost(viewModel: RootViewModel = hiltViewModel()) {
             pendingToken = pendingToken,
             onPendingConsumed = viewModel::consumePendingInvitation,
         )
-        is Session.Student -> RoleShell(tabs = StudentTabs, onSignOut = viewModel::signOut)
-        is Session.Trainer -> RoleShell(tabs = TrainerTabs, onSignOut = viewModel::signOut)
+        is Session.Student -> RoleShell(tabs = StudentTabs, onSignOut = viewModel::signOut, launches = launches)
+        is Session.Trainer -> RoleShell(tabs = TrainerTabs, onSignOut = viewModel::signOut, launches = launches)
     }
     if (invitationWhileLoggedIn) {
         AlertDialog(

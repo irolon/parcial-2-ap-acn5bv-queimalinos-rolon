@@ -32,6 +32,13 @@ class HistoryDaoTest {
         assertEquals(listOf("b", "a"), dao.observeSessions("u1").first().map { it.id })
     }
 
+    @Test fun hasSessionSoloDelDueno() = runBlocking {
+        dao.upsertSessions(listOf(session("a"), session("b", owner = "u2")))
+        assertTrue(dao.hasSession("u1", "a"))
+        assertFalse(dao.hasSession("u1", "b"))
+        assertFalse(dao.hasSession("u1", "zz"))
+    }
+
     @Test fun replaceLatestConservaElDetalle() = runBlocking {
         dao.upsertSessions(listOf(session("a")))
         dao.replaceDetail("a", listOf(exercise("a")), listOf(set("s1", "a")))

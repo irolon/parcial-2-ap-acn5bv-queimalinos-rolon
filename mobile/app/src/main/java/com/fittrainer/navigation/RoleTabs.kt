@@ -23,9 +23,14 @@ const val STUDENT_PROGRESS_ROUTE = "student/progress"
 const val HISTORY_DETAIL_ROUTE = "student/history/{sessionId}"
 fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
 
-/** El detalle de una sesión cuelga de Progreso: esa pestaña sigue marcada mientras se ve. */
+/** Lista de avisos del alumno (tarjeta 17): se abre desde la campana de Hoy. */
+const val NOTIFICATIONS_ROUTE = "student/notifications"
+
+/** El detalle de una sesión cuelga de Progreso y la lista de avisos, de Hoy: esa pestaña sigue marcada mientras se ven. */
 fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
-    currentRoute == tabRoute || (tabRoute == STUDENT_PROGRESS_ROUTE && currentRoute?.startsWith("student/history/") == true)
+    currentRoute == tabRoute ||
+        (tabRoute == STUDENT_PROGRESS_ROUTE && currentRoute?.startsWith("student/history/") == true) ||
+        (tabRoute == STUDENT_TODAY_ROUTE && currentRoute == NOTIFICATIONS_ROUTE)
 
 /** Sesión activa: pantalla completa, sin la barra de pestañas. */
 const val WORKOUT_ROUTE = "student/workout"

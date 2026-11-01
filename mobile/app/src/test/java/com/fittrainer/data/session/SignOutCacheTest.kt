@@ -2,6 +2,8 @@ package com.fittrainer.data.session
 
 import com.fittrainer.data.auth.AuthRepository
 import com.fittrainer.data.library.LibraryRepository
+import com.fittrainer.data.notifications.push.PushLogger
+import com.fittrainer.data.notifications.push.PushTokenRegistry
 import com.fittrainer.data.routine.RoutineRepository
 import com.fittrainer.testing.fakes.auth.FakeAuthApi
 import com.fittrainer.testing.fakes.auth.FakeTokenStore
@@ -9,6 +11,8 @@ import com.fittrainer.testing.fakes.auth.authState
 import com.fittrainer.testing.fakes.auth.fixedClock
 import com.fittrainer.testing.fakes.library.FakeExerciseApi
 import com.fittrainer.testing.fakes.library.FakeLibraryDao
+import com.fittrainer.testing.fakes.notifications.FakeFcmTokenSource
+import com.fittrainer.testing.fakes.notifications.FakeNotificationsApi
 import com.fittrainer.testing.fakes.routine.FakeRoutineApi
 import com.fittrainer.testing.fakes.routine.FakeRoutineDao
 import kotlinx.coroutines.CompletableDeferred
@@ -29,8 +33,9 @@ class SignOutCacheTest {
     private val store = FakeTokenStore()
     private val routines = RoutineRepository(FakeRoutineApi(), FakeRoutineDao(), fixedClock())
     private val library = LibraryRepository(FakeExerciseApi(), FakeLibraryDao(), fixedClock())
+    private val push = PushTokenRegistry(FakeNotificationsApi(), store, FakeFcmTokenSource(), PushLogger())
     private val sessions = TokenSessionRepository(
-        store, AuthRepository(authApi, store, fixedClock()), setOf(routines, library),
+        store, AuthRepository(authApi, store, fixedClock()), setOf(routines, library), push,
     )
 
     private suspend fun cachedIds() = routines.observeCache(authState().user.id).first().routines.map { it.id }
