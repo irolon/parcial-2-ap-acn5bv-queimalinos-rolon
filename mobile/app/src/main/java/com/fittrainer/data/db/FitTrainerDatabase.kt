@@ -49,7 +49,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         ProgressExerciseEntity::class,
         ProgressExercisesMetaEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -62,6 +62,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9),
+        AutoMigration(from = 9, to = 10),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
