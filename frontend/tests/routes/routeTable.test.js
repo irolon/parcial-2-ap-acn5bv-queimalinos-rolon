@@ -10,7 +10,7 @@ describe('tabla de rutas', () => {
 
   it('tiene los ítems del alumno en el orden del prototipo', () => {
     expect(STUDENT_NAV.items.map((i) => i.label)).toEqual([
-      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Asistente IA', 'Mi perfil',
+      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Mensajes', 'Asistente IA', 'Mi perfil',
     ]);
   });
 

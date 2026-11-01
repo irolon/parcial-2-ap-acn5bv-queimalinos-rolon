@@ -9,7 +9,7 @@ with expected (t) as (
          ('achievements'), ('student_achievements'), ('challenges'),
          ('student_challenges'), ('student_streaks'), ('chat_messages'),
          ('ai_routine_generations'), ('appointments'), ('notifications'),
-         ('push_tokens')
+         ('push_tokens'), ('messages')
 )
 select 'falta la tabla ' || t as problema
 from expected e
