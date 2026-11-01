@@ -20,6 +20,7 @@ describe.each([
   ['PATCH /challenges/:id', router, '/:id', 'patch'],
   ['DELETE /challenges/:id', router, '/:id', 'delete'],
   ['POST /challenges/:id/assignments', router, '/:id/assignments', 'post'],
+  ['GET /challenges/:id/active-students', router, '/:id/active-students', 'get'],
 ])('%s (solo trainer)', (_n, r, path, method) => {
   it('exige authenticate y rol trainer', () => {
     expect(handlersOf(r, path, method)[0]).toBe(authenticate);
