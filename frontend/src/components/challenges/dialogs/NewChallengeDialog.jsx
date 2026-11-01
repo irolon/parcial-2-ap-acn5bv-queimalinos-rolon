@@ -57,7 +57,7 @@ export default function NewChallengeDialog({ open, onClose, onCreated }) {
           <Button variant="ghost" onClick={onClose} disabled={create.isPending}>
             Cancelar
           </Button>
-          <Button type="submit" form={FORM_ID} disabled={catalog.isPending} loading={create.isPending}>
+          <Button type="submit" form={FORM_ID} disabled={catalog.isPending || catalog.isError} loading={create.isPending}>
             Crear
           </Button>
         </>
@@ -70,6 +70,17 @@ export default function NewChallengeDialog({ open, onClose, onCreated }) {
             className="mb-3 rounded-md border border-hot/25 bg-hot/[0.14] px-3 py-2.5 font-body text-sm text-hot"
           >
             {formError}
+          </p>
+        )}
+        {catalog.isError && (
+          <p
+            role="alert"
+            className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-hot/25 bg-hot/[0.14] px-3 py-2.5 font-body text-sm text-hot"
+          >
+            No pudimos cargar los premios
+            <Button variant="ghost" size="sm" onClick={() => catalog.refetch()} loading={catalog.isFetching}>
+              Reintentar
+            </Button>
           </p>
         )}
         <ChallengeFormFields values={values} errors={errors} onChange={handleChange} withReward={Boolean(rewardId)} />

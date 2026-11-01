@@ -15,7 +15,7 @@ const notStubbed = (what) => () => {
 
 /**
  * Stub de la API de desafíos: `challenges` (GET /challenges), `students` (GET /students), `active` (ids de
- * active-students), `catalog` (GET /achievements), y `create`, `assign`, `remove` como `(init, url) => Response`.
+ * active-students), `catalog` (GET /achievements; o una función que devuelve la Response), y `create`, `assign`, `remove` como `(init, url) => Response`.
  */
 export function stubChallengesApi({
   challenges = [],
@@ -33,7 +33,7 @@ export function stubChallengesApi({
     if (path.endsWith('/assignments')) return assign(init, url);
     if (method === 'POST') return create(init, url);
     if (path.startsWith('/students')) return jsonResponse(200, { data: students, meta: { total_pages: 1 } });
-    if (path === '/achievements') return jsonResponse(200, { data: catalog });
+    if (path === '/achievements') return typeof catalog === 'function' ? catalog() : jsonResponse(200, { data: catalog });
     if (path.endsWith('/active-students')) return jsonResponse(200, { data: active });
     return jsonResponse(200, { data: challenges });
   });

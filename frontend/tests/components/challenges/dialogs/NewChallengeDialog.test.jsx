@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewChallengeDialog from '@/components/challenges/dialogs/NewChallengeDialog';
 import { bodyOf, calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
-import { challenge, stubChallengesApi } from '../../../helpers/challenges/challenges';
+import { CHALLENGE_DONE, challenge, stubChallengesApi } from '../../../helpers/challenges/challenges';
 import { renderWithClient } from '../../../helpers/challenges/renderWithClient';
 
 afterEach(() => {
@@ -44,6 +44,23 @@ describe('NewChallengeDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear' }));
     await vi.waitFor(() => expect(createCalls(fetchMock)).toHaveLength(1));
     expect(bodyOf(createCalls(fetchMock)[0][1]).reward_achievement_id).toBeNull();
+  });
+
+  it('si falla el catálogo avisa, ofrece Reintentar y no deja crear hasta resolverlo', async () => {
+    let fails = true;
+    const catalog = () => (fails ? errorResponse(500, 'INTERNAL', 'Se rompió') : jsonResponse(200, { data: [CHALLENGE_DONE] }));
+    const create = vi.fn(async () => jsonResponse(201, { data: challenge() }));
+    setup({ catalog, create });
+    await fill();
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos cargar los premios');
+    expect(screen.getByRole('button', { name: 'Crear' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Crear' }));
+    expect(create).not.toHaveBeenCalled();
+    fails = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByRole('checkbox', { name: /Desafío cumplido/ })).toBeChecked();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Crear' })).toBeEnabled();
   });
 
   it('valida en el cliente y no pide nada', async () => {
