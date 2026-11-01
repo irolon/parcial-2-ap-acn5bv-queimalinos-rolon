@@ -45,6 +45,7 @@ const TABLES = [
   'chat_messages',
   'ai_routine_generations',
   'appointments',
+  'trainer_availability',
   'notifications',
   'push_tokens',
   // Vista (no tabla): con security_invoker hereda el RLS de sessions.

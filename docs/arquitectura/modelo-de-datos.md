@@ -9,7 +9,7 @@ tags: [arquitectura]
 
 # Modelo de datos (DER)
 
-Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07) (19 tablas: estas 18 + refresh_tokens). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, y se suma la tabla push_tokens (tarjeta 44); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
+Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 31/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07, más 04b) (22 tablas: estas 21 + refresh_tokens; la 21 es trainer_availability, tarjeta 46). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, y se suma la tabla push_tokens (tarjeta 44); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
 
 ---
 
@@ -272,9 +272,27 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | trainer_id | uuid | FK → trainers |
 | student_id | uuid | FK → students |
 | scheduled_at | timestamptz | |
-| duration_min | int | |
+| duration_min | int | default 60 |
 | status | enum | pending / confirmed / cancelled |
 | notes | text | |
+| created_at | timestamptz | |
+
+Índice único parcial `uq_appointments_trainer_slot` sobre `(trainer_id, scheduled_at) where status <> 'cancelled'`: un solo turno vivo (`pending` o `confirmed`) por entrenador y horario. Dos pedidos simultáneos para el mismo horario: el segundo falla con `23505` y el backend responde 409 `SLOT_TAKEN`. Un turno cancelado libera el horario.
+
+**trainer_availability** *(franjas semanales del entrenador, tarjeta 46)*
+
+| Campo | Tipo | Clave |
+|---|---|---|
+| id | uuid | PK |
+| trainer_id | uuid | FK → trainers (on delete cascade) |
+| weekday | smallint | 1 (lunes) a 7 (domingo), ISO |
+| start_time | time | hora en punto, hora de Argentina (UTC-3 fijo) |
+| end_time | time | hora en punto, mayor que `start_time` |
+| created_at | timestamptz | |
+
+Índice único `uq_availability_slot` sobre `(trainer_id, weekday, start_time)`. Checks `availability_range` (`start_time < end_time`) y `availability_on_the_hour` (minutos y segundos en 0). Hay varias franjas por día; los turnos de 60 min salen de cada hora en punto de cada franja. RLS activado sin políticas (ADR 0001).
+
+**Función `replace_trainer_availability(p_trainer uuid, p_slots jsonb)`**: borra e inserta las franjas del entrenador en una sola transacción (supabase-js no tiene transacciones) y devuelve las filas ordenadas por `weekday, start_time`. `security invoker`, `search_path = public`, ejecutable solo por `service_role`. Migración: `backend/src/database/migrations/2026-10-31-agenda.sql`.
 
 **notifications**
 
@@ -286,7 +304,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | type | enum | inactivity / appointment / comment / pr / achievement / routine_modified |
 | title | varchar | máx. 150 caracteres |
 | body | text | opcional |
-| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
+| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
 | read | boolean | |
 | push_sent_at | timestamptz | cuándo salió el push a algún dispositivo; null si no se envió (sin credenciales, sin tokens, política "solo base" o error). No hay reintentos |
 | created_at | timestamptz | |
@@ -327,6 +345,9 @@ RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FC
 | students | 1 ──── N | student_challenges | Challenges asumidos |
 | routine_templates | 1 ──── N | routines | Una plantilla puede instanciarse en muchas rutinas |
 | routines | N ──── M | exercises | Vía routine_exercises (tabla pivote) |
+| trainers | 1 ──── N | trainer_availability | Franjas semanales de atención |
+| trainers | 1 ──── N | appointments | Turnos con sus alumnos |
+| students | 1 ──── N | appointments | Turnos del alumno |
 | students | 1 ──── N | sessions | Historial de sesiones del alumno |
 | sessions | N ──── 1 | routines | Cada sesión ejecuta una rutina |
 | sessions | 1 ──── N | session_sets | Cada sesión tiene N series registradas |

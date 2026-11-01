@@ -1,11 +1,9 @@
-import { DAY_MS } from './dates.js';
-
-// Buenos Aires es UTC-3 todo el año (sin horario de verano).
-const AR_UTC_OFFSET_HOURS = 3;
+import { DAY_MS } from './dates/dates.js';
+import { AR_UTC_OFFSET_H } from './dates/argentina.js';
 
 /** Milisegundos hasta la próxima `hour`:00 hora de Buenos Aires (por defecto 03:00). */
 export function msUntilNextRun(now = new Date(), hour = 3) {
-  const utcHour = hour + AR_UTC_OFFSET_HOURS;
+  const utcHour = hour + AR_UTC_OFFSET_H;
   let next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour);
   if (next <= now.getTime()) next += DAY_MS;
   return next - now.getTime();

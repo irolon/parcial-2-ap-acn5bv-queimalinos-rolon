@@ -1,5 +1,5 @@
 import { Errors, CHALLENGE_ALREADY_ACTIVE } from '../../shared/utils/errors.js';
-import { DAY_MS } from '../../shared/utils/dates.js';
+import { DAY_MS } from '../../shared/utils/dates/dates.js';
 import * as studentChallengesRepo from '../../repositories/gamification/student-challenges.repository.js';
 import * as dataRepo from '../../repositories/gamification/evaluate-data.repository.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';

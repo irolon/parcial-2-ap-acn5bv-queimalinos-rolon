@@ -1070,6 +1070,146 @@ Envía un mensaje al asistente IA en sesión.
 
 ---
 
+## Módulo: Disponibilidad
+
+Franjas semanales del entrenador (hora de Argentina, UTC-3 fijo; `weekday` 1 = lunes … 7 = domingo) y horarios libres para pedir turno. Todos los endpoints piden `Authorization: Bearer <token>`. Las franjas son de horas en punto y se parten en turnos de 60 min.
+
+### GET /availability
+
+**Rol:** `trainer`. Sin token → 401; con rol alumno → 403.
+
+**200 OK** — franjas propias, ordenadas por día y hora:
+
+```json
+{ "data": [{ "weekday": 1, "start_time": "09:00", "end_time": "13:00" }] }
+```
+
+### PUT /availability
+
+**Rol:** `trainer`. Reemplaza toda la disponibilidad de forma atómica (RPC `replace_trainer_availability`). `{ "slots": [] }` la vacía.
+
+**Body**
+
+```json
+{ "slots": [{ "weekday": 1, "start_time": "09:00", "end_time": "13:00" }] }
+```
+
+- `slots`: de 0 a 50. `weekday` entero 1–7; `start_time` y `end_time` con formato `HH:00` (hora en punto), `start_time < end_time`. Las franjas no pueden superponerse dentro del mismo día.
+
+**200 OK** — lo guardado, con la misma forma que el `GET`.
+
+**Errores:** 400 `VALIDATION_ERROR` con `details` por franja (`slots[i]`, `slots[i].weekday`, `slots[i].start_time`, `slots[i].end_time`); las superpuestas dan un detalle por franja ("La franja se superpone con otra del mismo día").
+
+### GET /availability/free
+
+**Rol:** `trainer` y `student`. Horarios libres para pedir turno.
+
+**Query (obligatorios)**
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `from` | `YYYY-MM-DD` | Primer día (hora de Argentina), inclusive |
+| `to` | `YYYY-MM-DD` | Último día (hora de Argentina), inclusive. Rango de 1 a 31 días |
+
+**200 OK**
+
+```json
+{ "data": [{ "starts_at": "2026-11-06T21:00:00.000Z" }] }
+```
+
+- `starts_at` es ISO UTC, ordenado. Cada uno es un turno de 60 min.
+- Salen los horarios dentro de la disponibilidad, de la próxima hora en punto en adelante y sin turno `pending` o `confirmed`. Los turnos cancelados liberan el horario.
+- El alumno ve la agenda de **su** entrenador (sin entrenador: `[]`) y solo hasta ahora + 28 días. El entrenador ve la suya, sin ese tope.
+
+**Errores:** 400 `VALIDATION_ERROR` (falta `from` o `to`, formato inválido, `to < from` o más de 31 días); 403 `FORBIDDEN` si el alumno está inactivo.
+
+---
+
+## Módulo: Turnos
+
+Turnos de 60 min entre el entrenador y sus alumnos. Endpoints con `Authorization: Bearer <token>`, roles `trainer` y `student`; cada uno trabaja solo con sus propios turnos. Sin token → 401.
+
+**Turno** (forma de todas las respuestas):
+
+```json
+{
+  "id": "uuid",
+  "trainer_id": "uuid",
+  "student": { "id": "uuid", "name": "Lucía Gómez", "avatar_url": null },
+  "scheduled_at": "2026-11-06T21:00:00.000Z",
+  "duration_min": 60,
+  "status": "pending",
+  "notes": null,
+  "created_at": "2026-10-31T15:20:11.123456+00:00"
+}
+```
+
+- `status`: `pending | confirmed | cancelled`. `scheduled_at` es ISO UTC; `notes` es `string` o `null`.
+- Un horario solo admite un turno `pending` o `confirmed` por entrenador (índice único parcial). Un turno cancelado se puede volver a pedir.
+
+### GET /appointments
+
+Lista los turnos propios (todos los estados) ordenados por `scheduled_at`.
+
+**Query (obligatorios):** `from` y `to` (`YYYY-MM-DD`, días de Argentina, ambos inclusivos, rango de 1 a 62 días).
+
+**200 OK** — `{ "data": [turno] }`
+
+**Errores:** 400 `VALIDATION_ERROR` (falta alguno, formato inválido, `to < from` o más de 62 días).
+
+### POST /appointments
+
+**Rol:** `student` pide un turno; `trainer` agenda uno a mano. El `trainer_id` sale del alumno o del token.
+
+**Body del alumno**
+
+```json
+{ "scheduled_at": "2026-11-06T18:00:00-03:00", "notes": "opcional, hasta 500 caracteres" }
+```
+
+**Body del entrenador**
+
+```json
+{ "student_id": "uuid", "scheduled_at": "2026-11-06T18:00:00-03:00", "notes": "opcional" }
+```
+
+- `scheduled_at`: ISO 8601 con zona, en hora en punto. `notes` vacío o con solo espacios se guarda como `null`.
+- **Alumno:** nace `pending`. Tiene que caer dentro de la disponibilidad de su entrenador, a futuro y hasta 28 días adelante. Notifica al entrenador (solo en la base).
+- **Entrenador:** nace `confirmed`. No exige disponibilidad ni tope de 28 días (solo hora en punto y a futuro). Notifica al alumno con push.
+
+**201 Created** — `{ "data": turno }`
+
+**Errores:**
+
+| Status | Code | Cuándo |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Body inválido |
+| 400 | `SLOT_UNAVAILABLE` | "El turno tiene que empezar en una hora en punto", "El turno tiene que ser a futuro"; solo alumno: "Solo se puede pedir turno hasta 28 días adelante", "Ese horario está fuera de la disponibilidad de tu entrenador" |
+| 403 | `FORBIDDEN` | Alumno sin entrenador o inactivo; entrenador con un `student_id` de otro entrenador, inexistente o inactivo |
+| 409 | `SLOT_TAKEN` | "Ese horario ya está ocupado" (también si dos pedidos llegan a la vez: el segundo pierde) |
+
+### PATCH /appointments/:id
+
+Confirma o cancela un turno.
+
+**Body:** `{ "status": "confirmed" | "cancelled" }`
+
+**Transiciones permitidas**
+
+| Rol | Desde | Hacia |
+|---|---|---|
+| `trainer` | `pending` | `confirmed` |
+| `trainer` | `pending`, `confirmed` | `cancelled` |
+| `student` | `pending`, `confirmed` | `cancelled` |
+
+El alumno no confirma, el entrenador no reconfirma y nadie reabre un cancelado. El cambio es optimista: solo se aplica si el turno sigue en el estado que se leyó, así dos cambios simultáneos no se pisan. Un alumno dado de baja **sí** puede cancelar los suyos.
+
+**200 OK** — `{ "data": turno }`
+
+**Errores:** 400 `VALIDATION_ERROR` (`id` no UUID o `status` distinto de los dos valores); 403 `FORBIDDEN` (turno ajeno o inexistente, no se distingue); 409 `APPOINTMENT_PAST` ("El turno ya pasó": `scheduled_at <= ahora`, se chequea antes que la transición); 409 `INVALID_STATUS_TRANSITION` ("No se puede pasar el turno a ese estado", también si el estado cambió en el medio).
+
+---
+
 ## Módulo: Notificaciones
 
 La tabla `notifications` es la fuente de verdad; el push al celular es un aviso aparte y best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]). Todos los endpoints piden `Authorization: Bearer <token>`, roles `trainer` y `student`, y trabajan **solo con las notificaciones y tokens del usuario autenticado**. Sin token → 401 `UNAUTHORIZED`; con un dato inválido → 400 `VALIDATION_ERROR`.
@@ -1120,9 +1260,9 @@ Lista las notificaciones propias, las más nuevas primero (`created_at` desc).
 | `pr` | Se cierra una sesión con récords; una por sesión | Alumno y PT del alumno | Alumno (el PT solo la ve en la lista) | `student_id`, `session_id`, `exercise_ids` |
 | `achievement` | Se desbloquea un logro al cerrar una sesión; una por logro, para el alumno y para el PT. Los que desbloquea el job nocturno quedan solo en la base | Alumno y PT del alumno | Alumno (con varios logros en la sesión, un único push resumen); el PT solo la ve en la lista | `student_id`, `achievement_code` |
 | `comment` | El PT guarda un comentario de sesión no vacío y distinto del anterior (`PATCH /sessions/:id/comment`) | Alumno | Alumno | `session_id` |
-| `appointment` | Reservado para la agenda (otra tarjeta); todavía no se crea | — | — | — |
+| `appointment` | Cambios en un turno (ver Módulo: Turnos). El PT confirma, cancela o agenda a mano: `Tu turno del vie 06/11 a las 18:00 quedó confirmado` / `… fue cancelado` / `Tu entrenador te agendó un turno el vie 06/11 a las 18:00`. El alumno pide o cancela: `Lucía pidió un turno para el vie 06/11 a las 18:00` / `Lucía canceló su turno del vie 06/11 a las 18:00` | Alumno (acciones del PT) o PT (acciones del alumno) | Alumno; el PT solo la ve en la lista | `appointment_id` |
 
-El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
+El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el turno (`appointment_id`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
 
 **Payload del push.** El mensaje FCM lleva `notification` (`title`, `body`) y un `data` con el de la fila más dos campos: `type` (el tipo de la notificación, para elegir la pantalla) y `notification_id` (el id de la fila, para llamar a `PATCH /notifications/:id/read` al tocarla). Todos los valores viajan como texto, como exige FCM: los arrays y objetos van serializados en JSON (por ejemplo, `exercise_ids` llega como `"[\"uuid-1\",\"uuid-2\"]"` y hay que parsearlo en la app). El push resumen de varios logros no tiene fila: lleva `type: "achievement"` y `student_id`, sin `notification_id`. La fila guardada no cambia: `type` ya es una columna y el id es el de la fila.
 

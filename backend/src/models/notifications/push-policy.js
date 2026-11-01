@@ -10,6 +10,7 @@ export const PUSH_POLICY = {
   pr: { student: true },
   achievement: { student: true },
   comment: { student: true },
+  appointment: { student: true },
 };
 
 /**

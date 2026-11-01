@@ -134,7 +134,7 @@ tests/
 scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en scripts/lib/)
 ```
 
-Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación).
+Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación); `agenda` (agrupa `/availability` y `/appointments`: la disponibilidad define qué turnos se pueden pedir).
 
 #### Web (`frontend/`)
 

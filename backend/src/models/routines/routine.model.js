@@ -4,7 +4,7 @@
  */
 
 import { round1 } from '../../shared/utils/numbers.js';
-import { TIMEZONE } from '../../shared/utils/dates.js';
+import { TIMEZONE } from '../../shared/utils/dates/dates.js';
 
 export const ROUTINES_TABLE = 'routines';
 export const ROUTINE_EXERCISES_TABLE = 'routine_exercises';

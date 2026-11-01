@@ -27,5 +27,6 @@ alter table student_streaks        enable row level security;
 alter table chat_messages          enable row level security;
 alter table ai_routine_generations enable row level security;
 alter table appointments           enable row level security;
+alter table trainer_availability  enable row level security;
 alter table notifications          enable row level security;
 alter table push_tokens            enable row level security;

@@ -79,6 +79,11 @@ export const Errors = {
       'EXERCISE_IN_USE',
       'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno'
     ),
+  slotTaken: () => new AppError(409, 'SLOT_TAKEN', 'Ese horario ya está ocupado'),
+  slotUnavailable: (message) => new AppError(400, 'SLOT_UNAVAILABLE', message),
+  invalidStatusTransition: () =>
+    new AppError(409, 'INVALID_STATUS_TRANSITION', 'No se puede pasar el turno a ese estado'),
+  appointmentPast: () => new AppError(409, 'APPOINTMENT_PAST', 'El turno ya pasó'),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };

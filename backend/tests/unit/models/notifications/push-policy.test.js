@@ -14,7 +14,8 @@ describe('shouldPush', () => {
     ['achievement', 'trainer', { fromJob: true }, false],
     ['comment', 'student', undefined, true],
     ['comment', 'trainer', undefined, false],
-    ['appointment', 'student', undefined, false],
+    ['appointment', 'student', undefined, true],
+    ['appointment', 'trainer', undefined, false],
     ['desconocido', 'trainer', undefined, false],
   ])('%s para %s %j → %s', (type, role, opts, expected) => {
     expect(shouldPush(type, role, opts)).toBe(expected);
