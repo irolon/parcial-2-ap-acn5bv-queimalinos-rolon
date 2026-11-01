@@ -9,6 +9,7 @@ import RoutinesPage from '@/pages/routines/RoutinesPage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
+import MessagesPage from '@/pages/messages/MessagesPage';
 import StudentMessagesPage from '@/pages/messages/StudentMessagesPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
@@ -65,6 +66,7 @@ export const routes = [
     alumnos: <StudentsPage />,
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,
+    mensajes: <MessagesPage />,
   }),
   roleSection(ROLES.STUDENT, STUDENT_NAV, [], {
     progreso: <MyProgressPage />,

@@ -59,6 +59,9 @@ export const newRoutineHref = (studentId) => (studentId ? `${NEW_ROUTINE.path}?a
 // Ficha del alumno: la página fija su propio título con `usePageHeader`.
 export const STUDENT_PROFILE = { path: `${STUDENTS_PATH}/:id` };
 
+/** Mensajes del PT, con la conversación del alumno abierta. */
+export const messagesHref = (studentId) => `${TRAINER_NAV.base}/mensajes?alumno=${studentId}`;
+
 /** Link a la ficha; `search` (sin `?`) conserva los filtros del panel. */
 export const profileHref = (id, search = '') => `${STUDENTS_PATH}/${id}${search ? `?${search}` : ''}`;
 
