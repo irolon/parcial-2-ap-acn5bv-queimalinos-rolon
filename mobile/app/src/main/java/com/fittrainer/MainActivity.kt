@@ -11,8 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.fittrainer.data.invitation.InvitationLink
-import com.fittrainer.navigation.AppNavHost
+import com.fittrainer.data.notifications.NotificationLaunchRequests
+import com.fittrainer.data.notifications.launchFromIntent
 import com.fittrainer.data.workout.WorkoutLaunchRequests
+import com.fittrainer.navigation.AppNavHost
 import com.fittrainer.navigation.PendingInvitation
 import com.fittrainer.ui.theme.FitTrainerTheme
 import com.fittrainer.ui.workout.service.WorkoutNotifications
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var pendingInvitation: PendingInvitation
     @Inject lateinit var workoutLaunch: WorkoutLaunchRequests
+    @Inject lateinit var notificationLaunch: NotificationLaunchRequests
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +34,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) {
             handleInvitationLink(intent)
             handleWorkoutLaunch(intent)
+            handleNotificationLaunch(intent)
         }
         // App siempre oscura: íconos de las barras del sistema claros sobre fondo transparente.
         enableEdgeToEdge(
@@ -50,6 +54,19 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         handleInvitationLink(intent)
         handleWorkoutLaunch(intent)
+        handleNotificationLaunch(intent)
+    }
+
+    /** Tocar un push: se anota el destino y la navegación lo consume cuando haya sesión de alumno. */
+    private fun handleNotificationLaunch(intent: Intent?) {
+        val extras = intent?.extras ?: return
+        val data = extras.keySet().mapNotNull { key ->
+            // Solo los extras que son texto: getString sobre un Long/Boolean (google.sent_time, etc.) loguea un warning.
+            @Suppress("DEPRECATION")
+            (extras.get(key) as? String)?.let { key to it }
+        }.toMap()
+        val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        launchFromIntent(fromHistory, data)?.let(notificationLaunch::request)
     }
 
     /** Tocar la notificación de la sesión: abrirla (la navegación lo consume). */

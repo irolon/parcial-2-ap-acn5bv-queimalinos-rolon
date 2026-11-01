@@ -16,6 +16,7 @@ import com.fittrainer.ui.progress.charts.ChartsKeys.BODY_FIELD
 import com.fittrainer.ui.progress.charts.ChartsKeys.EXERCISE_ID
 import com.fittrainer.ui.progress.charts.ChartsKeys.LIST_KEY
 import com.fittrainer.ui.progress.charts.ChartsKeys.METRIC
+import com.fittrainer.ui.progress.charts.ChartsKeys.OPEN_WAIT_MS
 import com.fittrainer.ui.progress.charts.ChartsKeys.RANGE
 import com.fittrainer.ui.progress.charts.ChartsKeys.VIEW
 import com.fittrainer.ui.progress.charts.ChartsKeys.refreshKey
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Progreso → Gráficos (tarjeta 13). Lee de Room por [ProgressRepository]; nunca llama a Retrofit.
@@ -128,6 +130,20 @@ class ChartsViewModel @Inject constructor(
     /** El refresco y el reinicio de la métrica los dispara el colector de [selectedId] cuando el ejercicio efectivo cambia. */
     fun onExerciseSelected(id: String) {
         savedState[EXERCISE_ID] = id
+    }
+
+    /**
+     * Desde un aviso de récord: Cargas con ese ejercicio si está en el desplegable; si no, la elección queda como estaba.
+     * El récord puede ser de un ejercicio recién estrenado: la lista se vuelve a pedir aunque esté fresca y se espera, con tope.
+     */
+    fun openExercise(id: String) {
+        savedState[VIEW] = ChartsView.LOADS.name
+        refreshes.launch(LIST_KEY) { repository.refreshExercises(ownerId(), force = true) }
+        resolveExercise()?.let { refreshExercise(it, force = false) }
+        viewModelScope.launch {
+            val listed = withTimeoutOrNull(OPEN_WAIT_MS) { exercises.filterNotNull().first { l -> l.items.any { it.exerciseId == id } } }
+            if (listed != null) onExerciseSelected(id)
+        }
     }
 
     fun onMetricSelected(metric: ChartMetric) {

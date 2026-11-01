@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,8 +32,17 @@ import com.fittrainer.ui.theme.Spacing
 /** Progreso → Gráficos (tarjeta 13): selector Cargas | Medidas y la sección que corresponda. Pull = Reintentar (force) + refresco del historial. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChartsScreen(onRefreshHistory: () -> Unit = {}, viewModel: ChartsViewModel = hiltViewModel()) {
+fun ChartsScreen(
+    onRefreshHistory: () -> Unit = {},
+    openExercise: String? = null,
+    onOpenExerciseHandled: () -> Unit = {},
+    viewModel: ChartsViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // Pedido de un aviso de récord (tarjeta 17): se aplica una vez y se consume.
+    LaunchedEffect(openExercise) {
+        openExercise?.let { viewModel.openExercise(it); onOpenExerciseHandled() }
+    }
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
         onStopOrDispose { }

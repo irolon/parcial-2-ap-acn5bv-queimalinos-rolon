@@ -42,6 +42,10 @@ abstract class HistoryDao {
     @Query("UPDATE history_sessions SET inLatest = 0 WHERE ownerId = :ownerId AND id NOT IN (:keep)")
     abstract suspend fun markOutOfLatest(ownerId: String, keep: List<String>)
 
+    /** ¿Esa sesión está guardada para ese dueño? (al tocar un aviso de comentario, tarjeta 17) */
+    @Query("SELECT EXISTS(SELECT 1 FROM history_sessions WHERE ownerId = :ownerId AND id = :sessionId)")
+    abstract suspend fun hasSession(ownerId: String, sessionId: String): Boolean
+
     @Query("SELECT EXISTS(SELECT 1 FROM history_sessions WHERE id = :sessionId)")
     abstract suspend fun exists(sessionId: String): Boolean
 

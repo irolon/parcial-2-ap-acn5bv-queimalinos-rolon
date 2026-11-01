@@ -57,6 +57,22 @@
                 android:value="Timer de descanso entre series de una sesión de entrenamiento" />
         </service>
 
+        <!-- Push del entrenador (tarjeta 17): el canal por defecto coincide con PushChannel.ID. -->
+        <service
+            android:name=".data.notifications.push.FitTrainerMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="student_notices" />
+        <!-- Mismo ícono con la app cerrada (lo arma el sistema) y abierta (lo arma el servicio). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_workout" />
+
         <!-- WorkManager se configura en FitTrainerApp (HiltWorkerFactory): sin su inicializador por defecto. -->
         <provider
             android:name="androidx.startup.InitializationProvider"

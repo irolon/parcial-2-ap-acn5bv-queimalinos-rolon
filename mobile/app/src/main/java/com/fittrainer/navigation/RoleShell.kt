@@ -17,6 +17,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fittrainer.ui.health.HealthScreen
+import com.fittrainer.ui.notifications.NotificationsScreen
+import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
@@ -38,6 +40,7 @@ import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 fun RoleShell(
     tabs: List<Tab>,
     onSignOut: () -> Unit,
+    launches: NotificationLaunchViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
     uploads: SignOutSyncViewModel = hiltViewModel(),
 ) {
@@ -47,6 +50,8 @@ fun RoleShell(
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
+    if (isStudent) NotificationLaunchEffect(launches, navController)
+    val progressOpen by launches.progressOpen.collectAsStateWithLifecycle()
     LaunchedEffect(openRequested) {
         if (openRequested) {
             if (isStudent && entry.hasActiveNow()) navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true }
@@ -82,6 +87,7 @@ fun RoleShell(
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
     val unread = progressUnread(isStudent)
+    val unreadNotifications = notificationsUnread(isStudent)
     val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
@@ -101,19 +107,34 @@ fun RoleShell(
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
                             onSignOut = guardedSignOut,
                         )
-                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(onOpenWorkout = openWorkout)
+                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
+                            onOpenWorkout = openWorkout,
+                            unreadNotifications = unreadNotifications,
+                            onOpenNotifications = { navController.navigate(NOTIFICATIONS_ROUTE) { launchSingleTop = true } },
+                        )
                         tab.route == STUDENT_ROUTINES_ROUTE -> RoutinesScreen(
                             // Un doble toque no apila dos veces la misma pantalla.
                             onOpenRoutine = { navController.navigate(routineDetailRoute(it)) { launchSingleTop = true } },
                             onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
                         )
-                        tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
+                        tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(
+                            onOpen = { navController.navigate(historyDetailRoute(it)) },
+                            openRequest = progressOpen,
+                            onOpenHandled = launches::onProgressOpenHandled,
+                        )
                         else -> PlaceholderScreen(tab.label)
                     }
                 }
             }
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
+            }
+            composable(NOTIFICATIONS_ROUTE) {
+                NotificationsScreen(
+                    onBack = { navController.popBackStack() },
+                    // Mismo resolver que el push; la lista ya marcó el leído.
+                    onOpen = launches::open,
+                )
             }
             composable(HISTORY_DETAIL_ROUTE) {
                 HistoryDetailScreen(onBack = { navController.popBackStack() })
