@@ -74,13 +74,15 @@ export async function countByChallenge(trainerId, challengeIds) {
 
 /** Ids de los alumnos del entrenador que tienen el desafío activo. */
 export async function findActiveStudentIds(challengeId, trainerId) {
-  const rows = unwrap(
-    await supabase
+  // Puede pasar de 1000 filas (PostgREST corta ahí): se pagina, con orden estable por id.
+  const rows = await fetchAll(() =>
+    supabase
       .from(STUDENT_CHALLENGES_TABLE)
       .select('student_id, students!inner(trainer_id)')
       .eq('challenge_id', challengeId)
       .eq('status', CHALLENGE_STATUS.ACTIVE)
       .eq('students.trainer_id', trainerId)
+      .order('id')
   );
   return rows.map((r) => r.student_id);
 }

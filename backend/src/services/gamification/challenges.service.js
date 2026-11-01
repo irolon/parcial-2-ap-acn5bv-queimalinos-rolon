@@ -1,6 +1,7 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as challengesRepo from '../../repositories/gamification/challenges.repository.js';
 import { CHALLENGE_STATUS } from '../../models/gamification/gamification.model.js';
+import { validateMergedGoal } from '../../validations/gamification/challenges.validation.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 
 /** Desafío visible para ese entrenador (global o suyo); si no, 404. */
@@ -57,6 +58,7 @@ export async function createChallenge(user, fields) {
 
 export async function updateChallenge(user, challengeId, fields) {
   const current = await getOwnedChallenge(challengeId, user.id);
+  validateMergedGoal({ ...current, ...fields });
   await assertRewardExists(fields.reward_achievement_id);
   const goalChanged =
     (fields.goal_type !== undefined && fields.goal_type !== current.goal_type) ||
