@@ -162,10 +162,10 @@ Escritura del alumno: solo rol `student`; el `student_id` sale del token. Sesió
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
-| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed, unlocked_achievements } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
+| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed, unlocked_achievements } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true`. Cada serie acepta `rest_seconds` (descanso real después de la serie, 0-3600 o `null`) |
 | PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
 | GET | `/api/students/:id/sessions?page=&limit=` | Historial paginado `{ data, meta }`, más recientes primero (trainer: sus alumnos; student: él mismo): `routine`, `duration_min`, `sets`, `volume_kg`, `has_pr`, `trainer_comment` |
-| GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
+| GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`, descanso real por serie y `planned.rest_seconds`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
 | PATCH | `/api/sessions/:id/comment` | Solo `trainer`: `{ trainer_comment }` (≤ 1000 o `null`; `""` borra) en una sesión de sus alumnos (ajena o inexistente: 404). Devuelve el resumen; el alumno lo ve en su historial |
 
 ### Progreso — Fase 3
@@ -301,6 +301,8 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **Sustitución:** `substituted_exercise_id` se reemplaza por `exercise_id` (lo realmente hecho) + `original_exercise_id` (lo planificado).
 - **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
 - **Historial:** `GET /students/:id/sessions`, `GET /students/:id/sessions/:sessionId` y `PATCH /sessions/:id/comment` (solo `trainer`); ver el contrato.
+- **Descanso real (01/11, compatible):** `session_sets.rest_seconds` (migración `2026-11-01-session-sets-rest.sql`). El celular lo manda en cada serie de `POST /sessions/:id/sets`: los segundos que el alumno descansó **después** de esa serie, con su ajuste, la pausa y "Saltar". `null` = sin dato (series anteriores, última serie de la sesión, ejercicio sin descanso). El detalle del historial lo devuelve en cada serie y suma `planned.rest_seconds` (el de la rutina actual).
+  - **Para la web (Pablo):** en el detalle de una sesión del alumno, mostrar el descanso de cada serie ("desc. 2:00") y marcarlo cuando difiere del plan ("desc. 2:00 (plan 1:30)"). Si alguno de los dos es `null`, sin marca.
 
 ### Gamificación (`/achievements`, `/challenges`)
 

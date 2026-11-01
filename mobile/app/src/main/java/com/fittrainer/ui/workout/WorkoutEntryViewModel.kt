@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.data.workout.Workout
 import com.fittrainer.data.workout.WorkoutLaunchRequests
 import com.fittrainer.data.workout.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Entrada a la sesión desde Hoy, desde la notificación y el aviso del logout con sesión abierta. */
+/** Entrada a la sesión desde Hoy, el detalle de una rutina, la notificación y el aviso del logout con sesión abierta. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WorkoutEntryViewModel @Inject constructor(
@@ -34,8 +35,12 @@ class WorkoutEntryViewModel @Inject constructor(
         .map { (it as? Session.Student)?.user?.id }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val hasActive: StateFlow<Boolean> = ownerId.filterNotNull()
+    /** La sesión abierta, de la rutina que sea: Hoy la compara con la rutina del día. */
+    val active: StateFlow<Workout?> = ownerId.filterNotNull()
         .flatMapLatest { repository.observeActive(it) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val hasActive: StateFlow<Boolean> = active
         .map { it != null }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -46,7 +51,7 @@ class WorkoutEntryViewModel @Inject constructor(
 
     fun dismissError() { _error.value = null }
 
-    /** "Empezar" o "Continuar sesión": si ya hay una abierta, la continúa (el repo devuelve esa). */
+    /** "Empezar" desde Hoy o el detalle: se guarda en Room antes de navegar (si ya hay una abierta, el repo devuelve esa). */
     fun start(routine: Routine, onReady: () -> Unit) {
         val owner = ownerId.value ?: return
         attempt(START_FAILED) {
@@ -64,11 +69,12 @@ class WorkoutEntryViewModel @Inject constructor(
         }
     }
 
-    /** Si Room falla no se navega ni se cierra la cuenta: queda el aviso para reintentar. */
+    /** Si Room falla no se navega ni se cierra la cuenta: queda el aviso para reintentar (un intento bueno lo borra). */
     private fun attempt(failure: String, block: suspend () -> Unit) {
         viewModelScope.launch {
             try {
                 block()
+                _error.value = null
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
-/** Hay una sesión abierta pero Hoy no muestra su rutina: el botón solo vuelve a la sesión (no la crea). */
+/** Hay una sesión abierta pero Hoy no muestra su rutina para entrenar: el botón solo vuelve a la sesión (no la crea). */
 @Composable
-fun ActiveWorkoutCard(onContinue: () -> Unit) {
+fun ActiveWorkoutCard(routineName: String, onContinue: () -> Unit) {
     val shape = MaterialTheme.shapes.large
     Column(
         Modifier
@@ -33,7 +33,7 @@ fun ActiveWorkoutCard(onContinue: () -> Unit) {
             .padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
-        Text("Sesión en curso", style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
+        Text("Sesión en curso de $routineName", style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
         Text("Tenés una sesión sin terminar.", style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
         Button(
             onClick = onContinue,

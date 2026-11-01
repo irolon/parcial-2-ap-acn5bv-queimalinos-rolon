@@ -606,13 +606,14 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
       "actual_reps": 8,
       "actual_kg": 80,
       "completed": true,
-      "executed_at": "ISO 8601 con zona"
+      "executed_at": "ISO 8601 con zona",
+      "rest_seconds": 95
     }
   ]
 }
 ```
 
-`set_number` entero 1-100, `actual_reps` entero 0-1000 (0 = serie fallida), `actual_kg` 0-1000 o `null` (peso corporal), `completed` opcional (por defecto `true`). `executed_at` se guarda tal cual, sin chequear fechas futuras.
+`set_number` entero 1-100, `actual_reps` entero 0-1000 (0 = serie fallida), `actual_kg` 0-1000 o `null` (peso corporal), `completed` opcional (por defecto `true`). `executed_at` se guarda tal cual, sin chequear fechas futuras. `rest_seconds` opcional: el descanso real **después** de la serie, entero 0-3600 o `null` (sin dato).
 
 **Response 200** (siempre, si la sesión es válida; las series válidas se guardan aunque otras fallen)
 
@@ -713,17 +714,17 @@ Mismos roles y permisos. La sesión tiene que ser de ese alumno; si no existe o 
 "exercises": [{
   "exercise": { "id": "uuid", "name": "Press de banca" },
   "original_exercise": { "id": "uuid", "name": "Press con mancuernas" },
-  "planned": { "sets": 4, "reps": 10, "suggested_kg": 60 },
+  "planned": { "sets": 4, "reps": 10, "suggested_kg": 60, "rest_seconds": 90 },
   "is_pr": true,
-  "sets": [{ "id": "uuid", "set_number": 1, "actual_reps": 10, "actual_kg": 62.5, "completed": true, "executed_at": "ISO" }]
+  "sets": [{ "id": "uuid", "set_number": 1, "actual_reps": 10, "actual_kg": 62.5, "completed": true, "executed_at": "ISO", "rest_seconds": 95 }]
 }]
 ```
 
 - Agrupado por ejercicio realmente hecho (y por `original_exercise_id` si fue sustitución), en el orden del primer `executed_at`.
 - `original_exercise`: `null` si no hubo sustitución.
-- `planned`: plan **actual** de la rutina (`sets`, `reps`, `suggested_kg`) vía `routine_exercise_id`; `null` si la serie no tiene enlace.
+- `planned`: plan **actual** de la rutina (`sets`, `reps`, `suggested_kg`, `rest_seconds`) vía `routine_exercise_id`; `null` si la serie no tiene enlace.
 - `is_pr`: el ejercicio fue récord en esa sesión.
-- **Campos que pueden ser `null`:** los del resumen (`finished_at`, `duration_min`, `routine`, `rpe`, `notes`, `trainer_comment`), `original_exercise`, `planned` (y dentro de él, `sets`, `reps` y `suggested_kg` por separado) y, en cada serie, `actual_reps` y `actual_kg`.
+- **Campos que pueden ser `null`:** los del resumen (`finished_at`, `duration_min`, `routine`, `rpe`, `notes`, `trainer_comment`), `original_exercise`, `planned` (y dentro de él, `sets`, `reps`, `suggested_kg` y `rest_seconds` por separado) y, en cada serie, `actual_reps`, `actual_kg` y `rest_seconds`.
 
 ### PATCH /sessions/:id/comment
 
