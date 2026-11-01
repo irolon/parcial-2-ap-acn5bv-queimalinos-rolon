@@ -85,6 +85,11 @@ describe('weekStrip: bordes de la semana en Argentina', () => {
     expect(flags(strip, 'trained')).toEqual([true, false, false, false, false, false, false]);
   });
 
+  it('y todavía no es de la semana que cierra el domingo 23:59: el lunes 00:00 siguiente no marca nada', () => {
+    const strip = weekStrip({ sessions: [done('2026-11-02T03:00:00Z')], now: SUNDAY_2359 });
+    expect(flags(strip, 'trained')).toEqual(Array(7).fill(false));
+  });
+
   it('el domingo 23:59 en Argentina, que en UTC ya es lunes, no se cuenta como lunes', () => {
     // 2026-10-26T02:59Z es el lunes en UTC pero el domingo 25/10, 23:59 en Argentina: semana anterior.
     const strip = weekStrip({ sessions: [done('2026-10-26T02:59:00Z')], now: WEDNESDAY });

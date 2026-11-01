@@ -37,7 +37,8 @@ export const STUDENT_NAV = {
 /** Sesión activa del alumno: fuera del menú, se entra desde Hoy o desde Mis rutinas. */
 export const WORKOUT_PATH = `${STUDENT_NAV.base}/entrenar`;
 
-// Detalle de una rutina del alumno: fuera del menú; la página fija su propio título con `usePageHeader`.
+// Detalle de una rutina del alumno: fuera del menú. El `handle` de router.jsx es el título por defecto;
+// la página puede pisarlo con `usePageHeader`.
 export const STUDENT_ROUTINE = { path: `${STUDENT_NAV.base}/rutinas/:id` };
 
 /** Link al detalle de una de las rutinas del alumno. */
