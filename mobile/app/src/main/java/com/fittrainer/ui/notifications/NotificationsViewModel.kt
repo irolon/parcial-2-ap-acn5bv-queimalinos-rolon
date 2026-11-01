@@ -13,6 +13,7 @@ import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -40,8 +41,14 @@ class NotificationsViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
 
-    /** Lo que no sale de Room: el estado del pedido en curso y el permiso. */
-    private data class Local(val isRefreshing: Boolean = false, val refreshFailed: Boolean = false, val enabled: Boolean = true)
+    /** Lo que no sale de Room: el estado de los pedidos en curso y el permiso. */
+    private data class Local(
+        val isRefreshing: Boolean = false,
+        val refreshFailed: Boolean = false,
+        val loadingMore: Boolean = false,
+        val moreFailed: Boolean = false,
+        val enabled: Boolean = true,
+    )
 
     private data class Stored(val items: List<AppNotification>, val everLoaded: Boolean, val hasMore: Boolean)
 
@@ -74,15 +81,25 @@ class NotificationsViewModel @Inject constructor(
             refreshFailed = l.refreshFailed,
             everLoaded = stored.everLoaded,
             hasMore = stored.hasMore,
+            isLoadingMore = l.loadingMore,
+            loadMoreFailed = l.moreFailed,
             notificationsEnabled = l.enabled,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotificationsUiState())
 
     /** Al quedar visible (también al volver de Ajustes): relee el permiso y refresca. */
     fun onStart() {
-        local.update { it.copy(enabled = permission.enabled()) }
+        onPermissionChecked()
         refresh()
     }
+
+    /** Volvió el pedido del permiso del sistema (o cambió en Ajustes): el cartel se muestra o se va. */
+    fun onPermissionChecked() {
+        local.update { it.copy(enabled = permission.enabled()) }
+    }
+
+    /** La hora para el "hace N min": la pantalla la vuelve a pedir cada minuto mientras la lista está abierta. */
+    fun now(): Instant = clock.instant()
 
     fun onRefresh() = refresh()
 
@@ -92,7 +109,8 @@ class NotificationsViewModel @Inject constructor(
         moreJob?.cancel()
         refreshJob = viewModelScope.launch {
             val id = owner.filterNotNull().first()
-            local.update { it.copy(isRefreshing = true, refreshFailed = false) }
+            // Un refresco también le da otra oportunidad a "Ver más" que había fallado.
+            local.update { it.copy(isRefreshing = true, refreshFailed = false, moreFailed = false) }
             val result = repository.refresh(id)
             // Sin red no es un error: se ve lo guardado con el aviso de "sin conexión". Pero un Offline (IOException,
             // p. ej. un timeout) con red sí lo es: "No pudimos actualizar" + Reintentar.
@@ -102,10 +120,21 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
-    /** Al llegar al final de la lista. Si falla se ignora: al volver a llegar al final se reintenta. */
+    /**
+     * Al llegar al final de la lista, o con "Reintentar" en el pie si la anterior falló (con pocas filas el final
+     * sigue visible y no se vuelve a pedir solo). Un refresco que la corta no cuenta como falla.
+     */
     fun onLoadMore() {
         if (refreshJob?.isActive == true || moreJob?.isActive == true || !online.value) return
-        moreJob = viewModelScope.launch { repository.loadMore(owner.filterNotNull().first()) }
+        moreJob = viewModelScope.launch {
+            local.update { it.copy(loadingMore = true, moreFailed = false) }
+            try {
+                val failed = repository.loadMore(owner.filterNotNull().first()).isFailure
+                local.update { it.copy(moreFailed = failed) }
+            } finally {
+                local.update { it.copy(loadingMore = false) }
+            }
+        }
     }
 
     fun onMarkAllRead() {

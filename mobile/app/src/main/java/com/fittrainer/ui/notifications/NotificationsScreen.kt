@@ -1,8 +1,5 @@
 package com.fittrainer.ui.notifications
 
-import android.content.Context
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,21 +22,29 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.data.notifications.NotificationDestination
+import com.fittrainer.ui.notifications.components.LoadMoreFooter
 import com.fittrainer.ui.notifications.components.NotificationItem
 import com.fittrainer.ui.notifications.components.NotificationsStates
 import com.fittrainer.ui.notifications.components.PermissionBanner
+import com.fittrainer.ui.notifications.permission.rememberActivateNotifications
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import java.time.ZoneId
+import kotlinx.coroutines.delay
+
+/** Cada cuánto se vuelve a pedir la hora para el "hace N min" con la lista abierta. */
+private const val MINUTE_MS = 60_000L
 
 /** Lista de avisos del alumno (tarjeta 17), agrupada Hoy · Ayer · Antes. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,8 +55,15 @@ fun NotificationsScreen(
     viewModel: NotificationsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val zone = remember { ZoneId.systemDefault() }
+    val activate = rememberActivateNotifications(onChecked = viewModel::onPermissionChecked)
+    // Como el reloj de la sesión activa: la hora sale del Clock del ViewModel y avanza sola mientras se ve la lista.
+    val now by produceState(viewModel.now()) {
+        while (true) {
+            delay(MINUTE_MS)
+            value = viewModel.now()
+        }
+    }
     // ON_START: al entrar y al volver de los ajustes del sistema (relee el permiso).
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
@@ -68,7 +80,7 @@ fun NotificationsScreen(
                 contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                if (!state.notificationsEnabled) item { PermissionBanner { openAppNotificationSettings(context) } }
+                if (!state.notificationsEnabled) item { PermissionBanner(onActivate = activate) }
                 NotificationsStates(state, onRetry = viewModel::onRefresh)
                 state.groups.forEach { (group, items) ->
                     item(key = "header-$group") {
@@ -76,17 +88,21 @@ fun NotificationsScreen(
                             NotificationTexts.groupLabel(group),
                             style = MaterialTheme.typography.labelLarge,
                             color = FtColors.TextSecondary,
-                            modifier = Modifier.padding(top = Spacing.md),
+                            // TalkBack salta de grupo en grupo (Hoy · Ayer · Antes) con la navegación por títulos.
+                            modifier = Modifier.padding(top = Spacing.md).semantics { heading() },
                         )
                     }
-                    items(items, key = { it.id }) { item -> NotificationItem(item, state.now, zone) { viewModel.onOpen(item) } }
+                    items(items, key = { it.id }) { item -> NotificationItem(item, now, zone) { viewModel.onOpen(item) } }
                 }
                 // Llegar al final pide la página siguiente (cursor `before`); se vuelve a pedir si cambia la cantidad o las condiciones
-                // (un pedido descartado por un refresco o por falta de red).
+                // (un pedido descartado por un refresco o por falta de red). Si falló no insiste solo: el pie ofrece Reintentar.
                 if (state.hasMore) {
                     item(key = "more") {
                         val count = state.groups.sumOf { it.second.size }
-                        LaunchedEffect(count, state.isRefreshing, state.isOffline, state.hasMore) { viewModel.onLoadMore() }
+                        LaunchedEffect(count, state.isRefreshing, state.isOffline, state.hasMore) {
+                            if (!state.loadMoreFailed) viewModel.onLoadMore()
+                        }
+                        LoadMoreFooter(state.isLoadingMore, state.loadMoreFailed, onRetry = viewModel::onLoadMore)
                     }
                 }
             }
@@ -110,12 +126,4 @@ private fun NotificationsTopBar(hasUnread: Boolean, onBack: () -> Unit, onMarkAl
             TextButton(onClick = onMarkAllRead, modifier = Modifier.padding(end = 4.dp)) { Text(NotificationTexts.MARK_ALL_READ) }
         }
     }
-}
-
-/** "Activar": abre los ajustes de notificaciones de la app (no el permiso del sistema, que ya no se vuelve a pedir). */
-private fun openAppNotificationSettings(context: Context) {
-    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    context.startActivity(intent)
 }

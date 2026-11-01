@@ -13,12 +13,7 @@ import kotlinx.serialization.json.jsonObject
 /** Null si el tipo no es de alumno (comment, pr, achievement) o si `created_at` no se puede leer: esa fila no se guarda. */
 fun NotificationDto.toEntity(ownerId: String): NotificationEntity? {
     if (NotificationType.fromWire(type) == null) return null
-    // Supabase manda "+00:00" y microsegundos: OffsetDateTime los acepta, igual que "Z".
-    val created = try {
-        OffsetDateTime.parse(createdAt).toInstant().toEpochMilli()
-    } catch (e: DateTimeParseException) {
-        return null
-    }
+    val created = createdAtMillis() ?: return null
     return NotificationEntity(
         id = id,
         ownerId = ownerId,
@@ -29,6 +24,14 @@ fun NotificationDto.toEntity(ownerId: String): NotificationEntity? {
         read = read,
         createdAt = created,
     )
+}
+
+/** `created_at` en milisegundos, de cualquier tipo; null si no se puede leer. */
+fun NotificationDto.createdAtMillis(): Long? = try {
+    // Supabase manda "+00:00" y microsegundos: OffsetDateTime los acepta, igual que "Z".
+    OffsetDateTime.parse(createdAt).toInstant().toEpochMilli()
+} catch (e: DateTimeParseException) {
+    null
 }
 
 fun NotificationEntity.toModel(): AppNotification? {

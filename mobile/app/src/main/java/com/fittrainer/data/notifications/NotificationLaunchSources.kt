@@ -3,7 +3,7 @@ package com.fittrainer.data.notifications
 import com.fittrainer.data.db.workout.history.HistoryDao
 import com.fittrainer.data.network.ConnectivityObserver
 import com.fittrainer.data.workout.history.HistoryRepository
-import com.fittrainer.di.notifications.ApplicationScope
+import com.fittrainer.di.ApplicationScope
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first

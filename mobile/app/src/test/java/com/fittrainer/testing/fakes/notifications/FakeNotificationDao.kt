@@ -39,7 +39,7 @@ class FakeNotificationDao : NotificationDao() {
     override suspend fun existingAmong(ownerId: String, ids: List<String>): List<String> =
         mine(rows.value, ownerId).filter { it.id in ids }.map { it.id }
 
-    override suspend fun count(ownerId: String): Int = mine(rows.value, ownerId).size
+    override suspend fun newestCreatedAt(ownerId: String): Long? = mine(rows.value, ownerId).maxOfOrNull { it.createdAt }
     override suspend fun clear(ownerId: String) = update(ownerId) { null }
     override suspend fun clearAll() = rows.update { emptyMap() }
 

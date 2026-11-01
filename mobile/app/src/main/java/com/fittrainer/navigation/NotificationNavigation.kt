@@ -35,6 +35,12 @@ fun navSteps(nav: PendingNav, currentRoute: String?): List<NavStep> = when (val 
     NavTarget.None -> emptyList()
 }
 
+/**
+ * Con la sesión activa abierta (su resumen y el feedback incluidos) el destino espera: navegar la sacaría de la pila
+ * y se saltearía el feedback sin que el alumno lo elija. Se navega cuando la sesión sale.
+ */
+fun holdsNavigation(currentRoute: String?): Boolean = currentRoute == WORKOUT_ROUTE
+
 /** Navega al destino resuelto de un aviso tocado (push o lista) y lo da por consumido. Solo en el shell del alumno. */
 @Composable
 fun NotificationLaunchEffect(launches: NotificationLaunchViewModel, navController: NavController) {
@@ -42,7 +48,8 @@ fun NotificationLaunchEffect(launches: NotificationLaunchViewModel, navControlle
     LaunchedEffect(target) {
         val nav = target ?: return@LaunchedEffect
         // Arranque en frío: el NavHost arma su grafo recién al medirse. Hasta que hay una entrada no se puede navegar.
-        val current = navController.currentBackStackEntryFlow.first()
+        // Si la que hay es la sesión activa, se espera a la siguiente ([holdsNavigation]).
+        val current = navController.currentBackStackEntryFlow.first { !holdsNavigation(it.destination.route) }
         navSteps(nav, current.destination.route).forEach { navController.navigateStep(it) }
         launches.onNavigated()
     }

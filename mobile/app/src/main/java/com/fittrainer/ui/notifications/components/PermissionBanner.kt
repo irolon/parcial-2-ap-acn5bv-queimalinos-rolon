@@ -15,7 +15,7 @@ import com.fittrainer.ui.notifications.NotificationTexts
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
-/** Cartel de arriba cuando el permiso de notificaciones está apagado. "Activar" abre los ajustes de la app. */
+/** Cartel de arriba cuando las notificaciones están apagadas. "Activar" pide el permiso o abre los ajustes que corresponden. */
 @Composable
 fun PermissionBanner(onActivate: () -> Unit) {
     Row(

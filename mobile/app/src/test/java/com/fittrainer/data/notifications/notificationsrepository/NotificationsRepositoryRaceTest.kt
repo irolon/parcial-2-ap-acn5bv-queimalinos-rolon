@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -79,44 +80,26 @@ class NotificationsRepositoryRaceTest {
         assertTrue(dao.pendingOf().isEmpty())
     }
 
-    /** Ronda 3 (2): la que llega después del read-all queda sin leer (no hereda la marca de un pedido viejo). */
-    @Test fun notificacionPosteriorAlReadAllQuedaSinLeer() = runTest {
+    /** Revisión de Pablo (A): "marcar todo" con un refresco en vuelo lee lo que se veía, no lo que trae el refresco. */
+    @Test fun marcarTodoConUnRefrescoEnVueloNoLeeLoQueTraeElRefresco() = runTest {
         api.pages = mapOf(null to api.page(notificationDto("a")))
         api.unreadPage = api.page(notificationDto("a"))
+        repository.refresh("u1")
+        api.pages = mapOf(null to api.page(notificationDto("m1", at = later), notificationDto("a")))
+        api.unreadPage = api.page(notificationDto("m1", at = later), notificationDto("a"))
         val gate = gate()
         val refresh = launch { repository.refresh("u1") }
         advanceUntilIdle()
         val all = launch { repository.markAllRead("u1") }
         advanceUntilIdle()
-        assertEquals(0, api.markAllCalls) // espera el candado
+        assertTrue(api.markReadCalls.isEmpty()) // el PATCH espera el candado
         gate.complete(Unit)
         refresh.join()
         all.join()
-        assertEquals(1, api.markAllCalls)
-        assertTrue(read("a"))
-        // Llega m1 después del PATCH: el refresco siguiente la guarda sin leer.
-        api.pages = mapOf(null to api.page(notificationDto("m1", at = later), notificationDto("a", read = true)))
-        api.unreadPage = api.page(notificationDto("m1", at = later))
-        repository.refresh("u1")
-        assertTrue(!read("m1"))
+        assertEquals(listOf("a"), api.markReadCalls)
+        assertTrue(read("a")) // el GET viejo la traía sin leer: la pendiente gana
+        assertFalse(read("m1"))
         assertEquals(1, bell())
         assertTrue(dao.pendingOf().isEmpty())
-    }
-
-    /** Si m1 ya existía cuando salió el read-all (bajó antes del PATCH), el servidor la marcó leída: acá también. */
-    @Test fun notificacionAnteriorAlReadAllQuedaLeidaComoEnElServidor() = runTest {
-        api.pages = mapOf(null to api.page(notificationDto("a")))
-        val gate = gate()
-        val refresh = launch { repository.refresh("u1") }
-        advanceUntilIdle()
-        val all = launch { repository.markAllRead("u1") }
-        advanceUntilIdle()
-        api.unreadPage = api.page(notificationDto("a"), notificationDto("m1", at = later)) // aparece antes de unread_only
-        gate.complete(Unit)
-        refresh.join()
-        all.join()
-        assertEquals(1, api.markAllCalls)
-        assertTrue(read("m1"))
-        assertEquals(0, bell())
     }
 }

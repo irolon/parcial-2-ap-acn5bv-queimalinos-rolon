@@ -1,4 +1,4 @@
-package com.fittrainer.ui.notifications
+package com.fittrainer.ui.notifications.notificationsviewmodel
 
 import com.fittrainer.data.api.notifications.NotificationDto
 import com.fittrainer.data.notifications.NotificationDestination
@@ -12,6 +12,8 @@ import com.fittrainer.testing.fakes.notifications.offline
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.routine.FakeStudentSession
 import com.fittrainer.testing.fakes.routine.StepClock
+import com.fittrainer.ui.notifications.NotificationsEvent
+import com.fittrainer.ui.notifications.NotificationsViewModel
 import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -164,7 +166,7 @@ class NotificationsViewModelTest {
         assertTrue(vm.uiState.value.hasUnread)
         vm.onMarkAllRead(); advanceUntilIdle()
         assertFalse(vm.uiState.value.hasUnread)
-        assertEquals(1, api.markAllCalls)
+        assertEquals(listOf("n2"), api.markReadCalls) // solo la no leída, con su PATCH
     }
 
     @Test fun permisoApagadoMuestraCartel() = runTest {

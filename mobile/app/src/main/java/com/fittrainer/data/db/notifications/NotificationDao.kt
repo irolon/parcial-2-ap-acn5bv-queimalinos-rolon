@@ -35,12 +35,13 @@ abstract class NotificationDao {
     @Query("SELECT id FROM notifications WHERE ownerId = :ownerId AND `read` = 1 AND id IN (:ids)")
     abstract suspend fun readAmong(ownerId: String, ids: List<String>): List<String>
 
-    /** Cuáles de [ids] ya están guardadas para el dueño (para saber si la página 1 se solapa con lo local). */
+    /** Cuáles de [ids] ya están guardadas para el dueño (para saber cuántas filas nuevas suma una página). */
     @Query("SELECT id FROM notifications WHERE ownerId = :ownerId AND id IN (:ids)")
     abstract suspend fun existingAmong(ownerId: String, ids: List<String>): List<String>
 
-    @Query("SELECT COUNT(*) FROM notifications WHERE ownerId = :ownerId")
-    abstract suspend fun count(ownerId: String): Int
+    /** `createdAt` de la más nueva guardada del dueño; null si no tiene ninguna (para saber si la página 1 deja un hueco). */
+    @Query("SELECT MAX(createdAt) FROM notifications WHERE ownerId = :ownerId")
+    abstract suspend fun newestCreatedAt(ownerId: String): Long?
 
     @Query("DELETE FROM notifications WHERE ownerId = :ownerId")
     abstract suspend fun clear(ownerId: String)
@@ -53,7 +54,7 @@ abstract class NotificationDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertPending(row: NotificationPendingReadEntity)
 
-    /** Cada no leída guardada del dueño queda como lectura pendiente (lo que cubre el `read-all` al subir). */
+    /** Cada no leída guardada del dueño queda como lectura pendiente ("marcar todo": suben una por una). */
     @Query(
         "INSERT OR IGNORE INTO notification_pending_reads (ownerId, notificationId) " +
             "SELECT ownerId, id FROM notifications WHERE ownerId = :ownerId AND `read` = 0",
@@ -102,14 +103,14 @@ abstract class NotificationDao {
     }
 
     /**
-     * Primera página del servidor: lo guardado dentro de su ventana (desde la más vieja de [rows] hacia
-     * arriba) que no vino se borra; lo anterior (páginas viejas ya paginadas) no se toca. Vacía: se borran las filas
-     * del dueño. Las lecturas pendientes no se tocan nunca.
+     * Primera página del servidor: lo guardado dentro de su ventana (desde [from], la más vieja de la página tal como
+     * vino, con los tipos que no se guardan) que no está en [rows] se borra; lo anterior (páginas viejas ya paginadas)
+     * no se toca. Página vacía ([from] null): se borran las filas del dueño. Las lecturas pendientes no se tocan nunca.
      */
     @Transaction
-    open suspend fun replaceFirstPage(ownerId: String, rows: List<NotificationEntity>) {
-        if (rows.isEmpty()) return clear(ownerId)
-        deleteFromExcept(ownerId, rows.minOf { it.createdAt }, rows.map { it.id })
+    open suspend fun replaceFirstPage(ownerId: String, rows: List<NotificationEntity>, from: Long? = rows.minOfOrNull { it.createdAt }) {
+        if (from == null) return clear(ownerId)
+        deleteFromExcept(ownerId, from, rows.map { it.id })
         upsertKeepingRead(ownerId, rows)
     }
 

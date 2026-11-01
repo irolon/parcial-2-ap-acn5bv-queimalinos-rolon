@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "8ae42802faa825897eafb6762b6ec7aa",
+    "identityHash": "8e0a91706578affc75418c9280b35d6a",
     "entities": [
       {
         "tableName": "health_snapshot",
@@ -1294,7 +1294,7 @@
       },
       {
         "tableName": "notifications_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `everLoaded` INTEGER NOT NULL, `nextBefore` TEXT, `allReadPending` INTEGER NOT NULL, PRIMARY KEY(`ownerId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `everLoaded` INTEGER NOT NULL, `nextBefore` TEXT, PRIMARY KEY(`ownerId`))",
         "fields": [
           {
             "fieldPath": "ownerId",
@@ -1312,12 +1312,6 @@
             "fieldPath": "nextBefore",
             "columnName": "nextBefore",
             "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "allReadPending",
-            "columnName": "allReadPending",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -1355,7 +1349,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8ae42802faa825897eafb6762b6ec7aa')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8e0a91706578affc75418c9280b35d6a')"
     ]
   }
 }

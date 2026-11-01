@@ -29,9 +29,6 @@ interface NotificationsApi {
     @PATCH("notifications/{id}/read")
     suspend fun markRead(@Tag owner: RequiredUser, @Path("id") id: String)
 
-    @PATCH("notifications/read-all")
-    suspend fun markAllRead(@Tag owner: RequiredUser)
-
     @POST("notifications/tokens")
     suspend fun registerToken(@Tag owner: RequiredUser, @Body body: PushTokenDto)
 

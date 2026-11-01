@@ -9,9 +9,9 @@ import com.fittrainer.MainActivity
 import com.fittrainer.R
 import com.fittrainer.data.auth.tokenstore.TokenStore
 import com.fittrainer.data.notifications.NotificationsRepository
+import com.fittrainer.data.notifications.notificationsAllowed
 import com.fittrainer.data.session.Role
-import com.fittrainer.di.notifications.ApplicationScope
-import com.fittrainer.ui.workout.service.notificationsAllowed
+import com.fittrainer.di.ApplicationScope
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint

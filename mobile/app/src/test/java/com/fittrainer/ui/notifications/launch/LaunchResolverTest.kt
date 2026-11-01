@@ -6,6 +6,7 @@ import com.fittrainer.data.notifications.NotificationDestination
 import com.fittrainer.data.notifications.PendingLaunch
 import com.fittrainer.data.session.Role
 import com.fittrainer.data.session.Session
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -18,6 +19,7 @@ class LaunchResolverTest {
         val saved: MutableSet<String> = mutableSetOf(),
         var online: Boolean = true,
         val onServer: Set<String> = emptySet(),
+        val hangs: Boolean = false,
     ) : LaunchSources {
         val calls = mutableListOf<String>()
         override fun markRead(ownerId: String, id: String) {
@@ -33,6 +35,7 @@ class LaunchResolverTest {
         }
         override suspend fun refreshHistory(ownerId: String) {
             calls += "refresh:$ownerId"
+            if (hangs) awaitCancellation()
             saved += onServer
         }
     }
@@ -66,6 +69,13 @@ class LaunchResolverTest {
         val sources = FakeSources()
         assertEquals(NavTarget.ProgressHistory, resolve(comment("s3"), student, sources))
         assertTrue("refresh:u1" in sources.calls)
+    }
+
+    /** Revisión de Pablo: con red lenta el refresco tiene tope y se cae a Progreso → Historial. */
+    @Test fun comentarioConRefrescoColgadoVaAlHistorialTrasElTope() = runTest {
+        val sources = FakeSources(onServer = setOf("s2"), hangs = true)
+        assertEquals(NavTarget.ProgressHistory, resolve(comment("s2"), student, sources))
+        assertTrue(testScheduler.currentTime in 1..3_000)
     }
 
     @Test fun comentarioSinRedYSinSesionVaAlHistorial() = runTest {

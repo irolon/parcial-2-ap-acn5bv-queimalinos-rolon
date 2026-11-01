@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fittrainer.data.notifications.notificationsAllowed
 import com.fittrainer.data.workout.isOver
 import com.fittrainer.data.workout.pendingSets
 import com.fittrainer.ui.components.exercise.ExerciseDetail
@@ -47,7 +48,6 @@ import com.fittrainer.ui.workout.components.ReplaceSheet
 import com.fittrainer.ui.workout.components.WorkoutSummaryView
 import com.fittrainer.ui.workout.service.WorkoutScreenVisibility
 import com.fittrainer.ui.workout.service.WorkoutService
-import com.fittrainer.ui.workout.service.notificationsAllowed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

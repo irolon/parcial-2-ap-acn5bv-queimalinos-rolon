@@ -13,6 +13,7 @@ import com.fittrainer.testing.fakes.notifications.offline
 import com.fittrainer.testing.fakes.progress.httpErrorWithCode
 import com.fittrainer.testing.fakes.routine.FakeStudentSession
 import com.fittrainer.testing.fakes.sync.httpError
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -74,29 +75,44 @@ class NotificationsRepositoryReadsTest {
         assertTrue(pending("n1"))
     }
 
-    @Test fun marcarTodoLeidoSubeReadAll() = runTest {
+    @Test fun marcarTodoLeidoSinRedSubeUnaPorUna() = runTest {
         loadTwo()
         api.failMarks = offline
         assertTrue(repository.markAllRead("u1").isSuccess)
         assertTrue(dao.rows.value.values.all { it.read })
-        assertTrue(dao.meta("u1")!!.allReadPending)
+        assertEquals(setOf("n1", "n2"), dao.pendingOf().toSet())
         api.failMarks = null
         repository.uploadPendingReads("u1")
-        assertEquals(1, api.markAllCalls)
-        assertTrue(api.markReadCalls.isEmpty())
-        assertFalse(dao.meta("u1")!!.allReadPending)
+        assertEquals(setOf("n1", "n2"), api.markReadCalls.toSet())
         assertTrue(dao.pendingOf().isEmpty())
     }
 
-    @Test fun marcarTodoConUnaMarcaIndividualPrevia() = runTest {
+    /** Revisión de Pablo (A): sin red, el entrenador comenta entre el toque y la subida; ese aviso no lo vio y no se lee. */
+    @Test fun marcarTodoSinRedNoLeeElAvisoQueLlegoDespuesDelToque() = runTest {
+        loadTwo()
+        api.failMarks = offline
+        repository.markAllRead("u1")
+        val later = "2026-10-31T06:00:00+00:00"
+        api.pages = mapOf(null to api.page(notificationDto("m1", at = later), notificationDto("n1"), notificationDto("n2")))
+        api.unreadPage = api.page(notificationDto("m1", at = later), notificationDto("n1"), notificationDto("n2"))
+        api.failMarks = null
+        // Vuelve la red: el refresco sube las pendientes antes de pedir la página 1.
+        assertTrue(repository.refresh("u1").isSuccess)
+        assertEquals(setOf("n1", "n2"), api.markReadCalls.toSet()) // el servidor nunca recibe m1
+        assertFalse(row("m1").read)
+        assertTrue(row("n1").read && row("n2").read)
+        assertEquals(1, repository.observeUnread("u1").first())
+        assertTrue(dao.pendingOf().isEmpty())
+    }
+
+    @Test fun marcarTodoConUnaMarcaIndividualPreviaSubeCadaUnaUnaVez() = runTest {
         loadTwo()
         api.failMarks = offline
         repository.markRead("u1", "n1")
         repository.markAllRead("u1")
         api.failMarks = null
         repository.uploadPendingReads("u1")
-        assertEquals(1, api.markAllCalls)
-        assertTrue(api.markReadCalls.isEmpty())
+        assertEquals(listOf("n1", "n2"), api.markReadCalls.sorted())
         assertTrue(dao.pendingOf().isEmpty())
     }
 
@@ -104,7 +120,7 @@ class NotificationsRepositoryReadsTest {
         loadTwo()
         session.session.value = Session.Student(AuthUser("u2", "Beto", "b@test.com", Role.STUDENT))
         assertTrue(repository.markAllRead("u1").isFailure)
-        assertFalse(dao.meta("u1")?.allReadPending == true)
-        assertEquals(0, api.markAllCalls)
+        assertTrue(dao.pendingOf().isEmpty())
+        assertTrue(api.markReadCalls.isEmpty())
     }
 }

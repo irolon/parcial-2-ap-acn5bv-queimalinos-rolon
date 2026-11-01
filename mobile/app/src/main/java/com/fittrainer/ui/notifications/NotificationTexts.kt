@@ -15,6 +15,8 @@ object NotificationTexts {
     const val NEVER_LOADED = "Conectate una vez para ver tus avisos"
     const val REFRESH_FAILED = "No pudimos actualizar"
     const val RETRY = "Reintentar"
+    const val LOAD_MORE_FAILED = "No pudimos cargar más avisos"
+    const val LOADING_MORE = "Cargando más avisos"
     const val PERMISSION_OFF = "Las notificaciones están apagadas"
     const val ACTIVATE = "Activar"
 

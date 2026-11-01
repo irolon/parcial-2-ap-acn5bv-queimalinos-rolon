@@ -16,7 +16,6 @@ class FakeNotificationsApi : NotificationsApi {
 
     /** Dueño (RequiredUser) con el que salió cada escritura. */
     val owners = mutableListOf<String>()
-    var markAllCalls = 0
     var failMarks: Exception? = null
     var failList: Exception? = null
     var listGate: CompletableDeferred<Unit>? = null
@@ -51,12 +50,6 @@ class FakeNotificationsApi : NotificationsApi {
         markGate?.await()
         failMarks?.let { throw it }
         markReadCalls += id
-    }
-
-    override suspend fun markAllRead(owner: RequiredUser) {
-        owners += owner.userId
-        failMarks?.let { throw it }
-        markAllCalls++
     }
 
     val registered = mutableListOf<PushTokenDto>()

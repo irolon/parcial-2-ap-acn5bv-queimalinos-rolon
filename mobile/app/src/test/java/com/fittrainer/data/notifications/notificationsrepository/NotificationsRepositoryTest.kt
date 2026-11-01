@@ -79,4 +79,25 @@ class NotificationsRepositoryTest {
         assertNull(dao.meta("u1"))
         assertFalse(repository.everLoaded("u1").first())
     }
+
+    /** Revisión de Pablo: el logout intenta subir las lecturas pendientes antes de borrarlas. */
+    @Test fun logoutSubeLasLecturasPendientesAntesDeBorrar() = runTest {
+        api.failMarks = offline
+        repository.markRead("u1", "n9")
+        api.failMarks = null
+        repository.clearUserData("u1")
+        assertEquals(listOf("n9"), api.markReadCalls)
+        assertTrue(dao.pendingOf().isEmpty())
+    }
+
+    @Test fun logoutNoEsperaMasDelTopeAUnaSubidaColgada() = runTest {
+        api.failMarks = offline
+        repository.markRead("u1", "n9")
+        api.failMarks = null
+        api.markGate = CompletableDeferred() // el PATCH nunca responde
+        repository.clearUserData("u1")
+        assertTrue(testScheduler.currentTime <= 3_000)
+        assertTrue(api.markReadCalls.isEmpty())
+        assertTrue(dao.pendingOf().isEmpty())
+    }
 }

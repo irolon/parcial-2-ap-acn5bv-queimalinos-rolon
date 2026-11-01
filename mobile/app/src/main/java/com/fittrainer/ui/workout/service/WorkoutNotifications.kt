@@ -1,28 +1,19 @@
 package com.fittrainer.ui.workout.service
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import com.fittrainer.MainActivity
 import com.fittrainer.R
+import com.fittrainer.data.notifications.notificationsAllowed
 import com.fittrainer.data.workout.Load
 import com.fittrainer.data.workout.Workout
 import java.time.Instant
-
-/** En Android 13+ hace falta el permiso; antes, alcanza con que el usuario no las haya apagado. */
-fun notificationsAllowed(context: Context): Boolean =
-    (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
-        NotificationManagerCompat.from(context).areNotificationsEnabled()
 
 object WorkoutNotifications {
     const val EXTRA_OPEN_WORKOUT = "com.fittrainer.OPEN_WORKOUT"

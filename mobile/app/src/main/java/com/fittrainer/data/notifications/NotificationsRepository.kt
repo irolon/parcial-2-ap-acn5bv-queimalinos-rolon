@@ -20,13 +20,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Centro de notificaciones del alumno (tarjeta 17). La UI observa Room; refresh() trae la primera página (y todas
  * las no leídas, para la campana) y loadMore() las siguientes. Las lecturas se guardan primero en Room, en su tabla
- * de pendientes, y suben cuando hay red. La meta (cursor, everLoaded, pendiente ALL) se escribe junto con las filas.
+ * de pendientes, y suben cuando hay red, una por una. La meta (cursor, everLoaded) se escribe junto con las filas.
  *
- * Todo lo que toca la red (refresco con sus dos GET, "Ver más" con su vuelta, subida de lecturas y read-all) va en
+ * Todo lo que toca la red (refresco con sus dos GET, "Ver más" con su vuelta y subida de lecturas) va en
  * serie detrás de [network]: ninguna respuesta de un GET se aplica después de un PATCH que salió más tarde, ni dos
  * refrescos se pisan. Un segundo refresco espera al primero y vuelve a pedir (simple; la UI ya evita duplicarlos).
  * Las marcas locales (Room) no esperan el candado: la UI se actualiza al toque.
@@ -120,13 +121,16 @@ class NotificationsRepository @Inject constructor(
     /** Solo la marca en Room (no toca la red). Quien llama sube después con [uploadPendingReads], sin frenar a nadie. */
     suspend fun markReadLocal(ownerId: String, id: String): Result<Unit> = guard { markLocal(ownerId, id) }
 
-    /** Marca todas en Room y deja el pendiente `ALL` (con `PATCH read-all` al subir). Misma regla que [markRead]. */
+    /**
+     * "Marcar todo" es todo lo que el alumno vio: cada no leída guardada queda leída en Room y como lectura pendiente,
+     * y sube con su `PATCH /:id/read`. Sin `read-all`: ese marca también lo que llegó al servidor después del toque y
+     * nunca bajó al celular (un comentario mientras estaba sin red). Misma regla que [markRead].
+     */
     suspend fun markAllRead(ownerId: String): Result<Unit> = guard {
         val gen = clearGeneration
         dao.inTransaction {
             checkOwner(ownerId, gen)
             dao.markAllRead(ownerId)
-            dao.updateMeta(ownerId) { it.copy(allReadPending = true) }
         }
         tryUpload(ownerId)
     }
@@ -165,7 +169,12 @@ class NotificationsRepository @Inject constructor(
         if (current != ownerId || gen != clearGeneration) throw AccountChangedException()
     }
 
+    /**
+     * Antes de borrar intenta subir las lecturas pendientes (el JWT sigue: los cleaners corren antes del logout), con
+     * tope corto y sin fallar: sin red o con red lenta se pierden y esos avisos vuelven a verse sin leer.
+     */
     override suspend fun clearUserData(ownerId: String?) {
+        if (ownerId != null) withTimeoutOrNull(LOGOUT_UPLOAD_TIMEOUT_MS) { uploadPendingReads(ownerId) }
         clearGeneration++
         dao.clearOwner(ownerId)
     }
@@ -181,5 +190,6 @@ class NotificationsRepository @Inject constructor(
     private companion object {
         const val PAGE_SIZE = 20
         const val UNREAD_LIMIT = 100
+        const val LOGOUT_UPLOAD_TIMEOUT_MS = 2_500L
     }
 }

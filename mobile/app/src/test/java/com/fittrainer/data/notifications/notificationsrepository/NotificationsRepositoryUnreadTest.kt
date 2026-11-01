@@ -87,13 +87,12 @@ class NotificationsRepositoryUnreadTest {
         api.failMarks = offline
         repository.markAllRead("u1")
         api.pages = mapOf(null to api.page(*twentyRead(), next = "c1"))
-        api.unreadPage = api.page(notificationDto("a", at = at(10))) // el read-all todavía no subió
+        api.unreadPage = api.page(notificationDto("a", at = at(10))) // la lectura de "a" todavía no subió
         repository.refresh("u1")
         assertTrue(dao.rows.value.getValue("a").read)
         api.failMarks = null
         repository.uploadPendingReads("u1")
-        assertEquals(1, api.markAllCalls)
-        assertTrue(api.markReadCalls.isEmpty())
+        assertEquals(listOf("a"), api.markReadCalls)
         assertTrue(pendingIds().isEmpty())
     }
 

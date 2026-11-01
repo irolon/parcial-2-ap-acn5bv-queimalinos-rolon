@@ -63,6 +63,19 @@ class NotificationDaoTest {
         assertEquals(listOf("nueva", "dentroQueSigue", "viejaPaginada"), dao.observe("u1").first().map { it.id })
     }
 
+    /** La ventana sale de la página cruda: una página solo de tipos ajenos igual borra lo que no vino dentro de ella. */
+    @Test fun replaceFirstPageConVentanaDeLaPaginaCruda() = runBlocking {
+        dao.upsertAll(listOf(row("vieja", 50), row("dentroQueSeFue", 150)))
+        dao.replaceFirstPage("u1", emptyList(), from = 100)
+        assertEquals(listOf("vieja"), dao.observe("u1").first().map { it.id })
+    }
+
+    @Test fun newestCreatedAtEsLaMasNuevaDelDueno() = runBlocking {
+        assertEquals(null, dao.newestCreatedAt("u1"))
+        dao.upsertAll(listOf(row("a", 100), row("b", 300), row("ajena", 900, owner = "u2")))
+        assertEquals(300L, dao.newestCreatedAt("u1"))
+    }
+
     @Test fun replaceFirstPageNoTocaALosOtrosDuenos() = runBlocking {
         dao.upsertAll(listOf(row("ajena", 200, owner = "u2")))
         dao.replaceFirstPage("u1", listOf(row("propia", 100)))
