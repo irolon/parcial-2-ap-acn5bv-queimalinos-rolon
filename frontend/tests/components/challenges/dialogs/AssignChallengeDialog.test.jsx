@@ -40,6 +40,31 @@ describe('AssignChallengeDialog', () => {
     expect(screen.getByRole('checkbox', { name: 'Tomás Ruiz' })).toBeEnabled();
   });
 
+  it('no deja tildar alumnos hasta que cargan los "Ya lo tiene"', async () => {
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    const { fetchMock } = setup({ active: async () => { await gate; return jsonResponse(200, { data: ['s-3'] }); } });
+    await vi.waitFor(() => expect(calls(fetchMock).some(([path]) => path.startsWith('/students'))).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 50)); // ya llegaron los alumnos, falta active-students
+    expect(screen.getByText('Cargando alumnos…')).toBeVisible();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    release();
+    expect(await screen.findByRole('checkbox', { name: /Lucía Pérez.*Ya lo tiene/ })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'Tomás Ruiz' })).toBeEnabled();
+  });
+
+  it('si falla active-students avisa, no deja elegir y Reintentar lo vuelve a pedir', async () => {
+    let fails = true;
+    setup({ active: () => (fails ? errorResponse(500, 'INTERNAL', 'Se rompió') : jsonResponse(200, { data: ['s-3'] })) });
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos ver quiénes ya lo tienen');
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(assignButton()).toBeDisabled();
+    fails = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByRole('checkbox', { name: /Lucía Pérez.*Ya lo tiene/ })).toBeDisabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('cuenta los seleccionados y con 0 el botón queda deshabilitado', async () => {
     setup();
     await screen.findByRole('checkbox', { name: /Tomás/ });

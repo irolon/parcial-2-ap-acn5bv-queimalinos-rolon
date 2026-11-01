@@ -7,17 +7,27 @@ import { assignResultText } from '@/utils/challenges/assignResult';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import StudentMultiSelect, { MAX_SELECTED } from './StudentMultiSelect';
 
-const NO_IDS = new Set();
 const NOTICE = 'rounded-md border px-3 py-2.5 font-body text-sm';
 
 function StudentsList({ students, actives, selected, onChange }) {
-  if (students.isPending) return <p className="font-body text-sm text-ink6">Cargando alumnos…</p>;
   if (students.isError) return <p role="alert" className="font-body text-sm text-hot">No pudimos cargar tus alumnos</p>;
+  if (actives.isError) {
+    return (
+      <p role="alert" className="flex flex-wrap items-center justify-between gap-2 font-body text-sm text-hot">
+        No pudimos ver quiénes ya lo tienen
+        <Button variant="ghost" size="sm" onClick={() => actives.refetch()} loading={actives.isFetching}>
+          Reintentar
+        </Button>
+      </p>
+    );
+  }
+  // Sin los "Ya lo tiene" no se puede elegir: un alumno tildado antes viajaría en el POST.
+  if (students.isPending || actives.isPending) return <p className="font-body text-sm text-ink6">Cargando alumnos…</p>;
   if (students.data.length === 0) return <p className="font-body text-sm text-ink6">Todavía no tenés alumnos activos</p>;
   return (
     <StudentMultiSelect
       students={students.data}
-      disabledIds={actives.data ? new Set(actives.data) : NO_IDS}
+      disabledIds={new Set(actives.data)}
       selected={selected}
       onChange={onChange}
     />
