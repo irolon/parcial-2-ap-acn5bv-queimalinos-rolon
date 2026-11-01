@@ -83,6 +83,22 @@ describe('createForStudent', () => {
     expect(mockAppointments.insertAppointment).not.toHaveBeenCalled();
   });
 
+  it('con un alumno inactivo o sin PT responde 403 antes de validar hora, horizonte o disponibilidad', async () => {
+    const bad = [
+      { scheduled_at: '2026-11-06T21:30:00.000Z' },
+      { scheduled_at: '2020-01-01T15:00:00.000Z' },
+      { scheduled_at: '2027-01-01T15:00:00.000Z' },
+      { scheduled_at: '2026-11-07T21:00:00.000Z' },
+    ];
+    for (const row of [studentRow({ active: false }), studentRow({ trainer_id: null })]) {
+      mockStudents.findStudentById.mockResolvedValue(row);
+      for (const payload of bad) {
+        await expect(createForStudent(STUDENT, payload)).rejects.toMatchObject({ statusCode: 403 });
+      }
+    }
+    expect(mockAvailability.findAvailability).not.toHaveBeenCalled();
+  });
+
   it('un fallo de la notificación no rompe la respuesta', async () => {
     mockNotify.notify.mockRejectedValue(new Error('db'));
     await expect(createForStudent(STUDENT, input)).resolves.toMatchObject({ status: 'pending' });

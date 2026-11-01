@@ -5,13 +5,14 @@ import { assertCanAccessStudent } from '../students/student-access.service.js';
 import * as triggers from '../notifications/triggers.service.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { isOnTheHour, nextHourUtc, utcToArgentina } from '../../shared/utils/dates/argentina.js';
-import { DAY_MS } from '../../shared/utils/dates/dates.js';
 import {
   APPOINTMENT_DURATION_MIN,
   STATUS,
   STUDENT_MAX_DAYS_AHEAD,
+  studentHorizonMs,
   toAppointment,
 } from '../../models/agenda/appointment.model.js';
+import { hourOf } from '../../models/agenda/availability.model.js';
 
 /** Hora en punto y posterior a ahora: vale para los dos roles. */
 function assertOnTheHourAndFuture(scheduledAt, now) {
@@ -22,10 +23,7 @@ function assertOnTheHourAndFuture(scheduledAt, now) {
 /** ¿El horario cae dentro de alguna franja semanal (en hora de Argentina)? */
 function isWithinAvailability(scheduledAt, availability) {
   const { weekday, hour } = utcToArgentina(scheduledAt);
-  return availability.some(
-    (a) =>
-      a.weekday === weekday && Number(a.start_time.slice(0, 2)) <= hour && hour < Number(a.end_time.slice(0, 2))
-  );
+  return availability.some((a) => a.weekday === weekday && hourOf(a.start_time) <= hour && hour < hourOf(a.end_time));
 }
 
 const baseRow = (trainerId, studentId, { scheduled_at, notes }, status) => ({
@@ -39,13 +37,13 @@ const baseRow = (trainerId, studentId, { scheduled_at, notes }, status) => ({
 
 /** El alumno pide un turno en una franja libre de su PT: queda `pending` y se avisa al PT (sin push). */
 export async function createForStudent(user, input) {
-  const now = new Date();
-  assertOnTheHourAndFuture(input.scheduled_at, now);
-  if (new Date(input.scheduled_at).getTime() > now.getTime() + STUDENT_MAX_DAYS_AHEAD * DAY_MS) {
-    throw Errors.slotUnavailable(`Solo se puede pedir turno hasta ${STUDENT_MAX_DAYS_AHEAD} días adelante`);
-  }
   const student = await studentsRepo.findStudentById(user.id);
   if (!student?.trainer_id || !student.active) throw Errors.forbidden();
+  const now = new Date();
+  assertOnTheHourAndFuture(input.scheduled_at, now);
+  if (new Date(input.scheduled_at).getTime() > studentHorizonMs(now)) {
+    throw Errors.slotUnavailable(`Solo se puede pedir turno hasta ${STUDENT_MAX_DAYS_AHEAD} días adelante`);
+  }
   const availability = await availabilityRepo.findAvailability(student.trainer_id);
   if (!isWithinAvailability(input.scheduled_at, availability)) {
     throw Errors.slotUnavailable('Ese horario está fuera de la disponibilidad de tu entrenador');

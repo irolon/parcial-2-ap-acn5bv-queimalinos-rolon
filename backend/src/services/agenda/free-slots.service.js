@@ -3,9 +3,8 @@ import * as appointmentsRepo from '../../repositories/agenda/appointments.reposi
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { freeSlots } from '../../models/agenda/availability.model.js';
-import { STUDENT_MAX_DAYS_AHEAD } from '../../models/agenda/appointment.model.js';
+import { studentHorizonMs } from '../../models/agenda/appointment.model.js';
 import { argDayRange } from '../../shared/utils/dates/ranges.js';
-import { DAY_MS } from '../../shared/utils/dates/dates.js';
 
 /** Entrenador cuya agenda ve el usuario: la propia, o la de su PT si es alumno (null si no tiene). */
 async function trainerIdOf(user) {
@@ -30,6 +29,6 @@ export async function listFree(user, { from, to }) {
   ]);
   const slots = freeSlots({ availability, taken, from, to, now });
   if (user.role !== 'student') return slots;
-  const limit = now.getTime() + STUDENT_MAX_DAYS_AHEAD * DAY_MS;
+  const limit = studentHorizonMs(now);
   return slots.filter((iso) => new Date(iso).getTime() <= limit);
 }

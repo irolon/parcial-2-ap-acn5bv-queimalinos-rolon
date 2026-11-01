@@ -15,7 +15,7 @@ export const FREE_MAX_DAYS = 31;
 export const AVAILABILITY_COLUMNS = 'weekday, start_time, end_time';
 
 /** 'HH:MM[:SS]' → hora entera (las franjas son siempre en punto). */
-const hourOf = (time) => Number(time.slice(0, 2));
+export const hourOf = (time) => Number(time.slice(0, 2));
 
 /** Fila de la base ('08:00:00') → franja pública ('08:00'). */
 export const toSlot = (row) => ({

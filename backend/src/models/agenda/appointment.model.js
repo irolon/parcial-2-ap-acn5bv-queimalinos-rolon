@@ -3,12 +3,16 @@
  * Tabla, columnas, límites, estados y transiciones. SIN acceso a datos.
  */
 
+import { DAY_MS } from '../../shared/utils/dates/dates.js';
+
 export const APPOINTMENTS_TABLE = 'appointments';
 
 /** Duración de todos los turnos: los crea el backend y empiezan en hora en punto. */
 export const APPOINTMENT_DURATION_MIN = 60;
 /** Cuántos días hacia adelante puede pedir turno un alumno. */
 export const STUDENT_MAX_DAYS_AHEAD = 28;
+/** Último instante (ms) en que un alumno puede pedir turno: `now` + 28 días. */
+export const studentHorizonMs = (now) => now.getTime() + STUDENT_MAX_DAYS_AHEAD * DAY_MS;
 /** Máximo de días (inclusivos) de un rango de GET /appointments. */
 export const LIST_MAX_DAYS = 62;
 /** Largo máximo de la nota de un turno. */
