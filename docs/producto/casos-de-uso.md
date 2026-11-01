@@ -36,9 +36,9 @@ El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero 
 | Sesión libre (sin rutina) | No | No |
 | Historial de sesiones, con el comentario del entrenador en solo lectura (CU-17) | Sí | Sí |
 | Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Pendiente |
-| Gráficos de progreso (CU-17) | Sí | Pendiente (en revisión, #44) |
+| Gráficos de progreso (CU-17) | Sí | Sí (cargas y medidas, en Progreso) |
 | Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Pendiente: hoy el perfil solo tiene Estado del servidor y Cerrar sesión |
-| Notificaciones push | No | Pendiente (en revisión, #48) |
+| Notificaciones push y lista de avisos (CU-27) | No | Sí |
 | Pedir turno al entrenador (CU-19) | No | Pendiente (tarjeta de Igna) |
 | Asistente IA (CU-06 / CU-15) | **Pendiente** (tarjetas de IA pospuestas) | **Pendiente** |
 
@@ -357,3 +357,34 @@ El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero 
 **Flujos de error**
 
 - **E1:** Se intenta asignar a más de 50 alumnos por vez → el backend rechaza el pedido (400) y no asigna a nadie. Si entre los elegidos hay alumnos que no son del PT (o están inactivos), el backend los saltea (`not_your_student`), asigna al resto y los lista en el aviso.
+
+---
+
+## CU-27 — Recibir y ver los avisos (alumno)
+
+**Actor:** Alumno (mobile)
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El alumno inició sesión en el celular al menos una vez (así registró su token de push). El sistema creó una notificación para él: un comentario del PT en una sesión (CU-07), un récord o un logro (CU-08). |
+| Postcondiciones | El alumno vio el aviso en el push o en su lista de avisos y, si lo tocó, quedó leído en el servidor y en el celular. |
+
+**Flujo principal**
+
+1. El sistema guarda la notificación en `notifications` y manda el push al celular del alumno ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
+2. Al alumno le llega el push, aunque tenga la app cerrada.
+3. Lo toca: la app abre la pantalla del aviso (el detalle de la sesión comentada, los gráficos del ejercicio del récord o la lista de avisos para un logro) y lo marca leído.
+4. En la pantalla Hoy, la campana muestra cuántos avisos no leyó.
+5. Al tocar la campana ve la lista de avisos agrupada en Hoy · Ayer · Antes, con los no leídos marcados. Desde ahí puede abrir cualquiera o tocar "Marcar todo leído".
+
+**Flujos alternativos**
+
+- **2a:** Las notificaciones están apagadas en el celular → no llega el push, pero el aviso igual aparece en la campana y en la lista, con un cartel para activarlas.
+- **3a:** El alumno está en medio de una sesión (o en su resumen) → la app espera a que la sesión termine para abrir el aviso.
+- **3b:** La sesión comentada no está guardada y no hay red → se abre Progreso → Historial.
+- **5a:** Sin conexión → ve lo guardado con el aviso "Sin conexión · mostrando lo guardado". Lo que marca leído queda pendiente y se sube cuando vuelve la red, uno por uno. "Marcar todo leído" marca solo lo que vio: un aviso que llega al servidor mientras tanto queda sin leer.
+
+**Flujos de error**
+
+- **E1:** Falla el push (FCM caído, token vencido) → la notificación igual queda guardada y el alumno la ve en la lista al abrir la app.
+- **E2:** Falla la subida de un leído → queda pendiente y se reintenta en el próximo refresco.

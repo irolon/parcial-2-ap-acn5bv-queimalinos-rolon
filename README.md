@@ -41,6 +41,8 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.
 - [x] **Historial de sesiones** offline (con los comentarios del entrenador) y **feedback post-entreno** (RPE y nota).
 - [x] **Mis rutinas:** todas las rutinas asignadas con su detalle, offline, y se puede entrenar una rutina que no es la del día (la biblioteca pasa a ser una entrada dentro de Mis rutinas).
+- [x] **Gráficos de progreso** del alumno: curva de carga por ejercicio (1RM estimado, kg máximo o reps) y evolución de sus medidas, con período elegible y offline.
+- [x] **Push y centro de avisos** del alumno: push de comentarios del entrenador, récords y logros (FCM) que abren su pantalla, campana con no leídos en Hoy y lista de avisos offline, con los leídos que se suben al volver la red.
 
 **En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42).
 

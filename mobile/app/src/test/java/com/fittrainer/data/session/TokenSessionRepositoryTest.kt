@@ -4,6 +4,10 @@ import com.fittrainer.testing.fakes.auth.FakeAuthApi
 import com.fittrainer.testing.fakes.auth.FakeTokenStore
 import com.fittrainer.testing.fakes.auth.fixedClock
 import com.fittrainer.data.auth.AuthRepository
+import com.fittrainer.data.notifications.push.PushLogger
+import com.fittrainer.data.notifications.push.PushTokenRegistry
+import com.fittrainer.testing.fakes.notifications.FakeFcmTokenSource
+import com.fittrainer.testing.fakes.notifications.FakeNotificationsApi
 import com.fittrainer.testing.fakes.auth.authState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -13,11 +17,13 @@ import org.junit.Test
 class TokenSessionRepositoryTest {
 
     private val api = FakeAuthApi()
+    private val notifApi = FakeNotificationsApi()
     private val store = FakeTokenStore()
     private val cleaner = FakeCleaner()
     private val other = FakeCleaner()
+    private val push = PushTokenRegistry(notifApi, store, FakeFcmTokenSource(), PushLogger())
     private val repo = TokenSessionRepository(
-        store, AuthRepository(api, store, fixedClock()), setOf(cleaner, other),
+        store, AuthRepository(api, store, fixedClock()), setOf(cleaner, other), push,
     )
 
     @Test fun `sin sesion guardada es LoggedOut`() = runTest {

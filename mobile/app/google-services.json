@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "63950254052",
+    "project_id": "fittrainer-bdb46",
+    "storage_bucket": "fittrainer-bdb46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63950254052:android:17267f0d8b51a215d5e1f1",
+        "android_client_info": {
+          "package_name": "com.fittrainer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCO5swUyEAMIdbxWHKzSOCcHeEC4bfsri8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -9,6 +9,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.fittrainer.data.notifications.notificationsAllowed
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.data.workout.Load

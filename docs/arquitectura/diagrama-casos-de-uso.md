@@ -66,12 +66,13 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-14 | Ejecutar sesión de entrenamiento | Realiza el entrenamiento registrando peso y reps por serie, con timer de descanso | AL-03, AL-04 | Web (simplificada, se sube al terminar) y mobile (completa, con modo offline) |
 | CU-15 | Consultar asistente IA | Chat para reemplazar ejercicios, consultar técnica o calentamientos durante la sesión | AL-05 | Pendiente en ambas |
 | CU-16 | Registrar feedback post-entreno | Indica cómo se sintió (RPE 1-10) y nota libre al cerrar la sesión | AL-08 | Web y mobile |
-| CU-17 | Ver historial y progreso | Consulta sesiones pasadas, evolución de cargas, volumen total y gráficos por ejercicio | AL-06 | Web; mobile: historial (gráficos pendientes) |
+| CU-17 | Ver historial y progreso | Consulta sesiones pasadas, evolución de cargas, volumen total y gráficos por ejercicio | AL-06 | Web y mobile |
 | CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 | Web (mobile pendiente) |
 | CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 | Pendiente (mobile) |
 | CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 | Web (mobile pendiente) |
+| CU-27 | Recibir y ver avisos | Recibe push de comentarios del PT, récords y logros; los ve en la campana y la lista de avisos (también offline) y quedan leídos al abrirlos | AL-06, AL-11 | Mobile |
 
-La web no tiene sesión offline ni reemplazo de ejercicio, y push y pedido de turno están pendientes en las dos; la mobile todavía no tiene medidas, progreso ni logros del alumno; el detalle está en [[producto/casos-de-uso#Qué hace el alumno en cada plataforma|Qué hace el alumno en cada plataforma]].
+La web no tiene sesión offline, reemplazo de ejercicio ni push, y pedir turno está pendiente en las dos; la mobile todavía no tiene la carga de medidas ni la racha, los logros y los desafíos del alumno; el detalle está en [[producto/casos-de-uso#Qué hace el alumno en cada plataforma|Qué hace el alumno en cada plataforma]].
 
 ### Sistema (actor secundario)
 
@@ -96,6 +97,7 @@ La web no tiene sesión offline ni reemplazo de ejercicio, y push y pedido de tu
 | CU-05 → CU-08 | `«extend»` | El PT puede opcionalmente partir de una rutina generada por la IA antes de personalizarla |
 | CU-14 → CU-15 | `«extend»` | Consultar al asistente IA durante la sesión es opcional (depende de duda del alumno) |
 | CU-14 → CU-23 | `«extend»` | Si la sesión se ejecutó offline, al recuperar conexión se dispara la sincronización |
+| CU-27 → CU-17 | `«extend»` | Tocar el aviso de un comentario o de un récord abre el historial o los gráficos del alumno |
 | CU-16 → CU-24 | `«extend»` | Tras el feedback, el Sistema evalúa si corresponde otorgar logro, racha o badge |
 | CU-05 → CU-22 | `«extend»` | Si el alumno modifica la rutina asignada, el Sistema notifica al PT (flujo condicional) |
 | CU-19 → CU-10 | `«include»` | Solicitar turno requiere consultar la agenda del PT para ver slots disponibles |
@@ -148,6 +150,7 @@ rectangle "FitTrainer" {
   usecase "CU-18\nRegistrar medidas\ncorporales" as CU18
   usecase "CU-19\nSolicitar turno\nal PT" as CU19
   usecase "CU-20\nVer logros\ny rachas" as CU20
+  usecase "CU-27\nRecibir y ver\navisos" as CU27
 
   ' --- Sistema ---
   usecase "CU-21\nNotificar inactividad\nde alumno" as CU21
@@ -179,6 +182,7 @@ AL --> CU17
 AL --> CU18
 AL --> CU19
 AL --> CU20
+AL --> CU27
 
 ' --- Asociaciones Sistema ---
 SYS --> CU21
@@ -204,6 +208,7 @@ CU15 ..> CU14 : <<extend>>
 CU23 ..> CU14 : <<extend>>
 CU24 ..> CU16 : <<extend>>
 CU22 ..> CU05 : <<extend>>
+CU27 ..> CU17 : <<extend>>
 
 @enduml
 ```
