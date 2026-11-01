@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
+import com.fittrainer.ui.challenges.trainer.section.ChallengesSection
 import com.fittrainer.ui.invitations.InviteScreen
 import com.fittrainer.ui.routines.trainer.section.AssignRoutineAction
 import com.fittrainer.ui.routines.trainer.section.RoutinesSection
@@ -17,7 +18,7 @@ import com.fittrainer.ui.students.sessions.LatestSessionsSection
 import com.fittrainer.ui.students.sessions.StudentSessionsScreen
 import com.fittrainer.ui.students.sessions.detail.StudentSessionDetailScreen
 
-/** Pantallas que cuelgan de la pestaña Alumnos del entrenador (E2-E6, E8-E9): invitar, ficha, edición y sesiones. */
+/** Pantallas que cuelgan de la pestaña Alumnos del entrenador (E2-E6, E8-E9, E14): invitar, ficha, edición y sesiones. */
 fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
     composable(TRAINER_INVITE_ROUTE) {
         InviteScreen(onBack = { navController.popBackStack() })
@@ -32,6 +33,7 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
             extraSections = { _, detail ->
                 item { RoutinesSection(onOpen = { navController.navigate(trainerRoutineRoute(it)) { launchSingleTop = true } }) }
                 item { StudentProgressSection(detail.createdAt) }
+                item { ChallengesSection(canAssign = detail.active) }
                 item {
                     LatestSessionsSection(
                         onOpenAll = { navController.navigate(trainerStudentSessionsRoute(id)) { launchSingleTop = true } },
