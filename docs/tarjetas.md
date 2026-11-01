@@ -30,6 +30,7 @@ tags: [indice]
 | 41 | [Gamificación backend](https://trello.com/c/v4zsogFe) | [[superpowers/specs/2026-10-30-gamification-backend-design\|spec]] | [[superpowers/plans/2026-10-30-gamification-backend\|plan]] | [[arquitectura/adrs\|ADRs]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
 | 43 | Logros, racha y desafíos en la web (MIS TAREAS: 18) | [[superpowers/specs/2026-10-31-web-challenges-design\|spec]] | [[superpowers/plans/2026-10-31-web-challenges\|plan]] | [[producto/casos-de-uso\|Casos de uso]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
 | 44 | [Notificaciones (FCM + inactividad)](https://trello.com/c/rHdVyMV6) | [[superpowers/specs/2026-10-30-notifications-design\|spec]] | [[superpowers/plans/2026-10-30-notifications\|plan]] | [[arquitectura/adrs\|ADRs]], [[arquitectura/contratos-api\|Contratos de API]], [[arquitectura/modelo-de-datos\|Modelo de datos]] |
+| 50 | [Paridad de rol — vistas del alumno en la web](https://trello.com/c/Zha3yNu4) | [[superpowers/specs/2026-11-01-student-web-design\|spec]] | [[superpowers/plans/2026-11-01-student-web\|plan]] | [[producto/casos-de-uso\|Casos de uso]], [[arquitectura/contratos-api\|Contratos de API]], [[diseno/mockups\|Mockups]] |
 | — | Límite de 200 líneas y orden (mobile) | — | [[superpowers/plans/2026-10-17-orden-y-limite-200-mobile\|plan]] | Regla de `CONTRIBUTING.md` |
 
 Volver a [[inicio]].

@@ -392,6 +392,12 @@ Rutina activa del alumno para hoy. Solo alumnos.
 
 **200 OK** — incluye `routine_id`, `name`, `goal`, `days` y `exercises[]`, cada uno con `last_session_kg`: el mayor `actual_kg` de las series completadas con repeticiones del ejercicio en la **última sesión** (por `started_at`) en que el alumno lo hizo, a 1 decimal. Es `null` si nunca lo hizo o no cargó peso. Se calcula con una sola consulta por rutina (función SQL `last_session_kg`).
 
+### GET /routines/mine
+
+Todas las rutinas **activas** del alumno con sus ejercicios, la más nueva primero. Solo alumnos (otro rol → 403). La usan el caché offline del celular (que resuelve el día en el teléfono) y la web del alumno (Mis rutinas, y para distinguir "hoy es descanso" de "sin rutina asignada").
+
+**200 OK** — `{ data: [...] }` (arreglo vacío si no tiene rutinas). Cada elemento: `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises[]` ordenados por `order_index`, cada uno con `routine_exercise_id`, `exercise`, `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` y `order_index`. A diferencia de `GET /routines/today`, no trae `last_session_kg`.
+
 ---
 
 ## Módulo: Plantillas de rutinas

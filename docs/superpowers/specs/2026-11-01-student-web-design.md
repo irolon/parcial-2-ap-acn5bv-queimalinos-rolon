@@ -133,3 +133,18 @@ Que un alumno pueda usar la web con la funcionalidad central de la app: rutina d
   - Mi perfil: el ✕ solo en las medidas propias;
   - los logros: bloqueados con su avance.
 - **E2E contra Supabase dev:** la alumna QA ve Hoy, entrena una sesión corta, la ve en el historial y en el progreso y carga una medida. Las capturas van en `docs/superpowers/specs/assets/50/`. La parte visual necesita que Pablo inicie sesión en el navegador; la subida se verifica también por API.
+
+## 8. Ajustes durante la implementación
+
+Lo que cambió respecto de lo de arriba al construirlo (lo implementado manda):
+
+- **Logros bloqueados con su avance:** salen de `/achievements/progress`, que entró con la #45, con la unidad de cada tipo de criterio ("7/10 sesiones").
+- **Peso 0 = sin peso:** se decide por campo (`positiveKg(last) ?? positiveKg(sug)`), así que un 0 en `last_session_kg` no tapa al sugerido. Al subir, el peso vacío va como `actual_kg` 0, igual que el celular.
+- **Coma decimal en el peso:** el campo acepta "62,5" además de "62.5".
+- **409 en `POST /sessions` es permanente** (como en el celular). Ante un error permanente la pantalla ofrece **Descartar entrenamiento** (con confirmación); ante los reintentables, solo Reintentar.
+- **Sesión terminada sin guardar:** Hoy ofrece **Terminar de guardar** para retomar la subida.
+- **Semana:** el texto es "N de M entrenamientos · +K extra" cuando se entrenó en días que no eran de la rutina.
+- **Rutina del día:** la fecha en Argentina va en la key de la query, así que cambia sola al pasar la medianoche.
+- **Módulos:** las utilidades de Hoy viven en `utils/routines/` (no en `utils/student/`) y `greetingDate` en `utils/dates.js`.
+- **Logros (Task 6) apilados sobre la #42:** la #42 estaba aprobada sin mergear, así que la rama trae su `origin/feature/web-challenges` y la PR muestra esos commits hasta que se mergee.
+- **`/alumno/asistente`** da 404: la ruta salió junto con el menú.

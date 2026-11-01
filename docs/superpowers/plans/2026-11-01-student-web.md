@@ -45,7 +45,7 @@
 - `api/routines/routines.api.js`: `getTodayRoutine()` y `getMyRoutines()`.
 - `api/sessions/sessions.api.js`: `createSession(body)` y `uploadSets(sessionId, sets)`.
 - `hooks/routines/` (o `hooks/student/`): `useTodayRoutine()` y `useMyRoutines()`.
-- `utils/student/`:
+- `utils/routines/` (y `greetingDate` en `utils/dates.js`):
   - `estimatedMinutes(exercises)`;
   - `planRows(exercises)`;
   - `weekStrip({ routineDays, sessions, now })` → `[{ weekday 1-7, label 'L', planned, trained, isToday }]`;
