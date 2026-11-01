@@ -93,7 +93,7 @@ Turno público: `{ id, trainer_id, student: { id, name, avatar_url }, scheduled_
 - `texts.appointmentConfirmed`, `appointmentCancelled`, `appointmentCreatedByTrainer`, `appointmentRequested` y `appointmentCancelledByStudent`. Ejemplos: "Tu turno del vie 06/11 a las 18:00 quedó confirmado" y "Lucía pidió un turno para el vie 06/11 a las 18:00".
 - Los disparadores van en `triggers.service.js` con `safely`, con `data: { appointment_id }`.
 
-**Capas:** routes, controllers, services, repositories, models y validations en `appointments/` y `availability/`, más utilidades de fecha en `shared/utils/` (o `shared/utils/dates/` si la carpeta pasa de 10). Archivos ≤ 200 líneas.
+**Capas:** routes, controllers, services, repositories, models y validations en `agenda/`, más utilidades de fecha en `shared/utils/` (o `shared/utils/dates/` si la carpeta pasa de 10). Archivos ≤ 200 líneas.
 
 ## 5. Web (`frontend/`)
 
@@ -156,3 +156,6 @@ Pantalla del alumno (mobile, Igna; web en la tarjeta 22), feriados y excepciones
 - En "Nuevo turno", las horas ocupadas se marcan " · ocupado" (además de deshabilitadas).
 - Al cambiar de semana no hay parpadeo: se conserva la semana anterior mientras carga (`keepPreviousData`).
 - La RPC `replace_trainer_availability` es `security invoker`.
+- La grilla agrega filas fuera de la disponibilidad para mostrar los turnos manuales que caen ahí.
+- El panel del turno muestra las iniciales del alumno: `Avatar` no soporta imagen.
+- Los módulos de la agenda van en `agenda/` en todas las capas (excepción anotada en CONTRIBUTING.md).
