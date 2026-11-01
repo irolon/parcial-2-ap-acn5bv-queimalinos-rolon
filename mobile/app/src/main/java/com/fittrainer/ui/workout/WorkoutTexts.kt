@@ -56,6 +56,9 @@ fun ctaLabel(state: WorkoutUiState): String {
     }
 }
 
+fun setsProgressText(done: Int, total: Int): String =
+    "Llevás $done de $total ${if (total == 1) "serie" else "series"}"
+
 fun missingSetsMessage(n: Int): String =
     if (n == 1) "Te falta 1 serie, ¿terminar igual?" else "Te faltan $n series, ¿terminar igual?"
 
