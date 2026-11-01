@@ -139,3 +139,14 @@ Editar o borrar mensajes, varias fotos por mensaje, fotos en el envío masivo, p
 - Backend (Jest): validaciones; detección de tipo por bytes (JPEG/PNG/WebP válidos; PDF y texto con `Content-Type: image/png` → 415); 413; acceso (PT ajeno, alumno ajeno → 403); envío masivo con un id ajeno → 403 sin insertar; conversaciones ordenadas; unread-count por rol; paginación con `next_before`; read marca solo los del otro rol.
 - Web (Vitest): cliente con `FormData`; formatos de hora y vista previa; composer (Enter / Shift+Enter, foto > 5 MB, quitar foto); burbujas (✓/✓✓, envío masivo); badge (oculto en 0, "9+").
 - E2E en el navegador contra Supabase dev: el criterio de aceptación completo con el PT QA y dos alumnas, foto incluida, y un envío masivo a 5 alumnos (se crean alumnos QA si faltan). Capturas en `docs/superpowers/specs/assets/48/`.
+
+## 8. Ajustes durante la implementación
+
+- `unread-count` del PT cuenta solo los mensajes de alumnos activos.
+- `POST /api/messages/:studentId` acepta también JSON con solo texto, además de `multipart/form-data`.
+- La burbuja fallida muestra el motivo del error y ofrece "Reintentar" y "Descartar".
+- El cliente avisa también cuando el tipo de foto es inválido, no solo cuando pesa más de 5 MB.
+- El `image_url` se mantiene estable 45 min en el cliente (no cambia entre polls) y después se renueva.
+- Envío masivo con selector propio y aviso inline: no hay toasts en la app.
+- El botón "Mensaje" de la ficha aparece solo para alumnos activos.
+- El cursor `before` se basa en `created_at` (microsegundos); un empate dentro de una misma conversación es prácticamente imposible, queda como limitación conocida.

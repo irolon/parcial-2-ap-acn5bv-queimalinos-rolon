@@ -1276,7 +1276,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 | 413 | `IMAGE_TOO_LARGE` | La foto supera 5 MB |
 | 415 | `IMAGE_TYPE_INVALID` | La foto no es JPG, PNG ni WebP (por ejemplo un PDF con `Content-Type: image/png`) |
 
-> Si falla el guardado del mensaje, la foto ya subida se borra del bucket.
+> Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
 
 ### POST /messages/:studentId/read
 

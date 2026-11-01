@@ -332,7 +332,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El PT y el alumno están autenticados en la web. El alumno está activo y es del PT (cada alumno tiene un solo PT). |
+| Precondiciones | El PT y el alumno están autenticados en la web. El alumno es del PT (cada alumno tiene un solo PT). |
 | Postcondiciones | El mensaje (texto y/o una foto) queda guardado en `messages` dentro de la conversación del alumno. El destinatario lo ve en su pantalla "Mensajes" y en el badge de no leídos; al abrir la conversación se marca como leído. |
 | Requisitos | RF PT-13 · HU-24 (tarjeta 48) |
 
@@ -350,7 +350,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - **2a — Envío masivo (PT):** desde "Envío masivo" elige alumnos activos (o "Todos"), escribe un texto (1 a 2000 caracteres, sin fotos) y envía. Se le avisa que cada alumno lo recibe en su conversación individual y que no es un chat grupal. Cada alumno ve el mensaje con la etiqueta "Envío masivo". Si algún alumno no es del PT, no se envía a nadie.
 - **4a — Foto inválida:** la foto pesa más de 5 MB o no es JPEG, PNG ni WebP → se avisa al elegirla y no se adjunta. El servidor lo vuelve a validar (por el contenido real del archivo, no por el tipo declarado) y rechaza con 413 o 415.
 - **E1 — El mensaje no se envía:** falla la red o el servidor → la burbuja queda con "No se envió" y el motivo, con las acciones **Reintentar** y **Descartar**. No se pierde el texto mientras no se descarte.
-- **E2 — Alumno inactivo:** el alumno dado de baja no aparece en la lista del PT ni en el selector del envío masivo, y la ficha no ofrece el botón "Mensaje".
+- **E2 — Alumno inactivo:** el alumno dado de baja no aparece en la lista de conversaciones del PT ni en el selector del envío masivo (ambos solo incluyen alumnos activos), y la ficha no ofrece el botón "Mensaje". La conversación con un alumno inactivo igual se puede abrir desde su URL.
 - **E3 — Conversación ajena:** un PT o alumno que intenta abrir la conversación de otro recibe un error de acceso (403).
 
 **Alcance de esta versión**
