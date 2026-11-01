@@ -1,6 +1,6 @@
 # Logros, rachas y desafíos en mobile — diseño
 
-Tarjeta 15 (https://trello.com/c/ok2sUh8B). Fecha: 31/10/2026.
+Tarjeta 15 (https://trello.com/c/ddYBkRLF). Fecha: 31/10/2026.
 
 ## 1. Objetivo y criterio de aceptación
 
