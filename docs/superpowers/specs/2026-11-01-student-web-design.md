@@ -143,7 +143,10 @@ Lo que cambió respecto de lo de arriba al construirlo (lo implementado manda):
 - **Coma decimal en el peso:** el campo acepta "62,5" además de "62.5".
 - **409 en `POST /sessions` es permanente** (como en el celular). Ante un error permanente la pantalla ofrece **Descartar entrenamiento** (con confirmación); ante los reintentables, solo Reintentar.
 - **Sesión terminada sin guardar:** Hoy ofrece **Terminar de guardar** para retomar la subida.
-- **Semana:** el texto es "N de M entrenamientos · +K extra" cuando se entrenó en días que no eran de la rutina.
+- **Semana:** el texto es "N de M entrenamientos · +K extra": N = días de la rutina entrenados esta semana, M = días de la rutina y K = días entrenados que **no** son de la rutina (plan L-X-V, entrenó L y S: "1 de 3 entrenamientos · +1 extra").
+- **Resumen del entrenamiento:** cuenta las series con reps > 0, igual que el historial.
+- **Dialog compartido:** devuelve el foco al elemento que lo tenía al cerrar, en toda la app.
+- **QueryState compartido:** muestra el error de pantalla solo si no hay datos; un refetch fallido no tapa lo que ya se cargó (en toda la app; Hoy aplica lo mismo en la semana y el descanso).
 - **Rutina del día:** la fecha en Argentina va en la key de la query, así que cambia sola al pasar la medianoche.
 - **Módulos:** las utilidades de Hoy viven en `utils/routines/` (no en `utils/student/`) y `greetingDate` en `utils/dates.js`.
 - **Logros (Task 6) apilados sobre la #42:** la #42 estaba aprobada sin mergear, así que la rama trae su `origin/feature/web-challenges` y la PR muestra esos commits hasta que se mergee.
