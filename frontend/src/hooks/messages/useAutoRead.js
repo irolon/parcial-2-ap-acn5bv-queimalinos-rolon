@@ -19,7 +19,12 @@ export function useAutoRead(studentId, viewerRole, messages) {
     const markIfVisible = () => {
       if (document.visibilityState !== 'visible' || marked.current === lastUnreadId) return;
       marked.current = lastUnreadId;
-      mutate();
+      // Si el POST falla se libera el id: el próximo poll (o volver a la pestaña) reintenta.
+      mutate(undefined, {
+        onError: () => {
+          if (marked.current === lastUnreadId) marked.current = null;
+        },
+      });
     };
     markIfVisible();
     document.addEventListener('visibilitychange', markIfVisible);

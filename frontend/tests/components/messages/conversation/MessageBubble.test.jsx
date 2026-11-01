@@ -55,6 +55,16 @@ describe('MessageBubble', () => {
     expect(onOpenImage).toHaveBeenCalledWith({ url: 'https://x/f.jpg', alt: 'Foto enviada por Laura' });
   });
 
+  it('un mensaje de solo foto cuya firma falló (sin body ni image_url) dice "Foto no disponible", no una burbuja vacía', () => {
+    show({ ...base, body: null, image_url: null });
+    expect(screen.getByText('Foto no disponible')).toBeInTheDocument();
+  });
+
+  it('un mensaje con texto y sin foto no dice "Foto no disponible"', () => {
+    show(base);
+    expect(screen.queryByText('Foto no disponible')).not.toBeInTheDocument();
+  });
+
   it('un temporal enviándose dice "Enviando…" y no muestra hora ni tildes', () => {
     show({ ...base, id: 'tmp-1', status: 'sending' });
     expect(screen.getByText('Enviando…')).toBeInTheDocument();

@@ -42,6 +42,8 @@ export default function MessageBubble({ message, mine, isLastMine, senderName, o
           </button>
         )}
         {body && <p className="whitespace-pre-wrap break-words">{body}</p>}
+        {/* Todo mensaje tiene texto o foto: sin ninguno de los dos, la firma de la foto falló. */}
+        {!body && !imageUrl && <p className="italic opacity-70">Foto no disponible</p>}
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-2 px-1 font-mono text-[9px] text-ink6">
         {message.broadcast_id && <span className="text-cool">Envío masivo</span>}

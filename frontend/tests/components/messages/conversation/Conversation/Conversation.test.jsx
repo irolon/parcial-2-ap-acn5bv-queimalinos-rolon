@@ -1,63 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
-import { configureClient } from '@/api/shared/client';
-import Conversation from '@/components/messages/conversation/Conversation';
-import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
+import { calls, errorResponse, jsonResponse, stubFetch } from '../../../../helpers/shared/fetchMock';
+import { msg, readCalls, setupConversation, show, stubApi } from '../../../../helpers/messages/conversation';
 
 const CURSOR = '2026-10-30T14:00:00.123456+00:00';
-const counterpart = { id: 's-1', name: 'Tomás Ruiz', avatar_url: null };
-const msg = (id, extra) => ({
-  id,
-  student_id: 's-1',
-  sender_role: 'student',
-  body: id,
-  image_url: null,
-  broadcast_id: null,
-  read_at: null,
-  created_at: '2026-10-31T14:00:00+00:00',
-  ...extra,
-});
 
-let queryClient;
-
-beforeEach(() => {
-  configureClient({ getToken: () => 'access-1' });
-  useAuthStore.setState({ user: { id: 't-1', name: 'Laura Pereyra', role: 'trainer' } });
-  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
-});
-
-/** Backend simulado: `pages` por cursor, y el resto de las rutas según `extra`. */
-function stubApi({ first, older, extra = () => null }) {
-  return stubFetch(async (url, init) => {
-    const custom = extra(url, init);
-    if (custom) return custom;
-    if (url.endsWith('/read')) return jsonResponse(200, { data: { updated: 1 } });
-    const body = url.includes('before=') ? older : first;
-    return jsonResponse(200, { data: body.data, meta: { next_before: body.next ?? null }, counterpart });
-  });
-}
-
-function show(role = 'trainer') {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <Conversation studentId="s-1" viewerRole={role} />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
-const readCalls = (fetchMock) => calls(fetchMock).filter(([url]) => url === '/messages/s-1/read');
+setupConversation();
 
 describe('Conversation', () => {
   it('muestra el nombre del otro, los separadores de día y "Ver ficha" solo al PT', async () => {

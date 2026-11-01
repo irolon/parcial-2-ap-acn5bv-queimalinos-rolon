@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import QueryState from '@/components/shared/states/QueryState';
+import ErrorState from '@/components/shared/states/ErrorState';
+import LoadingState from '@/components/shared/states/LoadingState';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useAutoRead } from '@/hooks/messages/useAutoRead';
 import { useMessages } from '@/hooks/messages/useMessages';
@@ -9,11 +10,14 @@ import ConversationHeader from './ConversationHeader';
 import ImageDialog from './ImageDialog';
 import MessageComposer from './MessageComposer';
 import MessageList from './MessageList';
+import RefreshError from './RefreshError';
 
 /**
  * Conversación PT ↔ alumno, compartida por las dos pantallas.
  * `studentId` identifica la conversación; `viewerRole` ('trainer' | 'student') decide qué burbujas son propias
  * y si hay "Ver ficha". `onBack` (opcional) muestra "Volver". Usar `key={studentId}` al cambiar de conversación.
+ * El error de pantalla completa es solo para la primera carga: si un poll falla con datos en caché, se avisa
+ * arriba y el composer sigue montado (no se pierde el texto ni la foto).
  */
 export default function Conversation({ studentId, viewerRole, onBack }) {
   const ownName = useAuthStore((s) => s.user?.name) ?? 'vos';
@@ -29,40 +33,47 @@ export default function Conversation({ studentId, viewerRole, onBack }) {
     send(content);
   };
 
+  const renderBody = () => {
+    if (thread.isPending) return <LoadingState />;
+    if (thread.isError && !thread.data) {
+      return <ErrorState message="No pudimos cargar la conversación." onRetry={() => thread.refetch()} />;
+    }
+    return (
+      <>
+        <ConversationHeader
+          counterpart={thread.counterpart}
+          studentId={studentId}
+          viewerRole={viewerRole}
+          onBack={onBack}
+        />
+        {thread.isError && <RefreshError onRetry={() => thread.refetch()} />}
+        <MessageList
+          messages={messages}
+          viewerRole={viewerRole}
+          counterpartName={thread.counterpart?.name ?? ''}
+          ownName={ownName}
+          hasMore={thread.hasMore}
+          isFetchingOlder={thread.isFetchingOlder}
+          attach={scroll.attach}
+          onScroll={scroll.onScroll}
+          onImageLoad={scroll.onImageLoad}
+          onFetchOlder={thread.fetchOlder}
+          onOpenImage={setImage}
+          onRetry={retry}
+          onDiscard={discard}
+        />
+        <MessageComposer onSend={onSend} />
+        <ImageDialog image={image} onClose={() => setImage(null)} />
+      </>
+    );
+  };
+
   return (
     <section
       aria-label="Conversación"
       className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-ink3 bg-ink0"
     >
-      <QueryState query={thread} errorMessage="No pudimos cargar la conversación.">
-        {() => (
-          <>
-            <ConversationHeader
-              counterpart={thread.counterpart}
-              studentId={studentId}
-              viewerRole={viewerRole}
-              onBack={onBack}
-            />
-            <MessageList
-              messages={messages}
-              viewerRole={viewerRole}
-              counterpartName={thread.counterpart?.name ?? ''}
-              ownName={ownName}
-              hasMore={thread.hasMore}
-              isFetchingOlder={thread.isFetchingOlder}
-              attach={scroll.attach}
-              onScroll={scroll.onScroll}
-              onImageLoad={scroll.onImageLoad}
-              onFetchOlder={thread.fetchOlder}
-              onOpenImage={setImage}
-              onRetry={retry}
-              onDiscard={discard}
-            />
-            <MessageComposer onSend={onSend} />
-            <ImageDialog image={image} onClose={() => setImage(null)} />
-          </>
-        )}
-      </QueryState>
+      {renderBody()}
     </section>
   );
 }
