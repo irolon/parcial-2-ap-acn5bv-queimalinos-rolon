@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "8e0a91706578affc75418c9280b35d6a",
+    "identityHash": "14416372b88ff36a014a101fb3226de2",
     "entities": [
       {
         "tableName": "health_snapshot",
@@ -431,7 +431,7 @@
       },
       {
         "tableName": "workout_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `routineExerciseId` TEXT, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `name` TEXT NOT NULL, `muscleGroup` TEXT, `equipment` TEXT, `description` TEXT, `videoUrl` TEXT, `sets` INTEGER, `reps` INTEGER, `restSeconds` INTEGER, `suggestedKg` REAL, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `routineExerciseId` TEXT, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `name` TEXT NOT NULL, `muscleGroup` TEXT, `equipment` TEXT, `description` TEXT, `videoUrl` TEXT, `sets` INTEGER, `reps` INTEGER, `restSeconds` INTEGER, `suggestedKg` REAL, `restOverrideSeconds` INTEGER, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sessionId",
@@ -506,6 +506,11 @@
             "fieldPath": "suggestedKg",
             "columnName": "suggestedKg",
             "affinity": "REAL"
+          },
+          {
+            "fieldPath": "restOverrideSeconds",
+            "columnName": "restOverrideSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -531,7 +536,7 @@
       },
       {
         "tableName": "workout_sets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `routineExerciseId` TEXT, `setNumber` INTEGER NOT NULL, `actualKg` REAL NOT NULL, `actualReps` INTEGER NOT NULL, `executedAt` INTEGER NOT NULL, `syncState` TEXT NOT NULL DEFAULT 'PENDING', `syncError` TEXT, `failureSeen` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `routineExerciseId` TEXT, `setNumber` INTEGER NOT NULL, `actualKg` REAL NOT NULL, `actualReps` INTEGER NOT NULL, `executedAt` INTEGER NOT NULL, `syncState` TEXT NOT NULL DEFAULT 'PENDING', `syncError` TEXT, `failureSeen` INTEGER NOT NULL DEFAULT 0, `restSeconds` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -609,6 +614,11 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "restSeconds",
+            "columnName": "restSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -763,7 +773,7 @@
       },
       {
         "tableName": "history_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `originalExerciseName` TEXT, `plannedSets` INTEGER, `plannedReps` INTEGER, `plannedKg` REAL, `isPr` INTEGER NOT NULL, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `originalExerciseName` TEXT, `plannedSets` INTEGER, `plannedReps` INTEGER, `plannedKg` REAL, `isPr` INTEGER NOT NULL, `plannedRestSeconds` INTEGER, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sessionId",
@@ -808,6 +818,11 @@
             "columnName": "isPr",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "plannedRestSeconds",
+            "columnName": "plannedRestSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -833,7 +848,7 @@
       },
       {
         "tableName": "history_sets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `exercisePosition` INTEGER NOT NULL, `setNumber` INTEGER NOT NULL, `reps` INTEGER, `kg` REAL, `executedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `exercisePosition` INTEGER NOT NULL, `setNumber` INTEGER NOT NULL, `reps` INTEGER, `kg` REAL, `executedAt` INTEGER NOT NULL, `restSeconds` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -874,6 +889,11 @@
             "columnName": "executedAt",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "restSeconds",
+            "columnName": "restSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -1220,136 +1240,11 @@
             "ownerId"
           ]
         }
-      },
-      {
-        "tableName": "notifications",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ownerId` TEXT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `body` TEXT, `dataJson` TEXT NOT NULL, `read` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "type",
-            "columnName": "type",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "title",
-            "columnName": "title",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "body",
-            "columnName": "body",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "dataJson",
-            "columnName": "dataJson",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "read",
-            "columnName": "read",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_notifications_ownerId_createdAt",
-            "unique": false,
-            "columnNames": [
-              "ownerId",
-              "createdAt"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_notifications_ownerId_createdAt` ON `${TABLE_NAME}` (`ownerId`, `createdAt`)"
-          }
-        ]
-      },
-      {
-        "tableName": "notifications_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `everLoaded` INTEGER NOT NULL, `nextBefore` TEXT, PRIMARY KEY(`ownerId`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "everLoaded",
-            "columnName": "everLoaded",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "nextBefore",
-            "columnName": "nextBefore",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId"
-          ]
-        }
-      },
-      {
-        "tableName": "notification_pending_reads",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `notificationId` TEXT NOT NULL, PRIMARY KEY(`ownerId`, `notificationId`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "notificationId",
-            "columnName": "notificationId",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId",
-            "notificationId"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8e0a91706578affc75418c9280b35d6a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '14416372b88ff36a014a101fb3226de2')"
     ]
   }
 }

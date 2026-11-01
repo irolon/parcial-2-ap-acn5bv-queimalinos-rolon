@@ -123,8 +123,9 @@ private fun SessionSetsResult.resolve(batch: List<WorkoutSetEntity>): SetResults
 private fun WorkoutSessionEntity.toRequest() =
     CreateSessionRequest(id, routineId, iso(startedAt), finishedAt?.let { iso(maxOf(it, startedAt)) }, rpe, notes)
 
-private fun WorkoutSetEntity.toDto() = SessionSetDto(
+internal fun WorkoutSetEntity.toDto() = SessionSetDto(
     id, exerciseId, originalExerciseId, routineExerciseId, setNumber, actualReps, actualKg, iso(executedAt),
+    restSeconds,
 )
 
 private fun iso(millis: Long): String = Instant.ofEpochMilli(millis).toString()

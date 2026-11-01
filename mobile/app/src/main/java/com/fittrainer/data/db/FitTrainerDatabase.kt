@@ -56,10 +56,10 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         NotificationMetaEntity::class,
         NotificationPendingReadEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
-    // Cada versión nueva suma su migración y su caso en un test de migración (FitTrainerDatabaseMigrationTest o el suyo, como el 9→10).
+    // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -70,6 +70,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9),
         AutoMigration(from = 9, to = 10),
+        AutoMigration(from = 10, to = 11),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {

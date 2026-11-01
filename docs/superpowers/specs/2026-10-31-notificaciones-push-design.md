@@ -96,12 +96,12 @@ Que el alumno se entere de lo que pasa con su entrenamiento aunque tenga la app 
 - Payload del push: `data` lleva lo de la fila más `type` y `notification_id`, todo como texto. `exercise_ids` llega como JSON serializado y hay que parsearlo.
 - El listado devuelve también tipos que el alumno no recibe por push. **El celular muestra solo `comment`, `pr` y `achievement`** y descarta los demás. Decisión de Claude, para no mostrar algo sin pantalla a dónde ir.
 
-### 4.2 Caché (Room, v10)
+### 4.2 Caché (Room, v11)
 - Tres tablas por dueño (`ownerId`):
   - `notifications`: `id`, `type`, `title`, `body`, `data` (JSON en texto), `read`, `createdAt`;
   - `notifications_meta`: `everLoaded` (algún refresco terminó bien: distingue "cargando por primera vez" de "sin avisos") y `nextBefore` (el cursor de "Ver más" del tramo bajado de corrido desde la página 1; no se deduce de las filas);
   - `notification_pending_reads`: las lecturas que faltan subir. Es aparte para que la marca sobreviva aunque la fila no esté guardada (push tocado con la app cerrada) o la borre un refresco.
-- Room **v10, `AutoMigration(9 → 10)`**. La v9 es de la tarjeta 13.
+- Room **v11, `AutoMigration(10 → 11)`**. La v9 es del descanso ajustable (#51) y la v10, de los gráficos (tarjeta 13).
 - Se borra con el resto de los datos al cerrar sesión o cambiar de cuenta, como las tablas del historial y de los gráficos.
 - **Hueco o solapamiento** al refrescar: se compara el `created_at` más viejo de la página 1 tal como vino (con los tipos que no se guardan) con el más nuevo guardado. Si la página llega hasta lo guardado, el tramo sigue contiguo y se conserva el cursor; si no, lo viejo se borra y sigue el cursor del servidor. Una página 1 solo de tipos ajenos al alumno no es un hueco si llega hasta lo guardado.
 - **Marcar leído offline-first** (decisión de Claude, siguiendo la regla de escrituras de `AGENTS.md`):
@@ -148,7 +148,7 @@ La UI lee de Room con `Flow`, el repositorio refresca Room y el ViewModel no ve 
 - repositorio: refresco y paginación, marcar leído pendiente que un refresco no pisa, subida de pendientes, 404 al marcar (se descarta);
 - token: alta al loguear, alta en `onNewToken`, baja antes del logout y logout que sigue si falla.
 
-**Instrumentadas:** DAO y migración 9 → 10.
+**Instrumentadas:** DAO y migración 10 → 11 (`MigrationV11Test`).
 
 **A mano (emulador, `alumna.card8`):**
 1. Sin cuenta de servicio: se carga una notificación en Supabase dev y aparece en la campana y en la lista. Al tocarla se abre su destino y queda leída.

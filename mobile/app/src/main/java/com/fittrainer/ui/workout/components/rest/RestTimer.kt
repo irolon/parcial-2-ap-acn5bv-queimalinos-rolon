@@ -1,4 +1,4 @@
-package com.fittrainer.ui.workout.components
+package com.fittrainer.ui.workout.components.rest
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement

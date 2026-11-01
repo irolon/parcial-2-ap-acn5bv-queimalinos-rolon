@@ -4,7 +4,7 @@
 
 **Objetivo:** que el alumno vea en Progreso → Gráficos la curva de carga de cada ejercicio y la evolución de sus medidas, con período elegible y también sin conexión.
 
-> **Cambio tras la revisión de la PR #44 (1/11):** la lista del desplegable sale de `GET /progress/overview` guardado en `progress_exercises` (Room v9, misma `AutoMigration(8 → 9)`), no del historial. Se descartaron la columna `history_exercises.exerciseId` y su relleno (Tareas 1 y 2), y `di/ProgressModule.kt` pasó a `di/CacheCleanersModule.kt`. El detalle vigente está en el spec, §4.1.
+> **Cambio tras la revisión de la PR #44 (1/11):** la lista del desplegable sale de `GET /progress/overview` guardado en `progress_exercises`, no del historial. Como la v9 de Room la tomó la #51 (descanso ajustable), las tablas de progreso van en la **v10** (`AutoMigration(9 → 10)`, caso en `MigrationV10Test`); donde abajo dice v9, léase v10. Se descartaron la columna `history_exercises.exerciseId` y su relleno (Tareas 1 y 2), y `di/ProgressModule.kt` pasó a `di/CacheCleanersModule.kt`. El detalle vigente está en el spec, §4.1.
 
 **Arquitectura:** Room v9 suma `exerciseId` a `history_exercises` y tres tablas de caché (`progress_*`). `ProgressRepository` baja el historial completo de un ejercicio (`GET /progress/exercise/:id`) o de las medidas (`GET /progress/body/:studentId`) y reemplaza el caché; la UI lee de Room y filtra el período en memoria con funciones puras. La pestaña Progreso pasa a tener dos solapas (Historial de la 12, Gráficos nueva).
 

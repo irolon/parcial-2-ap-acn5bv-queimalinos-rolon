@@ -38,6 +38,8 @@ data class SessionSetDto(
     @SerialName("actual_reps") val actualReps: Int,
     @SerialName("actual_kg") val actualKg: Double,
     @SerialName("executed_at") val executedAt: String,
+    /** Descanso real después de la serie; null = sin dato. */
+    @SerialName("rest_seconds") val restSeconds: Int? = null,
 )
 
 @Serializable

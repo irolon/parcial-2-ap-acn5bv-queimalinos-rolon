@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "bebde53b3548602e0953369e5062f6f2",
+    "identityHash": "45c94ca72c99b838c00de25ab73c095c",
     "entities": [
       {
         "tableName": "health_snapshot",
@@ -431,7 +431,7 @@
       },
       {
         "tableName": "workout_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `routineExerciseId` TEXT, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `name` TEXT NOT NULL, `muscleGroup` TEXT, `equipment` TEXT, `description` TEXT, `videoUrl` TEXT, `sets` INTEGER, `reps` INTEGER, `restSeconds` INTEGER, `suggestedKg` REAL, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `routineExerciseId` TEXT, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `name` TEXT NOT NULL, `muscleGroup` TEXT, `equipment` TEXT, `description` TEXT, `videoUrl` TEXT, `sets` INTEGER, `reps` INTEGER, `restSeconds` INTEGER, `suggestedKg` REAL, `restOverrideSeconds` INTEGER, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sessionId",
@@ -506,6 +506,11 @@
             "fieldPath": "suggestedKg",
             "columnName": "suggestedKg",
             "affinity": "REAL"
+          },
+          {
+            "fieldPath": "restOverrideSeconds",
+            "columnName": "restOverrideSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -531,7 +536,7 @@
       },
       {
         "tableName": "workout_sets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `routineExerciseId` TEXT, `setNumber` INTEGER NOT NULL, `actualKg` REAL NOT NULL, `actualReps` INTEGER NOT NULL, `executedAt` INTEGER NOT NULL, `syncState` TEXT NOT NULL DEFAULT 'PENDING', `syncError` TEXT, `failureSeen` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseId` TEXT NOT NULL, `originalExerciseId` TEXT, `routineExerciseId` TEXT, `setNumber` INTEGER NOT NULL, `actualKg` REAL NOT NULL, `actualReps` INTEGER NOT NULL, `executedAt` INTEGER NOT NULL, `syncState` TEXT NOT NULL DEFAULT 'PENDING', `syncError` TEXT, `failureSeen` INTEGER NOT NULL DEFAULT 0, `restSeconds` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -609,6 +614,11 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "restSeconds",
+            "columnName": "restSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -763,7 +773,7 @@
       },
       {
         "tableName": "history_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `originalExerciseName` TEXT, `plannedSets` INTEGER, `plannedReps` INTEGER, `plannedKg` REAL, `isPr` INTEGER NOT NULL, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `originalExerciseName` TEXT, `plannedSets` INTEGER, `plannedReps` INTEGER, `plannedKg` REAL, `isPr` INTEGER NOT NULL, `plannedRestSeconds` INTEGER, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sessionId",
@@ -808,6 +818,11 @@
             "columnName": "isPr",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "plannedRestSeconds",
+            "columnName": "plannedRestSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -833,7 +848,7 @@
       },
       {
         "tableName": "history_sets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `exercisePosition` INTEGER NOT NULL, `setNumber` INTEGER NOT NULL, `reps` INTEGER, `kg` REAL, `executedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `exercisePosition` INTEGER NOT NULL, `setNumber` INTEGER NOT NULL, `reps` INTEGER, `kg` REAL, `executedAt` INTEGER NOT NULL, `restSeconds` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -874,6 +889,11 @@
             "columnName": "executedAt",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "restSeconds",
+            "columnName": "restSeconds",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -936,295 +956,11 @@
             "sessionId"
           ]
         }
-      },
-      {
-        "tableName": "progress_exercise_points",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `date` TEXT NOT NULL, `maxKg` REAL, `e1rmKg` REAL, `sets` INTEGER NOT NULL, `reps` INTEGER NOT NULL, PRIMARY KEY(`ownerId`, `exerciseId`, `date`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "exerciseId",
-            "columnName": "exerciseId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "date",
-            "columnName": "date",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "maxKg",
-            "columnName": "maxKg",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "e1rmKg",
-            "columnName": "e1rmKg",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "sets",
-            "columnName": "sets",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "reps",
-            "columnName": "reps",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId",
-            "exerciseId",
-            "date"
-          ]
-        }
-      },
-      {
-        "tableName": "progress_exercise_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `defaultMetric` TEXT NOT NULL, `prMaxKg` REAL, `prMaxKgDate` TEXT, `prE1rmKg` REAL, `prE1rmDate` TEXT, `fetchedAt` INTEGER NOT NULL, `trainedMarker` TEXT, PRIMARY KEY(`ownerId`, `exerciseId`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "exerciseId",
-            "columnName": "exerciseId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "defaultMetric",
-            "columnName": "defaultMetric",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "prMaxKg",
-            "columnName": "prMaxKg",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "prMaxKgDate",
-            "columnName": "prMaxKgDate",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "prE1rmKg",
-            "columnName": "prE1rmKg",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "prE1rmDate",
-            "columnName": "prE1rmDate",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "fetchedAt",
-            "columnName": "fetchedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "trainedMarker",
-            "columnName": "trainedMarker",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId",
-            "exerciseId"
-          ]
-        }
-      },
-      {
-        "tableName": "progress_body_points",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ownerId` TEXT NOT NULL, `recordedAt` INTEGER NOT NULL, `weightKg` REAL, `heightCm` REAL, `bodyFatPct` REAL, `waistCm` REAL, `hipCm` REAL, `chestCm` REAL, `bmi` REAL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "recordedAt",
-            "columnName": "recordedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "weightKg",
-            "columnName": "weightKg",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "heightCm",
-            "columnName": "heightCm",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "bodyFatPct",
-            "columnName": "bodyFatPct",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "waistCm",
-            "columnName": "waistCm",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "hipCm",
-            "columnName": "hipCm",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "chestCm",
-            "columnName": "chestCm",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "bmi",
-            "columnName": "bmi",
-            "affinity": "REAL"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_progress_body_points_ownerId_recordedAt",
-            "unique": false,
-            "columnNames": [
-              "ownerId",
-              "recordedAt"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_progress_body_points_ownerId_recordedAt` ON `${TABLE_NAME}` (`ownerId`, `recordedAt`)"
-          }
-        ]
-      },
-      {
-        "tableName": "progress_body_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `fetchedAt` INTEGER NOT NULL, PRIMARY KEY(`ownerId`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "fetchedAt",
-            "columnName": "fetchedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId"
-          ]
-        }
-      },
-      {
-        "tableName": "progress_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `name` TEXT NOT NULL, `days` INTEGER NOT NULL, `lastDate` TEXT NOT NULL, PRIMARY KEY(`ownerId`, `exerciseId`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "exerciseId",
-            "columnName": "exerciseId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "days",
-            "columnName": "days",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "lastDate",
-            "columnName": "lastDate",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId",
-            "exerciseId"
-          ]
-        }
-      },
-      {
-        "tableName": "progress_exercises_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `fetchedAt` INTEGER NOT NULL, PRIMARY KEY(`ownerId`))",
-        "fields": [
-          {
-            "fieldPath": "ownerId",
-            "columnName": "ownerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "fetchedAt",
-            "columnName": "fetchedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "ownerId"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bebde53b3548602e0953369e5062f6f2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '45c94ca72c99b838c00de25ab73c095c')"
     ]
   }
 }

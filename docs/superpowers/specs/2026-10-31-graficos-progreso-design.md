@@ -85,7 +85,7 @@ Antes la lista salía de `history_exercises`, que solo tiene las últimas 20 ses
 - **Nunca bajada no es lo mismo que vacía.** Mientras la lista no se bajó nunca, no se sabe si el alumno entrenó: se ve la carga, "Conectate una vez" o la falla con Reintentar (§3.4). "Terminá tu primera sesión" sale solo con la lista bajada y vacía.
 - **El marcador del caché de cada ejercicio** sale de la lista: `last_date/days` del ejercicio al momento del pedido. Si la lista nueva trae otro (lo entrenó otro día), el ejercicio se vuelve a pedir aunque no hayan pasado 5 minutos. Dos sesiones del mismo ejercicio el mismo día no cambian el marcador: esa curva se actualiza a los 5 minutos o con Reintentar.
 
-### 4.2 Caché de los gráficos (Room, misma v9)
+### 4.2 Caché de los gráficos (Room v10)
 
 - `progress_exercise_points`: `exerciseId`, `date`, `maxKg?`, `e1rmKg?`, `reps`, `sets`. Clave (`exerciseId`, `date`).
 - `progress_exercise_meta`: `exerciseId` (PK), `defaultMetric`, `prMaxKg?`, `prMaxKgDate?`, `prE1rmKg?`, `prE1rmDate?`, `fetchedAt`.
@@ -93,7 +93,7 @@ Antes la lista salía de `history_exercises`, que solo tiene las últimas 20 ses
 - `progress_exercises`: `exerciseId`, `name`, `days`, `lastDate`. Clave (`ownerId`, `exerciseId`). Es la lista del desplegable.
 - `progress_exercises_meta`: `ownerId` (PK), `fetchedAt`. Sin fila, la lista nunca se bajó.
 
-Todas van por dueño (`ownerId`). La v9 suma solo tablas nuevas (`AutoMigration(8 → 9)`); las de la v8 quedan iguales.
+Todas van por dueño (`ownerId`). La v10 suma solo tablas nuevas (`AutoMigration(9 → 10)`); las de la v9 quedan iguales. Al principio era la v9, pero la v9 la tomó el descanso ajustable (#51), que entró antes a `develop`.
 
 Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas, o la lista) en una transacción. Las tablas se borran con el resto de los datos al cerrar sesión o cambiar de cuenta, como las del historial.
 
@@ -124,7 +124,7 @@ Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas, o la 
 - Campos de medidas con datos y orden.
 - Repositorio: reemplazo transaccional, regla de los 5 minutos, 404 saca el ejercicio, error 5xx no borra lo guardado; lista del overview (nunca bajada vs vacía, `from` en hora de Argentina).
 - Estados: lista nunca bajada no da "Terminá tu primera sesión"; un solo aviso de error cuando no hay datos.
-- Migración 8 → 9 en `FitTrainerDatabaseMigrationTest`.
+- Migración 9 → 10 en `MigrationV10Test` (`androidTest/.../data/db/migration/`).
 
 **A mano (emulador, con `alumna.card8`):**
 1. Con sesiones terminadas, Progreso → Gráficos → Cargas muestra la curva del último ejercicio; cambiar ejercicio, métrica y período.

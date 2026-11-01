@@ -34,7 +34,7 @@ tarjeta: 17
   - el badge muestra "9+" si pasa de 9
 - Zona horaria de los grupos y del tiempo relativo: `America/Argentina/Buenos_Aires`, inyectada como `ZoneId` / `Clock` (igual que el historial).
 - Los agentes no commitean: el paso "Commit" de cada tarea es **snapshot** (lo maneja el controlador). Igna commitea.
-- Room pasa a **v10** con `AutoMigration(from = 9, to = 10)`. Se regenera `app/schemas/.../10.json`.
+- Room pasa a **v11** con `AutoMigration(from = 10, to = 11)`. Se regenera `app/schemas/.../11.json`. (Al escribir el plan era la v10; la v9 la tomó el descanso ajustable y la v10 los gráficos, así que donde abajo dice v10 o 9→10, léase v11 o 10→11, con el caso en `MigrationV11Test`.)
 - La rama sale de `feature/android-graficos` (#44), que trae Room v9 y la pantalla de Gráficos.
 
 ## Review Focus

@@ -131,6 +131,7 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
                 },
                 onDismissError = viewModel::dismissError,
                 onReplaceLocked = { scope.launch { snackbar.flash(REPLACE_LOCKED) } },
+                onPlannedRestAdjust = viewModel::onPlannedRestAdjust,
             ),
         )
         // Encima de Técnica / Reemplazar: el aviso no tapa los botones mientras se ve.
