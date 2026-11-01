@@ -84,6 +84,12 @@ describe('MyAchievements: Tus logros', () => {
     expect(logros.queryByRole('list')).toBeNull();
   });
 
+  it('si la respuesta no trae el catálogo, no se cae y dice que todavía no desbloqueaste logros', async () => {
+    renderMine({ progress: { streak: {}, facts: {}, assigned_days: [] } });
+    expect(await block('Tus logros').findByText('Todavía no desbloqueaste logros')).toBeVisible();
+    expect(block('Tus logros').queryByRole('alert')).toBeNull();
+  });
+
   it('con todo desbloqueado no queda lista de bloqueados ni texto de vacío', async () => {
     renderMine({ progress: progressOf([unlocked('Hecho', '2026-10-20T12:00:00Z')]) });
     const logros = block('Tus logros');
