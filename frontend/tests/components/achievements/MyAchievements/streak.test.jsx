@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { calls } from '../../../helpers/shared/fetchMock';
 import { block, renderMine } from '../../../helpers/achievements/renderMine';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 afterEach(() => {
   vi.unstubAllGlobals();

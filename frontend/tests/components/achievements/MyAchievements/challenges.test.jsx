@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
 import { assignment } from '../../../helpers/achievements/gamification';
 import { block, renderMine } from '../../../helpers/achievements/renderMine';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 afterEach(() => {
   vi.unstubAllGlobals();

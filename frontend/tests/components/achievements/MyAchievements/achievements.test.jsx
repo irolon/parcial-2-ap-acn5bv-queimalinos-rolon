@@ -3,6 +3,9 @@ import { within } from '@testing-library/react';
 import { calls } from '../../../helpers/shared/fetchMock';
 import { achievement, progressOf, unlocked } from '../../../helpers/achievements/gamification';
 import { block, renderMine } from '../../../helpers/achievements/renderMine';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 afterEach(() => {
   vi.unstubAllGlobals();

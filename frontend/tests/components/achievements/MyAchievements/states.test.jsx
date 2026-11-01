@@ -3,6 +3,9 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { DEFAULT_DATA } from '../../../helpers/achievements/gamification';
 import { block, renderMine } from '../../../helpers/achievements/renderMine';
+import { allowSlowScreens } from '../../../helpers/student/patience';
+
+allowSlowScreens();
 
 afterEach(() => {
   vi.unstubAllGlobals();
