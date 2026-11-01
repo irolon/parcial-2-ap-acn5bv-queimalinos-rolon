@@ -14,11 +14,12 @@ const STATS = [
 
 /**
  * Por campo, el último valor cargado del historial y la diferencia contra el anterior de ese campo.
- * El IMC viene del backend y su diferencia no lleva unidad.
+ * El IMC viene del backend y su diferencia no lleva unidad. El entrenador la ve como "Antropometría";
+ * el alumno, con su `title` ("Medidas actuales").
  */
-export default function AnthropometryCard({ metrics, extra }) {
+export default function AnthropometryCard({ metrics, extra, title = 'Antropometría' }) {
   return (
-    <Card title="Antropometría" extra={extra}>
+    <Card title={title} extra={extra}>
       {metrics.length > 0 ? (
         <div className="grid grid-cols-2 gap-4">
           {STATS.map(({ field, label, unit }) => {
