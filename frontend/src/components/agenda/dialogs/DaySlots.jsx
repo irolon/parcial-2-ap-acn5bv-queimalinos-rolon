@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { DAY_NAMES, hourLabel, hourOptions } from './availability';
+import { hourLabel } from '@/utils/agenda';
+import { DAY_NAMES, hourOptions } from './availabilityForm';
 
 const FROM_OPTIONS = hourOptions(0, 22);
 const TO_OPTIONS = hourOptions(1, 23);

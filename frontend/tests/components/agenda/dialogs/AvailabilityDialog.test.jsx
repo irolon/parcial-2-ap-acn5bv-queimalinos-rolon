@@ -10,7 +10,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const SAVED = [{ weekday: 1, start_time: '08:00:00', end_time: '12:00:00' }];
+const SAVED = [{ weekday: 1, start_time: '08:00', end_time: '12:00' }];
 
 function setup({ put } = {}) {
   const fetchMock = stubFetch(async (url, init) => {

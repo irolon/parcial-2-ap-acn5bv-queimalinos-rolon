@@ -1,4 +1,5 @@
-import { appointmentCell, hourRange, slotKey } from '@/utils/agenda';
+import { appointmentCell, hourRange } from './cells';
+import { slotKey } from './time';
 
 const visible = (appt, showCancelled) => showCancelled || appt.status !== 'cancelled';
 

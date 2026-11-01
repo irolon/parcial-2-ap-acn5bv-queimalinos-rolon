@@ -38,3 +38,6 @@ export const slotIso = (date, hour) => new Date(parseDay(date).getTime() + hour 
 
 /** Clave estable de una celda del calendario. */
 export const slotKey = (date, hour) => `${date}T${pad(hour)}`;
+
+/** Etiqueta de una hora en punto: `9` → `09:00`. */
+export const hourLabel = (hour) => `${pad(hour)}:00`;

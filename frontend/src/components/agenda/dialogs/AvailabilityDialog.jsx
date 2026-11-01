@@ -5,13 +5,13 @@ import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
 import { useAvailability, useSaveAvailability } from '@/hooks/agenda/useAgenda';
 import { validateSlots } from '@/utils/agenda';
-import { DAY_NAMES, NEW_SLOT, normalizeSlots, serverErrors } from './availability';
+import { DAY_NAMES, NEW_SLOT, serverErrors } from './availabilityForm';
 import DaySlots from './DaySlots';
 
 const DAYS = DAY_NAMES.map((_, i) => i + 1);
 
 function Form({ initial, save, onClose }) {
-  const [slots, setSlots] = useState(() => normalizeSlots(initial));
+  const [slots, setSlots] = useState(initial);
   const [errors, setErrors] = useState({});
   const [general, setGeneral] = useState(null);
 

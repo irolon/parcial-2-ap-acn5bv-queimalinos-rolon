@@ -7,7 +7,7 @@ import Textarea from '@/components/shared/ui/Textarea';
 import { useAppointments, useCreateAppointment, useFreeSlots } from '@/hooks/agenda/useAgenda';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
 import { arParts } from '@/utils/agenda';
-import { MAX_NOTES, hourChoices, scheduledAt } from './newAppointment';
+import { MAX_NOTES, hourChoices, scheduledAt } from './newAppointmentForm';
 
 const SLOT_TAKEN = 'Ese horario ya está ocupado';
 

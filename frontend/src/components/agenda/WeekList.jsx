@@ -1,6 +1,5 @@
-import { appointmentCell } from '@/utils/agenda';
+import { appointmentCell, groupByCell } from '@/utils/agenda';
 import AppointmentBlock from './AppointmentBlock';
-import { groupByCell } from './groupAppointments';
 
 const pad = (n) => String(n).padStart(2, '0');
 

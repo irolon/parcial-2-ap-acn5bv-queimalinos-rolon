@@ -1,5 +1,4 @@
-import { arParts, slotIso } from '@/utils/agenda';
-import { hourLabel } from './availability';
+import { arParts, hourLabel, slotIso } from '@/utils/agenda';
 
 export const FIRST_HOUR = 6;
 export const LAST_HOUR = 22;

@@ -1,6 +1,5 @@
-import { isAvailable, slotKey } from '@/utils/agenda';
+import { gridHours, groupByCell, isAvailable, slotKey } from '@/utils/agenda';
 import AppointmentBlock from './AppointmentBlock';
-import { gridHours, groupByCell } from './groupAppointments';
 
 const COLS = 'grid grid-cols-[50px_repeat(7,minmax(0,1fr))]';
 const pad = (n) => String(n).padStart(2, '0');

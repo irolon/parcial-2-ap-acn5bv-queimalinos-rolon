@@ -23,4 +23,4 @@ export const appt = (overrides = {}) => ({
 });
 
 /** Lunes a viernes de 09:00 a 13:00. */
-export const AVAILABILITY = [1, 2, 3, 4, 5].map((weekday) => ({ weekday, start_time: '09:00:00', end_time: '13:00:00' }));
+export const AVAILABILITY = [1, 2, 3, 4, 5].map((weekday) => ({ weekday, start_time: '09:00', end_time: '13:00' }));

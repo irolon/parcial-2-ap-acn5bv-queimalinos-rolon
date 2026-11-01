@@ -1,22 +1,11 @@
-import { WEEKDAYS_LONG } from '@/utils/agenda';
-import { pad } from '@/utils/dates';
+import { WEEKDAYS_LONG, hourLabel } from '@/utils/agenda';
 
 export const DAY_NAMES = WEEKDAYS_LONG.map((name) => name[0].toUpperCase() + name.slice(1));
 export const NEW_SLOT = { start_time: '09:00', end_time: '10:00' };
 
-export const hourLabel = (hour) => `${pad(hour)}:00`;
-
 /** Opciones de hora en punto `from`..`to` (inclusive) para un select. */
 export const hourOptions = (from, to) =>
   Array.from({ length: to - from + 1 }, (_, i) => ({ value: String(from + i), label: hourLabel(from + i) }));
-
-/** El backend devuelve `HH:MM:SS`; el formulario trabaja con `HH:00`. */
-export const normalizeSlots = (slots) =>
-  slots.map(({ weekday, start_time, end_time }) => ({
-    weekday,
-    start_time: start_time.slice(0, 5),
-    end_time: end_time.slice(0, 5),
-  }));
 
 const FIELD_INDEX = /^slots\[(\d+)\]/;
 
