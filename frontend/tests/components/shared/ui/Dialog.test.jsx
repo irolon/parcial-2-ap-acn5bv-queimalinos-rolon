@@ -83,4 +83,43 @@ describe('Dialog: foco al cerrar', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Afuera' })).toBeVisible();
   });
+
+  it('sin onCloseAutoFocus el foco vuelve al elemento que lo tenía al abrir, aunque no haya Trigger', async () => {
+    function Opener() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>Abrir</button>
+          <Dialog open={open} onOpenChange={setOpen} title="Borrar">
+            <button type="button" onClick={() => setOpen(false)}>Listo</button>
+          </Dialog>
+        </>
+      );
+    }
+    render(<Opener />);
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir' }));
+    expect(screen.getByRole('dialog')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Abrir' })).toHaveFocus());
+  });
+
+  it('si el elemento que tenía el foco ya no está en el DOM, no rompe al cerrar', async () => {
+    function Vanishing() {
+      const [open, setOpen] = useState(false);
+      const [gone, setGone] = useState(false);
+      return (
+        <>
+          {!gone && <button type="button" onClick={() => setOpen(true)}>Abrir</button>}
+          <Dialog open={open} onOpenChange={setOpen} title="Borrar">
+            <button type="button" onClick={() => { setGone(true); setOpen(false); }}>Listo</button>
+          </Dialog>
+        </>
+      );
+    }
+    render(<Vanishing />);
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Abrir' })).not.toBeInTheDocument();
+  });
 });
