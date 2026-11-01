@@ -51,13 +51,22 @@ class TrainerHomeViewModelTest {
         assertFalse(s.noStudents)
     }
 
-    @Test fun `al volver a entrar refresca de nuevo (lo comentado en E4 sale de atencion)`() = runTest {
+    @Test fun `al volver a entrar refresca de nuevo (lo comentado en E4 sale de feedback)`() = runTest {
         started()
-        api.response = overviewDto().copy(attention = emptyList())
+        api.response = overviewDto(feedback = emptyList())
         vm.onStart()
         advanceUntilIdle()
         assertEquals(2, api.calls)
-        assertTrue(vm.uiState.value.overview!!.attention.isEmpty())
+        assertTrue(vm.uiState.value.overview!!.feedback.isEmpty())
+    }
+
+    @Test fun `arranca en Hoy y el filtro elegido sobrevive a un refresh`() = runTest {
+        started()
+        assertEquals(HomeFilter.TODAY, vm.uiState.value.filter)
+        vm.onFilter(HomeFilter.FEEDBACK)
+        vm.onPullToRefresh()
+        advanceUntilIdle()
+        assertEquals(HomeFilter.FEEDBACK, vm.uiState.value.filter)
     }
 
     @Test fun `sin alumnos muestra el estado de invitar`() = runTest {

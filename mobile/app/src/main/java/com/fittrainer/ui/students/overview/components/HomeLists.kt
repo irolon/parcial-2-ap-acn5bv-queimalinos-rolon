@@ -17,31 +17,51 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.fittrainer.data.students.overview.AttentionItem
-import com.fittrainer.data.students.overview.RecentItem
-import com.fittrainer.ui.students.overview.attentionLine
-import com.fittrainer.ui.students.overview.recentLine
-import com.fittrainer.ui.students.overview.relativeTime
+import com.fittrainer.data.students.overview.FeedbackItem
+import com.fittrainer.data.students.overview.RiskItem
+import com.fittrainer.data.students.overview.StudentItem
+import com.fittrainer.data.students.overview.StudentStatus
+import com.fittrainer.data.students.overview.TodayItem
 import com.fittrainer.ui.students.components.StudentAvatar
 import com.fittrainer.ui.students.initials
+import com.fittrainer.ui.students.overview.feedbackLine
+import com.fittrainer.ui.students.overview.pctLabel
+import com.fittrainer.ui.students.overview.riskLine
+import com.fittrainer.ui.students.overview.studentLine
+import com.fittrainer.ui.students.overview.todayLine
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import java.time.Instant
 
-/** Una fila de "requieren atención": avatar, nombre, el motivo y la píldora "riesgo" (coral) o "aviso" (atenuada). */
+/** Filtro Hoy: "pendiente" (ámbar) o "hecho" (verde). */
 @Composable
-fun AttentionRow(item: AttentionItem, onClick: () -> Unit) {
-    val risk = item is AttentionItem.AtRisk
-    HomeRow(item.name, attentionLine(item), risk, onClick) {
-        Pill(if (risk) "riesgo" else "aviso", if (risk) FtColors.Coral else FtColors.TextSecondary)
+fun TodayRow(item: TodayItem, onClick: () -> Unit) {
+    HomeRow(item.name, todayLine(item), false, onClick) {
+        if (item.done) Pill("hecho", FtColors.Green) else Pill("pendiente", FtColors.Amber)
     }
 }
 
-/** Una fila de actividad reciente: nombre, "Push día 3 · RPE 8" y "hace 12 min". */
+/** Filtro Riesgo: días sin entrenar y la píldora coral. */
 @Composable
-fun RecentRow(item: RecentItem, now: Instant, onClick: () -> Unit) {
-    HomeRow(item.name, recentLine(item), false, onClick) {
-        Text(relativeTime(item.finishedAt, now), style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+fun RiskRow(item: RiskItem, onClick: () -> Unit) {
+    HomeRow(item.name, riskLine(item), true, onClick) { Pill("riesgo", FtColors.Coral) }
+}
+
+/** Filtro Feedback: la sesión sin comentar ("Push · RPE 8 · ayer"). */
+@Composable
+fun FeedbackRow(item: FeedbackItem, now: Instant, onClick: () -> Unit) {
+    HomeRow(item.name, feedbackLine(item, now), false, onClick) { Pill("comentar", FtColors.BrandText) }
+}
+
+/** Filtro Activos: estado y adherencia de 7 días a la derecha. */
+@Composable
+fun StudentRow(item: StudentItem, onClick: () -> Unit) {
+    HomeRow(item.name, studentLine(item), item.status == StudentStatus.INACTIVE, onClick) {
+        Text(
+            pctLabel(item.adherencePct),
+            style = if (item.adherencePct != null) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelSmall,
+            color = if (item.adherencePct != null) FtColors.TextPrimary else FtColors.TextSecondary,
+        )
     }
 }
 

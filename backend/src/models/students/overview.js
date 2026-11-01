@@ -1,16 +1,15 @@
 /**
  * Resumen del Inicio del entrenador (GET /students/overview). Funciones puras: reciben los alumnos
  * activos, sus días asignados, sus sesiones terminadas de los últimos 15 días y las últimas 10, y
- * arman KPIs, "requieren atención" y actividad reciente. Fechas en hora argentina.
+ * arman KPIs, "requieren atención", actividad reciente y las listas de los filtros de la app. Fechas en hora argentina.
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
 import { localDate } from '../../shared/utils/dates.js';
 import { adherence7d } from './adherence.js';
-import { activityStatus, daysWithoutTraining } from './activity.js';
+import { activityStatus } from './activity.js';
+import { feedbackList, riskList, studentsList, todayList } from './overview-lists.js';
 
 export const ATTENTION_LIMIT = 10;
-/** "Feedback pendiente": sesiones terminadas en los últimos 7 días, contando hoy. */
-const FEEDBACK_WINDOW_DAYS = 7;
 
 /** Promedio redondeado de los pct no nulos, o null si no hay ninguno. */
 function averagePct(results) {
@@ -36,23 +35,12 @@ function adherenceKpi(students, routineDays, daySince, datesByStudent, today) {
   return { pct, delta: pct !== null && previous !== null ? pct - previous : null };
 }
 
-function attention(students, sessions, nameById, today) {
-  const risk = students
-    .filter((s) => activityStatus(s, today) === 'inactive')
-    .map((s) => ({
-      kind: 'inactive', student_id: s.id, name: s.name,
-      days: daysWithoutTraining(s, today), never_trained: !s.last_session_at,
-    }))
-    .sort((a, b) => b.days - a.days);
-  const since = addDays(today, -(FEEDBACK_WINDOW_DAYS - 1));
-  const pending = sessions
-    .filter((s) => !s.trainer_comment && localDate(s.finished_at) >= since)
-    .sort((a, b) => b.finished_at.localeCompare(a.finished_at))
-    .map((s) => ({
-      kind: 'feedback_pending', student_id: s.student_id, name: nameById.get(s.student_id),
-      session_id: s.id, routine_name: s.routine_name ?? null, finished_at: s.finished_at,
-    }));
-  return [...risk, ...pending].slice(0, ATTENTION_LIMIT);
+/** "Requieren atención" (la usa la web): en riesgo y después feedback pendiente, con tope. */
+function attention(risk, feedback) {
+  return [
+    ...risk.map((r) => ({ kind: 'inactive', ...r })),
+    ...feedback.map(({ rpe: _rpe, ...f }) => ({ kind: 'feedback_pending', ...f })),
+  ].slice(0, ATTENTION_LIMIT);
 }
 
 /**
@@ -72,6 +60,8 @@ export function buildOverview({ students, routineDays, daySince = new Map(), ses
   const todayWeekday = weekdayOf(today);
   const plannedToday = new Set(students.filter((s) => (routineDays.get(s.id) ?? []).includes(todayWeekday)).map((s) => s.id));
   const newSince = addDays(today, -6);
+  const risk = riskList(students, today);
+  const feedback = feedbackList(sessions, nameById, today);
   return {
     active_students: {
       count: students.length,
@@ -87,10 +77,16 @@ export function buildOverview({ students, routineDays, daySince = new Map(), ses
     },
     adherence_7d: adherenceKpi(students, routineDays, daySince, datesByStudent, today),
     at_risk: students.filter((s) => activityStatus(s, today) === 'inactive').length,
-    attention: attention(students, sessions, nameById, today),
+    attention: attention(risk, feedback),
     recent: recent.map((s) => ({
       student_id: s.student_id, name: nameById.get(s.student_id) ?? null, session_id: s.id,
       routine_name: s.routine_name ?? null, rpe: s.rpe ?? null, finished_at: s.finished_at,
     })),
+    lists: {
+      today: todayList(students, routineDays, sessions, today),
+      at_risk: risk,
+      feedback_pending: feedback,
+      students: studentsList(students, routineDays, datesByStudent, today, daySince),
+    },
   };
 }

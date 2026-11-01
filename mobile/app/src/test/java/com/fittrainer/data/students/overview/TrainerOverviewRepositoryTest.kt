@@ -1,5 +1,6 @@
 package com.fittrainer.data.students.overview
 
+import com.fittrainer.data.db.students.overview.TrainerOverviewEntity
 import com.fittrainer.testing.fakes.students.FakeOverviewApi
 import com.fittrainer.testing.fakes.students.FakeTrainerOverviewDao
 import com.fittrainer.testing.fakes.students.overviewDto
@@ -27,11 +28,16 @@ class TrainerOverviewRepositoryTest {
         val o = cache.overview
         assertEquals(7, o.activeStudents)
         assertEquals(58, o.adherencePct)
-        // El aviso sin sesión se descarta en vez de romper la pantalla.
-        assertEquals(2, o.attention.size)
-        assertEquals(AttentionItem.AtRisk("s1", "Lucía Fernández", 10, false), o.attention[0])
-        assertEquals(Instant.parse("2026-11-01T12:00:00Z"), o.recent.single().finishedAt)
-        assertNull(o.recent.single().rpe)
+        // "Roto" viene como done sin sesión: se muestra pendiente en vez de romper la pantalla.
+        assertEquals(listOf(false, false, true, true), o.today.map { it.done })
+        assertEquals(3, o.plannedToday)
+        assertEquals(1, o.plannedDone)
+        assertEquals(listOf("José Martínez", "Roto"), o.missingToday.map { it.name })
+        assertEquals(Instant.parse("2026-11-01T13:45:00Z"), o.today[2].finishedAt)
+        assertEquals(RiskItem("s1", "Lucía Fernández", 10, false), o.atRisk.single())
+        assertEquals(Instant.parse("2026-11-01T12:00:00Z"), o.feedback.single().finishedAt)
+        assertNull(o.feedback.single().rpe)
+        assertEquals(listOf(StudentStatus.ACTIVE, StudentStatus.INACTIVE, StudentStatus.ACTIVE), o.students.map { it.status })
     }
 
     @Test fun `adherencia null si nadie tiene plan`() = runTest {
@@ -40,6 +46,13 @@ class TrainerOverviewRepositoryTest {
         val o = repo.observe("t1").first()!!.overview
         assertNull(o.adherencePct)
         assertNull(o.adherenceDelta)
+    }
+
+    @Test fun `un cache viejo sin listas se lee con listas vacias`() = runTest {
+        dao.upsert(TrainerOverviewEntity("t1", """{"active_students":{"count":3,"new_7d":0},"attention":[]}""", 1))
+        val o = repo.observe("t1").first()!!.overview
+        assertEquals(3, o.activeStudents)
+        assertTrue(o.today.isEmpty() && o.students.isEmpty())
     }
 
     @Test fun `un error conserva el resumen anterior`() = runTest {

@@ -21,6 +21,7 @@ describe('models/students/overview', () => {
       at_risk: 0,
       attention: [],
       recent: [],
+      lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
     });
   });
 

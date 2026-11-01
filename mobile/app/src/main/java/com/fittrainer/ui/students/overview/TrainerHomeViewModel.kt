@@ -46,12 +46,13 @@ data class TrainerHomeUiState(
     val offline: Boolean = false,
     val refreshing: Boolean = false,
     val error: String? = null,
+    val filter: HomeFilter = HomeFilter.TODAY,
 ) {
     val noStudents: Boolean get() = overview?.activeStudents == 0
     val showErrorScreen: Boolean get() = loaded && overview == null && error != null && !refreshing
 }
 
-/** Inicio del entrenador. Lee de Room; refresca al entrar (también al volver de comentar una sesión) y con pull. */
+/** Inicio del entrenador. Lee de Room; refresca al entrar (también al volver de comentar una sesión) y con pull. El filtro elegido sobrevive a los refrescos. */
 @HiltViewModel
 class TrainerHomeViewModel @Inject constructor(
     private val repository: TrainerOverviewRepository,
@@ -80,6 +81,7 @@ class TrainerHomeViewModel @Inject constructor(
             offline = !online,
             refreshing = l.refreshing,
             error = l.error,
+            filter = l.filter,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TrainerHomeUiState())
 
@@ -90,6 +92,8 @@ class TrainerHomeViewModel @Inject constructor(
     fun onRetry() = refresh()
 
     fun dismissError() = local.update { it.copy(error = null) }
+
+    fun onFilter(filter: HomeFilter) = local.update { it.copy(filter = filter) }
 
     private fun refresh() {
         if (local.value.refreshing) return
@@ -102,11 +106,11 @@ class TrainerHomeViewModel @Inject constructor(
                 (error as? DataException)?.error == DataError.Offline -> STUDENTS_OFFLINE_ERROR
                 else -> HOME_REFRESH_FAILED
             }
-            local.update { Local(refreshing = false, error = text) }
+            local.update { it.copy(refreshing = false, error = text) }
         }
     }
 
     private data class Loaded(val cache: OverviewCache?, val loaded: Boolean = true)
 
-    private data class Local(val refreshing: Boolean = false, val error: String? = null)
+    private data class Local(val refreshing: Boolean = false, val error: String? = null, val filter: HomeFilter = HomeFilter.TODAY)
 }

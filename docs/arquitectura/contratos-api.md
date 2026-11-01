@@ -219,7 +219,16 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
       "routine_name": "Push", "finished_at": "ISO" }
   ],
   "recent": [ { "student_id": "uuid", "name": "Tomás Rivera", "session_id": "uuid", "routine_name": "Push día 3",
-                "rpe": 8, "finished_at": "ISO" } ]
+                "rpe": 8, "finished_at": "ISO" } ],
+  "lists": {
+    "today": [ { "student_id": "uuid", "name": "José Martínez", "planned": true, "status": "pending",
+                 "session_id": null, "routine_name": null, "finished_at": null, "rpe": null } ],
+    "at_risk": [ { "student_id": "uuid", "name": "Diego Ocampo", "days": 9, "never_trained": false } ],
+    "feedback_pending": [ { "student_id": "uuid", "name": "Lucía Méndez", "session_id": "uuid", "routine_name": "Push",
+                            "finished_at": "ISO", "rpe": 8 } ],
+    "students": [ { "student_id": "uuid", "name": "Ana Paz", "status": "active", "days_without_training": 1,
+                    "adherence_pct": 67 } ]
+  }
 } }
 ```
 
@@ -229,6 +238,11 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
 - `at_risk`: alumnos con 7 días o más sin entrenar (desde la última sesión o el alta), las mismas reglas que la web.
 - `attention` (hasta 10): primero `inactive` (de más días a menos; `never_trained` si nunca entrenó), después `feedback_pending`: sesiones terminadas en los últimos 7 días (hoy incluido) sin `trainer_comment`, de la más nueva a la más vieja.
 - `recent`: las últimas 10 sesiones terminadas, de la más nueva a la más vieja. `routine_name` y `rpe` pueden ser `null`.
+- `lists` (las listas de los filtros del Inicio de la app, sin tope):
+  - `today`: los alumnos con hoy asignado (`planned: true`) y los que entrenaron hoy sin tenerlo (`planned: false`). `status` es `done` si terminaron una sesión hoy (por la hora de fin; los campos de sesión son los de la última) o `pending` (campos de sesión en `null`). Primero los `pending` por nombre, después los `done` del más reciente.
+  - `at_risk`: los mismos de `at_risk`, de más días a menos.
+  - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
+  - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
 - Todo en hora argentina.
 
 ### GET /students/:id
