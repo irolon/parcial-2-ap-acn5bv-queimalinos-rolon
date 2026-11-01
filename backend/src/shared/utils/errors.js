@@ -79,6 +79,7 @@ export const Errors = {
       'EXERCISE_IN_USE',
       'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno'
     ),
+  studentInactive: () => new AppError(409, 'STUDENT_INACTIVE', 'El alumno está dado de baja'),
   messageEmpty: () =>
     new AppError(400, 'MESSAGE_EMPTY', 'Escribí un mensaje o adjuntá una foto'),
   imageTooLarge: () => new AppError(413, 'IMAGE_TOO_LARGE', 'La foto supera 5 MB'),

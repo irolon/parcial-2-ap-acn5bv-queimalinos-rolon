@@ -69,6 +69,30 @@ describe('parseImageUpload', () => {
     expect((await res.json()).error.code).toBe('VALIDATION_ERROR');
   });
 
+  it('un segundo campo de texto da 400 VALIDATION_ERROR (fields: 1)', async () => {
+    const form = new FormData();
+    form.append('body', 'hola');
+    form.append('extra', 'otro');
+    const res = await post(form);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('un campo de texto de más de 16 KB da 400 VALIDATION_ERROR (fieldSize)', async () => {
+    const form = new FormData();
+    form.append('body', 'x'.repeat(16 * 1024 + 1));
+    const res = await post(form);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('el caso normal (body + image = 2 partes) sigue andando', async () => {
+    const form = new FormData();
+    form.append('body', '😀'.repeat(2000)); // el máximo (2000 caracteres) pesa 8 KB
+    form.append('image', file(10), 'a.png');
+    expect((await post(form)).status).toBe(200);
+  });
+
   it('un multipart cortado da 400 Formulario inválido, no 500', async () => {
     const truncated =
       '--XB\r\nContent-Disposition: form-data; name="image"; filename="a.png"\r\n' +

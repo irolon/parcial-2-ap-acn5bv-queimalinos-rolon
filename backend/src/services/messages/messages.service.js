@@ -40,9 +40,25 @@ async function storeImage(studentId, file) {
   return path;
 }
 
+/**
+ * El mensaje ya está guardado: si la firma falla no se responde 500 (el cliente reintentaría y
+ * duplicaría). Se devuelve sin URL y se loguea; la foto se firma en el próximo historial.
+ */
+async function signAfterInsert(imagePath) {
+  if (!imagePath) return null;
+  try {
+    return (await imagesRepo.signUrls([imagePath])).get(imagePath) ?? null;
+  } catch (err) {
+    console.error('No se pudo firmar la foto del mensaje ya guardado:', err.message);
+    return null;
+  }
+}
+
 /** Envía texto y/o una foto. El `sender_role` es siempre el del usuario autenticado. */
 export async function send(user, studentId, { body, file }) {
-  await assertCanAccessStudent(user, studentId);
+  const student = await assertCanAccessStudent(user, studentId);
+  // Al dado de baja no se le escribe (ni el PT ni el alumno); leer el historial sigue permitido.
+  if (!student.active) throw Errors.studentInactive();
   if (!body && !file) throw Errors.messageEmpty();
   // El tipo se valida antes de tocar Storage: un archivo falso no sube nada.
   const imagePath = file ? await storeImage(studentId, file) : null;
@@ -59,8 +75,7 @@ export async function send(user, studentId, { body, file }) {
     if (imagePath) await imagesRepo.removeImage(imagePath).catch(() => {});
     throw err;
   }
-  const urls = await imagesRepo.signUrls(imagePath ? [imagePath] : []);
-  return toMessage(row, urls.get(imagePath));
+  return toMessage(row, await signAfterInsert(imagePath));
 }
 
 /** Marca leídos solo los mensajes del otro rol. */

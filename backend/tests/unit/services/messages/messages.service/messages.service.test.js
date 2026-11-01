@@ -13,9 +13,9 @@ import {
   messageRow,
   PNG,
   PDF,
-} from '../../../helpers/messages/messages.setup.js';
+} from '../../../../helpers/messages/messages.setup.js';
 
-const service = await import('../../../../src/services/messages/messages.service.js');
+const service = await import('../../../../../src/services/messages/messages.service.js');
 
 beforeEach(() => {
   jest.resetAllMocks();

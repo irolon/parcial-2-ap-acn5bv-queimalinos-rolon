@@ -5,7 +5,8 @@ import { MAX_IMAGE_BYTES } from '../../models/messages/message.model.js';
 // En memoria: la foto (≤ 5 MB) se valida por firma y se sube a Storage desde el service.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+  // Un campo de texto (body) + un archivo (image) = 2 partes; todo lo demás se corta antes de bufferear.
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 1, fields: 1, fieldSize: 16 * 1024, parts: 2 },
 });
 const single = upload.single('image');
 
