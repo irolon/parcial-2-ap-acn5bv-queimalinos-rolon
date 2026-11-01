@@ -150,3 +150,15 @@ Editar o borrar mensajes, varias fotos por mensaje, fotos en el envío masivo, p
 - Envío masivo con selector propio y aviso inline: no hay toasts en la app.
 - El botón "Mensaje" de la ficha aparece solo para alumnos activos.
 - El cursor `before` se basa en `created_at` (microsegundos); un empate dentro de una misma conversación es prácticamente imposible, queda como limitación conocida.
+
+## 9. Resultado del E2E (31/10, contra Supabase dev)
+
+PT QA (`qa.card26…`) con 5 alumnos activos: Lucía, Martín y Nora QA, más Pedro y Sofía QA, creados con el flujo real de invitación.
+
+- **Navegador, PT:** el botón "Mensaje" de la ficha de Lucía abre `/pt/mensajes?alumno=<id>` con su conversación seleccionada. El mensaje aparece con el separador "Hoy", la hora y ✓, y la fila de la lista pasa a "Vos: …" ([captura](assets/48/01-pt-escribe.jpg)).
+- **API, alumna:** Lucía responde con texto y una foto JPG real (201, `sender_role: student`, sin `image_path`). Un PDF con `Content-Type: image/png` da 415, una foto de 5 MB + 1 byte da 413, y pedir el chat de otro alumno da 403.
+- **API, PT:**
+  - El badge del PT pasa de 1 a 0 al marcar leído (`updated: 1`). Lucía ve su foto como leída.
+  - La URL firmada de la foto devuelve 200 `image/jpeg`, con un JPEG válido.
+  - El envío masivo a los 5 da 201 `sent: 5`, y el último mensaje de cada una de las 5 conversaciones lleva el mismo `broadcast_id`. Lucía ve el masivo en su conversación y no puede leer conversaciones ajenas.
+- **No verificado en el navegador:** la foto en la burbuja, el ✓✓, el diálogo de envío masivo, la vista de menos de 768 px y la página del alumno. El modo automático del agente no permite usar la contraseña de QA para volver a iniciar sesión. Lo cubren los tests de componentes. Conviene mirarlo a mano antes de la defensa.
