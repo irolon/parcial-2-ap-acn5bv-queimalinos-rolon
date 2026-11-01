@@ -12,9 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.fittrainer.ui.routines.detail.StartAction
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import com.fittrainer.ui.today.StartAction
+import com.fittrainer.ui.today.startActionHint
 
 /** Barra de abajo del detalle (spec §3.2). Con otra sesión abierta, el botón se apaga y se ofrece ir a esa. */
 @Composable
@@ -30,23 +31,11 @@ fun StartBar(action: StartAction, onStart: () -> Unit, onOpenWorkout: () -> Unit
         ) {
             Text(if (action == StartAction.Continue) "Continuar sesión" else "Empezar")
         }
-        when (action) {
-            is StartAction.Blocked -> {
-                Text(
-                    "Tenés una sesión abierta de ${action.otherRoutineName}, terminala primero",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FtColors.TextSecondary,
-                )
-                TextButton(onClick = onOpenWorkout, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                    Text("Ir a la sesión")
-                }
+        startActionHint(action)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary) }
+        if (action is StartAction.Blocked) {
+            TextButton(onClick = onOpenWorkout, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                Text("Ir a la sesión")
             }
-            StartAction.NoExercises -> Text(
-                "Esta rutina no tiene ejercicios",
-                style = MaterialTheme.typography.bodySmall,
-                color = FtColors.TextSecondary,
-            )
-            else -> Unit
         }
     }
 }

@@ -38,11 +38,18 @@ import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.today.dayName
 import com.fittrainer.ui.today.toDetail
+import com.fittrainer.ui.workout.WorkoutEntryViewModel
 
 /** Mis rutinas → una rutina: sus ejercicios y "Empezar" aunque hoy no le toque. */
 @Composable
-fun RoutineDetailScreen(onBack: () -> Unit, onOpenWorkout: () -> Unit, viewModel: RoutineDetailViewModel = hiltViewModel()) {
+fun RoutineDetailScreen(
+    onBack: () -> Unit,
+    onOpenWorkout: () -> Unit,
+    viewModel: RoutineDetailViewModel = hiltViewModel(),
+    entry: WorkoutEntryViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val entryError by entry.error.collectAsStateWithLifecycle()
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
     val loaded = state.content as? RoutineDetailContent.Loaded
     Column(Modifier.fillMaxSize().background(FtColors.Background)) {
@@ -56,11 +63,12 @@ fun RoutineDetailScreen(onBack: () -> Unit, onOpenWorkout: () -> Unit, viewModel
                     IconButton(onClick = onBack, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = FtColors.TextPrimary)
                     }
-                    loaded?.let { Text(it.routine.name, style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary) }
+                    // Mientras carga (o si ya no está) la barra no queda vacía.
+                    Text(loaded?.routine?.name ?: "Rutina", style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary)
                 }
             }
             if (state.isOffline) item { OfflineIndicator("Sin conexión · mostrando lo guardado") }
-            state.error?.let { item { NoticeBanner(it, viewModel::dismissError) } }
+            entryError?.let { item { NoticeBanner(it, entry::dismissError) } }
             when (val content = state.content) {
                 is RoutineDetailContent.Loaded -> {
                     val routine = content.routine
@@ -81,7 +89,7 @@ fun RoutineDetailScreen(onBack: () -> Unit, onOpenWorkout: () -> Unit, viewModel
                 null -> Unit
             }
         }
-        loaded?.let { StartBar(it.action, onStart = { viewModel.start(onOpenWorkout) }, onOpenWorkout = onOpenWorkout) }
+        loaded?.let { StartBar(it.action, onStart = { entry.start(it.routine, onOpenWorkout) }, onOpenWorkout = onOpenWorkout) }
     }
     selected?.let { exercise ->
         ExerciseDetailSheet(exercise.toDetail(), canOpenVideo = !state.isOffline, onDismiss = { selected = null })

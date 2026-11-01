@@ -1,18 +1,18 @@
-package com.fittrainer.ui.routines.detail
+package com.fittrainer.ui.today
 
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.testing.fakes.workout.workout
 import java.time.Instant
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class StartActionTest {
 
-    private fun exercise(sets: Int? = 4, reps: Int? = 10, kg: Double? = 60.0, rest: Int? = 90, muscle: String? = "chest") =
-        RoutineExercise("re-1", "ex-1", "Press", muscle, null, null, sets, reps, rest, kg, null, null)
+    private val exercise = RoutineExercise("re-1", "ex-1", "Press", "chest", null, null, 4, 10, 90, 60.0, null, null)
 
-    private fun routine(id: String = "rt-1", exercises: List<RoutineExercise> = listOf(exercise())) =
+    private fun routine(id: String = "rt-1", exercises: List<RoutineExercise> = listOf(exercise)) =
         Routine(id, "Pecho", null, emptySet(), Instant.EPOCH, exercises)
 
     // workout() de los fixtures es de la rutina "rt-1" y se llama "Push".
@@ -37,9 +37,10 @@ class StartActionTest {
         assertEquals(StartAction.NoExercises, startAction(routine(exercises = emptyList()), active = null))
     }
 
-    @Test fun `subtitulo completo y sin separadores colgando`() {
-        assertEquals("4×10 · 60 kg · 90 s · Pecho", detailSubtitle(exercise()))
-        assertEquals("4 series · Pecho", detailSubtitle(exercise(reps = null, kg = null, rest = null)))
-        assertEquals("", detailSubtitle(exercise(sets = null, reps = null, kg = null, rest = null, muscle = null)))
+    @Test fun `el aviso solo aparece cuando no se puede empezar`() {
+        assertEquals("Tenés una sesión abierta de Push, terminala primero", startActionHint(StartAction.Blocked("Push")))
+        assertEquals("Esta rutina no tiene ejercicios", startActionHint(StartAction.NoExercises))
+        assertNull(startActionHint(StartAction.Start))
+        assertNull(startActionHint(StartAction.Continue))
     }
 }

@@ -1,13 +1,9 @@
-package com.fittrainer.ui.routines.detail
+package com.fittrainer.ui.today
 
 import com.fittrainer.data.routine.Routine
-import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.data.workout.Workout
-import com.fittrainer.ui.components.exercise.formatKg
-import com.fittrainer.ui.components.exercise.muscleLabel
-import com.fittrainer.ui.today.setsReps
 
-/** Qué ofrece la barra de abajo del detalle de una rutina. */
+/** Qué ofrece el botón de una rutina: el hero de Hoy y la barra de abajo del detalle (Mis rutinas). */
 sealed interface StartAction {
     data object Start : StartAction
     data object Continue : StartAction
@@ -30,10 +26,9 @@ fun startAction(routine: Routine, active: Workout?): StartAction = when {
     else -> StartAction.Start
 }
 
-/** "4×10 · 60 kg · 90 s · Pecho", sin separadores colgando si falta algo. */
-fun detailSubtitle(exercise: RoutineExercise): String = listOf(
-    setsReps(exercise),
-    exercise.suggestedKg?.let(::formatKg).orEmpty(),
-    exercise.restSeconds?.let { "$it s" }.orEmpty(),
-    muscleLabel(exercise.muscleGroup),
-).filter { it.isNotBlank() }.joinToString(" · ")
+/** Por qué el botón está apagado; null si se puede empezar o continuar. */
+fun startActionHint(action: StartAction): String? = when (action) {
+    is StartAction.Blocked -> "Tenés una sesión abierta de ${action.otherRoutineName}, terminala primero"
+    StartAction.NoExercises -> "Esta rutina no tiene ejercicios"
+    StartAction.Start, StartAction.Continue -> null
+}

@@ -103,8 +103,9 @@ fun RoleShell(
                         )
                         tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(onOpenWorkout = openWorkout)
                         tab.route == STUDENT_ROUTINES_ROUTE -> RoutinesScreen(
-                            onOpenRoutine = { navController.navigate(routineDetailRoute(it)) },
-                            onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) },
+                            // Un doble toque no apila dos veces la misma pantalla.
+                            onOpenRoutine = { navController.navigate(routineDetailRoute(it)) { launchSingleTop = true } },
+                            onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
                         )
                         tab.route == STUDENT_PROGRESS_ROUTE -> HistoryScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
                         else -> PlaceholderScreen(tab.label)

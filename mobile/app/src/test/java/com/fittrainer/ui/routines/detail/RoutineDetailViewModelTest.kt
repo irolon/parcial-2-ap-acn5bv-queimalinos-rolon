@@ -13,15 +13,13 @@ import com.fittrainer.testing.fakes.routine.FakeStudentSession
 import com.fittrainer.testing.fakes.routine.routineDto
 import com.fittrainer.testing.fakes.workout.FakeWorkoutDao
 import com.fittrainer.testing.fakes.workout.T0
-import com.fittrainer.ui.workout.START_FAILED
+import com.fittrainer.ui.today.StartAction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -33,9 +31,8 @@ class RoutineDetailViewModelTest {
     private val clock = MutableClock(T0.toEpochMilli())
     private val api = FakeRoutineApi(MineResponse(listOf(routineDto("rt-1"), routineDto("rt-2"))))
     private val routines = RoutineRepository(api, FakeRoutineDao(), clock)
-    private val workoutDao = FakeWorkoutDao()
     private var next = 0
-    private val workouts = WorkoutRepository(workoutDao, clock) { "id-${next++}" }
+    private val workouts = WorkoutRepository(FakeWorkoutDao(), clock) { "id-${next++}" }
 
     private fun viewModel(id: String = "rt-1") = RoutineDetailViewModel(
         SavedStateHandle(mapOf(ROUTINE_ID_ARG to id)), routines, workouts, FakeStudentSession(), FakeConnectivityObserver(),
@@ -73,14 +70,12 @@ class RoutineDetailViewModelTest {
         assertEquals(RoutineDetailContent.Missing, vm.uiState.value.content)
     }
 
-    @Test fun `empezar arranca la sesion y recien ahi navega`() = runTest {
+    @Test fun `con la sesion de esta rutina abierta se continua`() = runTest {
         routines.refresh("u1")
         val vm = viewModel()
         collect(vm)
-        var opened = false
-        vm.start { opened = true }
+        workouts.start("u1", loaded(vm).routine)
 
-        assertTrue(opened)
         assertEquals(StartAction.Continue, loaded(vm).action)
     }
 
@@ -88,37 +83,10 @@ class RoutineDetailViewModelTest {
         routines.refresh("u1")
         val other = viewModel("rt-2")
         collect(other)
-        other.start { }
+        workouts.start("u1", loaded(other).routine)
         val vm = viewModel("rt-1")
         collect(vm)
 
         assertEquals(StartAction.Blocked("Rutina rt-2"), loaded(vm).action)
-    }
-
-    @Test fun `si Room falla no navega y avisa`() = runTest {
-        routines.refresh("u1")
-        workoutDao.failWrites = true
-        val vm = viewModel()
-        collect(vm)
-        var opened = false
-        vm.start { opened = true }
-
-        assertFalse(opened)
-        assertEquals(START_FAILED, vm.uiState.value.error)
-        vm.dismissError()
-        assertEquals(null, vm.uiState.value.error)
-    }
-
-    @Test fun `un empezar exitoso despues de un fallo limpia el error viejo`() = runTest {
-        routines.refresh("u1")
-        workoutDao.failWrites = true
-        val vm = viewModel()
-        collect(vm)
-        vm.start { }
-        assertEquals(START_FAILED, vm.uiState.value.error)
-        workoutDao.failWrites = false
-        vm.start { }
-
-        assertEquals(null, vm.uiState.value.error)
     }
 }
