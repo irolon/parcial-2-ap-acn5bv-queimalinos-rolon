@@ -324,3 +324,34 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujos de error**
 
 - **E1:** FCM o Web Push no disponibles (o sin credenciales, o el token es inválido) → la notificación **igual queda guardada** en `notifications`: es la fuente de verdad y el PT la ve en su listado. El push es best-effort y **no se reintenta**. Si FCM indica que un token ya no es válido, se borra de `push_tokens`.
+
+---
+
+## CU-27 — Recibir y ver los avisos (alumno)
+
+**Actor:** Alumno (mobile)
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El alumno inició sesión en el celular al menos una vez (así registró su token de push). El sistema creó una notificación para él: un comentario del PT en una sesión (CU-07), un récord o un logro (CU-08). |
+| Postcondiciones | El alumno vio el aviso en el push o en su lista de avisos y, si lo tocó, quedó leído en el servidor y en el celular. |
+
+**Flujo principal**
+
+1. El sistema guarda la notificación en `notifications` y manda el push al celular del alumno ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
+2. Al alumno le llega el push, aunque tenga la app cerrada.
+3. Lo toca: la app abre la pantalla del aviso (el detalle de la sesión comentada, los gráficos del ejercicio del récord o la lista de avisos para un logro) y lo marca leído.
+4. En la pantalla Hoy, la campana muestra cuántos avisos no leyó.
+5. Al tocar la campana ve la lista de avisos agrupada en Hoy · Ayer · Antes, con los no leídos marcados. Desde ahí puede abrir cualquiera o tocar "Marcar todo leído".
+
+**Flujos alternativos**
+
+- **2a:** Las notificaciones están apagadas en el celular → no llega el push, pero el aviso igual aparece en la campana y en la lista, con un cartel para activarlas.
+- **3a:** El alumno está en medio de una sesión (o en su resumen) → la app espera a que la sesión termine para abrir el aviso.
+- **3b:** La sesión comentada no está guardada y no hay red → se abre Progreso → Historial.
+- **5a:** Sin conexión → ve lo guardado con el aviso "Sin conexión · mostrando lo guardado". Lo que marca leído queda pendiente y se sube cuando vuelve la red, uno por uno. "Marcar todo leído" marca solo lo que vio: un aviso que llega al servidor mientras tanto queda sin leer.
+
+**Flujos de error**
+
+- **E1:** Falla el push (FCM caído, token vencido) → la notificación igual queda guardada y el alumno la ve en la lista al abrir la app.
+- **E2:** Falla la subida de un leído → queda pendiente y se reintenta en el próximo refresco.

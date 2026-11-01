@@ -24,12 +24,15 @@ const val STUDENT_PROGRESS_ROUTE = "student/progress"
 const val HISTORY_DETAIL_ROUTE = "student/history/{sessionId}"
 fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
 
+/** Lista de avisos del alumno (tarjeta 17): se abre desde la campana de Hoy. */
+const val NOTIFICATIONS_ROUTE = "student/notifications"
+
 /** Mis rutinas → una rutina, y Mis rutinas → biblioteca (la biblioteca no cuelga de student/routines/ para no chocar con {routineId}). */
 const val ROUTINE_DETAIL_ROUTE = "student/routines/{$ROUTINE_ID_ARG}"
 fun routineDetailRoute(routineId: String) = "student/routines/$routineId"
 const val STUDENT_LIBRARY_ROUTE = "student/library"
 
-/** Las pantallas hijas dejan marcada su pestaña: el historial cuelga de Progreso; el detalle y la biblioteca, de Mis rutinas. */
+/** Las pantallas hijas dejan marcada su pestaña: el historial cuelga de Progreso; el detalle y la biblioteca, de Mis rutinas; los avisos, de Hoy. */
 fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
     currentRoute == tabRoute || (currentRoute != null && parentTab(currentRoute) == tabRoute)
 
@@ -39,6 +42,7 @@ private fun parentTab(route: String): String? = when {
     route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE
     route == TRAINER_TEMPLATES_ROUTE || route.startsWith("$TRAINER_TEMPLATES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == TRAINER_EXERCISES_ROUTE || route.startsWith("$TRAINER_EXERCISES_ROUTE/") -> TRAINER_MORE_ROUTE
+    route == NOTIFICATIONS_ROUTE -> STUDENT_TODAY_ROUTE
     else -> null
 }
 
