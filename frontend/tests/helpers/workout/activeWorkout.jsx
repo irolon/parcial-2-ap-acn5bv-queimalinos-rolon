@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useActiveWorkout } from '@/hooks/workout/useActiveWorkout';
+import { todayRoutine } from '../routines/studentRoutines';
 import { API_URL, errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
 
 export const STUDENT = 's-1';
@@ -13,12 +14,33 @@ export function renderActiveWorkout(studentId = STUDENT) {
   return { client, ...view };
 }
 
+/** Empieza la rutina de /today y registra dos series de Press banca: 62,5 kg × 10 y peso corporal × 12. */
+export function train(view) {
+  act(() => { view.result.current.start(todayRoutine()); });
+  act(() => { view.result.current.register(62.5, 10); });
+  act(() => { view.result.current.register(null, 12); });
+}
+
+/** Llama a `upload()` dentro de `act` y devuelve su resultado. */
+export async function uploadNow(view) {
+  let result;
+  await act(async () => { result = await view.result.current.upload(); });
+  return result;
+}
+
 /** La respuesta del backend cuando sale todo bien (sirve para armar respuestas demoradas). */
 export const okUploadResponse = (path, body) => (path === '/sessions'
   ? jsonResponse(201, { data: { ...body, student_id: STUDENT, unlocked_achievements: [] } })
   : jsonResponse(200, {
     data: { saved: body.sets.map(({ id }) => ({ id, created: true })), failed: [], unlocked_achievements: [] },
   }));
+
+/** Una respuesta que se queda esperando hasta `release()` (para simular un pedido en vuelo). */
+export function heldResponse() {
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  return { release, respond: (path, body) => gate.then(() => okUploadResponse(path, body)) };
+}
 
 /**
  * fetch falso para la subida (POST /sessions y POST /sessions/:id/sets), cada uno con su cola de respuestas:

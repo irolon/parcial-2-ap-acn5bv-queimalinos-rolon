@@ -150,6 +150,20 @@ describe('useActiveWorkout: la sesión en curso', () => {
     expect(loadWorkout(STUDENT)).toBeNull();
   });
 
+  it('otra pestaña registra 2 series mientras el alumno está en otra página: al volver, Siguiente no las pisa', () => {
+    const today = renderActiveWorkout();
+    act(() => { today.result.current.start(todayRoutine()); });
+    today.unmount(); // se fue a Historial: nadie usa el hook
+    const elsewhere = withSets(loadWorkout(STUDENT), [[0, 60, 10], [0, 62.5, 8]]);
+    localStorage.setItem('ft.workout.s-1', JSON.stringify(elsewhere));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'ft.workout.s-1' }));
+
+    const back = renderActiveWorkout();
+    expect(back.result.current.workout.sets).toHaveLength(2);
+    act(() => { back.result.current.next(); });
+    expect(loadWorkout(STUDENT)).toMatchObject({ cursor: 1, sets: [{ id: 'set-1' }, { id: 'set-2' }] });
+  });
+
   it('si otra pestaña cambia o descarta la sesión, se adopta lo que dejó', () => {
     const { result } = renderActiveWorkout();
     const other = withSets(freshWorkout(), [[0, 60, 10]]);

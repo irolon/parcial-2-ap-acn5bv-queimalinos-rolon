@@ -38,13 +38,28 @@ describe('workoutStore', () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
-  it('escucha a las otras pestañas solo mientras hay alguien suscripto', () => {
-    const add = vi.spyOn(window, 'addEventListener');
-    const remove = vi.spyOn(window, 'removeEventListener');
-    const off = [subscribeWorkout(vi.fn()), subscribeWorkout(vi.fn())];
-    expect(add.mock.calls.filter(([type]) => type === 'storage')).toHaveLength(1);
-    off.forEach((unsubscribe) => unsubscribe());
-    expect(remove.mock.calls.filter(([type]) => type === 'storage')).toHaveLength(1);
+  it('escucha a las otras pestañas aunque no haya nadie suscripto: la memoria nunca queda vieja', () => {
+    const off = subscribeWorkout(vi.fn());
+    writeWorkout('s-1', freshWorkout());
+    off(); // el alumno se fue a una página sin el hook
+    const twoSets = withSets(freshWorkout(), [[0, 60, 10], [0, 62.5, 8]]);
+    saveWorkout('s-1', twoSets);
+    storageEvent('ft.workout.s-1');
+    expect(readWorkout('s-1')).toStrictEqual(twoSets);
+  });
+
+  it('escenario del revisor: otra pestaña registra 2 series sin nadie suscripto y al volver una acción no las pisa', () => {
+    const off = subscribeWorkout(vi.fn());
+    writeWorkout('s-1', freshWorkout());
+    off();
+    saveWorkout('s-1', withSets(freshWorkout(), [[0, 60, 10], [0, 62.5, 8]]));
+    storageEvent('ft.workout.s-1');
+    const back = subscribeWorkout(vi.fn()); // vuelve a Hoy
+    const seen = readWorkout('s-1');
+    writeWorkout('s-1', { ...seen, cursor: 1 }); // cualquier acción (Siguiente)
+    expect(seen.sets).toHaveLength(2);
+    expect(loadWorkout('s-1')).toMatchObject({ cursor: 1, sets: [{ id: 'set-1' }, { id: 'set-2' }] });
+    back();
   });
 
   it('un cambio de otra pestaña recarga al alumno que ya estaba en memoria; las demás claves no', () => {
@@ -64,15 +79,17 @@ describe('workoutStore', () => {
     unsubscribe();
   });
 
-  it('trackUpload: mientras una subida está en curso devuelve la misma; terminada, deja arrancar otra', async () => {
+  it('trackUpload: con la misma clave devuelve la subida en curso; con otra clave o ya terminada, arranca otra', async () => {
     let release;
     const run = vi.fn(() => new Promise((resolve) => { release = resolve; }));
-    const first = trackUpload('s-1', run);
-    expect(trackUpload('s-1', run)).toBe(first);
+    const first = trackUpload('s-1:w-1', run);
+    expect(trackUpload('s-1:w-1', run)).toBe(first);
+    const other = vi.fn(async () => 'otra sesión');
+    await expect(trackUpload('s-1:w-2', other)).resolves.toBe('otra sesión');
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1));
     release('listo');
     await expect(first).resolves.toBe('listo');
-    const second = trackUpload('s-1', run);
+    const second = trackUpload('s-1:w-1', run);
     expect(second).not.toBe(first);
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2));
     release('otra');

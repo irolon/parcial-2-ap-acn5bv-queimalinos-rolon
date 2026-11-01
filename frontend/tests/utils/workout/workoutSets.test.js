@@ -1,11 +1,49 @@
 import { describe, expect, it } from 'vitest';
-import { exerciseSets, missingSets, planLoad, prefill, totals } from '@/utils/workout/workoutSets';
-import { finishWorkout, removeSet, setCursor } from '@/utils/workout/workoutState';
+import * as sets from '@/utils/workout/workoutSets';
+import * as workoutState from '@/utils/workout/workoutState';
 import { routineExercise, todayRoutine } from '../../helpers/routines/studentRoutines';
 import { at, freshWorkout, withSets } from '../../helpers/workout/workout';
 
+const { exerciseSets, missingSets, planLoad, prefill, toSetKg, toSetReps, totals } = sets;
+const { finishWorkout, removeSet, setCursor } = workoutState;
+
 const withKgs = (last, suggested) =>
   freshWorkout(todayRoutine({ exercises: [{ ...routineExercise({ suggested_kg: suggested }), last_session_kg: last }] }));
+
+describe('toSetKg: el peso como lo carga el alumno', () => {
+  it.each([
+    [62.5, 62.5], ['62.5', 62.5], ['62,5', 62.5], [' 62,5 ', 62.5], ['62,', 62], [',5', 0.5], ['72,556', 72.56],
+    [1500, 1000], ['1500', 1000],
+    ['1.000', 1], // sin separador de miles: un solo separador y es el decimal
+  ])('%j → %j', (value, expected) => {
+    expect(toSetKg(value)).toBe(expected);
+  });
+
+  it.each([null, undefined, '', '   ', 0, '0', '0,0', -5, '-2,5'])('%j es peso corporal (null)', (value) => {
+    expect(toSetKg(value)).toBeNull();
+  });
+
+  it.each(['abc', '62,5 kg', '1.000,5', '6,2,5', '--5', Number.NaN, Number.POSITIVE_INFINITY, true, {}])(
+    '%j es ilegible: NaN (la serie no se registra)',
+    (value) => {
+      expect(toSetKg(value)).toBeNaN();
+    },
+  );
+
+  it('toSetReps: entero de 0 a 1000; lo que no es número, null', () => {
+    expect([toSetReps('8'), toSetReps(7.6), toSetReps(-3), toSetReps(1500)]).toEqual([8, 8, 0, 1000]);
+    expect([toSetReps('8,5'), toSetReps(''), toSetReps(null)]).toEqual([null, null, null]);
+  });
+});
+
+describe('workoutState es la única puerta para las páginas', () => {
+  it.each(['exerciseSets', 'planLoad', 'prefill', 'missingSets', 'totals', 'toSetKg', 'toSetReps'])(
+    're-exporta %s de workoutSets',
+    (name) => {
+      expect(workoutState[name]).toBe(sets[name]);
+    },
+  );
+});
 
 describe('prefill: serie 1 contra serie 2', () => {
   it('serie 1: el peso de la última sesión (62,5 sobre el sugerido 60) y las reps del plan', () => {

@@ -1,5 +1,5 @@
 import { DEFAULT_REPS } from '@/utils/routines/defaults';
-import { positiveKg, suggestedKg } from '@/utils/routines/suggestedKg';
+import { suggestedKg } from '@/utils/routines/suggestedKg';
 
 // Las series de la sesión en curso: cómo se normaliza lo que carga el alumno y lo que se lee de ellas.
 
@@ -11,10 +11,24 @@ export const MAX_SET_NUMBER = 100;
 const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 const round = (n, decimals) => Math.round(n * 10 ** decimals) / 10 ** decimals;
 
-/** Peso de una serie: lo positivo, hasta 1000 kg y con 2 decimales; vacío, 0 o lo que no es número = peso corporal (null). */
+// Un número con a lo sumo un separador decimal, punto o coma (es-AR: "62,5"). Sin separador de miles: con el tope
+// en 1000 kg no hace falta, así que "1.000" se lee como 1 y "1.000,5" es ilegible.
+const KG_TEXT = /^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/;
+
+/**
+ * Peso de una serie como lo carga el alumno: número o texto con punto o coma decimal. Vacío, 0 o negativo es peso
+ * corporal (null); arriba de 1000, 1000; 2 decimales. Lo ilegible ("abc", "62,5 kg", "1.000,5") da NaN: esa serie
+ * no se registra, igual que con reps inválidas.
+ */
 export function toSetKg(value) {
-  const kg = positiveKg(value);
-  return kg === null ? null : round(Math.min(kg, MAX_KG), 2);
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') {
+    const text = value.trim();
+    if (text === '') return null;
+    return KG_TEXT.test(text) ? toSetKg(Number(text.replace(',', '.'))) : Number.NaN;
+  }
+  if (typeof value !== 'number' || !Number.isFinite(value)) return Number.NaN;
+  return value > 0 ? round(Math.min(value, MAX_KG), 2) : null;
 }
 
 /** Reps de una serie: entero de 0 a 1000 (0 = serie fallida), o null si no es un número. */

@@ -4,6 +4,10 @@ import { MAX_REPS, MAX_SET_NUMBER, exerciseSets, toSetKg, toSetReps } from './wo
 
 // La sesión en curso como datos puros (spec §3): cada función recibe el estado y devuelve uno nuevo, o el mismo si
 // no cambia nada. Las horas son ISO absolutas, así que recargar la página no corre el descanso ni las series.
+// Es la única puerta para las páginas: también re-exporta las lecturas de las series (workoutSets.js).
+export {
+  exerciseSets, missingSets, planLoad, prefill, toSetKg, toSetReps, totals,
+} from './workoutSets';
 
 const MAX_NOTES = 1000;
 
@@ -65,12 +69,14 @@ export function startRest(state, now = new Date()) {
 
 /**
  * Registra una serie del ejercicio a la vista (`set_number` = su posición en el ejercicio) y arranca el descanso.
- * Sin efecto si la sesión ya terminó, si las reps no son un número o si el ejercicio ya tiene 100 series.
+ * Sin efecto si la sesión ya terminó, si las reps no son un número, si el peso no está vacío y es ilegible
+ * (`toSetKg` da NaN) o si el ejercicio ya tiene 100 series.
  */
 export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId = newUuid } = {}) {
   const exercise = state.exercises[state.cursor];
   const actualReps = toSetReps(reps);
-  if (state.finishedAt || !exercise || actualReps === null) return state;
+  const actualKg = toSetKg(kg);
+  if (state.finishedAt || !exercise || actualReps === null || Number.isNaN(actualKg)) return state;
   const done = exerciseSets(state).length;
   if (done >= MAX_SET_NUMBER) return state;
   const set = {
@@ -79,7 +85,7 @@ export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId 
     routineExerciseId: exercise.routineExerciseId,
     setNumber: done + 1,
     reps: actualReps,
-    kg: toSetKg(kg),
+    kg: actualKg,
     executedAt: iso(now),
   };
   return startRest({ ...state, sets: [...state.sets, set] }, now);
@@ -134,6 +140,15 @@ export const skipRest = (state) => (state.restEndsAt === null ? state : { ...sta
 /** Terminar: fija la hora la primera vez (un reintento horas después no la cambia) y corta el descanso. */
 export function finishWorkout(state, now = new Date()) {
   return state.finishedAt ? state : { ...state, finishedAt: iso(now), restEndsAt: null };
+}
+
+/**
+ * Lista para subir: terminada (si faltaba) y con el feedback decidido (si no se pidió, cuenta como "Saltar"). Así, al
+ * recargar a mitad de la subida, la página no vuelve a mostrar el feedback.
+ */
+export function readyToUpload(state, now = new Date()) {
+  const finished = finishWorkout(state, now);
+  return finished.feedback ? finished : { ...finished, feedback: { rpe: null, notes: null } };
 }
 
 function validRpe(value) {

@@ -32,25 +32,28 @@ function onStorage(event) {
   if (known.length > 0) notify();
 }
 
-/** Para `useSyncExternalStore`: escucha los cambios (y a las otras pestañas mientras haya alguien suscripto). */
+// Se escucha desde que se carga el módulo y no se deja nunca: si solo se escuchara con alguien suscripto, mientras el
+// alumno está en una página sin el hook la memoria quedaría vieja y la próxima acción pisaría lo de la otra pestaña.
+if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+
+/** Para `useSyncExternalStore`: avisa cada vez que cambia alguna sesión (en esta pestaña o en otra). */
 export function subscribeWorkout(listener) {
-  if (listeners.size === 0) window.addEventListener('storage', onStorage);
   listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) window.removeEventListener('storage', onStorage);
-  };
+  return () => listeners.delete(listener);
 }
 
-/** Una sola subida por alumno a la vez: mientras haya una en curso se devuelve esa misma promesa. */
-export function trackUpload(studentId, run) {
-  if (!uploads.has(studentId)) {
+/**
+ * Una sola subida a la vez por `key` (`${studentId}:${workout.id}`): mientras haya una en curso se devuelve esa misma
+ * promesa. Con la sesión en la clave, una sesión nueva no espera a la subida de una descartada.
+ */
+export function trackUpload(key, run) {
+  if (!uploads.has(key)) {
     const upload = Promise.resolve().then(run).finally(() => {
-      if (uploads.get(studentId) === upload) uploads.delete(studentId);
+      if (uploads.get(key) === upload) uploads.delete(key);
     });
-    uploads.set(studentId, upload);
+    uploads.set(key, upload);
   }
-  return uploads.get(studentId);
+  return uploads.get(key);
 }
 
 /** Olvida lo que hay en memoria, como una recarga de la página (para los tests). */

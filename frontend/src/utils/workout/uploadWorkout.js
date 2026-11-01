@@ -31,25 +31,35 @@ const outcome = (state, result) => ({ ...result, state, failed: state.upload.fai
  * - 404 en las series: la sesión no existe; se vuelve a crear y se reenvían todas, una sola vez por llamada.
  * - `failed` de un lote: rechazos por serie, permanentes. Se juntan, no se reenvían y la subida termina igual.
  * - `unlocked_achievements` de cualquier respuesta: se juntan sin repetir.
- * @returns {Promise<{ ok: boolean, state, failed: {id, code}[], unlocked: object[], error?: { status, code, message, retryable } }>}
+ * - `shouldContinue()` se mira antes de cada pedido: si da false (se descartó la sesión), no sale ninguno más y
+ *   vuelve `{ ok: false, cancelled: true }` con error `CANCELLED`. Lo que ya estaba en vuelo termina igual.
+ * @returns {Promise<{ ok: boolean, cancelled?: true, state, failed: {id, code}[], unlocked: object[],
+ *   error?: { status, code, message, retryable } }>}
  */
-export async function uploadWorkout({ api, state, onState = () => {} }) {
+export async function uploadWorkout({ api, state, onState = () => {}, shouldContinue = () => true }) {
   let current = state;
   const commit = (next) => {
     current = next;
     onState(next);
   };
+  const cancelled = () => outcome(current, {
+    ok: false,
+    cancelled: true,
+    error: { status: null, code: 'CANCELLED', message: 'Se canceló la subida', retryable: false },
+  });
   let recreated = false;
   while (true) {
     let step = 'session';
     try {
       if (!current.upload.sessionCreated) {
+        if (!shouldContinue()) return cancelled();
         const data = await api.createSession(sessionBody(current));
         if (!isObject(data)) throw failure('BAD_RESPONSE', 'El servidor respondió sin la sesión');
         commit(applySession(current, data));
       }
       step = 'sets';
       for (const batch of batches(pendingSets(current))) {
+        if (!shouldContinue()) return cancelled();
         const data = await api.uploadSets(current.id, batch.map(setBody));
         if (!isObject(data)) throw failure('BAD_RESPONSE', 'El servidor respondió sin el resultado del lote');
         commit(applyBatch(current, batch, data));

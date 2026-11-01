@@ -37,9 +37,15 @@ describe('registerSet', () => {
   });
 
   it.each([
-    [null, null], ['', null], [0, null], [-5, null], ['62.5', 62.5], [1500, 1000], [62.556, 62.56], [0.1 + 0.2, 0.3],
-  ])('peso %j → %j (vacío, 0 o negativo es peso corporal; tope 1000 kg y 2 decimales)', (kg, expected) => {
+    [null, null], ['', null], [0, null], [-5, null], ['62.5', 62.5], ['62,5', 62.5], [1500, 1000], [62.556, 62.56],
+    [0.1 + 0.2, 0.3],
+  ])('peso %j → %j (vacío, 0 o negativo es peso corporal; coma decimal; tope 1000 kg y 2 decimales)', (kg, expected) => {
     expect(register(freshWorkout(), { kg, reps: 10 }).sets[0].kg).toBe(expected);
+  });
+
+  it.each(['abc', '62,5 kg', '1.000,5', Number.NaN, true])('peso ilegible %j: no registra nada (como reps inválidas)', (kg) => {
+    const state = freshWorkout();
+    expect(register(state, { kg, reps: 10 })).toBe(state);
   });
 
   it.each([[10, 10], ['8', 8], [7.6, 8], [0, 0], [-3, 0], [1500, 1000]])('reps %j → %j', (reps, expected) => {

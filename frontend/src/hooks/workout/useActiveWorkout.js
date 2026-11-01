@@ -6,7 +6,7 @@ import { TODAY_ROUTINE_KEY } from '@/hooks/routines/useStudentRoutines';
 import { SESSIONS_KEY } from '@/hooks/sessions/useSessions';
 import { uploadWorkout } from '@/utils/workout/uploadWorkout';
 import {
-  adjustRest, finishWorkout, registerSet, removeSet, setCursor, setFeedback, skipRest, startWorkout,
+  adjustRest, finishWorkout, readyToUpload, registerSet, removeSet, setCursor, setFeedback, skipRest, startWorkout,
 } from '@/utils/workout/workoutState';
 import { readWorkout, subscribeWorkout, trackUpload, writeWorkout } from './workoutStore';
 
@@ -27,9 +27,11 @@ const staleAfterUpload = (studentId) => [
  * La sesión en curso del alumno (`workout`, o null) y sus acciones. Vive en memoria compartida por todas las páginas
  * y se guarda en localStorage en cada cambio (ft.workout.<studentId>). Sin `studentId` no hace nada.
  * - `start(routine)` no pisa una sesión abierta: si hay una, devuelve esa (la página ofrece Continuar o Descartar).
- * - Las acciones devuelven el estado nuevo (o null sin sesión).
- * - `upload()` fija finished_at si faltaba, sube y, si sale bien, borra la sesión y refresca lo que cambió.
- *   Devuelve `{ ok, state, failed, unlocked, error? }` (ver `uploadWorkout`), o null si no hay nada para subir.
+ * - Las acciones devuelven el estado nuevo (o null sin sesión). `register` no registra un peso ilegible ni reps
+ *   que no son número: devuelve el mismo estado.
+ * - `upload()` fija finished_at y el feedback ("Saltar") si faltaban, sube y, si sale bien, borra la sesión y
+ *   refresca lo que cambió. Si la descartan mientras sube, no sale ningún pedido más (`cancelled: true`).
+ *   Devuelve `{ ok, cancelled?, state, failed, unlocked, error? }` (ver `uploadWorkout`), o null si no hay sesión.
  */
 export function useActiveWorkout(studentId) {
   const queryClient = useQueryClient();
@@ -67,19 +69,22 @@ export function useActiveWorkout(studentId) {
   }, [studentId]);
 
   const upload = useCallback(() => {
-    if (!studentId || !readWorkout(studentId)) return Promise.resolve(null);
-    return trackUpload(studentId, async () => {
-      const ready = change((s) => finishWorkout(s, new Date()));
-      if (!ready) return null;
-      // La subida solo es dueña de `upload`: se guarda sobre lo que haya en memoria. Si mientras sube la descartan
-      // (o empieza otra), lo que avanza no la vuelve a guardar.
-      const isCurrent = (state) => readWorkout(studentId)?.id === state.id;
+    const open = studentId ? readWorkout(studentId) : null;
+    if (!open) return Promise.resolve(null);
+    const { id } = open;
+    // Si la descartan mientras sube (o empieza otra), no sale ningún pedido más y lo que avanza no la vuelve a guardar.
+    const isCurrent = () => readWorkout(studentId)?.id === id;
+    return trackUpload(`${studentId}:${id}`, async () => {
+      if (!isCurrent()) return null;
+      const ready = change((s) => readyToUpload(s, new Date()));
+      // La subida solo es dueña de `upload`: se guarda sobre lo que haya en memoria (el cursor puede haber cambiado).
       const keepProgress = (state) => {
-        if (isCurrent(state)) writeWorkout(studentId, { ...readWorkout(studentId), upload: state.upload });
+        if (isCurrent()) writeWorkout(studentId, { ...readWorkout(studentId), upload: state.upload });
       };
-      const result = await uploadWorkout({ api, state: ready, onState: keepProgress });
-      if (result.ok) {
-        if (isCurrent(ready)) writeWorkout(studentId, null);
+      const result = await uploadWorkout({ api, state: ready, onState: keepProgress, shouldContinue: isCurrent });
+      if (result.ok && isCurrent()) writeWorkout(studentId, null);
+      // Se refresca si la sesión quedó en el servidor y la copia local dejó de valer: subida entera, o descartada a mitad.
+      if (result.ok || (result.cancelled && result.state.upload.sessionCreated)) {
         staleAfterUpload(studentId).forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
       }
       return result;

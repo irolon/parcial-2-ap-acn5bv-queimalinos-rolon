@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { finishWorkout, setFeedback } from '@/utils/workout/workoutState';
+import { finishWorkout, readyToUpload, setFeedback } from '@/utils/workout/workoutState';
 import { at, freshWorkout, isoAt, withSets } from '../../../helpers/workout/workout';
+
+describe('readyToUpload', () => {
+  it('termina (si faltaba) y, si el feedback no se pidió, queda como "Saltar"', () => {
+    const state = readyToUpload(freshWorkout(), at(1200));
+    expect(state).toMatchObject({ finishedAt: isoAt(1200), feedback: { rpe: null, notes: null } });
+  });
+
+  it('respeta la hora de Terminar y el feedback que ya estaban', () => {
+    const decided = setFeedback(finishWorkout(freshWorkout(), at(900)), { rpe: 8, notes: 'Bien' });
+    expect(readyToUpload(decided, at(5000))).toBe(decided);
+  });
+});
 
 describe('finishWorkout', () => {
   it('fija la hora de Terminar y corta el descanso', () => {
