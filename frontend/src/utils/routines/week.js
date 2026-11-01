@@ -28,6 +28,19 @@ export function weekStrip({ routineDays = [], sessions = [], now = new Date() } 
   }));
 }
 
+const workouts = (n) => `${n} ${n === 1 ? 'entrenamiento' : 'entrenamientos'}`;
+
+/**
+ * Lo que dice "Esta semana" debajo de los días: "2 de 4 entrenamientos" (los entrenados y los que tocan; un día
+ * entrenado que no tocaba suma igual). Sin días planificados no hay "de M": "1 entrenamiento".
+ */
+export function weekSummary(strip = []) {
+  const trained = strip.filter((day) => day.trained).length;
+  const planned = strip.filter((day) => day.planned).length;
+  if (planned > 0) return `${trained} de ${workouts(planned)}`;
+  return trained > 0 ? workouts(trained) : 'Sin entrenamientos planificados';
+}
+
 /**
  * Próximo día de entrenamiento después de hoy ('jueves'), con los días de todas las rutinas;
  * `null` si el alumno no tiene rutinas con días. Si el único día es hoy, es el de la semana que viene.

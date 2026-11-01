@@ -24,3 +24,18 @@ const DAY_LABELS = Object.fromEntries(DAY_OPTIONS.map((d) => [d.value, d.label])
 export function formatRoutineDays(days = []) {
   return days.map((day) => DAY_LABELS[day] ?? day).join(' · ');
 }
+
+const SHORT_LABELS = {
+  monday: 'Lun',
+  tuesday: 'Mar',
+  wednesday: 'Mié',
+  thursday: 'Jue',
+  friday: 'Vie',
+  saturday: 'Sáb',
+  sunday: 'Dom',
+};
+
+/** Días de la rutina abreviados y en orden de semana ("Lun · Mié · Vie"); un valor desconocido se muestra tal cual. */
+export function formatRoutineDaysShort(days) {
+  return sortDays(days ?? []).map((day) => SHORT_LABELS[day] ?? day).join(' · ');
+}

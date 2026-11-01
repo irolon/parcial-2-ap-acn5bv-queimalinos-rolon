@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { estimatedMinutes, planRows, totalSets } from '@/utils/routines/todayPlan';
+import { estimatedMinutes, planRows, planSummary, totalSets } from '@/utils/routines/todayPlan';
 import { routineExercise } from '../../helpers/routines/studentRoutines';
 
 const exercise = (overrides = {}) => ({ ...routineExercise(), last_session_kg: null, ...overrides });
@@ -108,5 +108,25 @@ describe('planRows', () => {
   it('sin ejercicios no hay filas', () => {
     expect(planRows([])).toEqual([]);
     expect(planRows()).toEqual([]);
+  });
+});
+
+describe('planSummary', () => {
+  it('resume ejercicios, series y minutos de la rutina del día', () => {
+    const exercises = [exercise({ sets: 4, rest_seconds: 90 }), exercise({ sets: 3, rest_seconds: 60 })]; // 855 s
+    expect(planSummary(exercises)).toBe('2 EJERCICIOS · 7 SERIES · ~14 MIN');
+  });
+
+  it('usa el singular con un ejercicio y una serie', () => {
+    expect(planSummary([exercise({ sets: 1, rest_seconds: 60 })])).toBe('1 EJERCICIO · 1 SERIE · ~2 MIN');
+  });
+
+  it('cuenta con los valores por defecto lo que la rutina no trae (3 series, 90 s)', () => {
+    expect(planSummary([exercise({ sets: null, rest_seconds: null })])).toBe('1 EJERCICIO · 3 SERIES · ~7 MIN');
+  });
+
+  it('sin ejercicios no se rompe', () => {
+    expect(planSummary([])).toBe('0 EJERCICIOS · 0 SERIES · ~0 MIN');
+    expect(planSummary()).toBe('0 EJERCICIOS · 0 SERIES · ~0 MIN');
   });
 });

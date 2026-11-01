@@ -22,6 +22,17 @@ export function estimatedMinutes(exercises = []) {
   return Math.round(seconds / 60);
 }
 
+const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+/** Lo que dice la tarjeta de la rutina del día: "6 EJERCICIOS · 18 SERIES · ~55 MIN". */
+export function planSummary(exercises = []) {
+  return [
+    count(exercises.length, 'EJERCICIO', 'EJERCICIOS'),
+    count(totalSets(exercises), 'SERIE', 'SERIES'),
+    `~${estimatedMinutes(exercises)} MIN`,
+  ].join(' · ');
+}
+
 /**
  * Filas de la tabla "Plan de hoy", en el orden recibido: número desde 1, nombre, `setsReps` ("4 × 10")
  * y el peso sugerido (`suggestedKg`): el de la última sesión y, si no hay, el del entrenador, campo por campo y con

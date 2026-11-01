@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextTrainingDay, weekStrip } from '@/utils/routines/week';
+import { nextTrainingDay, weekStrip, weekSummary } from '@/utils/routines/week';
 
 // Argentina es UTC-3 todo el año: las 23:59 del domingo son las 02:59 UTC del lunes.
 const WEDNESDAY = new Date('2026-10-28T18:00:00Z'); //  miércoles 28/10, 15:00 en Argentina
@@ -143,5 +143,30 @@ describe('nextTrainingDay', () => {
   it('rutinas sin días, o con días desconocidos, tampoco dan un próximo día', () => {
     expect(nextTrainingDay([routine(), routine('otro')], WEDNESDAY)).toBeNull();
     expect(nextTrainingDay([{ routine_id: 'r' }], WEDNESDAY)).toBeNull();
+  });
+});
+
+describe('weekSummary', () => {
+  const summary = (routineDays, sessions) => weekSummary(weekStrip({ routineDays, sessions, now: WEDNESDAY }));
+  const MONDAY = done('2026-10-26T13:00:00Z');
+  const TUESDAY = done('2026-10-27T13:00:00Z');
+
+  it('cuenta los días entrenados contra los que tocan: "N de M entrenamientos"', () => {
+    expect(summary(['monday', 'wednesday', 'friday'], [MONDAY])).toBe('1 de 3 entrenamientos');
+    expect(summary(['monday', 'wednesday', 'friday'], [])).toBe('0 de 3 entrenamientos');
+  });
+
+  it('con un solo día planificado va en singular', () => {
+    expect(summary(['monday'], [MONDAY])).toBe('1 de 1 entrenamiento');
+  });
+
+  it('un día entrenado que no tocaba suma igual', () => {
+    expect(summary(['monday', 'wednesday'], [MONDAY, TUESDAY, done('2026-10-28T13:00:00Z')])).toBe('3 de 2 entrenamientos');
+  });
+
+  it('sin días planificados no dice "0 de 0"', () => {
+    expect(summary([], [])).toBe('Sin entrenamientos planificados');
+    expect(summary([], [MONDAY])).toBe('1 entrenamiento');
+    expect(summary([], [MONDAY, TUESDAY])).toBe('2 entrenamientos');
   });
 });
