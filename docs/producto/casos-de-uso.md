@@ -323,3 +323,38 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujos de error**
 
 - **E1:** FCM o Web Push no disponibles (o sin credenciales, o el token es inválido) → la notificación **igual queda guardada** en `notifications`: es la fuente de verdad y el PT la ve en su listado. El push es best-effort y **no se reintenta**. Si FCM indica que un token ya no es válido, se borra de `push_tokens`.
+
+---
+
+## CU-11 — Enviar mensaje al alumno (web)
+
+**Actores:** Personal Trainer y Alumno
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El PT y el alumno están autenticados en la web. El alumno está activo y es del PT (cada alumno tiene un solo PT). |
+| Postcondiciones | El mensaje (texto y/o una foto) queda guardado en `messages` dentro de la conversación del alumno. El destinatario lo ve en su pantalla "Mensajes" y en el badge de no leídos; al abrir la conversación se marca como leído. |
+| Requisitos | RF PT-13 · HU-24 (tarjeta 48) |
+
+**Flujo principal**
+
+1. El PT entra a "Mensajes" (o toca "Mensaje" en la ficha del alumno) y elige al alumno en la lista.
+2. Escribe un texto y lo envía con Enter o con el botón enviar (Shift+Enter agrega un salto de línea). El mensaje aparece de inmediato como "Enviando…" y luego se confirma.
+3. El alumno ve el badge de no leídos en su ítem "Mensajes" (se actualiza solo, sin recargar). Abre la conversación con su PT y el mensaje queda marcado como leído.
+4. El alumno responde con texto y/o una foto: la adjunta con el clip, ve la previsualización y puede quitarla antes de enviar.
+5. El PT ve la respuesta con la foto (al tocarla se agranda). El último mensaje de cada lado muestra ✓ (enviado) o ✓✓ (leído).
+6. Los dos ven la conversación completa, ordenada por fecha con separadores de día, y pueden cargar los mensajes anteriores con "Ver anteriores".
+
+**Flujos alternativos**
+
+- **2a — Envío masivo (PT):** desde "Envío masivo" elige alumnos activos (o "Todos"), escribe un texto (1 a 2000 caracteres, sin fotos) y envía. Se le avisa que cada alumno lo recibe en su conversación individual y que no es un chat grupal. Cada alumno ve el mensaje con la etiqueta "Envío masivo". Si algún alumno no es del PT, no se envía a nadie.
+- **4a — Foto inválida:** la foto pesa más de 5 MB o no es JPEG, PNG ni WebP → se avisa al elegirla y no se adjunta. El servidor lo vuelve a validar (por el contenido real del archivo, no por el tipo declarado) y rechaza con 413 o 415.
+- **E1 — El mensaje no se envía:** falla la red o el servidor → la burbuja queda con "No se envió" y el motivo, con las acciones **Reintentar** y **Descartar**. No se pierde el texto mientras no se descarte.
+- **E2 — Alumno inactivo:** el alumno dado de baja no aparece en la lista del PT ni en el selector del envío masivo, y la ficha no ofrece el botón "Mensaje".
+- **E3 — Conversación ajena:** un PT o alumno que intenta abrir la conversación de otro recibe un error de acceso (403).
+
+**Alcance de esta versión**
+
+- Los avisos son por polling (conversación abierta cada 4 s, lista y badge cada 15 s, solo con la pestaña visible); no hay push ni filas en `notifications`.
+- El chat en el celular no está en esta versión: usa este mismo backend y queda para una tarjeta de mobile.
+- No se pueden editar ni borrar mensajes, ni mandar varias fotos por mensaje.
