@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.students.progress.DayMark
 import com.fittrainer.data.students.progress.DayStatus
@@ -23,10 +25,21 @@ import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import java.time.YearMonth
 
+/** El mismo color en la celda y en el puntito de la leyenda. */
+private val MissedColor = FtColors.Coral.copy(alpha = 0.8f)
+
 private fun cellColor(status: DayStatus?): Color = when (status) {
     DayStatus.TRAINED -> FtColors.Brand
-    DayStatus.MISSED -> FtColors.Coral.copy(alpha = 0.8f)
+    DayStatus.MISSED -> MissedColor
     else -> FtColors.Elevated
+}
+
+/** Lo que lee TalkBack en cada celda: "5, entrenó". */
+fun dayDescription(day: Int, status: DayStatus?): String = "$day, " + when (status) {
+    DayStatus.TRAINED -> "entrenó"
+    DayStatus.MISSED -> "faltó"
+    DayStatus.UPCOMING -> "por venir"
+    else -> "sin plan"
 }
 
 /** Grilla de 7 columnas que empieza el lunes: azul = entrenó, coral = faltó, sin color = sin plan; lo que viene, atenuado. */
@@ -46,7 +59,8 @@ fun AttendanceCalendar(month: YearMonth, marks: List<DayMark>) {
                             Box(
                                 Modifier.fillMaxWidth().aspectRatio(1f)
                                     .alpha(if (cell.status == DayStatus.UPCOMING) 0.4f else 1f)
-                                    .background(cellColor(cell.status), MaterialTheme.shapes.small),
+                                    .background(cellColor(cell.status), MaterialTheme.shapes.small)
+                                    .clearAndSetSemantics { contentDescription = dayDescription(cell.day, cell.status) },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text("${cell.day}", style = MaterialTheme.typography.labelSmall, color = FtColors.TextPrimary)
@@ -58,7 +72,7 @@ fun AttendanceCalendar(month: YearMonth, marks: List<DayMark>) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
             Legend(FtColors.Brand, LEGEND_TRAINED)
-            Legend(FtColors.Coral, LEGEND_MISSED)
+            Legend(MissedColor, LEGEND_MISSED)
             Legend(FtColors.Elevated, LEGEND_REST)
         }
     }

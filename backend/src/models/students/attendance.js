@@ -8,6 +8,8 @@
  * - rest: no asignado y sin entrenar (ya pasó);
  * - upcoming: hoy sin entrenar todavía, o un día futuro.
  * Sin rutina activa no hay días asignados: los pasados son rest.
+ * Los días anteriores al alta del alumno (`since`) o a la rutina que asigna ese día de la semana
+ * (`daySince`) tampoco cuentan como asignados: son rest (el mismo piso que la adherencia de la lista).
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
 
@@ -25,25 +27,36 @@ export function monthRange(month) {
   return { first: `${month}-01`, next: `${next}-01` };
 }
 
-function dayStatus(day, today, trained, assigned) {
+/** El día está asignado: su día de la semana está en la rutina y no es anterior a los pisos. */
+function isAssigned(day, assigned, since, daySince) {
+  const weekday = weekdayOf(day);
+  if (!assigned.has(weekday)) return false;
+  if (since && day < since) return false;
+  const from = daySince?.get(weekday);
+  return !(from && day < from);
+}
+
+function dayStatus(day, today, trained, assignedDay) {
   if (trained.has(day)) return ATTENDANCE_STATUS.TRAINED;
   if (day >= today) return ATTENDANCE_STATUS.UPCOMING;
-  return assigned.has(weekdayOf(day)) ? ATTENDANCE_STATUS.MISSED : ATTENDANCE_STATUS.REST;
+  return assignedDay ? ATTENDANCE_STATUS.MISSED : ATTENDANCE_STATUS.REST;
 }
 
 /**
  * sessions: sesiones terminadas del mes como { id, date } (fecha local de started_at).
  * recordSessionIds: ids de esas sesiones con al menos un récord.
+ * since / daySince: pisos opcionales (ver arriba).
  */
-export function buildAttendance({ month, today, assignedDays, sessions, recordSessionIds }) {
+export function buildAttendance({ month, today, assignedDays, sessions, recordSessionIds, since = null, daySince = null }) {
   const assigned = new Set(assignedDays ?? []);
   const trained = new Set(sessions.map((s) => s.date));
   const { first, next } = monthRange(month);
   const days = [];
   let assignedUntilToday = 0;
   for (let day = first; day < next; day = addDays(day, 1)) {
-    days.push({ date: day, status: dayStatus(day, today, trained, assigned) });
-    if (day <= today && assigned.has(weekdayOf(day))) assignedUntilToday += 1;
+    const assignedDay = isAssigned(day, assigned, since, daySince);
+    days.push({ date: day, status: dayStatus(day, today, trained, assignedDay) });
+    if (day <= today && assignedDay) assignedUntilToday += 1;
   }
   const records = new Set(recordSessionIds ?? []);
   return {

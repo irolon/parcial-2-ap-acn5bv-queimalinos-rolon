@@ -38,4 +38,12 @@ class ProgressTextsTest {
         assertEquals("Asistencia · noviembre", monthTitle(YearMonth.of(2026, 11), YearMonth.of(2026, 11)))
         assertEquals("Asistencia · diciembre 2025", monthTitle(YearMonth.of(2025, 12), YearMonth.of(2026, 11)))
     }
+
+    @Test fun `TalkBack lee el dia y si entreno o falto`() {
+        assertEquals("5, entrenó", dayDescription(5, DayStatus.TRAINED))
+        assertEquals("6, faltó", dayDescription(6, DayStatus.MISSED))
+        assertEquals("7, sin plan", dayDescription(7, DayStatus.REST))
+        assertEquals("8, por venir", dayDescription(8, DayStatus.UPCOMING))
+        assertEquals("9, sin plan", dayDescription(9, null))
+    }
 }

@@ -25,7 +25,7 @@ En la ficha, el entrenador ve de un vistazo el mes del alumno (sesiones, racha, 
   - `GET /students/:id/attendance?month=YYYY-MM`;
   - trainer (sus alumnos) o el propio alumno, con el ownership en el service, igual que `GET /students/:id`;
   - `month` es opcional (por defecto, el mes actual en hora argentina) y no puede ser futuro.
-- **Días asignados:** salen de las rutinas activas **actuales** (`findAssignedDays`), como la racha (ADR 0005). Si el entrenador cambia la rutina, el calendario de meses anteriores se recalcula con los días nuevos. Es una limitación conocida, la misma que la racha.
+- **Días asignados:** salen de las rutinas activas **actuales** (`findAssignedDays`), como la racha (ADR 0005). Si el entrenador cambia la rutina, el calendario de meses anteriores se recalcula con los días nuevos. Es una limitación conocida, la misma que la racha. Los días anteriores al alta del alumno o a la creación de la rutina que asigna ese día no cuentan (son `rest`), con el mismo piso que la adherencia de la lista (revisión de la #56); la flecha de mes anterior no pasa del mes del alta.
 - **La racha** se lee de `GET /students/:id/streak`, que ya existe y permite al trainer.
 - **Gráficos:** se reusan `ProgressRepository` y las pantallas de la tarjeta 13, pidiendo con `student_id`. La lista de ejercicios entrenados sale de `GET /progress/overview?student_id=` (el alumno la arma desde su historial local, que el entrenador no tiene).
 - **Offline:** el resumen, la asistencia y los gráficos ya vistos quedan cacheados y se ven en modo avión.

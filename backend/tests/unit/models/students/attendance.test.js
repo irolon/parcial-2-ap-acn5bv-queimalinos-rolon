@@ -63,4 +63,24 @@ describe('models/students/attendance', () => {
     expect(r.prs).toBe(2);
     expect(r.days.filter((d) => d.status === 'trained')).toHaveLength(1);
   });
+
+  it('pisos: días antes del alta o de la rutina son rest; entrenar igual gana', () => {
+    const r = buildAttendance({
+      month: '2026-10',
+      today: '2026-11-05',
+      assignedDays: MWF,
+      sessions: [{ id: 's1', date: '2026-10-02' }],
+      recordSessionIds: [],
+      since: '2026-10-12',
+      daySince: new Map([['monday', '2026-10-01'], ['wednesday', '2026-10-20'], ['friday', '2026-10-01']]),
+    });
+    expect(statusOf(r, '2026-10-05')).toBe('rest');
+    expect(statusOf(r, '2026-10-02')).toBe('trained');
+    expect(statusOf(r, '2026-10-12')).toBe('missed');
+    // Miércoles 14: después del alta pero antes de la rutina que asigna los miércoles.
+    expect(statusOf(r, '2026-10-14')).toBe('rest');
+    expect(statusOf(r, '2026-10-21')).toBe('missed');
+    // Desde el 12: lun 12, 19, 26; vie 16, 23, 30; mié 21, 28.
+    expect(r.assigned_days).toBe(8);
+  });
 });
