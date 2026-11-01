@@ -22,7 +22,7 @@ function setup(appointment, handler) {
       <AppointmentDialog appointment={appointment} onClose={onClose} />
     </QueryClientProvider>,
   );
-  return { fetchMock, onClose };
+  return { fetchMock, onClose, client };
 }
 
 const user = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
@@ -62,12 +62,33 @@ describe('AppointmentDialog', () => {
     expect(button('Cancelar turno')).not.toBeInTheDocument();
   });
 
+  it('pasado y confirmado: sin acciones', () => {
+    setup(appt({ status: 'confirmed', scheduled_at: '2026-11-03T21:00:00.000Z' }));
+    expect(screen.getByText('Este turno ya pasó')).toBeInTheDocument();
+    expect(button('Cancelar turno')).not.toBeInTheDocument();
+  });
+
+  it('deshabilita Cancelar turno mientras se confirma', async () => {
+    setup(appt(), () => new Promise(() => {}));
+    await user().click(button('Confirmar'));
+    expect(await screen.findByRole('button', { name: 'Cancelar turno' })).toBeDisabled();
+  });
+
+  it('un error del servidor invalida los turnos para refrescar la grilla', async () => {
+    const { client } = setup(appt(), async () => errorResponse(409, 'INVALID_STATUS_TRANSITION', 'x'));
+    const spy = vi.spyOn(client, 'invalidateQueries');
+    await user().click(button('Confirmar'));
+    await screen.findByRole('alert');
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['appointments'] });
+  });
+
   it('Confirmar hace el PATCH y cierra', async () => {
     const { fetchMock, onClose } = setup(appt());
     await user().click(button('Confirmar'));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     const [[path, init]] = calls(fetchMock);
     expect(path).toBe('/appointments/a-1');
+    expect(init.method).toBe('PATCH');
     expect(bodyOf(init)).toEqual({ status: 'confirmed' });
   });
 

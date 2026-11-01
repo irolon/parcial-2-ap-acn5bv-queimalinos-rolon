@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Avatar from '@/components/shared/ui/Avatar';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
-import { useUpdateAppointmentStatus } from '@/hooks/agenda/useAgenda';
-import { timeRangeLabel } from '@/utils/agenda';
-import { STATUS_STYLES, isPast, shortDayHourLabel, studentName } from './status';
+import { APPOINTMENTS_KEY, useUpdateAppointmentStatus } from '@/hooks/agenda/useAgenda';
+import { shortDayHourLabel, timeRangeLabel } from '@/utils/agenda';
+import { STATUS_STYLES, isPast, studentName } from './status';
 
 const confirmText = (appt) =>
   `¿Cancelar el turno de ${studentName(appt).split(' ')[0]} del ${shortDayHourLabel(appt.scheduled_at)}? Le avisamos.`;
@@ -27,7 +28,7 @@ function Actions({ appt, confirming, pending, onAsk, onBack, onChange }) {
   }
   return (
     <div className="flex justify-end gap-3">
-      <Button variant="ghost" size="sm" onClick={onAsk}>Cancelar turno</Button>
+      <Button variant="ghost" size="sm" disabled={pending} onClick={onAsk}>Cancelar turno</Button>
       {appt.status === 'pending' && (
         <Button size="sm" loading={pending} onClick={() => onChange('confirmed')}>Confirmar</Button>
       )}
@@ -37,9 +38,18 @@ function Actions({ appt, confirming, pending, onAsk, onBack, onChange }) {
 
 function Body({ appt, onClose }) {
   const [confirming, setConfirming] = useState(false);
+  const queryClient = useQueryClient();
   const mutation = useUpdateAppointmentStatus();
   const style = STATUS_STYLES[appt.status];
-  const change = (status) => mutation.mutate({ id: appt.id, status }, { onSuccess: onClose });
+  const change = (status) => 
+    mutation.mutate(
+      { id: appt.id, status },
+      {
+        onSuccess: onClose,
+        // Un 409 suele significar que el turno cambió: se refresca la grilla.
+        onError: () => queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY }),
+      },
+    );
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">

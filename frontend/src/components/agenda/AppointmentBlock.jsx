@@ -11,10 +11,14 @@ export default function AppointmentBlock({ appointment, onSelect }) {
       onClick={() => onSelect(appointment)}
       className={`flex w-full cursor-pointer flex-col items-start rounded-[5px] border-l-2 px-2 py-1 text-left focus-visible:outline-2 focus-visible:outline-accentText ${style.block}`}
     >
-      <span className="w-full truncate font-display text-[11px] font-medium leading-tight text-bone0">
+      <span
+        className={`w-full truncate font-display text-[11px] font-medium leading-tight text-bone0 ${
+          appointment.status === 'cancelled' ? 'line-through' : ''
+        }`}
+      >
         {studentName(appointment)}
       </span>
-      <span className={`font-mono text-[9px] uppercase tracking-wider no-underline ${style.text}`}>
+      <span className={`font-mono text-[9px] uppercase tracking-wider ${style.text}`}>
         {style.label}
       </span>
     </button>

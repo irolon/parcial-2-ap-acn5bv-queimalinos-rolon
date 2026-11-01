@@ -76,3 +76,12 @@ describe('slotIso / slotKey', () => {
     expect(slotKey('2026-11-06', 9)).toBe('2026-11-06T09');
   });
 });
+
+describe('etiquetas de día y hora', () => {
+  it('dayHourLabel y shortDayHourLabel usan la hora de Argentina', async () => {
+    const { dayHourLabel, shortDayHourLabel } = await import('@/utils/agenda');
+    expect(dayHourLabel('2026-11-06T21:00:00.000Z')).toBe('viernes 06/11 18:00');
+    expect(shortDayHourLabel('2026-11-06T21:00:00.000Z')).toBe('vie 06/11 a las 18:00');
+    expect(shortDayHourLabel('2026-11-07T01:00:00.000Z')).toBe('vie 06/11 a las 22:00');
+  });
+});

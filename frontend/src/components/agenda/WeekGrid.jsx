@@ -10,7 +10,7 @@ export default function WeekGrid({ week, availability, appointments, showCancell
   const cells = groupByCell(appointments, showCancelled);
   const hours = gridHours(availability, appointments, showCancelled);
   return (
-    <div role="grid" aria-label="Agenda semanal" className="overflow-hidden rounded-[14px] border border-ink2 bg-ink1">
+    <div role="table" aria-label="Agenda semanal" className="overflow-hidden rounded-[14px] border border-ink2 bg-ink1">
       <div role="row" className={`${COLS} border-b border-ink2`}>
         <div role="columnheader" aria-label="Hora" />
         {week.days.map((day) => (
@@ -36,10 +36,11 @@ export default function WeekGrid({ week, availability, appointments, showCancell
             return (
               <div
                 key={day.date}
-                role="gridcell"
+                role="cell"
                 data-available={free}
                 className={`flex min-h-9 flex-col gap-1 border-l border-ink2 p-[3px] ${free ? 'bg-ink2' : 'bg-ink1'}`}
               >
+                {free && <span className="sr-only">Disponible</span>}
                 {(cells.get(slotKey(day.date, hour)) ?? []).map((appt) => (
                   <AppointmentBlock key={appt.id} appointment={appt} onSelect={onSelect} />
                 ))}

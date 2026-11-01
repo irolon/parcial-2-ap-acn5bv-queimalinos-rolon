@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createAppointment,
   getAvailability,
@@ -17,7 +17,12 @@ const FREE_PREFIX = [...AVAILABILITY_KEY, 'free'];
 
 /** Turnos propios de `from` a `to` (`YYYY-MM-DD`). */
 export function useAppointments(from, to) {
-  return useQuery({ queryKey: appointmentsKey(from, to), queryFn: () => listAppointments(from, to), enabled: Boolean(from && to) });
+  return useQuery({
+    queryKey: appointmentsKey(from, to),
+    queryFn: () => listAppointments(from, to),
+    enabled: Boolean(from && to),
+    placeholderData: keepPreviousData,
+  });
 }
 
 /** Franjas semanales del entrenador. */

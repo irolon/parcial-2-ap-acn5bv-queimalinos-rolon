@@ -47,7 +47,7 @@ describe('AgendaPage', () => {
     expect(await screen.findByRole('button', { name: 'Lucía QA, pendiente, viernes 06/11 18:00' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 1, name: 'Agenda' })).toBeVisible();
     expect(screen.getByText('SEMANA DEL 2 AL 8 NOV')).toBeVisible();
-    expect(screen.getByRole('grid')).toBeVisible();
+    expect(screen.getByRole('table')).toBeVisible();
     expect(screen.getByText('Mostrar cancelados')).toBeVisible();
     expect(ranges(fetchMock)).toEqual(['/appointments?from=2026-11-02&to=2026-11-08']);
   });
@@ -68,10 +68,19 @@ describe('AgendaPage', () => {
     expect(ranges(fetchMock)).toContain('/appointments?from=2026-10-26&to=2026-11-01');
   });
 
+  it('al cambiar de semana mantiene la grilla mientras carga (sin parpadeo)', async () => {
+    stubAgenda();
+    renderRoute('/pt/agenda');
+    await screen.findByRole('table');
+    await user().click(screen.getByRole('button', { name: 'Semana siguiente' }));
+    expect(screen.getByRole('table')).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('oculta los cancelados hasta prender el toggle', async () => {
     stubAgenda({ appointments: [appt({ status: 'cancelled' })] });
     renderRoute('/pt/agenda');
-    await screen.findByRole('grid');
+    await screen.findByRole('table');
     expect(screen.queryByRole('button', { name: /cancelado/ })).not.toBeInTheDocument();
     await user().click(screen.getByLabelText('Mostrar cancelados'));
     expect(screen.getByRole('button', { name: /cancelado/ })).toBeVisible();
@@ -90,7 +99,7 @@ describe('AgendaPage', () => {
     stubAgenda();
     renderRoute('/pt/agenda');
     expect(await screen.findByRole('region', { name: 'VIE 06' })).toBeVisible();
-    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.getAllByText('Sin turnos')).toHaveLength(6);
     expect(screen.getByRole('button', { name: 'Lucía QA, pendiente, viernes 06/11 18:00' })).toBeVisible();
   });
@@ -98,7 +107,7 @@ describe('AgendaPage', () => {
   it('tiene los botones Disponibilidad y Nuevo turno', async () => {
     stubAgenda();
     renderRoute('/pt/agenda');
-    await screen.findByRole('grid');
+    await screen.findByRole('table');
     expect(screen.getByRole('button', { name: 'Disponibilidad' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Nuevo turno' })).toBeVisible();
   });
