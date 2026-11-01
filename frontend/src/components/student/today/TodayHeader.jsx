@@ -1,8 +1,7 @@
 import { Flame } from 'lucide-react';
 import Pill from '@/components/shared/ui/Pill';
 import { greetingDate } from '@/utils/dates';
-
-const days = (n) => `${n} ${n === 1 ? 'día' : 'días'}`;
+import { plural } from '@/utils/shared/plural';
 
 /** Encabezado de Hoy: el saludo, la fecha en Argentina y, si hay racha, la pastilla "Racha N días". */
 export default function TodayHeader({ name, now, streakDays }) {
@@ -18,7 +17,7 @@ export default function TodayHeader({ name, now, streakDays }) {
       {streakDays > 0 && (
         <Pill tone="hot" size="md">
           <Flame size={13} aria-hidden="true" />
-          Racha {days(streakDays)}
+          Racha {plural(streakDays, 'día', 'días')}
         </Pill>
       )}
     </header>
