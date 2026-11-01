@@ -47,10 +47,6 @@ class FakeHistoryDao : HistoryDao() {
         }
     }
     override suspend fun sessions(ownerId: String) = ordered(state.value, ownerId)
-    override suspend fun sessionIdsMissingExerciseId(ownerId: String): List<String> {
-        val st = state.value
-        return ordered(st, ownerId).filter { s -> s.detailLoaded && st.exercises.any { it.sessionId == s.id && it.exerciseId == null } }.map { it.id }
-    }
     override suspend fun upsertSessions(sessions: List<HistorySessionEntity>) = state.update { st ->
         writes += "upsertSessions tx=$inTx"
         st.copy(sessions = st.sessions + sessions.associateBy { it.id })

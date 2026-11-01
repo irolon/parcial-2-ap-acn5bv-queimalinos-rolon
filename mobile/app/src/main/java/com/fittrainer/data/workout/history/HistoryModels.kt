@@ -1,7 +1,5 @@
 package com.fittrainer.data.workout.history
 
-import com.fittrainer.data.db.workout.FEEDBACK_PENDING
-import com.fittrainer.data.db.workout.FEEDBACK_SYNCED
 import java.time.Instant
 
 /** De dónde sale una sesión del historial (spec §4 de la tarjeta 12). */
@@ -50,8 +48,6 @@ data class HistoryDetail(
     val trainerComment: String?,
     val exercises: List<HistoryExercise>,
     val detailLoaded: Boolean,
-    /** Detalle guardado antes de la v9 (algún ejercicio sin exerciseId): con red se vuelve a bajar al abrirlo (tarjeta 13). */
-    val missingExerciseIds: Boolean = false,
 )
 
 /**
@@ -65,9 +61,3 @@ sealed interface LoadMoreResult {
 
 /** Sesiones de la página 1 sin detalle guardado; gen ata la fase 2 a la misma cuenta/limpieza que la fase 1. */
 class PendingDetails internal constructor(val ids: List<String>, internal val gen: Int)
-
-/** Las que se guardan con detalle para verlas offline (spec §2). */
-const val HISTORY_PAGE_SIZE = 20
-
-/** El feedback del celular le gana al caché mientras no se mandó y también después, hasta que un refresco lo traiga. */
-internal fun String.hasFeedbackToShow() = this == FEEDBACK_PENDING || this == FEEDBACK_SYNCED

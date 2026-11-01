@@ -53,8 +53,8 @@ fun ChartsScreen(
     PullToRefreshBox(
         isRefreshing = state.isRefreshing && !sectionLoading,
         onRefresh = {
-            viewModel.onRetry()
-            onRefreshHistory() // trae también los ejercicios nuevos del historial
+            viewModel.onRetry() // en Cargas trae también la lista de ejercicios (overview)
+            onRefreshHistory() // el resumen de la semana de Progreso sale del historial
         },
         modifier = Modifier.fillMaxSize().background(FtColors.Background),
     ) {

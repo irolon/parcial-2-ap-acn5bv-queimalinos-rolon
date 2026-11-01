@@ -1,9 +1,10 @@
-package com.fittrainer.ui.progress.charts
+package com.fittrainer.ui.progress.charts.chartsviewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.api.progress.ExercisePointDto
 import com.fittrainer.data.api.progress.ExerciseProgressDto
 import com.fittrainer.data.api.progress.ExerciseRefDto
+import com.fittrainer.data.api.progress.OverviewExerciseDto
 import com.fittrainer.data.api.progress.PrDto
 import com.fittrainer.data.api.progress.PrValueDto
 import com.fittrainer.data.db.progress.TrainedExercise
@@ -17,6 +18,11 @@ import com.fittrainer.testing.fakes.progress.httpErrorWithCode
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.routine.FakeStudentSession
 import com.fittrainer.testing.fakes.sync.httpError
+import com.fittrainer.ui.progress.charts.ChartsContent
+import com.fittrainer.ui.progress.charts.ChartsEmptyState
+import com.fittrainer.ui.progress.charts.ChartsView
+import com.fittrainer.ui.progress.charts.ChartsViewModel
+import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -28,7 +34,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.time.Instant
 
 /** Refrescos por vista y por clave, y reinicio de la métrica al cambiar el ejercicio efectivo. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -51,7 +56,8 @@ class ChartsViewModelRefreshTest {
     )
 
     private fun load() {
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("e1", "Sentadilla", 2), TrainedExercise("e2", "Press", 1)))
+        dao.seedTrained("u1", TrainedExercise("e1", "Sentadilla", 2, "2026-10-30"), TrainedExercise("e2", "Press", 1, "2026-10-01"), fetchedAt = clock.millis)
+        api.trained = listOf(OverviewExerciseDto("e1", "Sentadilla", 2, "2026-10-30"), OverviewExerciseDto("e2", "Press", 1, "2026-10-01"))
         api.exercises = mapOf("e1" to exercise("e1", "e1rm_kg"), "e2" to exercise("e2", "e1rm_kg"))
     }
 
@@ -75,10 +81,12 @@ class ChartsViewModelRefreshTest {
 
     @Test fun unErrorDeCargasNoApareceEnMedidasYReintentarAllaForzaMedidas() = runTest {
         load()
-        api.exerciseErrors = mapOf("e1" to httpError(503))
         val model = started(vm())
+        api.exerciseErrors = mapOf("e1" to httpError(503))
+        model.onRetry()
+        advanceUntilIdle()
         val exerciseCalls = api.exerciseCalls
-        assertTrue(model.uiState.value.refreshFailed)
+        assertTrue(model.uiState.value.refreshFailed) // hay datos guardados: el banner avisa
         model.onViewSelected(ChartsView.BODY)
         advanceUntilIdle()
         assertFalse(model.uiState.value.refreshFailed)
@@ -107,8 +115,8 @@ class ChartsViewModelRefreshTest {
         load()
         val model = started(vm())
         assertEquals(1, api.exerciseCalls)
-        // Terminó una sesión: el historial guardado trae un startedAt más nuevo de e1.
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("e1", "Sentadilla", 50), TrainedExercise("e2", "Press", 1)))
+        // Lo entrenó otro día: la lista del overview trae una fecha más nueva de e1.
+        dao.seedTrained("u1", TrainedExercise("e1", "Sentadilla", 3, "2026-10-31"), TrainedExercise("e2", "Press", 1, "2026-10-01"), fetchedAt = clock.millis)
         advanceUntilIdle()
         assertEquals(2, api.exerciseCalls)
         assertEquals("e1", model.uiState.value.selectedExerciseId)
@@ -119,7 +127,8 @@ class ChartsViewModelRefreshTest {
         load()
         api.error = java.io.IOException("connection refused")
         val model = started(vm())
-        assertTrue(model.uiState.value.refreshFailed)
+        // Sin nada que mostrar, la sección trae "No pudimos cargar" con Reintentar: el banner no se suma (un solo aviso).
+        assertFalse(model.uiState.value.refreshFailed)
         assertEquals(ChartsContent.LOAD_FAILED, ChartsEmptyState.exercises(model.uiState.value))
         model.dismissRefreshError()
         advanceUntilIdle()
@@ -147,14 +156,16 @@ class ChartsViewModelRefreshTest {
         assertEquals(ChartMetric.MAX_KG, s.metric)
     }
 
-    @Test fun unEjercicioNuevoQueTraeElHistorialApareceEnElSelectorSinReabrirGraficos() = runTest {
+    @Test fun unEjercicioNuevoDelOverviewApareceEnElSelectorAlTirarParaActualizar() = runTest {
         load()
         val model = started(vm())
         assertEquals(listOf("e1", "e2"), model.uiState.value.exercises.map { it.exerciseId })
-        // El refresco del historial escribe en Room (el fake emite como la consulta de ejercicios entrenados).
-        dao.trained.value = mapOf(
-            "u1" to listOf(TrainedExercise("e3", "Remo", 9), TrainedExercise("e1", "Sentadilla", 2), TrainedExercise("e2", "Press", 1)),
+        api.trained = listOf(
+            OverviewExerciseDto("e3", "Remo", 1, "2026-10-31"),
+            OverviewExerciseDto("e1", "Sentadilla", 2, "2026-10-30"),
+            OverviewExerciseDto("e2", "Press", 1, "2026-10-01"),
         )
+        model.onRetry()
         advanceUntilIdle()
         assertEquals(listOf("e3", "e1", "e2"), model.uiState.value.exercises.map { it.exerciseId })
     }

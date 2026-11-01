@@ -9,6 +9,12 @@ internal object ChartsKeys {
     const val BODY_FIELD = "bodyField"
     private const val BODY_KEY = "body"
 
+    /** La lista de ejercicios entrenados (overview): un refresco aparte del ejercicio elegido. */
+    const val LIST_KEY = "exercises"
+
+    /** Cuánto espera un aviso de récord a que el ejercicio aparezca en la lista recién pedida (tarjeta 17). */
+    const val OPEN_WAIT_MS = 10_000L
+
     /** Un refresco por vista: medidas comparten una clave; cada ejercicio, la suya. */
     fun refreshKey(view: ChartsView, exerciseId: String?): String? =
         if (view == ChartsView.BODY) BODY_KEY else exerciseId?.let { "ex:$it" }

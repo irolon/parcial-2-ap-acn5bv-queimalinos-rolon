@@ -2,6 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import studentRouter from '../../../../src/routes/gamification/student-gamification.routes.js';
 import studentsRouter from '../../../../src/routes/students/students.routes.js';
 import { authenticate } from '../../../../src/shared/middlewares/auth.middleware.js';
+import * as achievementsController from '../../../../src/controllers/gamification/achievements.controller.js';
 
 const handlersOf = (router, path) =>
   router.stack.find((l) => l.route?.path === path && l.route.methods.get).route.stack.map((l) => l.handle);
@@ -15,6 +16,7 @@ const roleResult = (router, path, role) => {
 describe.each([
   ['GET /students/:id/achievements', studentRouter, '/achievements'],
   ['GET /students/:id/streak', studentRouter, '/streak'],
+  ['GET /students/:id/achievements/progress', studentRouter, '/achievements/progress'],
 ])('%s', (_name, router, path) => {
   it('exige authenticate y rol trainer o student', () => {
     expect(handlersOf(router, path)[0]).toBe(authenticate);
@@ -35,5 +37,14 @@ describe('montaje', () => {
     let err;
     handlers[2]({ params: { id: 'x' } }, {}, (e) => { err = e; });
     expect(err).toMatchObject({ statusCode: 400 });
+  });
+
+  it('el progreso valida el id y termina en su controller', () => {
+    const handlers = handlersOf(studentRouter, '/achievements/progress');
+    expect(handlers).toHaveLength(4);
+    let err;
+    handlers[2]({ params: { id: 'x' } }, {}, (e) => { err = e; });
+    expect(err).toMatchObject({ statusCode: 400 });
+    expect(handlers[3]).toBe(achievementsController.progress);
   });
 });

@@ -3,6 +3,8 @@ package com.fittrainer.data.workout.history
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.history.HistorySummaryDto
 import com.fittrainer.data.auth.AccountChangedException
+import com.fittrainer.data.db.workout.FEEDBACK_PENDING
+import com.fittrainer.data.db.workout.FEEDBACK_SYNCED
 import com.fittrainer.data.db.workout.SYNC_SYNCED
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.history.HistoryCommentSeenEntity
@@ -24,6 +26,9 @@ import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
+
+/** Las que se guardan con detalle para verlas offline (spec §2). */
+const val HISTORY_PAGE_SIZE = 20
 
 /**
  * Historial del alumno (spec §4 de la tarjeta 12). La UI observa Room; refresh() trae las 20 más
@@ -91,9 +96,7 @@ class HistoryRepository @Inject constructor(
         val page = api.history(ownerId, 1, HISTORY_PAGE_SIZE)
         totalPagesAfterRefresh = page.meta.totalPages
         val cached = dao.sessions(ownerId).associateBy { it.id }
-        // Los detalles guardados antes de la v9 no tienen exerciseId (tarjeta 13): se vuelven a bajar.
-        val stale = page.data.filterNot { cached[it.id]?.detailMatches(it) == true }.map { it.id }.toSet() +
-            dao.sessionIdsMissingExerciseId(ownerId)
+        val stale = page.data.filterNot { cached[it.id]?.detailMatches(it) == true }.map { it.id }.toSet()
         checkOwner(ownerId, gen)
         // El aviso va en la misma transacción que el reemplazo: un "Ver más" no puede colarse entre los dos.
         dao.inTransaction {
@@ -191,3 +194,6 @@ class HistoryRepository @Inject constructor(
         Result.failure(DataException(e.toDataError(), e))
     }
 }
+
+/** El feedback del celular le gana al caché mientras no se mandó y también después, hasta que un refresco lo traiga. */
+private fun String.hasFeedbackToShow() = this == FEEDBACK_PENDING || this == FEEDBACK_SYNCED

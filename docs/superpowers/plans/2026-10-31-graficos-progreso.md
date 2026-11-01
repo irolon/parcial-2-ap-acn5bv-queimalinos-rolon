@@ -4,6 +4,8 @@
 
 **Objetivo:** que el alumno vea en Progreso → Gráficos la curva de carga de cada ejercicio y la evolución de sus medidas, con período elegible y también sin conexión.
 
+> **Cambio tras la revisión de la PR #44 (1/11):** la lista del desplegable sale de `GET /progress/overview` guardado en `progress_exercises` (Room v9, misma `AutoMigration(8 → 9)`), no del historial. Se descartaron la columna `history_exercises.exerciseId` y su relleno (Tareas 1 y 2), y `di/ProgressModule.kt` pasó a `di/CacheCleanersModule.kt`. El detalle vigente está en el spec, §4.1.
+
 **Arquitectura:** Room v9 suma `exerciseId` a `history_exercises` y tres tablas de caché (`progress_*`). `ProgressRepository` baja el historial completo de un ejercicio (`GET /progress/exercise/:id`) o de las medidas (`GET /progress/body/:studentId`) y reemplaza el caché; la UI lee de Room y filtra el período en memoria con funciones puras. La pestaña Progreso pasa a tener dos solapas (Historial de la 12, Gráficos nueva).
 
 **Stack:** Kotlin, Jetpack Compose, Hilt, Retrofit + kotlinx.serialization, Room (auto-migración), Vico (gráficos), JUnit4 + coroutines-test.

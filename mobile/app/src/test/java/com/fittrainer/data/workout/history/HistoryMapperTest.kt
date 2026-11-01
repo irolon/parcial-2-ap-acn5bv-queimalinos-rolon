@@ -35,10 +35,4 @@ class HistoryMapperTest {
         val dto = HistorySummaryDto("a", "2026-10-29T22:00:00-03:00")
         assertEquals(base, dto.toEntity("u1", inLatest = true, detailLoaded = false).startedAt)
     }
-
-    @Test fun `exerciseEntities guarda el id del ejercicio ejecutado`() {
-        val e = HistoryExerciseDto(NamedRefDto("e2", "Press inclinado"), originalExercise = NamedRefDto("e1", "Press"))
-        val entities = HistoryDetailDto("a", "2026-10-30T01:00:00+00:00", exercises = listOf(e)).exerciseEntities()
-        assertEquals("e2", entities[0].exerciseId)
-    }
 }

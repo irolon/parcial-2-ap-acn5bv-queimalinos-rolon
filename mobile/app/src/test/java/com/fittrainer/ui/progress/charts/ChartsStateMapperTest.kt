@@ -7,6 +7,7 @@ import com.fittrainer.data.progress.BodyChart
 import com.fittrainer.data.progress.ChartMetric
 import com.fittrainer.data.progress.ChartRange
 import com.fittrainer.data.progress.ExerciseChart
+import com.fittrainer.data.progress.TrainedExercises
 import java.time.LocalDate
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
@@ -17,14 +18,27 @@ import org.junit.Test
 /** La armada del estado (buildChartsState): días vs puntos, gráfico de otro ejercicio y lista sin cargar. */
 class ChartsStateMapperTest {
     private val today = LocalDate.of(2026, 10, 31)
-    private val exercises = listOf(TrainedExercise("e1", "Sentadilla", 2), TrainedExercise("e2", "Press", 1))
+    private val exercises = TrainedExercises(
+        listOf(TrainedExercise("e1", "Sentadilla", 2, "2026-10-20"), TrainedExercise("e2", "Press", 1, "2026-10-01")),
+        fetchedAt = 1L,
+    )
     private val prefs = ChartsPrefs(ChartsView.LOADS, ChartMetric.E1RM, ChartRange.ALL, null)
 
     private fun meta(id: String) = ProgressExerciseMetaEntity("u1", id, "e1rm_kg", null, null, 70.0, "2026-10-01", 1L)
     private fun point(id: String, date: String, e1rm: Double?) = ProgressExercisePointEntity("u1", id, date, 50.0, e1rm, 3, 8)
 
-    private fun state(list: List<TrainedExercise>?, selected: String?, chart: ExerciseChart?) =
-        buildChartsState(ChartsData(list, selected, chart, BodyChart(emptyList(), null)), prefs, false, RefreshFlags(), today, ZoneOffset.UTC)
+    private fun state(
+        list: TrainedExercises?,
+        selected: String?,
+        chart: ExerciseChart?,
+        refresh: RefreshFlags = RefreshFlags(),
+        listFlags: RefreshFlags = RefreshFlags(),
+        view: ChartsView = ChartsView.LOADS,
+    ) = buildChartsState(
+        ChartsData(list, selected, chart, BodyChart(emptyList(), null)), prefs.copy(view = view), false, refresh, today, ZoneOffset.UTC, listFlags,
+    )
+
+    private val twoDays = ExerciseChart("e1", listOf(point("e1", "2026-10-01", 70.0), point("e1", "2026-10-10", 75.0)), meta("e1"))
 
     @Test fun losDiasSeCuentanPorPuntosGuardadosNoPorLaMetrica() {
         // Tres días entrenados; el 1RM solo existe en uno (los otros sin peso válido para estimarlo).
@@ -58,6 +72,30 @@ class ChartsStateMapperTest {
         val s = state(null, null, null)
         assertFalse(s.exercisesLoaded)
         assertEquals(ChartsContent.LOADING, ChartsEmptyState.exercises(s))
-        assertTrue(state(emptyList(), null, null).exercisesLoaded)
+        val empty = state(TrainedExercises(emptyList(), null), null, null)
+        assertTrue(empty.exercisesLoaded)
+        assertFalse(empty.exercisesEverLoaded) // Room emitió, pero el overview nunca se bajó
+        assertTrue(state(TrainedExercises(emptyList(), 1L), null, null).exercisesEverLoaded)
+    }
+
+    /** Con red, sin datos y un 5xx: un solo aviso, el de la sección ("No pudimos cargar" + Reintentar), sin el banner. */
+    @Test fun sinDatosQueMostrarLaFallaVaSoloEnLaSeccion() {
+        val failed = RefreshFlags(failed = true, attempted = true)
+        val s = state(exercises, "e1", null, refresh = failed)
+        assertEquals(ChartsContent.LOAD_FAILED, ChartsEmptyState.exercises(s))
+        assertFalse(s.refreshFailed)
+        val listFailed = state(TrainedExercises(emptyList(), null), null, null, listFlags = failed)
+        assertEquals(ChartsContent.LOAD_FAILED, ChartsEmptyState.exercises(listFailed))
+        assertFalse(listFailed.refreshFailed)
+    }
+
+    @Test fun conDatosGuardadosLaFallaVaEnElBanner() {
+        assertTrue(state(exercises, "e1", twoDays, refresh = RefreshFlags(failed = true, attempted = true)).refreshFailed)
+        // La lista también cuenta en Cargas (corriendo o con falla), pero no en Medidas.
+        val listFailed = RefreshFlags(running = true, failed = true, attempted = true)
+        val loads = state(exercises, "e1", twoDays, listFlags = listFailed)
+        assertTrue(loads.refreshFailed && loads.isRefreshing)
+        val body = state(exercises, "e1", twoDays, listFlags = listFailed, view = ChartsView.BODY)
+        assertFalse(body.refreshFailed || body.isRefreshing)
     }
 }

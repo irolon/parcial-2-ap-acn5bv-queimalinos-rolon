@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "db6b53636a9ff2ae9a1ae1f4330804df",
+    "identityHash": "8ae42802faa825897eafb6762b6ec7aa",
     "entities": [
       {
         "tableName": "health_snapshot",
@@ -763,7 +763,7 @@
       },
       {
         "tableName": "history_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `originalExerciseName` TEXT, `plannedSets` INTEGER, `plannedReps` INTEGER, `plannedKg` REAL, `isPr` INTEGER NOT NULL, `exerciseId` TEXT, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `position` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `originalExerciseName` TEXT, `plannedSets` INTEGER, `plannedReps` INTEGER, `plannedKg` REAL, `isPr` INTEGER NOT NULL, PRIMARY KEY(`sessionId`, `position`), FOREIGN KEY(`sessionId`) REFERENCES `history_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sessionId",
@@ -808,11 +808,6 @@
             "columnName": "isPr",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "exerciseId",
-            "columnName": "exerciseId",
-            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -998,7 +993,7 @@
       },
       {
         "tableName": "progress_exercise_meta",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `defaultMetric` TEXT NOT NULL, `prMaxKg` REAL, `prMaxKgDate` TEXT, `prE1rmKg` REAL, `prE1rmDate` TEXT, `fetchedAt` INTEGER NOT NULL, `historyMarker` INTEGER, PRIMARY KEY(`ownerId`, `exerciseId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `defaultMetric` TEXT NOT NULL, `prMaxKg` REAL, `prMaxKgDate` TEXT, `prE1rmKg` REAL, `prE1rmDate` TEXT, `fetchedAt` INTEGER NOT NULL, `trainedMarker` TEXT, PRIMARY KEY(`ownerId`, `exerciseId`))",
         "fields": [
           {
             "fieldPath": "ownerId",
@@ -1045,9 +1040,9 @@
             "notNull": true
           },
           {
-            "fieldPath": "historyMarker",
-            "columnName": "historyMarker",
-            "affinity": "INTEGER"
+            "fieldPath": "trainedMarker",
+            "columnName": "trainedMarker",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -1137,6 +1132,73 @@
       },
       {
         "tableName": "progress_body_meta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `fetchedAt` INTEGER NOT NULL, PRIMARY KEY(`ownerId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAt",
+            "columnName": "fetchedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerId"
+          ]
+        }
+      },
+      {
+        "tableName": "progress_exercises",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `name` TEXT NOT NULL, `days` INTEGER NOT NULL, `lastDate` TEXT NOT NULL, PRIMARY KEY(`ownerId`, `exerciseId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exerciseId",
+            "columnName": "exerciseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "days",
+            "columnName": "days",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastDate",
+            "columnName": "lastDate",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerId",
+            "exerciseId"
+          ]
+        }
+      },
+      {
+        "tableName": "progress_exercises_meta",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `fetchedAt` INTEGER NOT NULL, PRIMARY KEY(`ownerId`))",
         "fields": [
           {
@@ -1293,7 +1355,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db6b53636a9ff2ae9a1ae1f4330804df')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8ae42802faa825897eafb6762b6ec7aa')"
     ]
   }
 }

@@ -3,7 +3,7 @@ package com.fittrainer.data.api.progress
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** GET /progress/exercise/:id y /progress/body/:studentId (spec del backend §3.1 y §3.2). `summary` y `muscle_group` se ignoran. */
+/** GET /progress/exercise/:id, /progress/body/:studentId y /progress/overview. `summary`, `muscle_group` y `weekly_volume` se ignoran. */
 @Serializable
 data class ExerciseRefDto(val id: String, val name: String)
 
@@ -55,3 +55,18 @@ data class BodyProgressDto(val points: List<BodyPointDto> = emptyList())
 
 @Serializable
 data class BodyProgressResponse(val data: BodyProgressDto)
+
+/** Un ejercicio que el alumno ya entrenó: `days` = días distintos con series, `last_date` = YYYY-MM-DD del último. */
+@Serializable
+data class OverviewExerciseDto(
+    val id: String,
+    val name: String,
+    val days: Int = 0,
+    @SerialName("last_date") val lastDate: String,
+)
+
+@Serializable
+data class ProgressOverviewDto(val exercises: List<OverviewExerciseDto> = emptyList())
+
+@Serializable
+data class ProgressOverviewResponse(val data: ProgressOverviewDto)

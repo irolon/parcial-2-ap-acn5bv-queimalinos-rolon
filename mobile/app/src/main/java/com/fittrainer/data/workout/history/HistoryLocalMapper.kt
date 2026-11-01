@@ -53,7 +53,6 @@ fun HistorySessionEntity.toHistoryItem(rpeOverride: Int?, seenComment: String? =
 fun HistoryWithDetails.toHistoryDetail(rpeOverride: Int?, notesOverride: String?) = HistoryDetail(
     item = session.toHistoryItem(rpeOverride), notes = notesOverride ?: session.notes,
     trainerComment = session.trainerComment, detailLoaded = session.detailLoaded,
-    missingExerciseIds = exercises.any { it.exerciseId == null },
     exercises = exercises.sortedBy { it.position }.map { e ->
         HistoryExercise(
             e.exerciseName, e.originalExerciseName, e.plannedSets, e.plannedReps, e.plannedKg, e.isPr,

@@ -3,8 +3,10 @@ package com.fittrainer.testing.fakes.progress
 import com.fittrainer.data.db.progress.ProgressBodyMetaEntity
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
 import com.fittrainer.data.db.progress.ProgressDao
+import com.fittrainer.data.db.progress.ProgressExerciseEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
+import com.fittrainer.data.db.progress.ProgressExercisesMetaEntity
 import com.fittrainer.data.db.progress.TrainedExercise
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,19 +15,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** Caché de progreso en memoria. Los ejercicios entrenados se cargan a mano en [trained] (en Room salen del historial). */
+/** Caché de progreso en memoria. [seedTrained] carga la lista del desplegable como si ya se hubiera bajado el overview. */
 open class FakeProgressDao : ProgressDao() {
     data class State(
         val points: List<ProgressExercisePointEntity> = emptyList(),
         val metas: List<ProgressExerciseMetaEntity> = emptyList(),
         val body: List<ProgressBodyPointEntity> = emptyList(),
         val bodyMetas: List<ProgressBodyMetaEntity> = emptyList(),
+        val exercises: List<ProgressExerciseEntity> = emptyList(),
+        val exercisesMetas: List<ProgressExercisesMetaEntity> = emptyList(),
     )
 
     val state = MutableStateFlow(State())
 
-    /** Ejercicios entrenados por dueño. */
-    val trained = MutableStateFlow<Map<String, List<TrainedExercise>>>(emptyMap())
+    /** Lista del dueño ya bajada (con su fetchedAt), como la dejaría replaceExercises. */
+    fun seedTrained(ownerId: String, vararg rows: TrainedExercise, fetchedAt: Long = 0L) = state.update { st ->
+        st.copy(
+            exercises = st.exercises.filterNot { it.ownerId == ownerId } +
+                rows.map { ProgressExerciseEntity(ownerId, it.exerciseId, it.name, it.days, it.lastDate) },
+            exercisesMetas = st.exercisesMetas.filterNot { it.ownerId == ownerId } + ProgressExercisesMetaEntity(ownerId, fetchedAt),
+        )
+    }
 
     /** Como Room: una transaccion a la vez; clear y clearAll esperan a la abierta. */
     private val txLock = Mutex()
@@ -37,10 +47,34 @@ open class FakeProgressDao : ProgressDao() {
     override suspend fun clearAll() = txLock.withLock { super.clearAll() }
 
     override fun observeTrainedExercises(ownerId: String): Flow<List<TrainedExercise>> =
-        trained.map { m -> (m[ownerId] ?: emptyList()).sortedByDescending { it.lastTrainedAt } }
+        state.map { st -> trainedOf(st, ownerId) }
 
-    override suspend fun lastTrainedAt(ownerId: String, exerciseId: String): Long? =
-        trained.value[ownerId]?.filter { it.exerciseId == exerciseId }?.maxOfOrNull { it.lastTrainedAt }
+    override suspend fun trainedExercise(ownerId: String, exerciseId: String) =
+        trainedOf(state.value, ownerId).firstOrNull { it.exerciseId == exerciseId }
+
+    private fun trainedOf(st: State, ownerId: String) = st.exercises.filter { it.ownerId == ownerId }
+        .sortedWith(compareByDescending<ProgressExerciseEntity> { it.lastDate }.thenBy { it.name })
+        .map { TrainedExercise(it.exerciseId, it.name, it.days, it.lastDate) }
+
+    override fun observeExercisesMeta(ownerId: String): Flow<ProgressExercisesMetaEntity?> =
+        state.map { st -> st.exercisesMetas.firstOrNull { it.ownerId == ownerId } }
+
+    override suspend fun exercisesMeta(ownerId: String) = state.value.exercisesMetas.firstOrNull { it.ownerId == ownerId }
+
+    override suspend fun insertExercises(rows: List<ProgressExerciseEntity>) = state.update { it.copy(exercises = it.exercises + rows) }
+
+    override suspend fun upsertExercisesMeta(meta: ProgressExercisesMetaEntity) = state.update { st ->
+        st.copy(exercisesMetas = st.exercisesMetas.filterNot { it.ownerId == meta.ownerId } + meta)
+    }
+
+    override suspend fun deleteExercises(ownerId: String) = state.update { st -> st.copy(exercises = st.exercises.filterNot { it.ownerId == ownerId }) }
+
+    override suspend fun deleteTrainedExercise(ownerId: String, exerciseId: String) = state.update { st ->
+        st.copy(exercises = st.exercises.filterNot { it.ownerId == ownerId && it.exerciseId == exerciseId })
+    }
+
+    override suspend fun deleteExercisesMeta(ownerId: String) =
+        state.update { st -> st.copy(exercisesMetas = st.exercisesMetas.filterNot { it.ownerId == ownerId }) }
 
     override fun observePoints(ownerId: String, exerciseId: String): Flow<List<ProgressExercisePointEntity>> =
         state.map { st -> st.points.filter { it.ownerId == ownerId && it.exerciseId == exerciseId }.sortedBy { it.date } }
@@ -88,4 +122,6 @@ open class FakeProgressDao : ProgressDao() {
     override suspend fun deleteEveryMeta() = state.update { it.copy(metas = emptyList()) }
     override suspend fun deleteEveryBodyPoint() = state.update { it.copy(body = emptyList()) }
     override suspend fun deleteEveryBodyMeta() = state.update { it.copy(bodyMetas = emptyList()) }
+    override suspend fun deleteEveryExercise() = state.update { it.copy(exercises = emptyList()) }
+    override suspend fun deleteEveryExercisesMeta() = state.update { it.copy(exercisesMetas = emptyList()) }
 }

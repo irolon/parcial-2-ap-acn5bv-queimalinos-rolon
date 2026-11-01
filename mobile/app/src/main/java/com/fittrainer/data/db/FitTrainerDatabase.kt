@@ -13,8 +13,10 @@ import com.fittrainer.data.db.notifications.NotificationPendingReadEntity
 import com.fittrainer.data.db.progress.ProgressBodyMetaEntity
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
 import com.fittrainer.data.db.progress.ProgressDao
+import com.fittrainer.data.db.progress.ProgressExerciseEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
+import com.fittrainer.data.db.progress.ProgressExercisesMetaEntity
 import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.routine.RoutineEntity
 import com.fittrainer.data.db.routine.RoutineExerciseEntity
@@ -48,6 +50,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         ProgressExerciseMetaEntity::class,
         ProgressBodyPointEntity::class,
         ProgressBodyMetaEntity::class,
+        ProgressExerciseEntity::class,
+        ProgressExercisesMetaEntity::class,
         NotificationEntity::class,
         NotificationMetaEntity::class,
         NotificationPendingReadEntity::class,

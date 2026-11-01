@@ -2,9 +2,6 @@ package com.fittrainer.ui.workout.history.detail
 
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.api.history.HistoryDetailDto
-import com.fittrainer.data.api.history.HistoryExerciseDto
-import com.fittrainer.data.api.history.NamedRefDto
-import com.fittrainer.data.db.workout.history.HistoryExerciseEntity
 import com.fittrainer.data.db.workout.history.HistorySessionEntity
 import com.fittrainer.data.workout.history.HistoryOrigin
 import com.fittrainer.data.workout.history.HistoryRepository
@@ -168,19 +165,5 @@ class HistoryDetailViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
         advanceUntilIdle()
         assertTrue(historyDao.state.value.seen.isEmpty())
-    }
-
-    @Test fun detalleDeAntesDeLaV9SinIdDeEjercicioSeVuelveABajarAlAbrirlo() = runTest {
-        // Sesión vieja que no entra en las 20 ni pasó por "Ver más": detalle guardado, ejercicio sin exerciseId.
-        historyDao.state.value = FakeHistoryDao.State(
-            sessions = mapOf("a" to cached("a", detailLoaded = true).copy(inLatest = false)),
-            exercises = listOf(HistoryExerciseEntity("a", 0, "Press", null, null, null, null, false, exerciseId = null)),
-        )
-        api.details = mapOf("a" to HistoryDetailDto("a", "2026-10-29T12:00:00Z", exercises = listOf(HistoryExerciseDto(NamedRefDto("e1", "Press")))))
-        val vm = vm("a")
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
-        advanceUntilIdle()
-        assertEquals(listOf("a"), api.detailCalls)
-        assertEquals("e1", historyDao.state.value.exercises.single().exerciseId)
     }
 }

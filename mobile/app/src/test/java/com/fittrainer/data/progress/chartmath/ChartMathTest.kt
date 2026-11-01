@@ -1,8 +1,20 @@
-package com.fittrainer.data.progress
+package com.fittrainer.data.progress.chartmath
 
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
+import com.fittrainer.data.progress.BodyField
+import com.fittrainer.data.progress.ChartMetric
+import com.fittrainer.data.progress.ChartPoint
+import com.fittrainer.data.progress.ChartRange
+import com.fittrainer.data.progress.Record
+import com.fittrainer.data.progress.availableFields
+import com.fittrainer.data.progress.availableMetrics
+import com.fittrainer.data.progress.delta
+import com.fittrainer.data.progress.inRange
+import com.fittrainer.data.progress.initialMetric
+import com.fittrainer.data.progress.record
+import com.fittrainer.data.progress.series
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

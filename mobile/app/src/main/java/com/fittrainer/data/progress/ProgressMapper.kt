@@ -2,9 +2,12 @@ package com.fittrainer.data.progress
 
 import com.fittrainer.data.api.progress.BodyPointDto
 import com.fittrainer.data.api.progress.ExerciseProgressDto
+import com.fittrainer.data.api.progress.OverviewExerciseDto
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
+import com.fittrainer.data.db.progress.ProgressExerciseEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
+import com.fittrainer.data.db.progress.TrainedExercise
 import java.time.OffsetDateTime
 
 fun ExerciseProgressDto.toEntities(
@@ -39,3 +42,8 @@ fun BodyPointDto.toEntity(ownerId: String) = ProgressBodyPointEntity(
     chestCm = chestCm,
     bmi = bmi,
 )
+
+fun OverviewExerciseDto.toEntity(ownerId: String) = ProgressExerciseEntity(ownerId, id, name, days, lastDate)
+
+/** Cambia cuando el alumno entrena el ejercicio otro día (la fecha o la cuenta de días del overview). */
+fun TrainedExercise.marker(): String = "$lastDate/$days"

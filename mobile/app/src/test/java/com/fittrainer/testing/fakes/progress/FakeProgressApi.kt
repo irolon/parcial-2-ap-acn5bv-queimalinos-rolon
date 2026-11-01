@@ -4,7 +4,10 @@ import com.fittrainer.data.api.progress.BodyProgressDto
 import com.fittrainer.data.api.progress.BodyProgressResponse
 import com.fittrainer.data.api.progress.ExerciseProgressDto
 import com.fittrainer.data.api.progress.ExerciseProgressResponse
+import com.fittrainer.data.api.progress.OverviewExerciseDto
 import com.fittrainer.data.api.progress.ProgressApi
+import com.fittrainer.data.api.progress.ProgressOverviewDto
+import com.fittrainer.data.api.progress.ProgressOverviewResponse
 import kotlinx.coroutines.CompletableDeferred
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -15,6 +18,9 @@ import retrofit2.Response
 class FakeProgressApi : ProgressApi {
     var exercises: Map<String, ExerciseProgressDto> = emptyMap()
     var body: BodyProgressDto = BodyProgressDto()
+
+    /** Lo que devuelve el overview: los ejercicios entrenados. */
+    var trained: List<OverviewExerciseDto> = emptyList()
     var error: Exception? = null
 
     /** Error solo para ciertos ejercicios (por id); tiene prioridad sobre [error]. */
@@ -22,6 +28,10 @@ class FakeProgressApi : ProgressApi {
     var gate: CompletableDeferred<Unit>? = null
     var exerciseCalls = 0
     var bodyCalls = 0
+    var overviewCalls = 0
+
+    /** El `from` de cada pedido al overview. */
+    val overviewFroms = mutableListOf<String?>()
 
     override suspend fun exercise(id: String): ExerciseProgressResponse {
         exerciseCalls++
@@ -36,6 +46,14 @@ class FakeProgressApi : ProgressApi {
         gate?.await()
         error?.let { throw it }
         return BodyProgressResponse(body)
+    }
+
+    override suspend fun overview(from: String?): ProgressOverviewResponse {
+        overviewCalls++
+        overviewFroms += from
+        gate?.await()
+        error?.let { throw it }
+        return ProgressOverviewResponse(ProgressOverviewDto(trained))
     }
 }
 

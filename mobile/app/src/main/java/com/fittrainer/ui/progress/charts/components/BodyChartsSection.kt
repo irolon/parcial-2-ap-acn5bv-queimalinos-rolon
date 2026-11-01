@@ -36,7 +36,8 @@ fun BodyChartsSection(
             EmptyPeriodMessage(ChartsTexts.EMPTY_BODY_PERIOD) { onRange(ChartRange.ALL) }
             return@Column
         }
-        LineChart(state.bodySeries, null, FtColors.Brand)
+        val subject = state.bodyField?.let(ChartsTexts::fieldLabel).orEmpty()
+        LineChart(state.bodySeries, null, FtColors.Brand, ChartsTexts.chartDescription(subject, state.range, state.bodySeries, unit))
         ChartStats(
             firstLabel = "Última",
             firstValue = state.bodyLast?.let { ChartsTexts.formatValue(it.value, unit) } ?: "—",

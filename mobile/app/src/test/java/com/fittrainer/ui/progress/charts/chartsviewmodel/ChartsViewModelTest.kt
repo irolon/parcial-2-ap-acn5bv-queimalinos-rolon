@@ -1,4 +1,4 @@
-package com.fittrainer.ui.progress.charts
+package com.fittrainer.ui.progress.charts.chartsviewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.api.progress.BodyPointDto
@@ -6,6 +6,7 @@ import com.fittrainer.data.api.progress.BodyProgressDto
 import com.fittrainer.data.api.progress.ExercisePointDto
 import com.fittrainer.data.api.progress.ExerciseProgressDto
 import com.fittrainer.data.api.progress.ExerciseRefDto
+import com.fittrainer.data.api.progress.OverviewExerciseDto
 import com.fittrainer.data.api.progress.PrDto
 import com.fittrainer.data.api.progress.PrValueDto
 import com.fittrainer.data.db.progress.TrainedExercise
@@ -20,6 +21,10 @@ import com.fittrainer.testing.fakes.progress.httpErrorWithCode
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.routine.FakeStudentSession
 import com.fittrainer.testing.fakes.sync.httpError
+import com.fittrainer.ui.progress.charts.ChartsView
+import com.fittrainer.ui.progress.charts.ChartsViewModel
+import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -32,8 +37,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.time.Instant
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChartsViewModelTest {
@@ -56,7 +59,9 @@ class ChartsViewModelTest {
     )
 
     private fun load() {
-        dao.trained.value = mapOf("u1" to listOf(TrainedExercise("e1", "Sentadilla", 2), TrainedExercise("e2", "Press", 1)))
+        // Lista ya bajada y fresca: estos tests miran el ejercicio; la lista tiene los suyos en ChartsViewModelListTest.
+        dao.seedTrained("u1", TrainedExercise("e1", "Sentadilla", 3, "2026-10-30"), TrainedExercise("e2", "Press", 1, "2026-10-01"), fetchedAt = clock.millis)
+        api.trained = listOf(OverviewExerciseDto("e1", "Sentadilla", 3, "2026-10-30"), OverviewExerciseDto("e2", "Press", 1, "2026-10-01"))
         api.exercises = mapOf(
             "e1" to exercise("e1", "2026-07-01", "2026-09-15", "2026-10-30"),
             "e2" to exercise("e2", "2026-10-01", default = "e1rm_kg"),

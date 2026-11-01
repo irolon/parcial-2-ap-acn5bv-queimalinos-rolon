@@ -44,8 +44,6 @@ data class HistoryExerciseEntity(
     val plannedReps: Int?,
     val plannedKg: Double?,
     val isPr: Boolean,
-    /** Id del ejercicio ejecutado (tarjeta 13). Nulo en lo guardado antes de la v9: el próximo refresco lo completa. */
-    val exerciseId: String? = null,
 )
 
 @Entity(

@@ -1,13 +1,19 @@
-package com.fittrainer.data.progress
+package com.fittrainer.data.progress.chartmath
 
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
+import com.fittrainer.data.progress.BodyField
+import com.fittrainer.data.progress.ChartPoint
+import com.fittrainer.data.progress.ChartRange
+import com.fittrainer.data.progress.bodySeries
+import com.fittrainer.data.progress.delta
+import com.fittrainer.data.progress.inRange
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class BodySeriesTest {
+class ChartMathBodySeriesTest {
     private val today = LocalDate.parse("2026-10-31")
 
     private fun cp(date: String, v: Double) = LocalDate.parse(date) to v

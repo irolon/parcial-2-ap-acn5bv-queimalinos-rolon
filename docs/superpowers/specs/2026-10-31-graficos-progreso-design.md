@@ -8,7 +8,7 @@ tarjeta: 13
 - **Fecha:** 2026-10-31
 - **Rama:** `feature/android-graficos`, sale de `feature/android-historial` (tarjeta 12, PR #40 sin mergear), porque ahí vive la pestaña Progreso. Cuando la #40 entre a `develop`, esta rama se rebasa o se mergea `develop` y la PR apunta a `develop`. Solo mobile: el backend no se toca.
 - **Reglas que aplican:** `AGENTS.md` (Room es la única fuente de verdad; la UI nunca llama a Retrofit) y `CONTRIBUTING.md` (200 líneas, capa → módulo → archivo).
-- **Contrato:** `docs/superpowers/specs/2026-10-29-progress-backend-design.md` §3.1 y §3.2: `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. Ya están en `develop` (PR #31).
+- **Contrato:** `docs/superpowers/specs/2026-10-29-progress-backend-design.md` §3.1 y §3.2: `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId` (PR #31), más `GET /progress/overview` para la lista de ejercicios (PR #34). Están en `develop`.
 - **Diseño:** Guía Mobile p.16 (06 Progreso) como referencia; se toma solo la vista por ejercicio y la de medidas. Sistema de la app: tema oscuro, azul `#2952D9`, Space Grotesk / Inter / JetBrains Mono, toque mínimo 44 px.
 
 ## 1. Objetivo
@@ -23,7 +23,7 @@ Que el alumno vea desde el celular cómo progresan sus cargas y su cuerpo.
 
 - **Dónde:** la pestaña Progreso pasa a tener dos solapas, **Historial** (la de la tarjeta 12, sin cambios) y **Gráficos**. Ya estaba previsto en la spec de la 12, §2.
 - **Layout A** (elegido entre tres mockups): dentro de Gráficos, un selector segmentado **Cargas | Medidas**; cada vista tiene su selector de qué graficar, un gráfico grande y dos números debajo.
-- **Medidas entra; volumen semanal no.** El volumen semanal no tiene endpoint. Tampoco se ofrece el volumen por ejercicio como métrica, para no confundirlo.
+- **Medidas entra; volumen semanal no.** El volumen semanal sale en `GET /progress/overview` (`weekly_volume`), pero queda fuera de esta tarjeta: el celular usa de ese endpoint solo la lista de ejercicios (§4.1). Tampoco se ofrece el volumen por ejercicio como métrica, para no confundirlo.
 - **El período lo cambia el alumno:** chips **1M · 3M · 6M · Todo**, por defecto **3M**.
 - **Solo el alumno.** El entrenador no ve estos gráficos en el celular; los tiene en la web (PR #34).
 
@@ -38,7 +38,7 @@ Que el alumno vea desde el celular cómo progresan sus cargas y su cuerpo.
 ### 3.2 Gráficos → Cargas
 
 De arriba hacia abajo:
-1. **Desplegable de ejercicio.** Lista los ejercicios que aparecen en el historial guardado en el celular (§4.1), ordenados por la última vez que se entrenaron, el más reciente primero. Viene elegido el primero.
+1. **Desplegable de ejercicio.** Lista todos los ejercicios que el alumno entrenó alguna vez, de `GET /progress/overview` guardado en Room (§4.1), ordenados por la última vez que se entrenaron, el más reciente primero. Viene elegido el primero.
 2. **Chips de métrica** (decisión de Claude: se muestra solo el chip de una métrica con algún valor > 0 en todo el historial):
    - **1RM est.** si algún punto tiene `e1rm_kg`. No lo tienen los ejercicios hechos siempre a más de 12 repeticiones, porque el backend no estima el 1RM ahí.
    - **Kg máx** si algún punto tiene `max_kg`.
@@ -62,39 +62,46 @@ De arriba hacia abajo:
 
 | Situación | Qué ve |
 |---|---|
-| No hay ejercicios en el historial guardado | "Terminá tu primera sesión para ver tus gráficos" |
+| La lista de ejercicios nunca se bajó (primer login, celular nuevo) | Carga mientras se pide; sin red, "Conectate una vez para ver este gráfico"; si falla, "No pudimos cargar este gráfico" con Reintentar |
+| La lista se bajó y está vacía | "Terminá tu primera sesión para ver tus gráficos" |
 | El ejercicio tiene un solo punto en total | El punto con su valor y "Entrená otra vez este ejercicio para ver tu curva" |
 | El período no tiene puntos, pero hay en otros | "No entrenaste este ejercicio en este período" con botón "Ver todo" |
 | No hay medidas cargadas | "Tu entrenador todavía no cargó medidas" |
 | Sin red y con datos guardados | Lo guardado + "Sin conexión · mostrando lo guardado" (mismo aviso que el Historial) |
 | Sin red y nunca se bajó ese ejercicio | "Conectate una vez para ver este gráfico" |
-| Falla el refresco (5xx, timeout) | Lo guardado + "No pudimos actualizar" con Reintentar |
-| 404 `EXERCISE_NOT_FOUND` (el entrenador lo borró) | El ejercicio sale del desplegable y se elige el siguiente |
+| Falla el refresco (5xx, timeout) con datos guardados | Lo guardado + "No pudimos actualizar" con Reintentar |
+| Falla el refresco sin nada guardado | Solo "No pudimos cargar este gráfico" con Reintentar en la sección (sin el banner: un único aviso) |
+| 404 `EXERCISE_NOT_FOUND` (el entrenador lo borró) | El ejercicio sale del desplegable (se borra de Room, sobrevive a reiniciar la app) y se elige el siguiente |
 
 ## 4. Datos
 
 ### 4.1 De dónde sale la lista de ejercicios
 
-No hay endpoint de "ejercicios que entrené". La lista sale de Room, del historial de la tarjeta 12: los `history_exercises` de las sesiones guardadas **con detalle**. En la práctica son las últimas 20 (cuyo detalle se baja en segundo plano) más las de "Ver más" que el alumno haya abierto; las de "Ver más" sin abrir no tienen ejercicios en Room y no aportan.
+De `GET /progress/overview` (PR #34, revisión de Pablo en la #44). Su `exercises` trae `id`, `name`, `days` y `last_date` de **todos** los ejercicios que el alumno entrenó, sin filtrar por rango y ordenados por `last_date` descendente. Para el rol alumno el backend usa al propio usuario, así que no se manda `student_id`. Se manda `from` = hoy en hora de Argentina para que `weekly_volume` (que el celular no usa) venga corto; el backend acepta `from` sin `to` mientras el rango no pase de 3 años.
 
-**Hace falta guardar el id del ejercicio:** `history_exercises` guarda solo el nombre, pero el DTO (`HistoryExerciseDto.exercise: NamedRefDto`) ya trae el `id`. Se agrega la columna `exerciseId: String?` (nullable para que la migración sea automática: **Room v9, `AutoMigration(8 → 9)`**). Las filas con `null` no aparecen en el desplegable. Si hay ejercicio sustituido, el que cuenta es el ejecutado (`exercise`), no `original_exercise`.
+Antes la lista salía de `history_exercises`, que solo tiene las últimas 20 sesiones con detalle: con meses de historia, un ejercicio de un bloque anterior no aparecía aunque los chips 6M y Todo prometen esa curva. Con el overview, `history_exercises` no se toca y no hace falta guardar ahí el id del ejercicio (se descartó la columna `exerciseId` y su relleno).
 
-**Relleno después de actualizar la app** (decisión de Claude): hoy `HistoryRepository` solo vuelve a bajar el detalle de una sesión si cambió (`detailMatches`), así que las filas migradas quedarían en `null` para siempre. Se amplía esa condición: una sesión cuyo detalle tiene algún ejercicio con `exerciseId = null` también se considera desactualizada. El primer refresco con red después de actualizar vuelve a bajar esos detalles (como mucho 20) y desde ahí no se repite. Test en el repositorio.
-
-Consecuencia aceptada: un ejercicio que no aparece en ninguna sesión guardada con detalle no se puede elegir.
+- Se guarda en Room por dueño (§4.2) y se refresca al abrir Cargas, con Reintentar, al tirar para actualizar y al volver la red, con la misma regla de 5 minutos que el resto (§4.3).
+- **Nunca bajada no es lo mismo que vacía.** Mientras la lista no se bajó nunca, no se sabe si el alumno entrenó: se ve la carga, "Conectate una vez" o la falla con Reintentar (§3.4). "Terminá tu primera sesión" sale solo con la lista bajada y vacía.
+- **El marcador del caché de cada ejercicio** sale de la lista: `last_date/days` del ejercicio al momento del pedido. Si la lista nueva trae otro (lo entrenó otro día), el ejercicio se vuelve a pedir aunque no hayan pasado 5 minutos. Dos sesiones del mismo ejercicio el mismo día no cambian el marcador: esa curva se actualiza a los 5 minutos o con Reintentar.
 
 ### 4.2 Caché de los gráficos (Room, misma v9)
 
 - `progress_exercise_points`: `exerciseId`, `date`, `maxKg?`, `e1rmKg?`, `reps`, `sets`. Clave (`exerciseId`, `date`).
 - `progress_exercise_meta`: `exerciseId` (PK), `defaultMetric`, `prMaxKg?`, `prMaxKgDate?`, `prE1rmKg?`, `prE1rmDate?`, `fetchedAt`.
 - `progress_body_points`: `measuredAt`/fecha (o el `id` de la medición si lo trae) + los seis campos y `bmi`, nullables.
+- `progress_exercises`: `exerciseId`, `name`, `days`, `lastDate`. Clave (`ownerId`, `exerciseId`). Es la lista del desplegable.
+- `progress_exercises_meta`: `ownerId` (PK), `fetchedAt`. Sin fila, la lista nunca se bajó.
 
-Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas) en una transacción. Las tablas se borran con el resto de los datos al cerrar sesión o cambiar de cuenta, como las del historial.
+Todas van por dueño (`ownerId`). La v9 suma solo tablas nuevas (`AutoMigration(8 → 9)`); las de la v8 quedan iguales.
+
+Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas, o la lista) en una transacción. Las tablas se borran con el resto de los datos al cerrar sesión o cambiar de cuenta, como las del historial.
 
 ### 4.3 Cómo se baja
 
 - Siempre el **historial completo**: `GET /progress/exercise/:id` sin `from`/`to`, y `GET /progress/body/:studentId` con el id del usuario logueado. El período se filtra en el celular, así cambiar de chip es instantáneo y funciona sin red.
-- **Cuándo:** al elegir un ejercicio (o abrir Cargas con uno elegido) y al abrir Medidas, si hay red y lo guardado tiene más de 5 minutos. Reintentar fuerza el refresco.
+- La lista de ejercicios: `GET /progress/overview?from=<hoy>` (§4.1).
+- **Cuándo:** la lista y el ejercicio elegido al abrir Cargas, cada ejercicio al elegirlo y las medidas al abrir Medidas, si hay red y lo guardado tiene más de 5 minutos. Reintentar y tirar para actualizar fuerzan el refresco.
 - La UI lee de Room con `Flow`; el repositorio refresca Room. El ViewModel no ve Retrofit.
 
 ## 5. Componentes (orientativo)
@@ -102,7 +109,7 @@ Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas) en un
 - `data/api/progress/ProgressApi.kt` + `ProgressDtos.kt`.
 - `data/db/progress/` entidades + `ProgressDao`.
 - `data/progress/ProgressRepository.kt` + mappers + modelos (`ExerciseChart`, `BodyChart`, `ChartRange`, `ChartMetric`).
-- `di/ProgressModule.kt`.
+- `di/CacheCleanersModule.kt`: registra la limpieza de biblioteca, historial y progreso en el logout (junta los módulos que solo hacían eso, para que `di/` no pase de 10 archivos).
 - `ui/progress/` (o dentro de la pantalla de Progreso de la 12): `ProgressTabs`, `ChartsScreen` con `ExerciseChartsSection` y `BodyChartsSection`, `ChartsViewModel`, `LineChart` (envoltorio de la librería) y textos.
 - Lógica pura y testeable fuera de los composables: filtro por período, delta, récord de Reps, elección de métrica por defecto y lista de campos con datos.
 
@@ -115,7 +122,8 @@ Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas) en un
 - Delta del período con 0, 1 y varios puntos.
 - Métrica por defecto y caso peso corporal (solo Reps).
 - Campos de medidas con datos y orden.
-- Repositorio: reemplazo transaccional, regla de los 5 minutos, 404 saca el ejercicio, error 5xx no borra lo guardado.
+- Repositorio: reemplazo transaccional, regla de los 5 minutos, 404 saca el ejercicio, error 5xx no borra lo guardado; lista del overview (nunca bajada vs vacía, `from` en hora de Argentina).
+- Estados: lista nunca bajada no da "Terminá tu primera sesión"; un solo aviso de error cuando no hay datos.
 - Migración 8 → 9 en `FitTrainerDatabaseMigrationTest`.
 
 **A mano (emulador, con `alumna.card8`):**
@@ -130,5 +138,4 @@ Cada refresco **reemplaza** todo lo de ese ejercicio (o todas las medidas) en un
 - Logros, rachas y desafíos (tarjeta 15).
 - Comparar levantamientos entre sí (mockup p.16).
 - Gráficos del entrenador en el celular.
-- Elegir ejercicios que no estén en el historial guardado.
 - Tocar un punto para ver el detalle de esa sesión.

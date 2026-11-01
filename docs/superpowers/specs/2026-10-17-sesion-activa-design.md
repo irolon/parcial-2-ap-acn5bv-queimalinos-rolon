@@ -21,7 +21,7 @@ La pantalla donde el alumno entrena: recorre los ejercicios de la rutina del dí
 
 - **Reemplazar ejercicio entra** en esta tarjeta. Se elige de la biblioteca en Room (tarjeta 9), así que anda offline.
 - **Timer con foreground service** y notificación fija mientras dura la sesión. Se descartó `AlarmManager` porque en Android 14 el permiso de alarmas exactas viene apagado.
-- **La ✕ abre un menú** con tres opciones: Terminar sesión, Descartar sesión y Seguir entrenando.
+- **La ✕ abre un menú** con tres opciones: Terminar sesión, Descartar sesión y Seguir entrenando. Desde el 31/10 es una hoja inferior en vez de un diálogo (ver "Menú de la ✕").
 - **Precarga:**
   - la S1 arranca con lo que hizo la última vez en ese ejercicio (en este celular);
   - si nunca lo hizo, con el plan del PT;
@@ -89,10 +89,16 @@ La pantalla donde el alumno entrena: recorre los ejercicios de la rutina del dí
   - las series, las reps, el descanso y el peso sugerido siguen siendo los del plan.
 - Si la biblioteca nunca se sincronizó, la hoja muestra "Conectate una vez para bajar la biblioteca".
 
-**Menú de la ✕.**
+**Menú de la ✕.** Es una hoja inferior (decisión de Igna del 31/10, entre tres mockups; antes era un diálogo):
+- Arriba, el título "¿Qué hacemos con la sesión?" y el progreso "Llevás X de Y series" (singular "serie" si el total es 1). Y es la suma de las series del plan y X las ya hechas.
+- Las acciones, en este orden:
+  1. **Terminar sesión**, en azul de marca;
+  2. **Seguir entrenando**, en gris. Las dos tienen el mismo ancho, ícono y 44 dp de alto mínimo;
+  3. **Descartar sesión**, como texto coral centrado abajo, lejos del pulgar.
+- Cerrar la hoja (deslizarla o tocar afuera) equivale a Seguir entrenando. Las tres acciones primero cierran la hoja con su animación.
 - **Terminar sesión:** si faltan series, primero confirma con "Te faltan N series, ¿terminar igual?". Después marca `finishedAt` y `status = FINISHED`.
 - **Descartar sesión:** confirma con "Se borra todo lo de esta sesión" y después borra la sesión con su copia del plan y sus series.
-- **Seguir entrenando:** cierra el menú.
+- **Seguir entrenando:** cierra la hoja.
 - Con el botón atrás o cambiando de app, la sesión sigue `ACTIVE`.
 
 **Cierre.**
