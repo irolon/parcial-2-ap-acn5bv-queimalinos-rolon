@@ -10,7 +10,7 @@ tarjeta: 17
 - **Reglas:**
   - `AGENTS.md`: Room es la única fuente de verdad; la UI nunca llama a Retrofit.
   - `CONTRIBUTING.md`: 200 líneas por archivo; orden capa → módulo → archivo; carpetas de más de 10 archivos se dividen.
-- **Contrato:** `docs/arquitectura/contratos-api.md`, sección Notificaciones (`GET /notifications`, `PATCH /notifications/read-all`, `PATCH /notifications/:id/read`, `POST /notifications/tokens`, `DELETE /notifications/tokens/:token`) y el párrafo "Payload del push". Backend en `develop` desde la PR #36. ADR 0006: la tabla `notifications` es la fuente de verdad y el push es best-effort.
+- **Contrato:** `docs/arquitectura/contratos-api.md`, sección Notificaciones (`GET /notifications`, `PATCH /notifications/:id/read`, `POST /notifications/tokens`, `DELETE /notifications/tokens/:token`; `PATCH /notifications/read-all` existe pero el celular no lo usa, ver §4.2) y el párrafo "Payload del push". Backend en `develop` desde la PR #36. ADR 0006: la tabla `notifications` es la fuente de verdad y el push es best-effort.
 - **Diseño:** no hay mockup oficial. Igna eligió entre los mockups del debate (31/10). Sistema de la app: tema oscuro, azul `#2952D9`, Space Grotesk / Inter / JetBrains Mono, toque mínimo de 44 px.
 
 ## 1. Objetivo
@@ -43,7 +43,9 @@ Que el alumno se entere de lo que pasa con su entrenamiento aunque tenga la app 
 - **Permiso (Android 13+):**
   - no se pide en un momento nuevo, porque ya se pide al empezar la primera sesión (PR #38, aviso de fin de descanso) y el mismo permiso sirve para los push;
   - si el alumno lo rechazó, la app funciona igual y los avisos siguen en la campana;
-  - solo dentro de la lista se muestra un cartel discreto, "Las notificaciones están apagadas", con un botón **Activar** que abre los ajustes de notificaciones de la app;
+  - solo dentro de la lista se muestra un cartel discreto, "Las notificaciones están apagadas", con un botón **Activar**;
+  - "apagadas" incluye el canal "Avisos de tu entrenador" apagado solo (se mira su `importance`, que `areNotificationsEnabled()` no ve);
+  - **Activar** (revisión de Pablo): en Android 13+ sin el permiso (si el alumno nunca empezó una sesión, nunca se pidió) lanza el pedido del sistema; si el sistema ya no muestra el diálogo (negado para siempre), abre los ajustes de notificaciones de la app. Con el permiso, abre esos ajustes, o los del canal si solo está apagado el canal;
   - no se insiste en ningún otro lado.
 
 ## 3. Pantallas y estados
@@ -62,16 +64,19 @@ Que el alumno se entere de lo que pasa con su entrenamiento aunque tenga la app 
 | Sin red y nunca se bajó | "Conectate una vez para ver tus avisos" |
 | Falla el refresco (5xx, timeout) | Lo guardado + "No pudimos actualizar" con Reintentar |
 | Permiso de notificaciones denegado | Cartel arriba de la lista: "Las notificaciones están apagadas" + **Activar** |
-| Hay más páginas | Al llegar al final se cargan más (paginación por cursor `before`) |
+| Hay más páginas | Al llegar al final se cargan más (paginación por cursor `before`), con una ruedita al pie mientras tanto. Si una página no suma ninguna fila nueva (todas de tipos que no son del alumno o ya guardadas), se sigue con la próxima: "Ver más" nunca "no hace nada" |
+| Falla "Ver más" | Al pie: "No pudimos cargar más avisos" + **Reintentar** (con pocas filas el final sigue visible y no se volvería a pedir solo). Un refresco también lo reintenta |
 
 - Pull-to-refresh, como en el historial.
 - "Marcar todo leído" se ve solo si hay no leídos.
+- Los títulos Hoy · Ayer · Antes son encabezados para TalkBack, y el "hace N min" avanza solo (cada minuto) con la lista abierta.
 
 ### 3.3 Push
 - Con la app cerrada o en segundo plano: el sistema muestra el push. Lo arma el mensaje FCM con `notification.title` / `body`.
 - Con la app abierta: también se muestra (decisión de Claude: así el alumno se entera igual), y la lista y el número se actualizan.
 - Al tocarlo se abre la app en la pantalla del tipo (§2) y el aviso se marca leído (`notification_id` del payload).
 - El push resumen de varios logros no trae `notification_id`: abre la lista de avisos y no marca nada.
+- **Tap durante la sesión activa** (revisión de Pablo): el push de récord suele llegar con el alumno en el resumen y el feedback. Navegar sacaría la sesión de la pila y se saltearía el feedback, así que el destino espera y se navega cuando la sesión sale.
 - **Canal** (decisión de Claude): un canal propio, "Avisos de tu entrenador", con importancia por defecto. Se declara como canal por defecto de FCM en el manifest, porque el backend no manda `channel_id`. Es aparte del canal de fin de descanso de `WorkoutNotifications`.
 - **Dos caminos, un destino** (decisión de Claude):
   - con la app cerrada, el sistema abre la actividad principal con el `data` como extras;
@@ -79,38 +84,45 @@ Que el alumno se entere de lo que pasa con su entrenamiento aunque tenga la app 
   - la actividad lee los extras con una sola función pura (`data` → destino) y navega.
 - **Tap sin sesión de alumno** (decisión de Claude): si no hay sesión iniciada o la cuenta es de entrenador, el destino se descarta y la app abre normal (login o Hoy). No se guarda para después del login. Si hay sesión de alumno, el `PATCH` de leído usa su token: un `notification_id` de otra cuenta da 404 y se descarta sin mostrar nada.
 - **Destino sin datos en el celular** (decisión de Claude):
-  - `comment`: si la sesión no está en el historial guardado, primero se refresca la página 1 del historial (con red). Si la sesión aparece, se abre su detalle, que baja su contenido como ya hace con las de "Ver más". Si no aparece o no hay red, se abre Progreso → Historial.
-  - `pr`: si el ejercicio no está en el desplegable de Gráficos, Gráficos abre con su elección por defecto.
+  - `comment`: si la sesión no está en el historial guardado, primero se refresca la página 1 del historial (con red y un tope de 3 s, para no dejar al alumno mirando Hoy con red mala). Si la sesión aparece, se abre su detalle, que baja su contenido como ya hace con las de "Ver más". Si no aparece, no hay red o se pasa el tope, se abre Progreso → Historial.
+  - `pr`: la lista del desplegable de Gráficos se vuelve a pedir aunque esté fresca (el récord puede ser de un ejercicio recién estrenado) y se espera hasta 10 s a que el ejercicio aparezca. Si no aparece, Gráficos abre con su elección por defecto.
 
 ## 4. Datos
 
 ### 4.1 Backend (ya existe, no se toca)
 - `GET /notifications?limit&before&unread_only` → `{ data: [...], meta: { unread_count, next_before } }`. Cada fila: `id, type, title, body, data, read, created_at` (más campos que no se usan).
-- `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`.
+- `PATCH /notifications/:id/read`, `PATCH /notifications/read-all` (este último no se usa: §4.2).
 - `POST /notifications/tokens` `{ token, platform: "android" }` (upsert) · `DELETE /notifications/tokens/:token`.
 - Payload del push: `data` lleva lo de la fila más `type` y `notification_id`, todo como texto. `exercise_ids` llega como JSON serializado y hay que parsearlo.
 - El listado devuelve también tipos que el alumno no recibe por push. **El celular muestra solo `comment`, `pr` y `achievement`** y descarta los demás. Decisión de Claude, para no mostrar algo sin pantalla a dónde ir.
 
 ### 4.2 Caché (Room, v10)
-- Tabla `notifications` por dueño (`ownerId`): `id`, `type`, `title`, `body`, `data` (JSON en texto), `read`, `createdAt`, más una marca de `fetchedAt` del último refresco.
+- Tres tablas por dueño (`ownerId`):
+  - `notifications`: `id`, `type`, `title`, `body`, `data` (JSON en texto), `read`, `createdAt`;
+  - `notifications_meta`: `everLoaded` (algún refresco terminó bien: distingue "cargando por primera vez" de "sin avisos") y `nextBefore` (el cursor de "Ver más" del tramo bajado de corrido desde la página 1; no se deduce de las filas);
+  - `notification_pending_reads`: las lecturas que faltan subir. Es aparte para que la marca sobreviva aunque la fila no esté guardada (push tocado con la app cerrada) o la borre un refresco.
 - Room **v10, `AutoMigration(9 → 10)`**. La v9 es de la tarjeta 13.
 - Se borra con el resto de los datos al cerrar sesión o cambiar de cuenta, como las tablas del historial y de los gráficos.
+- **Hueco o solapamiento** al refrescar: se compara el `created_at` más viejo de la página 1 tal como vino (con los tipos que no se guardan) con el más nuevo guardado. Si la página llega hasta lo guardado, el tramo sigue contiguo y se conserva el cursor; si no, lo viejo se borra y sigue el cursor del servidor. Una página 1 solo de tipos ajenos al alumno no es un hueco si llega hasta lo guardado.
 - **Marcar leído offline-first** (decisión de Claude, siguiendo la regla de escrituras de `AGENTS.md`):
-  - se marca en Room al instante y queda pendiente;
-  - se sube con el `PATCH` cuando hay red, por WorkManager o en el próximo refresco;
-  - "Marcar todo leído" igual.
-  - Un refresco no pisa una marca pendiente.
+  - se marca en Room al instante y queda en `notification_pending_reads`;
+  - se sube con `PATCH /:id/read`, una por una: al toque si hay red, cuando vuelve la red con la campana a la vista y al principio de cada refresco (no hay WorkManager para esto);
+  - **"Marcar todo leído"** marca leídas en Room las no leídas guardadas y deja una pendiente por cada una, que suben igual, una por una. **No usa `read-all`** (revisión de Pablo): sin red, ese marcaría también lo que llegó al servidor entre el toque y la subida y el alumno nunca vio. "Marcar todo" es todo lo que vio;
+  - un refresco no pisa una marca pendiente (la fila se guarda leída);
+  - al cerrar sesión se intenta subir lo pendiente antes de borrarlo, con un tope de 2,5 s; si no sube, esos avisos vuelven a verse sin leer.
 
 ### 4.3 Cuándo se refresca
 - Al abrir la app (con red, como mucho cada 5 minutos, igual que el badge del historial).
 - Al abrir la lista y con pull-to-refresh.
 - Cuando llega un push con la app abierta.
 
+Cada refresco hace dos `GET`: la página 1 (20) y todas las no leídas (`unread_only=true`, hasta 100), porque la campana cuenta en Room y puede haber no leídas más allá de la página 1. Si esa segunda lista vino completa, lo guardado sin leer que no está en ninguna de las dos ya se leyó en otro lado y queda leído. Todo lo que va a la red (los dos `GET`, "Ver más" y la subida de lecturas) pasa en serie por un candado: ninguna respuesta vieja se aplica después de un `PATCH` que salió más tarde.
+
 La UI lee de Room con `Flow`, el repositorio refresca Room y el ViewModel no ve Retrofit.
 
 ### 4.4 Token de push
 - **Al iniciar sesión como alumno**, o cuando FCM rota el token (`onNewToken`) con sesión de alumno: `POST /notifications/tokens`. Si falla, se reintenta en el próximo inicio de la app.
-- **Al cerrar sesión:** `DELETE /notifications/tokens/:token` **antes** de borrar el JWT, para que otra cuenta en el mismo celular no reciba los avisos del anterior. Si falla (sin red), el logout sigue igual. Riesgo aceptado: el backend puede mandar un push viejo hasta que el token se reasigne.
+- **Al cerrar sesión:** primero se intenta subir las lecturas pendientes (§4.2) y `DELETE /notifications/tokens/:token`, los dos **antes** de borrar el JWT, para que otra cuenta en el mismo celular no reciba los avisos del anterior. Si falla (sin red), el logout sigue igual. Riesgo aceptado: el backend puede mandar un push viejo hasta que el token se reasigne.
 - Entrenador logueado: no registra token (§2).
 
 ## 5. Firebase
@@ -140,7 +152,7 @@ La UI lee de Room con `Flow`, el repositorio refresca Room y el ViewModel no ve 
 
 **A mano (emulador, `alumna.card8`):**
 1. Sin cuenta de servicio: se carga una notificación en Supabase dev y aparece en la campana y en la lista. Al tocarla se abre su destino y queda leída.
-2. Modo avión: la lista guardada se ve, y "Marcar todo leído" se aplica y se sube al volver la red.
+2. Modo avión: la lista guardada se ve, y "Marcar todo leído" se aplica y se sube al volver la red (un `PATCH /:id/read` por aviso). Un aviso que llega al servidor mientras tanto queda sin leer.
 3. Con cuenta de servicio: el entrenador comenta desde la web, llega el push con la app cerrada y al tocarlo se abre el detalle de la sesión. **Decisión de Igna (31/10):** se arranca sin la cuenta de servicio y Igna se la pide a Pablo. Esta prueba no traba la tarjeta: queda como pendiente no técnico. Mientras tanto, el tap del push se prueba mandando un intent con los mismos extras por `adb`.
 4. Permiso denegado: aparece el cartel con Activar.
 
