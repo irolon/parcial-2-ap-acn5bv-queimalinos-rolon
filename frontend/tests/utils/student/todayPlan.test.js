@@ -83,10 +83,16 @@ describe('planRows', () => {
     expect(row.suggestedLabel).toBe('—');
   });
 
-  it('una última sesión sin peso cargado (0) también cuenta como dato, no cae al sugerido', () => {
-    const [row] = planRows([exercise({ last_session_kg: 0, suggested_kg: 20 })]);
-    expect(row.suggestedKg).toBe(0);
-    expect(row.suggestedLabel).toBe('0 kg');
+  // 0 kg es "sin peso" (peso corporal): el celular guarda 0 cuando no hay sugerido ni historial.
+  it.each([
+    ['una última sesión en 0 no tapa al sugerido', { last_session_kg: 0, suggested_kg: 20 }, 20, '20 kg'],
+    ['una última sesión en 0 y sin sugerido no tiene peso', { last_session_kg: 0, suggested_kg: null }, null, '—'],
+    ['un sugerido en 0 y sin última sesión no tiene peso', { last_session_kg: null, suggested_kg: 0 }, null, '—'],
+    ['los dos en 0 no tienen peso', { last_session_kg: 0, suggested_kg: 0 }, null, '—'],
+  ])('%s', (_, weights, kg, label) => {
+    const [row] = planRows([exercise(weights)]);
+    expect(row.suggestedKg).toBe(kg);
+    expect(row.suggestedLabel).toBe(label);
   });
 
   it('las series o reps que la rutina no trae salen con los valores por defecto (3 × 10)', () => {
