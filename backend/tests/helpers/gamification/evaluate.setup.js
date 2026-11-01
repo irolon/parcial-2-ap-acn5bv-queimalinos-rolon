@@ -9,6 +9,7 @@ export const mockGam = {
   findCatalog: jest.fn(),
   findUnlockedAchievementIds: jest.fn(),
   findStudentAchievements: jest.fn(),
+  findUnlockedAt: jest.fn(),
   insertUnlocked: jest.fn(),
   findStreak: jest.fn(),
   upsertStreak: jest.fn(),

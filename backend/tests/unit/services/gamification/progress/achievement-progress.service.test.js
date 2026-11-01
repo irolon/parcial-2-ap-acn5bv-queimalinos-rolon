@@ -19,7 +19,7 @@ describe('getAchievementsProgress', () => {
   });
 
   it('sin sesiones: racha y datos en cero, todo el catálogo en 0 y sin desbloquear', async () => {
-    mockGam.findStudentAchievements.mockResolvedValue([]);
+    mockGam.findUnlockedAt.mockResolvedValue([]);
     const result = await run();
     expect(mockAccess.assertCanAccessStudent).toHaveBeenCalledWith(USER, STUDENT_ID);
     expect(result.streak).toEqual({ current_streak_days: 0, longest_streak_days: 0, last_session_date: null });
@@ -33,7 +33,7 @@ describe('getAchievementsProgress', () => {
   });
 
   it('cuenta sesiones y racha, y recorta current a target', async () => {
-    mockGam.findStudentAchievements.mockResolvedValue([]);
+    mockGam.findUnlockedAt.mockResolvedValue([]);
     mockData.findClosedSessions.mockResolvedValue([24, 25, 26, 27, 28, 29, 30].map((d) => session(`s-${d}`, d)));
     const result = await run();
     expect(result.streak).toEqual({ current_streak_days: 7, longest_streak_days: 7, last_session_date: '2026-10-30' });
@@ -45,7 +45,7 @@ describe('getAchievementsProgress', () => {
   });
 
   it('desbloqueado: current = target aunque los datos sean menores, con su unlocked_at', async () => {
-    mockGam.findStudentAchievements.mockResolvedValue([
+    mockGam.findUnlockedAt.mockResolvedValue([
       { achievement_id: 'a-s7', unlocked_at: '2026-10-01T12:00:00Z' },
       { achievement_id: 'a-done', unlocked_at: '2026-10-02T12:00:00Z' },
     ]);
@@ -56,14 +56,14 @@ describe('getAchievementsProgress', () => {
   });
 
   it('devuelve los días asignados con los que calculó la racha', async () => {
-    mockGam.findStudentAchievements.mockResolvedValue([]);
+    mockGam.findUnlockedAt.mockResolvedValue([]);
     mockData.findAssignedDays.mockResolvedValue(['monday', 'thursday']);
     const result = await run();
     expect(result.assigned_days).toEqual(['monday', 'thursday']);
   });
 
   it('récords: pr_sessions sale de los récords de las sesiones cerradas', async () => {
-    mockGam.findStudentAchievements.mockResolvedValue([]);
+    mockGam.findUnlockedAt.mockResolvedValue([]);
     mockData.findClosedSessions.mockResolvedValue([session('s-1', 30)]);
     mockHistory.fetchSessionRecords.mockResolvedValue([{ session_id: 's-1', exercise_id: 'e-1' }]);
     const result = await run();
@@ -72,7 +72,7 @@ describe('getAchievementsProgress', () => {
   });
 
   it('no escribe nada', async () => {
-    mockGam.findStudentAchievements.mockResolvedValue([]);
+    mockGam.findUnlockedAt.mockResolvedValue([]);
     mockData.findClosedSessions.mockResolvedValue([session('s-1', 30)]);
     await run();
     expect(mockGam.upsertStreak).not.toHaveBeenCalled();

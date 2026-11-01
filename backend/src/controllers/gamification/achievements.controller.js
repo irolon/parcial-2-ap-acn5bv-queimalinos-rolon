@@ -17,7 +17,7 @@ export const streak = asyncHandler(async (req, res) => {
   res.json({ data: await achievementsService.getStreak(req.user, req.params.id) });
 });
 
-/** GET /students/:id/achievements/progress — 200 → { data: { streak, facts, achievements } } */
+/** GET /students/:id/achievements/progress — 200 → { data: { streak, facts, assigned_days, achievements } } */
 export const progress = asyncHandler(async (req, res) => {
   res.json({ data: await progressService.getAchievementsProgress(req.user, req.params.id) });
 });

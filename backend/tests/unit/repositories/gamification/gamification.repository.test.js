@@ -31,6 +31,12 @@ describe('gamification.repository', () => {
     expect(q.order).toHaveBeenCalledWith('unlocked_at', { ascending: false });
   });
 
+  it('findUnlockedAt: solo id del logro y fecha, sin el logro embebido', async () => {
+    await repo.findUnlockedAt('st');
+    expect(q.select).toHaveBeenCalledWith('achievement_id, unlocked_at');
+    expect(q.eq).toHaveBeenCalledWith('student_id', 'st');
+  });
+
   it('insertUnlocked: upsert que ignora duplicados y devuelve lo insertado', async () => {
     result.current = { data: [{ achievement_id: 'a' }], error: null };
     const rows = [{ student_id: 'st', achievement_id: 'a', context: {} }];

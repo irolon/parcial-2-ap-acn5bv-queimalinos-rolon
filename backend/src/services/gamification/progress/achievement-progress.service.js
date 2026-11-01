@@ -1,9 +1,9 @@
 import { assertCanAccessStudent } from '../../students/student-access.service.js';
 import * as gamificationRepo from '../../../repositories/gamification/gamification.repository.js';
 import { achievementProgress } from '../../../models/gamification/achievement-progress.js';
+import { toStreakView } from '../../../models/gamification/streak.js';
 import { buildFacts } from '../evaluate-facts.js';
 import { loadEvaluationInput } from '../evaluation-input.js';
-import { toStreakView } from '../achievements.service.js';
 
 /**
  * Racha, datos y progreso de cada logro del catálogo (spec tarjeta 15 §2). Solo lee: a diferencia de
@@ -15,7 +15,7 @@ export async function getAchievementsProgress(user, studentId, { now = new Date(
   const [input, catalog, unlockedRows] = await Promise.all([
     loadEvaluationInput(studentId, now),
     gamificationRepo.findCatalog(),
-    gamificationRepo.findStudentAchievements(studentId),
+    gamificationRepo.findUnlockedAt(studentId),
   ]);
   const { facts, streak } = buildFacts(input);
   const unlockedAt = new Map(unlockedRows.map((row) => [row.achievement_id, row.unlocked_at]));
