@@ -32,13 +32,13 @@ describe('guard de rutas privadas', () => {
     stubFetch(async () =>
       jsonResponse(200, { user: TRAINER, token: 'a', refresh_token: 'r', expires_in: '1h' }),
     );
-    const { pathname } = renderRoute('/pt/agenda');
+    const { pathname } = renderRoute('/pt/mensajes');
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText('Email'), 'laura@fit.com');
     await user.type(screen.getByLabelText('Contraseña'), 'Secreta123');
     await user.click(screen.getByRole('button', { name: 'Ingresar' }));
-    expect(await heading('Agenda')).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/agenda');
+    expect(await heading('Mensajes')).toBeInTheDocument();
+    expect(pathname()).toBe('/pt/mensajes');
   });
 
   it('con sesión de otro rol manda a la home de su rol', async () => {
@@ -50,10 +50,10 @@ describe('guard de rutas privadas', () => {
 
   it('con su rol deja pasar y muestra la página', async () => {
     setSession(TRAINER);
-    const { pathname } = renderRoute('/pt/agenda');
-    expect(await heading('Agenda')).toBeInTheDocument();
+    const { pathname } = renderRoute('/pt/mensajes');
+    expect(await heading('Mensajes')).toBeInTheDocument();
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/agenda');
+    expect(pathname()).toBe('/pt/mensajes');
   });
 
   it.each(['loading', 'idle'])('con status %s muestra el skeleton', async (status) => {
