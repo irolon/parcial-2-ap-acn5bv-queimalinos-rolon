@@ -65,6 +65,16 @@ function parseChallenge(body, partial) {
 
 export const validateCreateChallenge = (body) => parseChallenge(body, false);
 
+/**
+ * La meta como queda después de un PATCH (lo guardado más lo que llega): un PATCH con solo `goal_value` no trae el
+ * tipo, así que el entero de sesiones y racha se chequea acá, contra el desafío completo.
+ */
+export function validateMergedGoal({ goal_type: goalType, goal_value: goalValue }) {
+  if (INTEGER_GOAL_TYPES.includes(goalType) && !Number.isInteger(Number(goalValue))) {
+    fail([{ field: 'goal_value', message: 'goal_value debe ser un entero para metas de sesiones o racha' }]);
+  }
+}
+
 export function validateUpdateChallenge(body) {
   const out = parseChallenge(body, true);
   if (Object.keys(out).length === 0) {

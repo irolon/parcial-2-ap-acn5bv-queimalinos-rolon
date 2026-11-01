@@ -46,6 +46,17 @@ describe('challenges.repository', () => {
     expect(q.in).toHaveBeenCalledWith('challenge_id', ['c']);
   });
 
+  it('findActiveStudentIds (del desafío): pagina de a 1000 y filtra por entrenador y activas', async () => {
+    const page = (n, from) => Array.from({ length: n }, (_, i) => ({ student_id: `s${from + i}` }));
+    result.queue = [{ data: page(1000, 0), error: null }, { data: page(2, 1000), error: null }];
+    const ids = await challenges.findActiveStudentIds('c', 'tr');
+    expect(ids).toHaveLength(1002);
+    expect(ids.at(-1)).toBe('s1001');
+    expect(q.range).toHaveBeenNthCalledWith(2, 1000, 1999);
+    expect(q.eq).toHaveBeenCalledWith('status', 'active');
+    expect(q.eq).toHaveBeenCalledWith('students.trainer_id', 'tr');
+  });
+
   it('hasActiveAssignments cuenta las activas', async () => {
     result.current = { count: 2, error: null };
     await expect(challenges.hasActiveAssignments('c')).resolves.toBe(true);
