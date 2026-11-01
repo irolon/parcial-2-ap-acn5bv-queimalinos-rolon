@@ -8,6 +8,7 @@ import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
+import * as appointments from '../agenda/appointments.service.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
@@ -65,12 +66,17 @@ export async function getById(user, studentId) {
  * baja (aunque ya estuviera inactivo; revocar es idempotente). Si la revocación
  * falla, la baja no se guarda y el reintento la completa; al revés, un alumno
  * quedaría inactivo con tokens vivos que volverían a andar al reactivarlo.
+ * Con el mismo criterio, también antes de guardar la baja, se cancelan sus
+ * turnos futuros (pending o confirmed) para liberar el horario.
  */
 export async function update(user, studentId, fields) {
   if (user.role !== 'trainer') throw Errors.forbidden();
   await assertCanAccessStudent(user, studentId);
 
-  if (fields.active === false) await authRepo.revokeAllForUser(studentId, 'student');
+  if (fields.active === false) {
+    await authRepo.revokeAllForUser(studentId, 'student');
+    await appointments.cancelFutureForStudent(studentId);
+  }
   const updated = await studentsRepo.updateStudent(studentId, fields);
   return buildDetail(updated);
 }

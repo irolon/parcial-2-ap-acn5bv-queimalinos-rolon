@@ -3,6 +3,7 @@ import {
   mockAuthRepo,
   mockRoutinesRepo,
   mockBodyMetricsService,
+  mockAppointmentsService,
   service,
   TRAINER,
   STUDENT_ROW,
@@ -32,15 +33,25 @@ describe('students.service — update', () => {
       last_session_at: '2026-10-20T10:00:00Z',
     });
     expect(mockAuthRepo.revokeAllForUser).not.toHaveBeenCalled();
+    expect(mockAppointmentsService.cancelFutureForStudent).not.toHaveBeenCalled();
   });
 
-  it('dar de baja a un alumno activo revoca sus sesiones', async () => {
+  it('dar de baja a un alumno activo revoca sus sesiones y cancela sus turnos futuros', async () => {
     mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT_ROW);
     mockStudentsRepo.updateStudent.mockResolvedValue({ ...STUDENT_ROW, active: false });
 
     await service.update(TRAINER, 'student-1', { active: false });
 
     expect(mockAuthRepo.revokeAllForUser).toHaveBeenCalledWith('student-1', 'student');
+    expect(mockAppointmentsService.cancelFutureForStudent).toHaveBeenCalledWith('student-1');
+  });
+
+  it('si cancelar los turnos falla, no guarda la baja (el reintento la completa)', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT_ROW);
+    mockAppointmentsService.cancelFutureForStudent.mockRejectedValueOnce(new Error('db'));
+
+    await expect(service.update(TRAINER, 'student-1', { active: false })).rejects.toThrow('db');
+    expect(mockStudentsRepo.updateStudent).not.toHaveBeenCalled();
   });
 
   it('repetir la baja vuelve a revocar (permite reintentar si falló antes)', async () => {
@@ -69,6 +80,7 @@ describe('students.service — update', () => {
     await service.update(TRAINER, 'student-1', { active: true });
 
     expect(mockAuthRepo.revokeAllForUser).not.toHaveBeenCalled();
+    expect(mockAppointmentsService.cancelFutureForStudent).not.toHaveBeenCalled();
   });
 
   it('el propio alumno no puede editarse → 403 y no toca la base', async () => {
