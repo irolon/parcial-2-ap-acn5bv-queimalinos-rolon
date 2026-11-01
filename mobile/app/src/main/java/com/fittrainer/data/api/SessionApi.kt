@@ -2,6 +2,8 @@ package com.fittrainer.data.api
 
 import com.fittrainer.data.api.history.HistoryDetailResponse
 import com.fittrainer.data.api.history.HistoryPageDto
+import com.fittrainer.data.api.history.HistorySummaryResponse
+import com.fittrainer.data.api.history.TrainerCommentRequest
 import com.fittrainer.data.auth.RequiredUser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -77,4 +79,8 @@ interface SessionApi {
 
     @GET("students/{studentId}/sessions/{sessionId}")
     suspend fun historyDetail(@Path("studentId") studentId: String, @Path("sessionId") sessionId: String): HistoryDetailResponse
+
+    /** El entrenador comenta (o borra con null) una sesión de su alumno. Ajena o inexistente → 404. */
+    @PATCH("sessions/{id}/comment")
+    suspend fun comment(@Path("id") id: String, @Body body: TrainerCommentRequest): HistorySummaryResponse
 }

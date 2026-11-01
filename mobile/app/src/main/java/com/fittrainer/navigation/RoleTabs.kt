@@ -62,6 +62,12 @@ fun trainerStudentDetailRoute(studentId: String) = "trainer/students/$studentId"
 const val TRAINER_STUDENT_EDIT_ROUTE = "trainer/students/{studentId}/edit"
 fun trainerStudentEditRoute(studentId: String) = "trainer/students/$studentId/edit"
 
+/** Sesiones de un alumno y su detalle (tarjeta E4). */
+const val TRAINER_STUDENT_SESSIONS_ROUTE = "trainer/students/{studentId}/sessions"
+fun trainerStudentSessionsRoute(studentId: String) = "trainer/students/$studentId/sessions"
+const val TRAINER_STUDENT_SESSION_ROUTE = "trainer/students/{studentId}/sessions/{sessionId}"
+fun trainerStudentSessionRoute(studentId: String, sessionId: String) = "trainer/students/$studentId/sessions/$sessionId"
+
 /** Guía Mobile p.5 — app del entrenador. */
 val TrainerTabs = listOf(
     Tab("trainer/home", "Inicio", Icons.Filled.Home),
