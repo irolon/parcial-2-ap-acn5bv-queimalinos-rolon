@@ -7,12 +7,13 @@ import Textarea from '@/components/shared/ui/Textarea';
 import { useAppointments, useCreateAppointment, useFreeSlots } from '@/hooks/agenda/useAgenda';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
 import { arParts } from '@/utils/agenda';
-import { MAX_NOTES, hourChoices, scheduledAt } from './newAppointmentForm';
+import { MAX_NOTES, hourChoices, lastBookableDate, scheduledAt } from './newAppointmentForm';
 
 const SLOT_TAKEN = 'Ese horario ya está ocupado';
 
 function Form({ create, onClose }) {
   const today = arParts(new Date()).date;
+  const maxDate = lastBookableDate();
   const [student, setStudent] = useState('');
   const [date, setDate] = useState(today);
   const [hour, setHour] = useState('');
@@ -34,6 +35,7 @@ function Form({ create, onClose }) {
     const found = {};
     if (!student) found.student = 'Elegí el alumno del turno';
     if (!date || date < today) found.date = 'Elegí una fecha desde hoy';
+    else if (date > maxDate) found.date = 'Se puede agendar hasta dentro de un año';
     if (!hour || choices.find((c) => c.value === hour)?.disabled) found.hour = 'Elegí una hora libre';
     if (notes.length > MAX_NOTES) found.notes = `Hasta ${MAX_NOTES} caracteres`;
     setErrors(found);
@@ -67,7 +69,7 @@ function Form({ create, onClose }) {
         error={errors.student ?? (noStudents ? 'No tenés alumnos activos' : undefined)}
         onChange={(e) => setStudent(e.target.value)}
       />
-      <Input label="Fecha" type="date" min={today} value={date} error={errors.date} onChange={(e) => { setDate(e.target.value); setHour(''); }} />
+      <Input label="Fecha" type="date" min={today} max={maxDate} value={date} error={errors.date} onChange={(e) => { setDate(e.target.value); setHour(''); }} />
       <Select label="Hora" options={hourOptions} value={hour} disabled={hoursLoading || free.isError || day.isError} error={errors.hour} onChange={(e) => setHour(e.target.value)} />
       <Textarea label="Nota (opcional)" value={notes} error={errors.notes} onChange={(e) => setNotes(e.target.value)} />
       {errors.form && <p role="alert" className="font-body text-sm text-hot">{errors.form}</p>}
