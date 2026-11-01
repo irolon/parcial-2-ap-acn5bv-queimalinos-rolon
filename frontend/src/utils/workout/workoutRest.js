@@ -35,11 +35,12 @@ export function restTotal(state) {
 
 /**
  * ±segundos (los botones de ±15) sobre lo que le queda ahora al descanso en curso; nunca baja de 0. El total se mueve
- * lo mismo, sin quedar por debajo de lo que queda (la barra nunca pasa de llena).
+ * lo mismo, sin quedar por debajo de lo que queda (la barra nunca pasa de llena). Sobre un descanso ya vencido no hace
+ * nada: moverle el fin a "ahora" inflaría el descanso real que se anota en la serie.
  */
 export function adjustRest(state, deltaSeconds, now = new Date()) {
   const end = restEnd(state);
-  if (Number.isNaN(end) || !Number.isFinite(deltaSeconds)) return state;
+  if (Number.isNaN(end) || !Number.isFinite(deltaSeconds) || end <= ms(now)) return state;
   const left = Math.max(0, Math.max(0, end - ms(now)) + deltaSeconds * 1000);
   const total = Math.max(restTotal(state) + deltaSeconds, Math.ceil(left / 1000));
   return { ...state, restEndsAt: iso(ms(now) + left), restTotalSeconds: total };

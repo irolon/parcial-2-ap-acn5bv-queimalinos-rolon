@@ -132,7 +132,7 @@ describe('SessionDetail', () => {
     expect(within(fourth).getByText('no hecha')).toHaveAttribute('colspan', '3');
   });
 
-  it('sin plan muestra solo el real; sin descansos registrados (sesión vieja) no hay columna', async () => {
+  it('sin plan muestra solo el real; la columna se decide para toda la sesión (las tablas iguales)', async () => {
     await expand(
       sessionDetailItem({
         exercises: [
@@ -143,8 +143,15 @@ describe('SessionDetail', () => {
     );
     const withRest = await screen.findByRole('table', { name: 'Series de Press de banca' });
     expect(within(withRest).getByText('1:15')).toHaveClass('text-bone0');
-    const old = screen.getByRole('table', { name: 'Series de Remo con barra' });
-    expect(within(old).queryByRole('columnheader', { name: 'Desc.' })).toBeNull();
+    const other = screen.getByRole('table', { name: 'Series de Remo con barra' });
+    expect(within(other).getByRole('columnheader', { name: 'Desc.' })).toBeInTheDocument();
+    expect(within(other).getByText('—')).toBeInTheDocument();
+  });
+
+  it('sin descansos registrados en toda la sesión (sesión vieja) no hay columna', async () => {
+    await expand(sessionDetailItem({ exercises: [exerciseItem({ sets: [setItem({ id: 'b' })] })] }));
+    const table = await screen.findByRole('table', { name: 'Series de Press de banca' });
+    expect(within(table).queryByRole('columnheader', { name: 'Desc.' })).toBeNull();
   });
 
   it('la tabla de series scrollea dentro de su caja', async () => {

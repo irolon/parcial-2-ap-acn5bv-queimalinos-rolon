@@ -113,10 +113,11 @@ describe('RestTimer: botones', () => {
     expect(handlers.onSkip).toHaveBeenCalledTimes(1);
   });
 
-  it('con el descanso cumplido siguen disponibles +15″ y Saltar', () => {
+  it('con el descanso cumplido se apagan +15″ y −15″ (inflarían el real) y Saltar sigue disponible', () => {
     mount();
     tick(90);
-    expect(screen.getByRole('button', { name: '+15 segundos' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '+15 segundos' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '−15 segundos' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Saltar descanso' })).toBeEnabled();
   });
 });
@@ -157,17 +158,17 @@ describe('RestTimer: justo después de una acción', () => {
     expect(clock()).toHaveTextContent('1:29');
   });
 
-  it('+15″ con el descanso cumplido muestra 0:15 enseguida, y sigue contando', async () => {
+  it('+15″ a mitad del descanso muestra el resto nuevo enseguida, y sigue contando', async () => {
     render(<Page />);
     const user = setup();
     await user.click(screen.getByRole('button', { name: 'Registrar' }));
-    tick(90);
-    expect(clock()).toHaveTextContent('0:00');
+    tick(60);
+    expect(clock()).toHaveTextContent('0:30');
     tick(0.5);
     await user.click(screen.getByRole('button', { name: '+15 segundos' }));
-    expect(clock()).toHaveTextContent('0:15');
+    expect(clock()).toHaveTextContent('0:45');
     tick(1.5);
-    expect(clock()).toHaveTextContent('0:14');
+    expect(clock()).toHaveTextContent('0:43');
   });
 
   it('no se vuelve a montar: es el mismo reloj y el foco queda en el botón apretado', async () => {

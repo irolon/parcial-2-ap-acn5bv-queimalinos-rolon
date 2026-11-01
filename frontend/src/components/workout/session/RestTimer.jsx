@@ -6,7 +6,8 @@ import { formatClock } from '@/utils/sessions/workoutFormat';
 import { restRemaining, restTotal } from '@/utils/workout/workoutState';
 
 const MINUS = '−';
-const PILL = `h-11 cursor-pointer rounded-pill bg-ink3 px-4 font-mono text-[11px] text-bone0 transition-colors hover:bg-ink4 ${FOCUS_RING}`;
+const PILL = `h-11 cursor-pointer rounded-pill bg-ink3 px-4 font-mono text-[11px] text-bone0 transition-colors hover:bg-ink4 `
+  + `disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink3 ${FOCUS_RING}`;
 
 // Cuándo se registró la última serie (el descanso arranca en ese mismo instante); 0 si no hay o no se puede leer.
 const lastSetTime = (workout) => {
@@ -16,7 +17,8 @@ const lastSetTime = (workout) => {
 
 /**
  * El descanso después de registrar una serie: cuenta regresiva (contra la hora de fin guardada en la sesión, así
- * recargar no la corre), +15″, −15″ y Saltar. Al llegar a 0 anuncia "¡A la próxima serie!". Sin descanso, nada.
+ * recargar no la corre), +15″, −15″ y Saltar. Al llegar a 0 anuncia "¡A la próxima serie!" y los ±15″ se apagan
+ * (ajustar un descanso vencido inflaría el real); Saltar lo cierra. Sin descanso, nada.
  * El reloj no se anuncia segundo a segundo: solo lo lee el lector de pantalla al terminar. La barra es contra el total
  * guardado al arrancar el descanso (y movido por ±15″), no contra el ejercicio que esté a la vista.
  *
@@ -60,10 +62,22 @@ export default function RestTimer({ workout, onAdjust, onSkip }) {
           {remaining === 0 ? '¡A la próxima serie!' : ''}
         </p>
         <div className="flex justify-center gap-2">
-          <button type="button" aria-label="+15 segundos" onClick={acting(() => onAdjust(15))} className={PILL}>
+          <button
+            type="button"
+            aria-label="+15 segundos"
+            disabled={remaining === 0}
+            onClick={acting(() => onAdjust(15))}
+            className={PILL}
+          >
             +15″
           </button>
-          <button type="button" aria-label={`${MINUS}15 segundos`} onClick={acting(() => onAdjust(-15))} className={PILL}>
+          <button
+            type="button"
+            aria-label={`${MINUS}15 segundos`}
+            disabled={remaining === 0}
+            onClick={acting(() => onAdjust(-15))}
+            className={PILL}
+          >
             {MINUS}15″
           </button>
           <button type="button" aria-label="Saltar descanso" onClick={acting(onSkip)} className={PILL}>

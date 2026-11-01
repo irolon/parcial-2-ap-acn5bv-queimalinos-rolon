@@ -47,17 +47,32 @@ describe('descanso real (restSeconds): se anota en la serie que disparó el desc
     expect(other.restSetId).toBe('set-2');
   });
 
-  it('Terminar con el descanso abierto no lo anota (después de la última serie no hay otra; null como el celular)', () => {
+  it('Terminar a mitad con el descanso abierto lo anota hasta ahora, o hasta su fin si venció (como el celular)', () => {
     const finished = finishWorkout(resting(), at(100));
-    expect(restOf(finished)).toBeUndefined();
+    expect(restOf(finished)).toBe(40);
+    expect(finished.restSetId).toBeNull();
+    expect(finished.restEndsAt).toBeNull();
+    expect(restOf(finishWorkout(resting(), at(4000)))).toBe(90);
+  });
+
+  it('Terminar con el plan completo no lo anota: en el celular la última serie no arranca descanso (null)', () => {
+    // Press banca 4 × 10 y Remo 3 × 12: las 7 series del plan, la última (set-7) con su descanso abierto.
+    const plan = [0, 0, 0, 0, 1, 1, 1].map((exercise) => [exercise, 60, 10]);
+    const state = withSets(freshWorkout(), plan);
+    expect(state.restSetId).toBe('set-7');
+    const finished = finishWorkout(state, at(9000));
+    expect(restOf(finished, 'set-7')).toBeUndefined();
+    expect(restOf(finished, 'set-6')).toBe(60);
     expect(finished.restSetId).toBeNull();
   });
 
-  it('si se borra la serie que lo disparó, se cierra sin anotar nada en otra', () => {
+  it('si se borra la serie que lo disparó, se cierra (deja de correr) sin anotar nada en otra', () => {
     const state = withSets(freshWorkout(), [[0, 60, 10], [0, 60, 10]]);
-    const closed = closeRest(removeSet(state, 'set-2'), at(200));
-    expect(closed.restSetId).toBeNull();
-    expect(closed.sets.map((set) => set.restSeconds)).toEqual([60]);
+    const removed = removeSet(state, 'set-2');
+    expect(removed.restSetId).toBeNull();
+    expect(removed.restEndsAt).toBeNull();
+    expect(removed.sets.map((set) => set.restSeconds)).toEqual([60]);
+    expect(closeRest(removed, at(200))).toBe(removed);
   });
 
   it('un ejercicio sin descanso (0 s) no abre ninguno', () => {

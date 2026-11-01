@@ -69,9 +69,7 @@ function SetRow({ set, planned, showRest }) {
   );
 }
 
-function ExerciseBlock({ item }) {
-  // La columna del descanso aparece solo si alguna serie lo registró (sesiones viejas o de la web anterior no lo traen).
-  const showRest = item.sets.some((set) => Number.isFinite(set.rest_seconds));
+function ExerciseBlock({ item, showRest }) {
   return (
     <div className="min-w-0">
       <div className="mb-1.5 flex flex-wrap items-center gap-2">
@@ -126,6 +124,10 @@ function Note({ label, text }) {
  * Para el entrenador, el comentario se edita (`SessionComment`). Para el alumno (`viewer="student"`), la nota es
  * "Tu nota" y el comentario del entrenador, si lo hay, es de solo lectura: el PATCH es solo del entrenador.
  */
+// La columna del descanso aparece si alguna serie de la sesión lo registró (sesiones viejas o de la web anterior no lo
+// traen). Se decide para toda la sesión, así todas las tablas tienen las mismas columnas.
+const hasRest = (detail) => detail.exercises.some((item) => item.sets.some((set) => Number.isFinite(set.rest_seconds)));
+
 export default function SessionDetail({ studentId, session, viewer = 'trainer' }) {
   const isStudent = viewer === 'student';
   const query = useSessionDetail(studentId, session.id);
@@ -136,7 +138,7 @@ export default function SessionDetail({ studentId, session, viewer = 'trainer' }
           <div className="flex flex-col gap-4">
             {detail.exercises.length === 0 && <p className="text-sm text-bone2">Sin series registradas</p>}
             {detail.exercises.map((item, index) => (
-              <ExerciseBlock key={`${item.exercise.id}-${index}`} item={item} />
+              <ExerciseBlock key={`${item.exercise.id}-${index}`} item={item} showRest={hasRest(detail)} />
             ))}
           </div>
         )}

@@ -1,7 +1,7 @@
 import { DEFAULT_REPS, DEFAULT_REST_SECONDS, DEFAULT_SETS } from '@/utils/routines/defaults';
 import { positiveKg } from '@/utils/routines/suggestedKg';
 import { closeRest, startRest } from './workoutRest';
-import { MAX_REPS, MAX_SET_NUMBER, exerciseSets, toSetKg, toSetReps } from './workoutSets';
+import { MAX_REPS, MAX_SET_NUMBER, exerciseSets, missingSets, toSetKg, toSetReps } from './workoutSets';
 
 // La sesión en curso como datos puros (spec §3): cada función recibe el estado y devuelve uno nuevo, o el mismo si
 // no cambia nada. Las horas son ISO absolutas, así que recargar la página no corre el descanso ni las series.
@@ -93,7 +93,10 @@ export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId 
   return startRest({ ...rested, sets: [...rested.sets, set] }, now, set.id);
 }
 
-/** Borra una serie y renumera las de su ejercicio (si se borra la 2 de 3, la 3 pasa a ser la 2). */
+/**
+ * Borra una serie y renumera las de su ejercicio (si se borra la 2 de 3, la 3 pasa a ser la 2). Si es la que disparó el
+ * descanso en curso, lo cierra sin anotar nada: no queda corriendo por una serie que ya no existe.
+ */
 export function removeSet(state, setId) {
   const target = state.sets.find((set) => set.id === setId);
   if (state.finishedAt || !target) return state;
@@ -104,8 +107,10 @@ export function removeSet(state, setId) {
       .sort((a, b) => a.setNumber - b.setNumber)
       .map((set, index) => [set.id, index + 1]),
   );
+  const rest = setId === state.restSetId ? { restEndsAt: null, restTotalSeconds: null, restSetId: null } : {};
   return {
     ...state,
+    ...rest,
     sets: sets.map((set) => {
       const setNumber = position.get(set.id);
       return setNumber && setNumber !== set.setNumber ? { ...set, setNumber } : set;
@@ -121,11 +126,14 @@ export function setCursor(state, index) {
 }
 
 /**
- * Terminar: fija la hora la primera vez (un reintento horas después no la cambia) y corta el descanso. El que estaba
- * abierto no se anota: después de la última serie no hay otra que esperar (en el celular queda null).
+ * Terminar: fija la hora la primera vez (un reintento horas después no la cambia) y corta el descanso. Como el celular
+ * (`WorkoutRepository.finish`): si terminó a mitad, el descanso abierto se anota hasta ahora (o hasta su fin, si ya
+ * venció); con el plan completo no se anota, porque en el celular la última serie no arranca descanso (queda null).
  */
 export function finishWorkout(state, now = new Date()) {
-  return state.finishedAt ? state : { ...state, finishedAt: iso(now), restEndsAt: null, restSetId: null };
+  if (state.finishedAt) return state;
+  const rested = missingSets(state) > 0 ? closeRest(state, now) : { ...state, restSetId: null };
+  return { ...rested, finishedAt: iso(now), restEndsAt: null };
 }
 
 /**
