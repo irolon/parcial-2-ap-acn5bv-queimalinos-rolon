@@ -39,7 +39,8 @@ create table if not exists trainer_availability (
   end_time    time not null,
   created_at  timestamptz not null default now(),
   constraint availability_range check (start_time < end_time),
-  constraint availability_on_the_hour check (extract(minute from start_time) = 0 and extract(minute from end_time) = 0)
+  constraint availability_on_the_hour check (extract(minute from start_time) = 0 and extract(second from start_time) = 0
+                                                  and extract(minute from end_time) = 0 and extract(second from end_time) = 0)
 );
 create unique index if not exists uq_availability_slot on trainer_availability (trainer_id, weekday, start_time);
 alter table trainer_availability enable row level security;
@@ -49,7 +50,7 @@ create unique index if not exists uq_appointments_trainer_slot
 
 -- Reemplazo atómico de la disponibilidad (supabase-js no tiene transacciones).
 create or replace function replace_trainer_availability(p_trainer uuid, p_slots jsonb)
-returns setof trainer_availability language plpgsql security definer set search_path = public as $$
+returns setof trainer_availability language plpgsql security invoker set search_path = public as $$
 begin
   delete from trainer_availability where trainer_id = p_trainer;
   insert into trainer_availability (trainer_id, weekday, start_time, end_time)
@@ -62,7 +63,7 @@ grant execute on function replace_trainer_availability(uuid, jsonb) to service_r
 ```
 
 - `appointments` no cambia de forma: `duration_min` queda en 60, que es lo que crea el backend.
-- Las horas de `trainer_availability` son de Argentina (UTC-3 fijo, sin horario de verano). `scheduled_at` es `timestamptz` (UTC). La conversión se hace con `Intl` y `America/Argentina/Buenos_Aires`.
+- Las horas de `trainer_availability` son de Argentina (UTC-3 fijo, sin horario de verano). `scheduled_at` es `timestamptz` (UTC). La conversión usa un offset fijo UTC-3 (Argentina no tiene horario de verano), verificado contra Intl en los tests.
 
 ## 4. API
 

@@ -56,14 +56,14 @@ describe('freeSlots', () => {
     const out = freeSlots({
       availability: [
         { weekday: 1, start_time: '00:00', end_time: '01:00' },
-        { weekday: 7, start_time: '23:00', end_time: '23:00' },
+        { weekday: 7, start_time: '22:00', end_time: '23:00' },
       ],
       taken: [],
       from: '2026-11-08',
       to: '2026-11-09',
       now: NOW,
     });
-    expect(out).toEqual(['2026-11-09T03:00:00.000Z']);
+    expect(out).toEqual(['2026-11-09T01:00:00.000Z', '2026-11-09T03:00:00.000Z']);
   });
 
   it('varias franjas del mismo día salen ordenadas y sin repetir', () => {
