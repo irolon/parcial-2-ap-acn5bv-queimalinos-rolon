@@ -61,6 +61,11 @@ describe('StudentMetrics: Registrar medición', () => {
     expect(POSTS(fetchMock)).toHaveLength(0);
   });
 
+  it('con una medida anterior, la Talla viene precargada con la última', async () => {
+    const { dialog } = await open({ rows: [metric({ id: 'm-h', recorded_by: 'student', height_cm: 178 })] });
+    expect(within(dialog).getByLabelText(/Talla/)).toHaveValue(178);
+  });
+
   it('guarda en la ruta del alumno, con id del cliente y sin decir quién la cargó', async () => {
     const { rows, createMetric } = server([BY_TRAINER]);
     const { user, fetchMock, dialog } = await open({ rows, createMetric });
