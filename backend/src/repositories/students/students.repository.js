@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
+import { fetchAll } from '../../shared/utils/supabase-query.js';
 import {
   STUDENTS_TABLE,
   STUDENT_LIST_COLUMNS,
@@ -95,6 +96,31 @@ export async function updateStudent(id, fields) {
     .eq('id', id)
     .select(STUDENT_DETAIL_COLUMNS)
     .single();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** Todos los alumnos activos del trainer, por nombre (mensajería: id, name, avatar_url). */
+export async function findActiveStudentsByTrainer(trainerId) {
+  return fetchAll(() =>
+    supabase
+      .from(STUDENTS_TABLE)
+      .select('id, name, avatar_url')
+      .eq('trainer_id', trainerId)
+      .eq('active', true)
+      .order('name')
+      .order('id')
+  );
+}
+
+/** De los `ids` pedidos, los que son alumnos activos del trainer (para validar un envío masivo). */
+export async function findActiveStudentsByIds(trainerId, ids) {
+  const { data, error } = await supabase
+    .from(STUDENTS_TABLE)
+    .select('id')
+    .eq('trainer_id', trainerId)
+    .eq('active', true)
+    .in('id', ids);
   if (error) throw Errors.internal(error.message);
   return data;
 }

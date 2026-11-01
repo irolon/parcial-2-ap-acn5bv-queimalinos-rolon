@@ -32,17 +32,19 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Gamificación:** logros, rachas y desafíos.
 - [x] **Progreso:** curva de carga por ejercicio (1RM estimado, peso máximo y volumen) y evolución corporal.
 - [x] **Notificaciones:** tabla como fuente de verdad, push FCM (HTTP v1), alerta de inactividad del PT y avisos de récords, rutina modificada y logros.
+- [x] **Mensajería:** chat 1 a 1 entre el PT y cada alumno con texto y fotos (bucket privado de Storage), no leídos y envío masivo.
 
 **Web** (React)
 - [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas e historial de sesiones con comentarios del PT y vista de progreso con gráficos (Recharts).
+- [x] **Mensajería:** página de Mensajes del PT (lista de conversaciones, botón en la ficha y envío masivo) y del alumno, con badge de no leídos.
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.
 - [x] **Historial de sesiones** offline (con los comentarios del entrenador) y **feedback post-entreno** (RPE y nota).
 
-**En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42).
+**En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42) y mensajería interna (#47).
 
-**Pendiente:** IA (asistente del alumno y del PT, con n8n), logros en la web, agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
+**Pendiente:** IA (asistente del alumno y del PT, con n8n), logros en la web, agenda, chat en el celular, paridad del alumno en la web, QA y deploy (S7).
 
 > DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
 

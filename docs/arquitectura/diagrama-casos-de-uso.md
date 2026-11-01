@@ -54,7 +54,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-08 | Generar rutina con IA | El PT le pasa parámetros del alumno al asistente IA y obtiene una plantilla inicial editable | PT-14 |
 | CU-09 | Comentar sesión del alumno | Dejar notas y feedback sobre sesiones completadas del alumno | PT-08 |
 | CU-10 | Gestionar agenda | Cargar disponibilidad horaria, aceptar/rechazar turnos solicitados por alumnos | PT-11 |
-| CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes | PT-13 |
+| CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes; el alumno responde desde la web. Detalle en [[producto/casos-de-uso#CU-11 — Enviar mensaje al alumno (web)\|casos de uso]] | PT-13 |
 
 ### Alumno
 
@@ -174,6 +174,7 @@ AL --> CU17
 AL --> CU18
 AL --> CU19
 AL --> CU20
+AL --> CU11
 
 ' --- Asociaciones Sistema ---
 SYS --> CU21

@@ -1134,6 +1134,169 @@ Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra 
 
 ---
 
+## Módulo: Mensajes
+
+Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Una conversación por alumno: el PT es siempre `students.trainer_id`, no se guarda en el mensaje. No es el chat con el asistente IA (`POST /chat`, tabla `chat_messages`). Todos los endpoints piden `Authorization: Bearer <token>`; sin token → 401 `UNAUTHORIZED`. Se actualiza por polling, no hay tiempo real: cada 4 s en la conversación abierta y cada 15 s en la lista de conversaciones y en el badge de no leídos.
+
+**Mensaje** (forma pública, la misma en todas las respuestas):
+
+```json
+{
+  "id": "uuid",
+  "student_id": "uuid",
+  "sender_role": "trainer",
+  "body": "¡Buen entrenamiento hoy!",
+  "image_url": "https://…/message-images/…?token=…",
+  "broadcast_id": null,
+  "read_at": null,
+  "created_at": "2026-10-31T14:05:00.123456+00:00"
+}
+```
+
+- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`, pero nunca los dos a la vez.
+- `image_url` es una URL firmada que vence a la hora (3600 s); el `image_path` del bucket nunca sale. Si hace falta, se vuelve a pedir el historial para obtener una nueva.
+- `broadcast_id` lo comparten los mensajes de un mismo envío masivo; `null` si es un mensaje normal.
+- `read_at` lo completa el **otro** lado de la conversación al abrirla (`POST /messages/:studentId/read`).
+
+**Reglas de acceso.** El PT solo accede a las conversaciones de sus alumnos; el alumno, solo a la suya (`:studentId` tiene que ser su propio id). Una conversación ajena o inexistente responde igual: 403 `FORBIDDEN`, sin distinguir. Con un `:studentId` que no es UUID → 400 `VALIDATION_ERROR`.
+
+### GET /messages/conversations
+
+Lista las conversaciones del PT: una por alumno **activo**, ordenadas con la más reciente primero (las que no tienen mensajes, al final por nombre). **Rol:** `trainer` (el alumno recibe 403).
+
+**200 OK**
+
+```json
+{
+  "data": [
+    {
+      "student": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null },
+      "last_message": {
+        "body": "Dale, mañana lo hago",
+        "has_image": false,
+        "sender_role": "student",
+        "created_at": "2026-10-31T14:05:00.123456+00:00"
+      },
+      "unread_count": 2
+    }
+  ]
+}
+```
+
+- `last_message` es `null` si todavía no hay mensajes. `body` va completo (el recorte para la lista lo hace la web) y puede ser `null` si el último fue solo una foto (`has_image: true`).
+- `unread_count` son los mensajes del alumno sin leer por el PT.
+
+### GET /messages/unread-count
+
+Total de mensajes sin leer para el usuario autenticado (sirve para el globito del menú). **Roles:** `trainer` y `student`.
+
+- Para el PT: mensajes de sus alumnos **activos** sin leer. No cuenta a los inactivos, para que el globito coincida con lo que ve en la lista de conversaciones.
+- Para el alumno: mensajes del PT sin leer en su conversación.
+
+**200 OK**
+
+```json
+{ "data": { "count": 3 } }
+```
+
+### POST /messages/broadcast
+
+Envía el mismo texto a varios alumnos del PT. Crea un mensaje por alumno, todos con el mismo `broadcast_id`, en una sola operación. **Rol:** `trainer`.
+
+**Body** (JSON)
+
+```json
+{ "student_ids": ["uuid", "uuid"], "body": "Mañana no hay clase, feriado." }
+```
+
+- `student_ids`: lista de 1 a 200 UUID sin repetidos. `body`: obligatorio, 1–2000 caracteres (se recorta).
+- Es solo texto; no admite foto.
+
+**201 Created**
+
+```json
+{ "data": { "broadcast_id": "uuid", "sent": 2 } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR` (lista vacía, de más de 200, ids no UUID o repetidos, `body` vacío o de más de 2000), 403 `FORBIDDEN` (algún id no es un alumno activo del PT: ajeno, inexistente o inactivo; no se envía a nadie), 403 si lo llama un alumno.
+
+### GET /messages/:studentId
+
+Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de uno de sus alumnos) y `student` (el propio).
+
+**Query (todos opcionales)**
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `limit` | entero 1–100 | Tamaño de página. Por defecto 50 |
+| `before` | ISO 8601 con zona | Cursor: solo los creados **antes** de esa fecha (exclusivo). Se obtiene de `meta.next_before` |
+
+**200 OK**
+
+```json
+{
+  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
+  "meta": { "next_before": "2026-10-31T14:00:00.000000+00:00" },
+  "counterpart": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null }
+}
+```
+
+- `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
+- `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
+- `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
+
+**Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.
+
+### POST /messages/:studentId
+
+Envía un mensaje, con texto, con foto o con las dos cosas. **Roles:** `trainer` (a uno de sus alumnos) y `student` (a su PT).
+
+**Body.** `multipart/form-data` con dos campos opcionales (hay que mandar al menos uno):
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `body` | texto | Hasta 2000 caracteres (se recorta; vacío cuenta como ausente) |
+| `image` | archivo | Una sola foto JPG, PNG o WebP de hasta 5 MB |
+
+También acepta `application/json` `{ "body": "…" }` para mensajes de solo texto. El tipo de la foto se valida por sus bytes, no por el `Content-Type` ni la extensión que declare el cliente.
+
+**201 Created** con el mensaje creado:
+
+```json
+{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
+```
+
+**Errores**
+
+| Status | Código | Cuándo |
+|---|---|---|
+| 400 | `MESSAGE_EMPTY` | Sin texto (o solo espacios) y sin foto |
+| 400 | `VALIDATION_ERROR` | `body` de más de 2000 caracteres o que no es texto; más de un archivo o archivo en un campo que no es `image`; multipart mal formado o con más de un campo de texto, un campo de más de 16 KB o más de 2 partes (mensaje "Formulario inválido") |
+| 403 | `FORBIDDEN` | Conversación ajena o inexistente |
+| 409 | `STUDENT_INACTIVE` | El alumno está dado de baja ("El alumno está dado de baja"); vale para el PT y para el alumno. Leer el historial sigue permitido |
+| 413 | `IMAGE_TOO_LARGE` | La foto supera 5 MB |
+| 415 | `IMAGE_TYPE_INVALID` | La foto no es JPG, PNG ni WebP (por ejemplo un PDF con `Content-Type: image/png`) |
+
+> Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
+>
+> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
+
+### POST /messages/:studentId/read
+
+Marca como leídos los mensajes de la **otra** parte: el PT marca los del alumno y el alumno marca los del PT. Los propios no se tocan. Se llama al abrir la conversación. **Roles:** `trainer` y `student`.
+
+**200 OK** (también si no había nada sin leer: `updated` es 0)
+
+```json
+{ "data": { "updated": 2 } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID), 403 `FORBIDDEN`.
+
+> Las rutas fijas (`/conversations`, `/unread-count`, `/broadcast`) están declaradas antes que `/:studentId` para que no se confundan con el parámetro.
+
+---
+
 ## Health checks
 
 ### GET /health

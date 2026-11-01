@@ -1,7 +1,8 @@
+import { MessageSquare } from 'lucide-react';
 import { Link } from 'react-router';
 import Button from '@/components/shared/ui/Button';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
-import { newRoutineHref } from '@/routes/routeTable';
+import { messagesHref, newRoutineHref } from '@/routes/routeTable';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
 /** Acciones de la ficha: editar y dar de baja (con confirmación) o reactivar (directo). Abrir un diálogo limpia el error de reactivar. */
@@ -27,6 +28,15 @@ export default function ProfileActions({ student, onEdit, onDeactivate }) {
             className="inline-flex h-9 items-center rounded-lg bg-accent px-3.5 font-display text-sm font-semibold text-accentInk hover:bg-accentDim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText"
           >
             Asignar rutina
+          </Link>
+        )}
+        {student.active !== false && (
+          <Link
+            to={messagesHref(student.id)}
+            className="inline-flex h-8 items-center gap-2 rounded-lg border border-white/[0.14] px-3 font-display text-[13px] font-semibold text-bone0 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText"
+          >
+            <MessageSquare size={14} aria-hidden="true" />
+            Mensaje
           </Link>
         )}
         {student.active === false ? (

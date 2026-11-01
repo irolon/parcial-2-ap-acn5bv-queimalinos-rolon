@@ -9,7 +9,7 @@ tags: [arquitectura]
 
 # Modelo de datos (DER)
 
-Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07) (19 tablas: estas 18 + refresh_tokens). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, y se suma la tabla push_tokens (tarjeta 44); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
+Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 12/10/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07, con 06b-messages.sql) (19 tablas: estas 18 + refresh_tokens; push_tokens y messages se suman aparte). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, se suma la tabla push_tokens (tarjeta 44) y la tabla messages (tarjeta 48, mensajería interna PT ↔ alumno, `schema/06b-messages.sql`); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
 
 ---
 
@@ -308,6 +308,31 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | last_seen_at | timestamptz | se actualiza cada vez que el cliente registra el token |
 
 RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FCM lo da por inválido (`UNREGISTERED` o token mal formado).
+
+---
+
+### Mensajería (celeste)
+
+**messages** *(mensajería interna PT ↔ alumno, tarjeta 48)*
+
+| Campo | Tipo | Clave |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| student_id | uuid | FK → students, `on delete cascade`. Identifica la conversación; el PT es `students.trainer_id`, no se guarda acá |
+| sender_role | varchar(10) | trainer / student (check) |
+| body | text | opcional; si existe, de 1 a 2000 caracteres (check) |
+| image_path | text | opcional; `<student_id>/<uuid>.<ext>` dentro del bucket `message-images`. Nunca sale en la API: se reemplaza por una URL firmada |
+| broadcast_id | uuid | opcional; lo comparten los mensajes de un mismo envío masivo del PT. Sin FK |
+| read_at | timestamptz | null mientras el destinatario no lo leyó |
+| created_at | timestamptz | default `now()` |
+
+Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede haber los dos).
+
+Índices: `idx_messages_student_created` sobre `(student_id, created_at desc)` para el historial paginado y el último mensaje de cada conversación, e `idx_messages_unread` parcial sobre `(student_id, sender_role) where read_at is null` para contar los no leídos. RLS activado sin políticas (ADR 0001). Migración: `backend/src/database/migrations/2026-10-31-messages.sql` (y `schema/06b-messages.sql` + `07-rls.sql` para bases nuevas).
+
+> **No confundir con `chat_messages`:** esa tabla es el historial del asistente IA del alumno (`POST /chat`). `messages` es la mensajería entre personas y no tiene relación con ella.
+
+**Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
 
 ---
 

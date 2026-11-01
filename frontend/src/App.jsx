@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 // Importarlo también conecta el cliente de la API con la sesión.
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
+import { useClearCacheOnSessionChange } from '@/hooks/auth/useClearCacheOnSessionChange';
 import { routes } from '@/routes/router';
 
 function createQueryClient() {
@@ -14,6 +15,7 @@ function createQueryClient() {
 export default function App() {
   const [queryClient] = useState(createQueryClient);
   const [router] = useState(() => createBrowserRouter(routes));
+  useClearCacheOnSessionChange(queryClient);
 
   useEffect(() => {
     // Solo la primera vez (StrictMode monta dos veces en desarrollo).
