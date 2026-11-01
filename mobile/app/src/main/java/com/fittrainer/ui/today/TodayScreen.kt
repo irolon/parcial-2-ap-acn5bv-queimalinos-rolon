@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,6 +38,7 @@ import com.fittrainer.ui.today.components.NoRoutineState
 import com.fittrainer.ui.today.components.RestState
 import com.fittrainer.ui.today.components.RoutineHeroCard
 import com.fittrainer.ui.today.components.TodayHeader
+import com.fittrainer.ui.today.components.TodayMusclesSheet
 import com.fittrainer.ui.today.components.WeekStrip
 import com.fittrainer.ui.workout.WorkoutEntryViewModel
 
@@ -86,6 +88,9 @@ fun TodayBody(
     onDismissFailures: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
+    // La clave es la rutina de hoy (null si no toca entrenar): al cambiar o desaparecer, la hoja vuelve a cerrada.
+    val musclesKey = (state.content as? TodayContent.Training)?.routine?.id
+    var musclesOpen by rememberSaveable(musclesKey) { mutableStateOf(false) }
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
         onRefresh = onRefresh,
@@ -104,11 +109,14 @@ fun TodayBody(
             val activeCardItem: LazyListScope.() -> Unit = {
                 if (showsActiveWorkoutCard(state.content, workoutActive)) item { ActiveWorkoutCard(onContinueWorkout) }
             }
-            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it }, uploadsItem, activeCardItem)
+            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it }, onOpenMuscles = { musclesOpen = true }, uploadsItem, activeCardItem)
         }
     }
     selected?.let { exercise ->
         ExerciseDetailSheet(exercise.toDetail(), canOpenVideo = !state.isOffline, onDismiss = { selected = null })
+    }
+    musclesSheetRoutine(state.content, musclesOpen)?.let { routine ->
+        TodayMusclesSheet(routine.name, remember(routine) { todayMuscles(routine) }) { musclesOpen = false }
     }
 }
 
@@ -117,6 +125,7 @@ private fun LazyListScope.todayItems(
     workoutActive: Boolean,
     onStartWorkout: (Routine) -> Unit,
     onExerciseClick: (RoutineExercise) -> Unit,
+    onOpenMuscles: () -> Unit,
     uploadsItem: LazyListScope.() -> Unit,
     activeCardItem: LazyListScope.() -> Unit,
 ) {
@@ -125,7 +134,7 @@ private fun LazyListScope.todayItems(
         is TodayContent.Training -> {
             item { WeekStrip(content.routine.days, today) }
             uploadsItem() // El aviso de subidas va debajo de la semana (si no hay semana, arriba de todo).
-            item { RoutineHeroCard(content.routine, workoutActive) { onStartWorkout(content.routine) } }
+            item { RoutineHeroCard(content.routine, workoutActive, { onStartWorkout(content.routine) }, onOpenMuscles) }
             item { SectionLabel("PLAN DE HOY", content.routine.exercises.size.toString()) }
             items(content.routine.exercises, key = { it.id }) { exercise ->
                 ExerciseRow(exercise.name, exerciseSubtitle(exercise), onClick = { onExerciseClick(exercise) })

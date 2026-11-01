@@ -16,17 +16,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.today.heroSummary
+import com.fittrainer.ui.today.todayMuscles
 
 /** CTA único: "Empezar", o "Continuar sesión" si hay una abierta. Sin ejercicios no se puede empezar. */
 @Composable
-fun RoutineHeroCard(routine: Routine, workoutActive: Boolean, onStart: () -> Unit) {
+fun RoutineHeroCard(routine: Routine, workoutActive: Boolean, onStart: () -> Unit, onOpenMuscles: () -> Unit) {
     val shape = MaterialTheme.shapes.large
+    val muscles = remember(routine) { todayMuscles(routine) }
     Column(
         Modifier
             .fillMaxWidth()
@@ -37,6 +40,7 @@ fun RoutineHeroCard(routine: Routine, workoutActive: Boolean, onStart: () -> Uni
     ) {
         Text(routine.name, style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
         Text(heroSummary(routine), style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+        if (muscles.isNotEmpty()) MusclesRow(muscles, onOpenMuscles)
         Button(
             onClick = onStart,
             enabled = workoutActive || routine.exercises.isNotEmpty(),
