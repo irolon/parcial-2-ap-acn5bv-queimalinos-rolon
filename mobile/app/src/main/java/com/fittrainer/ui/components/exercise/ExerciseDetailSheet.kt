@@ -2,6 +2,7 @@ package com.fittrainer.ui.components.exercise
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -21,10 +22,15 @@ import com.fittrainer.ui.theme.Spacing
 
 const val VIDEO_NEEDS_CONNECTION = "El video necesita conexión"
 
-/** Detalle del ejercicio. El video es un link externo: con red se abre; sin red, se avisa. */
+/** Detalle del ejercicio. El video es un link externo: con red se abre; sin red, se avisa. [actions]: botones extra al pie (E10). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseDetailSheet(detail: ExerciseDetail, canOpenVideo: Boolean, onDismiss: () -> Unit) {
+fun ExerciseDetailSheet(
+    detail: ExerciseDetail,
+    canOpenVideo: Boolean,
+    onDismiss: () -> Unit,
+    actions: @Composable ColumnScope.() -> Unit = {},
+) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FtColors.Surface) {
         Column(
             Modifier
@@ -45,10 +51,11 @@ fun ExerciseDetailSheet(detail: ExerciseDetail, canOpenVideo: Boolean, onDismiss
             DetailLine("Peso sugerido", detail.suggestedKg?.let(::formatKg))
             DetailLine("Tempo", detail.tempo)
             DetailLine("Descanso", detail.restSeconds?.let { "$it s" })
-            DetailLine("Equipo", detail.equipment)
+            DetailLine("Equipo", detail.equipment?.let(::equipmentLabel))
             DetailBlock("DESCRIPCIÓN", detail.description)
             DetailBlock("NOTA DEL ENTRENADOR", detail.notes)
             VideoAction(detail.videoUrl, canOpenVideo)
+            actions()
         }
     }
 }
