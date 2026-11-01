@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import AgendaToolbar from '@/components/agenda/AgendaToolbar';
 import AppointmentDialog from '@/components/agenda/AppointmentDialog';
+import AvailabilityDialog from '@/components/agenda/dialogs/AvailabilityDialog';
+import NewAppointmentDialog from '@/components/agenda/dialogs/NewAppointmentDialog';
 import Legend from '@/components/agenda/Legend';
 import WeekGrid from '@/components/agenda/WeekGrid';
 import WeekList from '@/components/agenda/WeekList';
@@ -16,13 +18,13 @@ const weekFrom = (from) => weekOf(slotIso(from, 12));
 
 /**
  * Calendario semanal del entrenador.
- * `dialog` ('availability' | 'new' | null) queda listo para que los diálogos de la Task 7 se enchufen.
+ * `dialog` ('availability' | 'new' | null) abre los diálogos de disponibilidad y de nuevo turno.
  */
 export default function AgendaPage() {
   const [from, setFrom] = useState(() => weekOf(new Date()).from);
   const [showCancelled, setShowCancelled] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [, setDialog] = useState(null);
+  const [dialog, setDialog] = useState(null);
   const isDesktop = useIsDesktop();
   const week = weekFrom(from);
   usePageHeader({ title: 'Agenda', subtitle: weekTitle(week.from, week.to) });
@@ -60,6 +62,8 @@ export default function AgendaPage() {
       )}
       <Legend />
       <AppointmentDialog appointment={selected} onClose={() => setSelected(null)} />
+      <AvailabilityDialog open={dialog === 'availability'} onClose={() => setDialog(null)} />
+      <NewAppointmentDialog open={dialog === 'new'} onClose={() => setDialog(null)} />
     </div>
   );
 }
