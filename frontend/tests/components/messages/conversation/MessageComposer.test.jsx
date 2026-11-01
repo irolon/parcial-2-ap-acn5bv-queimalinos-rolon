@@ -75,4 +75,17 @@ describe('MessageComposer', () => {
     await userEvent.paste('a');
     expect(screen.getByText('1800/2000')).toBeInTheDocument();
   });
+
+  it('no muestra scroll mientras el texto entra y lo activa al llegar al alto máximo', async () => {
+    let height = 40;
+    const spy = vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => height);
+    render(<MessageComposer onSend={vi.fn()} />);
+    const field = screen.getByLabelText('Mensaje');
+    expect(field.style.overflowY).toBe('hidden');
+    height = 200;
+    await userEvent.type(field, 'a');
+    expect(field.style.overflowY).toBe('auto');
+    expect(field.style.height).toBe('140px');
+    spy.mockRestore();
+  });
 });

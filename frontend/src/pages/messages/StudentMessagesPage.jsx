@@ -1,5 +1,5 @@
 import Conversation from '@/components/messages/conversation/Conversation';
-import { CONVERSATION_HEIGHT } from '@/components/messages/conversationHeight';
+import { CONVERSATION_HEIGHT } from '@/utils/messages/conversationHeight';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { ROLES } from '@/routes/routeTable';
 

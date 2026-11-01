@@ -35,6 +35,8 @@ export default function MessageComposer({ onSend }) {
     const el = fieldRef.current;
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT_PX)}px`;
+    // Sin barra de scroll mientras el texto entra; recién al llegar al alto máximo aparece.
+    el.style.overflowY = el.scrollHeight > MAX_HEIGHT_PX ? 'auto' : 'hidden';
   }, [text]);
 
   const submit = () => {

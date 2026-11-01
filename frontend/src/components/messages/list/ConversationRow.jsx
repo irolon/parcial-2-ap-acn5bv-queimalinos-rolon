@@ -1,6 +1,7 @@
 import Avatar from '@/components/shared/ui/Avatar';
 import { listTimeLabel } from '@/utils/messages/messageTime';
-import { badgeText, previewText } from '@/utils/messages/messagePreview';
+import { badgeText } from '@/utils/messages/badgeText';
+import { previewText } from '@/utils/messages/messagePreview';
 
 /** Fila de la lista del PT: avatar, nombre, vista previa, hora corta y no leídos. */
 export default function ConversationRow({ conversation, active, onSelect }) {

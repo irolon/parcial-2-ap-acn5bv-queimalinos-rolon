@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { MessageSquare } from 'lucide-react';
 import BroadcastDialog from '@/components/messages/BroadcastDialog';
 import Conversation from '@/components/messages/conversation/Conversation';
-import { CONVERSATION_HEIGHT } from '@/components/messages/conversationHeight';
+import { CONVERSATION_HEIGHT } from '@/utils/messages/conversationHeight';
 import ConversationList from '@/components/messages/list/ConversationList';
 import EmptyState from '@/components/shared/states/EmptyState';
 import { useConversations } from '@/hooks/messages/useConversations';

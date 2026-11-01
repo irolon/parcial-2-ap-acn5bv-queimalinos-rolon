@@ -1,5 +1,5 @@
 import { useUnreadCount } from '@/hooks/messages/useUnreadCount';
-import { badgeText } from '@/utils/messages/messagePreview';
+import { badgeText } from '@/utils/messages/badgeText';
 
 /** Contador de no leídos para el ítem "Mensajes" del menú. Sin no leídos no se muestra. */
 export default function UnreadBadge() {
