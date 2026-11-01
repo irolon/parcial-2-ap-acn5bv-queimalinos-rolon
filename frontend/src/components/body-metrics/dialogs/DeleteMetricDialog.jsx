@@ -1,20 +1,30 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import { useDeleteMetric } from '@/hooks/body-metrics/useBodyMetrics';
 import { formatMetricDate } from '@/utils/body-metrics/metrics';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
-/** Confirmación de borrado de una medida; ante un error queda abierto con el mensaje. */
-export default function DeleteMetricDialog({ studentId, metric, onClose }) {
+/**
+ * Confirmación de borrado de una medida; ante un error queda abierto con el mensaje. Borrada, el ✕ que abrió el
+ * diálogo ya no existe: `focusAfterDelete` (un ref) dice a dónde va el foco. Con Cancelar o Esc vuelve al ✕.
+ */
+export default function DeleteMetricDialog({ studentId, metric, onClose, focusAfterDelete }) {
   const [error, setError] = useState(null);
   const remove = useDeleteMetric(studentId);
+  const deleted = useRef(false);
+  const afterClose = (event) => {
+    if (!deleted.current || !focusAfterDelete?.current) return;
+    event.preventDefault();
+    focusAfterDelete.current.focus();
+  };
 
   async function handleDelete() {
     if (remove.isPending) return;
     setError(null);
     try {
       await remove.mutateAsync(metric.id);
+      deleted.current = true;
       onClose();
     } catch (err) {
       setError(fieldErrorsFrom(err, { fields: [], fallback: 'No pudimos borrar la medida' }).form);
@@ -26,6 +36,7 @@ export default function DeleteMetricDialog({ studentId, metric, onClose }) {
       open
       dismissible={!remove.isPending}
       onOpenChange={(next) => !next && onClose()}
+      onCloseAutoFocus={afterClose}
       title={`¿Borrar la medida del ${formatMetricDate(metric.recorded_at)}?`}
       footer={
         <>

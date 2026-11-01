@@ -85,6 +85,21 @@ describe('StudentMetrics: borrar una medida propia', () => {
     expect(screen.getByRole('button', { name: 'Registrar medición' })).toBeVisible();
   });
 
+  it('borrada, el foco va a Registrar medición (el ✕ que lo tenía ya no existe); con Cancelar vuelve al ✕', async () => {
+    const { user, dialog } = await open();
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.getByRole('button', DELETE_BUTTON)).toHaveFocus());
+    await user.click(screen.getByRole('button', DELETE_BUTTON));
+    await confirm(user, await screen.findByRole('dialog'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Registrar medición' })).toHaveFocus());
+  });
+
+  it('borrada la única, el foco va al Registrar medición del estado vacío', async () => {
+    const { user, dialog } = await open({ rows: [BY_STUDENT] });
+    await confirm(user, dialog);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Registrar medición' })).toHaveFocus());
+  });
+
   it('si el servidor no la borra, el diálogo queda abierto con el motivo y el historial sigue igual', async () => {
     const fail = () => errorResponse(500, 'INTERNAL', 'No pudimos borrar la medida');
     const { user, dialog } = await open({ fail });

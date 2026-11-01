@@ -19,6 +19,11 @@ describe('MetricsHistory: quién puede borrar', () => {
     expect(screen.getByRole('columnheader', { name: 'Acciones' })).toBeInTheDocument();
   });
 
+  it('el ✕ es un toque de 44 px (size-11), no solo el ícono', () => {
+    render(<MetricsHistory metrics={METRICS} onDelete={() => {}} />);
+    expect(deleteButton('05/10/2026')).toHaveClass('size-11');
+  });
+
   it('con canDelete solo las filas que lo permiten tienen el botón, las otras quedan sin acción', () => {
     render(<MetricsHistory metrics={METRICS} onDelete={() => {}} canDelete={(m) => m.recorded_by === 'student'} />);
     expect(deleteButton('05/10/2026')).toBeVisible();

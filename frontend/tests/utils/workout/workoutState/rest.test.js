@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustRest, restRemaining, setCursor, skipRest, startRest } from '@/utils/workout/workoutState';
+import { adjustRest, restRemaining, restTotal, setCursor, skipRest, startRest } from '@/utils/workout/workoutState';
 import { at, freshWorkout, isoAt, withSets } from '../../../helpers/workout/workout';
 
 // Una serie de Press banca a T0 + 60 s: el descanso (90 s) termina a T0 + 150 s.
@@ -37,6 +37,19 @@ describe('startRest', () => {
     expect(startRest(freshWorkout(), at(10)).restEndsAt).toBe(isoAt(100));
     expect(startRest(setCursor(freshWorkout(), 1), at(10)).restEndsAt).toBe(isoAt(70));
   });
+
+  it('guarda el total del descanso: pasar a un ejercicio con otro descanso no lo cambia', () => {
+    const state = setCursor(resting(), 1);
+    expect(state.restTotalSeconds).toBe(90);
+    expect(restTotal(state)).toBe(90);
+  });
+
+  it('una sesión guardada sin el total (versión vieja) usa el descanso del ejercicio a la vista', () => {
+    const old = resting();
+    delete old.restTotalSeconds;
+    expect(restTotal(old)).toBe(90);
+    expect(restTotal(setCursor(old, 1))).toBe(60);
+  });
 });
 
 describe('adjustRest', () => {
@@ -44,6 +57,14 @@ describe('adjustRest', () => {
     const state = resting();
     expect(adjustRest(state, 15, at(120)).restEndsAt).toBe(isoAt(165));
     expect(adjustRest(state, -15, at(120)).restEndsAt).toBe(isoAt(135));
+  });
+
+  it('el total se mueve igual, sin quedar por debajo de lo que queda', () => {
+    const state = resting();
+    expect(adjustRest(state, 15, at(120)).restTotalSeconds).toBe(105);
+    expect(adjustRest(state, -15, at(120)).restTotalSeconds).toBe(75);
+    expect(adjustRest(state, 15, at(500)).restTotalSeconds).toBe(105);
+    expect(adjustRest(adjustRest(state, -60, at(60)), -60, at(60)).restTotalSeconds).toBe(0);
   });
 
   it('nunca deja menos de 0: el descanso queda terminado ("¡A la próxima serie!")', () => {

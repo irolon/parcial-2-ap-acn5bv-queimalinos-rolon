@@ -1,6 +1,6 @@
 import { MAX_KG, MAX_REPS } from '@/utils/workout/workoutSets';
 import { toSetKg, toSetReps } from '@/utils/workout/workoutState';
-import { kgText } from './workoutFormat';
+import { kgText } from '@/utils/sessions/workoutFormat';
 
 // Los campos de peso y reps de la sesión activa: son texto mientras se escriben y recién al registrar la serie el
 // motor (`toSetKg` / `toSetReps`) los convierte. Acá van los pasos de los botones, lo que se deja escribir y los avisos.
@@ -16,8 +16,13 @@ export const REPS_INPUT = /^\d{0,4}$/;
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
-// El peso del campo como número; vacío, 0 o ilegible es peso corporal (0) para sumar y restar.
+// El número escrito, sin topes (lo que deja KG_INPUT: dígitos y un separador decimal); NaN si no se lee.
+const typedKg = (text) => Number(String(text ?? '').trim().replace(',', '.'));
+const overMax = (text) => typedKg(text) > MAX_KG;
+
+// El peso del campo como número para sumar y restar; vacío, 0 o ilegible es peso corporal (0) y arriba de 1000, 1000.
 const kgOf = (text) => {
+  if (overMax(text)) return MAX_KG;
   const kg = toSetKg(text);
   return kg === null || Number.isNaN(kg) ? 0 : kg;
 };
@@ -34,7 +39,7 @@ export function stepReps(text, delta) {
   return String(Math.min(Math.max(reps + delta, 0), MAX_REPS));
 }
 
-/** Al salir del campo: "62," → "62", "9999" → "1000", "0" → vacío. Lo ilegible se deja para poder avisarlo. */
+/** Al salir del campo: "62," → "62", "0" → vacío. Lo ilegible y lo que pasa de 1000 ("1250") se deja para avisarlo. */
 export function cleanKgText(text) {
   const kg = toSetKg(text);
   return Number.isNaN(kg) ? text : kgText(kg);
@@ -49,7 +54,8 @@ export function cleanRepsText(text) {
 /** Avisos de lo que no se puede registrar (`{}` si está todo bien). */
 export function validateLoad(kg, reps) {
   const errors = {};
-  if (Number.isNaN(toSetKg(kg))) errors.kg = 'Escribí el peso como número, por ejemplo 62,5.';
+  if (overMax(kg)) errors.kg = `El peso no puede pasar de ${MAX_KG} kg.`;
+  else if (Number.isNaN(toSetKg(kg))) errors.kg = 'Escribí el peso como número, por ejemplo 62,5.';
   if (toSetReps(reps) === null) errors.reps = 'Escribí las repeticiones como un número entero.';
   return errors;
 }

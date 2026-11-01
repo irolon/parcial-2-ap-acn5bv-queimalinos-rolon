@@ -29,6 +29,7 @@ describe('startWorkout', () => {
       sets: [],
       cursor: 0,
       restEndsAt: null,
+      restTotalSeconds: null,
       feedback: null,
       upload: { sessionCreated: false, sentSetIds: [], failed: [], unlocked: [] },
     });

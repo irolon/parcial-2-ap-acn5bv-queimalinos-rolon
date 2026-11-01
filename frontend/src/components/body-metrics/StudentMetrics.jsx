@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Ruler } from 'lucide-react';
 import AnthropometryCard from '@/components/body-metrics/AnthropometryCard';
 import DeleteMetricDialog from '@/components/body-metrics/dialogs/DeleteMetricDialog';
@@ -15,7 +15,7 @@ import { useMetricsQuery } from '@/hooks/body-metrics/useBodyMetrics';
 // El alumno solo borra las medidas que cargó él: el backend responde 403 si intenta borrar las de su entrenador.
 const recordedByStudent = (metric) => metric.recorded_by === 'student';
 
-function Body({ query, onRegister, onDelete }) {
+function Body({ query, onRegister, onDelete, registerRef }) {
   if (query.isPending) {
     return (
       <Card>
@@ -36,7 +36,7 @@ function Body({ query, onRegister, onDelete }) {
       <Card>
         <EmptyState icon={Ruler} title="Todavía no hay medidas. Registrá la primera." />
         <div className="flex justify-center pb-6">
-          <Button onClick={onRegister}>Registrar medición</Button>
+          <Button ref={registerRef} onClick={onRegister}>Registrar medición</Button>
         </div>
       </Card>
     );
@@ -47,7 +47,7 @@ function Body({ query, onRegister, onDelete }) {
         title="Medidas actuales"
         metrics={metrics}
         extra={
-          <Button variant="ghost" size="sm" onClick={onRegister}>
+          <Button ref={registerRef} variant="ghost" onClick={onRegister}>
             Registrar medición
           </Button>
         }
@@ -61,15 +61,17 @@ function Body({ query, onRegister, onDelete }) {
 /**
  * Las medidas del alumno en Mi perfil: las actuales con Registrar medición, la evolución del peso y el historial,
  * donde solo se pueden borrar las que cargó él. Un solo bloque con su carga, su error con Reintentar y su estado vacío.
+ * Al borrar una medida el foco va a Registrar medición (el de las actuales, o el del estado vacío si era la última).
  */
 export default function StudentMetrics({ studentId }) {
   const query = useMetricsQuery(studentId);
   const [registering, setRegistering] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const registerRef = useRef(null);
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <Body query={query} onRegister={() => setRegistering(true)} onDelete={setDeleting} />
+      <Body query={query} onRegister={() => setRegistering(true)} onDelete={setDeleting} registerRef={registerRef} />
       {registering && (
         <MetricFormDialog
           studentId={studentId}
@@ -78,7 +80,14 @@ export default function StudentMetrics({ studentId }) {
           onClose={() => setRegistering(false)}
         />
       )}
-      {deleting && <DeleteMetricDialog studentId={studentId} metric={deleting} onClose={() => setDeleting(null)} />}
+      {deleting && (
+        <DeleteMetricDialog
+          studentId={studentId}
+          metric={deleting}
+          onClose={() => setDeleting(null)}
+          focusAfterDelete={registerRef}
+        />
+      )}
     </div>
   );
 }

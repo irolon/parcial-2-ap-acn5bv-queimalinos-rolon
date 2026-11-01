@@ -67,7 +67,8 @@ export default function BodyProgressCard({ studentId, viewer = 'trainer' }) {
   const query = useBodyProgress(studentId);
   const title = 'Peso corporal y medidas';
   if (query.isPending) return <Card title={title}><LoadingState /></Card>;
-  if (query.isError) {
+  // Un refetch fallido no tapa las medidas que ya cargaron: solo se ve el error si no hay nada que mostrar.
+  if (query.isError && query.data == null) {
     return <Card title={title}><ErrorState message={query.error?.message} onRetry={() => query.refetch()} /></Card>;
   }
   const { points, summary } = query.data;

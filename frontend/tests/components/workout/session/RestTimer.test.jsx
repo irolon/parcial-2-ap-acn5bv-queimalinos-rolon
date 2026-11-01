@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RestTimer from '@/components/workout/session/RestTimer';
-import { adjustRest, registerSet, skipRest } from '@/utils/workout/workoutState';
+import { adjustRest, registerSet, setCursor, skipRest } from '@/utils/workout/workoutState';
 import { at, freshWorkout, T0 } from '../../../helpers/workout/workout';
 
 const MINUS = '−';
@@ -50,6 +50,12 @@ describe('RestTimer: la cuenta regresiva', () => {
 
   it('la barra baja con lo que queda del descanso del ejercicio', () => {
     mount();
+    tick(45);
+    expect(screen.getByTestId('rest-progress')).toHaveStyle({ width: '50%' });
+  });
+
+  it('la barra es contra el descanso que arrancó, aunque se pase a un ejercicio con otro descanso', () => {
+    mount(setCursor(resting(), 1));
     tick(45);
     expect(screen.getByTestId('rest-progress')).toHaveStyle({ width: '50%' });
   });

@@ -103,6 +103,26 @@ describe('Dialog: foco al cerrar', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Abrir' })).toHaveFocus());
   });
 
+  it('con un onCloseAutoFocus que no hace preventDefault, el foco igual vuelve al que lo tenía al abrir', async () => {
+    const onCloseAutoFocus = vi.fn();
+    function Opener() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>Abrir</button>
+          <Dialog open={open} onOpenChange={setOpen} title="Borrar" onCloseAutoFocus={onCloseAutoFocus}>
+            <button type="button" onClick={() => setOpen(false)}>Cancelar</button>
+          </Dialog>
+        </>
+      );
+    }
+    render(<Opener />);
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir' }));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Abrir' })).toHaveFocus());
+    expect(onCloseAutoFocus).toHaveBeenCalledTimes(1);
+  });
+
   it('si el elemento que tenía el foco ya no está en el DOM, no rompe al cerrar', async () => {
     function Vanishing() {
       const [open, setOpen] = useState(false);

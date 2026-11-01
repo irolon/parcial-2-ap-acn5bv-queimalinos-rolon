@@ -4,12 +4,12 @@ import { plural } from '@/utils/shared/plural';
 const UNITS = {
   sessions_count: ['sesión', 'sesiones'],
   streak: ['día', 'días'],
-  pr_count: ['récord', 'récords'],
+  pr_count: ['sesión con récord', 'sesiones con récord'], // cuenta sesiones con algún récord, no récords
   full_week: ['semana completa', 'semanas completas'],
 };
 
 /**
- * El avance de un logro bloqueado: "7/10 sesiones", "3/7 días", "1/5 récords" o "2/4 semanas completas" (la unidad
+ * El avance de un logro bloqueado: "7/10 sesiones", "3/7 días", "1/5 sesiones con récord" o "2/4 semanas completas" (la unidad
  * concuerda con el objetivo: "0/1 sesión"). El logro de desafío no se mide: "Se gana con un desafío". Un tipo
  * desconocido, o un logro sin criterio, da `null` (el backend lo deja en 0/1, que no le dice nada al alumno).
  */

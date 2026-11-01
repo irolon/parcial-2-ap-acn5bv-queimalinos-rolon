@@ -63,10 +63,17 @@ describe('WorkoutPage: una subida que el servidor rechaza para siempre', () => {
 });
 
 describe('WorkoutPage: una subida que se puede reintentar', () => {
-  it('ofrece solo Reintentar: descartar dejaría una sesión a medias en el servidor', async () => {
-    stubUpload({ sets: [503] });
-    renderWorkoutPage({ workout: readyToUpload() });
+  it('ofrece Reintentar y, con confirmación, Descartar: borra la sesión del navegador y vuelve a Hoy', async () => {
+    const fetchMock = stubUpload({ sets: [503] });
+    const { pathname } = renderWorkoutPage({ workout: readyToUpload() });
+    const user = userEvent.setup();
     expect(await screen.findByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /descartar/i })).not.toBeInTheDocument();
+    const sent = calls(fetchMock).length;
+    await user.click(screen.getByRole('button', { name: 'Descartar' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Descartar' }));
+    expect(await screen.findByText('Pantalla de Hoy')).toBeInTheDocument();
+    expect(pathname()).toBe(TODAY_URL);
+    expect(stored()).toBeNull();
+    expect(calls(fetchMock)).toHaveLength(sent); // descartar no manda nada más
   });
 });

@@ -28,6 +28,18 @@ describe('ExercisePanel: registrar la serie', () => {
     expect(status()).toHaveTextContent('Serie 1 registrada · 62,5 kg × 10');
   });
 
+  it('un doble clic registra una sola serie; dos clics separados, dos', async () => {
+    const spy = vi.fn();
+    render(<PanelHarness spy={spy} />);
+    const user = userEvent.setup();
+    await user.dblClick(register());
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(status()).toHaveTextContent('Serie 1 registrada');
+    await user.click(screen.getByRole('button', { name: '+1 rep' }));
+    await user.click(register());
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
   it('Enter en un campo también registra', async () => {
     const spy = vi.fn();
     render(<PanelHarness spy={spy} />);
@@ -72,6 +84,17 @@ describe('ExercisePanel: registrar la serie', () => {
     await user.click(register());
     expect(spy).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('Escribí el peso como número, por ejemplo 62,5.');
+  });
+
+  it('"1250" + Enter no registra 1000 kg sin avisar: dice que el peso no puede pasar de 1000 kg', async () => {
+    const spy = vi.fn();
+    render(<PanelHarness spy={spy} />);
+    const user = userEvent.setup();
+    await user.clear(weight());
+    await user.type(weight(), '1250{Enter}');
+    expect(spy).not.toHaveBeenCalled();
+    expect(weight()).toHaveValue('1250');
+    expect(screen.getByRole('alert')).toHaveTextContent('El peso no puede pasar de 1000 kg.');
   });
 
   it('al cambiar de ejercicio se vuelve a precargar y se borra el aviso de la serie registrada', async () => {

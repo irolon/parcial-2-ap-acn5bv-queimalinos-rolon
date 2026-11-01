@@ -6,9 +6,9 @@ import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
 import RoutineExerciseList from '@/components/student/routines/RoutineExerciseList';
 import WorkoutEntry from '@/components/student/WorkoutEntry';
-import { useMyRoutines } from '@/hooks/routines/useStudentRoutines';
+import { useCachedTodayRoutine, useMyRoutines } from '@/hooks/routines/useStudentRoutines';
 import { MY_ROUTINES_PATH } from '@/routes/routeTable';
-import { exerciseCount } from '@/utils/routines/todayPlan';
+import { exerciseCount, withLastSessionKg } from '@/utils/routines/todayPlan';
 import { formatRoutineDaysShort } from '@/utils/students/routineDays';
 
 function BackLink() {
@@ -25,14 +25,17 @@ function BackLink() {
 
 /**
  * Detalle de una de las rutinas activas del alumno (`/alumno/rutinas/:id`), de solo lectura: se busca entre
- * `/routines/mine` por `routine_id`. Desde acá se empieza esa rutina, o se continúa la sesión que haya abierta.
+ * `/routines/mine` por `routine_id`. Desde acá se empieza esa rutina, o se continúa la sesión que haya abierta. Si es
+ * la rutina de hoy y Hoy ya la cargó, la sesión precarga el peso de la última vez (`last_session_kg`, que /mine no trae).
  */
 export default function RoutineDetailPage() {
   const { id } = useParams();
   const query = useMyRoutines();
+  const today = useCachedTodayRoutine();
 
   if (query.isPending) return <LoadingState rows={4} label="Cargando la rutina…" />;
-  if (query.isError) return <ErrorState message="No pudimos cargar la rutina." onRetry={() => query.refetch()} />;
+  // Un refetch fallido no tapa la rutina que ya cargó: solo se ve el error si no hay nada que mostrar.
+  if (query.isError && query.data == null) return <ErrorState message="No pudimos cargar la rutina." onRetry={() => query.refetch()} />;
 
   const routine = (query.data ?? []).find((item) => item.routine_id === id);
   if (!routine) {
@@ -54,7 +57,7 @@ export default function RoutineDetailPage() {
         <h2 className="font-display text-[28px] font-bold leading-none tracking-[-1px] text-bone0">{routine.name}</h2>
         <p className="mb-5 mt-2 font-mono text-[11px] text-ink6">{summary}</p>
         <WorkoutEntry
-          routine={routine}
+          routine={withLastSessionKg(routine, today.data)}
           startLabel="Empezar esta rutina"
           continueLabel="Continuar la que tenés abierta"
           size="md"

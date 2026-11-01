@@ -36,7 +36,7 @@ export default function ActiveSession({
     setDeleting(null);
     focusRegisterOnClose.current = true;
   };
-  // Solo después de confirmar: con Cancelar o Esc la ✕ sigue ahí y el diálogo hace lo de siempre.
+  // Solo después de confirmar: con Cancelar o Esc la ✕ sigue ahí, esto no hace nada y el diálogo le devuelve el foco.
   const afterDeleteDialog = (event) => {
     if (!focusRegisterOnClose.current) return;
     focusRegisterOnClose.current = false;

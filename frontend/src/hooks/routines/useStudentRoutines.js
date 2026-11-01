@@ -30,5 +30,12 @@ function argentinaDay(now) {
 export const useTodayRoutine = (now = new Date()) =>
   useOwnQuery(TODAY_ROUTINE_KEY, getTodayRoutine, { extraKey: [argentinaDay(now)], refetchOnWindowFocus: true });
 
+/**
+ * La rutina del día solo si ya está en caché (la pidió Hoy), sin pedirla: el detalle de una rutina la usa para
+ * precargar `last_session_kg`, que /mine no trae. `data` queda undefined si nadie la pidió todavía.
+ */
+export const useCachedTodayRoutine = (now = new Date()) =>
+  useOwnQuery(TODAY_ROUTINE_KEY, getTodayRoutine, { extraKey: [argentinaDay(now)], enabled: false });
+
 /** Las rutinas activas del alumno, con la misma forma que la del día. Vacía si no tiene ninguna asignada. */
 export const useMyRoutines = () => useOwnQuery(MY_ROUTINES_KEY, getMyRoutines);

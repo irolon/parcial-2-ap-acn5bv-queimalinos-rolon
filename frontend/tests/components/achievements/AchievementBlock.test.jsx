@@ -51,4 +51,14 @@ describe('AchievementBlock', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(refetch).toHaveBeenCalledTimes(1);
   });
+
+  it('un refetch fallido que conserva los datos los sigue mostrando, sin el error', () => {
+    render(
+      <AchievementBlock title="Tus logros" query={query({ isError: true, error: { message: 'boom' }, data: { days: 12 } })}>
+        {(data) => <p>{data.days} días</p>}
+      </AchievementBlock>,
+    );
+    expect(screen.getByText('12 días')).toBeVisible();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

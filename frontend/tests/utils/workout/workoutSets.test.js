@@ -13,7 +13,7 @@ const withKgs = (last, suggested) =>
 describe('toSetKg: el peso como lo carga el alumno', () => {
   it.each([
     [62.5, 62.5], ['62.5', 62.5], ['62,5', 62.5], [' 62,5 ', 62.5], ['62,', 62], [',5', 0.5], ['72,556', 72.56],
-    [1500, 1000], ['1500', 1000],
+    [1000, 1000], ['1000', 1000],
     ['1.000', 1], // sin separador de miles: un solo separador y es el decimal
   ])('%j → %j', (value, expected) => {
     expect(toSetKg(value)).toBe(expected);
@@ -23,8 +23,8 @@ describe('toSetKg: el peso como lo carga el alumno', () => {
     expect(toSetKg(value)).toBeNull();
   });
 
-  it.each(['abc', '62,5 kg', '1.000,5', '6,2,5', '--5', Number.NaN, Number.POSITIVE_INFINITY, true, {}])(
-    '%j es ilegible: NaN (la serie no se registra)',
+  it.each(['abc', '62,5 kg', '1.000,5', '6,2,5', '--5', Number.NaN, Number.POSITIVE_INFINITY, true, {}, 1000.01, '1250'])(
+    '%j es ilegible o pasa de 1000 kg: NaN (la serie no se registra)',
     (value) => {
       expect(toSetKg(value)).toBeNaN();
     },
@@ -91,6 +91,11 @@ describe('planLoad', () => {
     const [press, rowing] = freshWorkout().exercises;
     expect(planLoad(press)).toEqual({ kg: 62.5, reps: 10 });
     expect(planLoad(rowing)).toEqual({ kg: null, reps: 12 });
+  });
+
+  it('un peso del plan de más de 1000 kg se propone en 1000 (no es lo que cargó el alumno)', () => {
+    const [press] = freshWorkout(todayRoutine({ exercises: [{ ...routineExercise({ suggested_kg: 1500 }), last_session_kg: null }] })).exercises;
+    expect(planLoad(press).kg).toBe(1000);
   });
 });
 

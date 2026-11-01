@@ -4,7 +4,7 @@ import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import {
   KG_INPUT, KG_STEP, REPS_INPUT, REPS_STEP, cleanKgText, cleanRepsText, stepKg, stepReps, validateLoad,
-} from '@/utils/sessions/loadFields';
+} from '@/utils/workout/loadFields';
 import { kgLabel, kgText } from '@/utils/sessions/workoutFormat';
 import { exerciseSets, planLoad, prefill } from '@/utils/workout/workoutState';
 import LoadField from './LoadField';
@@ -23,6 +23,10 @@ const goal = (exercise) => [
   `OBJETIVO ${exercise.sets} × ${exercise.reps}`,
   exercise.restSeconds > 0 ? `DESCANSO ${exercise.restSeconds}″` : 'SIN DESCANSO',
 ].join(' · ');
+
+// El segundo clic de un doble clic (`detail` 2 o más) no vuelve a enviar: registraría dos series iguales. Con el
+// teclado `detail` es 0, y dos clics separados son dos series.
+const ignoreRepeatedClick = (event) => event.detail > 1 && event.preventDefault();
 
 const initialFields = (workout) => {
   const { kg, reps } = prefill(workout);
@@ -126,7 +130,7 @@ export default function ExercisePanel({ workout, onRegister, registerRef }) {
         </div>
         {errors.form && <p role="alert" className="mb-3 font-mono text-[11px] text-hot">{errors.form}</p>}
         <div className="mt-auto">
-          <Button ref={registerRef} type="submit" size="lg" full>
+          <Button ref={registerRef} type="submit" size="lg" full onClick={ignoreRepeatedClick}>
             <Check size={18} aria-hidden="true" />
             Registrar serie
           </Button>

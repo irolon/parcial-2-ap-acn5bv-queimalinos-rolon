@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   KG_INPUT, REPS_INPUT, cleanKgText, cleanRepsText, stepKg, stepReps, validateLoad,
-} from '@/utils/sessions/loadFields';
+} from '@/utils/workout/loadFields';
 
 describe('stepKg', () => {
   it('sube y baja de a 2,5 kg, con coma decimal', () => {
@@ -21,6 +21,7 @@ describe('stepKg', () => {
   it('no pasa de 1000 kg', () => {
     expect(stepKg('999', 2.5)).toBe('1000');
     expect(stepKg('1000', 2.5)).toBe('1000');
+    expect(stepKg('1250', -2.5)).toBe('997,5');
   });
 
   it('un texto ilegible cuenta como peso corporal', () => {
@@ -53,7 +54,6 @@ describe('cleanKgText (al salir del campo)', () => {
     expect(cleanKgText('62,')).toBe('62');
     expect(cleanKgText('62.50')).toBe('62,5');
     expect(cleanKgText(',5')).toBe('0,5');
-    expect(cleanKgText('9999')).toBe('1000');
   });
 
   it('vacío o 0 es peso corporal', () => {
@@ -62,8 +62,9 @@ describe('cleanKgText (al salir del campo)', () => {
     expect(cleanKgText('  ')).toBe('');
   });
 
-  it('un texto ilegible se deja como está para poder avisar', () => {
+  it('un texto ilegible, o de más de 1000 kg, se deja como está para poder avisar', () => {
     expect(cleanKgText(',')).toBe(',');
+    expect(cleanKgText('1250')).toBe('1250');
   });
 });
 
@@ -99,6 +100,11 @@ describe('validateLoad', () => {
 
   it('avisa de las reps vacías', () => {
     expect(validateLoad('60', '')).toEqual({ reps: 'Escribí las repeticiones como un número entero.' });
+  });
+
+  it('avisa del peso de más de 1000 kg en vez de recortarlo', () => {
+    expect(validateLoad('1250', '10')).toEqual({ kg: 'El peso no puede pasar de 1000 kg.' });
+    expect(validateLoad('1000', '10')).toEqual({});
   });
 
   it('avisa del peso ilegible', () => {

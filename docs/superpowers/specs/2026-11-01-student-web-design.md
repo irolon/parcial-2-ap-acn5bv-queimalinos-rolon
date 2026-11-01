@@ -46,6 +46,7 @@ Que un alumno pueda usar la web con la funcionalidad central de la app: rutina d
   sets: [{ id, exerciseId, routineExerciseId, setNumber, reps, kg, executedAt }],
   cursor,               // índice del ejercicio a la vista
   restEndsAt,           // ISO o null
+  restTotalSeconds,     // total del descanso en curso, para la barra (null sin descanso; falta en sesiones viejas)
   feedback: { rpe, notes } | null,
   upload: { sessionCreated, sentSetIds } }
 ```
@@ -81,7 +82,7 @@ Que un alumno pueda usar la web con la funcionalidad central de la app: rutina d
   - con series faltantes: "Te faltan N series, ¿terminar igual?";
   - sin ninguna serie: "No registraste ninguna serie. ¿Descartar el entrenamiento?".
 - Feedback: "¿Qué tan dura fue?", con RPE de 1 a 10 y las etiquetas de mobile (`RpeTexts.kt`), y "Nota (opcional)" de hasta 1000 caracteres. Botones **Guardar** y **Saltar**.
-- Subida: "Guardando tu entrenamiento…". Si falla: "No pudimos guardar tu entrenamiento. Tus series siguen guardadas en este navegador.", con Reintentar.
+- Subida: "Guardando tu entrenamiento…". Si falla: "No pudimos guardar tu entrenamiento. Tus series siguen guardadas en este navegador.", con Reintentar y, secundario, Descartar (ver §8).
 - Resumen: "¡Entrenamiento guardado!", "N series · X kg · Y min", los logros desbloqueados (si hay), "N series no se pudieron guardar" (si hubo `failed`) y los botones "Ver historial" y "Volver a Hoy".
 
 **Mis rutinas**
@@ -141,13 +142,25 @@ Lo que cambió respecto de lo de arriba al construirlo (lo implementado manda):
 - **Logros bloqueados con su avance:** salen de `/achievements/progress`, que entró con la #45, con la unidad de cada tipo de criterio ("7/10 sesiones").
 - **Peso 0 = sin peso:** se decide por campo (`positiveKg(last) ?? positiveKg(sug)`), así que un 0 en `last_session_kg` no tapa al sugerido. Al subir, el peso vacío va como `actual_kg` 0, igual que el celular.
 - **Coma decimal en el peso:** el campo acepta "62,5" además de "62.5".
-- **409 en `POST /sessions` es permanente** (como en el celular). Ante un error permanente la pantalla ofrece **Descartar entrenamiento** (con confirmación); ante los reintentables, solo Reintentar.
+- **409 en `POST /sessions` es permanente** (como en el celular). Ante un error permanente la pantalla ofrece **Descartar entrenamiento** (con confirmación).
+- **La subida es de la cuenta que la empezó:** solo sale con ese alumno adentro. Si cambia quién inició sesión (cerró sesión, entró otra cuenta o venció la sesión), se cortan los pedidos en vuelo (`AbortSignal`) y no sale ninguno más. Un refresh que termina después del cambio no pisa el token de la cuenta nueva. Al cerrar sesión, `ft.workout.<id>` **no se borra**: la clave es de ese alumno, otra cuenta no la ve, y se retoma cuando vuelve a entrar ("ante la duda, guardá").
+- **401 en la subida es reintentable:** llega si no se pudo renovar la sesión; después de volver a entrar, Reintentar sigue desde donde quedó.
+- **Descartar ante un error reintentable:** además de Reintentar hay un **Descartar** secundario, con confirmación ("¿Descartar el entrenamiento? No se va a guardar." · "Las series que todavía no se subieron se pierden."). Borra la copia del navegador y vuelve a Hoy; si la sesión ya estaba creada, lo que se subió queda en el servidor. Así, con el backend caído por horas, el alumno puede volver a entrenar.
+- **Barra del descanso:** se mide contra el total guardado al arrancarlo (`restTotalSeconds`, que ±15″ también mueve), no contra el ejercicio a la vista. Una sesión guardada sin el campo usa el `restSeconds` del ejercicio a la vista, como antes.
+- **Peso de más de 1000 kg:** no se recorta. "1250" da "El peso no puede pasar de 1000 kg." y no se registra (el motor también lo rechaza). El peso sugerido del plan sí se propone con tope de 1000.
+- **Doble clic en Registrar serie:** el segundo clic de un doble clic no vuelve a registrar. Dos clics separados son dos series.
+- **Último peso desde Mis rutinas:** `/routines/mine` no trae `last_session_kg`. Si la rutina que se empieza desde su detalle es la de hoy y `/routines/today` ya está en caché (se pasó por Hoy), se toma de ahí, sin pedirla. Si no está en caché, se precarga el peso del entrenador.
+- **Varias pestañas en `/alumno/entrenar`:** una pestaña que recibe la sesión ya lista para subir (la terminó otra) muestra "Guardando…", no el error, y no la sube. Limitación: cuando la otra termina de subirla y borra la copia, esta vuelve a Hoy sin resumen; y si en esta se toca Reintentar y termina primero, la otra también vuelve a Hoy sin resumen. Desde localStorage no se distingue "se guardó en otra pestaña" de "se descartó". Si la que sube falla, esta sigue en "Guardando…" hasta recargar (al recargar sube sola).
 - **Sesión terminada sin guardar:** Hoy ofrece **Terminar de guardar** para retomar la subida.
 - **Semana:** el texto es "N de M entrenamientos · +K extra": N = días de la rutina entrenados esta semana, M = días de la rutina y K = días entrenados que **no** son de la rutina (plan L-X-V, entrenó L y S: "1 de 3 entrenamientos · +1 extra").
 - **Resumen del entrenamiento:** cuenta las series con reps > 0, igual que el historial.
-- **Dialog compartido:** devuelve el foco al elemento que lo tenía al cerrar, en toda la app.
-- **QueryState compartido:** muestra el error de pantalla solo si no hay datos; un refetch fallido no tapa lo que ya se cargó (en toda la app; Hoy aplica lo mismo en la semana y el descanso).
+- **Dialog compartido:** devuelve el foco al elemento que lo tenía al cerrar, en toda la app. Un `onCloseAutoFocus` de la página corre primero; si no hace `preventDefault`, igual se devuelve el foco (Cancelar o Esc en borrar serie vuelve a la ✕).
+- **Foco al borrar una medida:** la ✕ ya no existe, así que el foco va a **Registrar medición** (el de "Medidas actuales" o el del estado vacío).
+- **Toques de 44 px:** la ✕ de las medidas, **Registrar medición** (tamaño `md`) y **Detalle** del historial.
+- **Desafíos al cargar o borrar una medida:** se invalidan también `['student-challenges', id]` (el avance de `weight_target` sale de las medidas).
+- **Textos:** el avance de `pr_count` dice "sesiones con récord" (cuenta sesiones con algún récord). En Mi perfil la tarjeta se llama "Rutina más reciente": la ficha trae solo la `active_routine` más nueva; todas están en Mis rutinas.
+- **QueryState compartido:** muestra el error de pantalla solo si no hay datos; un refetch fallido no tapa lo que ya se cargó (en toda la app; Hoy aplica lo mismo en la semana y el descanso, y también el detalle de una rutina, los bloques de racha, logros y desafíos y "Peso corporal y medidas").
 - **Rutina del día:** la fecha en Argentina va en la key de la query, así que cambia sola al pasar la medianoche.
-- **Módulos:** las utilidades de Hoy viven en `utils/routines/` (no en `utils/student/`) y `greetingDate` en `utils/dates.js`.
+- **Módulos:** las utilidades de Hoy viven en `utils/routines/` (no en `utils/student/`) y `greetingDate` en `utils/dates.js`, que tiene sus propios nombres de días (`WEEKDAYS`, de los que sale `DAY_OPTIONS`). Los campos de peso y reps (`loadFields.js`) y `useWorkoutSave` son de la sesión activa: `utils/workout/` y `hooks/workout/`.
 - **Logros (Task 6) apilados sobre la #42:** la #42 estaba aprobada sin mergear, así que la rama trae su `origin/feature/web-challenges` y la PR muestra esos commits hasta que se mergee.
 - **`/alumno/asistente`** da 404: la ruta salió junto con el menú.

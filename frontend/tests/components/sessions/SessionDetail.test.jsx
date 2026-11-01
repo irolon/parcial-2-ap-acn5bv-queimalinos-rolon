@@ -23,6 +23,7 @@ async function expand(detail) {
   const fetchMock = stubSessions({ sessions: sessionsPage([sessionItem()]), details: { 's-1': detail } });
   renderWithQuery(<SessionsHistory studentId="st-1" />);
   const button = await screen.findByRole('button', { name: 'Detalle' });
+  expect(button).toHaveClass('!h-11'); // toque de 44 px
   await user.click(button);
   return { user, fetchMock, button };
 }

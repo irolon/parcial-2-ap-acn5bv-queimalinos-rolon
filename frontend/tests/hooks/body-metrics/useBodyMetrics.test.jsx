@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { useStudentChallengesQuery } from '@/hooks/achievements/useStudentGamification';
 import { useCreateMetric, useDeleteMetric, useMetricsQuery } from '@/hooks/body-metrics/useBodyMetrics';
 import { useBodyProgress, useProgressOverview } from '@/hooks/progress/useProgress';
 import { useStudentQuery } from '@/hooks/students/useStudents';
@@ -23,7 +24,7 @@ function mount() {
     if (init.method === 'DELETE') return jsonResponse(204);
     if (path.startsWith('/progress/body/')) return jsonResponse(200, { data: BODY });
     if (path.startsWith('/progress/overview')) return jsonResponse(200, { data: { exercises: [], weekly_volume: [] } });
-    if (path.endsWith('/metrics')) return jsonResponse(200, { data: [] });
+    if (path.endsWith('/metrics') || path.endsWith('/challenges')) return jsonResponse(200, { data: [] });
     return jsonResponse(200, { data: studentDetail({ id: 's-1' }) });
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -34,6 +35,7 @@ function mount() {
       student: useStudentQuery('s-1'),
       body: useBodyProgress('s-1'),
       overview: useProgressOverview('s-1'),
+      challenges: useStudentChallengesQuery('s-1'),
       create: useCreateMetric('s-1'),
       remove: useDeleteMetric('s-1'),
     }),
@@ -48,13 +50,13 @@ const gets = (fetchMock, path) =>
 
 async function ready(result) {
   await waitFor(() => {
-    const { list, student, body, overview } = result.current;
-    expect([list, student, body, overview].every((query) => query.isSuccess)).toBe(true);
+    const { list, student, body, overview, challenges } = result.current;
+    expect([list, student, body, overview, challenges].every((query) => query.isSuccess)).toBe(true);
   });
 }
 
 describe('useCreateMetric / useDeleteMetric', () => {
-  it('cargar una medida vuelve a pedir el historial, la ficha y el progreso corporal del alumno', async () => {
+  it('cargar una medida vuelve a pedir el historial, la ficha, el progreso corporal y los desafíos del alumno', async () => {
     const { fetchMock, result } = mount();
     await ready(result);
     await act(() => result.current.create.mutateAsync(NEW_METRIC));
@@ -62,6 +64,7 @@ describe('useCreateMetric / useDeleteMetric', () => {
       expect(gets(fetchMock, '/students/s-1/metrics')).toHaveLength(2);
       expect(gets(fetchMock, '/students/s-1')).toHaveLength(2);
       expect(gets(fetchMock, '/progress/body/s-1')).toHaveLength(2);
+      expect(gets(fetchMock, '/students/s-1/challenges')).toHaveLength(2);
     });
   });
 

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { readWorkout, writeWorkout } from '@/hooks/workout/workoutStore';
+import { TODAY_ROUTINE_KEY } from '@/hooks/routines/useStudentRoutines';
 import { WORKOUT_PATH } from '@/routes/routeTable';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { cleanUpStudent, openStudent, signInStudent } from '../../../helpers/student/today';
@@ -32,6 +33,26 @@ describe('RoutineDetailPage: empezar la rutina', () => {
     await userEvent.setup().click(button);
     expect(pathname()).toBe(WORKOUT_PATH);
     expect(readWorkout('s-1')).toMatchObject({ routineId: 'r-2', routineName: 'Pierna' });
+  });
+
+  // Hoy ya cargó la rutina del día (domingo 1/11 en Argentina): /mine no trae `last_session_kg`, la de hoy sí.
+  const cacheToday = (queryClient, routine) =>
+    act(() => queryClient.setQueryData([...TODAY_ROUTINE_KEY, 's-1', '2026-11-01'], routine));
+  const lastKgs = () => readWorkout('s-1').exercises.map((exercise) => exercise.lastKg);
+
+  it('si es la rutina de hoy y está en caché, precarga el peso de la última sesión sin pedir /today', async () => {
+    const { queryClient, fetchMock } = open();
+    cacheToday(queryClient, todayRoutine());
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Empezar esta rutina' }));
+    expect(lastKgs()).toEqual([62.5, null]);
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/routines/today'))).toBe(false);
+  });
+
+  it('si la de hoy es otra rutina, no toma sus pesos', async () => {
+    const { queryClient } = open('/alumno/rutinas/r-2');
+    cacheToday(queryClient, todayRoutine());
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Empezar esta rutina' }));
+    expect(lastKgs()).toEqual([null, null]);
   });
 });
 

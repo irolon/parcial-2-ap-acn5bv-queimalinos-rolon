@@ -29,7 +29,7 @@ export default function MetricsHistory({ metrics, onDelete, canDelete = () => tr
                   </th>
                 ))}
                 {withActions && (
-                  <th scope="col" className="w-10">
+                  <th scope="col" className="w-12">
                     <span className="sr-only">Acciones</span>
                   </th>
                 )}
@@ -52,7 +52,7 @@ export default function MetricsHistory({ metrics, onDelete, canDelete = () => tr
                             type="button"
                             aria-label={`Borrar medida del ${date}`}
                             onClick={() => onDelete?.(m)}
-                            className="rounded p-1.5 text-ink6 hover:text-hot focus-visible:outline-2 focus-visible:outline-accentText"
+                            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-ink6 hover:text-hot focus-visible:outline-2 focus-visible:outline-accentText"
                           >
                             <Trash2 size={16} aria-hidden="true" />
                           </button>

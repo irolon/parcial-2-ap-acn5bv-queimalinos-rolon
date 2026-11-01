@@ -1,13 +1,12 @@
 import { Dumbbell } from 'lucide-react';
 import Pill from '@/components/shared/ui/Pill';
 import WorkoutEntry from '@/components/student/WorkoutEntry';
-import { argentinaDate } from '@/utils/dates';
+import { WEEKDAYS, argentinaDate } from '@/utils/dates';
 import { planSummary } from '@/utils/routines/todayPlan';
-import { DAY_OPTIONS } from '@/utils/students/routineDays';
 
 /** La rutina del día: el día, el nombre, el resumen y cómo entrar a entrenar (Empezar, o Continuar y Descartar). */
 export default function RoutineHero({ routine, now }) {
-  const weekday = DAY_OPTIONS[argentinaDate(now).weekday - 1].label;
+  const weekday = WEEKDAYS[argentinaDate(now).weekday - 1];
   return (
     <section className="relative flex items-center gap-6 overflow-hidden rounded-2xl border border-ink3 bg-linear-to-br from-ink2 to-ink1 p-5 sm:p-6">
       <div

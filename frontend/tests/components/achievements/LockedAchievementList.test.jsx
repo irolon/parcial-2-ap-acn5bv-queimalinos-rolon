@@ -33,7 +33,7 @@ describe('LockedAchievementList', () => {
     );
     const rowOf = (name) => within(screen.getByText(name).closest('li'));
     expect(rowOf('Racha').getByText('3/7 días')).toBeVisible();
-    expect(rowOf('Récords').getByText('1/5 récords')).toBeVisible();
+    expect(rowOf('Récords').getByText('1/5 sesiones con récord')).toBeVisible();
     expect(rowOf('Semanas').getByText('2/4 semanas completas')).toBeVisible();
     expect(rowOf('Desafiante').getByText('Se gana con un desafío')).toBeVisible();
   });

@@ -86,13 +86,6 @@ describe('WorkoutPage: si la subida falla', () => {
     held.release();
     await summary();
   });
-
-  it('con un error que se puede reintentar no ofrece descartar (lo rechazado para siempre está en rejected.test.jsx)', async () => {
-    stubUpload({ sets: [503] });
-    renderWorkoutPage({ workout: readyToUpload() });
-    await retry();
-    expect(screen.queryByRole('button', { name: /descartar/i })).not.toBeInTheDocument();
-  });
 });
 
 describe('WorkoutPage: el resumen', () => {

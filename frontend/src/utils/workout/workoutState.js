@@ -56,15 +56,20 @@ export function startWorkout(routine, { now = new Date(), newId = newUuid } = {}
     sets: [],
     cursor: 0,
     restEndsAt: null,
+    restTotalSeconds: null,
     feedback: null,
     upload: { sessionCreated: false, sentSetIds: [], failed: [], unlocked: [] },
   };
 }
 
-/** Descanso del ejercicio a la vista con fin absoluto (`restEndsAt`), desde `now`. 0 s = sin descanso. */
+/**
+ * Descanso del ejercicio a la vista con fin absoluto (`restEndsAt`), desde `now`. 0 s = sin descanso. Guarda también
+ * su total (`restTotalSeconds`), así la barra no depende del ejercicio que se ponga a la vista después.
+ */
 export function startRest(state, now = new Date()) {
   const seconds = state.exercises[state.cursor]?.restSeconds ?? 0;
-  return { ...state, restEndsAt: seconds > 0 ? iso(ms(now) + seconds * 1000) : null };
+  if (seconds <= 0) return { ...state, restEndsAt: null, restTotalSeconds: null };
+  return { ...state, restEndsAt: iso(ms(now) + seconds * 1000), restTotalSeconds: seconds };
 }
 
 /**
@@ -126,12 +131,25 @@ export function restRemaining(state, now = new Date()) {
   return Number.isNaN(end) ? null : Math.max(0, Math.ceil((end - ms(now)) / 1000));
 }
 
-/** ±segundos (los botones de ±15) sobre lo que le queda ahora al descanso en curso; nunca baja de 0. */
+/**
+ * El total del descanso en curso, para la barra. Una sesión guardada antes de que existiera `restTotalSeconds` usa el
+ * descanso del ejercicio a la vista, como antes.
+ */
+export function restTotal(state) {
+  const total = state.restTotalSeconds;
+  return Number.isFinite(total) && total > 0 ? total : (state.exercises[state.cursor]?.restSeconds ?? 0);
+}
+
+/**
+ * ±segundos (los botones de ±15) sobre lo que le queda ahora al descanso en curso; nunca baja de 0. El total se mueve
+ * lo mismo, sin quedar por debajo de lo que queda (la barra nunca pasa de llena).
+ */
 export function adjustRest(state, deltaSeconds, now = new Date()) {
   const end = restEnd(state);
   if (Number.isNaN(end) || !Number.isFinite(deltaSeconds)) return state;
   const left = Math.max(0, Math.max(0, end - ms(now)) + deltaSeconds * 1000);
-  return { ...state, restEndsAt: iso(ms(now) + left) };
+  const total = Math.max(restTotal(state) + deltaSeconds, Math.ceil(left / 1000));
+  return { ...state, restEndsAt: iso(ms(now) + left), restTotalSeconds: total };
 }
 
 /** Saltea el descanso en curso. */

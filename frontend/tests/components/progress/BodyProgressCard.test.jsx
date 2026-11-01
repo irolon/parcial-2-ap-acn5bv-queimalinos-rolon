@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import BodyProgressCard, { WeightTooltip } from '@/components/progress/BodyProgressCard';
 import { BODY, EMPTY_BODY, renderWithQuery, stubProgress } from '../../helpers/progress/progress';
@@ -59,5 +60,17 @@ describe('BodyProgressCard', () => {
     expect(await screen.findByRole('img', { name: 'Evolución del peso corporal' })).toBeInTheDocument();
     expect(screen.queryByText(/Todavía no hay medidas cargadas/)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Mi perfil' })).not.toBeInTheDocument();
+  });
+
+  it('un refetch fallido con las medidas en caché las sigue mostrando, sin el error', async () => {
+    const fetchMock = stubProgress({ body: BODY });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={queryClient}><BodyProgressCard studentId="st-1" /></QueryClientProvider>);
+    expect(await screen.findByRole('img', { name: 'Evolución del peso corporal' })).toBeInTheDocument();
+    fetchMock.mockImplementation(async () => new Response(null, { status: 500 }));
+    await act(() => queryClient.refetchQueries());
+    expect(queryClient.getQueryCache().findAll()[0].state.status).toBe('error');
+    expect(screen.getByRole('img', { name: 'Evolución del peso corporal' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { estimatedMinutes, exerciseCount, planRows, planSummary, totalSets } from '@/utils/routines/todayPlan';
-import { routineExercise } from '../../helpers/routines/studentRoutines';
+import {
+  estimatedMinutes, exerciseCount, planRows, planSummary, totalSets, withLastSessionKg,
+} from '@/utils/routines/todayPlan';
+import { mineRoutine, routineExercise, todayRoutine } from '../../helpers/routines/studentRoutines';
 
 const exercise = (overrides = {}) => ({ ...routineExercise(), last_session_kg: null, ...overrides });
 
@@ -142,5 +144,20 @@ describe('exerciseCount', () => {
     expect(exerciseCount([])).toBe('0 ejercicios');
     expect(exerciseCount(null)).toBe('0 ejercicios');
     expect(exerciseCount()).toBe('0 ejercicios');
+  });
+});
+
+describe('withLastSessionKg', () => {
+  it('a la rutina de /mine le suma el last_session_kg de la de hoy, por routine_exercise_id', () => {
+    const merged = withLastSessionKg(mineRoutine(), todayRoutine());
+    expect(merged.exercises.map((item) => item.last_session_kg)).toEqual([62.5, undefined]);
+    expect(merged.exercises[0].suggested_kg).toBe(60);
+  });
+
+  it('si hoy es otra rutina, o no hay rutina del día, la deja como vino', () => {
+    const routine = mineRoutine({ routine_id: 'r-2' });
+    expect(withLastSessionKg(routine, todayRoutine())).toBe(routine);
+    expect(withLastSessionKg(routine, null)).toBe(routine);
+    expect(withLastSessionKg(routine, undefined)).toBe(routine);
   });
 });

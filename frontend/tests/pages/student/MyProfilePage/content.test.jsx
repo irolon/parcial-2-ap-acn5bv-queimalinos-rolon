@@ -44,7 +44,7 @@ describe('MyProfilePage: lo que se ve', () => {
     expect(screen.getByText('Objetivo').nextElementSibling).toHaveTextContent('Ganar masa muscular');
     expect(screen.getByText('Nivel').nextElementSibling).toHaveTextContent('Intermedio');
     expect(screen.getByText('Para cambiar tus datos, hablá con tu entrenador')).toBeVisible();
-    const routine = screen.getByText('Rutina activa');
+    const routine = screen.getByText('Rutina más reciente');
     expect(screen.getByText('Push/Pull')).toBeVisible();
     expect(screen.getByText('Lunes · Jueves')).toBeVisible();
     const current = await screen.findByText('Medidas actuales');
@@ -55,7 +55,7 @@ describe('MyProfilePage: lo que se ve', () => {
 
   it('sin rutina asignada lo dice en la tarjeta de la rutina', async () => {
     show({ profile: selfDetail({ active_routine: null }) });
-    expect(await screen.findByText('Rutina activa')).toBeVisible();
+    expect(await screen.findByText('Rutina más reciente')).toBeVisible();
     expect(screen.getByText('Sin rutina asignada')).toBeVisible();
   });
 

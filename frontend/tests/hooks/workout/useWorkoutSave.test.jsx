@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { useWorkoutSave } from '@/hooks/sessions/useWorkoutSave';
+import { useWorkoutSave } from '@/hooks/workout/useWorkoutSave';
 
 const saved = { ok: true, state: { id: 'session-1' }, failed: [], unlocked: [] };
 const failed = (error) => ({ ok: false, state: { id: 'session-1' }, failed: [], unlocked: [], error });

@@ -54,3 +54,18 @@ export function planRows(exercises = []) {
     };
   });
 }
+
+/**
+ * La rutina de /mine con el `last_session_kg` de cada ejercicio tomado de la rutina del día (`today`), si es la misma
+ * rutina: /mine no lo calcula. Si no es la de hoy (o no está), la devuelve como vino.
+ */
+export function withLastSessionKg(routine, today) {
+  if (!routine || !today || today.routine_id !== routine.routine_id) return routine;
+  const lastKg = new Map((today.exercises ?? []).map((item) => [item.routine_exercise_id, item.last_session_kg]));
+  return {
+    ...routine,
+    exercises: (routine.exercises ?? []).map((item) => (
+      lastKg.get(item.routine_exercise_id) == null ? item : { ...item, last_session_kg: lastKg.get(item.routine_exercise_id) }
+    )),
+  };
+}

@@ -36,17 +36,26 @@ describe('SavingScreen: error que se puede reintentar', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('solo Reintentar: no ofrece Descartar (podría dejar una sesión a medias en el servidor)', () => {
-    mount({ error: OFFLINE });
-    expect(discardButton()).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /descartar/i })).not.toBeInTheDocument();
-  });
-
   it('sin error ni subida en curso (la sesión quedó lista para subir) pasa lo mismo', () => {
     mount();
     expect(screen.getByRole('alert')).toHaveTextContent(SPEC_MESSAGE);
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Descartar' })).toBeEnabled();
+  });
+
+  it('Descartar (secundario) pide confirmación, Cancelar no descarta y confirmar sí', async () => {
+    const { onDiscard, onRetry } = mount({ error: OFFLINE });
+    const user = userEvent.setup();
     expect(discardButton()).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Descartar' }));
+    const dialog = screen.getByRole('dialog', { name: '¿Descartar el entrenamiento? No se va a guardar.' });
+    expect(dialog).toHaveAccessibleDescription('Las series que todavía no se subieron se pierden.');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    expect(onDiscard).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Descartar' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Descartar' }));
+    expect(onDiscard).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
   });
 });
 

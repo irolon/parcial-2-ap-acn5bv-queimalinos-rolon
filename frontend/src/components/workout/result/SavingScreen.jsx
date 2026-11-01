@@ -4,11 +4,15 @@ import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import Dialog from '@/components/shared/ui/Dialog';
 
+const SECONDARY = 'h-11 cursor-pointer rounded-lg px-3 font-display text-[13px] font-semibold text-ink6 hover:text-bone0 '
+  + 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText';
+
 /**
  * La subida del entrenamiento terminado:
  * - subiendo: "Guardando tu entrenamiento…", sin botones (no se descarta lo que está en camino);
  * - error que se puede reintentar (sin red, 5xx…): "No pudimos guardar tu entrenamiento. Tus series siguen guardadas
- *   en este navegador." y Reintentar. Solo eso: descartar podría dejar una sesión a medias en el servidor;
+ *   en este navegador.", Reintentar y, más chico, Descartar (con confirmación): si el servidor no vuelve, el alumno no
+ *   queda sin poder entrenar. Lo que ya se haya subido queda en el servidor; lo demás se pierde;
  * - error que reintentar no arregla (`retryable === false`, p. ej. un 409): el mensaje del servidor, "No se pudo guardar
  *   este entrenamiento." y Descartar entrenamiento (con confirmación), para que el alumno no quede trabado.
  */
@@ -44,15 +48,21 @@ export default function SavingScreen({ saving, error, onRetry, onDiscard }) {
             Descartar entrenamiento
           </Button>
         ) : (
-          <Button variant="ghost" onClick={onRetry}>
-            Reintentar
-          </Button>
+          <div className="flex flex-col items-center gap-1">
+            <Button variant="ghost" onClick={onRetry}>
+              Reintentar
+            </Button>
+            <button type="button" onClick={() => setConfirming(true)} className={SECONDARY}>
+              Descartar
+            </button>
+          </div>
         )}
       </div>
       <Dialog
         open={confirming}
         onOpenChange={setConfirming}
         title="¿Descartar el entrenamiento? No se va a guardar."
+        description={rejected ? undefined : 'Las series que todavía no se subieron se pierden.'}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Button>

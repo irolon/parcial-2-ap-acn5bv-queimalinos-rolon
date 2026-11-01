@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { calls } from '../../../helpers/shared/fetchMock';
 import { mineRoutine, routineExercise } from '../../../helpers/routines/studentRoutines';
@@ -91,5 +91,15 @@ describe('RoutineDetailPage', () => {
     expect(screen.queryByText('No encontramos esa rutina')).not.toBeInTheDocument();
     await userEvent.setup().click(within(alert).getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByRole('heading', { level: 2, name: 'Push · día 3' })).toBeInTheDocument();
+  });
+
+  it('un refetch fallido con la rutina en caché sigue mostrándola, sin el error', async () => {
+    let attempts = 0;
+    const { queryClient } = open({ mine: () => (attempts++ === 0 ? [ROUTINE] : 500) });
+    expect(await screen.findByRole('heading', { level: 2, name: 'Push · día 3' })).toBeInTheDocument();
+    await act(() => queryClient.refetchQueries({ queryKey: ['routines'] }));
+    expect(queryClient.getQueryCache().findAll().some((query) => query.state.status === 'error')).toBe(true);
+    expect(screen.getByRole('heading', { level: 2, name: 'Push · día 3' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

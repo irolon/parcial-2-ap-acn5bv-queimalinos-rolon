@@ -8,6 +8,7 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useStudentQuery } from '@/hooks/students/useStudents';
 
 // Los datos y la rutina activa salen de la misma ficha (`GET /students/:id`): un solo bloque con su carga y su error.
+// La ficha trae solo la rutina activa más reciente; con varias, todas están en Mis rutinas.
 function ProfileBlock({ query }) {
   if (query.isPending) {
     return (
@@ -26,7 +27,7 @@ function ProfileBlock({ query }) {
   return (
     <>
       <MyProfileCard student={query.data} />
-      <ActiveRoutineCard routine={query.data.active_routine} />
+      <ActiveRoutineCard routine={query.data.active_routine} title="Rutina más reciente" />
     </>
   );
 }

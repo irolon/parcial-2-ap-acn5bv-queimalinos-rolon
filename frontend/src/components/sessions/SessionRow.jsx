@@ -47,7 +47,7 @@ export default function SessionRow({ studentId, session, viewer = 'trainer' }) {
         <Button
           variant="ghost"
           size="sm"
-          className="col-start-3 row-start-1 !h-7 !text-[11px] sm:col-start-4"
+          className="col-start-3 row-start-1 !h-11 !text-[11px] sm:col-start-4"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((value) => !value)}

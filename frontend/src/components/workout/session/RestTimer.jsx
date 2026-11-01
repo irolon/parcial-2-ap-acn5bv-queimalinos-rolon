@@ -3,7 +3,7 @@ import { FOCUS_RING } from '@/components/shared/layout/compact';
 import Card from '@/components/shared/ui/Card';
 import { useNow } from '@/hooks/shared/useNow';
 import { formatClock } from '@/utils/sessions/workoutFormat';
-import { restRemaining } from '@/utils/workout/workoutState';
+import { restRemaining, restTotal } from '@/utils/workout/workoutState';
 
 const MINUS = '−';
 const PILL = `h-11 cursor-pointer rounded-pill bg-ink3 px-4 font-mono text-[11px] text-bone0 transition-colors hover:bg-ink4 ${FOCUS_RING}`;
@@ -17,7 +17,8 @@ const lastSetTime = (workout) => {
 /**
  * El descanso después de registrar una serie: cuenta regresiva (contra la hora de fin guardada en la sesión, así
  * recargar no la corre), +15″, −15″ y Saltar. Al llegar a 0 anuncia "¡A la próxima serie!". Sin descanso, nada.
- * El reloj no se anuncia segundo a segundo: solo lo lee el lector de pantalla al terminar.
+ * El reloj no se anuncia segundo a segundo: solo lo lee el lector de pantalla al terminar. La barra es contra el total
+ * guardado al arrancar el descanso (y movido por ±15″), no contra el ejercicio que esté a la vista.
  *
  * `useNow` se renueva una vez por segundo, así que justo después de una acción tiene hasta un segundo de atraso y el
  * resto saldría de más (1:31 en vez de 1:30). Por eso se cuenta desde el más tardío entre ese reloj, la última serie
@@ -29,7 +30,7 @@ export default function RestTimer({ workout, onAdjust, onSkip }) {
   const [actedAt, setActedAt] = useState(0);
   const remaining = restRemaining(workout, new Date(Math.max(now.getTime(), actedAt, lastSetTime(workout))));
   if (remaining === null) return null;
-  const total = workout.exercises[workout.cursor]?.restSeconds ?? 0;
+  const total = restTotal(workout);
   const progress = total > 0 ? Math.min(1, remaining / total) : 0;
   // La hora se anota después de la acción, que ya fijó la suya: nunca es anterior a la del motor.
   const acting = (action) => () => {

@@ -55,13 +55,16 @@ describe('WorkoutPage: borrar una serie', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Registrar serie' })).toHaveFocus());
   });
 
-  it('con Cancelar el diálogo hace lo de siempre: no manda el foco a Registrar serie', async () => {
+  it('con Cancelar o Esc el foco vuelve a la ✕ que abrió el diálogo, no a Registrar serie', async () => {
     renderWorkoutPage({ workout: withTwoSets() });
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Borrar la serie 1' }));
+    const cross = screen.getByRole('button', { name: 'Borrar la serie 1' });
+    await user.click(cross);
     await user.click(screen.getByRole('button', { name: 'Cancelar' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await new Promise((resolve) => setTimeout(resolve, 50)); // el foco se resuelve un instante después de cerrar
+    await waitFor(() => expect(cross).toHaveFocus());
+    await user.click(cross);
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(cross).toHaveFocus());
     expect(screen.getByRole('button', { name: 'Registrar serie' })).not.toHaveFocus();
   });
 

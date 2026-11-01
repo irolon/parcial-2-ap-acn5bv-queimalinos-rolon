@@ -1,5 +1,3 @@
-import { DAY_OPTIONS } from '@/utils/students/routineDays';
-
 export const pad = (n) => String(n).padStart(2, '0');
 
 /** `aaaa-mm-dd` de `date` en la zona horaria local. */
@@ -28,6 +26,9 @@ export function argentinaDate(value) {
   };
 }
 
+/** Los días de la semana, de lunes a domingo: `WEEKDAYS[weekday - 1]` con el `weekday` de `argentinaDate`. */
+export const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
 const MONTHS = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
@@ -36,7 +37,7 @@ const MONTHS = [
 /** La fecha de hoy en Argentina para el saludo de Hoy: 'Domingo 1 de noviembre'. */
 export function greetingDate(now = new Date()) {
   const { weekday, day, month } = argentinaDate(now);
-  return `${DAY_OPTIONS[weekday - 1].label} ${day} de ${MONTHS[month - 1]}`;
+  return `${WEEKDAYS[weekday - 1]} ${day} de ${MONTHS[month - 1]}`;
 }
 
 const AR_ZONE = 'America/Argentina/Buenos_Aires';

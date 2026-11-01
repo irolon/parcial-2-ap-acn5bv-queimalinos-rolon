@@ -39,6 +39,7 @@ describe('StudentMetrics: las medidas', () => {
     expect(within(card).getByText('Peso').nextElementSibling).toHaveTextContent('80,5');
     expect(within(card).getByText('−1,5 kg')).toBeVisible();
     expect(within(card).getByRole('button', { name: 'Registrar medición' })).toBeVisible();
+    expect(within(card).getByRole('button', { name: 'Registrar medición' })).toHaveClass('h-11'); // toque de 44 px
     expect(screen.queryByText('Antropometría')).toBeNull();
   });
 

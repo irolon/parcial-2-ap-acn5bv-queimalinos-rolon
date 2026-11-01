@@ -9,7 +9,7 @@ describe('progressLabel', () => {
   it.each([
     ['sessions_count', 7, 10, '7/10 sesiones'],
     ['streak', 3, 7, '3/7 días'],
-    ['pr_count', 1, 5, '1/5 récords'],
+    ['pr_count', 1, 5, '1/5 sesiones con récord'],
     ['full_week', 2, 4, '2/4 semanas completas'],
   ])('%s con %i de %i dice "%s"', (type, current, target, expected) => {
     expect(progressLabel(of(type, current, target))).toBe(expected);
@@ -18,7 +18,7 @@ describe('progressLabel', () => {
   it('con un objetivo de 1 la unidad va en singular', () => {
     expect(progressLabel(of('sessions_count', 0, 1))).toBe('0/1 sesión');
     expect(progressLabel(of('streak', 0, 1))).toBe('0/1 día');
-    expect(progressLabel(of('pr_count', 0, 1))).toBe('0/1 récord');
+    expect(progressLabel(of('pr_count', 0, 1))).toBe('0/1 sesión con récord');
     expect(progressLabel(of('full_week', 0, 1))).toBe('0/1 semana completa');
   });
 

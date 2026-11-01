@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createMetric, deleteMetric, listMetrics } from '@/api/body-metrics/body-metrics.api';
+import { STUDENT_CHALLENGES_KEY } from '@/hooks/achievements/useStudentGamification';
 import { bodyProgressKey } from '@/hooks/progress/useProgress';
 import { STUDENTS_KEY } from '@/hooks/students/useStudents';
 
@@ -13,7 +14,10 @@ export function useMetricsQuery(studentId) {
   });
 }
 
-/** Mutación que refresca el historial, la ficha (trae `latest_metrics`) y el progreso corporal ("Mi progreso"). */
+/**
+ * Mutación que refresca el historial, la ficha (trae `latest_metrics`), el progreso corporal ("Mi progreso") y los
+ * desafíos del alumno (el avance de un `weight_target` sale de sus medidas).
+ */
 function useMetricMutation(studentId, mutationFn) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -23,6 +27,7 @@ function useMetricMutation(studentId, mutationFn) {
         queryClient.invalidateQueries({ queryKey: [...METRICS_KEY, studentId] }),
         queryClient.invalidateQueries({ queryKey: [...STUDENTS_KEY, studentId] }),
         queryClient.invalidateQueries({ queryKey: bodyProgressKey(studentId) }),
+        queryClient.invalidateQueries({ queryKey: [...STUDENT_CHALLENGES_KEY, studentId] }),
       ]),
   });
 }

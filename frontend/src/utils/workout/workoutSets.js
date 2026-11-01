@@ -17,8 +17,8 @@ const KG_TEXT = /^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/;
 
 /**
  * Peso de una serie como lo carga el alumno: número o texto con punto o coma decimal. Vacío, 0 o negativo es peso
- * corporal (null); arriba de 1000, 1000; 2 decimales. Lo ilegible ("abc", "62,5 kg", "1.000,5") da NaN: esa serie
- * no se registra, igual que con reps inválidas.
+ * corporal (null); 2 decimales. Lo ilegible ("abc", "62,5 kg", "1.000,5") y lo que pasa de 1000 kg da NaN: esa serie
+ * no se registra (el campo lo avisa), igual que con reps inválidas. Recortarlo cambiaría el peso sin avisar.
  */
 export function toSetKg(value) {
   if (value === null || value === undefined) return null;
@@ -28,7 +28,8 @@ export function toSetKg(value) {
     return KG_TEXT.test(text) ? toSetKg(Number(text.replace(',', '.'))) : Number.NaN;
   }
   if (typeof value !== 'number' || !Number.isFinite(value)) return Number.NaN;
-  return value > 0 ? round(Math.min(value, MAX_KG), 2) : null;
+  if (value > MAX_KG) return Number.NaN;
+  return value > 0 ? round(value, 2) : null;
 }
 
 /** Reps de una serie: entero de 0 a 1000 (0 = serie fallida), o null si no es un número. */
@@ -52,7 +53,7 @@ export function exerciseSets(state, index = state.cursor) {
  */
 export function planLoad(exercise) {
   const kg = suggestedKg({ last_session_kg: exercise.lastKg, suggested_kg: exercise.suggestedKg });
-  return { kg: toSetKg(kg), reps: exercise.reps };
+  return { kg: kg === null ? null : toSetKg(Math.min(kg, MAX_KG)), reps: exercise.reps };
 }
 
 /** Precarga del ejercicio a la vista (spec §3): la serie 1 sale del plan; de la 2 en adelante, la serie anterior. */
