@@ -11,14 +11,28 @@ export const studentOfKey = (key) =>
 
 const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** Lo mínimo para poder retomar la sesión; si falta algo, lo guardado no sirve. */
+// Un ejercicio de la copia del plan, con lo que la pantalla de la sesión lee de él (ids, nombre, series, reps y descanso;
+// el peso sugerido y el de la última sesión pueden faltar o ser null: sin peso).
+const isExercise = (value) => isObject(value)
+  && typeof value.routineExerciseId === 'string'
+  && typeof value.exerciseId === 'string'
+  && typeof value.name === 'string'
+  && Number.isInteger(value.sets) && value.sets >= 1
+  && Number.isInteger(value.reps) && value.reps >= 0
+  && Number.isInteger(value.restSeconds) && value.restSeconds >= 0;
+
+/**
+ * Lo mínimo para poder retomar la sesión; si falta algo, lo guardado no sirve y se lee como "sin sesión". Incluye que
+ * el cursor apunte a un ejercicio que existe y que cada ejercicio tenga la forma que la pantalla lee: un localStorage
+ * tocado a mano (o de una versión vieja) no tiene que tirar abajo la página.
+ */
 export function isWorkout(value) {
   return isObject(value)
     && typeof value.id === 'string'
     && typeof value.startedAt === 'string'
-    && Array.isArray(value.exercises) && value.exercises.length > 0
+    && Array.isArray(value.exercises) && value.exercises.length > 0 && value.exercises.every(isExercise)
     && Array.isArray(value.sets)
-    && Number.isInteger(value.cursor)
+    && Number.isInteger(value.cursor) && value.cursor >= 0 && value.cursor < value.exercises.length
     && isObject(value.upload)
     && Array.isArray(value.upload.sentSetIds)
     && Array.isArray(value.upload.failed)

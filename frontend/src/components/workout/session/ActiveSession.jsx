@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { missingSets } from '@/utils/workout/workoutState';
 import DeleteSetDialog from './dialogs/DeleteSetDialog';
 import FinishDialog from './dialogs/FinishDialog';
@@ -13,19 +13,35 @@ import SetsTable from './SetsTable';
  * el descanso y las series (debajo de 768 px es una sola columna: el ejercicio arriba y el descanso antes de las series,
  * que es lo que se mira después de registrar). Las acciones son las de `useActiveWorkout`.
  * Terminar pregunta si faltan series o si no hay ninguna (descartar); con todo hecho termina directo.
+ * Cuando el botón que tenía el foco desaparece (Saltar el descanso, la ✕ de una serie que se borra), el foco va a
+ * Registrar serie en vez de perderse.
  */
 export default function ActiveSession({
   workout, register, remove, goTo, next, prev, adjustRest, skipRest, finish, discard,
 }) {
   const [finishing, setFinishing] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const registerRef = useRef(null);
+  const focusRegisterOnClose = useRef(false);
   const hasSets = workout.sets.length > 0;
   const missing = missingSets(workout);
 
   const requestFinish = () => (hasSets && missing === 0 ? finish() : setFinishing(true));
+  const skip = () => {
+    skipRest();
+    registerRef.current?.focus();
+  };
   const confirmDelete = () => {
     remove(deleting.id);
     setDeleting(null);
+    focusRegisterOnClose.current = true;
+  };
+  // Solo después de confirmar: con Cancelar o Esc la ✕ sigue ahí y el diálogo hace lo de siempre.
+  const afterDeleteDialog = (event) => {
+    if (!focusRegisterOnClose.current) return;
+    focusRegisterOnClose.current = false;
+    event.preventDefault();
+    registerRef.current?.focus();
   };
 
   return (
@@ -41,12 +57,12 @@ export default function ActiveSession({
       <SegmentBar workout={workout} onSelect={goTo} />
       <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
         <div className="min-w-0 md:flex-[1.55]">
-          <ExercisePanel workout={workout} onRegister={register} />
+          <ExercisePanel workout={workout} onRegister={register} registerRef={registerRef} />
         </div>
         <div className="flex min-w-0 flex-col gap-4 md:min-w-[250px] md:flex-1">
           {workout.restEndsAt && (
             <div className="order-first md:order-last">
-              <RestTimer workout={workout} onAdjust={adjustRest} onSkip={skipRest} />
+              <RestTimer workout={workout} onAdjust={adjustRest} onSkip={skip} />
             </div>
           )}
           <SetsTable workout={workout} onDelete={setDeleting} />
@@ -60,7 +76,12 @@ export default function ActiveSession({
         onFinish={finish}
         onDiscard={discard}
       />
-      <DeleteSetDialog set={deleting} onCancel={() => setDeleting(null)} onConfirm={confirmDelete} />
+      <DeleteSetDialog
+        set={deleting}
+        onCancel={() => setDeleting(null)}
+        onConfirm={confirmDelete}
+        onCloseAutoFocus={afterDeleteDialog}
+      />
     </div>
   );
 }

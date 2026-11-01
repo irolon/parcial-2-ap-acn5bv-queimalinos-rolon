@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RestTimer from '@/components/workout/session/RestTimer';
-import { registerSet, skipRest } from '@/utils/workout/workoutState';
+import { adjustRest, registerSet, skipRest } from '@/utils/workout/workoutState';
 import { at, freshWorkout, T0 } from '../../../helpers/workout/workout';
 
 const MINUS = '−';
@@ -102,7 +103,7 @@ describe('RestTimer: botones', () => {
   it('Saltar corta el descanso', async () => {
     const handlers = { onSkip: vi.fn() };
     mount(resting(), handlers);
-    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole('button', { name: 'Saltar' }));
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole('button', { name: 'Saltar descanso' }));
     expect(handlers.onSkip).toHaveBeenCalledTimes(1);
   });
 
@@ -110,6 +111,72 @@ describe('RestTimer: botones', () => {
     mount();
     tick(90);
     expect(screen.getByRole('button', { name: '+15 segundos' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Saltar' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Saltar descanso' })).toBeEnabled();
+  });
+});
+
+// La página: monta el descanso cuando hay uno (como ActiveSession) y registra y ajusta con el motor, como el hook.
+function Page() {
+  const [workout, setWorkout] = useState(freshWorkout());
+  return (
+    <>
+      {workout.restEndsAt && (
+        <RestTimer
+          workout={workout}
+          onAdjust={(seconds) => setWorkout(adjustRest(workout, seconds, new Date()))}
+          onSkip={() => setWorkout(skipRest(workout))}
+        />
+      )}
+      <button type="button" onClick={() => setWorkout(registerSet(workout, { kg: 60, reps: 10 }, new Date()))}>
+        Registrar
+      </button>
+    </>
+  );
+}
+const setup = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+// El reloj interno solo se renueva cada segundo: una acción a mitad de ese segundo no puede mostrar un resto de más.
+describe('RestTimer: justo después de una acción', () => {
+  it('registrar otra serie a los 500 ms muestra 1:30, no 1:31', async () => {
+    render(<Page />);
+    const user = setup();
+    await user.click(screen.getByRole('button', { name: 'Registrar' }));
+    expect(clock()).toHaveTextContent('1:30');
+    tick(0.5);
+    await user.click(screen.getByRole('button', { name: 'Registrar' }));
+    expect(clock()).toHaveTextContent('1:30');
+    tick(0.5);
+    expect(clock()).toHaveTextContent('1:30');
+    tick(1);
+    expect(clock()).toHaveTextContent('1:29');
+  });
+
+  it('+15″ con el descanso cumplido muestra 0:15 enseguida, y sigue contando', async () => {
+    render(<Page />);
+    const user = setup();
+    await user.click(screen.getByRole('button', { name: 'Registrar' }));
+    tick(90);
+    expect(clock()).toHaveTextContent('0:00');
+    tick(0.5);
+    await user.click(screen.getByRole('button', { name: '+15 segundos' }));
+    expect(clock()).toHaveTextContent('0:15');
+    tick(1.5);
+    expect(clock()).toHaveTextContent('0:14');
+  });
+
+  it('no se vuelve a montar: es el mismo reloj y el foco queda en el botón apretado', async () => {
+    render(<Page />);
+    const user = setup();
+    await user.click(screen.getByRole('button', { name: 'Registrar' }));
+    const before = clock();
+    const plus = screen.getByRole('button', { name: '+15 segundos' });
+    plus.focus();
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Registrar' }));
+    expect(clock()).toBe(before);
+    plus.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: '+15 segundos' })).toBe(plus);
+    expect(plus).toHaveFocus();
   });
 });

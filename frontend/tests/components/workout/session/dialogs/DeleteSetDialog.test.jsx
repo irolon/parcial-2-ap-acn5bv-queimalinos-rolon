@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DeleteSetDialog from '@/components/workout/session/dialogs/DeleteSetDialog';
 
@@ -37,6 +37,13 @@ describe('DeleteSetDialog', () => {
     await userEvent.setup().keyboard('{Escape}');
     expect(handlers.onCancel).toHaveBeenCalledTimes(1);
     expect(handlers.onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('le pasa onCloseAutoFocus al diálogo para que la página decida adónde va el foco', async () => {
+    const onCloseAutoFocus = vi.fn((event) => event.preventDefault());
+    const { rerender } = render(<DeleteSetDialog set={SET} onCancel={vi.fn()} onConfirm={vi.fn()} onCloseAutoFocus={onCloseAutoFocus} />);
+    rerender(<DeleteSetDialog set={null} onCancel={vi.fn()} onConfirm={vi.fn()} onCloseAutoFocus={onCloseAutoFocus} />);
+    await waitFor(() => expect(onCloseAutoFocus).toHaveBeenCalledTimes(1));
   });
 
   it('sin serie elegida no se ve', () => {

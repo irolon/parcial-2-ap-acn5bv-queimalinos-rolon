@@ -57,6 +57,34 @@ describe('workoutStorage', () => {
     expect(isWorkout(freshWorkout())).toBe(true);
   });
 
+  it('un cursor fuera de rango no es una sesión: 99, negativo, decimal o igual a la cantidad de ejercicios', () => {
+    [99, -1, 1.5, 2, Number.NaN, '1', null].forEach((cursor) => expect(isWorkout({ ...freshWorkout(), cursor })).toBe(false));
+    [0, 1].forEach((cursor) => expect(isWorkout({ ...freshWorkout(), cursor })).toBe(true));
+  });
+
+  it('guardada a mano con el cursor en 99 se lee como sin sesión (la pantalla no la recibe)', () => {
+    localStorage.setItem('ft.workout.s-1', JSON.stringify({ ...freshWorkout(), cursor: 99 }));
+    expect(loadWorkout('s-1')).toBeNull();
+  });
+
+  it('un ejercicio sin la forma que lee la pantalla (ids, nombre, series, reps o descanso) no es una sesión', () => {
+    const [press] = freshWorkout().exercises;
+    const withExercise = (change) => ({ ...freshWorkout(), exercises: [{ ...press, ...change }] });
+    const broken = [
+      { routineExerciseId: undefined }, { routineExerciseId: 5 }, { exerciseId: null }, { name: undefined }, { name: 7 },
+      { sets: '4' }, { sets: 0 }, { sets: 2.5 }, { reps: null }, { reps: -1 }, { restSeconds: undefined }, { restSeconds: -5 },
+    ];
+    broken.forEach((change) => expect(isWorkout(withExercise(change)), JSON.stringify(change)).toBe(false));
+    expect(isWorkout({ ...freshWorkout(), exercises: [null] })).toBe(false);
+    expect(isWorkout({ ...freshWorkout(), exercises: [press, 'x'] })).toBe(false);
+  });
+
+  it('sin peso en el plan (null) o sin descanso (0) sigue siendo una sesión', () => {
+    const [press] = freshWorkout().exercises;
+    const quiet = { ...press, suggestedKg: null, lastKg: null, restSeconds: 0, reps: 0 };
+    expect(isWorkout({ ...freshWorkout(), exercises: [quiet] })).toBe(true);
+  });
+
   it('si localStorage falla (modo privado, cuota, bloqueado), no tira: null y false', () => {
     const boom = () => { throw new DOMException('bloqueado', 'SecurityError'); };
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(boom);

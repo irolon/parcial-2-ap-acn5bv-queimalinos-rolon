@@ -36,7 +36,7 @@ describe('WorkoutPage: una sesión de punta a punta', () => {
     expect(screen.getByRole('timer')).toHaveTextContent('1:30');
     vi.setSystemTime(at(31 * 60));
     await user.click(registerButton());
-    await user.click(screen.getByRole('button', { name: 'Saltar' }));
+    await user.click(screen.getByRole('button', { name: 'Saltar descanso' }));
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
     expect(stored().sets).toHaveLength(2);
 

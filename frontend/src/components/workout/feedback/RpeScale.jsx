@@ -3,13 +3,14 @@ import { RPE_VALUES, rpeLabel } from '@/utils/sessions/rpe';
 /**
  * Los diez valores del RPE como un grupo de radios (el lector de pantalla dice cuál está elegido y las flechas
  * pasan de uno a otro). Tocar el elegido lo desmarca, como en el celular. `labelledBy` es el id de la pregunta. Cada valor
- * lleva su etiqueta ("Difícil, te quedaban 2-3 reps") como descripción y tooltip.
+ * lleva su etiqueta ("Difícil, te quedaban 2-3 reps") como descripción del radio y como tooltip del botón visible (el
+ * radio nativo está oculto y el mouse no llega a él).
  */
 export default function RpeScale({ value, onChange, labelledBy }) {
   return (
     <fieldset role="radiogroup" aria-labelledby={labelledBy} className="m-0 grid min-w-0 grid-cols-5 gap-2 border-0 p-0">
       {RPE_VALUES.map((rpe) => (
-        <label key={rpe} className="block">
+        <label key={rpe} title={rpeLabel(rpe)} className="block">
           <input
             type="radio"
             name="rpe"

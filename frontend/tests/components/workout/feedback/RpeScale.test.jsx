@@ -37,6 +37,13 @@ describe('RpeScale', () => {
     expect(radio(1)).toHaveAccessibleDescription('Muy fácil, como entrar en calor');
   });
 
+  it('el valor visible también lleva la etiqueta como tooltip (el radio nativo está oculto y no se puede apuntar con el mouse)', () => {
+    render(<Harness />);
+    const pill = radio(7).closest('label');
+    expect(pill).toHaveAttribute('title', 'Difícil, te quedaban 2-3 reps');
+    expect(pill).toHaveTextContent('7');
+  });
+
   it('elegir un valor lo deja marcado y desmarca el anterior', async () => {
     const changes = [];
     render(<Harness onChange={(next) => changes.push(next)} />);

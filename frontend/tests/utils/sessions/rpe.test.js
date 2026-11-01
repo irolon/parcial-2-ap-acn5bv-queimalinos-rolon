@@ -1,11 +1,15 @@
-/* global process */
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RPE_LABELS, RPE_VALUES, rpeLabel } from '@/utils/sessions/rpe';
 
-// Vitest corre con la raíz en frontend/: el repo está un nivel más arriba.
-const RPE_TEXTS_KT = resolve(process.cwd(), '../mobile/app/src/main/java/com/fittrainer/ui/workout/RpeTexts.kt');
+// Desde este archivo (frontend/tests/utils/sessions) al del celular, sin depender de desde dónde se corra vitest.
+// Se usa `import.meta.dirname` y no `new URL('…', import.meta.url)`: Vite reescribe esa forma literal a una URL http
+// del servidor de desarrollo y `fileURLToPath` falla ("The URL must be of scheme file").
+const RPE_TEXTS_KT = resolve(
+  import.meta.dirname,
+  '../../../../mobile/app/src/main/java/com/fittrainer/ui/workout/RpeTexts.kt',
+);
 
 describe('RPE_LABELS', () => {
   it('son las diez etiquetas de la escala, de la más suave a la más dura', () => {

@@ -32,9 +32,10 @@ const initialFields = (workout) => {
 /**
  * El ejercicio a la vista: su nombre, la serie que toca, los campos de peso y reps (con sus botones de paso) y
  * Registrar serie. Los campos se precargan con `prefill` cada vez que cambia el ejercicio o las series registradas.
- * `onRegister(kg, reps)` devuelve la sesión nueva (o la misma si el motor no registró).
+ * `onRegister(kg, reps)` devuelve la sesión nueva (o la misma si el motor no registró). `registerRef` es el ref del
+ * botón Registrar serie: la página lo usa para llevar el foco ahí cuando el botón que lo tenía desaparece.
  */
-export default function ExercisePanel({ workout, onRegister }) {
+export default function ExercisePanel({ workout, onRegister, registerRef }) {
   const exercise = workout.exercises[workout.cursor];
   const done = exerciseSets(workout).length;
   const prefillKey = `${workout.cursor}:${done}`;
@@ -46,6 +47,9 @@ export default function ExercisePanel({ workout, onRegister }) {
     setSeenKey(prefillKey);
     setFields(initialFields(workout));
     setErrors({});
+    // El aviso es de la serie que se acaba de registrar: si cambia el ejercicio o las series (se borra una, se sigue
+    // registrando), ya no corresponde y no vuelve aunque se regrese a este mismo punto.
+    if (notice?.key !== prefillKey) setNotice(null);
   }
 
   const edit = (field, value) => {
@@ -65,7 +69,10 @@ export default function ExercisePanel({ workout, onRegister }) {
       return;
     }
     const set = next.sets.at(-1);
-    setNotice({ cursor: workout.cursor, text: `Serie registrada · ${kgLabel(set.kg)} × ${set.reps}` });
+    setNotice({
+      key: `${workout.cursor}:${done + 1}`, // el prefillKey con el que queda el panel después de registrar
+      text: `Serie ${set.setNumber} registrada · ${kgLabel(set.kg)} × ${set.reps}`,
+    });
   }
 
   return (
@@ -119,12 +126,12 @@ export default function ExercisePanel({ workout, onRegister }) {
         </div>
         {errors.form && <p role="alert" className="mb-3 font-mono text-[11px] text-hot">{errors.form}</p>}
         <div className="mt-auto">
-          <Button type="submit" size="lg" full>
+          <Button ref={registerRef} type="submit" size="lg" full>
             <Check size={18} aria-hidden="true" />
             Registrar serie
           </Button>
           <p role="status" className="mt-3 min-h-4 text-center font-mono text-[11px] text-good">
-            {notice?.cursor === workout.cursor ? notice.text : ''}
+            {notice?.key === prefillKey ? notice.text : ''}
           </p>
         </div>
       </form>

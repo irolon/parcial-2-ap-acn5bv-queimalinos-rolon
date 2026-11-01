@@ -45,7 +45,7 @@ describe('WorkoutPage: registrar una serie', () => {
     await setup().click(registerButton());
 
     expect(within(seriesTable()).getByText('62,5 kg')).toBeInTheDocument();
-    expect(screen.getByText('Serie registrada · 62,5 kg × 10')).toBeInTheDocument();
+    expect(screen.getByText('Serie 1 registrada · 62,5 kg × 10')).toBeInTheDocument();
     expect(screen.getByText('SERIE 2 DE 4 · SUGERIDO 62,5 KG × 10')).toBeInTheDocument();
     expect(clock()).toHaveTextContent('1:30');
     expect(stored().sets).toMatchObject([{ setNumber: 1, kg: 62.5, reps: 10 }]);
@@ -105,14 +105,33 @@ describe('WorkoutPage: el descanso', () => {
     expect(screen.getByText('¡A la próxima serie!')).toBeInTheDocument();
   });
 
-  it('Saltar corta el descanso y lo borra de lo guardado', async () => {
+  it('Saltar corta el descanso, lo borra de lo guardado y deja el foco en Registrar serie', async () => {
     renderWorkoutPage();
     const user = setup();
     await user.click(registerButton());
-    await user.click(screen.getByRole('button', { name: 'Saltar' }));
+    await user.click(screen.getByRole('button', { name: 'Saltar descanso' }));
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
     expect(screen.queryByText('DESCANSO')).not.toBeInTheDocument();
     expect(stored().restEndsAt).toBeNull();
+    expect(registerButton()).toHaveFocus(); // el botón Saltar desapareció: el foco no se pierde
+  });
+
+  it('registrar otra serie a mitad de un segundo muestra 1:30 enseguida, no 1:31', async () => {
+    renderWorkoutPage();
+    const user = setup();
+    await user.click(registerButton());
+    tick(0.5);
+    await user.click(registerButton());
+    expect(clock()).toHaveTextContent('1:30');
+  });
+
+  it('+15″ con el descanso cumplido muestra 0:15 enseguida, no 0:16', async () => {
+    renderWorkoutPage();
+    const user = setup();
+    await user.click(registerButton());
+    tick(90.5);
+    await user.click(screen.getByRole('button', { name: '+15 segundos' }));
+    expect(clock()).toHaveTextContent('0:15');
   });
 
   it('registrar otra serie vuelve a arrancar el descanso completo', async () => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { freshWorkout, withSets } from '../../../helpers/workout/workout';
 import {
@@ -44,6 +44,24 @@ describe('WorkoutPage: borrar una serie', () => {
     expect(stored().sets).toMatchObject([{ setNumber: 1, kg: 65, reps: 8 }]);
   });
 
+  it('después de confirmar Borrar el foco va a Registrar serie (la ✕ que lo tenía ya no existe)', async () => {
+    renderWorkoutPage({ workout: withTwoSets() });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Borrar la serie 1' }));
+    await user.click(screen.getByRole('button', { name: 'Borrar' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Registrar serie' })).toHaveFocus());
+  });
+
+  it('con Cancelar el diálogo hace lo de siempre: no manda el foco a Registrar serie', async () => {
+    renderWorkoutPage({ workout: withTwoSets() });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Borrar la serie 1' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 50)); // el foco se resuelve un instante después de cerrar
+    expect(screen.getByRole('button', { name: 'Registrar serie' })).not.toHaveFocus();
+  });
+
   it('después de borrar, los campos se precargan con la serie que quedó', async () => {
     renderWorkoutPage({ workout: withTwoSets() });
     const user = userEvent.setup();
@@ -71,7 +89,7 @@ describe('WorkoutPage: moverse entre ejercicios', () => {
 
   it('tocar un segmento salta a ese ejercicio y se guarda cuál quedó a la vista', async () => {
     renderWorkoutPage();
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Ejercicio 2: Remo con barra' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Ejercicio 2: Remo con barra, sin empezar' }));
     expect(screen.getByRole('heading', { name: 'Remo con barra' })).toBeInTheDocument();
     expect(screen.getByText('EJERCICIO 2 DE 2', { exact: false })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled();

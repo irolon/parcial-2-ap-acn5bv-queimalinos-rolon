@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { act, screen } from '@testing-library/react';
 import { writeWorkout } from '@/hooks/workout/workoutStore';
 import { TODAY_URL, WORKOUT_URL } from '../../../helpers/workout/router';
+import { freshWorkout } from '../../../helpers/workout/workout';
 import { STUDENT_ID, cleanUpBrowser, renderWorkoutPage } from '../../../helpers/workout/workoutPage';
 
 afterEach(cleanUpBrowser);
@@ -23,6 +24,21 @@ describe('WorkoutPage: sin sesión en curso', () => {
     const { pathname } = renderWorkoutPage();
     expect(pathname()).toBe(WORKOUT_URL);
     act(() => writeWorkout(STUDENT_ID, null));
+    expect(await screen.findByText('Pantalla de Hoy')).toBeInTheDocument();
+    expect(pathname()).toBe(TODAY_URL);
+  });
+});
+
+describe('WorkoutPage: con una sesión guardada que no sirve', () => {
+  it('con el cursor fuera de rango (localStorage tocado a mano) se trata como sin sesión: vuelve a Hoy, no se rompe', async () => {
+    const { pathname } = renderWorkoutPage({ workout: { ...freshWorkout(), cursor: 99 } });
+    expect(await screen.findByText('Pantalla de Hoy')).toBeInTheDocument();
+    expect(pathname()).toBe(TODAY_URL);
+  });
+
+  it('con un ejercicio sin nombre pasa lo mismo', async () => {
+    const [press, row] = freshWorkout().exercises;
+    const { pathname } = renderWorkoutPage({ workout: { ...freshWorkout(), exercises: [{ ...press, name: undefined }, row] } });
     expect(await screen.findByText('Pantalla de Hoy')).toBeInTheDocument();
     expect(pathname()).toBe(TODAY_URL);
   });

@@ -2,17 +2,27 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ExercisePanel from '@/components/workout/session/ExercisePanel';
-import { setCursor } from '@/utils/workout/workoutState';
+import { removeSet, setCursor } from '@/utils/workout/workoutState';
 import { PanelHarness, register, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout } from '../../../../helpers/workout/workout';
 
+// Lo que hace la página fuera del panel: pasar de ejercicio y borrar la última serie.
+const around = (setWorkout) => (
+  <>
+    <button type="button" onClick={() => setWorkout((w) => setCursor(w, w.cursor + 1))}>Siguiente</button>
+    <button type="button" onClick={() => setWorkout((w) => setCursor(w, w.cursor - 1))}>Anterior</button>
+    <button type="button" onClick={() => setWorkout((w) => removeSet(w, w.sets.at(-1).id))}>Borrar última</button>
+  </>
+);
+const status = () => screen.getByRole('status');
+
 describe('ExercisePanel: registrar la serie', () => {
-  it('manda el peso y las reps tal como están en los campos y avisa "Serie registrada"', async () => {
+  it('manda el peso y las reps tal como están en los campos y avisa qué serie se registró', async () => {
     const spy = vi.fn();
     render(<PanelHarness spy={spy} />);
     await userEvent.setup().click(register());
     expect(spy).toHaveBeenCalledWith('62,5', '10');
-    expect(screen.getByRole('status')).toHaveTextContent('Serie registrada · 62,5 kg × 10');
+    expect(status()).toHaveTextContent('Serie 1 registrada · 62,5 kg × 10');
   });
 
   it('Enter en un campo también registra', async () => {
@@ -35,7 +45,7 @@ describe('ExercisePanel: registrar la serie', () => {
   it('una serie sin peso se avisa como peso corporal', async () => {
     render(<PanelHarness initial={setCursor(freshWorkout(), 1)} />);
     await userEvent.setup().click(register());
-    expect(screen.getByRole('status')).toHaveTextContent('Serie registrada · Peso corporal × 12');
+    expect(status()).toHaveTextContent('Serie 1 registrada · Peso corporal × 12');
   });
 
   it('con las reps vacías no registra y avisa', async () => {
@@ -62,16 +72,14 @@ describe('ExercisePanel: registrar la serie', () => {
   });
 
   it('al cambiar de ejercicio se vuelve a precargar y se borra el aviso de la serie registrada', async () => {
-    render(<PanelHarness>{(setWorkout) => (
-      <button type="button" onClick={() => setWorkout((current) => setCursor(current, current.cursor + 1))}>Siguiente</button>
-    )}</PanelHarness>);
+    render(<PanelHarness>{around}</PanelHarness>);
     const user = userEvent.setup();
     await user.click(register());
     await user.click(screen.getByRole('button', { name: 'Siguiente' }));
     expect(screen.getByRole('heading', { name: 'Remo con barra' })).toBeInTheDocument();
     expect(weight()).toHaveValue('');
     expect(reps()).toHaveValue('12');
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    expect(status()).toBeEmptyDOMElement();
   });
 
   it('si el motor no registra (tope de series) lo avisa en vez de callar', async () => {
@@ -79,5 +87,35 @@ describe('ExercisePanel: registrar la serie', () => {
     render(<ExercisePanel workout={freshWorkout()} onRegister={onRegister} />);
     await userEvent.setup().click(register());
     expect(screen.getByRole('alert')).toHaveTextContent('No pudimos registrar la serie.');
+  });
+});
+
+describe('ExercisePanel: el aviso de la serie registrada', () => {
+  it('lleva el número de la serie que se acaba de registrar', async () => {
+    render(<PanelHarness />);
+    const user = userEvent.setup();
+    await user.click(register());
+    await user.click(register());
+    expect(status()).toHaveTextContent('Serie 2 registrada · 62,5 kg × 10');
+  });
+
+  it('no reaparece al irse del ejercicio y volver', async () => {
+    render(<PanelHarness>{around}</PanelHarness>);
+    const user = userEvent.setup();
+    await user.click(register());
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }));
+    await user.click(screen.getByRole('button', { name: 'Anterior' }));
+    expect(screen.getByText('SERIE 2 DE 4 · SUGERIDO 62,5 KG × 10')).toBeInTheDocument();
+    expect(status()).toBeEmptyDOMElement();
+  });
+
+  it('no sigue ahí si se borra esa serie, y el de la serie nueva sí aparece', async () => {
+    render(<PanelHarness>{around}</PanelHarness>);
+    const user = userEvent.setup();
+    await user.click(register());
+    await user.click(screen.getByRole('button', { name: 'Borrar última' }));
+    expect(status()).toBeEmptyDOMElement();
+    await user.click(register());
+    expect(status()).toHaveTextContent('Serie 1 registrada · 62,5 kg × 10');
   });
 });
