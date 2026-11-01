@@ -100,7 +100,7 @@ La #44 (v9) y la #48 (v10) ya usan esas versiones de Room; la #51 también usaba
 
 - [ ] **Tests que fallan:**
   - estados en los bordes: 6 y 7 días desde la última sesión; nunca entrenó con 6 y 7 días de alta; dado de baja gana sobre todo;
-  - filtros: ALL excluye dados de baja; NEW = nunca entrenó (cualquier antigüedad);
+  - filtros: ALL excluye dados de baja; NEW = estado `new` (nunca entrenó y menos de 7 días de alta; cambiado en la revisión de la #52);
   - query con tildes;
   - mapper: un DTO sin `adherence_7d` (backend viejo) → `adherence = null`.
 - [ ] Implementar; `gradlew testDebugUnitTest --tests "*Student*"` → verde.
