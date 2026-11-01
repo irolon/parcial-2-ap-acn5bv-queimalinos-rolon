@@ -6,6 +6,13 @@
 import { DAYS } from '../routines/routine.model.js';
 import { DAY_MS } from '../../shared/utils/dates/dates.js';
 
+/** Forma pública de la racha (fila de student_streaks o la calculada): la usan /streak y el progreso. */
+export const toStreakView = (row) => ({
+  current_streak_days: row.current_days,
+  longest_streak_days: row.longest_days,
+  last_session_date: row.last_trained_date,
+});
+
 const toUtc = (str) => new Date(`${str}T00:00:00Z`);
 
 /** Suma (o resta) días a una fecha 'YYYY-MM-DD'. */

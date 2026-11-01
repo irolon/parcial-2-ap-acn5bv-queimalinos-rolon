@@ -154,7 +154,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El alumno está autenticado. Tiene una rutina activa asignada para el día de hoy. La mobile es la plataforma esperada por el contexto (gym), pero también es factible desde web. |
+| Precondiciones | El alumno está autenticado. Tiene al menos una rutina activa asignada. La mobile es la plataforma esperada por el contexto (gym), pero también es factible desde web. |
 | Postcondiciones | Se crea un registro en `sessions`. Cada serie ejecutada queda guardada en `session_sets`. Si hubo modificaciones, `sessions.has_modifications = true` y el PT recibe notificación. |
 
 **Flujo principal**
@@ -171,6 +171,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 **Flujos alternativos**
 
+- **1a:** El alumno entrena otra rutina (no la del día) desde Mis rutinas → abre su detalle y toca "Empezar"; sigue en el paso 3. Si ya tiene una sesión abierta de otra rutina, primero tiene que terminarla.
 - **4a:** El alumno saltea una serie → la marca como omitida (`completed = false`).
 - **4b:** El alumno reemplaza un ejercicio (máquina ocupada o no disponible) → abre el chat IA o lo selecciona manualmente. Se registra `substituted_exercise_id` y `has_modifications = true`.
 - **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente, puede retomar más tarde desde cualquier dispositivo.
