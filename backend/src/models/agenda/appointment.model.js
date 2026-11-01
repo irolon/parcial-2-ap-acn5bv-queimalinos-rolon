@@ -4,6 +4,7 @@
  */
 
 import { DAY_MS } from '../../shared/utils/dates/dates.js';
+import { utcToArgentina } from '../../shared/utils/dates/argentina.js';
 
 export const APPOINTMENTS_TABLE = 'appointments';
 
@@ -13,6 +14,12 @@ export const APPOINTMENT_DURATION_MIN = 60;
 export const STUDENT_MAX_DAYS_AHEAD = 28;
 /** Último instante (ms) en que un alumno puede pedir turno: `now` + 28 días. */
 export const studentHorizonMs = (now) => now.getTime() + STUDENT_MAX_DAYS_AHEAD * DAY_MS;
+/** Cuántos días hacia adelante se puede agendar (los dos roles): tope de 1 año. */
+export const MAX_DAYS_AHEAD = 365;
+/** Último día de Argentina ('YYYY-MM-DD') en que se puede agendar: el de `now` + 365 días. */
+export const lastBookableDate = (now) => utcToArgentina(now.getTime() + MAX_DAYS_AHEAD * DAY_MS).date;
+/** Máximo de turnos `pending` a futuro que puede tener un alumno (lo que pide él). */
+export const STUDENT_MAX_PENDING = 3;
 /** Máximo de días (inclusivos) de un rango de GET /appointments. */
 export const LIST_MAX_DAYS = 62;
 /** Largo máximo de la nota de un turno. */

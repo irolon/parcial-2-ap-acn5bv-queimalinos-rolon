@@ -34,6 +34,32 @@ export async function findTakenInRange(trainerId, fromUtc, toUtc) {
   return rows.map((r) => r.scheduled_at);
 }
 
+/** Cuántos turnos `pending` con `scheduled_at` posterior a `nowUtc` tiene el alumno. */
+export async function countFuturePending(studentId, nowUtc) {
+  const { count, error } = await supabase
+    .from(APPOINTMENTS_TABLE)
+    .select('id', { count: 'exact', head: true })
+    .eq('student_id', studentId)
+    .eq('status', STATUS.PENDING)
+    .gt('scheduled_at', nowUtc.toISOString());
+  if (error) throw Errors.internal(error.message);
+  return count ?? 0;
+}
+
+/** Cancela los turnos futuros (pending o confirmed) del alumno y devuelve cuántos cambió. */
+export async function cancelFutureForStudent(studentId, nowUtc) {
+  const rows = unwrap(
+    await supabase
+      .from(APPOINTMENTS_TABLE)
+      .update({ status: STATUS.CANCELLED })
+      .eq('student_id', studentId)
+      .in('status', [STATUS.PENDING, STATUS.CONFIRMED])
+      .gt('scheduled_at', nowUtc.toISOString())
+      .select('id')
+  );
+  return rows.length;
+}
+
 /** Inserta el turno. Si el horario ya está ocupado (índice único parcial, 23505) lanza SLOT_TAKEN. */
 export async function insertAppointment(row) {
   const res = await supabase.from(APPOINTMENTS_TABLE).insert(row).select(APPOINTMENT_COLUMNS).single();
