@@ -20,6 +20,7 @@ import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
+import com.fittrainer.ui.progress.ProgressScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
 import com.fittrainer.ui.sync.SignOutSyncState
@@ -30,7 +31,6 @@ import com.fittrainer.ui.workout.WorkoutEntryViewModel
 import com.fittrainer.ui.workout.WorkoutScreen
 import com.fittrainer.ui.workout.components.ActiveWorkoutSignOutDialog
 import com.fittrainer.ui.workout.components.SignOutFailedDialog
-import com.fittrainer.ui.workout.history.HistoryScreen
 import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 
 /** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → pantalla hija (Estado del servidor, detalle del historial, detalle de rutina, biblioteca). */
@@ -107,7 +107,7 @@ fun RoleShell(
                             onOpenRoutine = { navController.navigate(routineDetailRoute(it)) { launchSingleTop = true } },
                             onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
                         )
-                        tab.route == STUDENT_PROGRESS_ROUTE -> HistoryScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
+                        tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
                         else -> PlaceholderScreen(tab.label)
                     }
                 }

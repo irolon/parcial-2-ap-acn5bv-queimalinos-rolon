@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.library.LibraryDao
+import com.fittrainer.data.db.progress.ProgressDao
 import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.history.HistoryDao
@@ -40,6 +41,9 @@ object DatabaseModule {
 
     @Provides
     fun provideHistoryDao(db: FitTrainerDatabase): HistoryDao = db.historyDao()
+
+    @Provides
+    fun provideProgressDao(db: FitTrainerDatabase): ProgressDao = db.progressDao()
 
     @Provides
     @Singleton
