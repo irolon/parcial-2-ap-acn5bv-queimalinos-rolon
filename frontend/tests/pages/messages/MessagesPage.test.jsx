@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../../helpers/auth/authStore';
-import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { stub, stubDesktop } from '../../helpers/messages/ptMessages';
+import { calls, errorResponse } from '../../helpers/shared/fetchMock';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 
 beforeEach(() => {
@@ -14,38 +15,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
-
-const conv = (id, name, last = null, unread = 0) => ({
-  student: { id, name, avatar_url: null },
-  last_message: last,
-  unread_count: unread,
-});
-const CONVERSATIONS = [
-  conv('s-1', 'Ana Paz', { body: 'Listo!', has_image: false, sender_role: 'student', created_at: '2026-10-30T15:00:00+00:00' }, 3),
-  conv('s-2', 'Ángel Díaz', { body: '', has_image: true, sender_role: 'trainer', created_at: '2026-10-20T15:00:00+00:00' }),
-  conv('s-3', 'Bruno Sosa'),
-];
-
-function stub(extra = {}) {
-  return stubFetch(async (url, init) => {
-    const path = url.replace('http://api.test/api', '');
-    if (extra[path]) return extra[path](init);
-    if (path === '/messages/conversations') return jsonResponse(200, { data: CONVERSATIONS });
-    if (path === '/messages/broadcast') return jsonResponse(201, { data: { broadcast_id: 'b-1', sent: 2 } });
-    if (path.endsWith('/read')) return jsonResponse(200, { data: { updated: 0 } });
-    const id = path.split('/')[2];
-    const name = CONVERSATIONS.find((c) => c.student.id === id)?.student.name ?? 'Otro';
-    return jsonResponse(200, {
-      data: [],
-      meta: { next_before: null },
-      counterpart: { id, name, avatar_url: null },
-    });
-  });
-}
-
-function stubDesktop(matches) {
-  vi.stubGlobal('matchMedia', () => ({ matches, addEventListener: () => {}, removeEventListener: () => {} }));
-}
 
 describe('MessagesPage: lista', () => {
   it('muestra las filas en el orden del servidor con vista previa, "Vos:" y no leídos', async () => {
@@ -126,58 +95,3 @@ describe('MessagesPage: responsive', () => {
   });
 });
 
-describe('MessagesPage: envío masivo', () => {
-  async function openDialog(user) {
-    await screen.findByRole('button', { name: /Ana Paz/ });
-    await user.click(screen.getByRole('button', { name: 'Envío masivo' }));
-    return screen.findByRole('dialog', { name: 'Envío masivo' });
-  }
-
-  it('muestra el aviso fijo y el botón está deshabilitado sin texto o sin alumnos', async () => {
-    const user = userEvent.setup();
-    stub();
-    renderRoute('/pt/mensajes');
-    const dialog = await openDialog(user);
-    expect(within(dialog).getByText(/No es un chat grupal: no se ven entre ellos\./)).toBeInTheDocument();
-    const send = within(dialog).getByRole('button', { name: 'Enviar a 0 alumnos' });
-    expect(send).toBeDisabled();
-    await user.type(within(dialog).getByRole('textbox', { name: 'Mensaje' }), 'Hola');
-    expect(send).toBeDisabled();
-    await user.click(within(dialog).getByRole('checkbox', { name: /Ana Paz/ }));
-    expect(within(dialog).getByRole('button', { name: 'Enviar a 1 alumno' })).toBeEnabled();
-    await user.clear(within(dialog).getByRole('textbox', { name: 'Mensaje' }));
-    expect(within(dialog).getByRole('button', { name: 'Enviar a 1 alumno' })).toBeDisabled();
-  });
-
-  it('"Todos" selecciona y deselecciona; envía, avisa "Enviado a N alumnos" y cierra', async () => {
-    const user = userEvent.setup();
-    const fetchMock = stub();
-    renderRoute('/pt/mensajes');
-    const dialog = await openDialog(user);
-    const all = within(dialog).getByRole('checkbox', { name: 'Todos' });
-    await user.click(all);
-    expect(within(dialog).getByRole('checkbox', { name: /Bruno Sosa/ })).toBeChecked();
-    expect(within(dialog).getByRole('button', { name: 'Enviar a 3 alumnos' })).toBeDisabled();
-    await user.click(all);
-    expect(within(dialog).getByRole('button', { name: 'Enviar a 0 alumnos' })).toBeDisabled();
-    await user.click(within(dialog).getByRole('checkbox', { name: /Ana Paz/ }));
-    await user.click(within(dialog).getByRole('checkbox', { name: /Bruno Sosa/ }));
-    await user.type(within(dialog).getByRole('textbox', { name: 'Mensaje' }), '  Mañana no abrimos ');
-    await user.click(within(dialog).getByRole('button', { name: 'Enviar a 2 alumnos' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Enviado a 2 alumnos');
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    const post = calls(fetchMock).find(([u]) => u === '/messages/broadcast');
-    expect(bodyOf(post[1])).toEqual({ student_ids: ['s-1', 's-3'], body: 'Mañana no abrimos' });
-  });
-
-  it('un error del servidor se muestra y el diálogo sigue abierto', async () => {
-    const user = userEvent.setup();
-    stub({ '/messages/broadcast': () => errorResponse(403, 'FORBIDDEN', 'Alumno ajeno') });
-    renderRoute('/pt/mensajes');
-    const dialog = await openDialog(user);
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Todos' }));
-    await user.type(within(dialog).getByRole('textbox', { name: 'Mensaje' }), 'Hola');
-    await user.click(within(dialog).getByRole('button', { name: 'Enviar a 3 alumnos' }));
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Alumno ajeno');
-  });
-});

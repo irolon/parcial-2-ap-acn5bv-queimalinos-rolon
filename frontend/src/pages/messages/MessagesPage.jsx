@@ -37,11 +37,11 @@ export default function MessagesPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      {notice && (
-        <p role="status" className="rounded-md border border-ink3 bg-ink2 px-4 py-2 font-body text-sm text-bone0">
-          {notice}
-        </p>
-      )}
+      <div role="status">
+        {notice && (
+          <p className="rounded-md border border-ink3 bg-ink2 px-4 py-2 font-body text-sm text-bone0">{notice}</p>
+        )}
+      </div>
       <div className={`flex gap-4 ${CONVERSATION_HEIGHT}`}>
         {showList && (
           <div className="w-full min-w-0 md:w-[280px] md:shrink-0">
