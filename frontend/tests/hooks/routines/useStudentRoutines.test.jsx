@@ -13,8 +13,7 @@ const LUCIA = { id: 's-2', name: 'Lucía Gómez', role: 'student' };
 const signIn = (user) =>
   useAuthStore.setState({ user, token: user ? 'access-1' : null, refreshToken: 'refresh-1', status: user ? 'authenticated' : 'anonymous' });
 
-function renderQuery(hook) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderQuery(hook, client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   return { client, ...renderHook(hook, { wrapper }) };
 }
@@ -25,6 +24,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -81,6 +81,50 @@ describe('useTodayRoutine', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     await act(() => client.invalidateQueries({ queryKey: TODAY_ROUTINE_KEY }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+});
+
+// Argentina es UTC-3: las 23:59 del domingo 1/11 son las 02:59 UTC del lunes 2/11.
+describe('useTodayRoutine: la pestaña queda abierta de un día para otro', () => {
+  it('al volver a la pestaña vuelve a pedir la rutina, aunque la app apague el refresco por foco', async () => {
+    const fetchMock = stubStudentRoutines({ today: todayRoutine() });
+    const appClient = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
+    const { result } = renderQuery(() => useTodayRoutine(), appClient);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+    });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('cuando cambia el día en Argentina pide la rutina de nuevo, no se queda con la de ayer', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-02T02:59:00Z')); // domingo 23:59
+    let answer = todayRoutine({ name: 'Rutina del domingo' });
+    const fetchMock = stubStudentRoutines({ today: () => answer });
+    const { result, rerender } = renderQuery(() => useTodayRoutine());
+    await waitFor(() => expect(result.current.data?.name).toBe('Rutina del domingo'));
+
+    answer = todayRoutine({ name: 'Rutina del lunes' });
+    vi.setSystemTime(new Date('2026-11-02T03:01:00Z')); // lunes 00:01
+    rerender();
+    expect(result.current.data).toBeUndefined();
+    await waitFor(() => expect(result.current.data?.name).toBe('Rutina del lunes'));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('el mismo día argentino no la vuelve a pedir al renderizar, aunque en UTC ya sea otro día', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-01T13:00:00Z')); // domingo 10:00
+    const fetchMock = stubStudentRoutines({ today: todayRoutine() });
+    const { result, rerender } = renderQuery(() => useTodayRoutine());
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    vi.setSystemTime(new Date('2026-11-02T02:59:00Z')); // domingo 23:59: ya es lunes en UTC, no en Argentina
+    rerender();
+    await act(() => Promise.resolve());
+    expect(result.current.isSuccess).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
