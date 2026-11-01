@@ -68,6 +68,10 @@ fun trainerStudentSessionsRoute(studentId: String) = "trainer/students/$studentI
 const val TRAINER_STUDENT_SESSION_ROUTE = "trainer/students/{studentId}/sessions/{sessionId}"
 fun trainerStudentSessionRoute(studentId: String, sessionId: String) = "trainer/students/$studentId/sessions/$sessionId"
 
+/** Medidas de un alumno (tarjeta E6). ?new=true abre directo la hoja "Nueva medida". */
+const val TRAINER_STUDENT_METRICS_ROUTE = "trainer/students/{studentId}/metrics?new={new}"
+fun trainerStudentMetricsRoute(studentId: String, openNew: Boolean) = "trainer/students/$studentId/metrics?new=$openNew"
+
 /** Guía Mobile p.5 — app del entrenador. */
 val TrainerTabs = listOf(
     Tab("trainer/home", "Inicio", Icons.Filled.Home),
