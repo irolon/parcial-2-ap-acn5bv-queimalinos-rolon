@@ -29,30 +29,17 @@ El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero 
 | Función | Web | Mobile |
 |---|---|---|
 | Hoy: rutina del día, plan y semana (CU-13) | Sí | Sí |
-| Mis rutinas (solo lectura) y biblioteca de ejercicios | Sí | Sí |
+| Mis rutinas (solo lectura) y biblioteca de ejercicios | Mis rutinas: Sí. Biblioteca: no, solo el video de cada ejercicio | Sí |
 | Ejecutar una sesión (CU-05 / CU-14) | **Simplificada:** un ejercicio por vez, descanso con cuenta regresiva y borrar series antes de subir. Se guarda en el navegador y se sube entera al terminar; necesita red para subir | Completa, con modo offline y sincronización |
 | Feedback post-entreno, RPE y nota (CU-16) | Sí | Sí |
 | Reemplazar un ejercicio | No | Sí |
 | Sesión libre (sin rutina) | No | No |
 | Historial de sesiones, con el comentario del entrenador en solo lectura (CU-17) | Sí | Sí |
-| Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Pendiente (en revisión) |
-| Gráficos de progreso (CU-17) | Sí | Pendiente (en revisión) |
-| Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Pendiente (en revisión): hoy el perfil solo tiene Estado del servidor y Cerrar sesión |
-| Notificaciones push | No | Pendiente |
+| Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Pendiente |
+| Gráficos de progreso (CU-17) | Sí | Pendiente (en revisión, #44) |
+| Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Pendiente: hoy el perfil solo tiene Estado del servidor y Cerrar sesión |
+| Notificaciones push | No | Pendiente (en revisión, #48) |
 | Pedir turno al entrenador (CU-19) | No | Pendiente (tarjeta de Igna) |
-| Asistente IA (CU-06 / CU-15) | **Pendiente** (tarjetas de IA pospuestas) | **Pendiente** |
-
----|---|---|
-| Hoy: rutina del día, plan y semana (CU-13) | Sí | Sí |
-| Mis rutinas (solo lectura) | Sí | Sí |
-| Ejecutar una sesión (CU-05 / CU-14) | **Simplificada:** un ejercicio por vez, descanso con cuenta regresiva y borrar series antes de subir. Se guarda en el navegador y se sube entera al terminar; necesita red para subir | Completa, con modo offline y sincronización |
-| Feedback post-entreno, RPE y nota (CU-16) | Sí | Sí |
-| Reemplazar un ejercicio y sesión libre | No | Sí |
-| Historial de sesiones, con el comentario del entrenador en solo lectura (CU-17) | Sí | Sí |
-| Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Sí |
-| Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Sí |
-| Notificaciones push | No | Sí |
-| Pedir turno al entrenador (CU-19) | No | Sí (tarjeta de Igna) |
 | Asistente IA (CU-06 / CU-15) | **Pendiente** (tarjetas de IA pospuestas) | **Pendiente** |
 
 ---
