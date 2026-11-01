@@ -30,7 +30,12 @@ data class HistoryMetaDto(val total: Int, val page: Int, val limit: Int, @Serial
 data class HistoryPageDto(val data: List<HistorySummaryDto>, val meta: HistoryMetaDto)
 
 @Serializable
-data class PlannedDto(val sets: Int? = null, val reps: Int? = null, @SerialName("suggested_kg") val suggestedKg: Double? = null)
+data class PlannedDto(
+    val sets: Int? = null,
+    val reps: Int? = null,
+    @SerialName("suggested_kg") val suggestedKg: Double? = null,
+    @SerialName("rest_seconds") val restSeconds: Int? = null,
+)
 
 @Serializable
 data class HistorySetDto(
@@ -39,6 +44,8 @@ data class HistorySetDto(
     @SerialName("actual_reps") val actualReps: Int? = null,
     @SerialName("actual_kg") val actualKg: Double? = null,
     @SerialName("executed_at") val executedAt: String,
+    /** Descanso real después de la serie; null en las anteriores al 01/11. */
+    @SerialName("rest_seconds") val restSeconds: Int? = null,
 )
 
 @Serializable

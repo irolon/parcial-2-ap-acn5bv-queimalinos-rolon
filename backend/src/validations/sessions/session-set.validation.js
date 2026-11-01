@@ -1,6 +1,7 @@
 import { fail, isMissing, isObject, parseDateTime, parseUuid } from './sessions.validation.js';
 
 const MAX_SETS_PER_REQUEST = 100;
+const MAX_REST_SECONDS = 3600;
 
 /** Valida el envelope de POST /sessions/:id/sets: `sets` es un array de 1 a 100. */
 export function validateSetsEnvelope(body) {
@@ -37,6 +38,8 @@ export function parseSet(raw) {
     actual_kg: null,
     completed: true,
     executed_at: parseDateTime('executed_at', raw.executed_at, details),
+    // Descanso real después de esta serie (lo mide el celular); null = sin dato.
+    rest_seconds: isMissing(raw.rest_seconds) ? null : intField('rest_seconds', 0, MAX_REST_SECONDS),
   };
   if (!isMissing(raw.actual_kg)) {
     if (typeof raw.actual_kg !== 'number' || !Number.isFinite(raw.actual_kg) || raw.actual_kg < 0
