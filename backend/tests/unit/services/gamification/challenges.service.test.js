@@ -54,6 +54,13 @@ describe('activeStudents', () => {
     expect(repo.findActiveStudentIds).toHaveBeenCalledWith('ch-1', 'tr-1');
   });
 
+  it('desafío propio del entrenador: devuelve los ids de sus alumnos', async () => {
+    repo.findById.mockResolvedValue(challengeRow({ trainer_id: 'tr-1' }));
+    repo.findActiveStudentIds.mockResolvedValue(['st-1']);
+    await expect(challenges.activeStudents(TRAINER, 'ch-1')).resolves.toEqual(['st-1']);
+    expect(repo.findActiveStudentIds).toHaveBeenCalledWith('ch-1', 'tr-1');
+  });
+
   it('desafío ajeno → CHALLENGE_NOT_FOUND', async () => {
     repo.findById.mockResolvedValue(challengeRow({ trainer_id: 'tr-2' }));
     await expect(challenges.activeStudents(TRAINER, 'ch-1')).rejects.toMatchObject({
