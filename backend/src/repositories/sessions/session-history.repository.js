@@ -9,7 +9,7 @@ import { EXERCISES_TABLE } from '../../models/exercises/exercise.model.js';
 const HISTORY_COLUMNS =
   'id, student_id, routine_id, started_at, finished_at, rpe, notes, trainer_comment, has_modifications';
 const SET_COLUMNS =
-  'id, session_id, exercise_id, original_exercise_id, routine_exercise_id, set_number, actual_reps, actual_kg, completed, executed_at';
+  'id, session_id, exercise_id, original_exercise_id, routine_exercise_id, set_number, actual_reps, actual_kg, completed, executed_at, rest_seconds';
 
 const unwrap = ({ data, error }) => {
   if (error) throw Errors.internal(error.message);
@@ -94,10 +94,10 @@ export async function findRoutinesByIds(ids) {
   return unwrap(await supabase.from(ROUTINES_TABLE).select('id, name').in('id', ids));
 }
 
-/** Plan actual (sets, reps, suggested_kg) por lote de routine_exercises. */
+/** Plan actual (sets, reps, suggested_kg, rest_seconds) por lote de routine_exercises. */
 export async function findRoutineExercisesByIds(ids) {
   return unwrap(
-    await supabase.from(ROUTINE_EXERCISES_TABLE).select('id, sets, reps, suggested_kg').in('id', ids)
+    await supabase.from(ROUTINE_EXERCISES_TABLE).select('id, sets, reps, suggested_kg, rest_seconds').in('id', ids)
   );
 }
 

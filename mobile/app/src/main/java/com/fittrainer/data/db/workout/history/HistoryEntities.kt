@@ -44,6 +44,8 @@ data class HistoryExerciseEntity(
     val plannedReps: Int?,
     val plannedKg: Double?,
     val isPr: Boolean,
+    /** Descanso del plan, en segundos (v9). */
+    val plannedRestSeconds: Int? = null,
 )
 
 @Entity(
@@ -59,6 +61,8 @@ data class HistorySetEntity(
     val reps: Int?,
     val kg: Double?,
     val executedAt: Long,
+    /** Descanso real después de la serie, en segundos (v9). */
+    val restSeconds: Int? = null,
 )
 
 /**
