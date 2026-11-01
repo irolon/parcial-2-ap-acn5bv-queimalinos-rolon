@@ -8,6 +8,7 @@ import { useAppointments, useCreateAppointment, useFreeSlots } from '@/hooks/age
 import { useStudentsQuery } from '@/hooks/students/useStudents';
 import { arParts } from '@/utils/agenda';
 import { MAX_NOTES, hourChoices, lastBookableDate, scheduledAt } from './newAppointmentForm';
+import { TOUCH_SM } from '../touch';
 
 const SLOT_TAKEN = 'Ese horario ya está ocupado';
 
@@ -58,7 +59,7 @@ function Form({ create, onClose }) {
       {loadFailed && (
         <div role="alert" className="flex items-center justify-between gap-3 font-body text-sm text-hot">
           <span>No pudimos cargar los datos del turno.</span>
-          <Button variant="ghost" size="sm" onClick={retry}>Reintentar</Button>
+          <Button variant="ghost" size="sm" className={TOUCH_SM} onClick={retry}>Reintentar</Button>
         </div>
       )}
       <Select
