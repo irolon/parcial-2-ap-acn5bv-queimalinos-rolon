@@ -45,7 +45,7 @@ export async function createForStudent(user, input) {
     throw Errors.slotUnavailable(`Solo se puede pedir turno hasta ${STUDENT_MAX_DAYS_AHEAD} días adelante`);
   }
   const student = await studentsRepo.findStudentById(user.id);
-  if (!student?.trainer_id) throw Errors.forbidden();
+  if (!student?.trainer_id || !student.active) throw Errors.forbidden();
   const availability = await availabilityRepo.findAvailability(student.trainer_id);
   if (!isWithinAvailability(input.scheduled_at, availability)) {
     throw Errors.slotUnavailable('Ese horario está fuera de la disponibilidad de tu entrenador');

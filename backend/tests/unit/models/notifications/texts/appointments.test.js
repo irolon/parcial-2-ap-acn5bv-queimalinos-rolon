@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { texts } from '../../../../src/models/notifications/texts.js';
+import { texts } from '../../../../../src/models/notifications/texts.js';
 
 // Viernes 06/11 18:00 en Argentina = 21:00 UTC.
 const scheduledAt = '2026-11-06T21:00:00.000Z';

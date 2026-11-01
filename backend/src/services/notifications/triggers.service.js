@@ -163,7 +163,7 @@ export function onAppointmentChanged(event, appointment) {
   return safely(`appointment ${event}`, async () => {
     const { to, text } = APPOINTMENT_EVENTS[event];
     const { title, body } = texts[text]({
-      studentName: appointment.student.name,
+      studentName: appointment.student.name ?? 'Tu alumno',
       scheduledAt: appointment.scheduled_at,
     });
     await notify({

@@ -1,6 +1,7 @@
 import * as availabilityRepo from '../../repositories/agenda/availability.repository.js';
 import * as appointmentsRepo from '../../repositories/agenda/appointments.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository.js';
+import { Errors } from '../../shared/utils/errors.js';
 import { freeSlots } from '../../models/agenda/availability.model.js';
 import { STUDENT_MAX_DAYS_AHEAD } from '../../models/agenda/appointment.model.js';
 import { argDayRange } from '../../shared/utils/dates/ranges.js';
@@ -10,6 +11,7 @@ import { DAY_MS } from '../../shared/utils/dates/dates.js';
 async function trainerIdOf(user) {
   if (user.role === 'trainer') return user.id;
   const student = await studentsRepo.findStudentById(user.id);
+  if (student && !student.active) throw Errors.forbidden();
   return student?.trainer_id ?? null;
 }
 

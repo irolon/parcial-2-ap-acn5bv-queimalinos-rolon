@@ -1,6 +1,8 @@
 import { jest } from '@jest/globals';
 import { fileURLToPath } from 'node:url';
 
+// OJO: el supabase falso serializa los inserts (corren de a uno), así que estos tests prueban la traducción
+// del 23505 a 409 por HTTP, NO la carrera real; la carrera se valida en el E2E contra Supabase dev.
 // Express real (createApp) con JWT reales y un supabase falso que se comporta como las tablas de la agenda,
 // incluido el índice único parcial (trainer_id, scheduled_at) where status <> 'cancelled' (23505).
 const src = (p) => fileURLToPath(new URL(`../../../src/${p}`, import.meta.url));

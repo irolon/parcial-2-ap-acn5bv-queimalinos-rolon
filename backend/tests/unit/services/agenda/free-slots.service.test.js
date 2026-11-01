@@ -78,3 +78,10 @@ describe('listFree', () => {
     expect(asTrainer).toHaveLength(12);
   });
 });
+
+describe('listFree · alumno inactivo', () => {
+  it('un alumno dado de baja no ve los libres: 403', async () => {
+    mockStudents.findStudentById.mockResolvedValue(studentRow({ active: false }));
+    await expect(listFree(STUDENT, { from: '2026-11-05', to: '2026-11-05' })).rejects.toMatchObject({ statusCode: 403 });
+  });
+});

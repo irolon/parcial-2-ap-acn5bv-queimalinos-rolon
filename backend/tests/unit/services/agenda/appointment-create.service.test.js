@@ -77,6 +77,12 @@ describe('createForStudent', () => {
     await expect(createForStudent(STUDENT, input)).rejects.toMatchObject({ statusCode: 403 });
   });
 
+  it('un alumno inactivo no puede pedir turno: 403', async () => {
+    mockStudents.findStudentById.mockResolvedValue(studentRow({ active: false }));
+    await expect(createForStudent(STUDENT, input)).rejects.toMatchObject({ statusCode: 403 });
+    expect(mockAppointments.insertAppointment).not.toHaveBeenCalled();
+  });
+
   it('un fallo de la notificación no rompe la respuesta', async () => {
     mockNotify.notify.mockRejectedValue(new Error('db'));
     await expect(createForStudent(STUDENT, input)).resolves.toMatchObject({ status: 'pending' });

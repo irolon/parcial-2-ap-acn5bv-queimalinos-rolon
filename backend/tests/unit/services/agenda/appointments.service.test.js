@@ -72,6 +72,12 @@ describe('changeStatus · notificaciones', () => {
     }
   );
 
+  it('un alumno inactivo (dado de baja) sí puede cancelar sus turnos', async () => {
+    await expect(service.changeStatus(STUDENT, APPT_ID, { status: 'cancelled' })).resolves.toMatchObject({
+      status: 'cancelled',
+    });
+  });
+
   it('un fallo al notificar no rompe el cambio de estado', async () => {
     mockNotify.notify.mockRejectedValue(new Error('db'));
     await expect(service.changeStatus(TRAINER, APPT_ID, { status: 'confirmed' })).resolves.toMatchObject({
