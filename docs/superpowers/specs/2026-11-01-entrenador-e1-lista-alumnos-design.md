@@ -6,7 +6,7 @@ tarjeta: E1
 
 - **Tarjeta:** [E1 del tablero del entrenador](https://trello.com/c/IHkkxiBo).
 - **Fecha:** 2026-11-01 (debate con Igna del mismo día).
-- **Rama:** `feature/android-entrenador-alumnos`, sobre `develop` (que ya tiene la #51). La PR apunta a `develop`. Room v12 desde la 9, dejando la 10 y la 11 para la #44 y la #48 (ver Task 0 del plan).
+- **Rama:** `feature/android-entrenador-alumnos`, sobre `develop` (que ya tiene la #51). La PR apunta a `develop`. Room v12 con `AutoMigration(11, 12)`: la 10 es de la #44 y la 11, de la #48 (ver Task 0 del plan).
 - **Reglas:** `AGENTS.md` (Room es la única fuente de verdad; capas del backend; ownership en services) y `CONTRIBUTING.md` (200 líneas, capa → módulo → archivo, carpetas de más de 10 archivos se subdividen).
 - **Diseño:** prototipo `EM_Alumnos` en `docs/design/prototype-src/ent-mobile.jsx`. Tema oscuro, azul `#2952D9`, toque mínimo 44 px.
 
