@@ -1,6 +1,7 @@
 package com.fittrainer.ui.students.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -31,7 +33,7 @@ fun adherenceColor(pct: Int): Color = when {
     else -> FtColors.Coral
 }
 
-private fun statusColor(status: StudentStatus): Color = when (status) {
+fun statusColor(status: StudentStatus): Color = when (status) {
     StudentStatus.ACTIVE -> FtColors.Green
     StudentStatus.INACTIVE -> FtColors.Coral
     StudentStatus.NEW -> FtColors.Cyan
@@ -39,10 +41,11 @@ private fun statusColor(status: StudentStatus): Color = when (status) {
 }
 
 @Composable
-fun StudentRow(row: StudentRowUi, modifier: Modifier = Modifier) {
+fun StudentRow(row: StudentRowUi, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     Row(
         modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)
-            .background(FtColors.Card, MaterialTheme.shapes.large).padding(Spacing.md),
+            .clip(MaterialTheme.shapes.large).background(FtColors.Card)
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it }.padding(Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {

@@ -56,6 +56,12 @@ const val TRAINER_STUDENTS_ROUTE = "trainer/students"
 /** Invitar alumno (tarjeta E2): cuelga de la pestaña Alumnos. */
 const val TRAINER_INVITE_ROUTE = "trainer/students/invite"
 
+/** Ficha del alumno y su edición (tarjeta E3). La ruta literal de invitar tiene prioridad sobre {studentId}. */
+const val TRAINER_STUDENT_DETAIL_ROUTE = "trainer/students/{studentId}"
+fun trainerStudentDetailRoute(studentId: String) = "trainer/students/$studentId"
+const val TRAINER_STUDENT_EDIT_ROUTE = "trainer/students/{studentId}/edit"
+fun trainerStudentEditRoute(studentId: String) = "trainer/students/$studentId/edit"
+
 /** Guía Mobile p.5 — app del entrenador. */
 val TrainerTabs = listOf(
     Tab("trainer/home", "Inicio", Icons.Filled.Home),
