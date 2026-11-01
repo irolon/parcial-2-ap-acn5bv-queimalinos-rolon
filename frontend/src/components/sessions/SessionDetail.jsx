@@ -91,8 +91,22 @@ function ExerciseBlock({ item }) {
   );
 }
 
-/** Series de la sesión (real contra plan), nota del alumno y comentario; el detalle se pide al montarse. */
-export default function SessionDetail({ studentId, session }) {
+function Note({ label, text }) {
+  return (
+    <div className="mt-4">
+      <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink6">{label}</div>
+      <p className="whitespace-pre-line break-words font-body text-sm text-bone1">{text}</p>
+    </div>
+  );
+}
+
+/**
+ * Series de la sesión (real contra plan), nota del alumno y comentario; el detalle se pide al montarse.
+ * Para el entrenador, el comentario se edita (`SessionComment`). Para el alumno (`viewer="student"`), la nota es
+ * "Tu nota" y el comentario del entrenador, si lo hay, es de solo lectura: el PATCH es solo del entrenador.
+ */
+export default function SessionDetail({ studentId, session, viewer = 'trainer' }) {
+  const isStudent = viewer === 'student';
   const query = useSessionDetail(studentId, session.id);
   return (
     <div className="min-w-0 pt-3">
@@ -106,13 +120,12 @@ export default function SessionDetail({ studentId, session }) {
           </div>
         )}
       </QueryState>
-      {session.notes && (
-        <div className="mt-4">
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-wider text-ink6">Nota del alumno</div>
-          <p className="whitespace-pre-line break-words font-body text-sm text-bone1">{session.notes}</p>
-        </div>
+      {session.notes && <Note label={isStudent ? 'Tu nota' : 'Nota del alumno'} text={session.notes} />}
+      {isStudent ? (
+        session.trainer_comment && <Note label="Comentario de tu entrenador" text={session.trainer_comment} />
+      ) : (
+        <SessionComment key={session.trainer_comment ?? ''} studentId={studentId} session={session} />
       )}
-      <SessionComment key={session.trainer_comment ?? ''} studentId={studentId} session={session} />
     </div>
   );
 }

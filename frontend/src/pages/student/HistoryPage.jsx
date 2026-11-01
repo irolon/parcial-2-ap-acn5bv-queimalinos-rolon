@@ -1,12 +1,8 @@
-import { Calendar } from 'lucide-react';
-import EmptyState from '@/components/shared/states/EmptyState';
-import Card from '@/components/shared/ui/Card';
+import SessionsHistory from '@/components/sessions/SessionsHistory';
+import { useAuthStore } from '@/hooks/auth/useAuthStore';
 
-/** Historial de entrenamientos del alumno. Versión mínima: la tarea que arma la pantalla la reemplaza. */
+/** Historial del alumno: sus sesiones con el detalle, su nota y el comentario de su entrenador (de solo lectura). */
 export default function HistoryPage() {
-  return (
-    <Card>
-      <EmptyState icon={Calendar} title="Historial" text="Acá vas a ver los entrenamientos que ya hiciste." />
-    </Card>
-  );
+  const studentId = useAuthStore((state) => state.user?.id);
+  return <SessionsHistory studentId={studentId} viewer="student" />;
 }

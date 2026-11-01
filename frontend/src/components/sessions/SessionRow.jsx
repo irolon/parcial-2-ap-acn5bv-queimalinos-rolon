@@ -4,8 +4,11 @@ import Pill from '@/components/shared/ui/Pill';
 import SessionDetail from '@/components/sessions/SessionDetail';
 import { formatDuration, formatSessionDate } from '@/utils/sessions/format';
 
-/** Fila del historial (grilla del prototipo; en < 640 px baja a dos líneas) con detalle expandible. */
-export default function SessionRow({ studentId, session }) {
+/**
+ * Fila del historial (grilla del prototipo; en < 640 px baja a dos líneas) con detalle expandible.
+ * `viewer` (`'trainer'` o `'student'`) solo se le pasa al detalle.
+ */
+export default function SessionRow({ studentId, session, viewer = 'trainer' }) {
   const [open, setOpen] = useState(false);
   const panelId = `session-detail-${session.id}`;
   const text = session.trainer_comment || session.notes;
@@ -54,7 +57,7 @@ export default function SessionRow({ studentId, session }) {
       </div>
       {open && (
         <div id={panelId}>
-          <SessionDetail studentId={studentId} session={session} />
+          <SessionDetail studentId={studentId} session={session} viewer={viewer} />
         </div>
       )}
     </li>
