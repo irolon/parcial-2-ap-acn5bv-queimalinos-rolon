@@ -13,6 +13,24 @@ export async function getSession(studentId, sessionId) {
   return res.data;
 }
 
+/**
+ * POST /sessions → la sesión con `unlocked_achievements` (201 si es nueva, 200 si es un reintento: es idempotente por `id`).
+ * Body: `{ id, routine_id, started_at, finished_at, rpe?, notes? }`.
+ */
+export async function createSession(body) {
+  const res = await request('/sessions', { method: 'POST', body });
+  return res.data;
+}
+
+/**
+ * POST /sessions/:id/sets → `{ saved, failed, unlocked_achievements }` para un lote de hasta 100 series.
+ * También es idempotente por `id` de cada serie; las `failed` son errores por serie, no del pedido.
+ */
+export async function uploadSets(sessionId, sets) {
+  const res = await request(`/sessions/${encodeURIComponent(sessionId)}/sets`, { method: 'POST', body: { sets } });
+  return res.data;
+}
+
 /** PATCH /sessions/:id/comment → resumen actualizado. `''` o `null` borran el comentario. */
 export async function commentSession(sessionId, trainerComment) {
   const res = await request(`/sessions/${encodeURIComponent(sessionId)}/comment`, {
