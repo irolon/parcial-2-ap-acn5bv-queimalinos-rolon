@@ -11,6 +11,7 @@ import {
   stubFetch,
 } from '../../helpers/shared/fetchMock';
 import { STUDENT, TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+import { stubStudentHome } from '../../helpers/student/home';
 import { stubStudents } from '../../helpers/students/students';
 
 beforeEach(() => {
@@ -127,6 +128,7 @@ describe('RegisterPage', () => {
     [STUDENT, '/alumno/hoy'],
   ])('con sesión iniciada (%o) redirige a %s', async (user, target) => {
     setSession(user);
+    if (user.role === 'student') stubStudentHome(); // Hoy pide la rutina, las rutinas, el historial y la racha
     const { pathname } = renderRoute('/registro');
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
     expect(pathname()).toBe(target);

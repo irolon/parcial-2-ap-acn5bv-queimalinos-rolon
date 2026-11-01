@@ -36,6 +36,7 @@ describe('AppShell: sidebar del entrenador', () => {
       'Alumnos',
       'Rutinas',
       'Biblioteca',
+      'Desafíos',
       'Agenda',
       'Mensajes',
     ]);
@@ -84,7 +85,6 @@ describe('AppShell: sidebar del alumno', () => {
       'Mi progreso',
       'Mis rutinas',
       'Historial',
-      'Asistente IA',
       'Mi perfil',
     ]);
     expect(within(sidebar).getByRole('link', { name: 'Mi progreso' })).toHaveAttribute(

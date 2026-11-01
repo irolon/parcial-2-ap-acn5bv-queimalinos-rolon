@@ -93,7 +93,8 @@ async function renewAccessToken() {
   const { refreshToken } = useAuthStore.getState();
   if (!refreshToken) throw new Error('Sin refresh token');
   const { token } = await authApi.refresh(refreshToken);
-  useAuthStore.setState({ token });
+  // Si mientras tanto cerró sesión o entró otra cuenta, el access nuevo es de la anterior: no pisa el de la actual.
+  if (useAuthStore.getState().refreshToken === refreshToken) useAuthStore.setState({ token });
   return token;
 }
 

@@ -18,9 +18,32 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - 🟣 **Sistema** — procesos automáticos (cron jobs, notificaciones, detección de logros)
 - 🟡 **Asistente IA** — actor automatizado vía n8n (tanto para PT como para alumno)
 
-> **Sobre las plataformas en los casos de uso:** cuando se menciona "la app" sin distinguir, se refiere indistintamente a la web o la mobile (ambas soportan a ambos roles con paridad funcional). En los casos donde el flujo tiene un dispositivo típico asociado (ej: registro de sesión en el gym), se aclara la plataforma esperada.
+> **Sobre las plataformas en los casos de uso:** cuando se menciona "la app" sin distinguir, se refiere indistintamente a la web o la mobile (ambas soportan a ambos roles). En los casos donde el flujo tiene un dispositivo típico asociado (ej: registro de sesión en el gym), se aclara la plataforma esperada. Las diferencias del alumno entre la web y la mobile están en la tabla de abajo.
 
 ---
+
+## Qué hace el alumno en cada plataforma
+
+El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero **no hacen lo mismo**: la mobile es la que se usa en el gym (sesión completa, con modo offline y reemplazo de ejercicios) y la web cubre lo central, además de lo que en la mobile todavía está pendiente. La columna Mobile refleja lo que hay hoy en el código de la mobile de `develop`; "Pendiente (en revisión)" es lo que tiene una PR abierta sin mergear.
+
+| Función | Web | Mobile |
+|---|---|---|
+| Hoy: rutina del día, plan y semana (CU-13) | Sí | Sí |
+| Mis rutinas (solo lectura) y biblioteca de ejercicios | Mis rutinas: Sí. Biblioteca: no, solo el video de cada ejercicio | Sí |
+| Ejecutar una sesión (CU-05 / CU-14) | **Simplificada:** un ejercicio por vez, descanso con cuenta regresiva y borrar series antes de subir. Se guarda en el navegador y se sube entera al terminar; necesita red para subir | Completa, con modo offline y sincronización |
+| Feedback post-entreno, RPE y nota (CU-16) | Sí | Sí |
+| Reemplazar un ejercicio | No | Sí |
+| Sesión libre (sin rutina) | No | No |
+| Historial de sesiones, con el comentario del entrenador en solo lectura (CU-17) | Sí | Sí |
+| Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Pendiente |
+| Gráficos de progreso (CU-17) | Sí | Sí (cargas y medidas, en Progreso) |
+| Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Pendiente: hoy el perfil solo tiene Estado del servidor y Cerrar sesión |
+| Notificaciones push y lista de avisos (CU-27) | No | Sí |
+| Pedir turno al entrenador (CU-19) | No | Pendiente (tarjeta de Igna) |
+| Asistente IA (CU-06 / CU-15) | **Pendiente** (tarjetas de IA pospuestas) | **Pendiente** |
+
+---
+
 
 ## CU-01 — Generar invitación para un alumno (WhatsApp o QR)
 
@@ -154,7 +177,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El alumno está autenticado. Tiene al menos una rutina activa asignada. La mobile es la plataforma esperada por el contexto (gym), pero también es factible desde web. |
+| Precondiciones | El alumno está autenticado. Tiene al menos una rutina activa asignada. La mobile es la plataforma esperada por el contexto (gym); desde la web se puede hacer una versión simplificada (ver "Qué hace el alumno en cada plataforma"). |
 | Postcondiciones | Se crea un registro en `sessions`. Cada serie ejecutada queda guardada en `session_sets`. Si hubo modificaciones, `sessions.has_modifications = true` y el PT recibe notificación. |
 
 **Flujo principal**
@@ -174,11 +197,13 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - **1a:** El alumno entrena otra rutina (no la del día) desde Mis rutinas → abre su detalle y toca "Empezar"; sigue en el paso 3. Si ya tiene una sesión abierta de otra rutina, primero tiene que terminarla.
 - **4a:** El alumno saltea una serie → la marca como omitida (`completed = false`).
 - **4b:** El alumno reemplaza un ejercicio (máquina ocupada o no disponible) → abre el chat IA o lo selecciona manualmente. Se registra `substituted_exercise_id` y `has_modifications = true`.
-- **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente, puede retomar más tarde desde cualquier dispositivo.
+- **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente y puede retomarla más tarde, pero en el mismo dispositivo: la de la web vive en ese navegador y la del celular, en el celular (no pasa de uno a otro).
+- **W1 (web):** la sesión vive en el navegador (`localStorage`) y se sube entera al terminar, con el mismo contrato de la mobile. Si queda una a medias, Hoy ofrece "Continuar" o "Descartar"; no incluye 4b (reemplazar ejercicio).
 
 **Flujos de error**
 
 - **E1:** Sin conexión (escenario típico de la mobile en el gym) → los datos se guardan localmente (modo offline) y se sincronizan al recuperar red. El asistente IA queda deshabilitado con aviso.
+- **E2 (web):** si falla la subida, las series siguen guardadas en el navegador y la pantalla ofrece Reintentar (reintentar no duplica). Si el error es permanente, ofrece "Descartar entrenamiento". No hay sincronización en segundo plano: con la sesión terminada pero sin guardar, Hoy ofrece "Terminar de guardar".
 
 ---
 
@@ -188,7 +213,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El alumno tiene una sesión activa y conexión a internet. Disponible desde web o mobile. |
+| Precondiciones | El alumno tiene una sesión activa y conexión a internet. **Pendiente en ambas plataformas** (tarjetas de IA pospuestas); el menú del alumno en la web no lo muestra. |
 | Postcondiciones | El mensaje queda guardado en `chat_messages`. El alumno recibe respuesta con sugerencias o información. |
 
 **Flujo principal**
@@ -278,29 +303,6 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 ---
 
-## CU-09 — Crear y asignar challenge personalizado
-
-**Actor:** Personal Trainer
-
-| Campo | Detalle |
-|---|---|
-| Precondiciones | El PT está autenticado (web o mobile). |
-| Postcondiciones | Se crea un challenge en `challenges`. Si lo asigna a alumnos, se crean registros en `student_challenges`. |
-
-**Flujo principal**
-
-1. El PT entra a la sección "Challenges".
-2. Crea un challenge nuevo: nombre, descripción, tipo de meta (sesiones, peso, racha, volumen), valor meta y duración.
-3. Opcionalmente asocia un logro de recompensa (`reward_achievement_id`).
-4. Lo asigna a uno o más alumnos. El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
-5. Los alumnos reciben una notificación en sus clientes activos.
-
-**Flujos alternativos**
-
-- **4a:** El PT solo crea el challenge sin asignar → queda en su catálogo personal disponible para futuras asignaciones.
-
----
-
 ## CU-10 — Enviar alerta de alumno inactivo o con modificaciones
 
 **Actor:** Sistema (cron job nocturno)
@@ -324,6 +326,37 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujos de error**
 
 - **E1:** FCM o Web Push no disponibles (o sin credenciales, o el token es inválido) → la notificación **igual queda guardada** en `notifications`: es la fuente de verdad y el PT la ve en su listado. El push es best-effort y **no se reintenta**. Si FCM indica que un token ya no es válido, se borra de `push_tokens`.
+
+---
+
+## CU-25 — Crear y asignar desafío (web)
+
+**Actor:** Personal Trainer
+
+> **Numeración:** este caso de uso se numera CU-25 para coincidir con el [[arquitectura/diagrama-casos-de-uso|diagrama de casos de uso]] (donde CU-09 es "Comentar sesión del alumno"). Antes figuraba acá como CU-09.
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El PT está autenticado en la web. |
+| Postcondiciones | Si crea un desafío, se guarda en `challenges` (propio del PT). Si asigna una plantilla o un desafío propio a alumnos, se crean registros en `student_challenges`. |
+
+**Flujo principal**
+
+1. El PT entra a "Desafíos" del menú. La página tiene dos secciones: "Plantillas" (los 4 desafíos globales que vienen con la app: "12 sesiones en 30 días", "Racha de 2 semanas", "10 toneladas en 4 semanas" y "8 sesiones en 4 semanas") y "Mis desafíos" (los que creó él).
+2. En "Plantillas" elige una y toca "Asignar". Las plantillas se asignan directamente, sin copiarse ni modificarse.
+3. El PT elige alumnos con un buscador (hasta 50 por vez) y confirma con "Asignar". El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
+4. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. El alumno ve su desafío activo y su avance en "Mi progreso" de la web (tarjeta 50); la vista en la mobile está pendiente.
+
+**Flujos alternativos**
+
+- **1a:** El PT borra un desafío propio → solo se permite si no tiene asignaciones. Las plantillas globales no se pueden borrar.
+- **2a:** El PT crea un desafío nuevo desde cero: nombre, tipo de meta (sesiones, racha, volumen o peso corporal), valor meta (entero en sesiones y racha; en kg admite decimales, con coma), duración en días y descripción opcional. El premio "Desafío cumplido" es opcional (viene activado por defecto) y el alumno lo recibe **solo la primera vez** que completa un desafío; los siguientes no lo repiten. Al crearlo se abre "Asignar" (paso 3).
+- **2b:** Al crear, el PT elige "Ahora no" → el desafío queda en "Mis desafíos", disponible para asignar más tarde.
+- **3a:** Algún alumno elegido ya tiene ese desafío activo → aparece marcado "Ya lo tiene", no se le vuelve a asignar y al confirmar un aviso lista a los alumnos salteados.
+
+**Flujos de error**
+
+- **E1:** Se intenta asignar a más de 50 alumnos por vez → el backend rechaza el pedido (400) y no asigna a nadie. Si entre los elegidos hay alumnos que no son del PT (o están inactivos), el backend los saltea (`not_your_student`), asigna al resto y los lista en el aviso.
 
 ---
 

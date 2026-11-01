@@ -5,6 +5,7 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+import { stubStudentHome } from '../../helpers/student/home';
 
 const TOKEN = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b';
 const INVITATION = {
@@ -36,9 +37,9 @@ async function fill(password, confirm = password) {
   await user.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
 }
 
-// GET devuelve `get`, POST devuelve `post`.
+// GET devuelve `get`, POST devuelve `post`. Lo de Hoy, al que se llega al crear la cuenta, se contesta aparte.
 const load = ({ get, post }) =>
-  stubFetch(async (url, init) => (init?.method === 'POST' ? post : get));
+  stubStudentHome({}, async (url, init) => (init?.method === 'POST' ? post : get));
 
 describe('JoinPage', () => {
   it('sin token o con token que no es UUID no llama a la API', async () => {

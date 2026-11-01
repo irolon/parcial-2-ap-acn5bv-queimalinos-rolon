@@ -5,7 +5,7 @@ import {
   House,
   List,
   MessageSquare,
-  Sparkles,
+  Trophy,
   User,
 } from 'lucide-react';
 
@@ -19,6 +19,7 @@ export const TRAINER_NAV = {
     { path: 'alumnos', label: 'Alumnos', icon: User, subtitle: 'TUS ALUMNOS' },
     { path: 'rutinas', label: 'Rutinas', icon: List, subtitle: 'PLANES DE ENTRENAMIENTO' },
     { path: 'biblioteca', label: 'Biblioteca', icon: Dumbbell, subtitle: 'EJERCICIOS' },
+    { path: 'desafios', label: 'Desafíos', icon: Trophy, subtitle: 'RETOS PARA TUS ALUMNOS' },
     { path: 'agenda', label: 'Agenda', icon: Calendar, subtitle: 'SESIONES PROGRAMADAS' },
     { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'CONVERSACIONES' },
   ],
@@ -31,10 +32,25 @@ export const STUDENT_NAV = {
     { path: 'progreso', label: 'Mi progreso', icon: ChartLine, subtitle: 'MEDIDAS Y MARCAS' },
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
-    { path: 'asistente', label: 'Asistente IA', icon: Sparkles, subtitle: 'CONSULTAS Y SUGERENCIAS' },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
   ],
 };
+
+/** Sesión activa del alumno: fuera del menú, se entra desde Hoy o desde Mis rutinas. */
+export const WORKOUT_PATH = `${STUDENT_NAV.base}/entrenar`;
+
+/** Lista de rutinas del alumno (el ítem `rutinas` de su menú). */
+export const MY_ROUTINES_PATH = `${STUDENT_NAV.base}/rutinas`;
+
+/** Mi perfil del alumno (el ítem `perfil` de su menú). */
+export const MY_PROFILE_PATH = `${STUDENT_NAV.base}/perfil`;
+
+// Detalle de una rutina del alumno: fuera del menú. El `handle` de router.jsx es el título por defecto;
+// la página puede pisarlo con `usePageHeader`.
+export const STUDENT_ROUTINE = { path: `${STUDENT_NAV.base}/rutinas/:id` };
+
+/** Link al detalle de una de las rutinas del alumno. */
+export const studentRoutineHref = (id) => `${STUDENT_NAV.base}/rutinas/${id}`;
 
 /** Panel de alumnos (el ítem `alumnos` del menú del entrenador). */
 export const STUDENTS_PATH = `${TRAINER_NAV.base}/alumnos`;

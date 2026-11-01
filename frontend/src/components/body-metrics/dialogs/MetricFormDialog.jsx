@@ -23,8 +23,9 @@ const LABELS = {
  * y el backend no duplica. La página lo monta con otra `key` en cada apertura.
  * La talla se precarga con la última cargada en el historial (`metrics`).
  * La fecha arranca en la hora de apertura; vacía toma la del guardado y lo futuro se valida al guardar (sin `max`).
+ * `title` es el título del diálogo: "Cargar medida" para el entrenador y "Registrar medición" para el alumno.
  */
-export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
+export default function MetricFormDialog({ studentId, metrics = [], title = 'Cargar medida', onClose }) {
   const [id] = useState(() => crypto.randomUUID());
   const [openedAt] = useState(() => localInputValue());
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
@@ -63,7 +64,7 @@ export default function MetricFormDialog({ studentId, metrics = [], onClose }) {
       open
       dismissible={!saving}
       onOpenChange={(next) => !next && onClose()}
-      title="Cargar medida"
+      title={title}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={saving}>

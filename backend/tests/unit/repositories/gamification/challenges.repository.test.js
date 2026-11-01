@@ -3,12 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
 
-const result = { current: { data: [], error: null } };
+const result = { current: { data: [], error: null }, queue: [] };
 const q = {};
-for (const m of ['select', 'eq', 'in', 'or', 'order', 'insert', 'update', 'delete', 'maybeSingle', 'single']) {
+for (const m of ['select', 'eq', 'in', 'or', 'order', 'range', 'insert', 'update', 'delete', 'maybeSingle', 'single']) {
   q[m] = jest.fn(() => q);
 }
-q.then = (resolve) => resolve(result.current);
+q.then = (resolve) => resolve(result.queue.length > 0 ? result.queue.shift() : result.current);
 const supabase = { from: jest.fn(() => q) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
@@ -18,6 +18,7 @@ const assignments = await import(src('repositories/gamification/student-challeng
 beforeEach(() => {
   jest.clearAllMocks();
   result.current = { data: [], error: null };
+  result.queue = [];
 });
 
 describe('challenges.repository', () => {
@@ -27,6 +28,22 @@ describe('challenges.repository', () => {
     expect(q.or).toHaveBeenCalledWith('trainer_id.is.null,trainer_id.eq.tr');
     expect(q.eq).toHaveBeenCalledWith('goal_type', 'volume');
     expect(rows.map((r) => r.name)).toEqual(['B', 'A']);
+  });
+
+  it('countByChallenge: sin desafíos no consulta', async () => {
+    await expect(challenges.countByChallenge('tr', [])).resolves.toEqual([]);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('countByChallenge: pagina de a 1000 para no cortar los conteos', async () => {
+    const page = (n) => Array.from({ length: n }, () => ({ challenge_id: 'c', status: 'active' }));
+    result.queue = [{ data: page(1000), error: null }, { data: page(3), error: null }];
+    const rows = await challenges.countByChallenge('tr', ['c']);
+    expect(rows).toHaveLength(1003);
+    expect(q.range).toHaveBeenNthCalledWith(1, 0, 999);
+    expect(q.range).toHaveBeenNthCalledWith(2, 1000, 1999);
+    expect(q.eq).toHaveBeenCalledWith('students.trainer_id', 'tr');
+    expect(q.in).toHaveBeenCalledWith('challenge_id', ['c']);
   });
 
   it('hasActiveAssignments cuenta las activas', async () => {

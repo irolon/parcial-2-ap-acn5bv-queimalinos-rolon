@@ -42,7 +42,7 @@ Definir la solución de la problemática sobre la cual será desarrollado el pro
 
 ## 2.2 Alcance
 
-FitTrainer es una plataforma compuesta por dos clientes — una aplicación web y una aplicación móvil Android — que comparten un único backend y una única base de datos. Ambos clientes soportan a los dos roles del sistema (entrenador y alumno) con **paridad funcional completa**: el rol del usuario determina qué pantallas y permisos se le muestran, no la plataforma desde la que accede. La web ofrece mejor experiencia para tareas largas (armar rutinas, revisar gráficos); la mobile está optimizada para acción rápida en movimiento (registrar series en el gym), pero ninguna funcionalidad está bloqueada por plataforma.
+FitTrainer es una plataforma compuesta por dos clientes — una aplicación web y una aplicación móvil Android — que comparten un único backend y una única base de datos. Ambos clientes soportan a los dos roles del sistema (entrenador y alumno): el rol del usuario determina qué pantallas y permisos se le muestran. La web ofrece mejor experiencia para tareas largas (armar rutinas, revisar gráficos); la mobile está optimizada para acción rápida en movimiento (registrar series en el gym). El entrenador tiene todo en las dos. El alumno tiene en la web la rutina del día, una sesión activa simplificada que se sube al terminar, Mis rutinas, el historial, Mi progreso con racha y logros, y Mi perfil con medidas; en el celular el alumno tiene hoy la rutina del día, Mis rutinas, la sesión completa con modo offline y reemplazo de ejercicio, el feedback y el historial; sus medidas, progreso y logros, las notificaciones push y pedir turno están pendientes en el celular, y el asistente IA del alumno está pendiente en ambas plataformas.
 
 | Funcionalidad | Descripción | Tipificación | Plataforma |
 |---|---|---|---|
@@ -160,7 +160,7 @@ FitTrainer responde a una necesidad concreta del personal trainer independiente 
 | RNF-12 | Onboarding sin fricciones: un nuevo alumno completa el registro vía WhatsApp o QR en menos de 2 minutos sin ayuda externa. |
 | RNF-13 | UX durante el entreno: registrar una serie (peso + reps) no requiere más de 3 taps desde la pantalla principal; usable con una sola mano. |
 | RNF-14 | Tablero del entrenador: el PT se mueve entre alumnos en menos de 2 clics y ve sus métricas principales sin scroll. |
-| RNF-15 | Soporte multiplataforma con paridad de roles. |
+| RNF-15 | Soporte multiplataforma: ambos roles en ambos clientes; el alumno en la web con funcionalidad central y en la mobile con una parte por ahora (ver casos de uso). |
 | RNF-16 | Idioma: producto en español. |
 
 **Disponibilidad y resiliencia**
@@ -442,7 +442,7 @@ El backlog se prioriza por valor para el MVP y se organiza en cuatro fases incre
 
 # 5. Prototipo — Wireframes
 
-Se elaboraron los wireframes de las pantallas principales cubriendo los dos roles (entrenador y alumno) en las dos plataformas (web y móvil Android), reflejando la paridad funcional. Las imágenes se entregan en cuatro archivos PDF adjuntos; aquí se incluye el índice de pantallas.
+Se elaboraron los wireframes de las pantallas principales cubriendo los dos roles (entrenador y alumno) en las dos plataformas (web y móvil Android), cubriendo lo que el diseño prevé para cada rol y plataforma (el asistente IA del alumno en la web queda pendiente de implementación). Las imágenes se entregan en cuatro archivos PDF adjuntos; aquí se incluye el índice de pantallas.
 
 | Archivo adjunto | Rol | Plataforma | Pantallas |
 |---|---|---|---|

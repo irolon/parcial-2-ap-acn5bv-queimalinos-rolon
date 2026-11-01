@@ -188,7 +188,8 @@ Rol: `trainer` / `student`. Sobre un alumno rige la regla de siempre (trainer du
 | GET | `/api/students/:id/achievements` | trainer dueño / el propio alumno | Logros desbloqueados, el más reciente primero |
 | GET | `/api/students/:id/streak` | trainer dueño / el propio alumno | `{ current_streak_days, longest_streak_days, last_session_date }` ([ADR 0005](../docs/adr/0005-racha-contra-dias-asignados.md)) |
 | GET | `/api/students/:id/achievements/progress` | trainer dueño / el propio alumno | Solo lectura: `{ streak, facts, assigned_days, achievements }` con `current`/`target`/`unlocked_at` de cada logro del catálogo (lo usa el celular, tarjeta 15) |
-| GET | `/api/challenges` | trainer/student | Globales + del entrenador. Query `goal_type`; `active_only` se acepta y se ignora |
+| GET | `/api/challenges` | trainer/student | Globales + del entrenador. Query `goal_type`; `active_only` se acepta y se ignora. Para trainer suma `assignments_count` y `active_count` |
+| GET | `/api/challenges/:id/active-students` | trainer | `{ data: string[] }` con los alumnos suyos que lo tienen activo; no visible → 404 `CHALLENGE_NOT_FOUND` |
 | POST | `/api/challenges` | trainer | Crea un desafío (`duration_days` obligatorio). 201 |
 | PATCH | `/api/challenges/:id` | trainer dueño | Edición parcial; global o ajeno → 404 `CHALLENGE_NOT_FOUND`; cambiar `goal_type`/`goal_value` con asignaciones activas → 409 `CHALLENGE_IN_USE` |
 | DELETE | `/api/challenges/:id` | trainer dueño | 204; con cualquier asignación (aun terminada) 409 `CHALLENGE_IN_USE`, para conservar el historial |

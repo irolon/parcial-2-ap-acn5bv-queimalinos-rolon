@@ -16,6 +16,15 @@ export function errorResponse(status, code, message = code, details) {
   return jsonResponse(status, { error: { code, message, details } });
 }
 
+/**
+ * Arma la respuesta de un GET falso: `answer` es el dato (200), un status de error (número, da un error con ese status)
+ * o una función (también async) que lo arma en cada pedido.
+ */
+export async function reply(answer) {
+  const value = await (typeof answer === 'function' ? answer() : answer);
+  return typeof value === 'number' ? errorResponse(value, 'INTERNAL') : jsonResponse(200, { data: value });
+}
+
 /** Stub de `fetch` + `VITE_API_URL`. Llamar a `vi.unstubAllGlobals/Envs` en el afterEach. */
 export function stubFetch(impl) {
   vi.stubEnv('VITE_API_URL', API_URL);

@@ -17,7 +17,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 
 - Garantizar que las funcionalidades core (auth, invitaciones, rutinas, sesiones, progreso, IA, gamificación) funcionen correctamente en ambas plataformas y para ambos roles.
 - Detectar regresiones antes de cada entrega.
-- Validar la experiencia de usuario en los dos roles (Trainer y Alumno) **en ambos clientes** (web y mobile), confirmando paridad funcional.
+- Validar la experiencia de usuario en los dos roles (Trainer y Alumno) **en ambos clientes** (web y mobile), verificando que el alumno tenga en la web lo central (rutina del día, sesión simplificada, historial, progreso, logros y medidas) y que lo que queda solo en el celular esté documentado.
 - Verificar comportamiento del modo offline en sesiones de entrenamiento.
 - Verificar que ambos asistentes IA respondan dentro de los timeouts establecidos y manejen fallbacks correctamente.
 - Verificar tests cruzados: alumno usando la web, entrenador usando la mobile.
@@ -123,10 +123,11 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | E2E-15 | Desbloquear logro de racha | Android | Notificación visual al alumno + registro en student_achievements |
 | E2E-16 | Cumplir challenge asignado | Android + Web | Status pasa a completed, alumno notificado, PT notificado |
 | E2E-17 | Notificación de alumno inactivo | Web | El PT recibe la notificación tras N días sin sesiones |
-| E2E-18 | **Cruzado:** alumno entra desde la web y registra una sesión | Web (rol alumno) | La sesión se guarda igual que desde mobile, queda visible en el dashboard del PT |
+| E2E-18 | **Cruzado:** alumno entra desde la web, entrena una sesión corta y la guarda | Web (rol alumno) | La sesión se guarda igual que desde mobile (mismo contrato `POST /sessions` + series), queda visible en el historial del alumno y en el dashboard del PT |
 | E2E-19 | **Cruzado:** entrenador usa la mobile para responder mensajes y dejar comentarios | Android (rol PT) | El comentario aparece en la sesión del alumno, el alumno recibe notificación |
 | E2E-20 | **Cruzado:** entrenador genera rutina con IA desde la mobile | Android (rol PT) | La propuesta IA llega correctamente al cliente mobile, el PT puede editarla y asignarla |
-| E2E-21 | **Cruzado:** mismo usuario entra desde web y mobile en sesiones distintas | Web + Android | Los datos están sincronizados, la sesión iniciada en una plataforma puede continuarse en la otra |
+| E2E-21 | **Cruzado:** mismo usuario entra desde web y mobile en sesiones distintas | Web + Android | Los datos están sincronizados: lo que el alumno entrenó en una plataforma se ve en la otra. La sesión en curso no se continúa en la otra (la de la web vive en el navegador) |
+| E2E-22 | **Portal del alumno en la web** (tarjeta 50): Hoy con la rutina del día → Empezar entrenamiento → registrar series → Terminar con RPE → ver el resumen → Historial → Mi progreso (racha y logros, con avance en los bloqueados) → Mi perfil → Registrar medición | Web (rol alumno, Supabase dev) | La sesión aparece en el historial y en el progreso, suma a la racha, la medida se ve en Mi perfil y ninguna pantalla queda en blanco. Con la red cortada al guardar, las series siguen en el navegador y Reintentar no duplica. Capturas en `docs/superpowers/specs/assets/50/` |
 
 ### 3.4 Pruebas de Regresión
 

@@ -34,7 +34,7 @@ Entrenadores independientes con entre **10 y 30 alumnos activos**, que trabajan 
 - Producto en **español argentino**, con precios **en pesos** y enfoque local.
 - **Doble asistente IA**: para el entrenador (armado de rutinas) y para el alumno (sustituciones, técnica, calentamiento).
 - **Onboarding sin fricción** por WhatsApp o QR.
-- **Paridad total** entre los clientes web y mobile para ambos roles.
+- **Los dos roles en los dos clientes**: el entrenador con todo en web y mobile, y el alumno con lo central en la web y la experiencia completa en el celular.
 - Apunta al **entrenador independiente** (10–30 alumnos), no a la gestión de gimnasios ni al alto rendimiento profesional.
 - **Plan freemium** accesible para el mercado local.
 - No compite por precio, sino por **valor**: profesionaliza la operatoria del entrenador y mejora la adherencia del alumno.
