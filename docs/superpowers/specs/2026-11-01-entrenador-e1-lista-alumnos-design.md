@@ -24,7 +24,7 @@ La pestaña **Alumnos** del entrenador hoy dice "PRÓXIMAMENTE". Pasa a ser la l
   - `new` ("nuevo"): nunca entrenó y tiene menos de 7 días de alta.
   - `active` ("al día"): el resto.
   - Los días son de calendario en hora argentina.
-- **Filtros:** Todos (activos, sin dados de baja) · Al día · En riesgo · Nuevos (nunca entrenó, cualquier antigüedad) · Dados de baja.
+- **Filtros:** Todos (activos, sin dados de baja) · Al día · En riesgo · Nuevos (el estado `new`: nunca entrenó y menos de 7 días de alta; así el filtro coincide con la etiqueta de la fila, revisión de la #52) · Dados de baja.
 - **Búsqueda** por nombre, local sobre lo cacheado (sin distinguir mayúsculas ni tildes).
 - **Adherencia de 7 días:** días asignados por la rutina activa en los 7 días completos anteriores a hoy (de ayer hacia atrás) en los que el alumno tuvo al menos una sesión terminada, sobre esos días asignados. Sin días asignados → `null` (la fila muestra "Sin plan"). Es la misma noción de "días asignados" que la racha (ADR 0005). La calcula el backend.
 - **Offline:** solo lectura. La lista se cachea en Room y se ve en modo avión con "Actualizado hace X". El refresco es al entrar y con pull-to-refresh.
@@ -41,7 +41,7 @@ Cambio compatible en el módulo Students (de Igna). Cada alumno del listado suma
 
 - `days_per_week`: cantidad de días distintos de las rutinas activas del alumno; `0` si no tiene.
 - `adherence_7d`:
-  - `assigned`: días asignados entre `hoy-7` y `hoy-1`.
+  - `assigned`: días asignados entre `hoy-7` y `hoy-1`. No cuentan los días anteriores al alta del alumno ni los anteriores a la creación de la rutina activa que asigna ese día de la semana (revisión de la #52): un alumno nuevo no arranca con días faltados.
   - `done`: de esos, cuántos tienen al menos una sesión **terminada** (`finished_at` no nulo, fecha de `started_at` en hora argentina).
   - `pct`: `round(done * 100 / assigned)`, o `null` si `assigned = 0`.
 - Se calcula para la página pedida, con una consulta de rutinas activas y una de sesiones para todos los alumnos de la página (sin N+1).
