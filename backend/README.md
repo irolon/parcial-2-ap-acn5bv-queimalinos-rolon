@@ -302,7 +302,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
 - **Historial:** `GET /students/:id/sessions`, `GET /students/:id/sessions/:sessionId` y `PATCH /sessions/:id/comment` (solo `trainer`); ver el contrato.
 - **Descanso real (01/11, compatible):** `session_sets.rest_seconds` (migración `2026-11-01-session-sets-rest.sql`). El celular lo manda en cada serie de `POST /sessions/:id/sets`: los segundos que el alumno descansó **después** de esa serie, con su ajuste, la pausa y "Saltar". `null` = sin dato (series anteriores, última serie de la sesión, ejercicio sin descanso). El detalle del historial lo devuelve en cada serie y suma `planned.rest_seconds` (el de la rutina actual).
-  - **Para la web (Pablo):** en el detalle de una sesión del alumno, mostrar el descanso de cada serie ("desc. 2:00") y marcarlo cuando difiere del plan ("desc. 2:00 (plan 1:30)"). Si alguno de los dos es `null`, sin marca.
+  - **Para la web (Pablo):** en el detalle de una sesión del alumno, mostrar el descanso de cada serie ("desc. 2:00") y marcarlo cuando difiere del plan ("desc. 2:00 (plan 1:30)"). Si alguno de los dos es `null`, sin marca. **Hecho** en la web: el detalle muestra la columna "Desc." y la sesión web del alumno también manda `rest_seconds` (spec del alumno en la web, §8).
 
 ### Gamificación (`/achievements`, `/challenges`)
 
