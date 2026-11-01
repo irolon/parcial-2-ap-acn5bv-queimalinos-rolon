@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { estimatedMinutes, planRows, totalSets } from '@/utils/student/todayPlan';
+import { estimatedMinutes, planRows, totalSets } from '@/utils/routines/todayPlan';
 import { routineExercise } from '../../helpers/routines/studentRoutines';
 
 const exercise = (overrides = {}) => ({ ...routineExercise(), last_session_kg: null, ...overrides });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextTrainingDay, weekStrip } from '@/utils/student/week';
+import { nextTrainingDay, weekStrip } from '@/utils/routines/week';
 
 // Argentina es UTC-3 todo el año: las 23:59 del domingo son las 02:59 UTC del lunes.
 const WEDNESDAY = new Date('2026-10-28T18:00:00Z'); //  miércoles 28/10, 15:00 en Argentina
