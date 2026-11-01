@@ -12,6 +12,9 @@ import com.fittrainer.data.api.history.HistoryDetailDto
 import com.fittrainer.data.api.history.HistoryDetailResponse
 import com.fittrainer.data.api.history.HistoryMetaDto
 import com.fittrainer.data.api.history.HistoryPageDto
+import com.fittrainer.data.api.history.HistorySummaryResponse
+import com.fittrainer.data.api.history.TrainerCommentRequest
+import kotlinx.coroutines.CompletableDeferred
 import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.auth.RequiredUser
 import okhttp3.MediaType.Companion.toMediaType
@@ -87,6 +90,26 @@ class FakeSessionApi : SessionApi {
         historyGates[page]?.await()
         historyError?.let { throw it }
         return historyPages[page] ?: HistoryPageDto(emptyList(), HistoryMetaDto(0, page, limit, 0))
+    }
+
+    /** Comentarios del entrenador (E4): lo que llegó, un error y una compuerta. Responde el resumen con el comentario. */
+    val comments = mutableListOf<Pair<String, TrainerCommentRequest>>()
+    var commentError: Throwable? = null
+    var commentGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun comment(id: String, body: TrainerCommentRequest): HistorySummaryResponse {
+        comments += id to body
+        commentGate?.await()
+        commentError?.let { throw it }
+        val d = details.getValue(id)
+        val comment = body.trainerComment?.trim()?.ifEmpty { null }
+        details = details + (id to d.copy(trainerComment = comment))
+        return HistorySummaryResponse(
+            com.fittrainer.data.api.history.HistorySummaryDto(
+                d.id, d.startedAt, d.finishedAt, d.durationMin, d.routine, d.rpe, d.notes, comment,
+                d.hasModifications, d.sets, d.volumeKg, d.hasPr,
+            ),
+        )
     }
 
     override suspend fun historyDetail(studentId: String, sessionId: String): HistoryDetailResponse {
