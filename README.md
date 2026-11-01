@@ -35,6 +35,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 
 **Web** (React)
 - [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas, historial de sesiones con comentarios del PT, vista de progreso con gráficos (Recharts), y racha, logros y desafíos del PT (crear, asignar y seguir el progreso).
+- [x] **Portal del alumno:** Hoy con la rutina del día, sesión activa simplificada (se guarda en el navegador y se sube al terminar), Mis rutinas, Historial, Mi progreso con logros y Mi perfil con medidas. Offline, push, reemplazar ejercicio y pedir turno quedan solo en el celular.
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.
@@ -42,7 +43,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 
 **En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42).
 
-**Pendiente:** IA (asistente del alumno y del PT, con n8n), agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
+**Pendiente:** IA (asistente del alumno y del PT, con n8n), agenda, mensajería, QA y deploy (S7).
 
 > DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
 

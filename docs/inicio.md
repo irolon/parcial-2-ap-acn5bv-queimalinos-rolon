@@ -18,7 +18,7 @@ Aplicación para personal trainers y sus alumnos · Web + Android · Proyecto fi
 
 ## Resumen del proyecto
 
-FitTrainer es una plataforma con dos clientes — una aplicación web y una aplicación móvil Android — que digitaliza la relación entre el personal trainer y sus alumnos. Ambos roles (entrenador y alumno) pueden acceder indistintamente desde cualquiera de los dos clientes con paridad total de funcionalidades: la web está optimizada para el flujo del entrenador y la mobile para el del alumno, pero ningún feature está bloqueado por plataforma. La diferencia de experiencia la determina el rol del usuario, no el dispositivo. La plataforma permite armar y asignar rutinas, hacer seguimiento del progreso, registrar volúmenes de entrenamiento en el momento, e integra un asistente IA dual: uno que asiste al entrenador en el armado de plantillas de rutinas y otro que acompaña al alumno durante la sesión. Suma componentes de gamificación (logros, rachas y desafíos) para mejorar la adherencia.
+FitTrainer es una plataforma con dos clientes — una aplicación web y una aplicación móvil Android — que digitaliza la relación entre el personal trainer y sus alumnos. Ambos roles (entrenador y alumno) pueden acceder desde cualquiera de los dos clientes: la web está optimizada para el flujo del entrenador y la mobile para el del alumno. El entrenador tiene todo en los dos; el alumno tiene en la web lo central (rutina del día, una sesión simplificada que se sube al terminar, historial, progreso con logros y medidas), y la sesión offline completa, las notificaciones push, reemplazar ejercicios y pedir turno quedan solo en el celular. El asistente IA del alumno está pendiente en las dos plataformas. La plataforma permite armar y asignar rutinas, hacer seguimiento del progreso, registrar volúmenes de entrenamiento en el momento, e integra un asistente IA dual: uno que asiste al entrenador en el armado de plantillas de rutinas y otro que acompaña al alumno durante la sesión. Suma componentes de gamificación (logros, rachas y desafíos) para mejorar la adherencia.
 
 | Campo | Detalle |
 |---|---|
@@ -41,7 +41,7 @@ FitTrainer es una plataforma con dos clientes — una aplicación web y una apli
 - Producto en español, pensado para LATAM y precios en pesos.
 - Doble asistente IA: para el entrenador (generación de plantillas con personalización por alumno) y para el alumno (sustituciones, técnica, calentamiento).
 - Onboarding simplificado vía WhatsApp o QR — fricción mínima para sumar alumnos.
-- Paridad total entre clientes: el alumno puede usar la web cuando está en su casa frente a la PC y el entrenador puede usar la mobile cuando está en el gym o en la calle. Cada rol tiene la misma experiencia funcional en cualquier plataforma.
+- Los dos roles en los dos clientes: el alumno puede ver su rutina, su historial, su progreso y sus logros desde la web, y hasta registrar un entrenamiento simplificado; el entrenador puede usar la mobile en el gym o en la calle. Lo que queda solo en el celular del alumno (sesión offline completa, push, reemplazar ejercicio y pedir turno) está en [[producto/casos-de-uso|Casos de uso]].
 - Foco en el flujo crítico: vinculación + armado de rutina + entrenamiento + seguimiento + logros.
 - Gamificación integrada al MVP (logros, rachas, desafíos) para sostener la adherencia.
 - Modo offline reforzado para gimnasios con mala conectividad.

@@ -18,7 +18,7 @@ Marco estratégico para evaluar la viabilidad del producto antes del lanzamiento
 - **Producto en español pensado para LATAM**, con foco inicial en Argentina (precios en pesos, terminología local, equipamiento común de gimnasios locales).
 - **Doble asistente IA**: uno para el entrenador (generación de plantillas de rutinas personalizables) y otro para el alumno en sesión (sustituciones, técnica, calentamiento, prevención de lesiones).
 - **Onboarding simplificado** vía WhatsApp o QR con carga mínima de datos — fricción mínima para sumar alumnos al sistema.
-- **Paridad total entre clientes**: ambos roles (entrenador y alumno) pueden usar tanto la web como la mobile con todas las funcionalidades. El usuario elige el dispositivo según su contexto, no según su rol.
+- **Los dos roles en los dos clientes**: el entrenador tiene todo en la web y en la mobile; el alumno tiene en la web lo central (rutina, sesión simplificada, historial, progreso, logros y medidas) y en el celular la experiencia completa. El usuario elige el dispositivo según su contexto.
 - **Visión dual real PT + alumno** — flujo natural del negocio, ambos roles tienen experiencias diseñadas para su tarea concreta.
 - **Gamificación integrada al MVP** (logros, rachas, desafíos) para sostener la adherencia del alumno.
 - **Stack moderno** (React, Node.js, Supabase) que permite iteración rápida.
