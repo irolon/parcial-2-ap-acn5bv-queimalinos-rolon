@@ -69,6 +69,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 |
 | CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 |
 | CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 |
+| CU-27 | Recibir y ver avisos | Recibe push de comentarios del PT, récords y logros; los ve en la campana y la lista de avisos (también offline) y quedan leídos al abrirlos | AL-06, AL-11 |
 
 ### Sistema (actor secundario)
 
@@ -93,6 +94,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-05 → CU-08 | `«extend»` | El PT puede opcionalmente partir de una rutina generada por la IA antes de personalizarla |
 | CU-14 → CU-15 | `«extend»` | Consultar al asistente IA durante la sesión es opcional (depende de duda del alumno) |
 | CU-14 → CU-23 | `«extend»` | Si la sesión se ejecutó offline, al recuperar conexión se dispara la sincronización |
+| CU-27 → CU-17 | `«extend»` | Tocar el aviso de un comentario o de un récord abre el historial o los gráficos del alumno |
 | CU-16 → CU-24 | `«extend»` | Tras el feedback, el Sistema evalúa si corresponde otorgar logro, racha o badge |
 | CU-05 → CU-22 | `«extend»` | Si el alumno modifica la rutina asignada, el Sistema notifica al PT (flujo condicional) |
 | CU-19 → CU-10 | `«include»` | Solicitar turno requiere consultar la agenda del PT para ver slots disponibles |
@@ -144,6 +146,7 @@ rectangle "FitTrainer" {
   usecase "CU-18\nRegistrar medidas\ncorporales" as CU18
   usecase "CU-19\nSolicitar turno\nal PT" as CU19
   usecase "CU-20\nVer logros\ny rachas" as CU20
+  usecase "CU-27\nRecibir y ver\navisos" as CU27
 
   ' --- Sistema ---
   usecase "CU-21\nNotificar inactividad\nde alumno" as CU21
@@ -174,6 +177,7 @@ AL --> CU17
 AL --> CU18
 AL --> CU19
 AL --> CU20
+AL --> CU27
 
 ' --- Asociaciones Sistema ---
 SYS --> CU21
@@ -199,6 +203,7 @@ CU15 ..> CU14 : <<extend>>
 CU23 ..> CU14 : <<extend>>
 CU24 ..> CU16 : <<extend>>
 CU22 ..> CU05 : <<extend>>
+CU27 ..> CU17 : <<extend>>
 
 @enduml
 ```
