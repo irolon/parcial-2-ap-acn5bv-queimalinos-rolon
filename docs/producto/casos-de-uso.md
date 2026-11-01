@@ -323,11 +323,11 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 **Flujos alternativos**
 
-- **2a:** El PT crea un desafío nuevo desde cero: nombre, tipo de meta (sesiones, racha, volumen o peso corporal), valor meta, duración en días y descripción opcional. El premio "Desafío cumplido" es opcional (viene activado por defecto) y el alumno lo recibe **solo la primera vez** que completa un desafío; los siguientes no lo repiten. Al crearlo se abre "Asignar" (paso 3).
+- **1a:** El PT borra un desafío propio → solo se permite si no tiene asignaciones. Las plantillas globales no se pueden borrar.
+- **2a:** El PT crea un desafío nuevo desde cero: nombre, tipo de meta (sesiones, racha, volumen o peso corporal), valor meta (entero en sesiones y racha; en kg admite decimales, con coma), duración en días y descripción opcional. El premio "Desafío cumplido" es opcional (viene activado por defecto) y el alumno lo recibe **solo la primera vez** que completa un desafío; los siguientes no lo repiten. Al crearlo se abre "Asignar" (paso 3).
 - **2b:** Al crear, el PT elige "Ahora no" → el desafío queda en "Mis desafíos", disponible para asignar más tarde.
 - **3a:** Algún alumno elegido ya tiene ese desafío activo → aparece marcado "Ya lo tiene", no se le vuelve a asignar y al confirmar un aviso lista a los alumnos salteados.
-- **6a:** El PT borra un desafío propio → solo se permite si no tiene asignaciones. Las plantillas globales no se pueden borrar.
 
 **Flujos de error**
 
-- **E1:** Se intenta asignar a un alumno que no es del PT, o a más de 50 → el backend rechaza el pedido y no asigna a nadie.
+- **E1:** Se intenta asignar a más de 50 alumnos por vez → el backend rechaza el pedido (400) y no asigna a nadie. Si entre los elegidos hay alumnos que no son del PT (o están inactivos), el backend los saltea (`not_your_student`), asigna al resto y los lista en el aviso.
