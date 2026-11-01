@@ -90,7 +90,7 @@ Turno público: `{ id, trainer_id, student: { id, name, avatar_url }, scheduled_
 
 **Notificaciones:**
 - `push-policy`: `appointment: { student: true }`.
-- `texts.appointmentConfirmed`, `appointmentCancelled`, `appointmentCreatedByTrainer`, `appointmentRequested` y `appointmentCancelledByStudent`. Ejemplos: "Tu turno del jue 06/11 a las 18:00 quedó confirmado" y "Lucía pidió un turno para el jue 06/11 a las 18:00".
+- `texts.appointmentConfirmed`, `appointmentCancelled`, `appointmentCreatedByTrainer`, `appointmentRequested` y `appointmentCancelledByStudent`. Ejemplos: "Tu turno del vie 06/11 a las 18:00 quedó confirmado" y "Lucía pidió un turno para el vie 06/11 a las 18:00".
 - Los disparadores van en `triggers.service.js` con `safely`, con `data: { appointment_id }`.
 
 **Capas:** routes, controllers, services, repositories, models y validations en `appointments/` y `availability/`, más utilidades de fecha en `shared/utils/` (o `shared/utils/dates/` si la carpeta pasa de 10). Archivos ≤ 200 líneas.
@@ -98,7 +98,7 @@ Turno público: `{ id, trainer_id, student: { id, name, avatar_url }, scheduled_
 ## 5. Web (`frontend/`)
 
 - El ítem `agenda` del PT deja de ser placeholder y pasa a `AgendaPage`.
-- **Encabezado:** "Agenda", con el subtítulo "SEMANA DEL 3 AL 9 NOV". Botones: "‹", "Hoy", "›", "Disponibilidad" (ghost) y "Nuevo turno" (primary).
+- **Encabezado:** "Agenda", con el subtítulo "SEMANA DEL 2 AL 8 NOV". Botones: "‹", "Hoy", "›", "Disponibilidad" (ghost) y "Nuevo turno" (primary).
 - **Grilla:**
   - Una columna de horas y 7 días; el día de hoy en `accentText`.
   - Una fila por hora entre la primera y la última de la disponibilidad (08–21 si no hay ninguna).
@@ -106,14 +106,14 @@ Turno público: `{ id, trainer_id, student: { id, name, avatar_url }, scheduled_
   - Bloque de turno: el nombre del alumno con borde izquierdo y fondo translúcido del color de su estado (pending `warn`, confirmed `good`, cancelled `ink5` tachado). Debajo, en mono, "PENDIENTE" o "CONFIRMADO".
 - **Toggle** "Mostrar cancelados", apagado por defecto. Leyenda de colores.
 - **Panel del turno** (`Dialog`):
-  - Avatar y nombre del alumno, "Jue 06/11 · 18:00–19:00", estado y nota.
-  - Botones según el estado: Confirmar (si está pendiente) y Cancelar turno (si está pendiente o confirmado y no pasó). Cancelar pide confirmación: "¿Cancelar el turno de Lucía del jue 06/11 a las 18:00? Le avisamos."
+  - Avatar y nombre del alumno, "Vie 06/11 · 18:00–19:00", estado y nota.
+  - Botones según el estado: Confirmar (si está pendiente) y Cancelar turno (si está pendiente o confirmado y no pasó). Cancelar pide confirmación: "¿Cancelar el turno de Lucía del vie 06/11 a las 18:00? Le avisamos."
   - Errores del servidor inline.
 - **Nuevo turno** (`Dialog`): select de alumno activo, fecha (`input date`), hora (select con horas en punto de 06 a 22; las de la disponibilidad marcadas "· disponible" y las ocupadas deshabilitadas) y nota opcional. Un 409 muestra "Ese horario ya está ocupado".
 - **Disponibilidad** (`Dialog`): una fila por día (Lunes … Domingo) con sus franjas "08:00 – 12:00 ✕" y "+ Agregar franja" (dos selects de hora). Validación en el cliente con los mismos mensajes que el backend. Botón Guardar.
 - **Menos de 768 px:** lista de la semana agrupada por día, con turnos tocables; el resto igual.
 - **Datos:** React Query con `['appointments', from, to]` y `['availability']`. Las mutaciones invalidan. Sin polling.
-- **Fechas:** todo en `America/Argentina/Buenos_Aires` (semana de lunes a domingo, etiquetas "jue 06/11"), con utilidades en `utils/agenda/`.
+- **Fechas:** todo en `America/Argentina/Buenos_Aires` (semana de lunes a domingo, etiquetas "vie 06/11"), con utilidades en `utils/agenda/`.
 - **Módulos:** `api/agenda/`, `hooks/agenda/`, `components/agenda/` (subcarpetas si hace falta), `pages/agenda/AgendaPage.jsx`, `utils/agenda/`.
 
 ## 6. Fuera de alcance
@@ -145,3 +145,14 @@ Pantalla del alumno (mobile, Igna; web en la tarjeta 22), feriados y excepciones
   - dos solicitudes simultáneas al mismo horario: una da 201 y la otra 409.
   
   Las capturas van en `docs/superpowers/specs/assets/46/`.
+
+## 8. Ajustes durante la implementación
+
+- El cambio de estado es optimista: se actualiza solo si el estado sigue siendo el que se leyó; si cambió en el medio, 409.
+- El alumno inactivo recibe 403 al pedir un turno y en `/availability/free`; igual puede cancelar los suyos.
+- La grilla es una tabla semántica (`table`).
+- "Mostrar cancelados" apila los turnos cancelados junto a los demás en la misma celda.
+- Las franjas de disponibilidad se editan directamente, sin borrador previo.
+- En "Nuevo turno", las horas ocupadas se marcan " · ocupado" (además de deshabilitadas).
+- Al cambiar de semana no hay parpadeo: se conserva la semana anterior mientras carga (`keepPreviousData`).
+- La RPC `replace_trainer_availability` es `security invoker`.
