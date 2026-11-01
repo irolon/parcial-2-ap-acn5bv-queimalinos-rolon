@@ -1,6 +1,8 @@
 package com.fittrainer.testing.fakes.students
 
 import com.fittrainer.data.api.students.ActiveRoutineDto
+import com.fittrainer.data.api.students.AttendanceResponse
+import com.fittrainer.data.api.students.StreakResponse
 import com.fittrainer.data.api.students.LatestMetricsDto
 import com.fittrainer.data.api.students.StudentDetailDto
 import com.fittrainer.data.api.students.StudentDetailResponse
@@ -49,6 +51,9 @@ class FakeStudentDetailApi(var detail: StudentDetailDto = detailDto()) : Student
         detail = detail.copy(active = active, injuries = injuries)
         return StudentDetailResponse(detail)
     }
+
+    override suspend fun attendance(id: String, month: String): AttendanceResponse = error("no se usa acá")
+    override suspend fun streak(id: String): StreakResponse = error("no se usa acá")
 
     private fun kotlinx.serialization.json.JsonPrimitive.contentOrNullSafe(): String? = if (isString) content else null
 }

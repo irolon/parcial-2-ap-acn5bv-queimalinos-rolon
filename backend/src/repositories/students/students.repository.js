@@ -148,3 +148,17 @@ export async function findFinishedSessionDates(studentIds, fromIso) {
   );
   return groupByStudent(studentIds, rows, (r) => localDate(r.started_at));
 }
+
+/** Sesiones terminadas del alumno que empezaron en [fromIso, toIso) (id y started_at). */
+export async function findFinishedSessionsBetween(studentId, fromIso, toIso) {
+  return fetchAll(() =>
+    supabase
+      .from(SESSIONS_TABLE)
+      .select('id, started_at')
+      .eq('student_id', studentId)
+      .gte('started_at', fromIso)
+      .lt('started_at', toIso)
+      .not('finished_at', 'is', null)
+      .order('id')
+  );
+}

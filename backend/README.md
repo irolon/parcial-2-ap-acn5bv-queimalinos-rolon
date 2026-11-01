@@ -109,6 +109,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | POST | `/api/students` | — | Alta del alumno desde token de invitación |
 | GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`, `days_per_week` y `adherence_7d` (`{ assigned, done, pct }` de los últimos 7 días). Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
 | GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`), `active_routine` (`{ id, name, days }`) y `last_session_at` |
+| GET | `/api/students/:id/attendance?month=YYYY-MM` | trainer dueño / el propio alumno | Resumen del mes (`sessions`, `assigned_days`, `prs`) y estado de cada día (`trained`, `missed`, `rest`, `upcoming`). `month` por defecto es el actual; futuro → 400. **La web puede usarlo para el calendario de asistencia** |
 | PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) |
 | GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
 | POST | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Carga una medida. 201 si es nueva, 200 si es un reintento con el mismo `id` |
