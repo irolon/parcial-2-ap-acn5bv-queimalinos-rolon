@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { clearWorkout, loadWorkout, saveWorkout, studentOfKey } from '@/utils/workout/workoutStorage';
 
 // La sesión en curso de cada alumno, en memoria y compartida por todas las páginas de la pestaña: es la verdad
@@ -45,19 +46,33 @@ export function subscribeWorkout(listener) {
 /**
  * Una sola subida a la vez por `key` (`${studentId}:${workout.id}`): mientras haya una en curso se devuelve esa misma
  * promesa. Con la sesión en la clave, una sesión nueva no espera a la subida de una descartada.
+ * `run(signal)` recibe un `AbortSignal` que se dispara con `cancelUploads()`.
  */
 export function trackUpload(key, run) {
   if (!uploads.has(key)) {
-    const upload = Promise.resolve().then(run).finally(() => {
-      if (uploads.get(key) === upload) uploads.delete(key);
+    const controller = new AbortController();
+    const promise = Promise.resolve().then(() => run(controller.signal)).finally(() => {
+      if (uploads.get(key)?.promise === promise) uploads.delete(key);
     });
-    uploads.set(key, upload);
+    uploads.set(key, { promise, controller });
   }
-  return uploads.get(key);
+  return uploads.get(key).promise;
 }
+
+/** Corta los pedidos en vuelo de todas las subidas y las olvida (lo que el servidor ya confirmó queda guardado). */
+export function cancelUploads() {
+  uploads.forEach(({ controller }) => controller.abort());
+  uploads.clear();
+}
+
+// Si cambia quién inició sesión (cerró sesión, entró otra cuenta o venció la sesión), lo que falta de una subida
+// saldría con el token de otra cuenta: se corta. La sesión queda en ft.workout.<id> y se retoma cuando ese alumno vuelva.
+useAuthStore.subscribe((state, prev) => {
+  if (state.user?.id !== prev.user?.id) cancelUploads();
+});
 
 /** Olvida lo que hay en memoria, como una recarga de la página (para los tests). */
 export function resetWorkoutStore() {
   memory.clear();
-  uploads.clear();
+  cancelUploads();
 }

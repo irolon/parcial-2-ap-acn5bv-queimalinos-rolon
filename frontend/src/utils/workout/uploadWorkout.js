@@ -6,8 +6,11 @@ const isObject = (value) => typeof value === 'object' && value !== null;
 
 const failure = (code, message) => Object.assign(new Error(message), { code });
 
-/** Sin red, timeout, 5xx o 429 (o algo que no es HTTP, como una respuesta ilegible) se puede reintentar; otro 4xx, no. */
-const isRetryable = (status) => status === null || status === 0 || status >= 500 || status === 408 || status === 429;
+/**
+ * Sin red, timeout, 5xx, 429 o 401 (o algo que no es HTTP, como una respuesta ilegible) se puede reintentar; otro 4xx,
+ * no. El 401 llega si no se pudo renovar la sesión: después de volver a entrar, la subida sigue.
+ */
+const isRetryable = (status) => status === null || status === 0 || status >= 500 || [401, 408, 429].includes(status);
 
 function describe(err) {
   const status = Number.isInteger(err?.status) ? err.status : null;
@@ -32,11 +35,12 @@ const outcome = (state, result) => ({ ...result, state, failed: state.upload.fai
  * - `failed` de un lote: rechazos por serie, permanentes. Se juntan, no se reenvían y la subida termina igual.
  * - `unlocked_achievements` de cualquier respuesta: se juntan sin repetir.
  * - `shouldContinue()` se mira antes de cada pedido: si da false (se descartó la sesión), no sale ninguno más y
- *   vuelve `{ ok: false, cancelled: true }` con error `CANCELLED`. Lo que ya estaba en vuelo termina igual.
+ *   vuelve `{ ok: false, cancelled: true }` con error `CANCELLED`. Lo que ya estaba en vuelo termina igual, salvo
+ *   que lo corte `signal`; si un pedido falla cuando `shouldContinue()` ya da false, también vuelve como cancelada.
  * @returns {Promise<{ ok: boolean, cancelled?: true, state, failed: {id, code}[], unlocked: object[],
  *   error?: { status, code, message, retryable } }>}
  */
-export async function uploadWorkout({ api, state, onState = () => {}, shouldContinue = () => true }) {
+export async function uploadWorkout({ api, state, onState = () => {}, shouldContinue = () => true, signal }) {
   let current = state;
   const commit = (next) => {
     current = next;
@@ -53,20 +57,21 @@ export async function uploadWorkout({ api, state, onState = () => {}, shouldCont
     try {
       if (!current.upload.sessionCreated) {
         if (!shouldContinue()) return cancelled();
-        const data = await api.createSession(sessionBody(current));
+        const data = await api.createSession(sessionBody(current), { signal });
         if (!isObject(data)) throw failure('BAD_RESPONSE', 'El servidor respondió sin la sesión');
         commit(applySession(current, data));
       }
       step = 'sets';
       for (const batch of batches(pendingSets(current))) {
         if (!shouldContinue()) return cancelled();
-        const data = await api.uploadSets(current.id, batch.map(setBody));
+        const data = await api.uploadSets(current.id, batch.map(setBody), { signal });
         if (!isObject(data)) throw failure('BAD_RESPONSE', 'El servidor respondió sin el resultado del lote');
         commit(applyBatch(current, batch, data));
       }
       if (pendingSets(current).length > 0) throw failure('INCOMPLETE', 'El servidor no confirmó todas las series');
       return outcome(current, { ok: true });
     } catch (err) {
+      if (!shouldContinue()) return cancelled();
       const sessionGone = step === 'sets' && err?.status === 404;
       if (!sessionGone || recreated) return outcome(current, { ok: false, error: describe(err) });
       recreated = true;

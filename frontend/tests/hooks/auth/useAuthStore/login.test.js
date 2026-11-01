@@ -128,6 +128,17 @@ describe('useAuthStore + client', () => {
     expect(state().token).toBe('nuevo');
   });
 
+  it('si mientras renueva entra otra cuenta, el access renovado no pisa el de la cuenta nueva', async () => {
+    const other = { user: { id: 'u-2' }, token: 'de-la-otra', refreshToken: 'refresh-2', status: 'authenticated' };
+    stubFetch(async (url) => {
+      if (!url.endsWith('/auth/refresh')) return errorResponse(401, 'UNAUTHORIZED');
+      useAuthStore.setState(other); // cerró sesión y entró otra cuenta mientras tanto
+      return jsonResponse(200, { token: 'de-la-anterior', expires_in: '1h' });
+    });
+    await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
+    expect(state()).toMatchObject(other);
+  });
+
   it('si la renovación falla, hace logout y el status pasa a anonymous', async () => {
     stubFetch(async () => errorResponse(401, 'UNAUTHORIZED'));
     await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });

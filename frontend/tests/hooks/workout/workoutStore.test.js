@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import {
-  readWorkout, resetWorkoutStore, subscribeWorkout, trackUpload, writeWorkout,
+  cancelUploads, readWorkout, resetWorkoutStore, subscribeWorkout, trackUpload, writeWorkout,
 } from '@/hooks/workout/workoutStore';
 import { loadWorkout, saveWorkout } from '@/utils/workout/workoutStorage';
 import { freshWorkout, withSets } from '../../helpers/workout/workout';
@@ -94,5 +95,26 @@ describe('workoutStore', () => {
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2));
     release('otra');
     await expect(second).resolves.toBe('otra');
+  });
+
+  it('cancelUploads dispara el `signal` de las subidas en curso y la próxima arranca de nuevo', async () => {
+    let signal;
+    const run = vi.fn((received) => { signal = received; return new Promise(() => {}); });
+    const first = trackUpload('s-1:w-1', run);
+    await vi.waitFor(() => expect(signal).toBeDefined());
+    cancelUploads();
+    expect(signal.aborted).toBe(true);
+    expect(trackUpload('s-1:w-1', run)).not.toBe(first);
+  });
+
+  it('si cambia quién inició sesión (logout u otra cuenta), se cortan las subidas; si sigue el mismo, no', async () => {
+    useAuthStore.setState({ user: { id: 's-1' }, token: 'a', refreshToken: 'r' });
+    const signals = [];
+    trackUpload('s-1:w-1', (signal) => { signals.push(signal); return new Promise(() => {}); });
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
+    useAuthStore.setState({ token: 'renovado' });
+    expect(signals[0].aborted).toBe(false);
+    useAuthStore.setState({ user: null, token: null, refreshToken: null });
+    expect(signals[0].aborted).toBe(true);
   });
 });

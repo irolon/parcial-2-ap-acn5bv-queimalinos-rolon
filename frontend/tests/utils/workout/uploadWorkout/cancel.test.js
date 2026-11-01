@@ -51,4 +51,21 @@ describe('uploadWorkout: shouldContinue', () => {
     expect(sentBatches(api)).toEqual([setIds(1, 100)]);
     expect(result.state.upload.sentSetIds).toEqual(setIds(1, 100));
   });
+
+  it('pasa `signal` a cada pedido', async () => {
+    const api = fakeApi();
+    const { signal } = new AbortController();
+    await uploadWorkout({ api, state: finishedWorkout(150), signal });
+    expect(api.createSession.mock.calls[0][1]).toEqual({ signal });
+    expect(api.uploadSets.mock.calls.map(([, , options]) => options)).toEqual([{ signal }, { signal }]);
+  });
+
+  it('un pedido que falla (cortado por `signal`) cuando ya no hay que seguir vuelve como cancelada, no como error', async () => {
+    let keepGoing = true;
+    const aborted = Object.assign(new Error('aborted'), { name: 'AbortError' });
+    const api = fakeApi({ session: [() => { keepGoing = false; throw aborted; }] });
+    const result = await uploadWorkout({ api, state: finishedWorkout(3), shouldContinue: () => keepGoing });
+    expect(result).toMatchObject({ ok: false, cancelled: true, error: CANCELLED });
+    expect(api.uploadSets).not.toHaveBeenCalled();
+  });
 });

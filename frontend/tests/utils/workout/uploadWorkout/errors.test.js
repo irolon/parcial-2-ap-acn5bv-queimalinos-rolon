@@ -7,6 +7,7 @@ import {
 describe('uploadWorkout: errores del POST /sessions', () => {
   it.each([
     [500, 'INTERNAL'], [502, 'HTTP_ERROR'], [503, 'SERVICE_UNAVAILABLE'], [408, 'HTTP_ERROR'], [429, 'RATE_LIMITED'],
+    [401, 'UNAUTHORIZED'], // no se pudo renovar la sesión: después de volver a entrar, sigue
   ])('%i: se corta y se puede reintentar; la sesión no queda creada', async (status, code) => {
     const api = fakeApi({ session: [httpError(status, code)] });
     const result = await uploadWorkout({ api, state: finishedWorkout(3) });
@@ -17,7 +18,7 @@ describe('uploadWorkout: errores del POST /sessions', () => {
   });
 
   it.each([
-    [400, 'VALIDATION_ERROR'], [401, 'UNAUTHORIZED'], [403, 'FORBIDDEN'], [404, 'NOT_FOUND'],
+    [400, 'VALIDATION_ERROR'], [403, 'FORBIDDEN'], [404, 'NOT_FOUND'],
   ])('%i: error permanente, se devuelve tal cual y no se mandan series', async (status, code) => {
     const api = fakeApi({ session: [httpError(status, code)] });
     const result = await uploadWorkout({ api, state: finishedWorkout(3) });

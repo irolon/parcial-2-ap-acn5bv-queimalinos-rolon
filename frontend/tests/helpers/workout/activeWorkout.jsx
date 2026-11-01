@@ -1,13 +1,30 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import { SESSION_STORAGE_KEY, useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useActiveWorkout } from '@/hooks/workout/useActiveWorkout';
 import { todayRoutine } from '../routines/studentRoutines';
 import { API_URL, errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
 
 export const STUDENT = 's-1';
 
-/** Monta `useActiveWorkout` con su QueryClient. `rerender({ id })` cambia de alumno. */
+/**
+ * Deja iniciada la sesión del alumno `id` (la subida solo sale con ese alumno adentro), sin dejarla en localStorage:
+ * los tests de la sesión en curso miran lo que hay ahí (y algunos lo rompen a propósito).
+ */
+export function signInAs(id) {
+  try {
+    useAuthStore.setState({
+      user: { id, role: 'student' }, token: `access-${id}`, refreshToken: `refresh-${id}`, status: 'authenticated',
+    });
+  } catch {
+    // localStorage roto a propósito: el store ya cambió, solo falló la copia.
+  }
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+/** Monta `useActiveWorkout` con su QueryClient y ese alumno adentro. `rerender({ id })` cambia de alumno. */
 export function renderActiveWorkout(studentId = STUDENT) {
+  signInAs(studentId);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   const view = renderHook(({ id }) => useActiveWorkout(id), { wrapper, initialProps: { id: studentId } });

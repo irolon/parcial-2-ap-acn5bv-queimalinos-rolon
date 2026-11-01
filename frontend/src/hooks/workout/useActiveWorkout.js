@@ -4,6 +4,7 @@ import { createSession, uploadSets } from '@/api/sessions/sessions.api';
 import {
   ACHIEVEMENT_PROGRESS_KEY, STUDENT_ACHIEVEMENTS_KEY, STUDENT_CHALLENGES_KEY, STUDENT_STREAK_KEY,
 } from '@/hooks/achievements/useStudentGamification';
+import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { PROGRESS_KEY } from '@/hooks/progress/useProgress';
 import { TODAY_ROUTINE_KEY } from '@/hooks/routines/useStudentRoutines';
 import { SESSIONS_KEY } from '@/hooks/sessions/useSessions';
@@ -34,7 +35,8 @@ const staleAfterUpload = (studentId) => [
  * - Las acciones devuelven el estado nuevo (o null sin sesión). `register` no registra un peso ilegible ni reps
  *   que no son número: devuelve el mismo estado.
  * - `upload()` fija finished_at y el feedback ("Saltar") si faltaban, sube y, si sale bien, borra la sesión y
- *   refresca lo que cambió. Si la descartan mientras sube, no sale ningún pedido más (`cancelled: true`).
+ *   refresca lo que cambió. Si la descartan mientras sube, o deja de ser este alumno el que inició sesión, no sale
+ *   ningún pedido más (`cancelled: true`) y se cortan los que estaban en vuelo.
  *   Devuelve `{ ok, cancelled?, state, failed, unlocked, error? }` (ver `uploadWorkout`), o null si no hay sesión.
  */
 export function useActiveWorkout(studentId) {
@@ -77,15 +79,16 @@ export function useActiveWorkout(studentId) {
     if (!open) return Promise.resolve(null);
     const { id } = open;
     // Si la descartan mientras sube (o empieza otra), no sale ningún pedido más y lo que avanza no la vuelve a guardar.
-    const isCurrent = () => readWorkout(studentId)?.id === id;
-    return trackUpload(`${studentId}:${id}`, async () => {
+    // Tampoco si ya no es este alumno el que inició sesión: el cliente manda el token de quien esté ahora.
+    const isCurrent = () => useAuthStore.getState().user?.id === studentId && readWorkout(studentId)?.id === id;
+    return trackUpload(`${studentId}:${id}`, async (signal) => {
       if (!isCurrent()) return null;
       const ready = change((s) => readyToUpload(s, new Date()));
       // La subida solo es dueña de `upload`: se guarda sobre lo que haya en memoria (el cursor puede haber cambiado).
       const keepProgress = (state) => {
         if (isCurrent()) writeWorkout(studentId, { ...readWorkout(studentId), upload: state.upload });
       };
-      const result = await uploadWorkout({ api, state: ready, onState: keepProgress, shouldContinue: isCurrent });
+      const result = await uploadWorkout({ api, state: ready, onState: keepProgress, shouldContinue: isCurrent, signal });
       if (result.ok && isCurrent()) writeWorkout(studentId, null);
       // Se refresca si la sesión quedó en el servidor y la copia local dejó de valer: subida entera, o descartada a mitad.
       if (result.ok || (result.cancelled && result.state.upload.sessionCreated)) {
