@@ -2,6 +2,7 @@ import Pill from '@/components/shared/ui/Pill';
 import QueryState from '@/components/shared/states/QueryState';
 import SessionComment from '@/components/sessions/SessionComment';
 import { useSessionDetail } from '@/hooks/sessions/useSessions';
+import { restVsPlan } from '@/utils/sessions/format';
 
 const TH = 'px-2 py-1.5 text-left font-mono text-[10px] font-normal uppercase tracking-[0.8px] text-ink6';
 const TD = 'px-2 py-1.5 font-mono text-xs text-bone0';
@@ -23,12 +24,24 @@ function Planned({ value, unit = '' }) {
   );
 }
 
-function SetRow({ set, planned }) {
+/** Descanso real después de la serie; si difiere del plan, en ámbar y con el del plan al lado (como el celular). */
+function RestCell({ set, planned }) {
+  const rest = restVsPlan(set.rest_seconds, planned?.rest_seconds);
+  if (!rest) return <td className={`${TD} text-ink6`}>—</td>;
+  return (
+    <td className={TD}>
+      <span className={rest.plan ? 'text-warn' : 'text-bone0'}>{rest.rest}</span>
+      {rest.plan && <span className="text-ink6"> (plan {rest.plan})</span>}
+    </td>
+  );
+}
+
+function SetRow({ set, planned, showRest }) {
   if (!set.completed) {
     return (
       <tr className="border-t border-ink3">
         <td className={TD}>{set.set_number}</td>
-        <td colSpan={2} className={`${TD} text-ink6`}>
+        <td colSpan={showRest ? 3 : 2} className={`${TD} text-ink6`}>
           no hecha
         </td>
       </tr>
@@ -51,11 +64,14 @@ function SetRow({ set, planned }) {
           </>
         )}
       </td>
+      {showRest && <RestCell set={set} planned={planned} />}
     </tr>
   );
 }
 
 function ExerciseBlock({ item }) {
+  // La columna del descanso aparece solo si alguna serie lo registró (sesiones viejas o de la web anterior no lo traen).
+  const showRest = item.sets.some((set) => Number.isFinite(set.rest_seconds));
   return (
     <div className="min-w-0">
       <div className="mb-1.5 flex flex-wrap items-center gap-2">
@@ -78,11 +94,16 @@ function ExerciseBlock({ item }) {
               <th scope="col" className={TH}>
                 Kg
               </th>
+              {showRest && (
+                <th scope="col" className={TH}>
+                  Desc.
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
             {item.sets.map((set) => (
-              <SetRow key={set.id} set={set} planned={item.planned} />
+              <SetRow key={set.id} set={set} planned={item.planned} showRest={showRest} />
             ))}
           </tbody>
         </table>
