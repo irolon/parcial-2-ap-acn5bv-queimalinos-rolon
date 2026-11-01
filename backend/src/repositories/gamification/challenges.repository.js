@@ -1,6 +1,6 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
-import { unwrap } from '../../shared/utils/supabase-query.js';
+import { fetchAll, unwrap } from '../../shared/utils/supabase-query.js';
 import {
   ACHIEVEMENTS_TABLE,
   CHALLENGES_TABLE,
@@ -61,12 +61,14 @@ export const hasAssignments = (id) => countAssignments(id);
 /** Asignaciones (challenge_id, status) de los alumnos de ese entrenador para esos desafíos; el service las agrupa. */
 export async function countByChallenge(trainerId, challengeIds) {
   if (challengeIds.length === 0) return [];
-  return unwrap(
-    await supabase
+  // Una fila por asignación: PostgREST corta en 1000, así que se pagina (con orden estable por id).
+  return fetchAll(() =>
+    supabase
       .from(STUDENT_CHALLENGES_TABLE)
-      .select('challenge_id, status, students!inner(trainer_id)')
+      .select('id, challenge_id, status, students!inner(trainer_id)')
       .eq('students.trainer_id', trainerId)
       .in('challenge_id', challengeIds)
+      .order('id')
   );
 }
 
