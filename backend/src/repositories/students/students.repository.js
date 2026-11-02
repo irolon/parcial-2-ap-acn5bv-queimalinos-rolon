@@ -115,6 +115,31 @@ export async function updateStudent(id, fields) {
   return data;
 }
 
+/** Todos los alumnos activos del trainer, por nombre (mensajería: id, name, avatar_url). */
+export async function findActiveStudentsByTrainer(trainerId) {
+  return fetchAll(() =>
+    supabase
+      .from(STUDENTS_TABLE)
+      .select('id, name, avatar_url')
+      .eq('trainer_id', trainerId)
+      .eq('active', true)
+      .order('name')
+      .order('id')
+  );
+}
+
+/** De los `ids` pedidos, los que son alumnos activos del trainer (para validar un envío masivo). */
+export async function findActiveStudentsByIds(trainerId, ids) {
+  const { data, error } = await supabase
+    .from(STUDENTS_TABLE)
+    .select('id')
+    .eq('trainer_id', trainerId)
+    .eq('active', true)
+    .in('id', ids);
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
 /** Agrupa filas por student_id; cada alumno pedido arranca con []. */
 const groupByStudent = (studentIds, rows, pick) => {
   const out = new Map(studentIds.map((id) => [id, []]));
