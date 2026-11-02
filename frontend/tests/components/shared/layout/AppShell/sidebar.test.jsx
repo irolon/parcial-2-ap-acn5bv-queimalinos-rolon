@@ -36,6 +36,7 @@ describe('AppShell: sidebar del entrenador', () => {
       'Alumnos',
       'Rutinas',
       'Biblioteca',
+      'Desafíos',
       'Agenda',
       'Mensajes',
     ]);

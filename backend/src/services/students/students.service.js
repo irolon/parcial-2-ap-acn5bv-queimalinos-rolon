@@ -13,9 +13,10 @@ import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/stu
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
- * sesión, los días por semana de su rutina activa y la adherencia de los
+ * sesión, su racha, los días por semana de su rutina activa y la adherencia de los
  * últimos 7 días (models/students/adherence.js). Por defecto solo activos.
- * Cada dato extra sale de UNA consulta por lote para toda la página.
+ * Cada dato extra sale de UNA consulta por lote para toda la página; la racha sale de
+ * student_streaks (null si todavía no se calculó).
  */
 export async function list(trainerId, { active = true, search, page = 1, limit = 20 } = {}) {
   const { data: rows, total } = await studentsRepo.findStudentsByTrainer({
@@ -32,13 +33,17 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
 
   const ids = rows.map((s) => s.id);
   const today = localDate();
-  const [lastSessions, schedules, finishedDates] = await Promise.all([
+  const [lastSessions, streaks, schedules, finishedDates] = await Promise.all([
     studentsRepo.findLastSessionDates(ids),
+    studentsRepo.findStreaks(ids),
     studentsRepo.findActiveRoutineSchedules(ids),
     // AR = UTC-3 fijo (sin horario de verano), la misma zona que TIMEZONE de shared/utils/dates.js.
     studentsRepo.findFinishedSessionDates(ids, `${adherenceWindowStart(today)}T00:00:00-03:00`),
   ]);
   const lastByStudent = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
+  const streakByStudent = new Map(
+    streaks.map(({ student_id, ...streak }) => [student_id, streak])
+  );
 
   const data = rows.map((s) => {
     const { days: assignedDays, daySince } = schedules.get(s.id) ?? { days: [], daySince: new Map() };
@@ -47,6 +52,7 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
     return {
       ...s,
       last_session_at: lastByStudent.get(s.id) ?? null,
+      streak: streakByStudent.get(s.id) ?? null,
       days_per_week: daysPerWeek(assignedDays),
       adherence_7d: adherence7d({ assignedDays, finishedDates: finishedDates.get(s.id), today, since, daySince }),
     };

@@ -1,6 +1,8 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { isUuid } from '../../shared/utils/validators.js';
-import { GOAL_TYPES } from '../../models/gamification/gamification.model.js';
+import { GOAL_TYPE, GOAL_TYPES } from '../../models/gamification/gamification.model.js';
+
+const INTEGER_GOAL_TYPES = [GOAL_TYPE.SESSIONS_COUNT, GOAL_TYPE.STREAK];
 
 const fail = (details) => {
   throw Errors.validation('Error de validación', details);
@@ -40,6 +42,11 @@ function parseChallenge(body, partial) {
       details.push({ field: 'goal_value', message: 'goal_value debe ser un número mayor a 0' });
     } else out.goal_value = body.goal_value;
   }
+  // Sesiones y días de racha se cuentan de a uno: solo el volumen y el peso admiten decimales.
+  if (INTEGER_GOAL_TYPES.includes(out.goal_type) && out.goal_value !== undefined && !Number.isInteger(out.goal_value)) {
+    details.push({ field: 'goal_value', message: 'goal_value debe ser un entero para metas de sesiones o racha' });
+    delete out.goal_value;
+  }
   if (present('duration_days')) {
     const n = body.duration_days;
     if (!Number.isInteger(n) || n < 1 || n > 365) {
@@ -57,6 +64,16 @@ function parseChallenge(body, partial) {
 }
 
 export const validateCreateChallenge = (body) => parseChallenge(body, false);
+
+/**
+ * La meta como queda después de un PATCH (lo guardado más lo que llega): un PATCH con solo `goal_value` no trae el
+ * tipo, así que el entero de sesiones y racha se chequea acá, contra el desafío completo.
+ */
+export function validateMergedGoal({ goal_type: goalType, goal_value: goalValue }) {
+  if (INTEGER_GOAL_TYPES.includes(goalType) && !Number.isInteger(Number(goalValue))) {
+    fail([{ field: 'goal_value', message: 'goal_value debe ser un entero para metas de sesiones o racha' }]);
+  }
+}
 
 export function validateUpdateChallenge(body) {
   const out = parseChallenge(body, true);

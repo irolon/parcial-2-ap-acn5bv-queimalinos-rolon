@@ -45,6 +45,22 @@ describe('validateCreateChallenge', () => {
   });
 });
 
+describe('goal_value entero en sesiones y racha', () => {
+  it.each(['sessions_count', 'streak'])('%s rechaza decimales', (goal_type) => {
+    expect(fieldsOf(validateCreateChallenge, { ...valid, goal_type, goal_value: 2.5 })).toEqual(['goal_value']);
+    expect(validateCreateChallenge({ ...valid, goal_type, goal_value: 12 })).toMatchObject({ goal_value: 12 });
+  });
+
+  it.each(['volume', 'weight_target'])('%s acepta decimales', (goal_type) => {
+    expect(validateCreateChallenge({ ...valid, goal_type, goal_value: 72.5 })).toMatchObject({ goal_value: 72.5 });
+  });
+
+  it('en el PATCH se exige entero cuando vienen tipo y valor juntos', () => {
+    expect(fieldsOf(validateUpdateChallenge, { goal_type: 'streak', goal_value: 1.5 })).toEqual(['goal_value']);
+    expect(validateUpdateChallenge({ goal_value: 1.5 })).toEqual({ goal_value: 1.5 });
+  });
+});
+
 describe('validateUpdateChallenge', () => {
   it('acepta un solo campo', () => {
     expect(validateUpdateChallenge({ goal_value: 3 })).toEqual({ goal_value: 3 });
