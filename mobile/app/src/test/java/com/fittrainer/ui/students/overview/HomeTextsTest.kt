@@ -3,7 +3,7 @@ package com.fittrainer.ui.students.overview
 import com.fittrainer.data.students.overview.FeedbackItem
 import com.fittrainer.data.students.overview.RiskItem
 import com.fittrainer.data.students.overview.StudentItem
-import com.fittrainer.data.students.overview.StudentStatus
+import com.fittrainer.data.students.StudentStatus
 import com.fittrainer.data.students.overview.TodayItem
 import com.fittrainer.data.students.overview.TrainerOverview
 import java.time.Instant

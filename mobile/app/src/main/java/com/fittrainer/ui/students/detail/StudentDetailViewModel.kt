@@ -17,7 +17,6 @@ import com.fittrainer.data.students.status
 import com.fittrainer.ui.students.syncedAgo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +60,7 @@ class StudentDetailViewModel @Inject constructor(
     val uiState: StateFlow<StudentDetailUiState> =
         combine(cache, connectivity.isOnline, local) { c, online, l ->
             val now = clock.instant()
-            val today = LocalDate.ofInstant(now, ARGENTINA)
+            val today = now.atZone(ARGENTINA).toLocalDate()
             val detail = c.cache?.detail
             StudentDetailUiState(
                 loaded = c.loaded,
