@@ -30,6 +30,19 @@ function stubAgenda({ appointments = [appt()], appointmentsError } = {}) {
   });
 }
 
+/** La semana del 9 al 15 queda colgada hasta `resolve()`; la actual responde enseguida. */
+function deferNextWeek() {
+  let resolve;
+  const pending = new Promise((r) => {
+    resolve = () => r(jsonResponse(200, { data: [appt({ id: 'a-2', scheduled_at: '2026-11-13T21:00:00.000Z' })] }));
+  });
+  stubFetch(async (url) => {
+    if (url.includes('/availability')) return jsonResponse(200, { data: AVAILABILITY });
+    return url.includes('from=2026-11-09') ? pending : jsonResponse(200, { data: [appt()] });
+  });
+  return { resolve: () => resolve() };
+}
+
 function stubMedia(matches) {
   vi.stubGlobal('matchMedia', () => ({ matches, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
 }
@@ -74,7 +87,25 @@ describe('AgendaPage', () => {
     await screen.findByRole('table');
     await user().click(screen.getByRole('button', { name: 'Semana siguiente' }));
     expect(screen.getByRole('table')).toBeVisible();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('skeleton-row')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['la grilla', true],
+    ['la lista angosta', false],
+  ])('con la semana siguiente demorada, %s no muestra los turnos viejos ni "Sin turnos"', async (_, desktop) => {
+    stubMedia(desktop);
+    const next = deferNextWeek();
+    renderRoute('/pt/agenda');
+    await screen.findByRole('button', { name: /viernes 06\/11/ });
+    await user().click(screen.getByRole('button', { name: 'Semana siguiente' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Cargando turnos…');
+    expect(screen.getByRole('status').parentElement).toHaveAttribute('aria-busy', 'true');
+    expect(screen.queryByRole('button', { name: /Lucía QA/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin turnos')).not.toBeInTheDocument();
+    next.resolve();
+    expect(await screen.findByRole('button', { name: 'Lucía QA, pendiente, viernes 13/11 18:00' })).toBeVisible();
+    expect(screen.queryByText('Cargando turnos…')).not.toBeInTheDocument();
   });
 
   it('tras un 409 el panel muestra el turno refrescado', async () => {

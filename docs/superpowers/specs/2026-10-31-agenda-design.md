@@ -155,6 +155,7 @@ Pantalla del alumno (mobile, Igna; web en la tarjeta 22), feriados y excepciones
 - Las franjas de disponibilidad se editan directamente, sin borrador previo.
 - En "Nuevo turno", las horas ocupadas se marcan " · ocupado" (además de deshabilitadas).
 - Al cambiar de semana no hay parpadeo: se conserva la semana anterior mientras carga (`keepPreviousData`).
+- Mientras la semana nueva carga (`isPlaceholderData`), la vista queda atenuada con `aria-busy` y "Cargando turnos…", sin los turnos de la semana anterior (ni para ubicar ni para las filas de la grilla) y sin "Sin turnos" en la lista.
 - La RPC `replace_trainer_availability` es `security invoker`.
 - La grilla agrega filas fuera de la disponibilidad para mostrar los turnos manuales que caen ahí.
 - El panel del turno muestra las iniciales del alumno: `Avatar` no soporta imagen.
