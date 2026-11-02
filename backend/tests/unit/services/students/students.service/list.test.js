@@ -10,6 +10,7 @@ const fakeNow = (iso) => jest.useFakeTimers({ now: new Date(iso), doNotFake: ['n
 describe('students.service — list', () => {
   beforeEach(() => {
     mockStudentsRepo.findLastSessionDates.mockResolvedValue([]);
+    mockStudentsRepo.findStreaks.mockResolvedValue([]);
     mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(new Map());
     mockStudentsRepo.findFinishedSessionDates.mockResolvedValue(new Map());
   });
@@ -124,8 +125,8 @@ describe('students.service — list', () => {
 
     expect(mockStudentsRepo.findLastSessionDates).toHaveBeenCalledWith(['s1', 's2']);
     expect(r.data).toEqual([
-      expect.objectContaining({ id: 's1', last_session_at: '2026-10-15T20:00:00Z' }),
-      expect.objectContaining({ id: 's2', last_session_at: null }),
+      expect.objectContaining({ id: 's1', last_session_at: '2026-10-15T20:00:00Z', streak: null }),
+      expect.objectContaining({ id: 's2', last_session_at: null, streak: null }),
     ]);
   });
 
@@ -134,5 +135,28 @@ describe('students.service — list', () => {
     const r = await service.list('trainer-1', { page: 3 });
     expect(r.data).toEqual([]);
     expect(mockStudentsRepo.findLastSessionDates).not.toHaveBeenCalled();
+    expect(mockStudentsRepo.findStreaks).not.toHaveBeenCalled();
+  });
+
+  it('agrega la racha de cada alumno (sin student_id)', async () => {
+    mockStudentsRepo.findStudentsByTrainer.mockResolvedValue({ data: [{ id: 'a' }], total: 1 });
+    mockStudentsRepo.findStreaks.mockResolvedValue([
+      { student_id: 'a', current_days: 12, longest_days: 20, last_trained_date: '2026-10-30' },
+    ]);
+
+    const r = await service.list('trainer-1', {});
+
+    expect(mockStudentsRepo.findStreaks).toHaveBeenCalledWith(['a']);
+    expect(r.data[0].streak).toEqual({
+      current_days: 12,
+      longest_days: 20,
+      last_trained_date: '2026-10-30',
+    });
+  });
+
+  it('deja streak en null si el alumno no tiene fila', async () => {
+    mockStudentsRepo.findStudentsByTrainer.mockResolvedValue({ data: [{ id: 'a' }], total: 1 });
+    const r = await service.list('trainer-1', {});
+    expect(r.data[0].streak).toBeNull();
   });
 });

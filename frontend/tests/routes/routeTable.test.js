@@ -4,7 +4,7 @@ import { NEW_ROUTINE, NEW_STUDENT, ROUTINES_PATH, STUDENTS_PATH, STUDENT_NAV, ST
 describe('tabla de rutas', () => {
   it('tiene los ítems del entrenador en el orden del prototipo', () => {
     expect(TRAINER_NAV.items.map((i) => i.label)).toEqual([
-      'Dashboard', 'Alumnos', 'Rutinas', 'Biblioteca', 'Agenda', 'Mensajes',
+      'Dashboard', 'Alumnos', 'Rutinas', 'Biblioteca', 'Desafíos', 'Agenda', 'Mensajes',
     ]);
   });
 
