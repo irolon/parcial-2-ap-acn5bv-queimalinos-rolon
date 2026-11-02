@@ -1,6 +1,10 @@
 import { STATUS_STYLES, appointmentAriaLabel, studentName } from './status';
+import { TOUCH_BLOCK } from './touch';
 
-/** Turno dentro de una celda o de la lista: botón con el color de su estado. */
+/**
+ * Turno dentro de una celda o de la lista: botón con el color de su estado. En la vista angosta (la lista) mide al menos
+ * 44 px de alto (`TOUCH_BLOCK`); la grilla de escritorio no cambia.
+ */
 export default function AppointmentBlock({ appointment, onSelect }) {
   const style = STATUS_STYLES[appointment.status];
   return (
@@ -9,7 +13,7 @@ export default function AppointmentBlock({ appointment, onSelect }) {
       aria-label={appointmentAriaLabel(appointment)}
       data-status={appointment.status}
       onClick={() => onSelect(appointment)}
-      className={`flex w-full cursor-pointer flex-col items-start rounded-[5px] border-l-2 px-2 py-1 text-left focus-visible:outline-2 focus-visible:outline-accentText ${style.block}`}
+      className={`flex w-full cursor-pointer flex-col items-start rounded-[5px] border-l-2 px-2 py-1 text-left focus-visible:outline-2 focus-visible:outline-accentText ${TOUCH_BLOCK} ${style.block}`}
     >
       <span
         className={`w-full truncate font-display text-[11px] font-medium leading-tight text-bone0 ${
