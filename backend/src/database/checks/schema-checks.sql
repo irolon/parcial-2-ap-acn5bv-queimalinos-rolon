@@ -102,6 +102,13 @@ where not exists (
 )
 
 union all
+select 'falta el trigger appointments_student_active'
+where not exists (
+  select 1 from pg_trigger
+  where tgrelid = to_regclass('public.appointments') and tgname = 'appointments_student_active' and not tgisinternal
+)
+
+union all
 select 'falta la vista student_last_session'
 where to_regclass('public.student_last_session') is null
 
