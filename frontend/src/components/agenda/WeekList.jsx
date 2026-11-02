@@ -3,8 +3,8 @@ import AppointmentBlock from './AppointmentBlock';
 
 const pad = (n) => String(n).padStart(2, '0');
 
-/** Semana en lista por día (menos de 768 px). */
-export default function WeekList({ week, appointments, showCancelled, onSelect }) {
+/** Semana en lista por día (menos de 768 px). Con `loading` no dice "Sin turnos": la semana todavía no llegó. */
+export default function WeekList({ week, appointments, loading = false, showCancelled, onSelect }) {
   const shown = [...groupByCell(appointments, showCancelled).values()].flat();
   return (
     <div className="flex flex-col gap-4">
@@ -18,7 +18,7 @@ export default function WeekList({ week, appointments, showCancelled, onSelect }
               {day.label}
             </h3>
             {items.length === 0 ? (
-              <p className="font-body text-sm text-ink6">Sin turnos</p>
+              !loading && <p className="font-body text-sm text-ink6">Sin turnos</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {items.map((appt) => (

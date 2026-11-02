@@ -31,6 +31,8 @@ export default function AgendaPage() {
   const appointments = useAppointments(week.from, week.to, { keepPrevious: true });
   // Tras un 409 se refrescan los turnos: el panel muestra la versión nueva.
   const current = appointments.data?.find((a) => a.id === selected?.id) ?? selected;
+  // Con la semana anterior como placeholder no se ubica nada: la vista queda atenuada hasta que llega la nueva.
+  const refreshing = appointments.isPlaceholderData;
   const availability = useAvailability();
   const loading = appointments.isPending || availability.isPending;
   const failed = appointments.isError || availability.isError;
@@ -54,13 +56,21 @@ export default function AgendaPage() {
       {loading && <LoadingState />}
       {!loading && failed && <ErrorState onRetry={retry} />}
       {!loading && !failed && (
-        <View
-          week={week}
-          availability={availability.data}
-          appointments={appointments.data}
-          showCancelled={showCancelled}
-          onSelect={setSelected}
-        />
+        <div aria-busy={refreshing || undefined} className={refreshing ? 'opacity-50 transition-opacity' : undefined}>
+          {refreshing && (
+            <p role="status" className="mb-2 font-body text-sm text-ink6">
+              Cargando turnos…
+            </p>
+          )}
+          <View
+            week={week}
+            availability={availability.data}
+            appointments={refreshing ? [] : appointments.data}
+            loading={refreshing}
+            showCancelled={showCancelled}
+            onSelect={setSelected}
+          />
+        </div>
       )}
       <Legend />
       <AppointmentDialog appointment={current} onClose={() => setSelected(null)} />
