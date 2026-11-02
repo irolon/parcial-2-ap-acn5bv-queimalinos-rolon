@@ -93,7 +93,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.stepOne(state: NewRou
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
                 Checkbox(checked = state.deactivateCurrent, onCheckedChange = viewModel::onToggleDeactivate)
-                Text(DEACTIVATE_CURRENT, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
+                Text(deactivateLabel(state.activeRoutines.map { it.name }), style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
             }
         }
     }

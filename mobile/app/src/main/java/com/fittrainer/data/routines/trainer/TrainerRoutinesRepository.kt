@@ -36,6 +36,10 @@ class TrainerRoutinesRepository @Inject constructor(
 
     private val locks = ConcurrentHashMap<String, Mutex>()
     private val reorders = ReorderTracker()
+    // Ordena las escrituras del orden en Room: arrancar un reorder (aplicar el orden local) y guardar un
+    // detalle del servidor nunca se intercalan, así lo que se guarda no pisa un ↑ que llegó en el medio.
+    // Nunca se toma con la red en curso, y adentro no se pide el Mutex de [write].
+    private val orderLock = Mutex()
 
     /** null = la lista de ese alumno nunca se bajó. */
     fun observeStudentRoutines(trainerId: String, studentId: String): Flow<StudentRoutinesCache?> =
@@ -88,31 +92,56 @@ class TrainerRoutinesRepository @Inject constructor(
      * último reorder de la rutina se guarda (así un ↑↑↑ rápido no "salta" para atrás). Si el último falla,
      * Room vuelve a lo que diga el servidor (o, sin red, al último orden que confirmó). El ticket se cierra
      * siempre, también si se cancela (salir de la pantalla): así el tracker nunca queda con un estado viejo,
-     * y al volver a entrar el editor refresca la rutina desde el servidor.
+     * y al volver a entrar el editor refresca la rutina desde el servidor. Un GET que estaba en vuelo cuando
+     * se tocó ↑/↓ no pisa el orden local (ver [save]).
      */
     suspend fun reorder(trainerId: String, id: String, ids: List<String>): Result<Unit> {
-        val ticket = reorders.start(id, dao.exercises(trainerId, id).map { it.id })
+        // started: el ticket se abrió. Todo va dentro del try, así una cancelación durante applyOrder también
+        // lo cierra (si no, el orden pendiente se impondría a cada GET aunque el PUT nunca haya salido).
+        var started = false
+        var ticket = 0
         try {
-            dao.applyOrder(trainerId, ids)
+            orderLock.withLock {
+                ticket = reorders.start(id, dao.exercises(trainerId, id).map { it.id }, ids)
+                started = true
+                dao.applyOrder(trainerId, ids)
+            }
+            val latest = { reorders.isLatest(id, ticket) }
             val result = write(trainerId, id) {
                 val detail = api.reorder(id, ReorderRequest(ids)).data
                 reorders.confirm(id, detail.exercises.sortedBy { it.orderIndex }.map { it.id })
-                if (reorders.isLatest(id, ticket)) save(trainerId, detail)
+                save(trainerId, detail, onlyIf = latest)
             }
-            if (result.isFailure && reorders.isLatest(id, ticket)) {
+            if (result.isFailure && latest()) {
                 val confirmed = reorders.confirmed(id)
-                if (refreshRoutine(trainerId, id).isFailure) confirmed?.let { dao.applyOrder(trainerId, it) }
+                // Reconciliar: acá sí va el orden del servidor, no el que se pidió y falló.
+                val refreshed = write(trainerId, id) { save(trainerId, api.get(id).data, keepPendingOrder = false, onlyIf = latest) }
+                if (refreshed.isFailure) orderLock.withLock { if (latest()) confirmed?.let { dao.applyOrder(trainerId, it) } }
             }
             return result
         } finally {
-            reorders.finish(id)
+            if (started) reorders.finish(id)
         }
     }
 
     private suspend fun fetchDetail(trainerId: String, id: String) = save(trainerId, api.get(id).data)
 
-    private suspend fun save(trainerId: String, detail: TrainerRoutineDetailDto) =
-        dao.replaceRoutine(detail.toEntity(trainerId), detail.toExerciseEntities(trainerId))
+    /**
+     * Con un reorder en vuelo, lo que viene del servidor (un GET, un PATCH) trae el orden de antes del PUT,
+     * que espera el Mutex: se guarda ya con el orden pedido, en la misma transacción. Así Room nunca muestra
+     * el viejo y el próximo ↑ sale del bueno. [onlyIf] se evalúa con el lock tomado.
+     */
+    private suspend fun save(
+        trainerId: String,
+        detail: TrainerRoutineDetailDto,
+        keepPendingOrder: Boolean = true,
+        onlyIf: () -> Boolean = { true },
+    ) = orderLock.withLock {
+        if (!onlyIf()) return@withLock
+        val pending = if (keepPendingOrder) reorders.requested(detail.id) else null
+        val exercises = detail.toExerciseEntities(trainerId).let { if (pending == null) it else it.withOrder(pending) }
+        dao.replaceRoutine(detail.toEntity(trainerId), exercises)
+    }
 
     private suspend fun bestEffort(block: suspend () -> Unit) {
         try {

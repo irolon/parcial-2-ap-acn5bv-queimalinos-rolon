@@ -142,7 +142,7 @@ class NewRoutineViewModel @Inject constructor(
     }
 
     /**
-     * Un solo POST (un doble toque no crea dos, tampoco después de crear). Si "Desactivar la rutina actual" está marcado, después
+     * Un solo POST (un doble toque no crea dos, tampoco después de crear). Si "Desactivar …" está marcado, después
      * desactiva cada una de las que estaban activas; si alguna falla, la nueva queda igual y se avisa.
      */
     fun onCreate() {

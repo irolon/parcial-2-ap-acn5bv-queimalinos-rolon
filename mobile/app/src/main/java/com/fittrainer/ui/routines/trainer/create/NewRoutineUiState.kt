@@ -9,7 +9,10 @@ import com.fittrainer.ui.routines.trainer.components.ExerciseSheetState
 import com.fittrainer.ui.routines.trainer.picker.PickerState
 
 const val NEW_ROUTINE_TITLE = "Rutina nueva"
-const val DEACTIVATE_CURRENT = "Desactivar la rutina actual"
+/** "Desactivar la rutina actual (Push)" o, si tiene más de una activa, "Desactivar las rutinas activas (Push, Pull)". */
+fun deactivateLabel(names: List<String>): String =
+    if (names.size > 1) "Desactivar las rutinas activas (${names.joinToString(", ")})"
+    else "Desactivar la rutina actual" + names.singleOrNull()?.let { " ($it)" }.orEmpty()
 const val NEW_ROUTINE_NO_EXERCISES = "Agregá al menos un ejercicio"
 const val CREATE_FAILED = "No pudimos crear la rutina. Probá de nuevo."
 
@@ -21,7 +24,7 @@ fun deactivateFailed(names: List<String>): String =
 data class NewRoutineDone(val routineId: String, val warning: String?)
 
 /**
- * Paso 1: nombre, objetivo, días y "Desactivar la rutina actual" (solo si tiene alguna activa).
+ * Paso 1: nombre, objetivo, días y "Desactivar …" las activas (solo si tiene alguna, ver [deactivateLabel]).
  * Paso 2: los ejercicios, en una lista local con ↑/↓; "Crear" manda todo junto.
  */
 data class NewRoutineUiState(
