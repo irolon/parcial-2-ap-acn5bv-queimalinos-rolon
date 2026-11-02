@@ -25,6 +25,11 @@ class RoleTabsTest {
         assertFalse(isTabSelected(STUDENT_ROUTINES_ROUTE, historyDetailRoute("a")))
     }
 
+    @Test fun alumnosQuedaMarcadaAlInvitar() {
+        assertTrue(isTabSelected(TRAINER_STUDENTS_ROUTE, TRAINER_INVITE_ROUTE))
+        assertFalse(isTabSelected("trainer/home", TRAINER_INVITE_ROUTE))
+    }
+
     @Test fun conLaSesionActivaNingunaPestanaQuedaMarcada() {
         assertTrue(StudentTabs.none { isTabSelected(it.route, WORKOUT_ROUTE) })
     }

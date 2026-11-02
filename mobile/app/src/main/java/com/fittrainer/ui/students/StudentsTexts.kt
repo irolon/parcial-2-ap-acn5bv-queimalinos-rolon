@@ -12,13 +12,15 @@ import java.time.temporal.ChronoUnit
 const val STUDENTS_TITLE = "Alumnos"
 const val STUDENTS_SEARCH_HINT = "Buscar alumno…"
 const val STUDENTS_EMPTY_TITLE = "Todavía no tenés alumnos"
-const val STUDENTS_EMPTY_BODY = "Cuando un alumno acepte tu invitación, va a aparecer acá."
+const val STUDENTS_EMPTY_BODY = "Invitalo con un QR o por WhatsApp; cuando acepte, aparece acá."
 const val STUDENTS_NO_MATCH = "Ningún alumno coincide con el filtro o la búsqueda."
 const val STUDENTS_ERROR_TITLE = "No pudimos bajar tus alumnos"
 const val STUDENTS_OFFLINE_ERROR = "Sin conexión. Conectate y reintentá."
 const val STUDENTS_REFRESH_FAILED = "No pudimos actualizar. Mostrando la última lista"
 const val STUDENTS_RETRY = "Reintentar"
 const val NO_PLAN = "Sin plan"
+const val STUDENTS_INVITE = "Invitar alumno"
+const val STUDENTS_INVITE_FIRST = "Invitar a tu primer alumno"
 
 /** "Hoy", "Ayer", "Hace N días" o "Nunca entrenó", en días de calendario argentinos. */
 fun lastTrainingLabel(lastSessionAt: Instant?, today: LocalDate): String {

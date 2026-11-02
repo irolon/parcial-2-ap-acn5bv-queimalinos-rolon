@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fittrainer.ui.health.HealthScreen
+import com.fittrainer.ui.invitations.InviteScreen
 import com.fittrainer.ui.notifications.NotificationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 import com.fittrainer.ui.library.LibraryScreen
@@ -123,7 +124,9 @@ fun RoleShell(
                             openRequest = progressOpen,
                             onOpenHandled = launches::onProgressOpenHandled,
                         )
-                        tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen()
+                        tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen(
+                            onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                        )
                         else -> PlaceholderScreen(tab.label)
                     }
                 }
@@ -143,6 +146,9 @@ fun RoleShell(
             }
             composable(ROUTINE_DETAIL_ROUTE) {
                 RoutineDetailScreen(onBack = { navController.popBackStack() }, onOpenWorkout = openWorkout)
+            }
+            composable(TRAINER_INVITE_ROUTE) {
+                InviteScreen(onBack = { navController.popBackStack() })
             }
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
