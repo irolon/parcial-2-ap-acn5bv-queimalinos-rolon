@@ -29,7 +29,7 @@ import com.fittrainer.data.routines.trainer.RoutineField
 import com.fittrainer.data.routines.trainer.WEEK_DAYS
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
 import com.fittrainer.ui.routines.trainer.components.CheckRow
-import com.fittrainer.ui.routines.trainer.create.DEACTIVATE_CURRENT
+import com.fittrainer.ui.routines.trainer.create.deactivateLabel
 import com.fittrainer.ui.routines.trainer.dayChip
 import com.fittrainer.ui.templates.trainer.PREVIOUS_LOADING
 import com.fittrainer.ui.theme.FtColors
@@ -97,7 +97,7 @@ fun AssignTemplateSheet(
                 PreviousRoutines.READY -> Unit
             }
             if (state.showDeactivate) {
-                CheckRow(DEACTIVATE_CURRENT, state.deactivateCurrent, enabled = on, onChange = onToggleDeactivate)
+                CheckRow(deactivateLabel(state.activeRoutines.map { it.name }), state.deactivateCurrent, enabled = on, onChange = onToggleDeactivate)
             }
             Button(onClick = onSubmit, enabled = on && state.canSubmit, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text(if (state.submitting) "Asignando…" else "Asignar")

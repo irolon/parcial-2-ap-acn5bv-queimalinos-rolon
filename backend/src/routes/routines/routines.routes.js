@@ -45,7 +45,6 @@ router.post(
   validate(validateAddExercises),
   routinesController.addExercises
 );
-// Antes de '/:id/exercises/:routineExerciseId': 'order' no es un UUID.
 router.put(
   '/:id/exercises/order',
   requireRole('trainer'),

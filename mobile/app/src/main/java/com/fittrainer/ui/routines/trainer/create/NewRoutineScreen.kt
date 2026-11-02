@@ -91,7 +91,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.stepOne(state: NewRou
     item { RoutineHeaderFields(state.header, state.headerErrors, enabled = true, onChange = viewModel::onHeaderChange) }
     if (state.showDeactivate) {
         item {
-            CheckRow(DEACTIVATE_CURRENT, state.deactivateCurrent, onChange = viewModel::onToggleDeactivate)
+            CheckRow(deactivateLabel(state.activeRoutines.map { it.name }), state.deactivateCurrent, onChange = viewModel::onToggleDeactivate)
         }
     }
     item {
