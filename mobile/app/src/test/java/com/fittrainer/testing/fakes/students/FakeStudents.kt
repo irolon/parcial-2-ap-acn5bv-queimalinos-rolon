@@ -1,6 +1,7 @@
 package com.fittrainer.testing.fakes.students
 
 import com.fittrainer.data.api.students.AdherenceDto
+import com.fittrainer.data.api.students.StudentDetailResponse
 import com.fittrainer.data.api.students.PageMetaDto
 import com.fittrainer.data.api.students.StudentListItemDto
 import com.fittrainer.data.api.students.StudentListResponse
@@ -8,6 +9,7 @@ import com.fittrainer.data.api.students.StudentsApi
 import com.fittrainer.data.students.Adherence
 import com.fittrainer.data.students.TrainerStudent
 import java.time.Instant
+import kotlinx.serialization.json.JsonObject
 
 fun studentDto(
     id: String = "s1",
@@ -50,4 +52,7 @@ class FakeStudentsApi(
             meta = PageMetaDto(total = all.sumOf { it.size }, page = page, totalPages = all.size),
         )
     }
+
+    override suspend fun get(id: String): StudentDetailResponse = error("no se usa en la lista")
+    override suspend fun update(id: String, body: JsonObject): StudentDetailResponse = error("no se usa en la lista")
 }

@@ -2,6 +2,7 @@ package com.fittrainer.di.students
 
 import com.fittrainer.data.session.UserDataCleaner
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,4 +17,8 @@ abstract class StudentsModule {
     @Binds
     @IntoSet
     abstract fun bindTrainerStudentsCleaner(impl: TrainerStudentsRepository): UserDataCleaner
+
+    @Binds
+    @IntoSet
+    abstract fun bindTrainerStudentDetailCleaner(impl: TrainerStudentDetailRepository): UserDataCleaner
 }

@@ -32,7 +32,7 @@ import com.fittrainer.data.invitation.invite.MAX_EQUIPMENT
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
-/** Selector de una opción del backend, con "Sin definir" para dejarlo vacío. */
+/** Selector de una opción del backend, con "Sin definir" para dejarlo vacío si [allowNone]. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OptionPicker(
@@ -41,6 +41,7 @@ fun OptionPicker(
     options: List<String>,
     labelOf: (String?) -> String,
     error: String?,
+    allowNone: Boolean = true,
     onSelect: (String?) -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
@@ -57,7 +58,7 @@ fun OptionPicker(
                 modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
             )
             ExposedDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                (listOf<String?>(null) + options).forEach { option ->
+                ((if (allowNone) listOf<String?>(null) else emptyList()) + options).forEach { option ->
                     DropdownMenuItem(
                         text = { Text(labelOf(option)) },
                         onClick = { onSelect(option); open = false },

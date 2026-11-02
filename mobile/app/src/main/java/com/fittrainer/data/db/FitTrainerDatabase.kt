@@ -21,6 +21,8 @@ import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.routine.RoutineEntity
 import com.fittrainer.data.db.routine.RoutineExerciseEntity
 import com.fittrainer.data.db.routine.RoutineSyncEntity
+import com.fittrainer.data.db.students.TrainerStudentDetailDao
+import com.fittrainer.data.db.students.TrainerStudentDetailEntity
 import com.fittrainer.data.db.students.TrainerStudentEntity
 import com.fittrainer.data.db.students.TrainerStudentsDao
 import com.fittrainer.data.db.students.TrainerStudentsSyncEntity
@@ -60,8 +62,9 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         NotificationPendingReadEntity::class,
         TrainerStudentEntity::class,
         TrainerStudentsSyncEntity::class,
+        TrainerStudentDetailEntity::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -77,6 +80,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 9, to = 10),
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 11, to = 12),
+        AutoMigration(from = 12, to = 13),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -88,4 +92,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun progressDao(): ProgressDao
     abstract fun notificationDao(): NotificationDao
     abstract fun trainerStudentsDao(): TrainerStudentsDao
+    abstract fun trainerStudentDetailDao(): TrainerStudentDetailDao
 }
