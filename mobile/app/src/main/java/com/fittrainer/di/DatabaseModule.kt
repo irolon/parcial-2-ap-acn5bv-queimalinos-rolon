@@ -11,6 +11,7 @@ import com.fittrainer.data.db.progress.ProgressDao
 import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.students.TrainerStudentDetailDao
 import com.fittrainer.data.db.students.TrainerStudentsDao
+import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsDao
 import com.fittrainer.data.db.students.progress.TrainerAttendanceDao
 import com.fittrainer.data.db.students.sessions.TrainerSessionsDao
 import com.fittrainer.data.db.workout.WorkoutDao
@@ -76,6 +77,9 @@ object DatabaseModule {
 
     @Provides
     fun provideTrainerAttendanceDao(db: FitTrainerDatabase): TrainerAttendanceDao = db.trainerAttendanceDao()
+
+    @Provides
+    fun provideTrainerStudentMetricsDao(db: FitTrainerDatabase): TrainerStudentMetricsDao = db.trainerStudentMetricsDao()
 
     @Provides
     @Singleton

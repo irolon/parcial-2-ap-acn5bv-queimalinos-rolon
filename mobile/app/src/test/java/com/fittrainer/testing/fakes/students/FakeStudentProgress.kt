@@ -1,5 +1,8 @@
 package com.fittrainer.testing.fakes.students
 
+import com.fittrainer.data.api.students.CreateMetricRequest
+import com.fittrainer.data.api.students.MetricResponse
+import com.fittrainer.data.api.students.MetricsResponse
 import com.fittrainer.data.api.students.AttendanceDayDto
 import com.fittrainer.data.api.students.AttendanceDto
 import com.fittrainer.data.api.students.AttendanceResponse
@@ -41,6 +44,9 @@ class FakeProgressApi : StudentsApi {
     override suspend fun list(active: Boolean, page: Int, limit: Int) = StudentListResponse()
     override suspend fun get(id: String): StudentDetailResponse = error("no se usa acá")
     override suspend fun update(id: String, body: JsonObject): StudentDetailResponse = error("no se usa acá")
+    override suspend fun metrics(id: String): MetricsResponse = error("no se usa acá")
+    override suspend fun addMetric(id: String, body: CreateMetricRequest): MetricResponse = error("no se usa acá")
+    override suspend fun deleteMetric(id: String, metricId: String): retrofit2.Response<Unit> = error("no se usa acá")
 }
 
 class FakeTrainerAttendanceDao : TrainerAttendanceDao() {

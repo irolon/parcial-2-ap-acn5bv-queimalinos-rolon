@@ -51,6 +51,7 @@ fun StudentDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onGone: () -> Unit,
+    onOpenMetrics: ((openNew: Boolean) -> Unit)? = null,
     extraSections: LazyListScope.(offline: Boolean, detail: StudentDetail) -> Unit = { _, _ -> },
     viewModel: StudentDetailViewModel = hiltViewModel(),
 ) {
@@ -93,7 +94,14 @@ fun StudentDetailScreen(
             else -> {
                 item { DetailHeader(detail.name, state.header, state.status) }
                 item { RoutineCard(detail) }
-                item { LatestMetricsCard(detail) }
+                item {
+                    LatestMetricsCard(
+                        detail,
+                        onHistory = onOpenMetrics?.let { { it(false) } },
+                        onNew = onOpenMetrics?.let { { it(true) } },
+                        canWrite = !state.offline,
+                    )
+                }
                 extraSections(state.offline, detail)
                 item { DataCard(detail) }
                 item { Actions(state, onEdit, viewModel::onDisable, viewModel::onReactivate) }

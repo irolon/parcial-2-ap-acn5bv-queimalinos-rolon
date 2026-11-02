@@ -3,6 +3,7 @@ package com.fittrainer.di.students
 import com.fittrainer.data.session.UserDataCleaner
 import com.fittrainer.data.students.TrainerStudentsRepository
 import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
+import com.fittrainer.data.students.metrics.StudentMetricsRepository
 import com.fittrainer.data.students.progress.StudentProgressRepository
 import com.fittrainer.data.students.sessions.StudentSessionsRepository
 import dagger.Binds
@@ -31,4 +32,8 @@ abstract class StudentsModule {
     @Binds
     @IntoSet
     abstract fun bindStudentProgressCleaner(impl: StudentProgressRepository): UserDataCleaner
+
+    @Binds
+    @IntoSet
+    abstract fun bindStudentMetricsCleaner(impl: StudentMetricsRepository): UserDataCleaner
 }
