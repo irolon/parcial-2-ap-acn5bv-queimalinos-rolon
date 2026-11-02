@@ -23,6 +23,7 @@ tarjeta: E11
 > - **Ronda 1 de Codex:**
 >   - Un chat guardado sin mensajes ahora cuenta como primera carga, así guarda el cursor de una página llena.
 >   - Las fotos de páginas viejas se renuevan: cada mensaje guarda `fetchedAt` (cuándo se firmó su URL). Si alguna tiene más de 50 min, el refresco re-pide hasta 100 mensajes desde ella y actualiza los que ya estaban.
+> - **Ronda 3 de Codex (02/11), firma best-effort de la #47:** si Storage falla, el backend manda `image_url: null`. `keepSigned` (en `TrainerMessagesRepository`) conserva la URL guardada con su `fetchedAt` viejo, así la foto se sigue viendo y la renovación la vuelve a pedir. Una de solo foto que nunca se firmó queda con `fetchedAt` 0 y se reintenta en el próximo refresco; mientras tanto, la burbuja dice "Foto no disponible". Tests: `TrainerMessagesRepositorySigningTest`. **Límite conocido (decisión de Igna, 02/11: no se toca el backend de mensajes):** un mensaje con texto y foto, de una página vieja que se cargó durante la caída, llega igual que uno de solo texto y su foto no se recupera. Quedó como sugerencia opcional a Pablo en `backend/README.md` (`has_image`).
 > - **La hora** del emulador salió en UTC (00:03): el emulador no tiene la zona argentina. En un celular usa la zona del sistema.
 
 ## 1. Objetivo

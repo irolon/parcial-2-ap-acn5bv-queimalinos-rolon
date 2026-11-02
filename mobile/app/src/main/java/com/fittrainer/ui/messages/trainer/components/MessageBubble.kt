@@ -23,6 +23,7 @@ import coil.compose.AsyncImage
 import com.fittrainer.data.messages.trainer.Message
 import com.fittrainer.ui.messages.trainer.BROADCAST_TAG
 import com.fittrainer.ui.messages.trainer.PHOTO
+import com.fittrainer.ui.messages.trainer.PHOTO_UNAVAILABLE
 import com.fittrainer.ui.messages.trainer.bubbleTime
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
@@ -61,6 +62,10 @@ fun MessageBubble(message: Message, zone: ZoneId) {
                     )
                 }
                 message.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = FtColors.TextPrimary) }
+                // Solo foto y sin URL: el backend no la pudo firmar; vuelve en el próximo refresco.
+                if (message.body == null && message.imageUrl == null) {
+                    Text(PHOTO_UNAVAILABLE, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextSecondary)
+                }
             }
             Text(
                 bubbleTime(message.at, zone) + if (mine && message.read) " · ✓✓" else "",

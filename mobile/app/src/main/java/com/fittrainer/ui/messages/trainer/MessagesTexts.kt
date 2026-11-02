@@ -16,6 +16,7 @@ const val MESSAGES_REFRESH_FAILED = "No pudimos actualizar. Mostrando lo último
 const val MESSAGES_RETRY = "Reintentar"
 const val NO_MESSAGES_YET = "Sin mensajes todavía"
 const val PHOTO = "📷 Foto"
+const val PHOTO_UNAVAILABLE = "Foto no disponible"
 const val COMPOSER_HINT = "Mensaje…"
 const val SEND = "Enviar"
 const val SEND_FAILED = "No se pudo enviar. Probá de nuevo"

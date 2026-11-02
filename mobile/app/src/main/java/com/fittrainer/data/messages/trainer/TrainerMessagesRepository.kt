@@ -5,6 +5,7 @@ import com.fittrainer.data.api.messages.BroadcastRequest
 import com.fittrainer.data.api.messages.SendMessageRequest
 import com.fittrainer.data.api.messages.TrainerMessagesApi
 import com.fittrainer.data.db.messages.trainer.TrainerConversationsSyncEntity
+import com.fittrainer.data.db.messages.trainer.TrainerMessageEntity
 import com.fittrainer.data.db.messages.trainer.TrainerMessageThreadEntity
 import com.fittrainer.data.db.messages.trainer.TrainerMessagesDao
 import com.fittrainer.data.repository.DataError
@@ -74,7 +75,7 @@ class TrainerMessagesRepository @Inject constructor(
      */
     suspend fun refreshThread(trainerId: String, studentId: String): Result<Unit> = call(trainerId, studentId) {
         val page = api.history(studentId, MESSAGES_PAGE)
-        val rows = page.data.map { it.toEntity(trainerId, clock.millis()) }
+        val rows = keepSigned(trainerId, page.data.map { it.toEntity(trainerId, clock.millis()) })
         val saved = dao.getThread(trainerId, studentId)
         val newest = dao.newestAt(trainerId, studentId)
         val gap = page.meta.nextBefore != null && newest != null && rows.isNotEmpty() && rows.first().createdAt > newest
@@ -96,7 +97,27 @@ class TrainerMessagesRepository @Inject constructor(
         val oldest = dao.oldestAt(trainerId, studentId) ?: return
         val page = api.history(studentId, RENEW_PAGE, Instant.ofEpochMilli(stale + 1).toString())
         val rows = page.data.map { it.toEntity(trainerId, clock.millis()) }.filter { it.createdAt >= oldest }
-        dao.upsertMessages(rows)
+        dao.upsertMessages(keepSigned(trainerId, rows))
+    }
+
+    /**
+     * Si Storage falla, el backend igual responde con image_url null en esas fotos. Una que ya tenía URL la
+     * conserva con su fetchedAt viejo (si no venció se sigue viendo, y la renovación la vuelve a pedir); una de
+     * solo foto sin URL guardada queda con fetchedAt 0, así se reintenta en el próximo refresco.
+     */
+    private suspend fun keepSigned(trainerId: String, rows: List<TrainerMessageEntity>): List<TrainerMessageEntity> {
+        val unsigned = rows.filter { it.imageUrl == null }.map { it.id }
+        if (unsigned.isEmpty()) return rows
+        val prev = dao.getMessages(trainerId, unsigned).filter { it.imageUrl != null }.associateBy { it.id }
+        return rows.map { row ->
+            val old = prev[row.id]
+            when {
+                row.imageUrl != null -> row
+                old != null -> row.copy(imageUrl = old.imageUrl, fetchedAt = old.fetchedAt)
+                row.body == null -> row.copy(fetchedAt = 0)
+                else -> row
+            }
+        }
     }
 
     /** La página anterior a la más vieja guardada; sin cursor no hace nada. */
@@ -104,7 +125,7 @@ class TrainerMessagesRepository @Inject constructor(
         val saved = dao.getThread(trainerId, studentId) ?: return@call
         val before = saved.nextBefore ?: return@call
         val page = api.history(studentId, MESSAGES_PAGE, before)
-        dao.mergeThread(saved.copy(nextBefore = page.meta.nextBefore), page.data.map { it.toEntity(trainerId, clock.millis()) })
+        dao.mergeThread(saved.copy(nextBefore = page.meta.nextBefore), keepSigned(trainerId, page.data.map { it.toEntity(trainerId, clock.millis()) }))
     }
 
     /** Solo texto. 409 → StudentInactiveException; 403 → la conversación sale del caché y NotFound. */
