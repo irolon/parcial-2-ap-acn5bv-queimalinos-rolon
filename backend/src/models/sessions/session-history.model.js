@@ -50,7 +50,14 @@ export function toSessionSummary(row, { sets, recordsBySession }) {
 const refOf = (id, exercisesById) => ({ id, name: lookup(exercisesById, id)?.name ?? null });
 
 const toPlanned = (p) =>
-  p ? { sets: toNum(p.sets), reps: toNum(p.reps), suggested_kg: toNum(p.suggested_kg) } : null;
+  p
+    ? {
+        sets: toNum(p.sets),
+        reps: toNum(p.reps),
+        suggested_kg: toNum(p.suggested_kg),
+        rest_seconds: toNum(p.rest_seconds),
+      }
+    : null;
 
 const toSetOut = (s) => ({
   id: s.id,
@@ -59,6 +66,7 @@ const toSetOut = (s) => ({
   actual_kg: toNum(s.actual_kg),
   completed: s.completed,
   executed_at: s.executed_at,
+  rest_seconds: toNum(s.rest_seconds),
 });
 
 /** Detalle de §2.2: series agrupadas por ejercicio hecho (y original), por primer executed_at. */

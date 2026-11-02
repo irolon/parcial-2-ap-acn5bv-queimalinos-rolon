@@ -18,6 +18,8 @@ const studentScoped = [
 ];
 
 router.get('/achievements', ...studentScoped, achievementsController.listForStudent);
+// Progreso de cada logro del catálogo (tarjeta 15): solo lectura.
+router.get('/achievements/progress', ...studentScoped, achievementsController.progress);
 router.get('/streak', ...studentScoped, achievementsController.streak);
 
 // Desafíos del alumno: listado y toma.

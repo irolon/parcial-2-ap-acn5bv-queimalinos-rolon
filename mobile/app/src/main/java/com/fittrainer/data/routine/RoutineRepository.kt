@@ -16,6 +16,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Offline-first: la UI observa Room; refresh() trae de la API y reemplaza el caché entero.
@@ -41,8 +43,28 @@ class RoutineRepository @Inject constructor(
             }
             .distinctUntilChanged()
 
-    /** Si falla, Room queda como estaba y el error viaja en un [DataException]. */
-    suspend fun refresh(ownerId: String): Result<Unit> = try {
+    private val refreshMutex = Mutex()
+
+    /** Cuántas sincronizaciones buenas hubo y de quién fue la última (para no repetir un pedido recién hecho). */
+    @Volatile private var successCount = 0L
+    @Volatile private var successOwner: String? = null
+
+    /**
+     * Si falla, Room queda como estaba y el error viaja en un [DataException]. Un pedido a la vez: si mientras
+     * esperaba terminó bien otro del mismo alumno (Hoy y Mis rutinas refrescando juntas), usa ese resultado.
+     */
+    suspend fun refresh(ownerId: String): Result<Unit> {
+        val seen = successCount
+        return refreshMutex.withLock {
+            if (successCount != seen && successOwner == ownerId) return@withLock Result.success(Unit)
+            fetch(ownerId).onSuccess {
+                successCount++
+                successOwner = ownerId
+            }
+        }
+    }
+
+    private suspend fun fetch(ownerId: String): Result<Unit> = try {
         val routines = api.mine().data
         dao.replaceAll(
             RoutineSyncEntity(ownerId = ownerId, lastSyncedAt = clock.millis()),

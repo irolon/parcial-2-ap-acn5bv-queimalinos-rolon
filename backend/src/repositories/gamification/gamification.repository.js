@@ -28,6 +28,16 @@ export async function findUnlockedAchievementIds(studentId) {
   return rows.map((row) => row.achievement_id);
 }
 
+/** Desbloqueos del alumno: solo `achievement_id` y `unlocked_at` (el progreso ya tiene el catálogo). */
+export async function findUnlockedAt(studentId) {
+  return unwrap(
+    await supabase
+      .from(STUDENT_ACHIEVEMENTS_TABLE)
+      .select('achievement_id, unlocked_at')
+      .eq('student_id', studentId)
+  );
+}
+
 /** Desbloqueados del alumno con el logro embebido, el más reciente primero. */
 export async function findStudentAchievements(studentId) {
   return unwrap(

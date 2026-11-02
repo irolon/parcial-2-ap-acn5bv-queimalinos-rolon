@@ -90,18 +90,18 @@ describe('groupSetsByExercise', () => {
   const sets = [
     { ...base, id: 'a', exercise_id: 'e3', set_number: 1, executed_at: '2026-10-01T10:30:00Z' },
     { ...base, ...sub, id: 'b', set_number: 2, executed_at: '2026-10-01T10:10:00Z' },
-    { ...base, ...sub, id: 'c', set_number: 1, executed_at: '2026-10-01T10:05:00Z' },
+    { ...base, ...sub, id: 'c', set_number: 1, executed_at: '2026-10-01T10:05:00Z', rest_seconds: '120' },
   ];
   const ctx = {
     exercisesById,
-    plannedByRoutineExercise: new Map([['re1', { sets: 4, reps: '10', suggested_kg: '60', x: 1 }]]),
+    plannedByRoutineExercise: new Map([['re1', { sets: 4, reps: '10', suggested_kg: '60', rest_seconds: 90, x: 1 }]]),
     recordExerciseIds: new Set(['e1']),
   };
   it('agrupa, ordena por primer executed_at y arma la forma', () => {
     const r = groupSetsByExercise(sets, ctx);
     expect(r.map((g) => g.exercise.id)).toEqual(['e1', 'e3']);
     expect(r[0].original_exercise).toEqual({ id: 'e2', name: 'Mancuernas' });
-    expect(r[0].planned).toEqual({ sets: 4, reps: 10, suggested_kg: 60 });
+    expect(r[0].planned).toEqual({ sets: 4, reps: 10, suggested_kg: 60, rest_seconds: 90 });
     expect(r[0].is_pr).toBe(true);
     expect(r[0].sets.map((s) => s.id)).toEqual(['c', 'b']);
     expect(r[0].sets[0]).toEqual({
@@ -111,7 +111,9 @@ describe('groupSetsByExercise', () => {
       actual_kg: 60,
       completed: true,
       executed_at: sets[2].executed_at,
+      rest_seconds: 120,
     });
+    expect(r[0].sets[1].rest_seconds).toBeNull();
   });
   it('sin sustitución ni enlace: original_exercise y planned null; is_pr false', () => {
     const g = groupSetsByExercise(sets, ctx)[1];

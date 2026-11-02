@@ -5,6 +5,8 @@ import com.fittrainer.data.workout.history.HistorySet
 import java.time.Instant
 import java.time.ZoneId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -24,6 +26,18 @@ class HistoryTextsTest {
         assertEquals("S1 · 62,5 kg × 10", setLine(HistorySet(1, 10, 62.5)))
         assertEquals("S2 · 10 reps", setLine(HistorySet(2, 10, null)))
         assertEquals("S3 · 10 reps", setLine(HistorySet(3, 10, 0.0)))
+    }
+
+    @Test fun descansoRealContraElPlan() {
+        val set = HistorySet(2, 10, 20.0, restSeconds = 120)
+        assertEquals("S2 · 20 kg × 10 · desc. 2:00 (plan 1:30)", setLine(set, 90))
+        assertEquals("S2 · 20 kg × 10 · desc. 2:00", setLine(set, 120))
+        assertEquals("S2 · 20 kg × 10 · desc. 2:00", setLine(set, null))
+        assertEquals("S2 · 20 kg × 10", setLine(set.copy(restSeconds = null), 90))
+        assertTrue(restDiffers(set, 90))
+        assertFalse(restDiffers(set, 120))
+        assertFalse(restDiffers(set, null))
+        assertFalse(restDiffers(set.copy(restSeconds = null), 90))
     }
 
     @Test fun planCompletoParcialYVacio() {

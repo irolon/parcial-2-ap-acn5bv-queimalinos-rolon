@@ -3,6 +3,7 @@ package com.fittrainer.ui.workout.history
 import com.fittrainer.data.workout.history.HistoryItem
 import com.fittrainer.data.workout.history.HistoryOrigin
 import com.fittrainer.data.workout.history.HistorySet
+import com.fittrainer.ui.workout.formatClock
 import com.fittrainer.ui.workout.kgNumber
 import java.text.NumberFormat
 import java.time.Instant
@@ -30,12 +31,22 @@ fun historyLine(durationMin: Int?, sets: Int, volumeKg: Double): String = listOf
     volumeText(volumeKg),
 ).joinToString(" · ")
 
-/** "S1 · 62,5 kg × 10"; sin kg (o 0, peso corporal): "S1 · 10 reps". */
-fun setLine(set: HistorySet): String {
+/**
+ * "S1 · 62,5 kg × 10"; sin kg (o 0, peso corporal): "S1 · 10 reps". Con descanso registrado suma " · desc. 2:00",
+ * y el plan si difiere: " · desc. 2:00 (plan 1:30)".
+ */
+fun setLine(set: HistorySet, plannedRest: Int? = null): String {
     val reps = set.reps ?: 0
     val kg = set.kg?.takeIf { it > 0 }
-    return if (kg == null) "S${set.setNumber} · $reps reps" else "S${set.setNumber} · ${kgNumber(kg)} kg × $reps"
+    val base = if (kg == null) "S${set.setNumber} · $reps reps" else "S${set.setNumber} · ${kgNumber(kg)} kg × $reps"
+    val rest = set.restSeconds ?: return base
+    val plan = if (restDiffers(set, plannedRest)) " (plan ${formatClock(plannedRest!! * 1_000L)})" else ""
+    return "$base · desc. ${formatClock(rest * 1_000L)}$plan"
 }
+
+/** El descanso real no coincide con el del plan; sin alguno de los dos no hay con qué comparar. */
+fun restDiffers(set: HistorySet, plannedRest: Int?): Boolean =
+    set.restSeconds != null && plannedRest != null && set.restSeconds != plannedRest
 
 /** "Plan: 4 × 10 · 60 kg", con lo que haya; null si no hay plan. */
 fun planLine(sets: Int?, reps: Int?, kg: Double?): String? {

@@ -26,6 +26,15 @@ fun formatClock(ms: Long): String {
     return "%d:%02d".format(total / 60, total % 60)
 }
 
+/**
+ * Fila del descanso en la pantalla de la serie (spec §4.2): "Descanso 1:30", o con el plan al lado si el alumno
+ * eligió otro ("Descanso 2:00 · plan 1:30", "Sin descanso · plan 1:30").
+ */
+fun restPickerLabel(chosen: Int, plan: Int): String {
+    val head = if (chosen == 0) "Sin descanso" else "Descanso ${formatClock(chosen * 1_000L)}"
+    return if (chosen == plan) head else "$head · plan ${formatClock(plan * 1_000L)}"
+}
+
 /** Cronómetro de la sesión: "22:14" o "1:02:03". */
 fun formatElapsed(from: Instant, now: Instant): String {
     val s = Duration.between(from, now).seconds.coerceAtLeast(0)

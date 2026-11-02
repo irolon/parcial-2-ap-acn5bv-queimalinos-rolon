@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -21,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.data.routine.TodayContent
+import com.fittrainer.data.workout.Workout
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
 import com.fittrainer.ui.components.exercise.ExerciseRow
@@ -37,6 +39,7 @@ import com.fittrainer.ui.today.components.NoRoutineState
 import com.fittrainer.ui.today.components.RestState
 import com.fittrainer.ui.today.components.RoutineHeroCard
 import com.fittrainer.ui.today.components.TodayHeader
+import com.fittrainer.ui.today.components.TodayMusclesSheet
 import com.fittrainer.ui.today.components.WeekStrip
 import com.fittrainer.ui.workout.WorkoutEntryViewModel
 
@@ -44,12 +47,14 @@ import com.fittrainer.ui.workout.WorkoutEntryViewModel
 @Composable
 fun TodayScreen(
     onOpenWorkout: () -> Unit,
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
     uploads: UploadStatusViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val workoutActive by entry.hasActive.collectAsStateWithLifecycle()
+    val activeWorkout by entry.active.collectAsStateWithLifecycle()
     val entryError by entry.error.collectAsStateWithLifecycle()
     val uploadCounts by uploads.counts.collectAsStateWithLifecycle()
     val manualUpload by uploads.manual.collectAsStateWithLifecycle()
@@ -61,7 +66,7 @@ fun TodayScreen(
     TodayBody(
         // Si no se pudo abrir o terminar la sesión, el aviso va en el mismo banner que el de Hoy.
         entryError?.let { state.copy(notice = it) } ?: state,
-        workoutActive = workoutActive,
+        activeWorkout = activeWorkout,
         onStartWorkout = { routine -> entry.start(routine, onOpenWorkout) },
         onContinueWorkout = onOpenWorkout,
         onRefresh = viewModel::onPullToRefresh,
@@ -69,6 +74,8 @@ fun TodayScreen(
         uploads = uploadsNoticeUi(uploadCounts, manualUpload),
         onUploadNow = uploads::uploadNow,
         onDismissFailures = uploads::dismissFailures,
+        unreadNotifications = unreadNotifications,
+        onOpenNotifications = onOpenNotifications,
     )
 }
 
@@ -76,7 +83,7 @@ fun TodayScreen(
 @Composable
 fun TodayBody(
     state: TodayUiState,
-    workoutActive: Boolean,
+    activeWorkout: Workout?,
     onStartWorkout: (Routine) -> Unit,
     onContinueWorkout: () -> Unit,
     onRefresh: () -> Unit,
@@ -84,8 +91,13 @@ fun TodayBody(
     uploads: UploadsNoticeUi? = null,
     onUploadNow: () -> Unit = {},
     onDismissFailures: () -> Unit = {},
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
+    // La clave es la rutina de hoy (null si no toca entrenar): al cambiar o desaparecer, la hoja vuelve a cerrada.
+    val musclesKey = (state.content as? TodayContent.Training)?.routine?.id
+    var musclesOpen by rememberSaveable(musclesKey) { mutableStateOf(false) }
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
         onRefresh = onRefresh,
@@ -96,36 +108,57 @@ fun TodayBody(
             contentPadding = PaddingValues(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            item { TodayHeader(state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine) }
+            item {
+                TodayHeader(
+                    state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine,
+                    unreadNotifications = unreadNotifications, onOpenNotifications = onOpenNotifications,
+                )
+            }
             state.notice?.let { notice -> item { NoticeBanner(notice, onDismissNotice) } }
             val uploadsItem: LazyListScope.() -> Unit = {
                 uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
             }
             val activeCardItem: LazyListScope.() -> Unit = {
-                if (showsActiveWorkoutCard(state.content, workoutActive)) item { ActiveWorkoutCard(onContinueWorkout) }
+                activeWorkout?.takeIf { showsActiveWorkoutCard(state.content, it) }?.let { workout ->
+                    item { ActiveWorkoutCard(workout.routineName, onContinueWorkout) }
+                }
             }
-            todayItems(state, workoutActive, onStartWorkout, onExerciseClick = { selected = it }, uploadsItem, activeCardItem)
+            val heroItem: LazyListScope.(Routine) -> Unit = { routine ->
+                item {
+                    RoutineHeroCard(
+                        routine,
+                        startAction(routine, activeWorkout),
+                        onStart = { onStartWorkout(routine) },
+                        onContinue = onContinueWorkout,
+                        onOpenMuscles = { musclesOpen = true },
+                    )
+                }
+            }
+            todayItems(state, onExerciseClick = { selected = it }, uploadsItem, activeCardItem, heroItem)
         }
     }
     selected?.let { exercise ->
         ExerciseDetailSheet(exercise.toDetail(), canOpenVideo = !state.isOffline, onDismiss = { selected = null })
     }
+    musclesSheetRoutine(state.content, musclesOpen)?.let { routine ->
+        TodayMusclesSheet(routine.name, remember(routine) { todayMuscles(routine) }) { musclesOpen = false }
+    }
 }
 
 private fun LazyListScope.todayItems(
     state: TodayUiState,
-    workoutActive: Boolean,
-    onStartWorkout: (Routine) -> Unit,
     onExerciseClick: (RoutineExercise) -> Unit,
     uploadsItem: LazyListScope.() -> Unit,
     activeCardItem: LazyListScope.() -> Unit,
+    heroItem: LazyListScope.(Routine) -> Unit,
 ) {
     val today = state.today.dayOfWeek
     when (val content = state.content) {
         is TodayContent.Training -> {
             item { WeekStrip(content.routine.days, today) }
             uploadsItem() // El aviso de subidas va debajo de la semana (si no hay semana, arriba de todo).
-            item { RoutineHeroCard(content.routine, workoutActive) { onStartWorkout(content.routine) } }
+            activeCardItem() // Solo si la sesión abierta es de otra rutina: el hero queda bloqueado y se vuelve por acá.
+            heroItem(content.routine)
             item { SectionLabel("PLAN DE HOY", content.routine.exercises.size.toString()) }
             items(content.routine.exercises, key = { it.id }) { exercise ->
                 ExerciseRow(exercise.name, exerciseSubtitle(exercise), onClick = { onExerciseClick(exercise) })

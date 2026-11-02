@@ -2,6 +2,7 @@ package com.fittrainer.data.session
 
 import com.fittrainer.data.auth.AuthRepository
 import com.fittrainer.data.auth.tokenstore.TokenStore
+import com.fittrainer.data.notifications.push.PushTokenRegistry
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +13,7 @@ class TokenSessionRepository @Inject constructor(
     private val tokenStore: TokenStore,
     private val authRepository: AuthRepository,
     private val userDataCleaners: Set<@JvmSuppressWildcards UserDataCleaner>,
+    private val pushTokens: PushTokenRegistry,
 ) : SessionRepository {
 
     override val session: Flow<Session> = tokenStore.state.map { state ->
@@ -30,6 +32,8 @@ class TokenSessionRepository @Inject constructor(
      * el caché tiene dueño y otro usuario no lo ve. Si algún borrado falla, los demás igual se hacen.
      */
     override suspend fun signOut(): LogoutResult {
+        // La baja del token de push necesita el JWT: va antes de logout(). No lanza (timeout de 5 s).
+        pushTokens.unregister()
         // Sin sesión legible el dueño es desconocido: se borra todo.
         val ownerId = try {
             tokenStore.current()?.user?.id

@@ -19,7 +19,7 @@ describe('session-set.validation — parseSet', () => {
       value: {
         id: U1, exercise_id: U2, original_exercise_id: null, routine_exercise_id: null,
         set_number: 1, actual_reps: 10, actual_kg: 40, completed: true,
-        executed_at: '2026-10-17T09:10:00-03:00',
+        executed_at: '2026-10-17T09:10:00-03:00', rest_seconds: null,
       },
     });
   });
@@ -39,6 +39,17 @@ describe('session-set.validation — parseSet', () => {
 
   it('acepta los topes: set_number 100, reps 1000, kg 1000', () => {
     expect(parseSet({ ...base, set_number: 100, actual_reps: 1000, actual_kg: 1000 }).ok).toBe(true);
+  });
+
+  it('rest_seconds: entero de 0 a 3600, o null/ausente', () => {
+    expect(parseSet({ ...base, rest_seconds: 90 }).value.rest_seconds).toBe(90);
+    expect(parseSet({ ...base, rest_seconds: null }).value.rest_seconds).toBeNull();
+    expect(parseSet({ ...base, rest_seconds: 0 }).value.rest_seconds).toBe(0);
+    expect(parseSet({ ...base, rest_seconds: 3600 }).value.rest_seconds).toBe(3600);
+    badField({ rest_seconds: -1 }, 'rest_seconds');
+    badField({ rest_seconds: 3601 }, 'rest_seconds');
+    badField({ rest_seconds: 1.5 }, 'rest_seconds');
+    badField({ rest_seconds: '90' }, 'rest_seconds');
   });
 
   it('rechaza valores inválidos indicando el campo', () => {

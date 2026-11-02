@@ -76,8 +76,13 @@ create table if not exists session_sets (
   actual_reps          int check (actual_reps >= 0),
   actual_kg            numeric check (actual_kg >= 0),
   completed            boolean not null default true,
-  executed_at          timestamptz not null
+  executed_at          timestamptz not null,
+  -- Descanso real después de la serie, en segundos (lo mide el celular). Null = sin dato.
+  rest_seconds         int check (rest_seconds >= 0)
 );
+
+-- Para bases creadas antes de la columna (tarjeta descanso ajustable, 01/11).
+alter table session_sets add column if not exists rest_seconds int check (rest_seconds >= 0);
 
 create index if not exists idx_session_sets_session on session_sets (session_id);
 

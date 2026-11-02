@@ -42,6 +42,24 @@ class WorkoutEntryViewModelTest {
         assertTrue(vm.hasActive.value)
     }
 
+    @Test fun `expone la sesion abierta con el nombre de su rutina`() = runTest {
+        assertNull(vm.active.value)
+        repo.start("u1", routine)
+
+        assertEquals("rt-1", vm.active.value?.routineId)
+        assertEquals("Push", vm.active.value?.routineName)
+    }
+
+    @Test fun `un empezar exitoso despues de un fallo limpia el error viejo`() = runTest {
+        dao.failWrites = true
+        vm.start(routine) {}
+        assertEquals(START_FAILED, vm.error.value)
+        dao.failWrites = false
+        vm.start(routine) {}
+
+        assertNull(vm.error.value)
+    }
+
     @Test fun `terminar la sesion abierta antes de salir`() = runTest {
         vm.start(routine) {}
         repo.saveSet("u1", 0, 1, Load(40.0, 8))

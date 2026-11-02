@@ -160,6 +160,11 @@ class FakeWorkoutDao : WorkoutDao() {
         st.copy(sessions = st.sessions + (session.id to session), sets = st.sets.filterNot { it.id == set.id } + set)
     }
 
+    override suspend fun saveSets(sets: List<WorkoutSetEntity>, session: WorkoutSessionEntity) = write { st ->
+        val ids = sets.map { it.id }.toSet()
+        st.copy(sessions = st.sessions + (session.id to session), sets = st.sets.filterNot { it.id in ids } + sets)
+    }
+
     /**
      * Con un gate, cada escritura publica y recién vuelve al llamador cuando se completa: así el test ve
      * lo que Room emite mientras el repositorio todavía no devolvió (el orden real de producción).

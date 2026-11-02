@@ -25,12 +25,12 @@ fun WorkoutWithDetails.toDomain(): Workout = Workout(
 
 fun WorkoutExerciseEntity.toDomain() = WorkoutExercise(
     position, routineExerciseId, exerciseId, originalExerciseId, name, muscleGroup, equipment, description,
-    videoUrl, sets, reps, restSeconds, suggestedKg,
+    videoUrl, sets, reps, restSeconds, suggestedKg, restOverrideSeconds,
 )
 
 fun WorkoutSetEntity.toDomain() = WorkoutSet(
     id, position, exerciseId, originalExerciseId, routineExerciseId, setNumber, actualKg, actualReps,
-    Instant.ofEpochMilli(executedAt),
+    Instant.ofEpochMilli(executedAt), restSeconds,
 )
 
 /** Fila de la sesión con su cursor y su descanso. Por defecto, abierta y sin terminar. */
@@ -52,12 +52,12 @@ fun Workout.toSessionEntity(status: String = STATUS_ACTIVE, finishedAt: Long? = 
 
 fun WorkoutExercise.toEntity(sessionId: String) = WorkoutExerciseEntity(
     sessionId, position, routineExerciseId, exerciseId, originalExerciseId, name, muscleGroup, equipment,
-    description, videoUrl, sets, reps, restSeconds, suggestedKg,
+    description, videoUrl, sets, reps, restSeconds, suggestedKg, restOverrideSeconds,
 )
 
 fun WorkoutSet.toEntity(sessionId: String) = WorkoutSetEntity(
     id, sessionId, position, exerciseId, originalExerciseId, routineExerciseId, setNumber, kg, reps,
-    executedAt.toEpochMilli(),
+    executedAt.toEpochMilli(), restSeconds = restSeconds,
 )
 
 /** Copia del plan al empezar (la rutina no tiene descripción: la trae el reemplazo, si hay). */

@@ -4,10 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -16,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -32,13 +39,13 @@ import com.fittrainer.ui.theme.Spacing
 
 /** Biblioteca de ejercicios del alumno (sin mockup: componentes y tema de la Rutina del día). */
 @Composable
-fun LibraryScreen(viewModel: LibraryViewModel = hiltViewModel()) {
+fun LibraryScreen(onBack: (() -> Unit)? = null, viewModel: LibraryViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
         onStopOrDispose { }
     }
-    LibraryBody(state, viewModel::onPullToRefresh, viewModel::onSelectGroup, viewModel::dismissNotice)
+    LibraryBody(state, viewModel::onPullToRefresh, viewModel::onSelectGroup, viewModel::dismissNotice, onBack)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +55,7 @@ fun LibraryBody(
     onRefresh: () -> Unit,
     onSelectGroup: (String?) -> Unit,
     onDismissNotice: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     var selected by remember { mutableStateOf<LibraryExercise?>(null) }
     PullToRefreshBox(
@@ -62,7 +70,14 @@ fun LibraryBody(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                    Text(LIBRARY_TITLE, style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        onBack?.let {
+                            IconButton(onClick = it, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = FtColors.TextPrimary)
+                            }
+                        }
+                        Text(LIBRARY_TITLE, style = MaterialTheme.typography.headlineSmall, color = FtColors.TextPrimary)
+                    }
                     if (state.isOffline) OfflineIndicator(if (state.everSynced) LIBRARY_OFFLINE else "Sin conexión")
                 }
             }

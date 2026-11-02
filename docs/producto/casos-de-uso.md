@@ -154,7 +154,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El alumno está autenticado. Tiene una rutina activa asignada para el día de hoy. La mobile es la plataforma esperada por el contexto (gym), pero también es factible desde web. |
+| Precondiciones | El alumno está autenticado. Tiene al menos una rutina activa asignada. La mobile es la plataforma esperada por el contexto (gym), pero también es factible desde web. |
 | Postcondiciones | Se crea un registro en `sessions`. Cada serie ejecutada queda guardada en `session_sets`. Si hubo modificaciones, `sessions.has_modifications = true` y el PT recibe notificación. |
 
 **Flujo principal**
@@ -171,6 +171,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 **Flujos alternativos**
 
+- **1a:** El alumno entrena otra rutina (no la del día) desde Mis rutinas → abre su detalle y toca "Empezar"; sigue en el paso 3. Si ya tiene una sesión abierta de otra rutina, primero tiene que terminarla.
 - **4a:** El alumno saltea una serie → la marca como omitida (`completed = false`).
 - **4b:** El alumno reemplaza un ejercicio (máquina ocupada o no disponible) → abre el chat IA o lo selecciona manualmente. Se registra `substituted_exercise_id` y `has_modifications = true`.
 - **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente, puede retomar más tarde desde cualquier dispositivo.
@@ -331,3 +332,34 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 **Flujos de error**
 
 - **E1:** Se intenta asignar a más de 50 alumnos por vez → el backend rechaza el pedido (400) y no asigna a nadie. Si entre los elegidos hay alumnos que no son del PT (o están inactivos), el backend los saltea (`not_your_student`), asigna al resto y los lista en el aviso.
+
+---
+
+## CU-27 — Recibir y ver los avisos (alumno)
+
+**Actor:** Alumno (mobile)
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El alumno inició sesión en el celular al menos una vez (así registró su token de push). El sistema creó una notificación para él: un comentario del PT en una sesión (CU-07), un récord o un logro (CU-08). |
+| Postcondiciones | El alumno vio el aviso en el push o en su lista de avisos y, si lo tocó, quedó leído en el servidor y en el celular. |
+
+**Flujo principal**
+
+1. El sistema guarda la notificación en `notifications` y manda el push al celular del alumno ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
+2. Al alumno le llega el push, aunque tenga la app cerrada.
+3. Lo toca: la app abre la pantalla del aviso (el detalle de la sesión comentada, los gráficos del ejercicio del récord o la lista de avisos para un logro) y lo marca leído.
+4. En la pantalla Hoy, la campana muestra cuántos avisos no leyó.
+5. Al tocar la campana ve la lista de avisos agrupada en Hoy · Ayer · Antes, con los no leídos marcados. Desde ahí puede abrir cualquiera o tocar "Marcar todo leído".
+
+**Flujos alternativos**
+
+- **2a:** Las notificaciones están apagadas en el celular → no llega el push, pero el aviso igual aparece en la campana y en la lista, con un cartel para activarlas.
+- **3a:** El alumno está en medio de una sesión (o en su resumen) → la app espera a que la sesión termine para abrir el aviso.
+- **3b:** La sesión comentada no está guardada y no hay red → se abre Progreso → Historial.
+- **5a:** Sin conexión → ve lo guardado con el aviso "Sin conexión · mostrando lo guardado". Lo que marca leído queda pendiente y se sube cuando vuelve la red, uno por uno. "Marcar todo leído" marca solo lo que vio: un aviso que llega al servidor mientras tanto queda sin leer.
+
+**Flujos de error**
+
+- **E1:** Falla el push (FCM caído, token vencido) → la notificación igual queda guardada y el alumno la ve en la lista al abrir la app.
+- **E2:** Falla la subida de un leído → queda pendiente y se reintenta en el próximo refresco.

@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.ui.notifications.bell.NotificationBellViewModel
 import com.fittrainer.ui.workout.history.badge.ProgressBadgeViewModel
 import com.fittrainer.ui.workout.history.unreadBadgeDescription
 import com.fittrainer.ui.workout.history.unreadBadgeText
@@ -36,21 +37,35 @@ fun progressUnread(isStudent: Boolean): Int {
     return badge.unread.collectAsStateWithLifecycle().value
 }
 
-/** Barra de pestañas del rol. Progreso lleva el badge rojo si hay comentarios sin leer. */
+/** Avisos sin leer (campana de Hoy). Mismo criterio que [progressUnread]: solo el shell del alumno pide el ViewModel. */
 @Composable
-fun RoleNavigationBar(tabs: List<Tab>, currentRoute: String?, navController: NavController, progressUnread: Int) {
+fun notificationsUnread(isStudent: Boolean): Int {
+    if (!isStudent) return 0
+    val bell: NotificationBellViewModel = hiltViewModel()
+    LifecycleStartEffect(bell) {
+        bell.onAppStart()
+        onStopOrDispose {}
+    }
+    return bell.unread.collectAsStateWithLifecycle().value
+}
+
+/** Barra de pestañas del rol. backStack: las rutas de abajo hacia arriba. Progreso lleva el badge rojo si hay comentarios sin leer. */
+@Composable
+fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: NavController, progressUnread: Int) {
+    val routes = tabs.map { it.route }
+    val selected = selectedTab(routes, backStack)
     NavigationBar {
         tabs.forEach { tab ->
             NavigationBarItem(
-                selected = isTabSelected(tab.route, currentRoute),
+                selected = tab.route == selected,
                 onClick = {
-                    if (isTabSelected(tab.route, currentRoute) && currentRoute != tab.route) {
-                        navController.popBackStack(tab.route, inclusive = false)
-                    } else {
-                        navController.navigate(tab.route) {
+                    when (val action = tabAction(tab.route, routes, backStack)) {
+                        TabAction.None -> Unit
+                        is TabAction.PopTo -> navController.popBackStack(action.route, inclusive = false)
+                        is TabAction.Navigate -> navController.navigate(action.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = action.restoreState
                         }
                     }
                 },
