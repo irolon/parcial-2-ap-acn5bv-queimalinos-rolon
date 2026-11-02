@@ -32,3 +32,14 @@ fun tabAction(tab: String, tabRoutes: List<String>, backStack: List<String?>): T
         else -> TabAction.Navigate(tab, restoreState = tab != tabRoutes.firstOrNull())
     }
 }
+
+/**
+ * Las rutas del back stack que importan para la barra, sin la API restringida `currentBackStack`: las
+ * pestañas que están en la pila (la de inicio abajo de todo) y arriba la ruta actual. Alcanza porque con
+ * `popUpTo(inicio) { saveState = true }` en la pila hay como mucho la pestaña de inicio y otra.
+ */
+fun tabBackStack(tabRoutes: List<String>, current: String?, inStack: (String) -> Boolean): List<String?> {
+    val start = tabRoutes.firstOrNull()
+    val tabs = tabRoutes.filter { it != current && inStack(it) }.sortedBy { it != start }
+    return if (current == null) tabs else tabs + current
+}

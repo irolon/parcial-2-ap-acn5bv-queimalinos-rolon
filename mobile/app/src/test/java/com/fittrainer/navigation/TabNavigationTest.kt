@@ -52,4 +52,18 @@ class TabNavigationTest {
         val stack = listOf(null, home, students, ficha, TRAINER_STUDENT_TEMPLATES_ROUTE, TRAINER_STUDENT_TEMPLATE_ROUTE)
         assertEquals(students, selectedTab(trainer, stack))
     }
+
+    @Test fun tabBackStackPoneInicioAbajoYLaRutaActualArriba() {
+        val inStack = setOf(home, students)
+        assertEquals(listOf(home, students, ficha), tabBackStack(trainer, ficha) { it in inStack })
+        assertEquals(listOf(home, students), tabBackStack(trainer, students) { it in inStack })
+        assertEquals(listOf(home, ficha), tabBackStack(trainer, ficha) { it == home })
+    }
+
+    @Test fun conTabBackStackLaBarraDecideIgual() {
+        val stack = tabBackStack(trainer, ficha) { it == home }
+        assertEquals(home, selectedTab(trainer, stack))
+        assertEquals(TabAction.PopTo(home), tabAction(home, trainer, stack))
+        assertEquals(TabAction.Navigate(students, restoreState = true), tabAction(students, trainer, stack))
+    }
 }
