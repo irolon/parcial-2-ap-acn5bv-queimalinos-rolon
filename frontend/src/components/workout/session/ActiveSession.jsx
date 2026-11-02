@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { missingSets } from '@/utils/workout/workoutState';
+import { missingSets } from '@/utils/workout/workoutState/workoutState';
 import DeleteSetDialog from './dialogs/DeleteSetDialog';
 import FinishDialog from './dialogs/FinishDialog';
 import ExercisePanel from './ExercisePanel';

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { finishWorkout, setFeedback } from '@/utils/workout/workoutState';
+import { finishWorkout, setFeedback } from '@/utils/workout/workoutState/workoutState';
 import {
   clearWorkout, isWorkout, loadWorkout, saveWorkout, studentOfKey, workoutKey,
 } from '@/utils/workout/workoutStorage';

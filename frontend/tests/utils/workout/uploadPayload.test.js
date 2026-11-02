@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyBatch, batches, mergeUnlocked, pendingSets, sessionBody, setBody,
 } from '@/utils/workout/uploadPayload';
-import { finishWorkout, setFeedback } from '@/utils/workout/workoutState';
+import { finishWorkout, setFeedback } from '@/utils/workout/workoutState/workoutState';
 import { at, finishedWorkout, freshWorkout, isoAt, setIds, withSets } from '../../helpers/workout/workout';
 
 const FIRST_SESSION = { code: 'FIRST_SESSION', name: 'Primera sesión', category: 'milestone' };

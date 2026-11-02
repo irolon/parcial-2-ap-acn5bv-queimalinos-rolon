@@ -24,7 +24,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 ## Qué hace el alumno en cada plataforma
 
-El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero **no hacen lo mismo**: la mobile es la que se usa en el gym (sesión completa, con modo offline y reemplazo de ejercicios) y la web cubre lo central, además de lo que en la mobile todavía está pendiente. La columna Mobile refleja lo que hay hoy en el código de la mobile de `develop`; "Pendiente (en revisión)" es lo que tiene una PR abierta sin mergear.
+El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero **no hacen lo mismo**: la mobile es la que se usa en el gym (sesión completa, con modo offline y reemplazo de ejercicios) y la web cubre lo central, además de lo que en la mobile todavía está pendiente. La columna Mobile refleja lo que hay hoy en el código de la mobile de `develop`.
 
 | Función | Web | Mobile |
 |---|---|---|

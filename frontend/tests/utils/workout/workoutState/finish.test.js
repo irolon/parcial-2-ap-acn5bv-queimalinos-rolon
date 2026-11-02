@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { finishWorkout, readyToUpload, setFeedback } from '@/utils/workout/workoutState';
+import { finishWorkout, readyToUpload, setFeedback } from '@/utils/workout/workoutState/workoutState';
 import { at, freshWorkout, isoAt, withSets } from '../../../helpers/workout/workout';
 
 describe('readyToUpload', () => {

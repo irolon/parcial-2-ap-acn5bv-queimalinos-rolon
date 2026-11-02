@@ -15,14 +15,14 @@ const isReadyToUpload = (workout) => Boolean(workout?.finishedAt) && workout.fee
 // Qué pantalla toca. Mientras se guarda o ya se guardó (hay resumen para mostrar) manda la subida: `upload()` borra la
 // sesión en cuanto sale bien, y ese instante no es "no hay sesión". Sin eso, sin sesión es volver a Hoy: también si el
 // alumno descartó lo que no se pudo guardar. Lista para subir sin que esta página la haya subido (`idle` sin error) es
-// que la terminó otra pestaña, que la está subiendo: se ve "Guardando…", no un error.
+// que la terminó otra pestaña, que la está subiendo: se avisa eso, no un error, con la opción de guardarla desde acá.
 function screenFor(save, workout) {
   if (save.status === 'saved') return 'summary';
   if (save.status === 'saving') return 'saving';
   if (!workout) return 'gone';
   if (save.status === 'failed') return 'failed';
   if (!workout.finishedAt) return 'training';
-  return workout.feedback === null ? 'feedback' : 'saving';
+  return workout.feedback === null ? 'feedback' : 'elsewhere';
 }
 
 function headerFor(screen, workout) {
@@ -39,7 +39,7 @@ function headerFor(screen, workout) {
  * - terminada y sin feedback: "¿Qué tan dura fue?" (Guardar o Saltar y sube);
  * - terminada con el feedback decidido (se recargó entre Terminar y la subida): sube sola, con Reintentar y Descartar
  *   si falla (o solo Descartar entrenamiento si el servidor la rechaza para siempre). Si la terminó otra pestaña,
- *   esta muestra "Guardando…" mientras la otra la sube;
+ *   esta avisa que se está guardando allá y ofrece "Guardar desde acá" (por si la otra falló o se cerró);
  * - guardada: el resumen, que se queda en esta página.
  */
 export default function WorkoutPage() {
@@ -60,6 +60,8 @@ export default function WorkoutPage() {
       return <WorkoutSummary result={save.result} />;
     case 'saving':
       return <SavingScreen saving error={null} onRetry={save.run} />;
+    case 'elsewhere':
+      return <SavingScreen saving elsewhere error={null} onRetry={save.run} />;
     case 'failed':
       return <SavingScreen saving={false} error={save.error} onRetry={save.run} onDiscard={active.discard} />;
     case 'training':

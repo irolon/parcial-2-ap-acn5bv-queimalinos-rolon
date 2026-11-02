@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { FOCUS_RING } from '@/components/shared/layout/compact';
 import Card from '@/components/shared/ui/Card';
 import { kgLabel } from '@/utils/sessions/workoutFormat';
-import { exerciseSets } from '@/utils/workout/workoutState';
+import { exerciseSets } from '@/utils/workout/workoutState/workoutState';
 
 const HEAD = 'pb-2 text-left font-mono text-[9px] font-normal uppercase tracking-[1px] text-ink6';
 const CELL = 'py-3 pr-2 font-display text-base font-semibold text-bone0';

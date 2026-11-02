@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SegmentBar from '@/components/workout/session/SegmentBar';
-import { setCursor } from '@/utils/workout/workoutState';
+import { setCursor } from '@/utils/workout/workoutState/workoutState';
 import { freshWorkout, withSets } from '../../../helpers/workout/workout';
 
 const segment = (name) => screen.getByRole('button', { name });

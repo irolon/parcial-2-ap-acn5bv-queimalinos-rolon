@@ -6,7 +6,7 @@ import { FOCUS_RING } from '@/components/shared/layout/compact';
 import { ROLES, STUDENT_NAV, homeFor } from '@/routes/routeTable';
 import { formatKg } from '@/utils/progress/format';
 import { plural } from '@/utils/shared/plural';
-import { totals } from '@/utils/workout/workoutState';
+import { totals } from '@/utils/workout/workoutState/workoutState';
 
 const HISTORY_PATH = `${STUDENT_NAV.base}/historial`;
 const LINK = `inline-flex h-11 items-center justify-center rounded-lg border px-[18px] font-display text-sm font-semibold ${FOCUS_RING}`;

@@ -1,5 +1,5 @@
 import { FOCUS_RING } from '@/components/shared/layout/compact';
-import { exerciseSets } from '@/utils/workout/workoutState';
+import { exerciseSets } from '@/utils/workout/workoutState/workoutState';
 
 const BAR = {
   current: 'bg-accentText',

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { newUuid, startWorkout } from '@/utils/workout/workoutState';
+import { newUuid, startWorkout } from '@/utils/workout/workoutState/workoutState';
 import { mineRoutine, routineExercise, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { T0 } from '../../../helpers/workout/workout';
 

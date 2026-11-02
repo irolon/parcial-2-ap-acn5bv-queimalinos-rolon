@@ -11,7 +11,7 @@ import { SESSIONS_KEY } from '@/hooks/sessions/useSessions';
 import { uploadWorkout } from '@/utils/workout/uploadWorkout';
 import {
   adjustRest, finishWorkout, readyToUpload, registerSet, removeSet, setCursor, setFeedback, skipRest, startWorkout,
-} from '@/utils/workout/workoutState';
+} from '@/utils/workout/workoutState/workoutState';
 import { readWorkout, subscribeWorkout, trackUpload, writeWorkout } from './workoutStore';
 
 const api = { createSession, uploadSets };

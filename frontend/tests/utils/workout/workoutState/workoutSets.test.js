@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import * as sets from '@/utils/workout/workoutSets';
-import * as workoutState from '@/utils/workout/workoutState';
-import { routineExercise, todayRoutine } from '../../helpers/routines/studentRoutines';
-import { at, freshWorkout, withSets } from '../../helpers/workout/workout';
+import * as sets from '@/utils/workout/workoutState/workoutSets';
+import * as workoutState from '@/utils/workout/workoutState/workoutState';
+import { routineExercise, todayRoutine } from '../../../helpers/routines/studentRoutines';
+import { at, freshWorkout, withSets } from '../../../helpers/workout/workout';
 
 const { exerciseSets, missingSets, planLoad, prefill, toSetKg, toSetReps, totals } = sets;
 const { finishWorkout, removeSet, setCursor } = workoutState;

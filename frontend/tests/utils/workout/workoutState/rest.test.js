@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustRest, restRemaining, restTotal, setCursor, skipRest, startRest } from '@/utils/workout/workoutState';
+import { adjustRest, restRemaining, restTotal, setCursor, skipRest, startRest } from '@/utils/workout/workoutState/workoutState';
 import { at, freshWorkout, isoAt, withSets } from '../../../helpers/workout/workout';
 
 // Una serie de Press banca a T0 + 60 s: el descanso (90 s) termina a T0 + 150 s.

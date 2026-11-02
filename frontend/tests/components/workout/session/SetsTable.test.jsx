@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetsTable from '@/components/workout/session/SetsTable';
-import { setCursor } from '@/utils/workout/workoutState';
+import { setCursor } from '@/utils/workout/workoutState/workoutState';
 import { freshWorkout, withSets } from '../../../helpers/workout/workout';
 
 const rowsOf = () => within(screen.getByRole('table')).getAllByRole('row').slice(1);

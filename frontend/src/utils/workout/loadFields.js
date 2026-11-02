@@ -1,5 +1,5 @@
-import { MAX_KG, MAX_REPS } from '@/utils/workout/workoutSets';
-import { toSetKg, toSetReps } from '@/utils/workout/workoutState';
+import { MAX_KG, MAX_REPS } from '@/utils/workout/workoutState/workoutSets';
+import { toSetKg, toSetReps } from '@/utils/workout/workoutState/workoutState';
 import { kgText } from '@/utils/sessions/workoutFormat';
 
 // Los campos de peso y reps de la sesión activa: son texto mientras se escriben y recién al registrar la serie el
