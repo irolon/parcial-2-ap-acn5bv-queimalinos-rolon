@@ -17,6 +17,7 @@ tarjeta: E9
 > - **Más:** `AccountMenuScreen` recibe `MenuLink`s y los del entrenador salen de `navigation/trainer/TrainerMenuLinks.kt`. `TRAINER_MORE_ROUTE` es una constante, y las rutas de plantillas desde Más dejan marcada esa pestaña.
 > - **Desde Más,** después de asignar el editor queda arriba del detalle de la plantilla. Desde la ficha, las pantallas de plantillas salen del back stack y "atrás" vuelve a la ficha.
 > - **Revisión de la #63:** la lista de Alumnos solo la bajaba su pestaña, así que desde Más (o desde Inicio → ficha) el selector salía vacío. Ahora el detalle (y la lista en modo "para un alumno") la baja en `onStart`. El alumno fijo sale de `fixedStudent()` (`ui/templates/trainer/FixedStudent.kt`): de la lista o, si no está, de la ficha que ya está en Room. Si se llegó desde una ficha, nunca se abre el selector: mientras no se sepa quién es el alumno, "Asignar" está apagado. Las rutas del entrenador pasaron a `navigation/trainer/` (CONTRIBUTING, regla 2).
+> - **Menores de la #63:** "Guardar como plantilla" muestra el detalle del 400 (`saveMessage()`: el error de `name` va debajo del campo, el resto como aviso) y un 403 dice que la rutina usa un ejercicio que ya no está disponible. El detalle ofrece "Reintentar" si el refresh falla con red. Cerrar el selector después de "Cambiar" vuelve a la hoja con lo editado. "Desactivar …" nombra las rutinas, en plural si son varias (`deactivateLabel`, compartido con E8).
 
 ## 1. Objetivo
 
