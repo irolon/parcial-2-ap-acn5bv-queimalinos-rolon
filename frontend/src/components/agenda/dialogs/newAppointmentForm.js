@@ -1,8 +1,13 @@
-import { arParts, hourLabel, slotIso } from '@/utils/agenda';
+import { DAY_MS, arParts, hourLabel, slotIso } from '@/utils/agenda';
 
 export const FIRST_HOUR = 6;
 export const LAST_HOUR = 22;
 export const MAX_NOTES = 500;
+/** Cuántos días hacia adelante se puede agendar: tope de 1 año, igual que el backend. */
+export const MAX_DAYS_AHEAD = 365;
+
+/** Último día de Argentina ('YYYY-MM-DD') que se puede agendar: el de hoy + 365 días. */
+export const lastBookableDate = (now = new Date()) => arParts(new Date(now.getTime() + MAX_DAYS_AHEAD * DAY_MS)).date;
 
 const HOURS = Array.from({ length: LAST_HOUR - FIRST_HOUR + 1 }, (_, i) => FIRST_HOUR + i);
 

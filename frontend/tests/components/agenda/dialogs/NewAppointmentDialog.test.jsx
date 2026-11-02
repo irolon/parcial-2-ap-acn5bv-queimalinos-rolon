@@ -106,6 +106,18 @@ describe('NewAppointmentDialog', () => {
     expect(calls(fetchMock).some(([, init]) => init?.method === 'POST')).toBe(false);
   });
 
+  it('tope de 1 año: el selector llega hasta hoy + 365 y una fecha posterior da error sin mandar nada', async () => {
+    const u = user();
+    const { fetchMock } = setup();
+    expect(screen.getByLabelText('Fecha')).toHaveAttribute('max', '2027-11-04');
+    await fill(u, '13');
+    fireEvent.change(screen.getByLabelText('Fecha'), { target: { value: '2027-11-05' } });
+    await u.selectOptions(screen.getByLabelText('Hora'), '13');
+    await u.click(screen.getByRole('button', { name: 'Agendar turno' }));
+    expect(screen.getByText('Se puede agendar hasta dentro de un año')).toBeInTheDocument();
+    expect(calls(fetchMock).some(([, init]) => init?.method === 'POST')).toBe(false);
+  });
+
   it('doble click en Agendar manda un solo POST', async () => {
     const u = user();
     const { fetchMock } = setup({ post: async () => new Promise((resolve) => setTimeout(() => resolve(jsonResponse(201, { data: BUSY })), 50)) });

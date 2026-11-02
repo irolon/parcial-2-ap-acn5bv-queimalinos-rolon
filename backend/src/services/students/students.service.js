@@ -8,6 +8,7 @@ import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
+import * as appointments from '../agenda/appointments.service.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
@@ -65,6 +66,12 @@ export async function getById(user, studentId) {
  * baja (aunque ya estuviera inactivo; revocar es idempotente). Si la revocación
  * falla, la baja no se guarda y el reintento la completa; al revés, un alumno
  * quedaría inactivo con tokens vivos que volverían a andar al reactivarlo.
+ * Los turnos futuros (pending o confirmed) se cancelan DESPUÉS de guardar la
+ * baja: cancelar no tiene vuelta atrás, y si la baja fallara el alumno quedaría
+ * activo sin sus turnos. Si cancelar falla, el reintento (active:false de nuevo)
+ * los vuelve a cancelar. Un alta de turno en vuelo no se cuela: la base rechaza
+ * el insert de un alumno inactivo (trigger appointments_student_active, que
+ * además bloquea la fila del alumno hasta que el alta termine).
  */
 export async function update(user, studentId, fields) {
   if (user.role !== 'trainer') throw Errors.forbidden();
@@ -72,6 +79,7 @@ export async function update(user, studentId, fields) {
 
   if (fields.active === false) await authRepo.revokeAllForUser(studentId, 'student');
   const updated = await studentsRepo.updateStudent(studentId, fields);
+  if (fields.active === false) await appointments.cancelFutureForStudent(studentId);
   return buildDetail(updated);
 }
 

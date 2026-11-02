@@ -232,7 +232,7 @@ Actualiza un alumno. Solo el trainer dueño. Hay que mandar al menos un campo.
 | `name` | 2–100 caracteres |
 | `goal` | `tonify`, `weight_loss`, `hypertrophy` o `strength` |
 | `level` | `beginner`, `intermediate` o `advanced` |
-| `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`. **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña |
+| `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; además, sus turnos futuros `pending` o `confirmed` pasan a `cancelled` (liberan el horario, sin notificaciones). **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña; los turnos cancelados no vuelven |
 | `birth_date` | `YYYY-MM-DD`, no futura, o `null` |
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
@@ -1095,6 +1095,8 @@ Franjas semanales del entrenador (hora de Argentina, UTC-3 fijo; `weekday` 1 = l
 ```
 
 - `slots`: de 0 a 50. `weekday` entero 1–7; `start_time` y `end_time` con formato `HH:00` (hora en punto), `start_time < end_time`. Las franjas no pueden superponerse dentro del mismo día.
+- **Límite:** la disponibilidad llega hasta las 23 h; la última franja posible es de 22 a 23 (no hay `24:00`).
+- Dos guardados simultáneos del mismo entrenador van en fila (advisory lock en la RPC): gana el último, sin franjas mezcladas.
 
 **200 OK** — lo guardado, con la misma forma que el `GET`.
 
@@ -1119,7 +1121,7 @@ Franjas semanales del entrenador (hora de Argentina, UTC-3 fijo; `weekday` 1 = l
 
 - `starts_at` es ISO UTC, ordenado. Cada uno es un turno de 60 min.
 - Salen los horarios dentro de la disponibilidad, de la próxima hora en punto en adelante y sin turno `pending` o `confirmed`. Los turnos cancelados liberan el horario.
-- El alumno ve la agenda de **su** entrenador (sin entrenador: `[]`) y solo hasta ahora + 28 días. El entrenador ve la suya, sin ese tope.
+- El alumno ve la agenda de **su** entrenador y solo hasta ahora + 28 días. Un alumno sin entrenador recibe `[]` (a propósito, no es un error). El entrenador ve la suya, sin ese tope.
 
 **Errores:** 400 `VALIDATION_ERROR` (falta `from` o `to`, formato inválido, `to < from` o más de 31 días); 403 `FORBIDDEN` si el alumno está inactivo.
 
@@ -1146,6 +1148,8 @@ Turnos de 60 min entre el entrenador y sus alumnos. Endpoints con `Authorization
 
 - `status`: `pending | confirmed | cancelled`. `scheduled_at` es ISO UTC; `notes` es `string` o `null`.
 - Un horario solo admite un turno `pending` o `confirmed` por entrenador (índice único parcial). Un turno cancelado se puede volver a pedir.
+- La base exige que todo turno dure 60 min y empiece en hora en punto (checks `appointments_duration_60` y `appointments_on_the_hour`).
+- Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`), sus turnos futuros `pending` o `confirmed` pasan a `cancelled`.
 
 ### GET /appointments
 
@@ -1174,8 +1178,9 @@ Lista los turnos propios (todos los estados) ordenados por `scheduled_at`.
 ```
 
 - `scheduled_at`: ISO 8601 con zona, en hora en punto. `notes` vacío o con solo espacios se guarda como `null`.
-- **Alumno:** nace `pending`. Tiene que caer dentro de la disponibilidad de su entrenador, a futuro y hasta 28 días adelante. Notifica al entrenador (solo en la base).
-- **Entrenador:** nace `confirmed`. No exige disponibilidad ni tope de 28 días (solo hora en punto y a futuro). Notifica al alumno con push.
+- **Los dos roles:** hora en punto, a futuro y hasta 1 año: el día (de Argentina) del turno no puede pasar del de hoy + 365 días.
+- **Alumno:** nace `pending`. Tiene que caer dentro de la disponibilidad de su entrenador, a futuro y hasta 28 días adelante. Puede tener como máximo **3 turnos `pending` a futuro**: el 4.º da 409 `APPOINTMENT_LIMIT` (los confirmados, cancelados y pasados no cuentan). Notifica al entrenador (solo en la base). Un alumno sin entrenador recibe 403, a propósito.
+- **Entrenador:** nace `confirmed`. No exige disponibilidad, tope de 28 días ni tope de pendientes (solo hora en punto, a futuro y hasta 1 año). Notifica al alumno con push.
 
 **201 Created** — `{ "data": turno }`
 
@@ -1184,9 +1189,10 @@ Lista los turnos propios (todos los estados) ordenados por `scheduled_at`.
 | Status | Code | Cuándo |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Body inválido |
-| 400 | `SLOT_UNAVAILABLE` | "El turno tiene que empezar en una hora en punto", "El turno tiene que ser a futuro"; solo alumno: "Solo se puede pedir turno hasta 28 días adelante", "Ese horario está fuera de la disponibilidad de tu entrenador" |
+| 400 | `SLOT_UNAVAILABLE` | "El turno tiene que empezar en una hora en punto", "El turno tiene que ser a futuro", "Solo se puede agendar hasta 365 días adelante"; solo alumno: "Solo se puede pedir turno hasta 28 días adelante", "Ese horario está fuera de la disponibilidad de tu entrenador" |
 | 403 | `FORBIDDEN` | Alumno sin entrenador o inactivo; entrenador con un `student_id` de otro entrenador, inexistente o inactivo |
 | 409 | `SLOT_TAKEN` | "Ese horario ya está ocupado" (también si dos pedidos llegan a la vez: el segundo pierde) |
+| 409 | `APPOINTMENT_LIMIT` | Solo alumno: "Ya tenés 3 turnos pendientes: esperá a que tu entrenador los confirme" (ya tiene 3 `pending` a futuro). El chequeo no es atómico: dos pedidos simultáneos podrían dejar 4 |
 
 ### PATCH /appointments/:id
 

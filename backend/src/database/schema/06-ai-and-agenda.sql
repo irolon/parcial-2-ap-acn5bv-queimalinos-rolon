@@ -39,11 +39,13 @@ create table if not exists appointments (
   trainer_id   uuid not null references trainers (id) on delete cascade,
   student_id   uuid not null references students (id) on delete cascade,
   scheduled_at timestamptz not null,
-  duration_min int not null default 60 check (duration_min > 0),
+  duration_min int not null default 60 constraint appointments_duration_60 check (duration_min = 60),
   status       varchar(20) not null default 'pending'
                check (status in ('pending', 'confirmed', 'cancelled')),
   notes        text,
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  -- Tarjeta 46: hora en punto (en UTC; Argentina es UTC-3 fijo, da lo mismo).
+  constraint appointments_on_the_hour check (mod(extract(epoch from scheduled_at), 3600) = 0)
 );
 
 create index if not exists idx_appointments_trainer on appointments (trainer_id, scheduled_at);
@@ -71,10 +73,12 @@ create unique index if not exists uq_availability_slot on trainer_availability (
 create unique index if not exists uq_appointments_trainer_slot
   on appointments (trainer_id, scheduled_at) where status <> 'cancelled';
 
--- Reemplazo atómico de la disponibilidad (supabase-js no tiene transacciones).
+-- Reemplazo atómico de la disponibilidad (supabase-js no tiene transacciones). El
+-- advisory lock por PT pone en fila dos guardados simultáneos (2026-11-01-agenda-followup.sql).
 create or replace function replace_trainer_availability(p_trainer uuid, p_slots jsonb)
 returns setof trainer_availability language plpgsql security invoker set search_path = public as $$
 begin
+  perform pg_advisory_xact_lock(hashtext(p_trainer::text));
   delete from trainer_availability where trainer_id = p_trainer;
   insert into trainer_availability (trainer_id, weekday, start_time, end_time)
   select p_trainer, (s->>'weekday')::smallint, (s->>'start_time')::time, (s->>'end_time')::time
@@ -83,6 +87,26 @@ begin
 end $$;
 revoke all on function replace_trainer_availability(uuid, jsonb) from public, anon, authenticated;
 grant execute on function replace_trainer_availability(uuid, jsonb) to service_role;
+
+-- Ningún turno nuevo para un alumno dado de baja, ni siquiera un alta en vuelo
+-- durante la baja: `for share` la pone en fila con el UPDATE de la baja, que
+-- después cancela los turnos futuros (2026-11-01-agenda-inactive-student.sql).
+create or replace function appointments_student_active()
+returns trigger language plpgsql security invoker set search_path = public as $$
+declare
+  is_active boolean;
+begin
+  select active into is_active from students where id = new.student_id for share;
+  if is_active is distinct from true then
+    raise exception 'El alumno está dado de baja' using errcode = 'FT001';
+  end if;
+  return new;
+end $$;
+revoke all on function appointments_student_active() from public, anon, authenticated;
+drop trigger if exists appointments_student_active on appointments;
+create trigger appointments_student_active
+  before insert on appointments
+  for each row execute function appointments_student_active();
 
 -- ── notifications ────────────────────────────────────────────────────────────
 -- Desvío del DER: user_role (nuevo). user_id apunta a trainers o students según

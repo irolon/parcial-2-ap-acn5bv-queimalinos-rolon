@@ -11,6 +11,8 @@ export const mockAppointments = {
   insertAppointment: jest.fn(),
   findAppointmentById: jest.fn(),
   updateStatus: jest.fn(),
+  countFuturePending: jest.fn(),
+  cancelFutureForStudent: jest.fn(),
 };
 export const mockAvailability = { replaceAvailability: jest.fn(), findAvailability: jest.fn() };
 export const mockStudents = { findStudentById: jest.fn() };

@@ -6,6 +6,7 @@ import Dialog from '@/components/shared/ui/Dialog';
 import { APPOINTMENTS_KEY, useUpdateAppointmentStatus } from '@/hooks/agenda/useAgenda';
 import { shortDayHourLabel, timeRangeLabel } from '@/utils/agenda';
 import { STATUS_STYLES, isPast, studentName } from './status';
+import { TOUCH_SM } from './touch';
 
 const confirmText = (appt) =>
   `¿Cancelar el turno de ${studentName(appt).split(' ')[0]} del ${shortDayHourLabel(appt.scheduled_at)}? Le avisamos.`;
@@ -18,8 +19,8 @@ function Actions({ appt, confirming, pending, onAsk, onBack, onChange }) {
       <div className="flex flex-col gap-3">
         <p className="font-body text-sm text-bone0">{confirmText(appt)}</p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} disabled={pending}>Volver</Button>
-          <Button variant="danger" size="sm" loading={pending} onClick={() => onChange('cancelled')}>
+          <Button variant="ghost" size="sm" className={TOUCH_SM} onClick={onBack} disabled={pending}>Volver</Button>
+          <Button variant="danger" size="sm" className={TOUCH_SM} loading={pending} onClick={() => onChange('cancelled')}>
             Sí, cancelar turno
           </Button>
         </div>
@@ -28,9 +29,9 @@ function Actions({ appt, confirming, pending, onAsk, onBack, onChange }) {
   }
   return (
     <div className="flex justify-end gap-3">
-      <Button variant="ghost" size="sm" disabled={pending} onClick={onAsk}>Cancelar turno</Button>
+      <Button variant="ghost" size="sm" className={TOUCH_SM} disabled={pending} onClick={onAsk}>Cancelar turno</Button>
       {appt.status === 'pending' && (
-        <Button size="sm" loading={pending} onClick={() => onChange('confirmed')}>Confirmar</Button>
+        <Button size="sm" className={TOUCH_SM} loading={pending} onClick={() => onChange('confirmed')}>Confirmar</Button>
       )}
     </div>
   );

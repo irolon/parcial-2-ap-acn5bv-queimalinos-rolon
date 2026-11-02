@@ -4,6 +4,8 @@ import { unwrap } from '../../shared/utils/supabase-query.js';
 import { APPOINTMENTS_TABLE, APPOINTMENT_COLUMNS, STATUS } from '../../models/agenda/appointment.model.js';
 
 const UNIQUE_VIOLATION = '23505';
+/** SQLSTATE del trigger appointments_student_active: el alumno está dado de baja. */
+const STUDENT_INACTIVE = 'FT001';
 
 /**
  * Turnos con el alumno embebido, entre `fromUtc` (incluido) y `toUtc` (excluido), ordenados.
@@ -34,10 +36,40 @@ export async function findTakenInRange(trainerId, fromUtc, toUtc) {
   return rows.map((r) => r.scheduled_at);
 }
 
-/** Inserta el turno. Si el horario ya está ocupado (índice único parcial, 23505) lanza SLOT_TAKEN. */
+/** Cuántos turnos `pending` con `scheduled_at` posterior a `nowUtc` tiene el alumno. */
+export async function countFuturePending(studentId, nowUtc) {
+  const { count, error } = await supabase
+    .from(APPOINTMENTS_TABLE)
+    .select('id', { count: 'exact', head: true })
+    .eq('student_id', studentId)
+    .eq('status', STATUS.PENDING)
+    .gt('scheduled_at', nowUtc.toISOString());
+  if (error) throw Errors.internal(error.message);
+  return count ?? 0;
+}
+
+/** Cancela los turnos futuros (pending o confirmed) del alumno y devuelve cuántos cambió. */
+export async function cancelFutureForStudent(studentId, nowUtc) {
+  const rows = unwrap(
+    await supabase
+      .from(APPOINTMENTS_TABLE)
+      .update({ status: STATUS.CANCELLED })
+      .eq('student_id', studentId)
+      .in('status', [STATUS.PENDING, STATUS.CONFIRMED])
+      .gt('scheduled_at', nowUtc.toISOString())
+      .select('id')
+  );
+  return rows.length;
+}
+
+/**
+ * Inserta el turno. Si el horario ya está ocupado (índice único parcial, 23505) lanza SLOT_TAKEN; si el alumno se
+ * dio de baja mientras tanto (trigger, FT001), FORBIDDEN, igual que el chequeo del service.
+ */
 export async function insertAppointment(row) {
   const res = await supabase.from(APPOINTMENTS_TABLE).insert(row).select(APPOINTMENT_COLUMNS).single();
   if (res.error?.code === UNIQUE_VIOLATION) throw Errors.slotTaken();
+  if (res.error?.code === STUDENT_INACTIVE) throw Errors.forbidden();
   return unwrap(res);
 }
 

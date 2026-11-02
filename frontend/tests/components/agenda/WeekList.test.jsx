@@ -19,6 +19,11 @@ describe('WeekList', () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'a-1' }));
   });
 
+  it('cada turno de la lista tiene 44 px de toque en la vista angosta', () => {
+    render(<WeekList week={week} appointments={[appt()]} showCancelled={false} onSelect={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Lucía QA/ })).toHaveClass('max-md:min-h-11');
+  });
+
   it('respeta el toggle de cancelados', () => {
     const list = [appt({ status: 'cancelled' })];
     const { rerender } = render(<WeekList week={week} appointments={list} showCancelled={false} onSelect={vi.fn()} />);
