@@ -14,6 +14,7 @@ import com.fittrainer.data.workout.history.HistoryExercise
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.history.planLine
+import com.fittrainer.ui.workout.history.restDiffers
 import com.fittrainer.ui.workout.history.setLine
 
 /** Un ejercicio del detalle: nombre (y "en lugar de …"), 🏆, el plan y las series hechas. */
@@ -28,6 +29,10 @@ fun ExerciseBlock(exercise: HistoryExercise) {
         planLine(exercise.plannedSets, exercise.plannedReps, exercise.plannedKg)?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
         }
-        exercise.sets.forEach { Text(setLine(it), style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary) }
+        exercise.sets.forEach {
+            // Descanso distinto del plan del entrenador: en ámbar, para que salte a la vista.
+            val color = if (restDiffers(it, exercise.plannedRestSeconds)) FtColors.Amber else FtColors.TextPrimary
+            Text(setLine(it, exercise.plannedRestSeconds), style = MaterialTheme.typography.bodyMedium, color = color)
+        }
     }
 }

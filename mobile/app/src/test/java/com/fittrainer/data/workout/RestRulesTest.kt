@@ -11,6 +11,22 @@ class RestRulesTest {
 
     private val running = Rest(endsAt = T0.plusSeconds(90), totalSeconds = 90, pausedRemainingMs = null)
 
+    @Test fun `el fin de un descanso vencido es su endsAt y si no, ahora`() {
+        assertEquals(T0.plusSeconds(90), running.endedAt(T0.plusSeconds(400)))
+        assertEquals(T0.plusSeconds(40), running.endedAt(T0.plusSeconds(40)))
+        val paused = running.togglePause(T0.plusSeconds(10))
+        assertEquals(T0.plusSeconds(500), paused.endedAt(T0.plusSeconds(500)))
+    }
+
+    @Test fun `el descanso que corre es el elegido por el alumno y el plan no cambia`() {
+        val e = WorkoutExercise(0, "re-0", "ex-0", null, "Press", null, null, null, null, 4, 10, 90, 40.0)
+        assertEquals(90, e.restTotal)
+        assertEquals(120, e.copy(restOverrideSeconds = 120).restTotal)
+        assertEquals(90, e.copy(restOverrideSeconds = 120).plannedRest)
+        assertEquals(0, e.copy(restOverrideSeconds = 0).restTotal)
+        assertEquals(DEFAULT_REST_SECONDS, e.copy(restSeconds = null).plannedRest)
+    }
+
     @Test fun `arranca con los segundos del ejercicio y con 0 no hay descanso`() {
         assertEquals(running, startRest(90, T0))
         assertNull(startRest(0, T0))

@@ -77,9 +77,16 @@ class WorkoutRepository @Inject constructor(
             )
             val next = w.nextAfter(Cursor(position, setNumber))
             val updated = if (next == null) w.copy(rest = null) else w.copy(cursor = next, rest = startRest(e.restTotal, now))
-            dao.saveSet(set.toEntity(w.id), updated.toSessionEntity())
+            // Si quedaba un descanso corriendo (cambió de ejercicio desde la lista), se cierra acá.
+            val closed = listOfNotNull(w.closingRest(now)).map { it.toEntity(w.id) }
+            dao.saveSets(closed + set.toEntity(w.id), updated.toSessionEntity())
             if (next == null) SaveOutcome.AllDone else SaveOutcome.Advanced
         }
+
+    /** El alumno cambia el descanso del ejercicio para esta sesión (spec §4.2): vale para las próximas series. */
+    suspend fun adjustPlannedRest(ownerId: String, position: Int, deltaSeconds: Int) = withActive(ownerId) { w ->
+        dao.updateExercise(w.exercise(position).withRestPick(deltaSeconds).toEntity(w.id))
+    }
 
     /** Salta a otro ejercicio: su primera serie pendiente (o la última, si ya lo completó). */
     suspend fun moveTo(ownerId: String, position: Int) = withActive(ownerId) { w ->
@@ -122,7 +129,8 @@ class WorkoutRepository @Inject constructor(
             return@withActive null
         }
         val now = clock.instant()
-        dao.updateSession(w.copy(rest = null).toSessionEntity(STATUS_FINISHED, now.toEpochMilli()))
+        val closed = listOfNotNull(w.closingRest(now)).map { it.toEntity(w.id) }
+        dao.saveSets(closed, w.copy(rest = null).toSessionEntity(STATUS_FINISHED, now.toEpochMilli()))
         w.summary(now)
     }
 
@@ -142,7 +150,10 @@ class WorkoutRepository @Inject constructor(
 
     private suspend fun updateRest(ownerId: String, change: (Rest) -> Rest?) = withActive(ownerId) { w ->
         val rest = w.rest ?: return@withActive
-        dao.updateSession(w.copy(rest = change(rest)).toSessionEntity())
+        val next = change(rest)
+        // Si el descanso dejó de correr, la serie que lo disparó guarda cuánto duró (spec §4.3).
+        val closed = if (next == null) listOfNotNull(w.closingRest(clock.instant())).map { it.toEntity(w.id) } else emptyList()
+        dao.saveSets(closed, w.copy(rest = next).toSessionEntity())
     }
 
     /** null si el alumno no tiene una sesión abierta. */

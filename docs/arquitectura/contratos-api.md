@@ -189,13 +189,61 @@ Lista los alumnos del trainer autenticado (rol: trainer).
   "data": [
     { "id": "uuid", "name": "Tomás Rivera", "email": "t@mail.com", "goal": "hypertrophy",
       "active": true, "avatar_url": null, "created_at": "2026-10-17T12:00:00Z",
-      "last_session_at": "2026-10-20T10:00:00Z" }
+      "last_session_at": "2026-10-20T10:00:00Z",
+      "days_per_week": 3,
+      "adherence_7d": { "assigned": 3, "done": 2, "pct": 67 } }
   ],
   "meta": { "total": 1, "page": 1, "limit": 20, "total_pages": 1 }
 }
 ```
 
 > `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. El listado no trae `level`, `gym_equipment` ni `injuries`.
+>
+> `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
+
+### GET /students/overview
+
+Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:id` en el router. Solo cuentan sus alumnos **activos**.
+
+**200 OK**
+
+```json
+{ "data": {
+  "active_students": { "count": 23, "new_7d": 2 },
+  "sessions_today": { "done": 8, "expected": 11 },
+  "adherence_7d": { "pct": 87, "delta": 4 },
+  "at_risk": 3,
+  "attention": [
+    { "kind": "inactive", "student_id": "uuid", "name": "Diego Ocampo", "days": 9, "never_trained": false },
+    { "kind": "feedback_pending", "student_id": "uuid", "name": "Lucía Méndez", "session_id": "uuid",
+      "routine_name": "Push", "finished_at": "ISO" }
+  ],
+  "recent": [ { "student_id": "uuid", "name": "Tomás Rivera", "session_id": "uuid", "routine_name": "Push día 3",
+                "rpe": 8, "finished_at": "ISO" } ],
+  "lists": {
+    "today": [ { "student_id": "uuid", "name": "José Martínez", "planned": true, "status": "pending",
+                 "session_id": null, "routine_name": null, "finished_at": null, "rpe": null } ],
+    "at_risk": [ { "student_id": "uuid", "name": "Diego Ocampo", "days": 9, "never_trained": false } ],
+    "feedback_pending": [ { "student_id": "uuid", "name": "Lucía Méndez", "session_id": "uuid", "routine_name": "Push",
+                            "finished_at": "ISO", "rpe": 8 } ],
+    "students": [ { "student_id": "uuid", "name": "Ana Paz", "status": "active", "days_without_training": 1,
+                    "adherence_pct": 67 } ]
+  }
+} }
+```
+
+- `active_students.new_7d`: altas de los últimos 7 días (hoy incluido).
+- `sessions_today.expected`: alumnos con hoy asignado. `done`: de esos, cuántos terminaron al menos una sesión hoy (por la hora de fin), así nunca supera a `expected`.
+- `adherence_7d.pct`: promedio de la adherencia de 7 días de `GET /students` entre los alumnos con días asignados. `delta`: contra los 7 días anteriores. Los dos son `null` si nadie tiene plan.
+- `at_risk`: alumnos con 7 días o más sin entrenar (desde la última sesión o el alta), las mismas reglas que la web.
+- `attention` (hasta 10): primero `inactive` (de más días a menos; `never_trained` si nunca entrenó), después `feedback_pending`: sesiones terminadas en los últimos 7 días (hoy incluido) sin `trainer_comment`, de la más nueva a la más vieja.
+- `recent`: las últimas 10 sesiones terminadas, de la más nueva a la más vieja. `routine_name` y `rpe` pueden ser `null`.
+- `lists` (las listas de los filtros del Inicio de la app, sin tope):
+  - `today`: los alumnos con hoy asignado (`planned: true`) y los que entrenaron hoy sin tenerlo (`planned: false`). `status` es `done` si terminaron una sesión hoy (por la hora de fin; los campos de sesión son los de la última) o `pending` (campos de sesión en `null`). Primero los `pending` por nombre, después los `done` del más reciente.
+  - `at_risk`: los mismos de `at_risk`, de más días a menos.
+  - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
+  - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
+- Todo en hora argentina.
 
 ### GET /students/:id
 
@@ -222,6 +270,26 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
 > `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
 
 **Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `403 FORBIDDEN` (alumno de otro trainer o inexistente: no se distingue).
+
+### GET /students/:id/attendance
+
+Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la suya (ajeno o inexistente → `403 FORBIDDEN`, como la ficha).
+
+**Query:** `month` (`YYYY-MM`, opcional; por defecto el mes actual en hora argentina). Un mes futuro, anterior a `2020-01` o con formato inválido → `400 VALIDATION_ERROR` sobre `month`.
+
+**200 OK**
+
+```json
+{ "data": {
+  "month": "2026-11", "sessions": 6, "assigned_days": 9, "prs": 2,
+  "days": [ { "date": "2026-11-01", "status": "trained" }, { "date": "2026-11-02", "status": "missed" },
+            { "date": "2026-11-03", "status": "rest" }, { "date": "2026-11-20", "status": "upcoming" } ]
+} }
+```
+
+- `days` trae todos los días del mes, en orden. `status`: `trained` (al menos una sesión terminada ese día, asignado o no), `missed` (día asignado, anterior a hoy, sin entrenar), `rest` (no asignado y sin entrenar) o `upcoming` (hoy sin entrenar todavía, o un día futuro).
+- `sessions`: sesiones terminadas del mes. `assigned_days`: días asignados del mes hasta hoy inclusive. `prs`: sesiones del mes con al menos un récord (función SQL `session_records`).
+- Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos. Los días anteriores al alta del alumno o a la creación de la rutina que asigna ese día de la semana no cuentan como asignados (son `rest`), igual que en la adherencia de `GET /students`.
 
 ### PATCH /students/:id
 
@@ -384,6 +452,10 @@ Personaliza un ejercicio de una rutina asignada (trainer dueño). Body: `sets`, 
 ### DELETE /routines/:id/exercises/:routineExerciseId
 
 Quita un ejercicio de la rutina. **204**. Mismo 404 que el PATCH. Si es el único ejercicio de la rutina → **409 `ROUTINE_NEEDS_EXERCISE`** ("La rutina tiene que tener al menos un ejercicio").
+
+### PUT /routines/:id/exercises/order
+
+Reordena los ejercicios de una rutina propia (trainer dueño). Body: `{ "routine_exercise_ids": ["uuid", …] }`, de 1 a 100 ids sin repetidos, que tienen que ser **exactamente** los ejercicios de la rutina (si falta o sobra alguno → 400 `VALIDATION_ERROR` con `field: "routine_exercise_ids"`). Cada uno queda con `order_index` = su posición. **200 OK** devuelve la rutina completa (forma de `GET /routines/:id`). Ajena → 403, inexistente → 404. Es atómico: la función SQL `reorder_routine_exercises` valida el conjunto y guarda todo en una transacción con la rutina bloqueada, así que nunca queda un orden a medias ni dos reorders se pisan. Es idempotente: el body es el estado final.
 
 ### GET /routines/today
 
@@ -599,13 +671,14 @@ Registra series en lote (modo offline). Solo alumnos, sobre sus propias sesiones
       "actual_reps": 8,
       "actual_kg": 80,
       "completed": true,
-      "executed_at": "ISO 8601 con zona"
+      "executed_at": "ISO 8601 con zona",
+      "rest_seconds": 95
     }
   ]
 }
 ```
 
-`set_number` entero 1-100, `actual_reps` entero 0-1000 (0 = serie fallida), `actual_kg` 0-1000 o `null` (peso corporal), `completed` opcional (por defecto `true`). `executed_at` se guarda tal cual, sin chequear fechas futuras.
+`set_number` entero 1-100, `actual_reps` entero 0-1000 (0 = serie fallida), `actual_kg` 0-1000 o `null` (peso corporal), `completed` opcional (por defecto `true`). `executed_at` se guarda tal cual, sin chequear fechas futuras. `rest_seconds` opcional: el descanso real **después** de la serie, entero 0-3600 o `null` (sin dato).
 
 **Response 200** (siempre, si la sesión es válida; las series válidas se guardan aunque otras fallen)
 
@@ -706,17 +779,17 @@ Mismos roles y permisos. La sesión tiene que ser de ese alumno; si no existe o 
 "exercises": [{
   "exercise": { "id": "uuid", "name": "Press de banca" },
   "original_exercise": { "id": "uuid", "name": "Press con mancuernas" },
-  "planned": { "sets": 4, "reps": 10, "suggested_kg": 60 },
+  "planned": { "sets": 4, "reps": 10, "suggested_kg": 60, "rest_seconds": 90 },
   "is_pr": true,
-  "sets": [{ "id": "uuid", "set_number": 1, "actual_reps": 10, "actual_kg": 62.5, "completed": true, "executed_at": "ISO" }]
+  "sets": [{ "id": "uuid", "set_number": 1, "actual_reps": 10, "actual_kg": 62.5, "completed": true, "executed_at": "ISO", "rest_seconds": 95 }]
 }]
 ```
 
 - Agrupado por ejercicio realmente hecho (y por `original_exercise_id` si fue sustitución), en el orden del primer `executed_at`.
 - `original_exercise`: `null` si no hubo sustitución.
-- `planned`: plan **actual** de la rutina (`sets`, `reps`, `suggested_kg`) vía `routine_exercise_id`; `null` si la serie no tiene enlace.
+- `planned`: plan **actual** de la rutina (`sets`, `reps`, `suggested_kg`, `rest_seconds`) vía `routine_exercise_id`; `null` si la serie no tiene enlace.
 - `is_pr`: el ejercicio fue récord en esa sesión.
-- **Campos que pueden ser `null`:** los del resumen (`finished_at`, `duration_min`, `routine`, `rpe`, `notes`, `trainer_comment`), `original_exercise`, `planned` (y dentro de él, `sets`, `reps` y `suggested_kg` por separado) y, en cada serie, `actual_reps` y `actual_kg`.
+- **Campos que pueden ser `null`:** los del resumen (`finished_at`, `duration_min`, `routine`, `rpe`, `notes`, `trainer_comment`), `original_exercise`, `planned` (y dentro de él, `sets`, `reps`, `suggested_kg` y `rest_seconds` por separado) y, en cada serie, `actual_reps`, `actual_kg` y `rest_seconds`.
 
 ### PATCH /sessions/:id/comment
 
@@ -877,6 +950,36 @@ Logros desbloqueados por el alumno, el más reciente primero. Roles: `trainer` (
 ```
 
 `context` depende del logro: `{ session_id }` en general y `{ session_id, exercise_id }` en los de récords. Un logro se desbloquea una sola vez por alumno.
+
+### GET /students/:id/achievements/progress
+
+Progreso del alumno en cada logro del catálogo. Mismos roles y permisos. **Solo lee**: no guarda la racha ni otorga logros (eso pasa al cerrar una sesión y en el job diario). La racha se calcula en el momento con la misma regla que `GET /streak` (ADR 0005).
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "streak": { "current_streak_days": 6, "longest_streak_days": 9, "last_session_date": "2026-10-30" },
+    "facts": { "sessions_count": 3, "longest_streak": 9, "pr_sessions": 1, "full_weeks": 0 },
+    "assigned_days": ["monday", "thursday"],
+    "achievements": [
+      {
+        "id": "uuid", "code": "SESSIONS_10", "name": "10 sesiones", "description": "…",
+        "category": "milestone", "icon_url": null, "criteria_type": "sessions_count",
+        "current": 3, "target": 10, "unlocked_at": null
+      }
+    ]
+  }
+}
+```
+
+- `achievements`: todo el catálogo, en el orden de `GET /achievements`.
+- `target`: `value` (`sessions_count`, `pr_count`), `days` (`streak`), `count` (`full_week`); `challenge`, un `criteria.type` desconocido o un goal inválido → 1.
+- `current`: el dato de `facts` que corresponde, recortado a `target`. Un logro desbloqueado vale `target` aunque el dato haya bajado. `challenge` y los tipos desconocidos valen 1 solo si están desbloqueados; si no, 0.
+- `criteria_type` es `criteria.type` del catálogo (`sessions_count | streak | pr_count | full_week | challenge`), o `null` si el logro no tiene criterio.
+- `facts` son los valores sin recortar: `longest_streak` es la mayor racha del historial y `pr_sessions` las sesiones con al menos un récord.
+- `assigned_days`: los días asignados (unión de las rutinas activas, en inglés) con los que se calculó la racha; `[]` = sin rutina activa (todos los días cuentan, ADR 0005). El celular los usa para seguir la racha offline sobre esta foto.
 
 ### GET /students/:id/streak
 
@@ -1314,6 +1417,7 @@ Marca como leídos los mensajes de la **otra** parte: el PT marca los del alumno
 > - Añadidos `PATCH` y `DELETE /routines/:id/exercises/:routineExerciseId`.
 > - Añadido módulo completo de Asistente IA del entrenador (`/trainer-ai/*`).
 > - Añadido módulo completo de Gamificación (`/students/:id/achievements`, `/streak`, `/challenges`).
+> - Añadido `GET /students/:id/achievements/progress` (progreso de logros, solo lectura; tarjeta 15).
 > - Modificado `POST /invitations` para soportar canal `whatsapp | qr | both`.
 > - Las series se registran con `POST /sessions/:id/sets` (lote, con sustituciones vía `original_exercise_id`).
 > - Cualquier cambio futuro en endpoints existentes debe ser discutido entre los integrantes para no romper el cliente que ya lo usa.

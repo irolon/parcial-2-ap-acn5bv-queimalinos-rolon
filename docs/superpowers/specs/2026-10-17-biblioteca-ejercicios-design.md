@@ -26,7 +26,7 @@ Que el alumno explore la biblioteca de ejercicios desde el celular y vea los vid
 - **Endpoint nuevo solo para alumno, `GET /exercises/library`.** `GET /exercises` queda igual (solo trainer, con sus filtros): la web de Pablo no cambia.
 - **Sin filtros en el servidor.** La app baja la biblioteca entera y filtra por grupo muscular en memoria: el filtro funciona offline.
 - **Video como link externo**, igual que en Hoy: botón "Ver video" que abre YouTube o el navegador. Sin reproductor embebido (ahorra una dependencia y 3–4 h). Sin red, en lugar del botón se muestra "El video necesita conexión".
-- **Dónde vive:** la pestaña "Mis rutinas" (`student/routines`, hoy placeholder) abre la biblioteca. Cuando exista la pantalla real de "Mis rutinas", la biblioteca pasa a ser una entrada dentro de ella.
+- **Dónde vive:** la pestaña "Mis rutinas" (`student/routines`, hoy placeholder) abre la biblioteca. Cuando exista la pantalla real de "Mis rutinas", la biblioteca pasa a ser una entrada dentro de ella. *(Nota 01/11: ya existe. La pestaña Mis rutinas tiene pantalla propia y la biblioteca es una entrada dentro de ella, en `student/library`; ver el [[superpowers/specs/2026-10-31-mis-rutinas-design|spec de Mis rutinas]].)*
 - **Refresh sin WorkManager:** al entrar a la pantalla y con pull-to-refresh. Mismo patrón que `RoutineRepository`.
 - **Room pasa a versión 3 con `AutoMigration(2→3)`**, que solo agrega tablas, y su caso en `FitTrainerDatabaseMigrationTest`. Nunca migraciones destructivas.
 - **Al cerrar sesión se borran los dos cachés** (rutinas y biblioteca). Para eso `UserDataCleaner` pasa de binding único a multibinding (`@IntoSet`).

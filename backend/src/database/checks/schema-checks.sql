@@ -62,6 +62,14 @@ where not exists (
 )
 
 union all
+select 'falta la columna session_sets.rest_seconds'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'session_sets'
+    and column_name = 'rest_seconds'
+)
+
+union all
 select 'falta la columna notifications.push_sent_at'
 where not exists (
   select 1 from information_schema.columns

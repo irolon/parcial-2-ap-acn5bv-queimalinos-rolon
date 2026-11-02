@@ -1,6 +1,7 @@
 package com.fittrainer.ui.today
 
 import com.fittrainer.data.routine.TodayContent
+import com.fittrainer.data.workout.Workout
 import java.time.Instant
 import java.time.LocalDate
 
@@ -21,8 +22,9 @@ data class TodayUiState(
 }
 
 /**
- * Con una sesión abierta y Hoy sin rutina para entrenar (descanso, sin rutina, sin datos o cargando) igual
- * tiene que haber cómo volver (spec §3: aunque sea de otra rutina o de otro día). En Training lo hace el hero.
+ * Con una sesión abierta igual tiene que haber cómo volver (spec §3: aunque sea de otra rutina o de otro día).
+ * Solo si es de la rutina que Hoy muestra para entrenar lo hace el hero; si es de otra (o de una rutina que ya
+ * no existe), el hero queda bloqueado y la vuelta es esta tarjeta.
  */
-fun showsActiveWorkoutCard(content: TodayContent?, workoutActive: Boolean): Boolean =
-    workoutActive && content !is TodayContent.Training
+fun showsActiveWorkoutCard(content: TodayContent?, active: Workout?): Boolean =
+    active != null && (content !is TodayContent.Training || active.routineId != content.routine.id)

@@ -13,6 +13,9 @@ sealed interface DataError {
     data object InvitationExpired : DataError
     data object InvitationUsed : DataError
     data object StudentEmailExists : DataError
+
+    /** El recurso no existe o ya no es de este usuario (el backend responde 403 o 404 sin distinguir). */
+    data object NotFound : DataError
 }
 
 class DataException(val error: DataError, cause: Throwable? = null) : Exception(cause)

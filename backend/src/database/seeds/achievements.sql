@@ -5,6 +5,7 @@
 -- correrlo N veces deja siempre las mismas 11 filas (y actualiza sus textos y reglas).
 -- La regla de cada logro vive en `criteria` (jsonb) y la lee el evaluador:
 -- sessions_count {value}, streak {days}, pr_count {value}, full_week {count}.
+-- La meta tiene que ser un número mayor a 0: con 0, negativa o sin cargar, el logro nunca se otorga.
 -- `challenge` no lo otorga el evaluador: lo da el desafío que lo premia.
 -- ============================================================================
 

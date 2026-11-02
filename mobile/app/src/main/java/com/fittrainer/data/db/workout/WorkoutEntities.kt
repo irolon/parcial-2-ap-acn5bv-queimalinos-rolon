@@ -81,6 +81,8 @@ data class WorkoutExerciseEntity(
     val reps: Int?,
     val restSeconds: Int?,
     val suggestedKg: Double?,
+    /** El descanso que eligió el alumno para este ejercicio (v9); null = el del entrenador ([restSeconds]). */
+    val restOverrideSeconds: Int? = null,
 )
 
 /** Serie confirmada. Mismos datos que `session_sets` del backend; executedAt es el momento real. */
@@ -112,6 +114,8 @@ data class WorkoutSetEntity(
     val syncError: String? = null,
     /** Como en la sesión: el rechazo ya se vio y se descartó en Hoy (v6). */
     @ColumnInfo(defaultValue = "0") val failureSeen: Boolean = false,
+    /** Descanso real después de esta serie, en segundos (v9); null = sin dato o sin descanso. */
+    val restSeconds: Int? = null,
 )
 
 data class WorkoutWithDetails(

@@ -1,37 +1,66 @@
-import { CRITERIA, evaluateCriteria } from '../../../../src/models/gamification/criteria.js';
+import {
+  CRITERIA,
+  criteriaGoal,
+  evaluateCriteria,
+  meetsCriteria,
+} from '../../../../src/models/gamification/criteria.js';
 
 const facts = { sessionsCount: 10, longestStreak: 7, prSessions: 1, fullWeeks: 0 };
 const ach = (code, criteria) => ({ code, criteria });
 
 describe('CRITERIA', () => {
-  it('expone un evaluador por tipo', () => {
+  it('tiene una entrada por tipo', () => {
     expect(Object.keys(CRITERIA).sort()).toEqual(
       ['challenge', 'full_week', 'pr_count', 'sessions_count', 'streak'].sort()
     );
   });
+});
 
-  it('sessions_count: >= value', () => {
-    expect(CRITERIA.sessions_count({ value: 10 }, facts)).toBe(true);
-    expect(CRITERIA.sessions_count({ value: 11 }, facts)).toBe(false);
+describe('meetsCriteria', () => {
+  it('sessions_count: sessionsCount >= value', () => {
+    expect(meetsCriteria({ type: 'sessions_count', value: 10 }, facts)).toBe(true);
+    expect(meetsCriteria({ type: 'sessions_count', value: 11 }, facts)).toBe(false);
   });
 
   it('streak: longestStreak >= days', () => {
-    expect(CRITERIA.streak({ days: 7 }, facts)).toBe(true);
-    expect(CRITERIA.streak({ days: 30 }, facts)).toBe(false);
+    expect(meetsCriteria({ type: 'streak', days: 7 }, facts)).toBe(true);
+    expect(meetsCriteria({ type: 'streak', days: 30 }, facts)).toBe(false);
   });
 
   it('pr_count: prSessions >= value', () => {
-    expect(CRITERIA.pr_count({ value: 1 }, facts)).toBe(true);
-    expect(CRITERIA.pr_count({ value: 10 }, facts)).toBe(false);
+    expect(meetsCriteria({ type: 'pr_count', value: 1 }, facts)).toBe(true);
+    expect(meetsCriteria({ type: 'pr_count', value: 10 }, facts)).toBe(false);
   });
 
   it('full_week: fullWeeks >= count', () => {
-    expect(CRITERIA.full_week({ count: 1 }, facts)).toBe(false);
-    expect(CRITERIA.full_week({ count: 1 }, { ...facts, fullWeeks: 1 })).toBe(true);
+    expect(meetsCriteria({ type: 'full_week', count: 1 }, facts)).toBe(false);
+    expect(meetsCriteria({ type: 'full_week', count: 1 }, { ...facts, fullWeeks: 1 })).toBe(true);
   });
 
-  it('challenge: siempre false', () => {
-    expect(CRITERIA.challenge({}, { sessionsCount: 999 })).toBe(false);
+  it('challenge: nunca, aunque los datos sobren', () => {
+    expect(meetsCriteria({ type: 'challenge' }, { sessionsCount: 999 })).toBe(false);
+  });
+
+  it.each([0, -1, 'abc', null])('una meta inválida (%p) nunca se cumple', (value) => {
+    expect(meetsCriteria({ type: 'sessions_count', value }, facts)).toBe(false);
+  });
+
+  it('dato faltante cuenta como 0', () => {
+    expect(meetsCriteria({ type: 'pr_count', value: 1 }, {})).toBe(false);
+  });
+});
+
+describe('criteriaGoal', () => {
+  it('meta y dato del tipo', () => {
+    expect(criteriaGoal({ type: 'full_week', count: 4 })).toEqual({ goal: 4, fact: 'fullWeeks' });
+  });
+
+  it('null para challenge, tipo desconocido, criterio vacío o meta no mayor a 0', () => {
+    expect(criteriaGoal({ type: 'challenge' })).toBeNull();
+    expect(criteriaGoal({ type: 'inventado', value: 3 })).toBeNull();
+    expect(criteriaGoal(null)).toBeNull();
+    expect(criteriaGoal({ type: 'streak' })).toBeNull();
+    expect(criteriaGoal({ type: 'streak', days: 0 })).toBeNull();
   });
 });
 
