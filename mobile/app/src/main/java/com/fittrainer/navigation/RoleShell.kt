@@ -54,8 +54,9 @@ fun RoleShell(
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val stack by navController.currentBackStack.collectAsStateWithLifecycle()
-    val stackRoutes = stack.map { it.destination.route }
+    val stackRoutes = remember(backStack, tabs) {
+        tabBackStack(tabs.map { it.route }, currentRoute) { runCatching { navController.getBackStackEntry(it) }.isSuccess }
+    }
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
