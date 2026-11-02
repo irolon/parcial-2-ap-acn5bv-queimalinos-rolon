@@ -26,6 +26,14 @@ describe('SavingScreen: guardando', () => {
     mount({ saving: true });
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('si sube otra pestaña lo dice y "Guardar desde acá" llama a onRetry, sin ofrecer Descartar', async () => {
+    const { onRetry } = mount({ saving: true, elsewhere: true });
+    expect(screen.getByRole('status')).toHaveTextContent('Se está guardando en otra pestaña.');
+    expect(screen.queryByRole('button', { name: /Descartar/ })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Guardar desde acá' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('SavingScreen: error que se puede reintentar', () => {

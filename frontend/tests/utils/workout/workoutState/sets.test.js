@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { finishWorkout, registerSet, removeSet, setCursor } from '@/utils/workout/workoutState';
+import { finishWorkout, registerSet, removeSet, setCursor } from '@/utils/workout/workoutState/workoutState';
 import { at, freshWorkout, isoAt, withSets } from '../../../helpers/workout/workout';
 
 const register = (state, load, seconds = 60) => registerSet(state, load, at(seconds), { newId: () => 'set-x' });

@@ -10,21 +10,32 @@ const SECONDARY = 'h-11 cursor-pointer rounded-lg px-3 font-display text-[13px] 
 /**
  * La subida del entrenamiento terminado:
  * - subiendo: "Guardando tu entrenamiento…", sin botones (no se descarta lo que está en camino);
+ * - subiendo en otra pestaña (`elsewhere`): lo dice y ofrece "Guardar desde acá" (`onRetry`), por si la otra falló o
+ *   se cerró. Es seguro: el id de la sesión es idempotente;
  * - error que se puede reintentar (sin red, 5xx…): "No pudimos guardar tu entrenamiento. Tus series siguen guardadas
  *   en este navegador.", Reintentar y, más chico, Descartar (con confirmación): si el servidor no vuelve, el alumno no
  *   queda sin poder entrenar. Lo que ya se haya subido queda en el servidor; lo demás se pierde;
  * - error que reintentar no arregla (`retryable === false`, p. ej. un 409): el mensaje del servidor, "No se pudo guardar
  *   este entrenamiento." y Descartar entrenamiento (con confirmación), para que el alumno no quede trabado.
  */
-export default function SavingScreen({ saving, error, onRetry, onDiscard }) {
+export default function SavingScreen({ saving, elsewhere = false, error, onRetry, onDiscard }) {
   const [confirming, setConfirming] = useState(false);
   if (saving) {
     return (
       <Card padding={32} className="mx-auto w-full max-w-xl">
         <div role="status" className="flex flex-col items-center gap-3 text-center">
           <Loader2 size={28} className="animate-spin text-accentText" aria-hidden="true" />
-          <p className="font-display text-lg font-semibold text-bone0">Guardando tu entrenamiento…</p>
+          <p className="font-display text-lg font-semibold text-bone0">
+            {elsewhere ? 'Se está guardando en otra pestaña.' : 'Guardando tu entrenamiento…'}
+          </p>
         </div>
+        {elsewhere && (
+          <div className="mt-4 flex justify-center">
+            <Button variant="ghost" onClick={onRetry}>
+              Guardar desde acá
+            </Button>
+          </div>
+        )}
       </Card>
     );
   }

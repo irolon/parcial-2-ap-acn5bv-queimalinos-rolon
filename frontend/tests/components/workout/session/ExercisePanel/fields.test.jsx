@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setCursor } from '@/utils/workout/workoutState';
+import { setCursor } from '@/utils/workout/workoutState/workoutState';
 import { PanelHarness, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout } from '../../../../helpers/workout/workout';
 import { allowSlowScreens } from '../../../../helpers/shared/patience';

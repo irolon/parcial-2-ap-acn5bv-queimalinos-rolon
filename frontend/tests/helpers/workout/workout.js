@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { ApiError } from '@/api/shared/client';
-import { registerSet, setCursor, startWorkout } from '@/utils/workout/workoutState';
+import { registerSet, setCursor, startWorkout } from '@/utils/workout/workoutState/workoutState';
 import { todayRoutine } from '../routines/studentRoutines';
 
 /** Inicio de las sesiones de los tests: domingo 1/11, 10:00 en Argentina. */

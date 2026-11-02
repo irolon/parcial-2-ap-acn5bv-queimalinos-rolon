@@ -3,7 +3,7 @@ import { FOCUS_RING } from '@/components/shared/layout/compact';
 import Card from '@/components/shared/ui/Card';
 import { useNow } from '@/hooks/shared/useNow';
 import { formatClock } from '@/utils/sessions/workoutFormat';
-import { restRemaining, restTotal } from '@/utils/workout/workoutState';
+import { restRemaining, restTotal } from '@/utils/workout/workoutState/workoutState';
 
 const MINUS = '−';
 const PILL = `h-11 cursor-pointer rounded-pill bg-ink3 px-4 font-mono text-[11px] text-bone0 transition-colors hover:bg-ink4 ${FOCUS_RING}`;

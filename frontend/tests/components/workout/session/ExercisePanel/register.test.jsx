@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ExercisePanel from '@/components/workout/session/ExercisePanel';
-import { removeSet, setCursor } from '@/utils/workout/workoutState';
+import { removeSet, setCursor } from '@/utils/workout/workoutState/workoutState';
 import { PanelHarness, register, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout } from '../../../../helpers/workout/workout';
 import { allowSlowScreens } from '../../../../helpers/shared/patience';

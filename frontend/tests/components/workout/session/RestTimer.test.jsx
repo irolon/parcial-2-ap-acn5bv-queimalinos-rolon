@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RestTimer from '@/components/workout/session/RestTimer';
-import { adjustRest, registerSet, setCursor, skipRest } from '@/utils/workout/workoutState';
+import { adjustRest, registerSet, setCursor, skipRest } from '@/utils/workout/workoutState/workoutState';
 import { at, freshWorkout, T0 } from '../../../helpers/workout/workout';
 
 const MINUS = '−';

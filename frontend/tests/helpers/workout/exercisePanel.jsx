@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { screen } from '@testing-library/react';
 import ExercisePanel from '@/components/workout/session/ExercisePanel';
-import { registerSet } from '@/utils/workout/workoutState';
+import { registerSet } from '@/utils/workout/workoutState/workoutState';
 import { freshWorkout } from './workout';
 
 /** Hace de página: guarda la sesión y registra con el motor, como lo hace `useActiveWorkout`. */

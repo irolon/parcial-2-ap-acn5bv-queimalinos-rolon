@@ -6,7 +6,7 @@ import {
   KG_INPUT, KG_STEP, REPS_INPUT, REPS_STEP, cleanKgText, cleanRepsText, stepKg, stepReps, validateLoad,
 } from '@/utils/workout/loadFields';
 import { kgLabel, kgText } from '@/utils/sessions/workoutFormat';
-import { exerciseSets, planLoad, prefill } from '@/utils/workout/workoutState';
+import { exerciseSets, planLoad, prefill } from '@/utils/workout/workoutState/workoutState';
 import LoadField from './LoadField';
 
 const MINUS = '−';

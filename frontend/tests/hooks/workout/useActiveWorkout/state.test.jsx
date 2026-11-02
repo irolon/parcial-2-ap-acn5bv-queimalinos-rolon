@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from '@testing-library/react';
 import { resetWorkoutStore } from '@/hooks/workout/workoutStore';
-import { restRemaining } from '@/utils/workout/workoutState';
+import { restRemaining } from '@/utils/workout/workoutState/workoutState';
 import { loadWorkout, saveWorkout } from '@/utils/workout/workoutStorage';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { STUDENT, renderActiveWorkout } from '../../../helpers/workout/activeWorkout';
