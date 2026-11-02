@@ -278,29 +278,6 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 ---
 
-## CU-09 — Crear y asignar challenge personalizado
-
-**Actor:** Personal Trainer
-
-| Campo | Detalle |
-|---|---|
-| Precondiciones | El PT está autenticado (web o mobile). |
-| Postcondiciones | Se crea un challenge en `challenges`. Si lo asigna a alumnos, se crean registros en `student_challenges`. |
-
-**Flujo principal**
-
-1. El PT entra a la sección "Challenges".
-2. Crea un challenge nuevo: nombre, descripción, tipo de meta (sesiones, peso, racha, volumen), valor meta y duración.
-3. Opcionalmente asocia un logro de recompensa (`reward_achievement_id`).
-4. Lo asigna a uno o más alumnos. El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
-5. Los alumnos reciben una notificación en sus clientes activos.
-
-**Flujos alternativos**
-
-- **4a:** El PT solo crea el challenge sin asignar → queda en su catálogo personal disponible para futuras asignaciones.
-
----
-
 ## CU-10 — Enviar alerta de alumno inactivo o con modificaciones
 
 **Actor:** Sistema (cron job nocturno)
@@ -326,35 +303,6 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - **E1:** FCM o Web Push no disponibles (o sin credenciales, o el token es inválido) → la notificación **igual queda guardada** en `notifications`: es la fuente de verdad y el PT la ve en su listado. El push es best-effort y **no se reintenta**. Si FCM indica que un token ya no es válido, se borra de `push_tokens`.
 
 ---
-
-## CU-27 — Recibir y ver los avisos (alumno)
-
-**Actor:** Alumno (mobile)
-
-| Campo | Detalle |
-|---|---|
-| Precondiciones | El alumno inició sesión en el celular al menos una vez (así registró su token de push). El sistema creó una notificación para él: un comentario del PT en una sesión (CU-07), un récord o un logro (CU-08). |
-| Postcondiciones | El alumno vio el aviso en el push o en su lista de avisos y, si lo tocó, quedó leído en el servidor y en el celular. |
-
-**Flujo principal**
-
-1. El sistema guarda la notificación en `notifications` y manda el push al celular del alumno ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
-2. Al alumno le llega el push, aunque tenga la app cerrada.
-3. Lo toca: la app abre la pantalla del aviso (el detalle de la sesión comentada, los gráficos del ejercicio del récord o la lista de avisos para un logro) y lo marca leído.
-4. En la pantalla Hoy, la campana muestra cuántos avisos no leyó.
-5. Al tocar la campana ve la lista de avisos agrupada en Hoy · Ayer · Antes, con los no leídos marcados. Desde ahí puede abrir cualquiera o tocar "Marcar todo leído".
-
-**Flujos alternativos**
-
-- **2a:** Las notificaciones están apagadas en el celular → no llega el push, pero el aviso igual aparece en la campana y en la lista, con un cartel para activarlas.
-- **3a:** El alumno está en medio de una sesión (o en su resumen) → la app espera a que la sesión termine para abrir el aviso.
-- **3b:** La sesión comentada no está guardada y no hay red → se abre Progreso → Historial.
-- **5a:** Sin conexión → ve lo guardado con el aviso "Sin conexión · mostrando lo guardado". Lo que marca leído queda pendiente y se sube cuando vuelve la red, uno por uno. "Marcar todo leído" marca solo lo que vio: un aviso que llega al servidor mientras tanto queda sin leer.
-
-**Flujos de error**
-
-- **E1:** Falla el push (FCM caído, token vencido) → la notificación igual queda guardada y el alumno la ve en la lista al abrir la app.
-- **E2:** Falla la subida de un leído → queda pendiente y se reintenta en el próximo refresco.
 
 ## CU-11 — Enviar mensaje al alumno (web)
 
@@ -388,3 +336,65 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - Los avisos son por polling (conversación abierta cada 4 s, lista y badge cada 15 s, solo con la pestaña visible); no hay push ni filas en `notifications`.
 - El chat en el celular no está en esta versión: usa este mismo backend y queda para una tarjeta de mobile.
 - No se pueden editar ni borrar mensajes, ni mandar varias fotos por mensaje.
+
+---
+
+## CU-25 — Crear y asignar desafío (web)
+
+**Actor:** Personal Trainer
+
+> **Numeración:** este caso de uso se numera CU-25 para coincidir con el [[arquitectura/diagrama-casos-de-uso|diagrama de casos de uso]] (donde CU-09 es "Comentar sesión del alumno"). Antes figuraba acá como CU-09.
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El PT está autenticado en la web. |
+| Postcondiciones | Si crea un desafío, se guarda en `challenges` (propio del PT). Si asigna una plantilla o un desafío propio a alumnos, se crean registros en `student_challenges`. |
+
+**Flujo principal**
+
+1. El PT entra a "Desafíos" del menú. La página tiene dos secciones: "Plantillas" (los 4 desafíos globales que vienen con la app: "12 sesiones en 30 días", "Racha de 2 semanas", "10 toneladas en 4 semanas" y "8 sesiones en 4 semanas") y "Mis desafíos" (los que creó él).
+2. En "Plantillas" elige una y toca "Asignar". Las plantillas se asignan directamente, sin copiarse ni modificarse.
+3. El PT elige alumnos con un buscador (hasta 50 por vez) y confirma con "Asignar". El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
+4. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. La vista del alumno (desafío activo y progreso) está pendiente: tarjeta 50 (paridad de rol, vistas del alumno en la web) y la mobile.
+
+**Flujos alternativos**
+
+- **1a:** El PT borra un desafío propio → solo se permite si no tiene asignaciones. Las plantillas globales no se pueden borrar.
+- **2a:** El PT crea un desafío nuevo desde cero: nombre, tipo de meta (sesiones, racha, volumen o peso corporal), valor meta (entero en sesiones y racha; en kg admite decimales, con coma), duración en días y descripción opcional. El premio "Desafío cumplido" es opcional (viene activado por defecto) y el alumno lo recibe **solo la primera vez** que completa un desafío; los siguientes no lo repiten. Al crearlo se abre "Asignar" (paso 3).
+- **2b:** Al crear, el PT elige "Ahora no" → el desafío queda en "Mis desafíos", disponible para asignar más tarde.
+- **3a:** Algún alumno elegido ya tiene ese desafío activo → aparece marcado "Ya lo tiene", no se le vuelve a asignar y al confirmar un aviso lista a los alumnos salteados.
+
+**Flujos de error**
+
+- **E1:** Se intenta asignar a más de 50 alumnos por vez → el backend rechaza el pedido (400) y no asigna a nadie. Si entre los elegidos hay alumnos que no son del PT (o están inactivos), el backend los saltea (`not_your_student`), asigna al resto y los lista en el aviso.
+
+---
+
+## CU-27 — Recibir y ver los avisos (alumno)
+
+**Actor:** Alumno (mobile)
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El alumno inició sesión en el celular al menos una vez (así registró su token de push). El sistema creó una notificación para él: un comentario del PT en una sesión (CU-07), un récord o un logro (CU-08). |
+| Postcondiciones | El alumno vio el aviso en el push o en su lista de avisos y, si lo tocó, quedó leído en el servidor y en el celular. |
+
+**Flujo principal**
+
+1. El sistema guarda la notificación en `notifications` y manda el push al celular del alumno ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]).
+2. Al alumno le llega el push, aunque tenga la app cerrada.
+3. Lo toca: la app abre la pantalla del aviso (el detalle de la sesión comentada, los gráficos del ejercicio del récord o la lista de avisos para un logro) y lo marca leído.
+4. En la pantalla Hoy, la campana muestra cuántos avisos no leyó.
+5. Al tocar la campana ve la lista de avisos agrupada en Hoy · Ayer · Antes, con los no leídos marcados. Desde ahí puede abrir cualquiera o tocar "Marcar todo leído".
+
+**Flujos alternativos**
+
+- **2a:** Las notificaciones están apagadas en el celular → no llega el push, pero el aviso igual aparece en la campana y en la lista, con un cartel para activarlas.
+- **3a:** El alumno está en medio de una sesión (o en su resumen) → la app espera a que la sesión termine para abrir el aviso.
+- **3b:** La sesión comentada no está guardada y no hay red → se abre Progreso → Historial.
+- **5a:** Sin conexión → ve lo guardado con el aviso "Sin conexión · mostrando lo guardado". Lo que marca leído queda pendiente y se sube cuando vuelve la red, uno por uno. "Marcar todo leído" marca solo lo que vio: un aviso que llega al servidor mientras tanto queda sin leer.
+
+**Flujos de error**
+
+- **E1:** Falla el push (FCM caído, token vencido) → la notificación igual queda guardada y el alumno la ve en la lista al abrir la app.
+- **E2:** Falla la subida de un leído → queda pendiente y se reintenta en el próximo refresco.

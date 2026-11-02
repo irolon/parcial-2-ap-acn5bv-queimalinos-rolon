@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
 import com.fittrainer.ui.messages.trainer.badge.MessagesBadgeViewModel
 import com.fittrainer.ui.messages.trainer.unreadDescription
 import com.fittrainer.ui.notifications.bell.NotificationBellViewModel

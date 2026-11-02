@@ -10,12 +10,12 @@ tarjeta: E11
 
 - ≤ 200 líneas físicas por archivo, organizado capa → módulo → archivo y con los tests copiando el árbol.
 - La UI lee de Room. Las escrituras del entrenador son solo online.
-- Room v22, AutoMigration 21→22, con `MigrationV22Test`.
+- Room v21, AutoMigration 20→21, con `MigrationV21Test`.
 
 ## Task 1: Datos
 
 - **Red:** `data/api/messages/TrainerMessagesDtos.kt`, `TrainerMessagesApi.kt` (conversations, history, send JSON, markRead, broadcast), registrados en `NetworkModule`.
-- **Room:** `data/db/messages/trainer/TrainerMessageEntities.kt`, `TrainerMessagesDao.kt`; v22 en `FitTrainerDatabase` y el DAO en `DatabaseModule`.
+- **Room:** `data/db/messages/trainer/TrainerMessageEntities.kt`, `TrainerMessagesDao.kt`; v21 en `FitTrainerDatabase` y el DAO en `DatabaseModule`.
 - **Dominio y repositorio:** `data/messages/trainer/TrainerMessage.kt` (modelos y excepciones), `TrainerMessageMapper.kt`, `TrainerMessagesRepository.kt` (Mutex por PT, hueco, más viejos, errores), y `di/messages/TrainerMessagesModule.kt` (cleaner).
 - **Tests:** `TrainerMessagesRepositoryTest`, `TrainerMessagesRepositoryErrorsTest`, la carrera, y fakes en `testing/fakes/messages/`.
 
@@ -35,7 +35,7 @@ tarjeta: E11
 
 ## Task 4: Verificación y E2E
 
-- `gradlew checkFileLength assembleDebug testDebugUnitTest`, `MigrationV22Test` y el E2E del §5 del spec.
+- `gradlew checkFileLength assembleDebug testDebugUnitTest`, `MigrationV21Test` y el E2E del §5 del spec.
 - "Cómo quedó", tarjeta a 🔍 AUDITORÍA y comentario.
 
 **Estado (01/11):** las cuatro tareas están hechas; ver "Cómo quedó" en el spec.

@@ -3,6 +3,7 @@ package com.fittrainer.ui.templates.trainer.detail
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.auth.MutableClock
@@ -10,8 +11,10 @@ import com.fittrainer.testing.fakes.auth.httpError
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesApi
 import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesDao
+import com.fittrainer.testing.fakes.students.FakeStudentDetailApi
 import com.fittrainer.testing.fakes.students.FakeStudentsApi
 import com.fittrainer.testing.fakes.students.FakeTrainerSession
+import com.fittrainer.testing.fakes.students.FakeTrainerStudentDetailDao
 import com.fittrainer.testing.fakes.students.FakeTrainerStudentsDao
 import com.fittrainer.testing.fakes.students.studentDto
 import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesApi
@@ -46,12 +49,13 @@ class TemplateAssignRoundOneTest {
     private val students = TrainerStudentsRepository(
         FakeStudentsApi(pages = mapOf(true to listOf(listOf(studentDto("s1", "Ana Paz"))))), FakeTrainerStudentsDao(), MutableClock(0),
     )
+    private val details = TrainerStudentDetailRepository(FakeStudentDetailApi(), FakeTrainerStudentDetailDao(), Clock.systemUTC())
 
     /** Detalle abierto desde la ficha de s1 (alumno fijo), con la hoja "Asignar" abierta. */
     private suspend fun TestScope.opened(): TemplateDetailViewModel {
         students.refresh("t1")
         val args = mapOf(TEMPLATE_ID_ARG to "tp1", STUDENT_ID_ARG to "s1")
-        return TemplateDetailViewModel(repo, routines, students, FakeTrainerSession(), FakeConnectivityObserver(), SavedStateHandle(args)).also {
+        return TemplateDetailViewModel(repo, routines, students, details, FakeTrainerSession(), FakeConnectivityObserver(), SavedStateHandle(args)).also {
             it.onStart()
             advanceUntilIdle()
             it.onAssign()

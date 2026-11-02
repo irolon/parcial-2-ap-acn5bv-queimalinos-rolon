@@ -10,6 +10,11 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.fittrainer.navigation.trainer.TRAINER_CHALLENGES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_EXERCISES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_TEMPLATES_ROUTE
 import com.fittrainer.ui.routines.detail.ROUTINE_ID_ARG
 
 /** Una pestaña de la barra inferior. isAccountMenu = la que lleva a Estado del servidor y Cerrar sesión. */
@@ -26,9 +31,6 @@ fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
 
 /** Lista de avisos del alumno (tarjeta 17): se abre desde la campana de Hoy. */
 const val NOTIFICATIONS_ROUTE = "student/notifications"
-
-/** Centro de notificaciones del entrenador (E12): cuelga de Inicio, como el del alumno de Hoy. */
-const val TRAINER_NOTIFICATIONS_ROUTE = "trainer/notifications"
 
 /** Mis rutinas → una rutina, y Mis rutinas → biblioteca (la biblioteca no cuelga de student/routines/ para no chocar con {routineId}). */
 const val ROUTINE_DETAIL_ROUTE = "student/routines/{$ROUTINE_ID_ARG}"

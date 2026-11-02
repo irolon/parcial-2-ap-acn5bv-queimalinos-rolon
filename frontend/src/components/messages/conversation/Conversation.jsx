@@ -26,7 +26,7 @@ export default function Conversation({ studentId, viewerRole, onBack }) {
   const [image, setImage] = useState(null);
   const { messages } = thread;
   const scroll = useStickToBottom(messages.at(-1)?.id);
-  useAutoRead(studentId, viewerRole, messages);
+  useAutoRead(studentId, viewerRole, messages, thread.dataUpdatedAt);
 
   const onSend = (content) => {
     scroll.stickNext();

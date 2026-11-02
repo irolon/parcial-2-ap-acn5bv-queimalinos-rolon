@@ -1,6 +1,7 @@
 package com.fittrainer.data.students.overview
 
 import com.fittrainer.data.db.students.overview.TrainerOverviewEntity
+import com.fittrainer.data.students.StudentStatus
 import com.fittrainer.testing.fakes.students.FakeOverviewApi
 import com.fittrainer.testing.fakes.students.FakeTrainerOverviewDao
 import com.fittrainer.testing.fakes.students.overviewDto

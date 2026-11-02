@@ -190,6 +190,7 @@ Lista los alumnos del trainer autenticado (rol: trainer).
     { "id": "uuid", "name": "Tomás Rivera", "email": "t@mail.com", "goal": "hypertrophy",
       "active": true, "avatar_url": null, "created_at": "2026-10-17T12:00:00Z",
       "last_session_at": "2026-10-20T10:00:00Z",
+      "streak": { "current_days": 12, "longest_days": 20, "last_trained_date": "2026-10-30" },
       "days_per_week": 3,
       "adherence_7d": { "assigned": 3, "done": 2, "pct": 67 } }
   ],
@@ -197,7 +198,7 @@ Lista los alumnos del trainer autenticado (rol: trainer).
 }
 ```
 
-> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. El listado no trae `level`, `gym_equipment` ni `injuries`.
+> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. `streak` sale de `student_streaks` y es `null` si todavía no se calculó. El listado no trae `level`, `gym_equipment` ni `injuries`.
 >
 > `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
 
@@ -1013,10 +1014,19 @@ Desafíos que puede ver el usuario: globales (`trainer_id: null`) y los del entr
     "id": "uuid", "trainer_id": null, "name": "12 sesiones en 30 días",
     "description": "Cerrá 12 sesiones de entrenamiento en 30 días.",
     "goal_type": "sessions_count", "goal_value": 12, "duration_days": 30,
-    "reward_achievement_id": null
+    "reward_achievement_id": null,
+    "assignments_count": 3, "active_count": 1
   }]
 }
 ```
+
+Solo para `trainer`, cada desafío suma `assignments_count` (asignaciones en cualquier estado) y `active_count` (las activas), contando únicamente a sus propios alumnos. Para `student` esas claves no vienen.
+
+### GET /challenges/:id/active-students
+
+Solo `trainer`. Ids de los alumnos suyos que tienen el desafío (global o propio) **activo**; sirve para deshabilitarlos al asignar.
+
+**200 OK:** `{ "data": ["uuid", …] }`. Desafío inexistente o de otro entrenador → 404 `CHALLENGE_NOT_FOUND`.
 
 ### POST /challenges
 
@@ -1035,7 +1045,7 @@ Solo `trainer` (alumno → 403 `FORBIDDEN`). Crea un desafío propio.
 }
 ```
 
-- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0. `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
+- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0; entero si `goal_type` es `sessions_count` o `streak` (`volume` y `weight_target` admiten decimales). `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
 - Campo inválido → 400 `VALIDATION_ERROR` con `details`; un `reward_achievement_id` que no existe también.
 
 **201 Created:** `{ data }` con el desafío (misma forma que un ítem de `GET /challenges`, con `trainer_id` del entrenador).
@@ -1256,8 +1266,9 @@ Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Un
 }
 ```
 
-- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`, pero nunca los dos a la vez.
+- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`. Si los dos vienen en `null` es un mensaje de solo foto cuya URL no se pudo firmar (ver abajo): la web muestra "Foto no disponible".
 - `image_url` es una URL firmada que vence a la hora (3600 s); el `image_path` del bucket nunca sale. Si hace falta, se vuelve a pedir el historial para obtener una nueva.
+- La firma es best-effort: si Storage falla al firmar, la respuesta igual sale bien (200 en el historial, 201 en el envío) con `image_url: null` en las fotos afectadas, y el error se registra en el servidor. El próximo pedido del historial las vuelve a firmar.
 - `broadcast_id` lo comparten los mensajes de un mismo envío masivo; `null` si es un mensaje normal.
 - `read_at` lo completa el **otro** lado de la conversación al abrirla (`POST /messages/:studentId/read`).
 
@@ -1347,6 +1358,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 - `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
 - `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
 - `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
+- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y no responde 500.
 
 **Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.
 

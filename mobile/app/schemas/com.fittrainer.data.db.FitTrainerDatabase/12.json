@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 12,
-    "identityHash": "60cd7fd87dd9abc4be708482b9822a7f",
+    "identityHash": "3cca62890de5c84a506ff9a11f55d641",
     "entities": [
       {
         "tableName": "health_snapshot",
@@ -958,120 +958,6 @@
         }
       },
       {
-        "tableName": "trainer_students",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `trainerId` TEXT NOT NULL, `name` TEXT NOT NULL, `email` TEXT NOT NULL, `goal` TEXT, `active` INTEGER NOT NULL, `avatarUrl` TEXT, `createdAt` INTEGER NOT NULL, `lastSessionAt` INTEGER, `daysPerWeek` INTEGER NOT NULL, `adherenceAssigned` INTEGER, `adherenceDone` INTEGER, `adherencePct` INTEGER, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "trainerId",
-            "columnName": "trainerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "email",
-            "columnName": "email",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "goal",
-            "columnName": "goal",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "active",
-            "columnName": "active",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "avatarUrl",
-            "columnName": "avatarUrl",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "lastSessionAt",
-            "columnName": "lastSessionAt",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "daysPerWeek",
-            "columnName": "daysPerWeek",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "adherenceAssigned",
-            "columnName": "adherenceAssigned",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "adherenceDone",
-            "columnName": "adherenceDone",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "adherencePct",
-            "columnName": "adherencePct",
-            "affinity": "INTEGER"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
-      },
-      {
-        "tableName": "trainer_students_sync",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `trainerId` TEXT NOT NULL, `lastSyncedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "trainerId",
-            "columnName": "trainerId",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "lastSyncedAt",
-            "columnName": "lastSyncedAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
-      },
-      {
         "tableName": "progress_exercise_points",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, `date` TEXT NOT NULL, `maxKg` REAL, `e1rmKg` REAL, `sets` INTEGER NOT NULL, `reps` INTEGER NOT NULL, PRIMARY KEY(`ownerId`, `exerciseId`, `date`))",
         "fields": [
@@ -1479,11 +1365,125 @@
             "notificationId"
           ]
         }
+      },
+      {
+        "tableName": "trainer_students",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `trainerId` TEXT NOT NULL, `name` TEXT NOT NULL, `email` TEXT NOT NULL, `goal` TEXT, `active` INTEGER NOT NULL, `avatarUrl` TEXT, `createdAt` INTEGER NOT NULL, `lastSessionAt` INTEGER, `daysPerWeek` INTEGER NOT NULL, `adherenceAssigned` INTEGER, `adherenceDone` INTEGER, `adherencePct` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainerId",
+            "columnName": "trainerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "goal",
+            "columnName": "goal",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "active",
+            "columnName": "active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avatarUrl",
+            "columnName": "avatarUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSessionAt",
+            "columnName": "lastSessionAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "daysPerWeek",
+            "columnName": "daysPerWeek",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "adherenceAssigned",
+            "columnName": "adherenceAssigned",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "adherenceDone",
+            "columnName": "adherenceDone",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "adherencePct",
+            "columnName": "adherencePct",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "trainer_students_sync",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `trainerId` TEXT NOT NULL, `lastSyncedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainerId",
+            "columnName": "trainerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '60cd7fd87dd9abc4be708482b9822a7f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3cca62890de5c84a506ff9a11f55d641')"
     ]
   }
 }

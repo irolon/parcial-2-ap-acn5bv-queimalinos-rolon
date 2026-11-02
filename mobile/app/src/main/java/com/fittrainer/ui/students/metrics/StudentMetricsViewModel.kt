@@ -80,7 +80,7 @@ class StudentMetricsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StudentMetricsUiState())
 
-    fun today(): LocalDate = LocalDate.ofInstant(clock.instant(), ARGENTINA)
+    fun today(): LocalDate = clock.instant().atZone(ARGENTINA).toLocalDate()
 
     fun onStart() {
         if (local.value.openNewOnLoad) {

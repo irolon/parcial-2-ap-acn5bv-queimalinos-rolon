@@ -2,6 +2,7 @@ package com.fittrainer.ui.exercises.trainer.library
 
 import com.fittrainer.data.exercises.trainer.TrainerExercisesRepository
 import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.testing.fakes.auth.httpError
 import com.fittrainer.testing.fakes.exercises.FakeTrainerExercisesApi
 import com.fittrainer.testing.fakes.exercises.FakeTrainerExercisesDao
 import com.fittrainer.testing.fakes.exercises.trainerExerciseDto
@@ -17,6 +18,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -96,5 +98,53 @@ class TrainerLibraryViewModelTest {
         advanceUntilIdle()
         assertEquals(NEEDS_NETWORK, vm.uiState.value.notice)
         assertTrue(api.exercises.any { it.id == "o1" })
+    }
+
+    @Test fun `con solo mios los chips son los grupos propios y un grupo sin propios se suelta`() = runTest {
+        started()
+        vm.picker.onGroup("legs")
+        runCurrent()
+        vm.onToggleOnlyOwn()
+        runCurrent()
+        assertEquals(listOf("biceps"), vm.uiState.value.groups)
+        assertNull(vm.uiState.value.picker.group)
+        assertEquals(listOf("o1"), ids())
+        vm.onToggleOnlyOwn()
+        assertTrue(vm.uiState.value.groups.containsAll(listOf("chest", "legs", "biceps")))
+    }
+
+    @Test fun `un 500 con red ofrece reintentar y al reintentar carga`() = runTest {
+        api.error = httpError(500)
+        started()
+        assertTrue(vm.uiState.value.picker.refreshFailed)
+        assertTrue(vm.uiState.value.picker.catalogEmpty)
+        api.error = null
+        vm.onRetry()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.picker.refreshFailed)
+        assertEquals(listOf("o1", "e1", "e2"), ids())
+    }
+
+    @Test fun `sin red no es un error del servidor`() = runTest {
+        connectivity.state.value = false
+        api.error = java.io.IOException("sin red")
+        started()
+        assertFalse(vm.uiState.value.picker.refreshFailed)
+    }
+
+    @Test fun `con solo mios, si se borra el ultimo propio del grupo elegido el grupo se suelta`() = runTest {
+        api.exercises = api.exercises + trainerExerciseDto("o2", "Aperturas", "chest", global = false)
+        started()
+        vm.onToggleOnlyOwn()
+        vm.picker.onGroup("chest")
+        runCurrent()
+        assertEquals(listOf("o2"), ids())
+        vm.onSelect(vm.uiState.value.visible.single())
+        vm.onAskDelete()
+        vm.onConfirmDelete()
+        advanceUntilIdle()
+        assertEquals(listOf("biceps"), vm.uiState.value.groups)
+        assertNull(vm.uiState.value.picker.group)
+        assertEquals(listOf("o1"), ids())
     }
 }

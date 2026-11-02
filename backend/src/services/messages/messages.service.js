@@ -16,13 +16,27 @@ async function counterpartOf(user, student) {
   return toPublicPerson(await authRepo.findTrainerById(student.trainer_id));
 }
 
+/**
+ * Firma best-effort → Map<path, url>. Si Storage falla no se responde 500: en el historial, el resto
+ * de la conversación carga igual; en el envío, el mensaje ya guardado no se duplica al reintentar.
+ * Las fotos quedan con `image_url: null` y se loguea; se firman en el próximo historial.
+ */
+async function signBestEffort(paths) {
+  try {
+    return await imagesRepo.signUrls(paths);
+  } catch (err) {
+    console.error('No se pudieron firmar las fotos de los mensajes:', err.message);
+    return new Map();
+  }
+}
+
 /** Historial paginado por cursor, en orden cronológico, con las fotos ya firmadas. */
 export async function history(user, studentId, { before, limit }) {
   const student = await assertCanAccessStudent(user, studentId);
   const rows = await messagesRepo.findPage(studentId, { before, limit });
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
-  const urls = await imagesRepo.signUrls(page.filter((r) => r.image_path).map((r) => r.image_path));
+  const urls = await signBestEffort(page.filter((r) => r.image_path).map((r) => r.image_path));
   return {
     data: page.map((r) => toMessage(r, urls.get(r.image_path))).reverse(),
     // page viene de más nuevo a más viejo: el último es el más viejo de la página.
@@ -38,20 +52,6 @@ async function storeImage(studentId, file) {
   const path = `${studentId}/${randomUUID()}.${type.ext}`;
   await imagesRepo.uploadImage(path, file.buffer, type.mime);
   return path;
-}
-
-/**
- * El mensaje ya está guardado: si la firma falla no se responde 500 (el cliente reintentaría y
- * duplicaría). Se devuelve sin URL y se loguea; la foto se firma en el próximo historial.
- */
-async function signAfterInsert(imagePath) {
-  if (!imagePath) return null;
-  try {
-    return (await imagesRepo.signUrls([imagePath])).get(imagePath) ?? null;
-  } catch (err) {
-    console.error('No se pudo firmar la foto del mensaje ya guardado:', err.message);
-    return null;
-  }
 }
 
 /** Envía texto y/o una foto. El `sender_role` es siempre el del usuario autenticado. */
@@ -75,7 +75,8 @@ export async function send(user, studentId, { body, file }) {
     if (imagePath) await imagesRepo.removeImage(imagePath).catch(() => {});
     throw err;
   }
-  return toMessage(row, await signAfterInsert(imagePath));
+  const urls = imagePath ? await signBestEffort([imagePath]) : new Map();
+  return toMessage(row, urls.get(imagePath));
 }
 
 /** Marca leídos solo los mensajes del otro rol. */

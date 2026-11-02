@@ -16,6 +16,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
+import com.fittrainer.navigation.trainer.trainerChallengeRoutes
+import com.fittrainer.navigation.trainer.trainerChatRoute
+import com.fittrainer.navigation.trainer.trainerExerciseRoutes
+import com.fittrainer.navigation.trainer.trainerMenuLinks
+import com.fittrainer.navigation.trainer.trainerMessageRoutes
+import com.fittrainer.navigation.trainer.trainerNotificationRoutes
+import com.fittrainer.navigation.trainer.trainerRoutineRoutes
+import com.fittrainer.navigation.trainer.trainerStudentRoutes
+import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.messages.trainer.list.ConversationsScreen
@@ -51,8 +62,9 @@ fun RoleShell(
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val stack by navController.currentBackStack.collectAsStateWithLifecycle()
-    val stackRoutes = stack.map { it.destination.route }
+    val stackRoutes = remember(backStack, tabs) {
+        tabBackStack(tabs.map { it.route }, currentRoute) { runCatching { navController.getBackStackEntry(it) }.isSuccess }
+    }
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
@@ -150,10 +162,6 @@ fun RoleShell(
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
             }
-            trainerMessageRoutes(navController)
-            composable(TRAINER_NOTIFICATIONS_ROUTE) {
-                TrainerNotificationsRoute(navController, launches)
-            }
             composable(NOTIFICATIONS_ROUTE) {
                 NotificationsScreen(
                     onBack = { navController.popBackStack() },
@@ -172,6 +180,8 @@ fun RoleShell(
             trainerTemplateRoutes(navController)
             trainerExerciseRoutes(navController)
             trainerChallengeRoutes(navController)
+            trainerNotificationRoutes(navController, launches)
+            trainerMessageRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }

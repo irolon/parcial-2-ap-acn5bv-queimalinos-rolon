@@ -33,7 +33,7 @@ La pestaña Mensajes del entrenador deja de ser un placeholder. Muestra sus conv
 
 ## 2. Decisiones
 
-- **Offline-first como el resto:** lista y chat se leen de Room (v22) y se refrescan desde la API. Enviar, marcar leído y difundir son solo online, como todas las escrituras del entrenador (E8-E14). Sin red, la caja de texto se deshabilita y se ve lo guardado.
+- **Offline-first como el resto:** lista y chat se leen de Room (v21) y se refrescan desde la API. Enviar, marcar leído y difundir son solo online, como todas las escrituras del entrenador (E8-E14). Sin red, la caja de texto se deshabilita y se ve lo guardado.
 - **Solo texto para enviar.** Las fotos que manda el alumno se ven, con Coil y la URL firmada. Mandar fotos desde el celular queda fuera de E11, porque suma selector, compresión y multipart; el botón "+" del prototipo no va.
 - **Polling con la pantalla visible:**
   - con el chat abierto, cada 4 s;
@@ -64,7 +64,7 @@ La pestaña Mensajes del entrenador deja de ser un placeholder. Muestra sus conv
   - abre al final y baja solo cuando llega un mensaje y ya estaba abajo.
 - **Hoja de difusión:** como la de asignar desafíos (E14): búsqueda con más de 8 alumnos, casillas, "Todos", texto y "Enviar a N".
 
-## 4. Datos (Room v22, AutoMigration 21→22)
+## 4. Datos (Room v21, AutoMigration 20→21)
 
 - `trainer_conversations` (trainerId, studentId, name, avatarUrl, lastBody, lastHasImage, lastSenderRole, lastAt, unreadCount, position)
 - `trainer_conversations_sync` (trainerId, fetchedAt)
@@ -79,7 +79,7 @@ Todo se borra al cerrar sesión (`UserDataCleaner`).
   - repositorio: refresh, hueco, más viejos, enviar con 409/403/red, leer, difusión y carrera GET-vs-POST;
   - textos: vista previa, hora y separadores;
   - ViewModels: lista, chat (polling, leído, enviar) y difusión.
-- **Migración:** `MigrationV22Test` en el emulador.
+- **Migración:** `MigrationV21Test` en el emulador.
 - **E2E en el emulador con el backend local:**
   1. El PT abre Mensajes, entra al chat de `alumna.card8` y le escribe.
   2. Como alumna, `GET /messages/:id` por API muestra el mensaje (criterio de aceptación). La alumna contesta por API.

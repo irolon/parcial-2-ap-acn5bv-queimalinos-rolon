@@ -79,6 +79,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideProgressApi(client: OkHttpClient, json: Json): ProgressApi =
+        retrofit(client, json).create(ProgressApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNotificationsApi(client: OkHttpClient, json: Json): NotificationsApi =
+        retrofit(client, json).create(NotificationsApi::class.java)
+
+    @Provides
+    @Singleton
     fun provideStudentsApi(client: OkHttpClient, json: Json): StudentsApi =
         retrofit(client, json).create(StudentsApi::class.java)
 
@@ -112,16 +122,6 @@ object NetworkModule {
     @Singleton
     fun provideTrainerInvitationApi(client: OkHttpClient, json: Json): TrainerInvitationApi =
         retrofit(client, json).create(TrainerInvitationApi::class.java)
-
-    @Provides
-    @Singleton
-    fun provideProgressApi(client: OkHttpClient, json: Json): ProgressApi =
-        retrofit(client, json).create(ProgressApi::class.java)
-
-    @Provides
-    @Singleton
-    fun provideNotificationsApi(client: OkHttpClient, json: Json): NotificationsApi =
-        retrofit(client, json).create(NotificationsApi::class.java)
 
     // AuthApi tiene que quedar en @AuthClient: en el cliente principal el refresh reentraría al TokenAuthenticator y se trabaría en su Mutex.
     @Provides

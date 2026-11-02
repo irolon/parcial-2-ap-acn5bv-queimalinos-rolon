@@ -11,6 +11,7 @@ import {
   STUDENT_DETAIL_COLUMNS,
   STUDENT_LAST_SESSION_VIEW,
 } from '../../models/students/student.model.js';
+import { STUDENT_STREAKS_TABLE } from '../../models/gamification/gamification.model.js';
 
 /** Lista (paginada) los alumnos de un trainer, con filtros opcionales. */
 export async function findStudentsByTrainer({ trainerId, active, search, page, limit }) {
@@ -92,6 +93,16 @@ export async function findLastSessionDates(studentIds) {
   return data;
 }
 
+/** Racha de cada alumno pedido. Los que todavía no la tienen calculada no vienen. */
+export async function findStreaks(studentIds) {
+  const { data, error } = await supabase
+    .from(STUDENT_STREAKS_TABLE)
+    .select('student_id, current_days, longest_days, last_trained_date')
+    .in('student_id', studentIds);
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
 /** Actualiza campos del alumno y devuelve la ficha base. */
 export async function updateStudent(id, fields) {
   const { data, error } = await supabase
@@ -100,6 +111,31 @@ export async function updateStudent(id, fields) {
     .eq('id', id)
     .select(STUDENT_DETAIL_COLUMNS)
     .single();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** Todos los alumnos activos del trainer, por nombre (mensajería: id, name, avatar_url). */
+export async function findActiveStudentsByTrainer(trainerId) {
+  return fetchAll(() =>
+    supabase
+      .from(STUDENTS_TABLE)
+      .select('id, name, avatar_url')
+      .eq('trainer_id', trainerId)
+      .eq('active', true)
+      .order('name')
+      .order('id')
+  );
+}
+
+/** De los `ids` pedidos, los que son alumnos activos del trainer (para validar un envío masivo). */
+export async function findActiveStudentsByIds(trainerId, ids) {
+  const { data, error } = await supabase
+    .from(STUDENTS_TABLE)
+    .select('id')
+    .eq('trainer_id', trainerId)
+    .eq('active', true)
+    .in('id', ids);
   if (error) throw Errors.internal(error.message);
   return data;
 }
@@ -161,29 +197,4 @@ export async function findFinishedSessionsBetween(studentId, fromIso, toIso) {
       .not('finished_at', 'is', null)
       .order('id')
   );
-}
-
-/** Todos los alumnos activos del trainer, por nombre (mensajería: id, name, avatar_url). */
-export async function findActiveStudentsByTrainer(trainerId) {
-  return fetchAll(() =>
-    supabase
-      .from(STUDENTS_TABLE)
-      .select('id, name, avatar_url')
-      .eq('trainer_id', trainerId)
-      .eq('active', true)
-      .order('name')
-      .order('id')
-  );
-}
-
-/** De los `ids` pedidos, los que son alumnos activos del trainer (para validar un envío masivo). */
-export async function findActiveStudentsByIds(trainerId, ids) {
-  const { data, error } = await supabase
-    .from(STUDENTS_TABLE)
-    .select('id')
-    .eq('trainer_id', trainerId)
-    .eq('active', true)
-    .in('id', ids);
-  if (error) throw Errors.internal(error.message);
-  return data;
 }

@@ -109,7 +109,7 @@ Las últimas 10 sesiones terminadas de sus alumnos: nombre, "<rutina> · RPE N" 
 
 ## 6. Fuera de alcance
 
-Campana y notificaciones (E12). Dashboard igual en la web (queda el aviso a Pablo en el README).
+Las notificaciones (E12). La campana de Inicio con la hoja "Pendientes de hoy" ya está (ver el anexo §7); E12 le suma las notificaciones. Dashboard igual en la web (queda el aviso a Pablo en el README).
 
 ## 7. Anexo (01/11): rediseño "el día primero"
 
