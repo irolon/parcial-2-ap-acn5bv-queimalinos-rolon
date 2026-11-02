@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -109,5 +110,23 @@ class ExerciseFormViewModelTest {
     @Test fun `un global o uno que ya no esta no se edita`() = runTest {
         assertTrue(vm("e1").uiState.value.gone)
         assertTrue(vm("nada").uiState.value.gone)
+    }
+
+    @Test fun `un 400 de un campo del formulario no repite el generico arriba`() = runTest {
+        api.writeError = httpError(400, """{"error":{"code":"VALIDATION_ERROR","message":"Error de validación","details":[{"field":"name","message":"Ya existe"}]}}""")
+        val vm = vm()
+        vm.fill()
+        vm.onSave()
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.message)
+    }
+
+    @Test fun `un 400 de un campo que no esta en el formulario va arriba`() = runTest {
+        api.writeError = httpError(400, """{"error":{"code":"VALIDATION_ERROR","message":"Error de validación","details":[{"field":"body","message":"Enviá al menos un campo"}]}}""")
+        val vm = vm()
+        vm.fill()
+        vm.onSave()
+        advanceUntilIdle()
+        assertEquals("Enviá al menos un campo", vm.uiState.value.message)
     }
 }

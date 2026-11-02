@@ -3,12 +3,12 @@ package com.fittrainer.data.exercises.trainer
 import com.fittrainer.data.api.errorEnvelope
 import com.fittrainer.data.api.exercises.TrainerExerciseDto
 import com.fittrainer.data.api.exercises.TrainerExercisesApi
+import com.fittrainer.data.api.orThrow
 import com.fittrainer.data.db.exercises.trainer.TrainerExerciseEntity
 import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.repository.toDataError
-import com.fittrainer.data.routines.trainer.orThrow
 import com.fittrainer.data.session.UserDataCleaner
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject

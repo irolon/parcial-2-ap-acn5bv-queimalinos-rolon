@@ -20,6 +20,7 @@ const val EXERCISE_DELETED = "Ejercicio eliminado"
 const val EXERCISE_GONE = "Ese ejercicio ya no existe"
 const val NO_OWN_EXERCISES = "Todavía no creaste ejercicios propios"
 const val LIBRARY_CONNECT = "Conectate para cargar la biblioteca"
+const val LIBRARY_FAILED = "No pudimos actualizar la biblioteca"
 
 fun deleteQuestion(name: String) = "¿Eliminar \"$name\"? No se puede deshacer."
 

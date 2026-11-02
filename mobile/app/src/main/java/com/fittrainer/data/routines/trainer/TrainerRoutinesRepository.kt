@@ -1,5 +1,6 @@
 package com.fittrainer.data.routines.trainer
 
+import com.fittrainer.data.api.orThrow
 import com.fittrainer.data.api.routines.AddExercisesRequest
 import com.fittrainer.data.api.routines.CreateRoutineRequest
 import com.fittrainer.data.api.routines.ReorderRequest

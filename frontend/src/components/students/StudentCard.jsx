@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import StreakLabel from '@/components/achievements/StreakLabel';
 import Avatar from '@/components/shared/ui/Avatar';
 import { profileHref } from '@/routes/routeTable';
 import { activityStatus, lastSessionLabel } from '@/utils/students/activity';
@@ -25,6 +26,9 @@ export default function StudentCard({ student, now, search }) {
           <span className="block truncate font-body text-xs text-ink6">{goalLabel(student.goal) ?? 'Sin objetivo'}</span>
           <span className="mt-1 block font-mono text-[11px] text-ink6">
             Última sesión: {lastSessionLabel(student, now)}
+          </span>
+          <span className="block font-mono text-[11px] text-ink6">
+            <StreakLabel streak={student.streak} />
           </span>
         </span>
         <StudentStatusPill status={status} />
