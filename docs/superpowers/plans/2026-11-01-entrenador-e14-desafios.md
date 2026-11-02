@@ -10,7 +10,7 @@ tarjeta: E14
 
 **Architecture:**
 - **Datos:** `TrainerChallengesRepository` sobre cuatro tablas nuevas (Room v20), con un Mutex por entrenador.
-- **UI:** va en `ui/challenges/trainer/`, con rutas en `navigation/TrainerChallengeRoutes.kt` y una sección nueva en la ficha.
+- **UI:** va en `ui/challenges/trainer/`, con rutas en `navigation/trainer/TrainerChallengeRoutes.kt` y una sección nueva en la ficha.
 - **Backend:** no cambia.
 
 **Spec:** `docs/superpowers/specs/2026-11-01-entrenador-e14-desafios-design.md`
@@ -75,7 +75,7 @@ tarjeta: E14
   - `ui/challenges/trainer/detail/ChallengeDetailScreen`, `ChallengeDetailViewModel` y `AssignStudentsSheet`;
   - `ui/challenges/trainer/section/ChallengesSection`, `ChallengesSectionViewModel` y `PickChallengeSheet`;
   - `ui/challenges/trainer/components/` (fila del desafío y fila del avance);
-  - `navigation/TrainerChallengeRoutes.kt`.
+  - `navigation/trainer/TrainerChallengeRoutes.kt`.
 - **Modify:**
   - `TrainerMenuLinks` (+ Desafíos);
   - `RoleShell` (registrar las rutas);

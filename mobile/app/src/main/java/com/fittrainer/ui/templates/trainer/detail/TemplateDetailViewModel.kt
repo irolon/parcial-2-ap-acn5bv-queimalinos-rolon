@@ -11,12 +11,15 @@ import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.data.students.TrainerStudent
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import com.fittrainer.data.templates.trainer.TemplateDetail
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.ui.students.detail.STUDENT_ID_ARG
 import com.fittrainer.ui.templates.trainer.assign.AssignDone
 import com.fittrainer.ui.templates.trainer.assign.AssignState
 import com.fittrainer.ui.templates.trainer.assign.AssignTemplateController
+import com.fittrainer.ui.templates.trainer.TEMPLATE_REFRESH_FAILED
+import com.fittrainer.ui.templates.trainer.fixedStudent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,14 +37,19 @@ import kotlinx.coroutines.launch
 
 const val TEMPLATE_ID_ARG = "templateId"
 
-/** students: los activos, para elegir a quién asignarla. fixedStudent: el de la ficha, si se llegó desde ahí. */
+/**
+ * students: los activos, para elegir a quién asignarla. fixedStudent: el de la ficha, si se llegó desde ahí.
+ * forStudent: se llegó desde una ficha; mientras no se sepa quién es (fixedStudent null), no se puede asignar.
+ */
 data class TemplateDetailUiState(
     val loaded: Boolean = false,
     val detail: TemplateDetail? = null,
     val offline: Boolean = false,
     val gone: Boolean = false,
+    val loadError: String? = null,
     val students: List<TrainerStudent> = emptyList(),
     val fixedStudent: TrainerStudent? = null,
+    val forStudent: Boolean = false,
     val assign: AssignState? = null,
     val done: AssignDone? = null,
 )
@@ -51,7 +59,8 @@ data class TemplateDetailUiState(
 class TemplateDetailViewModel @Inject constructor(
     private val repository: TrainerTemplatesRepository,
     routines: TrainerRoutinesRepository,
-    students: TrainerStudentsRepository,
+    private val students: TrainerStudentsRepository,
+    details: TrainerStudentDetailRepository,
     sessionRepository: SessionRepository,
     connectivity: ConnectivityObserver,
     saved: SavedStateHandle,
@@ -62,6 +71,7 @@ class TemplateDetailViewModel @Inject constructor(
     private val trainerId = sessionRepository.session.map { (it as? Session.Trainer)?.user?.id }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val gone = MutableStateFlow(false)
+    private val loadError = MutableStateFlow<String?>(null)
     private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     private val controller = AssignTemplateController(
         repository, routines, viewModelScope,
@@ -80,26 +90,43 @@ class TemplateDetailViewModel @Inject constructor(
         .map { cache -> cache.students.filter { it.active }.sortedBy { it.name.lowercase() } }
         .onStart { emit(emptyList()) }
 
-    private val flags = combine(online, gone, controller.state, controller.done) { o, g, a, d -> Flags(!o, g, a, d) }
+    private val fixed = fixedStudent(trainerId, studentId, students, details)
 
-    val uiState: StateFlow<TemplateDetailUiState> = combine(detail, active, flags) { d, list, f ->
+    private val flags = combine(online, gone, loadError, controller.state, controller.done) { o, g, e, a, d -> Flags(!o, g, e, a, d) }
+
+    val uiState: StateFlow<TemplateDetailUiState> = combine(detail, active, fixed, flags) { d, list, student, f ->
         TemplateDetailUiState(
-            loaded = d.first, detail = d.second, offline = f.offline, gone = f.gone, students = list,
-            fixedStudent = studentId?.let { id -> list.firstOrNull { it.id == id } },
+            loaded = d.first, detail = d.second, offline = f.offline, gone = f.gone, loadError = f.loadError, students = list,
+            fixedStudent = student?.takeIf { it.active }, forStudent = studentId != null,
             assign = f.assign, done = f.done,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, TemplateDetailUiState())
 
     fun onStart() {
+        // El selector y el alumno fijo salen de la lista de Alumnos, que solo baja esa pestaña.
+        viewModelScope.launch { students.refresh(trainerId.filterNotNull().first()) }
+        refresh()
+    }
+
+    fun onRetry() = refresh()
+
+    /** Un error con red (un 500) ofrece reintentar; sin red no es error: se ve el caché o "Conectate". */
+    private fun refresh() {
+        loadError.value = null
         viewModelScope.launch {
-            val error = repository.refreshTemplate(trainerId.filterNotNull().first(), templateId).exceptionOrNull()
-            if ((error as? DataException)?.error == DataError.NotFound) gone.value = true
+            val error = (repository.refreshTemplate(trainerId.filterNotNull().first(), templateId).exceptionOrNull() as? DataException)?.error
+            when {
+                error == DataError.NotFound -> gone.value = true
+                error != null && error != DataError.Offline -> loadError.value = TEMPLATE_REFRESH_FAILED
+            }
         }
     }
 
     /** "Asignar a un alumno" (o "Asignar a <nombre>" si se llegó desde la ficha). */
     fun onAssign() {
         val state = uiState.value
+        // Desde la ficha nunca se abre el selector: sin el alumno todavía, no hace nada (el botón está apagado).
+        if (state.forStudent && state.fixedStudent == null) return
         controller.open(state.detail ?: return, state.fixedStudent)
     }
 
@@ -110,10 +137,11 @@ class TemplateDetailViewModel @Inject constructor(
     fun onToggleDeactivate(on: Boolean) = controller.onToggleDeactivate(on)
     fun onSubmit() = controller.submit(templateId)
     fun onDismissAssign() = controller.dismiss()
+    fun onDismissPicker() = controller.dismissPicker()
     fun onRetryPrevious() = controller.retryPrevious()
 
     /** La pantalla ya navegó al editor: el evento no se repite al volver. */
     fun onDoneHandled() = controller.consumeDone()
 
-    private data class Flags(val offline: Boolean, val gone: Boolean, val assign: AssignState?, val done: AssignDone?)
+    private data class Flags(val offline: Boolean, val gone: Boolean, val loadError: String?, val assign: AssignState?, val done: AssignDone?)
 }

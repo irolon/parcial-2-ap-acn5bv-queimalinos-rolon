@@ -92,10 +92,21 @@ class ExerciseFormViewModel @Inject constructor(
                 when {
                     error == null -> s.copy(saving = false, done = true)
                     (error as? DataException)?.error == DataError.NotFound -> s.copy(saving = false, gone = true)
-                    else -> s.copy(saving = false, message = error.exerciseActionMessage(), errors = error.fieldErrors())
+                    else -> s.copy(saving = false, message = error.formMessage(), errors = error.fieldErrors())
                 }
             }
         }
+    }
+
+    /**
+     * El aviso de arriba: en un 400, solo el primer detalle de un campo que no está en el formulario (los
+     * otros ya se ven debajo de cada campo), nunca el "Error de validación" genérico. Si no hay detalles, el
+     * mensaje del backend.
+     */
+    private fun Throwable.formMessage(): String? {
+        val rejected = this as? ExerciseRejectedException ?: return exerciseActionMessage()
+        if (rejected.fields.isEmpty()) return exerciseActionMessage()
+        return rejected.fields.entries.firstOrNull { exerciseFormFieldOf(it.key) == null }?.value
     }
 
     private fun Throwable.fieldErrors(): Map<ExerciseFormField, String> =

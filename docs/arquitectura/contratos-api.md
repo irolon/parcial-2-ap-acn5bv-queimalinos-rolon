@@ -190,6 +190,7 @@ Lista los alumnos del trainer autenticado (rol: trainer).
     { "id": "uuid", "name": "Tomás Rivera", "email": "t@mail.com", "goal": "hypertrophy",
       "active": true, "avatar_url": null, "created_at": "2026-10-17T12:00:00Z",
       "last_session_at": "2026-10-20T10:00:00Z",
+      "streak": { "current_days": 12, "longest_days": 20, "last_trained_date": "2026-10-30" },
       "days_per_week": 3,
       "adherence_7d": { "assigned": 3, "done": 2, "pct": 67 } }
   ],
@@ -197,7 +198,7 @@ Lista los alumnos del trainer autenticado (rol: trainer).
 }
 ```
 
-> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. El listado no trae `level`, `gym_equipment` ni `injuries`.
+> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. `streak` sale de `student_streaks` y es `null` si todavía no se calculó. El listado no trae `level`, `gym_equipment` ni `injuries`.
 >
 > `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
 
@@ -1013,10 +1014,19 @@ Desafíos que puede ver el usuario: globales (`trainer_id: null`) y los del entr
     "id": "uuid", "trainer_id": null, "name": "12 sesiones en 30 días",
     "description": "Cerrá 12 sesiones de entrenamiento en 30 días.",
     "goal_type": "sessions_count", "goal_value": 12, "duration_days": 30,
-    "reward_achievement_id": null
+    "reward_achievement_id": null,
+    "assignments_count": 3, "active_count": 1
   }]
 }
 ```
+
+Solo para `trainer`, cada desafío suma `assignments_count` (asignaciones en cualquier estado) y `active_count` (las activas), contando únicamente a sus propios alumnos. Para `student` esas claves no vienen.
+
+### GET /challenges/:id/active-students
+
+Solo `trainer`. Ids de los alumnos suyos que tienen el desafío (global o propio) **activo**; sirve para deshabilitarlos al asignar.
+
+**200 OK:** `{ "data": ["uuid", …] }`. Desafío inexistente o de otro entrenador → 404 `CHALLENGE_NOT_FOUND`.
 
 ### POST /challenges
 
@@ -1035,7 +1045,7 @@ Solo `trainer` (alumno → 403 `FORBIDDEN`). Crea un desafío propio.
 }
 ```
 
-- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0. `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
+- `name`: 1 a 100 caracteres. `description`: opcional, hasta 1000 o `null`. `goal_value`: número mayor a 0; entero si `goal_type` es `sessions_count` o `streak` (`volume` y `weight_target` admiten decimales). `duration_days`: entero de 1 a 365 (obligatorio: define `ends_at` al asignarlo). `reward_achievement_id`: uuid de un logro existente.
 - Campo inválido → 400 `VALIDATION_ERROR` con `details`; un `reward_achievement_id` que no existe también.
 
 **201 Created:** `{ data }` con el desafío (misma forma que un ítem de `GET /challenges`, con `trainer_id` del entrenador).

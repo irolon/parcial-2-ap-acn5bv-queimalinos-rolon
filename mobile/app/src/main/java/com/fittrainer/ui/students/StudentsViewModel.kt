@@ -14,7 +14,6 @@ import com.fittrainer.data.students.StudentsCache
 import com.fittrainer.data.students.TrainerStudentsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -64,7 +63,7 @@ class StudentsViewModel @Inject constructor(
     val uiState: StateFlow<StudentsUiState> =
         combine(cache, filters, online, refreshState) { c, f, isOnline, r ->
             val now = clock.instant()
-            studentsUiState(c, f.filter, f.query, LocalDate.ofInstant(now, ARGENTINA), now, isOnline, r.refreshing, r.error)
+            studentsUiState(c, f.filter, f.query, now.atZone(ARGENTINA).toLocalDate(), now, isOnline, r.refreshing, r.error)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StudentsUiState())
 
     init {

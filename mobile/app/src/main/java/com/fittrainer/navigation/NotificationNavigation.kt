@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
 import com.fittrainer.ui.notifications.launch.NavTarget
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 import com.fittrainer.ui.notifications.launch.PendingNav

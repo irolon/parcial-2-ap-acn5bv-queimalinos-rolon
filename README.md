@@ -34,7 +34,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Notificaciones:** tabla como fuente de verdad, push FCM (HTTP v1), alerta de inactividad del PT y avisos de récords, rutina modificada y logros.
 
 **Web** (React)
-- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas e historial de sesiones con comentarios del PT y vista de progreso con gráficos (Recharts).
+- [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas, historial de sesiones con comentarios del PT, vista de progreso con gráficos (Recharts), y racha, logros y desafíos del PT (crear, asignar y seguir el progreso).
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.
@@ -42,10 +42,11 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Mis rutinas:** todas las rutinas asignadas con su detalle, offline, y se puede entrenar una rutina que no es la del día (la biblioteca pasa a ser una entrada dentro de Mis rutinas).
 - [x] **Gráficos de progreso** del alumno: curva de carga por ejercicio (1RM estimado, kg máximo o reps) y evolución de sus medidas, con período elegible y offline.
 - [x] **Push y centro de avisos** del alumno: push de comentarios del entrenador, récords y logros (FCM) que abren su pantalla, campana con no leídos en Hoy y lista de avisos offline, con los leídos que se suben al volver la red.
+- [x] **Mapa muscular:** en la sesión activa, el músculo del ejercicio en un cuerpo dibujado (si entra sin scroll); en Hoy, "Ver músculos de hoy" abre el cuerpo con los grupos de la rutina del día. Offline.
 
 **En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42).
 
-**Pendiente:** IA (asistente del alumno y del PT, con n8n), logros en la web, agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
+**Pendiente:** IA (asistente del alumno y del PT, con n8n), agenda, mensajería, paridad del alumno en la web, QA y deploy (S7).
 
 > DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
 

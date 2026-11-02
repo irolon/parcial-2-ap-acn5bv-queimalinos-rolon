@@ -16,18 +16,26 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
+import com.fittrainer.navigation.trainer.trainerChallengeRoutes
+import com.fittrainer.navigation.trainer.trainerExerciseRoutes
+import com.fittrainer.navigation.trainer.trainerMenuLinks
+import com.fittrainer.navigation.trainer.trainerNotificationRoutes
+import com.fittrainer.navigation.trainer.trainerRoutineRoutes
+import com.fittrainer.navigation.trainer.trainerStudentRoutes
+import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
-import com.fittrainer.ui.students.overview.HomeNavigation
-import com.fittrainer.ui.students.overview.TrainerHomeScreen
+import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.notifications.NotificationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
-import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.progress.ProgressScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
 import com.fittrainer.ui.students.StudentsScreen
+import com.fittrainer.ui.students.overview.HomeNavigation
+import com.fittrainer.ui.students.overview.TrainerHomeScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -50,8 +58,9 @@ fun RoleShell(
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val stack by navController.currentBackStack.collectAsStateWithLifecycle()
-    val stackRoutes = stack.map { it.destination.route }
+    val stackRoutes = remember(backStack, tabs) {
+        tabBackStack(tabs.map { it.route }, currentRoute) { runCatching { navController.getBackStackEntry(it) }.isSuccess }
+    }
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
@@ -148,9 +157,6 @@ fun RoleShell(
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
             }
-            composable(TRAINER_NOTIFICATIONS_ROUTE) {
-                TrainerNotificationsRoute(navController, launches)
-            }
             composable(NOTIFICATIONS_ROUTE) {
                 NotificationsScreen(
                     onBack = { navController.popBackStack() },
@@ -169,6 +175,7 @@ fun RoleShell(
             trainerTemplateRoutes(navController)
             trainerExerciseRoutes(navController)
             trainerChallengeRoutes(navController)
+            trainerNotificationRoutes(navController, launches)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }

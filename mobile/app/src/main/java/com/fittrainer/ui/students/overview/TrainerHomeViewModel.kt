@@ -74,7 +74,7 @@ class TrainerHomeViewModel @Inject constructor(
         TrainerHomeUiState(
             loaded = c.loaded,
             name = user?.name.orEmpty(),
-            today = LocalDate.ofInstant(now, ARGENTINA),
+            today = now.atZone(ARGENTINA).toLocalDate(),
             now = now,
             overview = c.cache?.overview,
             syncedLabel = c.cache?.let { syncedAgo(it.fetchedAt, now) },

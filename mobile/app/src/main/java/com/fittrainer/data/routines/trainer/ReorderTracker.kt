@@ -1,21 +1,22 @@
 package com.fittrainer.data.routines.trainer
 
 /**
- * Por rutina: el último reorder pedido (ticket), cuántos hay en vuelo y el último orden que confirmó el
- * servidor. Con eso, un ↑↑↑ rápido solo guarda la respuesta del último y, si el último falla, vuelve al
+ * Por rutina: el último reorder pedido (ticket y orden), cuántos hay en vuelo y el último orden que confirmó
+ * el servidor. Con eso, un ↑↑↑ rápido solo guarda la respuesta del último y, si el último falla, vuelve al
  * orden confirmado (no al orden local de un reorder anterior que todavía no se confirmó).
  */
 internal class ReorderTracker {
 
-    private class State(var latest: Int = 0, var pending: Int = 0, var confirmed: List<String>? = null)
+    private class State(var latest: Int = 0, var pending: Int = 0, var confirmed: List<String>? = null, var requested: List<String>? = null)
 
     private val states = HashMap<String, State>()
 
     /** [current]: el orden en Room antes de aplicar este reorder. Si no hay otro en vuelo, es el confirmado. */
     @Synchronized
-    fun start(routineId: String, current: List<String>): Int {
+    fun start(routineId: String, current: List<String>, requested: List<String>): Int {
         val state = states.getOrPut(routineId) { State() }
         if (state.pending == 0) state.confirmed = current
+        state.requested = requested
         state.pending++
         state.latest++
         return state.latest
@@ -31,6 +32,10 @@ internal class ReorderTracker {
 
     @Synchronized
     fun confirmed(routineId: String): List<String>? = states[routineId]?.confirmed
+
+    /** El orden del último reorder que todavía está en vuelo; null si no hay ninguno. */
+    @Synchronized
+    fun requested(routineId: String): List<String>? = states[routineId]?.requested
 
     @Synchronized
     fun finish(routineId: String) {

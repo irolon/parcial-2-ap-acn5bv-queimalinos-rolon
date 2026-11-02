@@ -1,6 +1,7 @@
 package com.fittrainer.data.templates.trainer
 
 import com.fittrainer.data.api.errorEnvelope
+import com.fittrainer.data.api.orThrow
 import com.fittrainer.data.api.templates.FromRoutineRequest
 import com.fittrainer.data.api.templates.InstantiateRequest
 import com.fittrainer.data.api.templates.TrainerTemplatesApi
@@ -11,7 +12,6 @@ import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.repository.toDataError
 import com.fittrainer.data.routines.trainer.RoutineRejectedException
 import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
-import com.fittrainer.data.routines.trainer.orThrow
 import com.fittrainer.data.session.UserDataCleaner
 import java.time.Clock
 import java.time.Instant

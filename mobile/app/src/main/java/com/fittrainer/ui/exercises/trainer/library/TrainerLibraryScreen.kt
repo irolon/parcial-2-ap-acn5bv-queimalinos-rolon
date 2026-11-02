@@ -2,18 +2,21 @@ package com.fittrainer.ui.exercises.trainer.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +38,7 @@ import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
 import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
 import com.fittrainer.ui.exercises.trainer.LIBRARY_CONNECT
+import com.fittrainer.ui.exercises.trainer.LIBRARY_FAILED
 import com.fittrainer.ui.exercises.trainer.LIBRARY_TITLE
 import com.fittrainer.ui.exercises.trainer.NEW_EXERCISE
 import com.fittrainer.ui.exercises.trainer.NO_OWN_EXERCISES
@@ -45,6 +49,7 @@ import com.fittrainer.ui.exercises.trainer.toDetail
 import com.fittrainer.ui.library.components.MuscleChips
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
 import com.fittrainer.ui.routines.trainer.picker.PICKER_NO_RESULTS
+import com.fittrainer.ui.students.sessions.components.RetryRow
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
@@ -80,14 +85,21 @@ fun TrainerLibraryScreen(
             Button(onClick = onNew, enabled = !state.offline, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(NEW_EXERCISE) }
         }
         val p = state.picker
+        // Con red y un error del servidor se ofrece reintentar; sin red, el aviso de arriba y "Conectate".
+        if (p.refreshFailed && !state.offline) item { RetryRow(LIBRARY_FAILED, viewModel::onRetry) }
         when {
-            !p.loaded -> Unit
+            !p.loaded -> item {
+                Box(Modifier.fillMaxWidth().padding(Spacing.lg), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = FtColors.Brand)
+                }
+            }
+            p.catalogEmpty && p.refreshFailed -> Unit
             p.catalogEmpty -> item { InfoCard("Biblioteca vacía", LIBRARY_CONNECT) }
             else -> {
                 item {
                     OutlinedTextField(p.query, viewModel.picker::onQuery, Modifier.fillMaxWidth(), label = { Text("Buscar") }, singleLine = true)
                 }
-                item { MuscleChips(p.groups, p.group, viewModel.picker::onGroup) }
+                item { MuscleChips(state.groups, p.group, viewModel.picker::onGroup) }
                 item {
                     FilterChip(
                         selected = state.onlyOwn, onClick = viewModel::onToggleOnlyOwn, label = { Text(ONLY_MINE) },

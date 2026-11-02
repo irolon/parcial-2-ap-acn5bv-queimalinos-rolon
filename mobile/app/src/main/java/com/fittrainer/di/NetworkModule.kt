@@ -10,11 +10,11 @@ import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.invitation.TrainerInvitationApi
 import com.fittrainer.data.api.exercises.TrainerExercisesApi
 import com.fittrainer.data.api.routines.TrainerRoutinesApi
+import com.fittrainer.data.api.notifications.NotificationsApi
+import com.fittrainer.data.api.progress.ProgressApi
 import com.fittrainer.data.api.students.StudentsApi
 import com.fittrainer.data.api.templates.TrainerTemplatesApi
 import com.fittrainer.data.api.challenges.TrainerChallengesApi
-import com.fittrainer.data.api.notifications.NotificationsApi
-import com.fittrainer.data.api.progress.ProgressApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
 import dagger.Module
@@ -78,6 +78,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideProgressApi(client: OkHttpClient, json: Json): ProgressApi =
+        retrofit(client, json).create(ProgressApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNotificationsApi(client: OkHttpClient, json: Json): NotificationsApi =
+        retrofit(client, json).create(NotificationsApi::class.java)
+
+    @Provides
+    @Singleton
     fun provideStudentsApi(client: OkHttpClient, json: Json): StudentsApi =
         retrofit(client, json).create(StudentsApi::class.java)
 
@@ -106,16 +116,6 @@ object NetworkModule {
     @Singleton
     fun provideTrainerInvitationApi(client: OkHttpClient, json: Json): TrainerInvitationApi =
         retrofit(client, json).create(TrainerInvitationApi::class.java)
-
-    @Provides
-    @Singleton
-    fun provideProgressApi(client: OkHttpClient, json: Json): ProgressApi =
-        retrofit(client, json).create(ProgressApi::class.java)
-
-    @Provides
-    @Singleton
-    fun provideNotificationsApi(client: OkHttpClient, json: Json): NotificationsApi =
-        retrofit(client, json).create(NotificationsApi::class.java)
 
     // AuthApi tiene que quedar en @AuthClient: en el cliente principal el refresh reentraría al TokenAuthenticator y se trabaría en su Mutex.
     @Provides

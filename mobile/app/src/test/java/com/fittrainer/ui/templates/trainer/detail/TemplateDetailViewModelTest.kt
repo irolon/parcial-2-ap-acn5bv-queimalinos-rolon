@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.routines.trainer.RoutineField
 import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.auth.MutableClock
@@ -11,8 +12,10 @@ import com.fittrainer.testing.fakes.auth.httpError
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesApi
 import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesDao
+import com.fittrainer.testing.fakes.students.FakeStudentDetailApi
 import com.fittrainer.testing.fakes.students.FakeStudentsApi
 import com.fittrainer.testing.fakes.students.FakeTrainerSession
+import com.fittrainer.testing.fakes.students.FakeTrainerStudentDetailDao
 import com.fittrainer.testing.fakes.students.FakeTrainerStudentsDao
 import com.fittrainer.testing.fakes.students.studentDto
 import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesApi
@@ -48,10 +51,11 @@ class TemplateDetailViewModelTest {
         FakeStudentsApi(pages = mapOf(true to listOf(listOf(studentDto("s1", "Ana Paz"), studentDto("s2", "Beto"))))),
         FakeTrainerStudentsDao(), MutableClock(0),
     )
+    private val details = TrainerStudentDetailRepository(FakeStudentDetailApi(), FakeTrainerStudentDetailDao(), Clock.systemUTC())
 
     private fun TestScope.vm(studentId: String? = null): TemplateDetailViewModel {
         val args = mutableMapOf<String, Any>(TEMPLATE_ID_ARG to "tp1").apply { studentId?.let { put(STUDENT_ID_ARG, it) } }
-        return TemplateDetailViewModel(repo, routines, students, FakeTrainerSession(), connectivity, SavedStateHandle(args)).also {
+        return TemplateDetailViewModel(repo, routines, students, details, FakeTrainerSession(), connectivity, SavedStateHandle(args)).also {
             it.onStart()
             advanceUntilIdle()
         }

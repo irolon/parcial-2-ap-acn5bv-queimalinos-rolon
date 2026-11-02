@@ -1,5 +1,6 @@
 package com.fittrainer.navigation
 
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
 import com.fittrainer.ui.notifications.launch.NavTarget
 import com.fittrainer.ui.notifications.launch.PendingNav
 import org.junit.Assert.assertEquals

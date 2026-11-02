@@ -3,6 +3,7 @@ package com.fittrainer.data.api
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import retrofit2.HttpException
+import retrofit2.Response
 
 @Serializable
 private data class ErrorEnvelope(val error: ErrorBody? = null)
@@ -32,4 +33,9 @@ fun HttpException.errorEnvelope(): ErrorBody? = try {
     response()?.errorBody()?.string()?.let { errorJson.decodeFromString<ErrorEnvelope>(it).error }
 } catch (e: Exception) {
     null
+}
+
+/** Un Response<Unit> con error se trata igual que el HttpException de los métodos con body. */
+fun Response<Unit>.orThrow() {
+    if (!isSuccessful) throw HttpException(this)
 }
