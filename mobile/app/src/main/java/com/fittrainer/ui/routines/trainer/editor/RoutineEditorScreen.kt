@@ -65,7 +65,7 @@ fun RoutineEditorScreen(onBack: () -> Unit, viewModel: RoutineEditorViewModel = 
         }
     }
     if (state.picking) {
-        PickerContent(state.picker, viewModel::onQuery, viewModel::onGroup, viewModel::onPick, viewModel::onClosePicker)
+        PickerContent(state.picker, viewModel.picker::onQuery, viewModel.picker::onGroup, viewModel::onPick, viewModel::onClosePicker)
     } else {
         EditorBody(state, viewModel, onBack)
     }
@@ -74,6 +74,11 @@ fun RoutineEditorScreen(onBack: () -> Unit, viewModel: RoutineEditorViewModel = 
             sheet, if (sheet.removable) "Guardar" else "Agregar", state.offline,
             viewModel::onExerciseChange, viewModel::onSaveExercise, viewModel::onRemoveExercise, viewModel::onDismissSheet,
         )
+    }
+    val saveTemplate by viewModel.saveAsTemplate.state.collectAsStateWithLifecycle()
+    saveTemplate?.let { st ->
+        val c = viewModel.saveAsTemplate
+        SaveAsTemplateSheet(st, state.offline, c::onName, c::onLevel, c::save, c::dismiss)
     }
     state.headerSheet?.let { RoutineHeaderSheet(it, state.offline, viewModel::onHeaderChange, viewModel::onSaveHeader, viewModel::onDismissSheet) }
 }
@@ -115,6 +120,11 @@ private fun EditorBody(state: RoutineEditorUiState, viewModel: RoutineEditorView
                 item {
                     OutlinedButton(onClick = viewModel::onAdd, enabled = state.canEdit, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                         Text("Agregar ejercicio")
+                    }
+                }
+                item {
+                    TextButton(onClick = viewModel::onOpenSaveAsTemplate, enabled = state.canEdit, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+                        Text("Guardar como plantilla")
                     }
                 }
             }

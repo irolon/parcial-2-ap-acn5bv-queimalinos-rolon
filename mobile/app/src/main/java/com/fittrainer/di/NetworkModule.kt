@@ -13,6 +13,7 @@ import com.fittrainer.data.api.routines.TrainerRoutinesApi
 import com.fittrainer.data.api.notifications.NotificationsApi
 import com.fittrainer.data.api.progress.ProgressApi
 import com.fittrainer.data.api.students.StudentsApi
+import com.fittrainer.data.api.templates.TrainerTemplatesApi
 import com.fittrainer.data.auth.AuthInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
 import dagger.Module
@@ -98,6 +99,11 @@ object NetworkModule {
     @Singleton
     fun provideTrainerExercisesApi(client: OkHttpClient, json: Json): TrainerExercisesApi =
         retrofit(client, json).create(TrainerExercisesApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTrainerTemplatesApi(client: OkHttpClient, json: Json): TrainerTemplatesApi =
+        retrofit(client, json).create(TrainerTemplatesApi::class.java)
 
     // A diferencia de InvitationApi, crear invitaciones necesita la sesión del entrenador.
     @Provides

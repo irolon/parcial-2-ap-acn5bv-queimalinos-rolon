@@ -109,6 +109,9 @@ class TrainerRoutinesRepository @Inject constructor(
         }
     }
 
+    /** Guarda una rutina creada por otro camino (instanciar una plantilla, E9), así el editor la abre sin esperar. */
+    suspend fun store(trainerId: String, detail: TrainerRoutineDetailDto): Result<Unit> = write(trainerId, null) { save(trainerId, detail) }
+
     private suspend fun fetchDetail(trainerId: String, id: String) = save(trainerId, api.get(id).data)
 
     private suspend fun save(trainerId: String, detail: TrainerRoutineDetailDto) =

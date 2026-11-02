@@ -21,6 +21,7 @@ import com.fittrainer.data.routines.trainer.toInput
 import com.fittrainer.data.routines.trainer.validate
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.ui.routines.trainer.components.ExerciseSheetState
 import com.fittrainer.ui.routines.trainer.picker.CatalogPicker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,6 +47,7 @@ const val ROUTINE_ID_ARG = "routineId"
 class RoutineEditorViewModel @Inject constructor(
     private val repository: TrainerRoutinesRepository,
     exercises: TrainerExercisesRepository,
+    templates: TrainerTemplatesRepository,
     sessionRepository: SessionRepository,
     connectivity: ConnectivityObserver,
     saved: SavedStateHandle,
@@ -55,16 +57,20 @@ class RoutineEditorViewModel @Inject constructor(
     private val trainerId = sessionRepository.session.map { (it as? Session.Trainer)?.user?.id }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val local = MutableStateFlow(EditorLocal())
-    private val picker = CatalogPicker(exercises, viewModelScope, trainerId)
+    val picker = CatalogPicker(exercises, viewModelScope, trainerId)
+    private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val saveAsTemplate = SaveAsTemplateController(
+        templates, viewModelScope, routineId, { trainer() }, { !online.value }, { msg -> local.update { it.copy(notice = msg) } },
+    )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val detail = trainerId.filterNotNull().flatMapLatest { repository.observeRoutine(it, routineId) }
         .map<TrainerRoutineDetail?, Pair<Boolean, TrainerRoutineDetail?>> { true to it }
         .onStart { emit(false to null) }
 
-    val uiState: StateFlow<RoutineEditorUiState> = combine(detail, connectivity.isOnline, local, picker.state) { d, online, l, p ->
+    val uiState: StateFlow<RoutineEditorUiState> = combine(detail, online, local, picker.state) { d, on, l, p ->
         RoutineEditorUiState(
-            loaded = d.first, detail = d.second, offline = !online, busy = l.busy, exerciseSheet = l.exerciseSheet,
+            loaded = d.first, detail = d.second, offline = !on, busy = l.busy, exerciseSheet = l.exerciseSheet,
             headerSheet = l.headerSheet, picking = l.picking, picker = p, notice = l.notice, gone = l.gone,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RoutineEditorUiState())
@@ -82,11 +88,8 @@ class RoutineEditorViewModel @Inject constructor(
     fun onToggleActive(active: Boolean) = act { repository.update(it, routineId, routineActivePatch(active)) }
 
     fun onMove(routineExerciseId: String, up: Boolean) {
-        val ids = current()?.exercises?.map { it.id } ?: return
-        val from = ids.indexOf(routineExerciseId)
-        val to = if (up) from - 1 else from + 1
-        if (from < 0 || to !in ids.indices || !uiState.value.canEdit) return
-        val next = ids.toMutableList().apply { add(to, removeAt(from)) }
+        if (!uiState.value.canEdit) return
+        val next = current()?.exercises?.map { it.id }?.moved(routineExerciseId, up) ?: return
         viewModelScope.launch {
             val error = repository.reorder(trainer(), routineId, next).exceptionOrNull() ?: return@launch
             local.update { it.copy(gone = it.gone || error.isGone(), notice = error.actionMessage()) }
@@ -182,9 +185,8 @@ class RoutineEditorViewModel @Inject constructor(
         local.update { it.copy(picking = false, adding = null, exerciseSheet = null) }
     }
 
-    fun onQuery(text: String) = picker.onQuery(text)
-    fun onGroup(group: String?) = picker.onGroup(group)
     fun dismissNotice() = local.update { it.copy(notice = null) }
+    fun onOpenSaveAsTemplate() = current()?.routine?.takeIf { uiState.value.canEdit }?.let { saveAsTemplate.open(it.name) }
 
     /** Una acción sin hoja (activar/desactivar): busy mientras viaja y aviso si falla. */
     private fun act(block: suspend (String) -> Result<Unit>) {

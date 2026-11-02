@@ -39,6 +39,9 @@ class FakeTrainerRoutinesApi : TrainerRoutinesApi {
     var updateExerciseCalls = 0
     /** Solo para PATCH /routines/:id (activar, desactivar, cabecera). */
     var updateError: Throwable? = null
+    /** Solo para GET /routines?student_id (la lista de un alumno). */
+    var listError: Throwable? = null
+    var listGate: CompletableDeferred<Unit>? = null
     /** Solo para el PUT del orden. */
     var reorderError: Throwable? = null
     val creates = mutableListOf<CreateRoutineRequest>()
@@ -46,7 +49,9 @@ class FakeTrainerRoutinesApi : TrainerRoutinesApi {
     private fun fail() = error?.let { throw it }
 
     override suspend fun list(studentId: String): TrainerRoutineListResponse {
+        listGate?.await()
         fail()
+        listError?.let { throw it }
         return TrainerRoutineListResponse(server.values.filter { it.studentId == studentId }.map { it.summary() })
     }
 

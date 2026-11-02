@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
+import com.fittrainer.ui.routines.trainer.components.CheckRow
 import com.fittrainer.ui.routines.trainer.components.EditorExerciseRow
 import com.fittrainer.ui.routines.trainer.components.ExerciseFormSheet
 import com.fittrainer.ui.routines.trainer.components.RoutineHeaderFields
@@ -91,10 +91,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.stepOne(state: NewRou
     item { RoutineHeaderFields(state.header, state.headerErrors, enabled = true, onChange = viewModel::onHeaderChange) }
     if (state.showDeactivate) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                Checkbox(checked = state.deactivateCurrent, onCheckedChange = viewModel::onToggleDeactivate)
-                Text(DEACTIVATE_CURRENT, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
-            }
+            CheckRow(DEACTIVATE_CURRENT, state.deactivateCurrent, onChange = viewModel::onToggleDeactivate)
         }
     }
     item {

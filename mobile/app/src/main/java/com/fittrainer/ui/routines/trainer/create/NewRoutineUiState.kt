@@ -12,6 +12,7 @@ const val NEW_ROUTINE_TITLE = "Rutina nueva"
 const val DEACTIVATE_CURRENT = "Desactivar la rutina actual"
 const val NEW_ROUTINE_NO_EXERCISES = "Agregá al menos un ejercicio"
 const val CREATE_FAILED = "No pudimos crear la rutina. Probá de nuevo."
+const val PREVIOUS_UNKNOWN = "No pudimos ver sus rutinas actuales. Probá de nuevo en un momento."
 
 /** "La rutina se creó, pero no se pudo desactivar Push y Pull". */
 fun deactivateFailed(names: List<String>): String =
@@ -29,6 +30,8 @@ data class NewRoutineUiState(
     val header: RoutineHeaderInput = RoutineHeaderInput(),
     val headerErrors: Map<RoutineField, String> = emptyMap(),
     val activeRoutines: List<TrainerRoutineSummary> = emptyList(),
+    /** Ya se sabe cuáles tiene activas (la lista se bajó alguna vez). Sin eso, "Crear" avisa y vuelve a pedirla. */
+    val previousKnown: Boolean = false,
     val deactivateCurrent: Boolean = true,
     val items: List<NewRoutineExercise> = emptyList(),
     val exerciseSheet: ExerciseSheetState? = null,

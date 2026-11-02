@@ -16,18 +16,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.trainerMenuLinks
+import com.fittrainer.navigation.trainer.trainerRoutineRoutes
+import com.fittrainer.navigation.trainer.trainerStudentRoutes
+import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
-import com.fittrainer.ui.students.overview.HomeNavigation
-import com.fittrainer.ui.students.overview.TrainerHomeScreen
+import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.notifications.NotificationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
-import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.progress.ProgressScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
 import com.fittrainer.ui.students.StudentsScreen
+import com.fittrainer.ui.students.overview.HomeNavigation
+import com.fittrainer.ui.students.overview.TrainerHomeScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -111,6 +115,7 @@ fun RoleShell(
                             title = tab.label,
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
                             onSignOut = guardedSignOut,
+                            links = if (isStudent) emptyList() else trainerMenuLinks(navController),
                         )
                         tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
                             onOpenWorkout = openWorkout,
@@ -160,6 +165,7 @@ fun RoleShell(
             }
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
+            trainerTemplateRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }

@@ -14,7 +14,7 @@ import com.fittrainer.data.routines.trainer.RoutineHeaderInput
 import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
 import com.fittrainer.data.routines.trainer.errors
 import com.fittrainer.data.routines.trainer.orderedDays
-import com.fittrainer.data.routines.trainer.routineActivePatch
+import com.fittrainer.data.routines.trainer.deactivateOthers
 import com.fittrainer.data.routines.trainer.toInput
 import com.fittrainer.data.routines.trainer.toRequestItems
 import com.fittrainer.data.routines.trainer.validate
@@ -56,11 +56,12 @@ class NewRoutineViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val active = trainerId.filterNotNull().flatMapLatest { repository.observeStudentRoutines(it, studentId) }
-        .map { cache -> cache?.routines.orEmpty().filter { it.active } }
+        // null = todavía no se sabe cuáles tiene activas (la lista nunca se bajó): no se puede crear.
+        .map { cache -> cache?.routines?.filter { it.active } }
 
     val uiState: StateFlow<NewRoutineUiState> = combine(local, active, connectivity.isOnline, picker.state) { l, a, online, p ->
         NewRoutineUiState(
-            step = l.step, header = l.header, headerErrors = l.headerErrors, activeRoutines = a,
+            step = l.step, header = l.header, headerErrors = l.headerErrors, activeRoutines = a.orEmpty(), previousKnown = a != null,
             deactivateCurrent = l.deactivateCurrent, items = l.items, exerciseSheet = l.exerciseSheet, picking = l.picking,
             picker = p, creating = l.creating, offline = !online, notice = l.notice, done = l.done,
         )
@@ -69,6 +70,10 @@ class NewRoutineViewModel @Inject constructor(
     private suspend fun trainer() = trainerId.filterNotNull().first()
 
     init {
+        refreshPrevious()
+    }
+
+    private fun refreshPrevious() {
         viewModelScope.launch { repository.refreshList(trainer(), studentId) }
     }
 
@@ -151,6 +156,8 @@ class NewRoutineViewModel @Inject constructor(
         // Ya creada (done) tampoco: un toque entre el POST y la navegación crearía otra.
         if (l.creating || l.done != null || state.offline) return
         if (l.items.isEmpty()) return local.update { it.copy(notice = NEW_ROUTINE_NO_EXERCISES) }
+        // Sin saber cuáles tiene activas no se crea: "Desactivar la rutina actual" no desactivaría nada.
+        if (!state.previousKnown) return local.update { it.copy(notice = PREVIOUS_UNKNOWN) }.also { refreshPrevious() }
         val previous = if (l.deactivateCurrent) state.activeRoutines else emptyList()
         local.update { it.copy(creating = true, notice = null) }
         viewModelScope.launch {
@@ -159,9 +166,9 @@ class NewRoutineViewModel @Inject constructor(
             val id = repository.create(t, request).getOrElse {
                 return@launch local.update { it.copy(creating = false, notice = CREATE_FAILED) }
             }
-            val failed = previous.filter { it.id != id }.filter { repository.update(t, it.id, routineActivePatch(false)).isFailure }
+            val failed = repository.deactivateOthers(t, previous, keepId = id)
             repository.refreshList(t, studentId)
-            local.update { it.copy(creating = false, done = NewRoutineDone(id, failed.takeIf { f -> f.isNotEmpty() }?.map { f -> f.name }?.let(::deactivateFailed))) }
+            local.update { it.copy(creating = false, done = NewRoutineDone(id, failed.takeIf { f -> f.isNotEmpty() }?.let(::deactivateFailed))) }
         }
     }
 
