@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.trainerExerciseRoutes
 import com.fittrainer.navigation.trainer.trainerMenuLinks
 import com.fittrainer.navigation.trainer.trainerRoutineRoutes
 import com.fittrainer.navigation.trainer.trainerStudentRoutes
