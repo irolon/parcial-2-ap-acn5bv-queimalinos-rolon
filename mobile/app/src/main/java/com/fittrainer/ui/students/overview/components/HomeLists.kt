@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.fittrainer.data.students.overview.FeedbackItem
 import com.fittrainer.data.students.overview.RiskItem
 import com.fittrainer.data.students.overview.StudentItem
-import com.fittrainer.data.students.overview.StudentStatus
+import com.fittrainer.data.students.StudentStatus
 import com.fittrainer.data.students.overview.TodayItem
 import com.fittrainer.ui.students.components.StudentAvatar
 import com.fittrainer.ui.students.initials
