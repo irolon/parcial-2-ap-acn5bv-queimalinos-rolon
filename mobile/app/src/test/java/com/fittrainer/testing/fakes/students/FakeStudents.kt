@@ -1,6 +1,8 @@
 package com.fittrainer.testing.fakes.students
 
 import com.fittrainer.data.api.students.AdherenceDto
+import com.fittrainer.data.api.students.AttendanceResponse
+import com.fittrainer.data.api.students.StreakResponse
 import com.fittrainer.data.api.students.StudentDetailResponse
 import com.fittrainer.data.api.students.PageMetaDto
 import com.fittrainer.data.api.students.StudentListItemDto
@@ -55,4 +57,6 @@ class FakeStudentsApi(
 
     override suspend fun get(id: String): StudentDetailResponse = error("no se usa en la lista")
     override suspend fun update(id: String, body: JsonObject): StudentDetailResponse = error("no se usa en la lista")
+    override suspend fun attendance(id: String, month: String): AttendanceResponse = error("no se usa acá")
+    override suspend fun streak(id: String): StreakResponse = error("no se usa acá")
 }

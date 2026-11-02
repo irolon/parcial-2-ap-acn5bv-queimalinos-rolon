@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import com.fittrainer.ui.invitations.InviteScreen
 import com.fittrainer.ui.students.detail.StudentDetailScreen
 import com.fittrainer.ui.students.edit.EditStudentScreen
+import com.fittrainer.ui.students.progress.StudentProgressSection
 import com.fittrainer.ui.students.sessions.LatestSessionsSection
 import com.fittrainer.ui.students.sessions.StudentSessionsScreen
 import com.fittrainer.ui.students.sessions.detail.StudentSessionDetailScreen
@@ -21,7 +22,8 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onEdit = { navController.navigate(trainerStudentEditRoute(id)) { launchSingleTop = true } },
             onGone = { navController.popBackStack() },
-            extraSections = {
+            extraSections = { _, detail ->
+                item { StudentProgressSection(detail.createdAt) }
                 item {
                     LatestSessionsSection(
                         onOpenAll = { navController.navigate(trainerStudentSessionsRoute(id)) { launchSingleTop = true } },
