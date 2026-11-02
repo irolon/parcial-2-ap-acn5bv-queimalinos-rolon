@@ -1,42 +1,26 @@
-import { Errors } from '../../shared/utils/errors.js';
-import * as repository from '../../repositories/routines/routines.repository.js';
-import * as templatesRepository from '../../repositories/routine-templates/routine-templates.repository.js';
-import * as routineExercisesRepo from '../../repositories/routines/routine-exercises.repository.js';
-import * as progressRepository from '../../repositories/progress/progress.repository.js';
+import { Errors } from '../../../shared/utils/errors.js';
+import * as repository from '../../../repositories/routines/routines.repository.js';
+import * as templatesRepository from '../../../repositories/routine-templates/routine-templates.repository.js';
+import * as progressRepository from '../../../repositories/progress/progress.repository.js';
 import {
   isOwnedBy,
   dayName,
   toTodayRoutine,
   toRoutineDetail,
   toStudentRoutines,
-} from '../../models/routines/routine.model.js';
+} from '../../../models/routines/routine.model.js';
+import {
+  assertExercisesAccessible,
+  getOwnedRoutine,
+} from './routine-access.service.js';
 
-/**
- * Ids (sin repetir y en el orden recibido) que no son globales ni del trainer.
- * Los inexistentes también cuentan como faltantes: así nunca se revela qué ids existen.
- */
-export async function findMissingExerciseIds(trainerId, ids) {
-  const unique = [...new Set(ids)];
-  if (unique.length === 0) return [];
-  const accessible = new Set(await repository.findAccessibleExerciseIds(unique, trainerId));
-  return unique.filter((id) => !accessible.has(id));
-}
-
-/** Lanza 403 si algún ejercicio (por id) no es global ni del trainer. */
-export async function assertExercisesAccessible(trainerId, exerciseIds) {
-  const missing = await findMissingExerciseIds(trainerId, exerciseIds);
-  if (missing.length > 0) throw Errors.forbidden('No podés usar ejercicios que no son tuyos');
-}
-
-/** Verifica que la rutina exista y sea del trainer. */
-async function getOwnedRoutine(trainerId, routineId, action) {
-  const routine = await repository.findRoutineById(routineId);
-  if (!routine) throw Errors.notFound('Rutina no encontrada');
-  if (!isOwnedBy(routine, trainerId)) {
-    throw Errors.forbidden(`No podés ${action} una rutina que no es tuya`);
-  }
-  return routine;
-}
+export { findMissingExerciseIds, assertExercisesAccessible } from './routine-access.service.js';
+export {
+  addExercises,
+  updateExercise,
+  removeExercise,
+  reorderExercises,
+} from './routine-exercises.service.js';
 
 /**
  * Inserta la rutina y después sus ejercicios. Sin transacción entre tablas: si
@@ -107,49 +91,6 @@ export async function getById(trainerId, routineId) {
 export async function update(trainerId, routineId, fields) {
   await getOwnedRoutine(trainerId, routineId, 'modificar');
   return repository.updateRoutine(routineId, fields);
-}
-
-/** Agrega ejercicios (globales o propios) a una rutina propia del trainer. Precondición: `order` viene normalizado (0..n-1) por la validación. */
-export async function addExercises(trainerId, routineId, exercises) {
-  await getOwnedRoutine(trainerId, routineId, 'modificar');
-  await assertExercisesAccessible(
-    trainerId,
-    exercises.map((e) => e.exercise_id)
-  );
-  // Van después de los existentes: la lista nueva ya viene renumerada 0..n-1.
-  const offset = (await routineExercisesRepo.findMaxOrderIndex(routineId)) + 1;
-  return repository.addRoutineExercises(
-    routineId,
-    exercises.map((e) => ({ ...e, order: e.order + offset }))
-  );
-}
-
-/** Verifica rutina propia + que el ejercicio sea parte de ella. */
-async function assertRoutineExercise(trainerId, routineId, routineExerciseId, action) {
-  await getOwnedRoutine(trainerId, routineId, action);
-  const found = await routineExercisesRepo.findRoutineExercise(routineId, routineExerciseId);
-  if (!found) throw Errors.routineExerciseNotFound();
-}
-
-/** Edita un ejercicio de una rutina propia y devuelve el detalle recargado. */
-export async function updateExercise(trainerId, routineId, routineExerciseId, fields) {
-  await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
-  const updated = await routineExercisesRepo.updateRoutineExercise(
-    routineId,
-    routineExerciseId,
-    fields
-  );
-  if (!updated) throw Errors.routineExerciseNotFound(); // lo borraron entre el chequeo y el update
-  return toRoutineDetail(await repository.findRoutineByIdWithExercises(routineId));
-}
-
-/** Quita un ejercicio de una rutina propia; 409 si es el único que le queda. */
-export async function removeExercise(trainerId, routineId, routineExerciseId) {
-  await assertRoutineExercise(trainerId, routineId, routineExerciseId, 'modificar');
-  if ((await routineExercisesRepo.countRoutineExercises(routineId)) <= 1) {
-    throw Errors.routineNeedsExercise();
-  }
-  await routineExercisesRepo.deleteRoutineExercise(routineExerciseId);
 }
 
 /** last_session_kg es un dato de ayuda: si falla, se loguea y la rutina sale con null. */

@@ -159,6 +159,7 @@ fun RoleShell(
                 RoutineDetailScreen(onBack = { navController.popBackStack() }, onOpenWorkout = openWorkout)
             }
             trainerStudentRoutes(navController)
+            trainerRoutineRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }

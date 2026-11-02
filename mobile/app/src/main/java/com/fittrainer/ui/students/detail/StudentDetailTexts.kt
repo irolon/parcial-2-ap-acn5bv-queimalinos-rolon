@@ -16,16 +16,10 @@ const val DETAIL_GONE = "Este alumno ya no está en tu lista"
 const val DETAIL_NOT_LOADED = "Todavía no se bajó esta ficha. Conectate para verla."
 const val DETAIL_ACTION_FAILED = "No pudimos guardar el cambio. Probá de nuevo."
 const val DISABLE_TEXT = "Va a dejar de poder entrar a la app. Lo que ya tiene abierto sigue andando hasta 1 hora."
-const val NO_ROUTINE = "Sin rutina asignada"
 const val NO_METRICS = "Sin medidas cargadas"
 const val EMPTY_VALUE = "—"
 
 private val DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-private val DAY_ABBR = mapOf(
-    "monday" to "Lun", "tuesday" to "Mar", "wednesday" to "Mié", "thursday" to "Jue",
-    "friday" to "Vie", "saturday" to "Sáb", "sunday" to "Dom",
-)
-private val DAY_ORDER = DAY_ABBR.keys.toList()
 
 /** Años cumplidos. Un 29/02, en los años no bisiestos, cumple el 01/03 (así cuenta java.time). */
 fun ageOn(birth: LocalDate, today: LocalDate): Int = ChronoUnit.YEARS.between(birth, today).toInt()
@@ -36,10 +30,6 @@ fun headerLine(detail: StudentDetail, today: LocalDate): String = listOfNotNull(
     detail.goal?.let { goalLabel(it).uppercase(Locale.ROOT) },
     detail.activeRoutine?.days?.distinct()?.size?.takeIf { it > 0 }?.let { "$it D/SEM" },
 ).joinToString(" · ")
-
-/** "Lun · Jue", en orden de la semana. */
-fun daysLabel(days: List<String>): String =
-    days.distinct().sortedBy { DAY_ORDER.indexOf(it) }.joinToString(" · ") { DAY_ABBR[it] ?: it }
 
 fun dateLabel(date: LocalDate?): String = date?.format(DATE) ?: EMPTY_VALUE
 

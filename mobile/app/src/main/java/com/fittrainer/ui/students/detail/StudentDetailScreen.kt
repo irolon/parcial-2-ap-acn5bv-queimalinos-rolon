@@ -38,13 +38,13 @@ import com.fittrainer.ui.students.detail.components.DataCard
 import com.fittrainer.ui.students.detail.components.DetailHeader
 import com.fittrainer.ui.students.detail.components.DisableDialog
 import com.fittrainer.ui.students.detail.components.LatestMetricsCard
-import com.fittrainer.ui.students.detail.components.RoutineCard
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
 /**
- * Ficha del alumno (prototipo EM_PerfilAlumno). Es una columna de secciones: E4, E5 y E6 suman las
- * suyas con [extraSections]. "Mensaje" y "Asignar rutina" no están hasta E11 y E8.
+ * Ficha del alumno (prototipo EM_PerfilAlumno). Es una columna de secciones: E4-E6 y E8 suman las
+ * suyas con [extraSections]. [headerActions] va debajo del encabezado ("Asignar rutina" de E8; "Mensaje"
+ * llega con E11).
  */
 @Composable
 fun StudentDetailScreen(
@@ -53,6 +53,7 @@ fun StudentDetailScreen(
     onGone: () -> Unit,
     onOpenMetrics: ((openNew: Boolean) -> Unit)? = null,
     extraSections: LazyListScope.(offline: Boolean, detail: StudentDetail) -> Unit = { _, _ -> },
+    headerActions: @Composable (offline: Boolean, detail: StudentDetail) -> Unit = { _, _ -> },
     viewModel: StudentDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,7 +94,7 @@ fun StudentDetailScreen(
             detail == null -> if (!state.refreshing) item { InfoCard("Sin datos", DETAIL_NOT_LOADED) }
             else -> {
                 item { DetailHeader(detail.name, state.header, state.status) }
-                item { RoutineCard(detail) }
+                item { headerActions(state.offline, detail) }
                 item {
                     LatestMetricsCard(
                         detail,

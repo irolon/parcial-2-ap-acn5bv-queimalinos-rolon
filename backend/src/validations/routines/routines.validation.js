@@ -133,6 +133,26 @@ export function validateUpdateRoutineExercise(body) {
   return out;
 }
 
+/** Body de PUT /routines/:id/exercises/order — los ids en el orden nuevo (1..100, sin repetidos). */
+export function validateReorderExercises(body) {
+  const ids = body?.routine_exercise_ids;
+  const valid =
+    Array.isArray(ids) &&
+    ids.length > 0 &&
+    ids.length <= 100 &&
+    ids.every(isUuid) &&
+    new Set(ids).size === ids.length;
+  if (!valid) {
+    throw Errors.validation('Error de validación', [
+      {
+        field: 'routine_exercise_ids',
+        message: 'routine_exercise_ids debe ser un arreglo de 1 a 100 ids, sin repetidos',
+      },
+    ]);
+  }
+  return { routine_exercise_ids: ids };
+}
+
 /** Valida :id y :routineExerciseId de la ruta (UUID). */
 export function validateRoutineExerciseParams(params) {
   const details = [];

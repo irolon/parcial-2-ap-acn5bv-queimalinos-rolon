@@ -5,10 +5,12 @@ import android.util.Log
 import androidx.room.Room
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
+import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.notifications.NotificationDao
 import com.fittrainer.data.db.progress.ProgressDao
 import com.fittrainer.data.db.routine.RoutineDao
+import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
 import com.fittrainer.data.db.students.TrainerStudentDetailDao
 import com.fittrainer.data.db.students.TrainerStudentsDao
 import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsDao
@@ -84,6 +86,12 @@ object DatabaseModule {
 
     @Provides
     fun provideTrainerOverviewDao(db: FitTrainerDatabase): TrainerOverviewDao = db.trainerOverviewDao()
+
+    @Provides
+    fun provideTrainerRoutinesDao(db: FitTrainerDatabase): TrainerRoutinesDao = db.trainerRoutinesDao()
+
+    @Provides
+    fun provideTrainerExercisesDao(db: FitTrainerDatabase): TrainerExercisesDao = db.trainerExercisesDao()
 
     @Provides
     @Singleton
