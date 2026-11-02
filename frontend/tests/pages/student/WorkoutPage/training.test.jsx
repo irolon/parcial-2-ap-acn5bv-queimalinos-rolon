@@ -128,13 +128,15 @@ describe('WorkoutPage: el descanso', () => {
     expect(clock()).toHaveTextContent('1:30');
   });
 
-  it('+15″ con el descanso cumplido muestra 0:15 enseguida, no 0:16', async () => {
+  it('+15″ a mitad del descanso muestra 0:45 enseguida, no 0:46; con el descanso cumplido los ±15″ se apagan', async () => {
     renderWorkoutPage();
     const user = setup();
     await user.click(registerButton());
-    tick(90.5);
+    tick(60.5);
     await user.click(screen.getByRole('button', { name: '+15 segundos' }));
-    expect(clock()).toHaveTextContent('0:15');
+    expect(clock()).toHaveTextContent('0:45');
+    tick(45);
+    expect(screen.getByRole('button', { name: '+15 segundos' })).toBeDisabled();
   });
 
   it('registrar otra serie vuelve a arrancar el descanso completo', async () => {

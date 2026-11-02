@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   adjustRest, closeRest, finishWorkout, registerSet, removeSet, setCursor, skipRest, startWorkout,
-} from '@/utils/workout/workoutState';
+} from '@/utils/workout/workoutState/workoutState';
 import { todayRoutine } from '../../../helpers/routines/studentRoutines';
 import { at, freshWorkout, sequentialIds, withSets } from '../../../helpers/workout/workout';
 
