@@ -48,6 +48,7 @@ private fun parentTab(route: String): String? = when {
     route == TRAINER_CHALLENGES_ROUTE || route.startsWith("$TRAINER_CHALLENGES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == NOTIFICATIONS_ROUTE -> STUDENT_TODAY_ROUTE
     route == TRAINER_NOTIFICATIONS_ROUTE -> TRAINER_HOME_ROUTE
+    route.startsWith("$TRAINER_MESSAGES_ROUTE/") -> TRAINER_MESSAGES_ROUTE
     else -> null
 }
 
@@ -89,6 +90,6 @@ fun trainerStudentMetricsRoute(studentId: String, openNew: Boolean) = "trainer/s
 val TrainerTabs = listOf(
     Tab(TRAINER_HOME_ROUTE, "Inicio", Icons.Filled.Home),
     Tab(TRAINER_STUDENTS_ROUTE, "Alumnos", Icons.Filled.Face),
-    Tab("trainer/messages", "Mensajes", Icons.Filled.Email),
+    Tab(TRAINER_MESSAGES_ROUTE, "Mensajes", Icons.Filled.Email),
     Tab(TRAINER_MORE_ROUTE, "Más", Icons.Filled.Menu, isAccountMenu = true),
 )
