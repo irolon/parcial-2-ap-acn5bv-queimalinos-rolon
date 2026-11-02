@@ -99,7 +99,7 @@ fun TemplateDetailScreen(onBack: () -> Unit, onAssigned: (String) -> Unit, viewM
                 item {
                     Button(
                         onClick = viewModel::onAssign,
-                        enabled = !state.offline,
+                        enabled = !state.offline && (!state.forStudent || state.fixedStudent != null),
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = FtColors.Brand),
                     ) { Text(state.fixedStudent?.let { assignTo(it.name) } ?: ASSIGN_TO_STUDENT) }

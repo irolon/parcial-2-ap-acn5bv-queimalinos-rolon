@@ -14,8 +14,9 @@ tarjeta: E9
 > - **`instantiate`** guarda la rutina nueva en el caché de E8 con `TrainerRoutinesRepository.store`, así el editor la abre sin esperar.
 > - **"Desactivar la rutina actual"** se extrajo a `deactivateOthers` (`data/routines/trainer/DeactivateOthers.kt`). La usan el asistente de E8 y la asignación.
 > - **`CheckRow`:** en el E2E apareció que el texto de la casilla no la marcaba, ni en E8 ni acá. Ahora toda la fila responde al toque y se usa en los dos lugares.
-> - **Más:** `AccountMenuScreen` recibe `MenuLink`s y los del entrenador salen de `navigation/TrainerMenuLinks.kt`. `TRAINER_MORE_ROUTE` es una constante, y las rutas de plantillas desde Más dejan marcada esa pestaña.
+> - **Más:** `AccountMenuScreen` recibe `MenuLink`s y los del entrenador salen de `navigation/trainer/TrainerMenuLinks.kt`. `TRAINER_MORE_ROUTE` es una constante, y las rutas de plantillas desde Más dejan marcada esa pestaña.
 > - **Desde Más,** después de asignar el editor queda arriba del detalle de la plantilla. Desde la ficha, las pantallas de plantillas salen del back stack y "atrás" vuelve a la ficha.
+> - **Revisión de la #63:** la lista de Alumnos solo la bajaba su pestaña, así que desde Más (o desde Inicio → ficha) el selector salía vacío. Ahora el detalle (y la lista en modo "para un alumno") la baja en `onStart`. El alumno fijo sale de `fixedStudent()` (`ui/templates/trainer/FixedStudent.kt`): de la lista o, si no está, de la ficha que ya está en Room. Si se llegó desde una ficha, nunca se abre el selector: mientras no se sepa quién es el alumno, "Asignar" está apagado. Las rutas del entrenador pasaron a `navigation/trainer/` (CONTRIBUTING, regla 2).
 
 ## 1. Objetivo
 
@@ -87,7 +88,7 @@ Ante un 409 se muestra el `message` del backend.
 - **Ficha:** "Asignar rutina" abre `AssignChoiceSheet` (Rutina nueva / Desde plantilla).
 - **Editor de E8:** botón "Guardar como plantilla" al pie, con su hoja (nombre y nivel).
 - **Más:** `AccountMenuScreen` recibe una lista de accesos (`MenuLink`). El entrenador suma "Plantillas"; el alumno no cambia.
-- **Rutas** (`navigation/TrainerTemplateRoutes.kt`):
+- **Rutas** (`navigation/trainer/TrainerTemplateRoutes.kt`):
   - `trainer/templates` y `trainer/templates/{templateId}`;
   - `trainer/students/{studentId}/templates` y `trainer/students/{studentId}/templates/{templateId}`, que heredan la pestaña Alumnos.
   - Las de Más heredan la pestaña Más: se suma `trainer/templates` a `parentTab`.

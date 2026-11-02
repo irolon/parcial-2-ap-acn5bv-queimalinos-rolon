@@ -1,4 +1,4 @@
-package com.fittrainer.navigation
+package com.fittrainer.navigation.trainer
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController

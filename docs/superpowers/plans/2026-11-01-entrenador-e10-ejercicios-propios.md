@@ -10,7 +10,7 @@ tarjeta: E10
 
 **Architecture:**
 - **Datos:** `TrainerExercisesRepository` (de E8) suma `create`, `update` y `delete` sobre `trainer_exercises`. Room no cambia.
-- **UI:** va en `ui/exercises/trainer/`, con rutas en `navigation/TrainerExerciseRoutes.kt`.
+- **UI:** va en `ui/exercises/trainer/`, con rutas en `navigation/trainer/TrainerExerciseRoutes.kt`.
 - **Backend:** no cambia.
 
 **Spec:** `docs/superpowers/specs/2026-11-01-entrenador-e10-ejercicios-propios-design.md`
@@ -67,7 +67,7 @@ tarjeta: E10
   - `ui/exercises/trainer/library/TrainerLibraryScreen.kt` y `TrainerLibraryViewModel.kt`;
   - `ui/exercises/trainer/form/ExerciseFormScreen.kt` y `ExerciseFormViewModel.kt`;
   - `ui/exercises/trainer/components/…` y `TrainerExercisesTexts.kt`;
-  - `navigation/TrainerExerciseRoutes.kt`.
+  - `navigation/trainer/TrainerExerciseRoutes.kt`.
 - **Modify:**
   - `TrainerMenuLinks` (+ Biblioteca);
   - `RoleShell` (registrar las rutas);

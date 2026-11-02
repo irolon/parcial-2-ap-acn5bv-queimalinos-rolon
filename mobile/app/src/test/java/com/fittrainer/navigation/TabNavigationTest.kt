@@ -1,5 +1,9 @@
 package com.fittrainer.navigation
 
+import com.fittrainer.navigation.trainer.TRAINER_STUDENT_TEMPLATES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_STUDENT_TEMPLATE_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_TEMPLATES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_TEMPLATE_ROUTE
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
