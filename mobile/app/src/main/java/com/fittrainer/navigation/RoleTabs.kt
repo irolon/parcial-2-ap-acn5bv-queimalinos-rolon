@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.fittrainer.navigation.trainer.TRAINER_TEMPLATES_ROUTE
 import com.fittrainer.ui.routines.detail.ROUTINE_ID_ARG
 
 /** Una pestaña de la barra inferior. isAccountMenu = la que lleva a Estado del servidor y Cerrar sesión. */

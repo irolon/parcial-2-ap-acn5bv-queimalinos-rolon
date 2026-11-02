@@ -3,6 +3,7 @@ package com.fittrainer.ui.templates.trainer.list
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.auth.MutableClock
@@ -10,8 +11,10 @@ import com.fittrainer.testing.fakes.auth.httpError
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesApi
 import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesDao
+import com.fittrainer.testing.fakes.students.FakeStudentDetailApi
 import com.fittrainer.testing.fakes.students.FakeStudentsApi
 import com.fittrainer.testing.fakes.students.FakeTrainerSession
+import com.fittrainer.testing.fakes.students.FakeTrainerStudentDetailDao
 import com.fittrainer.testing.fakes.students.FakeTrainerStudentsDao
 import com.fittrainer.testing.fakes.students.studentDto
 import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesApi
@@ -46,9 +49,10 @@ class TemplatesViewModelTest {
     private val students = TrainerStudentsRepository(
         FakeStudentsApi(pages = mapOf(true to listOf(listOf(studentDto("s1", "Ana Paz"))))), FakeTrainerStudentsDao(), MutableClock(0),
     )
+    private val details = TrainerStudentDetailRepository(FakeStudentDetailApi(), FakeTrainerStudentDetailDao(), Clock.systemUTC())
 
     private fun vm(studentId: String? = null) = TemplatesViewModel(
-        repo, students, FakeTrainerSession(), connectivity, SavedStateHandle(studentId?.let { mapOf(STUDENT_ID_ARG to it) } ?: emptyMap()),
+        repo, students, details, FakeTrainerSession(), connectivity, SavedStateHandle(studentId?.let { mapOf(STUDENT_ID_ARG to it) } ?: emptyMap()),
     )
 
     private fun TestScope.started(vm: TemplatesViewModel) = vm.also {
@@ -94,5 +98,20 @@ class TemplatesViewModelTest {
         val vm = started(vm("s1"))
         assertEquals("Ana Paz", vm.uiState.value.studentName)
         assertEquals("s1", vm.uiState.value.studentId)
+    }
+
+    @Test fun `desde la ficha el titulo lleva el nombre aunque no se haya pasado por Alumnos`() = runTest {
+        val vm = started(vm("s1"))
+        assertEquals("Ana Paz", vm.uiState.value.studentName)
+    }
+
+    @Test fun `si la lista de alumnos no baja el nombre sale de la ficha cacheada`() = runTest {
+        details.refresh("t1", "s1")
+        connectivity.state.value = false
+        val offlineStudents = TrainerStudentsRepository(FakeStudentsApi(failOn = true to 1), FakeTrainerStudentsDao(), MutableClock(0))
+        val vm = started(
+            TemplatesViewModel(repo, offlineStudents, details, FakeTrainerSession(), connectivity, SavedStateHandle(mapOf(STUDENT_ID_ARG to "s1"))),
+        )
+        assertEquals("Tomás Rivera", vm.uiState.value.studentName)
     }
 }
