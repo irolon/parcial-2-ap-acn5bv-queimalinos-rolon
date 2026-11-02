@@ -1,3 +1,4 @@
+import UnreadBadge from '@/components/messages/UnreadBadge';
 import BrandMark from '@/components/shared/ui/BrandMark';
 import NavItem from './NavItem';
 import UserBlock from './UserBlock';
@@ -23,6 +24,7 @@ export default function SidebarFrame({ subtitle, nav, footer, user, onLogout, on
                 icon={item.icon}
                 label={item.label}
                 onNavigate={onNavigate}
+                badge={item.unread ? <UnreadBadge /> : null}
               />
             </li>
           ))}

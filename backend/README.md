@@ -17,7 +17,7 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`.
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`, `messages`.
 
 ```
 src/
@@ -223,6 +223,21 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 **Pendiente para el backend (E12 del celular, 01/11).** El feedback/RPE que deja un alumno al cerrar una sesión no genera ninguna notificación para el PT: hoy solo aparece en `GET /students/overview` (`attention`, sesiones sin comentar). La app del entrenador ya maneja `routine_modified`, `inactivity`, `pr` y `achievement`; si se agrega un tipo para el feedback (por ejemplo `session_feedback` con `student_id` y `session_id`), el celular lo abre en la sesión con un cambio chico. El otro pedido pendiente es **un push a la mañana para el PT** con los alumnos a los que les toca entrenar ese día (por ejemplo, tipo `daily_pending` con `count`, generado por un job como el de inactividad). En el celular, el centro de avisos del entrenador ya muestra esa lista arriba, a partir de `GET /students/overview`; falta solo el push. **Para la web: nada que hacer.**
 
 **Job de inactividad.** `runInactivityAlerts` recorre los alumnos activos y avisa al PT de los que tienen rutina activa y acumulan 3 o más días asignados sin entrenar desde su última sesión cerrada (desde el alta si nunca entrenaron), como máximo una vez cada 7 días por alumno. Corre a las 03:00 ART justo después del job de gamificación, bajo el mismo `CRON_ENABLED`. A mano: `npm run notifications:inactivity`; correrlo de nuevo es seguro (el límite de 7 días evita duplicados).
+
+### Mensajes — tarjeta 48
+
+Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat con la IA: ese es `POST /chat`). Rol: `trainer` / `student`; el PT solo ve las conversaciones de sus alumnos y el alumno, la suya (si no, 403 `FORBIDDEN`). Se actualiza por polling, sin tiempo real. Respuestas y errores en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/messages/conversations` | Solo PT. Una por alumno activo: `{ data: [{ student, last_message, unread_count }] }`, la más reciente primero |
+| GET | `/api/messages/unread-count` | `{ data: { count } }`. Del PT: solo alumnos activos; del alumno: lo que le escribió su PT |
+| POST | `/api/messages/broadcast` | Solo PT. `{ student_ids, body }` (1–200 ids, texto de hasta 2000). 201 `{ data: { broadcast_id, sent } }`; un id que no es alumno activo del PT: 403 y no se envía a nadie |
+| GET | `/api/messages/:studentId?before=&limit=` | Historial en orden cronológico: `{ data, meta: { next_before }, counterpart }` (50 por página, máx. 100). `next_before` termina en `+00:00`: codificarlo (`%2B`) al reenviarlo |
+| POST | `/api/messages/:studentId` | Envía. `multipart/form-data` con `body` y/o `image` (JPG/PNG/WebP, hasta 5 MB), o JSON `{ body }` de solo texto. 201 `{ data: mensaje }`. 400 `MESSAGE_EMPTY`, 413 `IMAGE_TOO_LARGE`, 415 `IMAGE_TYPE_INVALID` |
+| POST | `/api/messages/:studentId/read` | Marca como leídos los mensajes de la otra parte. 200 `{ data: { updated } }` |
+
+**Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
 
 ### Autenticación
 

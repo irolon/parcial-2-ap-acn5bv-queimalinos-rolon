@@ -72,3 +72,14 @@ export async function revokeAllForUser(userId, role) {
     .is('revoked_at', null);
   if (error) throw Errors.internal(error.message);
 }
+
+/** Busca un trainer por id (campos públicos, sin el hash). null si no existe. */
+export async function findTrainerById(id) {
+  const { data, error } = await supabase
+    .from(TRAINERS_TABLE)
+    .select(TRAINER_PUBLIC_COLUMNS)
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}

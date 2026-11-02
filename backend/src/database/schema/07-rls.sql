@@ -29,3 +29,4 @@ alter table ai_routine_generations enable row level security;
 alter table appointments           enable row level security;
 alter table notifications          enable row level security;
 alter table push_tokens            enable row level security;
+alter table messages               enable row level security;
