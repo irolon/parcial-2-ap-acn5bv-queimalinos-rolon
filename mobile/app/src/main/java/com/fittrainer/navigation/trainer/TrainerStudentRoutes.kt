@@ -41,7 +41,6 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
             onGone = { navController.popBackStack() },
             onOpenMetrics = { openNew -> navController.navigate(trainerStudentMetricsRoute(id, openNew)) { launchSingleTop = true } },
             extraSections = { _, detail ->
-                item { RoutinesSection(onOpen = { navController.navigate(trainerRoutineRoute(it)) { launchSingleTop = true } }) }
                 item { StudentProgressSection(detail.createdAt) }
                 item {
                     LatestSessionsSection(
@@ -50,15 +49,18 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
                     )
                 }
             },
-            headerActions = { offline, detail ->
+            topSections = { offline, detail ->
                 // A un alumno dado de baja no se le crea una rutina nueva (se puede ver y editar la que tiene).
                 if (detail.active) {
-                    AssignRoutineAction(
-                        enabled = !offline,
-                        onNew = { navController.navigate(trainerNewRoutineRoute(id)) { launchSingleTop = true } },
-                        onFromTemplate = { navController.navigate(trainerStudentTemplatesRoute(id)) { launchSingleTop = true } },
-                    )
+                    item {
+                        AssignRoutineAction(
+                            enabled = !offline,
+                            onNew = { navController.navigate(trainerNewRoutineRoute(id)) { launchSingleTop = true } },
+                            onFromTemplate = { navController.navigate(trainerStudentTemplatesRoute(id)) { launchSingleTop = true } },
+                        )
+                    }
                 }
+                item { RoutinesSection(onOpen = { navController.navigate(trainerRoutineRoute(it)) { launchSingleTop = true } }) }
             },
         )
     }
