@@ -5,6 +5,7 @@ import com.fittrainer.data.api.students.OverviewDto
 import com.fittrainer.data.api.students.OverviewStudentDto
 import com.fittrainer.data.api.students.RiskDto
 import com.fittrainer.data.api.students.TodayDto
+import com.fittrainer.data.students.StudentStatus
 import java.time.Instant
 import java.time.OffsetDateTime
 
@@ -45,8 +46,7 @@ data class RiskItem(val studentId: String, val name: String, val days: Int, val 
 
 data class FeedbackItem(val studentId: String, val name: String, val sessionId: String, val routineName: String?, val finishedAt: Instant, val rpe: Int?)
 
-enum class StudentStatus { ACTIVE, NEW, INACTIVE }
-
+/** status: ACTIVE, NEW o INACTIVE (al Inicio nunca llega un dado de baja). */
 data class StudentItem(val studentId: String, val name: String, val status: StudentStatus, val daysWithoutTraining: Int, val adherencePct: Int?)
 
 data class OverviewCache(val overview: TrainerOverview, val fetchedAt: Instant)
