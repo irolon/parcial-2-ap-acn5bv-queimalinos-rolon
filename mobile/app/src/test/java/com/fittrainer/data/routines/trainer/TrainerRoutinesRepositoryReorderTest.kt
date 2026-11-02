@@ -10,6 +10,7 @@ import java.time.Clock
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -22,7 +23,8 @@ class TrainerRoutinesRepositoryReorderTest {
     private val api = FakeTrainerRoutinesApi().apply {
         server["r1"] = routineDto(exercises = listOf(exerciseDto("a", 0), exerciseDto("b", 1), exerciseDto("c", 2)))
     }
-    private val repo = TrainerRoutinesRepository(api, FakeTrainerRoutinesDao(), Clock.systemUTC())
+    private val dao = FakeTrainerRoutinesDao()
+    private val repo = TrainerRoutinesRepository(api, dao, Clock.systemUTC())
 
     private suspend fun order() = repo.observeRoutine("t1", "r1").first()!!.exercises.map { it.id }
 
@@ -56,5 +58,48 @@ class TrainerRoutinesRepositoryReorderTest {
         api.error = IOException("sin red")
         assertTrue(repo.reorder("t1", "r1", listOf("c", "b", "a")).isFailure)
         assertEquals(listOf("b", "a", "c"), order())
+    }
+
+    @Test fun `un GET en vuelo al tocar flecha no pisa el orden local ni un segundo movimiento`() = runTest {
+        repo.refreshRoutine("t1", "r1")
+        val seen = mutableListOf<List<String>>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            repo.observeRoutine("t1", "r1").collect { d -> d?.let { seen += it.exercises.map { e -> e.id } } }
+        }
+        val get = CompletableDeferred<Unit>().also { api.getGate = it }
+        val put = CompletableDeferred<Unit>().also { api.reorderGates.addLast(it) }
+        launch { repo.refreshRoutine("t1", "r1") } // el refresh del onStart del editor, con el Mutex tomado
+        runCurrent()
+        launch { repo.reorder("t1", "r1", listOf("b", "a", "c")) }
+        runCurrent()
+        val afterTap = seen.size
+        assertEquals(listOf("b", "a", "c"), seen.last())
+        api.getGate = null
+        get.complete(Unit) // el GET vuelve con el orden de antes del PUT (a, b, c)
+        runCurrent()
+        assertTrue("Room no muestra el orden viejo: $seen", seen.drop(afterTap).none { it == listOf("a", "b", "c") })
+        // Segundo movimiento, calculado sobre lo que se ve: c sube un lugar.
+        assertEquals(listOf("b", "a", "c"), order())
+        launch { repo.reorder("t1", "r1", listOf("b", "c", "a")) }
+        runCurrent()
+        put.complete(Unit)
+        runCurrent()
+        assertEquals(listOf("b", "c", "a"), order())
+        assertEquals(listOf("b", "c", "a"), api.server.getValue("r1").exercises.sortedBy { it.orderIndex }.map { it.id })
+        assertTrue("nunca volvió atrás: $seen", seen.drop(afterTap).none { it == listOf("a", "b", "c") })
+    }
+
+    @Test fun `cancelar mientras se aplica el orden local cierra el ticket y el refresh trae el del servidor`() = runTest {
+        repo.refreshRoutine("t1", "r1")
+        dao.setOrderGate = CompletableDeferred()
+        val job = launch { repo.reorder("t1", "r1", listOf("b", "a", "c")) }
+        runCurrent() // trabado dentro de applyOrder, con el ticket ya abierto
+        job.cancel()
+        runCurrent()
+        dao.setOrderGate = null
+        // El PUT nunca salió: al volver a entrar, el GET manda y no se le impone el orden pendiente.
+        assertEquals(listOf("a", "b", "c"), api.server.getValue("r1").exercises.sortedBy { it.orderIndex }.map { it.id })
+        repo.refreshRoutine("t1", "r1")
+        assertEquals(listOf("a", "b", "c"), order())
     }
 }

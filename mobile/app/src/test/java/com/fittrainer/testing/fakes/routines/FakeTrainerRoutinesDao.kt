@@ -4,6 +4,7 @@ import com.fittrainer.data.db.routines.trainer.TrainerRoutineEntity
 import com.fittrainer.data.db.routines.trainer.TrainerRoutineExerciseEntity
 import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
 import com.fittrainer.data.db.routines.trainer.TrainerRoutinesSyncEntity
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -41,8 +42,12 @@ class FakeTrainerRoutinesDao : TrainerRoutinesDao() {
         exercises.update { m -> m.filterValues { !(it.trainerId == trainerId && it.routineId == routineId) } }
     override suspend fun deleteExercise(trainerId: String, id: String) = exercises.update { it - (trainerId to id) }
     override suspend fun deleteRoutine(trainerId: String, id: String) = routines.update { it - (trainerId to id) }
-    override suspend fun setOrder(trainerId: String, id: String, orderIndex: Int) = exercises.update { m ->
-        m[trainerId to id]?.let { m + ((trainerId to id) to it.copy(orderIndex = orderIndex)) } ?: m
+    /** Si no es null, cada setOrder (lo que hace applyOrder) espera este gate: simula una escritura lenta. */
+    var setOrderGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun setOrder(trainerId: String, id: String, orderIndex: Int) {
+        setOrderGate?.await()
+        exercises.update { m -> m[trainerId to id]?.let { m + ((trainerId to id) to it.copy(orderIndex = orderIndex)) } ?: m }
     }
     override suspend fun clearOwnerRoutines(trainerId: String) = routines.update { m -> m.filterValues { it.trainerId != trainerId } }
     override suspend fun clearOwnerExercises(trainerId: String) = exercises.update { m -> m.filterValues { it.trainerId != trainerId } }
