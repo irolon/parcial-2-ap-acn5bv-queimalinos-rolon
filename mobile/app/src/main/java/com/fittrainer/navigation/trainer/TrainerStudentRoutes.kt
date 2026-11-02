@@ -1,10 +1,21 @@
-package com.fittrainer.navigation
+package com.fittrainer.navigation.trainer
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.fittrainer.navigation.TRAINER_INVITE_ROUTE
+import com.fittrainer.navigation.TRAINER_STUDENTS_ROUTE
+import com.fittrainer.navigation.TRAINER_STUDENT_DETAIL_ROUTE
+import com.fittrainer.navigation.TRAINER_STUDENT_EDIT_ROUTE
+import com.fittrainer.navigation.TRAINER_STUDENT_METRICS_ROUTE
+import com.fittrainer.navigation.TRAINER_STUDENT_SESSIONS_ROUTE
+import com.fittrainer.navigation.TRAINER_STUDENT_SESSION_ROUTE
+import com.fittrainer.navigation.trainerStudentEditRoute
+import com.fittrainer.navigation.trainerStudentMetricsRoute
+import com.fittrainer.navigation.trainerStudentSessionRoute
+import com.fittrainer.navigation.trainerStudentSessionsRoute
 import com.fittrainer.ui.invitations.InviteScreen
 import com.fittrainer.ui.routines.trainer.section.AssignRoutineAction
 import com.fittrainer.ui.routines.trainer.section.RoutinesSection

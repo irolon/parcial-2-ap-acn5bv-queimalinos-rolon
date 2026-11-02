@@ -9,11 +9,13 @@ import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import com.fittrainer.data.templates.trainer.TemplateSummary
 import com.fittrainer.data.templates.trainer.TemplatesCache
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.ui.students.detail.STUDENT_ID_ARG
 import com.fittrainer.ui.templates.trainer.TEMPLATES_REFRESH_FAILED
+import com.fittrainer.ui.templates.trainer.fixedStudent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +27,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -46,7 +47,8 @@ data class TemplatesUiState(
 @HiltViewModel
 class TemplatesViewModel @Inject constructor(
     private val repository: TrainerTemplatesRepository,
-    students: TrainerStudentsRepository,
+    private val students: TrainerStudentsRepository,
+    details: TrainerStudentDetailRepository,
     sessionRepository: SessionRepository,
     connectivity: ConnectivityObserver,
     saved: SavedStateHandle,
@@ -64,11 +66,7 @@ class TemplatesViewModel @Inject constructor(
         .map<TemplatesCache?, Pair<Boolean, TemplatesCache?>> { true to it }
         .onStart { emit(false to null) }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val studentName: Flow<String?> = if (studentId == null) flowOf(null) else trainerId.filterNotNull()
-        .flatMapLatest { students.observe(it) }
-        .map { cache -> cache.students.firstOrNull { it.id == studentId }?.name }
-        .onStart { emit(null) }
+    private val studentName: Flow<String?> = fixedStudent(trainerId, studentId, students, details).map { it?.name }
 
     val uiState: StateFlow<TemplatesUiState> = combine(cache, connectivity.isOnline, loadError, studentName) { c, online, error, name ->
         TemplatesUiState(
@@ -77,7 +75,11 @@ class TemplatesViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TemplatesUiState(studentId = studentId))
 
-    fun onStart() = refresh()
+    fun onStart() {
+        // Para el título "· para <nombre>" si se llegó por Inicio sin pasar por Alumnos.
+        if (studentId != null) viewModelScope.launch { students.refresh(trainerId.filterNotNull().first()) }
+        refresh()
+    }
     fun onRetry() = refresh()
 
     private fun refresh() {
