@@ -25,6 +25,7 @@ import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.progress.ProgressScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
+import com.fittrainer.ui.students.StudentsScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -122,6 +123,7 @@ fun RoleShell(
                             openRequest = progressOpen,
                             onOpenHandled = launches::onProgressOpenHandled,
                         )
+                        tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen()
                         else -> PlaceholderScreen(tab.label)
                     }
                 }

@@ -1,0 +1,19 @@
+package com.fittrainer.di.students
+
+import com.fittrainer.data.session.UserDataCleaner
+import com.fittrainer.data.students.TrainerStudentsRepository
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
+
+/** App del entrenador: sus cachés también se borran al cerrar sesión. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class StudentsModule {
+
+    @Binds
+    @IntoSet
+    abstract fun bindTrainerStudentsCleaner(impl: TrainerStudentsRepository): UserDataCleaner
+}

@@ -1,5 +1,10 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
+import { fetchAll } from '../../shared/utils/supabase-query.js';
+import { localDate } from '../../shared/utils/dates.js';
+import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
+import { scheduleOf } from '../../models/students/adherence.js';
+import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';
 import {
   STUDENTS_TABLE,
   STUDENT_LIST_COLUMNS,
@@ -97,4 +102,49 @@ export async function updateStudent(id, fields) {
     .single();
   if (error) throw Errors.internal(error.message);
   return data;
+}
+
+/** Agrupa filas por student_id; cada alumno pedido arranca con []. */
+const groupByStudent = (studentIds, rows, pick) => {
+  const out = new Map(studentIds.map((id) => [id, []]));
+  for (const row of rows) out.get(row.student_id)?.push(pick(row));
+  return out;
+};
+
+/**
+ * Rutinas activas de cada alumno como agenda: { days, daySince } (ver models/students/adherence.js →
+ * scheduleOf). daySince sale de la fecha local de creación de cada rutina.
+ */
+export async function findActiveRoutineSchedules(studentIds) {
+  // PostgREST corta en 1000 filas: se pagina con orden estable.
+  const rows = await fetchAll(() =>
+    supabase
+      .from(ROUTINES_TABLE)
+      .select('id, student_id, days, created_at')
+      .in('student_id', studentIds)
+      .eq('active', true)
+      .order('id')
+  );
+  const grouped = groupByStudent(studentIds, rows, (r) => ({ days: r.days ?? [], since: localDate(r.created_at) }));
+  return new Map([...grouped].map(([id, routines]) => [id, scheduleOf(routines)]));
+}
+
+/** Días de las rutinas activas de cada alumno (unión, sin repetidos). */
+export async function findActiveRoutineDays(studentIds) {
+  const schedules = await findActiveRoutineSchedules(studentIds);
+  return new Map([...schedules].map(([id, s]) => [id, s.days]));
+}
+
+/** Fechas locales AR ('YYYY-MM-DD') de las sesiones terminadas desde `fromIso`, por alumno. */
+export async function findFinishedSessionDates(studentIds, fromIso) {
+  const rows = await fetchAll(() =>
+    supabase
+      .from(SESSIONS_TABLE)
+      .select('id, student_id, started_at')
+      .in('student_id', studentIds)
+      .gte('started_at', fromIso)
+      .not('finished_at', 'is', null)
+      .order('id')
+  );
+  return groupByStudent(studentIds, rows, (r) => localDate(r.started_at));
 }

@@ -107,7 +107,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | Método | Ruta | Rol | Descripción |
 |--------|------|-----|-------------|
 | POST | `/api/students` | — | Alta del alumno desde token de invitación |
-| GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`. Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
+| GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`, `days_per_week` y `adherence_7d` (`{ assigned, done, pct }` de los últimos 7 días). Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
 | GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`), `active_routine` (`{ id, name, days }`) y `last_session_at` |
 | PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) |
 | GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
@@ -249,6 +249,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 ### Alumnos (`/students`)
 
 - **`GET /students`:** cada alumno trae `last_session_at` (timestamp, o `null` si nunca entrenó), que sale de la vista `student_last_session`. **Por defecto trae solo los activos**; los dados de baja se piden con `?active=false`.
+- **`GET /students` (desde el 01/11, app del entrenador):** también trae `days_per_week` (días distintos de sus rutinas activas) y `adherence_7d` `{ assigned, done, pct }`: de los días asignados de hoy-7 a hoy-1 (hora argentina), cuántos tienen una sesión terminada; `pct` es `null` sin rutina. **La web puede usarlos para mostrar la barra de adherencia en la lista de alumnos.** Ver `docs/arquitectura/contratos-api.md`.
 - **`GET /students/:id`:** responde `{ data }`, con `latest_metrics` (la última medida con `bmi`, o `null`) y `active_routine` (`{ id, name, days }`, o `null`).
 - **`PATCH /students/:id`:** devuelve la ficha completa en `{ data }`, con la misma forma que el GET.
 - **Baja del alumno** (`active: false`): no se borra nada.
