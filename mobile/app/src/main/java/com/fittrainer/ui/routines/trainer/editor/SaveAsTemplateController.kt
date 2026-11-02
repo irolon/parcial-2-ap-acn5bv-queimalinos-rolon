@@ -3,7 +3,6 @@ package com.fittrainer.ui.routines.trainer.editor
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
 import com.fittrainer.ui.templates.trainer.SAVED_AS_TEMPLATE
-import com.fittrainer.ui.templates.trainer.assign.assignMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +52,7 @@ class SaveAsTemplateController(
                 _state.value = null
                 notice(SAVED_AS_TEMPLATE)
             } else {
-                _state.update { it?.copy(saving = false, message = error.assignMessage()) }
+                _state.update { it?.copy(saving = false, nameError = error.saveNameError(), message = error.saveMessage()) }
             }
         }
     }
