@@ -46,12 +46,33 @@ describe('students.service — update', () => {
     expect(mockAppointmentsService.cancelFutureForStudent).toHaveBeenCalledWith('student-1');
   });
 
-  it('si cancelar los turnos falla, no guarda la baja (el reintento la completa)', async () => {
+  it('guarda la baja ANTES de cancelar los turnos (cancelar no tiene vuelta atrás)', async () => {
     mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT_ROW);
+    mockStudentsRepo.updateStudent.mockResolvedValue({ ...STUDENT_ROW, active: false });
+
+    await service.update(TRAINER, 'student-1', { active: false });
+
+    const saved = mockStudentsRepo.updateStudent.mock.invocationCallOrder[0];
+    expect(mockAppointmentsService.cancelFutureForStudent.mock.invocationCallOrder[0]).toBeGreaterThan(saved);
+  });
+
+  it('si guardar la baja falla, no cancela ningún turno (el alumno sigue activo con sus turnos)', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT_ROW);
+    mockStudentsRepo.updateStudent.mockRejectedValueOnce(new Error('db'));
+
+    await expect(service.update(TRAINER, 'student-1', { active: false })).rejects.toThrow('db');
+    expect(mockAppointmentsService.cancelFutureForStudent).not.toHaveBeenCalled();
+  });
+
+  it('si cancelar los turnos falla, el error sale y repetir la baja los vuelve a cancelar', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT_ROW);
+    mockStudentsRepo.updateStudent.mockResolvedValue({ ...STUDENT_ROW, active: false });
     mockAppointmentsService.cancelFutureForStudent.mockRejectedValueOnce(new Error('db'));
 
     await expect(service.update(TRAINER, 'student-1', { active: false })).rejects.toThrow('db');
-    expect(mockStudentsRepo.updateStudent).not.toHaveBeenCalled();
+    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT_ROW, active: false });
+    await service.update(TRAINER, 'student-1', { active: false });
+    expect(mockAppointmentsService.cancelFutureForStudent).toHaveBeenCalledTimes(2);
   });
 
   it('repetir la baja vuelve a revocar (permite reintentar si falló antes)', async () => {

@@ -12,7 +12,7 @@ import {
   STUDENT_MAX_PENDING,
   STUDENT_MAX_DAYS_AHEAD,
   studentHorizonMs,
-  lastBookableDate,
+  bookableBeforeMs,
   toAppointment,
 } from '../../models/agenda/appointment.model.js';
 import { hourOf } from '../../models/agenda/availability.model.js';
@@ -21,7 +21,7 @@ import { hourOf } from '../../models/agenda/availability.model.js';
 function assertOnTheHourAndFuture(scheduledAt, now) {
   if (!isOnTheHour(scheduledAt)) throw Errors.slotUnavailable('El turno tiene que empezar en una hora en punto');
   if (new Date(scheduledAt) < nextHourUtc(now)) throw Errors.slotUnavailable('El turno tiene que ser a futuro');
-  if (utcToArgentina(scheduledAt).date > lastBookableDate(now)) {
+  if (new Date(scheduledAt).getTime() >= bookableBeforeMs(now)) {
     throw Errors.slotUnavailable(`Solo se puede agendar hasta ${MAX_DAYS_AHEAD} días adelante`);
   }
 }

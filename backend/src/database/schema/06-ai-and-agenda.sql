@@ -88,6 +88,26 @@ end $$;
 revoke all on function replace_trainer_availability(uuid, jsonb) from public, anon, authenticated;
 grant execute on function replace_trainer_availability(uuid, jsonb) to service_role;
 
+-- Ningún turno nuevo para un alumno dado de baja, ni siquiera un alta en vuelo
+-- durante la baja: `for share` la pone en fila con el UPDATE de la baja, que
+-- después cancela los turnos futuros (2026-11-01-agenda-inactive-student.sql).
+create or replace function appointments_student_active()
+returns trigger language plpgsql security invoker set search_path = public as $$
+declare
+  is_active boolean;
+begin
+  select active into is_active from students where id = new.student_id for share;
+  if is_active is distinct from true then
+    raise exception 'El alumno está dado de baja' using errcode = 'FT001';
+  end if;
+  return new;
+end $$;
+revoke all on function appointments_student_active() from public, anon, authenticated;
+drop trigger if exists appointments_student_active on appointments;
+create trigger appointments_student_active
+  before insert on appointments
+  for each row execute function appointments_student_active();
+
 -- ── notifications ────────────────────────────────────────────────────────────
 -- Desvío del DER: user_role (nuevo). user_id apunta a trainers o students según
 -- el rol, igual que refresh_tokens, así que no hay FK dura.

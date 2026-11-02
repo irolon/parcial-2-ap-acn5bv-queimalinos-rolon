@@ -18,6 +18,11 @@ export const studentHorizonMs = (now) => now.getTime() + STUDENT_MAX_DAYS_AHEAD 
 export const MAX_DAYS_AHEAD = 365;
 /** Último día de Argentina ('YYYY-MM-DD') en que se puede agendar: el de `now` + 365 días. */
 export const lastBookableDate = (now) => utcToArgentina(now.getTime() + MAX_DAYS_AHEAD * DAY_MS).date;
+/**
+ * Primer instante (ms) que ya no se puede agendar: las 00:00 de Argentina (UTC-3 fijo) del día siguiente al último.
+ * Se compara como instante y no como texto: un año de 5 cifras ('+010000-01-01') quedaría "antes" de '2027-…'.
+ */
+export const bookableBeforeMs = (now) => Date.parse(`${lastBookableDate(now)}T00:00:00-03:00`) + DAY_MS;
 /** Máximo de turnos `pending` a futuro que puede tener un alumno (lo que pide él). */
 export const STUDENT_MAX_PENDING = 3;
 /** Máximo de días (inclusivos) de un rango de GET /appointments. */

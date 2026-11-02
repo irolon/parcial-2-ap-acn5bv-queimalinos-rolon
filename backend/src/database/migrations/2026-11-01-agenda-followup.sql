@@ -16,8 +16,9 @@
 --
 -- Filas previas: antes de agregar los checks se cuentan las que los violarían y,
 -- si hay, se corta con un error que dice cuántas (nada queda a medias). Los
--- checks se agregan `not valid` (sin escanear la tabla bajo lock fuerte) y
--- después se validan con `validate constraint`.
+-- checks se agregan `not valid` y después se validan con `validate constraint`.
+-- Ojo: corriendo todo junto (una transacción), el lock ACCESS EXCLUSIVE del
+-- `add` dura hasta el commit igual; con una tabla chica no importa.
 do $$
 declare
   bad int;

@@ -29,6 +29,11 @@ describe('appointments.repository', () => {
     });
   });
 
+  it('insertAppointment traduce el FT001 del trigger (alumno dado de baja en el medio) a FORBIDDEN (403)', async () => {
+    result.current = { data: null, error: { code: 'FT001', message: 'El alumno está dado de baja' } };
+    await expect(repo.insertAppointment({ trainer_id: 't' })).rejects.toMatchObject({ statusCode: 403, code: 'FORBIDDEN' });
+  });
+
   it('insertAppointment: otro error es 500 y el éxito devuelve la fila', async () => {
     result.current = { data: null, error: { code: '42P01', message: 'boom' } };
     await expect(repo.insertAppointment({})).rejects.toMatchObject({ statusCode: 500 });

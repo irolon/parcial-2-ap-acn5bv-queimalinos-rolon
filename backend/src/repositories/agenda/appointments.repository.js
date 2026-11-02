@@ -4,6 +4,8 @@ import { unwrap } from '../../shared/utils/supabase-query.js';
 import { APPOINTMENTS_TABLE, APPOINTMENT_COLUMNS, STATUS } from '../../models/agenda/appointment.model.js';
 
 const UNIQUE_VIOLATION = '23505';
+/** SQLSTATE del trigger appointments_student_active: el alumno está dado de baja. */
+const STUDENT_INACTIVE = 'FT001';
 
 /**
  * Turnos con el alumno embebido, entre `fromUtc` (incluido) y `toUtc` (excluido), ordenados.
@@ -60,10 +62,14 @@ export async function cancelFutureForStudent(studentId, nowUtc) {
   return rows.length;
 }
 
-/** Inserta el turno. Si el horario ya está ocupado (índice único parcial, 23505) lanza SLOT_TAKEN. */
+/**
+ * Inserta el turno. Si el horario ya está ocupado (índice único parcial, 23505) lanza SLOT_TAKEN; si el alumno se
+ * dio de baja mientras tanto (trigger, FT001), FORBIDDEN, igual que el chequeo del service.
+ */
 export async function insertAppointment(row) {
   const res = await supabase.from(APPOINTMENTS_TABLE).insert(row).select(APPOINTMENT_COLUMNS).single();
   if (res.error?.code === UNIQUE_VIOLATION) throw Errors.slotTaken();
+  if (res.error?.code === STUDENT_INACTIVE) throw Errors.forbidden();
   return unwrap(res);
 }
 

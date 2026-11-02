@@ -173,6 +173,12 @@ describe('createForTrainer', () => {
     await expect(createForTrainer(TRAINER, { ...input, scheduled_at: '9999-01-01T15:00:00.000Z' })).rejects.toEqual(unavailable);
   });
 
+  it('tope de 1 año con un año de 5 cifras: se compara el instante, no el texto ("+010000-01-01")', async () => {
+    // 9999-12-31 23:00 en UTC-4 es 10000-01-01 03:00 UTC: como texto quedaría "antes" de 2027.
+    await expect(createForTrainer(TRAINER, { ...input, scheduled_at: '9999-12-31T23:00:00-04:00' })).rejects.toEqual(unavailable);
+    expect(mockAppointments.insertAppointment).not.toHaveBeenCalled();
+  });
+
   it('SLOT_TAKEN se propaga', async () => {
     mockAppointments.insertAppointment.mockRejectedValue(Errors.slotTaken());
     await expect(createForTrainer(TRAINER, input)).rejects.toMatchObject({ code: 'SLOT_TAKEN' });

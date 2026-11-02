@@ -109,7 +109,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | POST | `/api/students` | — | Alta del alumno desde token de invitación |
 | GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`. Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
 | GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`), `active_routine` (`{ id, name, days }`) y `last_session_at` |
-| PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) |
+| PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) y cancela sus turnos futuros |
 | GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
 | POST | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Carga una medida. 201 si es nueva, 200 si es un reintento con el mismo `id` |
 | DELETE | `/api/students/:id/metrics/:metricId` | trainer dueño (cualquiera) / alumno (solo las suyas) | Borra una medida. 204 |
@@ -228,11 +228,16 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 | PUT | `/api/availability` | trainer | `{ slots }` (0 a 50, horas en punto, sin superponerse). Reemplaza todo de forma atómica (RPC `replace_trainer_availability`); 400 `VALIDATION_ERROR` con `details` por franja |
 | GET | `/api/availability/free?from=&to=` | trainer / student | Horarios libres `{ starts_at }` (UTC), rango de 1 a 31 días. El alumno ve a su PT hasta 28 días adelante; alumno inactivo: 403 |
 | GET | `/api/appointments?from=&to=` | trainer / student | Turnos propios de todos los estados, rango de 1 a 62 días (días de Argentina) |
-| POST | `/api/appointments` | student | `{ scheduled_at, notes? }`. 201 `pending` dentro de la disponibilidad y hasta 28 días; 400 `SLOT_UNAVAILABLE`, 403 sin PT o inactivo, 409 `SLOT_TAKEN`. Notifica al PT |
+| POST | `/api/appointments` | student | `{ scheduled_at, notes? }`. 201 `pending` dentro de la disponibilidad y hasta 28 días; 400 `SLOT_UNAVAILABLE`, 403 sin PT o inactivo, 409 `SLOT_TAKEN`, 409 `APPOINTMENT_LIMIT` (3 pendientes). Notifica al PT |
 | POST | `/api/appointments` | trainer | `{ student_id, scheduled_at, notes? }`. 201 `confirmed`, sin exigir disponibilidad. 403 si el alumno es de otro PT o está inactivo. Push al alumno |
 | PATCH | `/api/appointments/:id` | trainer / student | `{ status }` con `confirmed` o `cancelled`. PT: `pending`→`confirmed`, cualquier vivo→`cancelled`; alumno: solo cancelar. 409 `APPOINTMENT_PAST` si ya pasó, 409 `INVALID_STATUS_TRANSITION`; ajeno o inexistente 403 |
 
-**Migración.** `src/database/migrations/2026-10-31-agenda.sql` (tabla `trainer_availability`, índice único parcial de `appointments` y la RPC); es re-ejecutable y también está en `schema/06-ai-and-agenda.sql`. Correrla en el SQL Editor de Supabase en las bases ya creadas.
+**Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda.sql`:
+- `src/database/migrations/2026-10-31-agenda.sql`: tabla `trainer_availability`, índice único parcial de `appointments` y la RPC.
+- `2026-11-01-agenda-followup.sql`: checks de 60 min y hora en punto, y advisory lock en la RPC.
+- `2026-11-01-agenda-inactive-student.sql`: trigger `appointments_student_active` (no se agenda a un alumno dado de baja, ni con un alta en vuelo durante la baja).
+
+**Topes.** El alumno puede tener hasta 3 turnos `pending` a futuro (el 4.º: 409 `APPOINTMENT_LIMIT`) y ningún rol agenda a más de 1 año. Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`) se guardan la baja y después se cancelan sus turnos futuros. `GET /appointments` no pagina (límite documentado en el spec de agenda).
 
 **Notificaciones.** Tipo `appointment` con `data: { appointment_id }`: al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
 
