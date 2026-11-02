@@ -5,15 +5,9 @@ import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.repository.toDataError
 import retrofit2.HttpException
-import retrofit2.Response
 
 /** El backend rechazó campos (400): mensaje por campo del backend ("rest_seconds", "exercises[0].sets", …). */
 class RoutineRejectedException(val fields: Map<String, String>, val messageText: String?) : Exception(messageText)
-
-/** Un Response<Unit> con error se trata igual que el HttpException de los métodos con body. */
-fun Response<Unit>.orThrow() {
-    if (!isSuccessful) throw HttpException(this)
-}
 
 /**
  * 403/404 → la rutina ya no es del entrenador (o no existe): [onGone] y NotFound. 400 → por campo.

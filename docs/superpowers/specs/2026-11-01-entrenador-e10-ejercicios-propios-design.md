@@ -11,6 +11,7 @@ tarjeta: E10
 
 > **Cómo quedó (01/11):**
 > - **El formulario puro** (`ExerciseForm.kt`) vive en `ui/exercises/trainer/form/`, no en `data/`: usa las listas de grupos y equipos de `ui/components/exercise/`, y data no depende de UI. El repositorio recibe el `JsonObject` armado.
+> - **Revisión de la #65:** las rutas en `navigation/trainer/`; `orThrow` en `data/api/ApiErrors.kt`; la biblioteca ofrece "Reintentar" con un error del servidor (sin red sigue "Conectate") y muestra un indicador mientras lee Room; el aviso del formulario solo muestra el detalle de un campo que no está en el formulario; con "Solo míos" los chips son los grupos propios.
 > - **`TrainerExercise`** sigue en `TrainerExercisesRepository.kt`, como en E8. Los errores nuevos están en `data/exercises/trainer/ExerciseErrors.kt`.
 > - **La biblioteca** reusa el `CatalogPicker` de E8 (búsqueda y grupo) y le suma "Solo míos". `ExerciseDetailSheet` suma el slot `actions` para "Editar" y "Eliminar".
 > - **Al borrar**, la hoja se cierra siempre, así el aviso (también el 409) queda a la vista.
@@ -60,7 +61,7 @@ No cambia. Usa:
   - 400 → `ExerciseRejectedException(fields, message)`;
   - 409 → `ExerciseInUseException(message)`;
   - 403/404 → sale del caché y devuelve `NotFound`.
-- **Formulario puro:** `data/exercises/trainer/ExerciseForm.kt`, con validación, armado del body del POST y diff del PATCH.
+- **Formulario puro:** `ui/exercises/trainer/form/ExerciseForm.kt` (ver "Cómo quedó"), con validación, armado del body del POST y diff del PATCH.
 - **UI** (`ui/exercises/trainer/`):
   - `library/TrainerLibraryScreen` y su ViewModel;
   - `form/ExerciseFormScreen` y su ViewModel, con el arg opcional `exerciseId` (con id es edición);

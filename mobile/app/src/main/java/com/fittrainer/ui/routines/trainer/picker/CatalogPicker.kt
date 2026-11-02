@@ -25,6 +25,8 @@ data class PickerState(
     val query: String = "",
     val group: String? = null,
     val groups: List<String> = emptyList(),
+    /** Los grupos de los ejercicios propios, para "Solo míos" en la biblioteca (E10). */
+    val ownGroups: List<String> = emptyList(),
     val visible: List<TrainerExercise> = emptyList(),
     val catalogEmpty: Boolean = true,
     /** El último refresh falló por la red (o todavía no hubo): si el catálogo está vacío, "Conectate". */
@@ -59,6 +61,7 @@ class CatalogPicker(
             query = q,
             group = selected,
             groups = groups,
+            ownGroups = availableGroups(all.filter { !it.isGlobal }),
             visible = filterExercises(all, q, selected),
             catalogEmpty = all.isEmpty(),
             offline = f == DataError.Offline,

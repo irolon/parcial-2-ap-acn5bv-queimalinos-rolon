@@ -25,10 +25,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** visible: lo que muestra la lista (búsqueda + grupo del selector de E8, y "Solo míos"). */
+/**
+ * visible: lo que muestra la lista (búsqueda + grupo del selector de E8, y "Solo míos"). groups: los chips;
+ * con "Solo míos", solo los grupos que tienen algún ejercicio propio.
+ */
 data class TrainerLibraryUiState(
     val picker: PickerState = PickerState(),
     val onlyOwn: Boolean = false,
+    val groups: List<String> = emptyList(),
     val visible: List<TrainerExercise> = emptyList(),
     val offline: Boolean = false,
     val selected: TrainerExercise? = null,
@@ -55,13 +59,26 @@ class TrainerLibraryViewModel @Inject constructor(
 
     val uiState: StateFlow<TrainerLibraryUiState> = combine(picker.state, local, online) { p, l, on ->
         TrainerLibraryUiState(
-            picker = p, onlyOwn = l.onlyOwn, visible = if (l.onlyOwn) p.visible.filter { !it.isGlobal } else p.visible,
+            picker = p, onlyOwn = l.onlyOwn, groups = if (l.onlyOwn) p.ownGroups else p.groups,
+            visible = if (l.onlyOwn) p.visible.filter { !it.isGlobal } else p.visible,
             offline = !on, selected = l.selected, confirmDelete = l.confirmDelete, deleting = l.deleting, notice = l.notice,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TrainerLibraryUiState())
 
     /** Al entrar o volver (por ejemplo, del formulario). */
     fun onStart() = picker.refresh()
+
+    /** Un error con red (un 500), no la falta de conexión. */
+    fun onRetry() = picker.refresh()
+
+    init {
+        // Con "Solo míos", un grupo elegido que se queda sin ejercicios propios (al activarlo, o porque se
+        // borró o cambió de grupo el último) se suelta: su chip deja de estar y no queda un filtro invisible.
+        viewModelScope.launch {
+            combine(picker.state, local) { p, l -> l.onlyOwn && p.loaded && p.group != null && p.group !in p.ownGroups }
+                .collect { orphan -> if (orphan) picker.onGroup(null) }
+        }
+    }
 
     fun onToggleOnlyOwn() = local.update { it.copy(onlyOwn = !it.onlyOwn) }
     fun onSelect(exercise: TrainerExercise) = local.update { it.copy(selected = exercise) }
