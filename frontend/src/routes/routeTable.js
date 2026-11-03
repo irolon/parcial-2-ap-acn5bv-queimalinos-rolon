@@ -21,7 +21,7 @@ export const TRAINER_NAV = {
     { path: 'biblioteca', label: 'Biblioteca', icon: Dumbbell, subtitle: 'EJERCICIOS' },
     { path: 'desafios', label: 'Desafíos', icon: Trophy, subtitle: 'RETOS PARA TUS ALUMNOS' },
     { path: 'agenda', label: 'Agenda', icon: Calendar, subtitle: 'SESIONES PROGRAMADAS' },
-    { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'CONVERSACIONES' },
+    { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'CONVERSACIONES', unread: true },
   ],
 };
 
@@ -32,6 +32,7 @@ export const STUDENT_NAV = {
     { path: 'progreso', label: 'Mi progreso', icon: ChartLine, subtitle: 'MEDIDAS Y MARCAS' },
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
+    { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'TU ENTRENADOR', unread: true },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
   ],
 };
@@ -73,6 +74,9 @@ export const newRoutineHref = (studentId) => (studentId ? `${NEW_ROUTINE.path}?a
 
 // Ficha del alumno: la página fija su propio título con `usePageHeader`.
 export const STUDENT_PROFILE = { path: `${STUDENTS_PATH}/:id` };
+
+/** Mensajes del PT, con la conversación del alumno abierta. */
+export const messagesHref = (studentId) => `${TRAINER_NAV.base}/mensajes?alumno=${studentId}`;
 
 /** Link a la ficha; `search` (sin `?`) conserva los filtros del panel. */
 export const profileHref = (id, search = '') => `${STUDENTS_PATH}/${id}${search ? `?${search}` : ''}`;

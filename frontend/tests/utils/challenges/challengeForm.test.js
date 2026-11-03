@@ -66,6 +66,11 @@ describe('goal_value entero en sesiones y racha', () => {
     expect(errors.goal_value).toMatch(/entero/);
   });
 
+  it.each(['72.5', '1500.25'])('"%s" con punto decimal pide la coma', (goal_value) => {
+    const errors = validateChallengeForm({ ...valid, goal_type: 'weight_target', goal_value });
+    expect(errors.goal_value).toBe('Usá coma para los decimales (ej. 72,5)');
+  });
+
   it('volumen y peso objetivo aceptan decimales', () => {
     expect(validateChallengeForm({ ...valid, goal_type: 'volume', goal_value: '2,5' })).toEqual({});
     expect(validateChallengeForm({ ...valid, goal_type: 'weight_target', goal_value: '72,5' })).toEqual({});

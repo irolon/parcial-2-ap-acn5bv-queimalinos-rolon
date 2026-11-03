@@ -3,6 +3,8 @@ package com.fittrainer.data.db
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.fittrainer.data.db.exercises.trainer.TrainerExerciseEntity
+import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.library.LibraryExerciseEntity
 import com.fittrainer.data.db.library.LibrarySyncEntity
@@ -21,6 +23,28 @@ import com.fittrainer.data.db.routine.RoutineDao
 import com.fittrainer.data.db.routine.RoutineEntity
 import com.fittrainer.data.db.routine.RoutineExerciseEntity
 import com.fittrainer.data.db.routine.RoutineSyncEntity
+import com.fittrainer.data.db.routines.trainer.TrainerRoutineEntity
+import com.fittrainer.data.db.routines.trainer.TrainerRoutineExerciseEntity
+import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
+import com.fittrainer.data.db.routines.trainer.TrainerRoutinesSyncEntity
+import com.fittrainer.data.db.students.TrainerStudentDetailDao
+import com.fittrainer.data.db.students.TrainerStudentDetailEntity
+import com.fittrainer.data.db.students.TrainerStudentEntity
+import com.fittrainer.data.db.students.TrainerStudentsDao
+import com.fittrainer.data.db.students.TrainerStudentsSyncEntity
+import com.fittrainer.data.db.students.metrics.TrainerStudentMetricEntity
+import com.fittrainer.data.db.students.overview.TrainerOverviewDao
+import com.fittrainer.data.db.students.overview.TrainerOverviewEntity
+import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsDao
+import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsSyncEntity
+import com.fittrainer.data.db.students.progress.TrainerAttendanceDao
+import com.fittrainer.data.db.students.progress.TrainerAttendanceEntity
+import com.fittrainer.data.db.students.sessions.TrainerSessionEntity
+import com.fittrainer.data.db.students.sessions.TrainerSessionsDao
+import com.fittrainer.data.db.students.sessions.TrainerSessionsSyncEntity
+import com.fittrainer.data.db.templates.trainer.TrainerTemplateEntity
+import com.fittrainer.data.db.templates.trainer.TrainerTemplatesDao
+import com.fittrainer.data.db.templates.trainer.TrainerTemplatesSyncEntity
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.WorkoutExerciseEntity
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
@@ -55,8 +79,23 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         NotificationEntity::class,
         NotificationMetaEntity::class,
         NotificationPendingReadEntity::class,
+        TrainerStudentEntity::class,
+        TrainerStudentsSyncEntity::class,
+        TrainerStudentDetailEntity::class,
+        TrainerSessionEntity::class,
+        TrainerSessionsSyncEntity::class,
+        TrainerAttendanceEntity::class,
+        TrainerStudentMetricEntity::class,
+        TrainerStudentMetricsSyncEntity::class,
+        TrainerOverviewEntity::class,
+        TrainerRoutineEntity::class,
+        TrainerRoutineExerciseEntity::class,
+        TrainerRoutinesSyncEntity::class,
+        TrainerExerciseEntity::class,
+        TrainerTemplateEntity::class,
+        TrainerTemplatesSyncEntity::class,
     ],
-    version = 11,
+    version = 19,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -71,6 +110,14 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 8, to = 9),
         AutoMigration(from = 9, to = 10),
         AutoMigration(from = 10, to = 11),
+        AutoMigration(from = 11, to = 12),
+        AutoMigration(from = 12, to = 13),
+        AutoMigration(from = 13, to = 14),
+        AutoMigration(from = 14, to = 15),
+        AutoMigration(from = 15, to = 16),
+        AutoMigration(from = 16, to = 17),
+        AutoMigration(from = 17, to = 18),
+        AutoMigration(from = 18, to = 19),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -81,4 +128,13 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun historyDao(): HistoryDao
     abstract fun progressDao(): ProgressDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun trainerStudentsDao(): TrainerStudentsDao
+    abstract fun trainerStudentDetailDao(): TrainerStudentDetailDao
+    abstract fun trainerSessionsDao(): TrainerSessionsDao
+    abstract fun trainerAttendanceDao(): TrainerAttendanceDao
+    abstract fun trainerStudentMetricsDao(): TrainerStudentMetricsDao
+    abstract fun trainerOverviewDao(): TrainerOverviewDao
+    abstract fun trainerRoutinesDao(): TrainerRoutinesDao
+    abstract fun trainerExercisesDao(): TrainerExercisesDao
+    abstract fun trainerTemplatesDao(): TrainerTemplatesDao
 }

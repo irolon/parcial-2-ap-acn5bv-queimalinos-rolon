@@ -118,6 +118,28 @@ describe('updateChallenge / deleteChallenge', () => {
     expect(repo.update).toHaveBeenCalledWith('ch-1', { goal_value: 100 });
   });
 
+  it.each([
+    ['solo goal_value con decimales en uno de sesiones', challengeRow(), { goal_value: 7.5 }],
+    ['pasar a racha uno de volumen con meta decimal', challengeRow({ goal_type: 'volume', goal_value: 1500.5 }),
+      { goal_type: 'streak' }],
+  ])('PATCH parcial: %s → 400 y no actualiza', async (_n, row, fields) => {
+    repo.findById.mockResolvedValue(row);
+    repo.hasActiveAssignments.mockResolvedValue(false);
+    await expect(challenges.updateChallenge(TRAINER, 'ch-1', fields)).rejects.toMatchObject({
+      statusCode: 400,
+      code: 'VALIDATION_ERROR',
+    });
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('PATCH parcial: decimales en uno de volumen pasa', async () => {
+    repo.findById.mockResolvedValue(challengeRow({ goal_type: 'volume', goal_value: '1500' }));
+    repo.hasActiveAssignments.mockResolvedValue(false);
+    repo.update.mockResolvedValue(challengeRow());
+    await challenges.updateChallenge(TRAINER, 'ch-1', { goal_value: 1500.5 });
+    expect(repo.update).toHaveBeenCalledWith('ch-1', { goal_value: 1500.5 });
+  });
+
   it('editar nombre o repetir la misma meta con asignaciones activas no bloquea', async () => {
     repo.findById.mockResolvedValue(challengeRow());
     repo.hasActiveAssignments.mockResolvedValue(true);
