@@ -25,11 +25,14 @@ export function useStudentQuery(id) {
   return useQuery({ queryKey: [...STUDENTS_KEY, id], queryFn: () => getStudent(id), enabled: Boolean(id) });
 }
 
-/** PATCH del alumno; refresca el listado y la ficha. */
+/**
+ * PATCH del alumno; refresca el listado y la ficha aunque falle: la baja se guarda antes de cancelar
+ * los turnos, así que un 500 puede llegar con el alumno ya inactivo.
+ */
 export function useUpdateStudent(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body) => updateStudent(id, body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: STUDENTS_KEY }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: STUDENTS_KEY }),
   });
 }
