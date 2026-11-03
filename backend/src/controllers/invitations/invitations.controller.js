@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as invitationsService from '../../services/invitations/invitations.service.js';
 
 /** POST /invitations — el trainer autenticado genera una invitación. 201 → { data } */

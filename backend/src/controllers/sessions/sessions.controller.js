@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as sessionsService from '../../services/sessions/sessions.service.js';
 import * as setsService from '../../services/sessions/session-sets.service.js';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { runInBackground } from '../../../../src/shared/utils/background.js';
+import { runInBackground } from '../../../../../src/shared/utils/async/background.js';
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 

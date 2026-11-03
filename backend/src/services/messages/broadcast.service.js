@@ -4,7 +4,7 @@ import * as studentsRepo from '../../repositories/students/students.repository.j
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
 import { SENDER_ROLES } from '../../models/messages/message.model.js';
 import { onBroadcastSent } from '../notifications/message-triggers.service.js';
-import { runInBackground } from '../../shared/utils/background.js';
+import { runInBackground } from '../../shared/utils/async/background.js';
 
 /**
  * Envío masivo del PT: una fila por alumno con el mismo broadcast_id. Si algún id no es

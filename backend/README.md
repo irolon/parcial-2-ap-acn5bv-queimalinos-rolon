@@ -24,7 +24,7 @@ src/
 ├── config/                  # env.js (variables de entorno) y supabase.js (cliente service role)
 ├── shared/                  # transversal a todos los módulos
 │   ├── middlewares/         # authenticate, requireRole, validate, errores
-│   └── utils/               # errors, password (bcrypt), jwt, qr, asyncHandler
+│   └── utils/               # errors, password (bcrypt), jwt, qr; async/ (asyncHandler, background, scheduler)
 ├── controllers/<modulo>/<modulo>.controller.js
 ├── services/<modulo>/<modulo>.service.js
 ├── repositories/<modulo>/<modulo>.repository.js

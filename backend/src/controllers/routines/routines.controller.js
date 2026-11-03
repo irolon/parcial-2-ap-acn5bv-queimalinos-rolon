@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as routinesService from '../../services/routines/routines.service/routines.service.js';
 
 /** POST /routines — crea y asigna una rutina. 201 → { data } */

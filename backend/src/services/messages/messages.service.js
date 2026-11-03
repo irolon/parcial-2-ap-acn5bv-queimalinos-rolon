@@ -8,7 +8,7 @@ import * as studentsRepo from '../../repositories/students/students.repository.j
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import { SENDER_ROLES, toMessage, toPublicPerson } from '../../models/messages/message.model.js';
 import { onMessageSent } from '../notifications/message-triggers.service.js';
-import { runInBackground } from '../../shared/utils/background.js';
+import { runInBackground } from '../../shared/utils/async/background.js';
 
 const otherRole = (role) => (role === SENDER_ROLES.TRAINER ? SENDER_ROLES.STUDENT : SENDER_ROLES.TRAINER);
 

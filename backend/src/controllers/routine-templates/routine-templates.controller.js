@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as templatesService from '../../services/routine-templates/routine-templates.service.js';
 
 /** GET /routine-templates — lista las plantillas del trainer. */

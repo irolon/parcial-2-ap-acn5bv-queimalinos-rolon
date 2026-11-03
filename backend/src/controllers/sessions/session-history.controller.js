@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as historyService from '../../services/sessions/session-history.service.js';
 
 /** GET /students/:id/sessions — 200 → { data, meta } */
