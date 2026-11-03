@@ -26,9 +26,9 @@ describe('tabla de rutas', () => {
 
   it('tiene los ítems del alumno en el orden del prototipo, sin el asistente', () => {
     expect(STUDENT_NAV.items.map((i) => i.label)).toEqual([
-      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Mi perfil',
+      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Mensajes', 'Mi perfil',
     ]);
-    expect(STUDENT_NAV.items.map((i) => i.path)).toEqual(['hoy', 'progreso', 'rutinas', 'historial', 'perfil']);
+    expect(STUDENT_NAV.items.map((i) => i.path)).toEqual(['hoy', 'progreso', 'rutinas', 'historial', 'mensajes', 'perfil']);
   });
 
   it('arma los links del alumno que no están en el menú', () => {

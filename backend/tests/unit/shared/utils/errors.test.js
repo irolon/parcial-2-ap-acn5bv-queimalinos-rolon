@@ -8,3 +8,16 @@ describe('Errors.notificationNotFound', () => {
     expect(err.message).toBe('La notificación no existe');
   });
 });
+
+describe('Errors de mensajería', () => {
+  it.each([
+    ['messageEmpty', 400, 'MESSAGE_EMPTY', 'Escribí un mensaje o adjuntá una foto'],
+    ['imageTooLarge', 413, 'IMAGE_TOO_LARGE', 'La foto supera 5 MB'],
+    ['imageTypeInvalid', 415, 'IMAGE_TYPE_INVALID', 'La foto tiene que ser JPG, PNG o WebP'],
+  ])('%s', (name, status, code, message) => {
+    const err = Errors[name]();
+    expect(err.statusCode ?? err.status).toBe(status);
+    expect(err.code).toBe(code);
+    expect(err.message).toBe(message);
+  });
+});

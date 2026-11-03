@@ -190,13 +190,61 @@ Lista los alumnos del trainer autenticado (rol: trainer).
     { "id": "uuid", "name": "Tomás Rivera", "email": "t@mail.com", "goal": "hypertrophy",
       "active": true, "avatar_url": null, "created_at": "2026-10-17T12:00:00Z",
       "last_session_at": "2026-10-20T10:00:00Z",
-      "streak": { "current_days": 12, "longest_days": 20, "last_trained_date": "2026-10-30" } }
+      "streak": { "current_days": 12, "longest_days": 20, "last_trained_date": "2026-10-30" },
+      "days_per_week": 3,
+      "adherence_7d": { "assigned": 3, "done": 2, "pct": 67 } }
   ],
   "meta": { "total": 1, "page": 1, "limit": 20, "total_pages": 1 }
 }
 ```
 
 > `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. `streak` sale de `student_streaks` y es `null` si todavía no se calculó. El listado no trae `level`, `gym_equipment` ni `injuries`.
+>
+> `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
+
+### GET /students/overview
+
+Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:id` en el router. Solo cuentan sus alumnos **activos**.
+
+**200 OK**
+
+```json
+{ "data": {
+  "active_students": { "count": 23, "new_7d": 2 },
+  "sessions_today": { "done": 8, "expected": 11 },
+  "adherence_7d": { "pct": 87, "delta": 4 },
+  "at_risk": 3,
+  "attention": [
+    { "kind": "inactive", "student_id": "uuid", "name": "Diego Ocampo", "days": 9, "never_trained": false },
+    { "kind": "feedback_pending", "student_id": "uuid", "name": "Lucía Méndez", "session_id": "uuid",
+      "routine_name": "Push", "finished_at": "ISO" }
+  ],
+  "recent": [ { "student_id": "uuid", "name": "Tomás Rivera", "session_id": "uuid", "routine_name": "Push día 3",
+                "rpe": 8, "finished_at": "ISO" } ],
+  "lists": {
+    "today": [ { "student_id": "uuid", "name": "José Martínez", "planned": true, "status": "pending",
+                 "session_id": null, "routine_name": null, "finished_at": null, "rpe": null } ],
+    "at_risk": [ { "student_id": "uuid", "name": "Diego Ocampo", "days": 9, "never_trained": false } ],
+    "feedback_pending": [ { "student_id": "uuid", "name": "Lucía Méndez", "session_id": "uuid", "routine_name": "Push",
+                            "finished_at": "ISO", "rpe": 8 } ],
+    "students": [ { "student_id": "uuid", "name": "Ana Paz", "status": "active", "days_without_training": 1,
+                    "adherence_pct": 67 } ]
+  }
+} }
+```
+
+- `active_students.new_7d`: altas de los últimos 7 días (hoy incluido).
+- `sessions_today.expected`: alumnos con hoy asignado. `done`: de esos, cuántos terminaron al menos una sesión hoy (por la hora de fin), así nunca supera a `expected`.
+- `adherence_7d.pct`: promedio de la adherencia de 7 días de `GET /students` entre los alumnos con días asignados. `delta`: contra los 7 días anteriores. Los dos son `null` si nadie tiene plan.
+- `at_risk`: alumnos con 7 días o más sin entrenar (desde la última sesión o el alta), las mismas reglas que la web.
+- `attention` (hasta 10): primero `inactive` (de más días a menos; `never_trained` si nunca entrenó), después `feedback_pending`: sesiones terminadas en los últimos 7 días (hoy incluido) sin `trainer_comment`, de la más nueva a la más vieja.
+- `recent`: las últimas 10 sesiones terminadas, de la más nueva a la más vieja. `routine_name` y `rpe` pueden ser `null`.
+- `lists` (las listas de los filtros del Inicio de la app, sin tope):
+  - `today`: los alumnos con hoy asignado (`planned: true`) y los que entrenaron hoy sin tenerlo (`planned: false`). `status` es `done` si terminaron una sesión hoy (por la hora de fin; los campos de sesión son los de la última) o `pending` (campos de sesión en `null`). Primero los `pending` por nombre, después los `done` del más reciente.
+  - `at_risk`: los mismos de `at_risk`, de más días a menos.
+  - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
+  - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
+- Todo en hora argentina.
 
 ### GET /students/:id
 
@@ -223,6 +271,26 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
 > `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
 
 **Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `403 FORBIDDEN` (alumno de otro trainer o inexistente: no se distingue).
+
+### GET /students/:id/attendance
+
+Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la suya (ajeno o inexistente → `403 FORBIDDEN`, como la ficha).
+
+**Query:** `month` (`YYYY-MM`, opcional; por defecto el mes actual en hora argentina). Un mes futuro, anterior a `2020-01` o con formato inválido → `400 VALIDATION_ERROR` sobre `month`.
+
+**200 OK**
+
+```json
+{ "data": {
+  "month": "2026-11", "sessions": 6, "assigned_days": 9, "prs": 2,
+  "days": [ { "date": "2026-11-01", "status": "trained" }, { "date": "2026-11-02", "status": "missed" },
+            { "date": "2026-11-03", "status": "rest" }, { "date": "2026-11-20", "status": "upcoming" } ]
+} }
+```
+
+- `days` trae todos los días del mes, en orden. `status`: `trained` (al menos una sesión terminada ese día, asignado o no), `missed` (día asignado, anterior a hoy, sin entrenar), `rest` (no asignado y sin entrenar) o `upcoming` (hoy sin entrenar todavía, o un día futuro).
+- `sessions`: sesiones terminadas del mes. `assigned_days`: días asignados del mes hasta hoy inclusive. `prs`: sesiones del mes con al menos un récord (función SQL `session_records`).
+- Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos. Los días anteriores al alta del alumno o a la creación de la rutina que asigna ese día de la semana no cuentan como asignados (son `rest`), igual que en la adherencia de `GET /students`.
 
 ### PATCH /students/:id
 
@@ -385,6 +453,10 @@ Personaliza un ejercicio de una rutina asignada (trainer dueño). Body: `sets`, 
 ### DELETE /routines/:id/exercises/:routineExerciseId
 
 Quita un ejercicio de la rutina. **204**. Mismo 404 que el PATCH. Si es el único ejercicio de la rutina → **409 `ROUTINE_NEEDS_EXERCISE`** ("La rutina tiene que tener al menos un ejercicio").
+
+### PUT /routines/:id/exercises/order
+
+Reordena los ejercicios de una rutina propia (trainer dueño). Body: `{ "routine_exercise_ids": ["uuid", …] }`, de 1 a 100 ids sin repetidos, que tienen que ser **exactamente** los ejercicios de la rutina (si falta o sobra alguno → 400 `VALIDATION_ERROR` con `field: "routine_exercise_ids"`). Cada uno queda con `order_index` = su posición. **200 OK** devuelve la rutina completa (forma de `GET /routines/:id`). Ajena → 403, inexistente → 404. Es atómico: la función SQL `reorder_routine_exercises` valida el conjunto y guarda todo en una transacción con la rutina bloqueada, así que nunca queda un orden a medias ni dos reorders se pisan. Es idempotente: el body es el estado final.
 
 ### GET /routines/today
 
@@ -1178,6 +1250,171 @@ Registra el token de FCM del dispositivo para recibir push. Es un upsert por `to
 Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
 
 > El backend también borra solo los tokens que FCM da por inválidos (`UNREGISTERED` o token mal formado); el cliente no tiene que hacer nada.
+
+---
+
+## Módulo: Mensajes
+
+Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Una conversación por alumno: el PT es siempre `students.trainer_id`, no se guarda en el mensaje. No es el chat con el asistente IA (`POST /chat`, tabla `chat_messages`). Todos los endpoints piden `Authorization: Bearer <token>`; sin token → 401 `UNAUTHORIZED`. Se actualiza por polling, no hay tiempo real: cada 4 s en la conversación abierta y cada 15 s en la lista de conversaciones y en el badge de no leídos.
+
+**Mensaje** (forma pública, la misma en todas las respuestas):
+
+```json
+{
+  "id": "uuid",
+  "student_id": "uuid",
+  "sender_role": "trainer",
+  "body": "¡Buen entrenamiento hoy!",
+  "image_url": "https://…/message-images/…?token=…",
+  "broadcast_id": null,
+  "read_at": null,
+  "created_at": "2026-10-31T14:05:00.123456+00:00"
+}
+```
+
+- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`. Si los dos vienen en `null` es un mensaje de solo foto cuya URL no se pudo firmar (ver abajo): la web muestra "Foto no disponible".
+- `image_url` es una URL firmada que vence a la hora (3600 s); el `image_path` del bucket nunca sale. Si hace falta, se vuelve a pedir el historial para obtener una nueva.
+- La firma es best-effort: si Storage falla al firmar, la respuesta igual sale bien (200 en el historial, 201 en el envío) con `image_url: null` en las fotos afectadas, y el error se registra en el servidor. El próximo pedido del historial las vuelve a firmar.
+- `broadcast_id` lo comparten los mensajes de un mismo envío masivo; `null` si es un mensaje normal.
+- `read_at` lo completa el **otro** lado de la conversación al abrirla (`POST /messages/:studentId/read`).
+
+**Reglas de acceso.** El PT solo accede a las conversaciones de sus alumnos; el alumno, solo a la suya (`:studentId` tiene que ser su propio id). Una conversación ajena o inexistente responde igual: 403 `FORBIDDEN`, sin distinguir. Con un `:studentId` que no es UUID → 400 `VALIDATION_ERROR`.
+
+### GET /messages/conversations
+
+Lista las conversaciones del PT: una por alumno **activo**, ordenadas con la más reciente primero (las que no tienen mensajes, al final por nombre). **Rol:** `trainer` (el alumno recibe 403).
+
+**200 OK**
+
+```json
+{
+  "data": [
+    {
+      "student": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null },
+      "last_message": {
+        "body": "Dale, mañana lo hago",
+        "has_image": false,
+        "sender_role": "student",
+        "created_at": "2026-10-31T14:05:00.123456+00:00"
+      },
+      "unread_count": 2
+    }
+  ]
+}
+```
+
+- `last_message` es `null` si todavía no hay mensajes. `body` va completo (el recorte para la lista lo hace la web) y puede ser `null` si el último fue solo una foto (`has_image: true`).
+- `unread_count` son los mensajes del alumno sin leer por el PT.
+
+### GET /messages/unread-count
+
+Total de mensajes sin leer para el usuario autenticado (sirve para el globito del menú). **Roles:** `trainer` y `student`.
+
+- Para el PT: mensajes de sus alumnos **activos** sin leer. No cuenta a los inactivos, para que el globito coincida con lo que ve en la lista de conversaciones.
+- Para el alumno: mensajes del PT sin leer en su conversación.
+
+**200 OK**
+
+```json
+{ "data": { "count": 3 } }
+```
+
+### POST /messages/broadcast
+
+Envía el mismo texto a varios alumnos del PT. Crea un mensaje por alumno, todos con el mismo `broadcast_id`, en una sola operación. **Rol:** `trainer`.
+
+**Body** (JSON)
+
+```json
+{ "student_ids": ["uuid", "uuid"], "body": "Mañana no hay clase, feriado." }
+```
+
+- `student_ids`: lista de 1 a 200 UUID sin repetidos. `body`: obligatorio, 1–2000 caracteres (se recorta).
+- Es solo texto; no admite foto.
+
+**201 Created**
+
+```json
+{ "data": { "broadcast_id": "uuid", "sent": 2 } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR` (lista vacía, de más de 200, ids no UUID o repetidos, `body` vacío o de más de 2000), 403 `FORBIDDEN` (algún id no es un alumno activo del PT: ajeno, inexistente o inactivo; no se envía a nadie), 403 si lo llama un alumno.
+
+### GET /messages/:studentId
+
+Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de uno de sus alumnos) y `student` (el propio).
+
+**Query (todos opcionales)**
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `limit` | entero 1–100 | Tamaño de página. Por defecto 50 |
+| `before` | ISO 8601 con zona | Cursor: solo los creados **antes** de esa fecha (exclusivo). Se obtiene de `meta.next_before` |
+
+**200 OK**
+
+```json
+{
+  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
+  "meta": { "next_before": "2026-10-31T14:00:00.000000+00:00" },
+  "counterpart": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null }
+}
+```
+
+- `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
+- `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
+- `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
+- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y no responde 500.
+
+**Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.
+
+### POST /messages/:studentId
+
+Envía un mensaje, con texto, con foto o con las dos cosas. **Roles:** `trainer` (a uno de sus alumnos) y `student` (a su PT).
+
+**Body.** `multipart/form-data` con dos campos opcionales (hay que mandar al menos uno):
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `body` | texto | Hasta 2000 caracteres (se recorta; vacío cuenta como ausente) |
+| `image` | archivo | Una sola foto JPG, PNG o WebP de hasta 5 MB |
+
+También acepta `application/json` `{ "body": "…" }` para mensajes de solo texto. El tipo de la foto se valida por sus bytes, no por el `Content-Type` ni la extensión que declare el cliente.
+
+**201 Created** con el mensaje creado:
+
+```json
+{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
+```
+
+**Errores**
+
+| Status | Código | Cuándo |
+|---|---|---|
+| 400 | `MESSAGE_EMPTY` | Sin texto (o solo espacios) y sin foto |
+| 400 | `VALIDATION_ERROR` | `body` de más de 2000 caracteres o que no es texto; más de un archivo o archivo en un campo que no es `image`; multipart mal formado o con más de un campo de texto, un campo de más de 16 KB o más de 2 partes (mensaje "Formulario inválido") |
+| 403 | `FORBIDDEN` | Conversación ajena o inexistente |
+| 409 | `STUDENT_INACTIVE` | El alumno está dado de baja ("El alumno está dado de baja"); vale para el PT y para el alumno. Leer el historial sigue permitido |
+| 413 | `IMAGE_TOO_LARGE` | La foto supera 5 MB |
+| 415 | `IMAGE_TYPE_INVALID` | La foto no es JPG, PNG ni WebP (por ejemplo un PDF con `Content-Type: image/png`) |
+
+> Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
+>
+> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
+
+### POST /messages/:studentId/read
+
+Marca como leídos los mensajes de la **otra** parte: el PT marca los del alumno y el alumno marca los del PT. Los propios no se tocan. Se llama al abrir la conversación. **Roles:** `trainer` y `student`.
+
+**200 OK** (también si no había nada sin leer: `updated` es 0)
+
+```json
+{ "data": { "updated": 2 } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID), 403 `FORBIDDEN`.
+
+> Las rutas fijas (`/conversations`, `/unread-count`, `/broadcast`) están declaradas antes que `/:studentId` para que no se confundan con el parámetro.
 
 ---
 

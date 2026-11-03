@@ -64,3 +64,16 @@ export async function deleteRoutineExercise(routineExerciseId) {
     .eq('id', routineExerciseId);
   if (error) throw Errors.internal(error.message);
 }
+
+/**
+ * Reordena con la función SQL reorder_routine_exercises (una transacción, con la rutina bloqueada).
+ * Devuelve false si `ids` no es exactamente el conjunto de ejercicios de la rutina: no se tocó nada.
+ */
+export async function reorderRoutineExercises(routineId, ids) {
+  const { data, error } = await supabase.rpc('reorder_routine_exercises', {
+    p_routine_id: routineId,
+    p_ids: ids,
+  });
+  if (error) throw Errors.internal(error.message);
+  return data === true;
+}

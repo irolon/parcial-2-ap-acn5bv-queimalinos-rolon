@@ -5,10 +5,19 @@ import android.util.Log
 import androidx.room.Room
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
+import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.notifications.NotificationDao
 import com.fittrainer.data.db.progress.ProgressDao
 import com.fittrainer.data.db.routine.RoutineDao
+import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
+import com.fittrainer.data.db.students.TrainerStudentDetailDao
+import com.fittrainer.data.db.students.TrainerStudentsDao
+import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsDao
+import com.fittrainer.data.db.students.overview.TrainerOverviewDao
+import com.fittrainer.data.db.students.progress.TrainerAttendanceDao
+import com.fittrainer.data.db.students.sessions.TrainerSessionsDao
+import com.fittrainer.data.db.templates.trainer.TrainerTemplatesDao
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.history.HistoryDao
 import dagger.Module
@@ -60,6 +69,33 @@ object DatabaseModule {
 
     @Provides
     fun provideNotificationDao(db: FitTrainerDatabase): NotificationDao = db.notificationDao()
+
+    @Provides
+    fun provideTrainerStudentsDao(db: FitTrainerDatabase): TrainerStudentsDao = db.trainerStudentsDao()
+
+    @Provides
+    fun provideTrainerStudentDetailDao(db: FitTrainerDatabase): TrainerStudentDetailDao = db.trainerStudentDetailDao()
+
+    @Provides
+    fun provideTrainerSessionsDao(db: FitTrainerDatabase): TrainerSessionsDao = db.trainerSessionsDao()
+
+    @Provides
+    fun provideTrainerAttendanceDao(db: FitTrainerDatabase): TrainerAttendanceDao = db.trainerAttendanceDao()
+
+    @Provides
+    fun provideTrainerStudentMetricsDao(db: FitTrainerDatabase): TrainerStudentMetricsDao = db.trainerStudentMetricsDao()
+
+    @Provides
+    fun provideTrainerOverviewDao(db: FitTrainerDatabase): TrainerOverviewDao = db.trainerOverviewDao()
+
+    @Provides
+    fun provideTrainerRoutinesDao(db: FitTrainerDatabase): TrainerRoutinesDao = db.trainerRoutinesDao()
+
+    @Provides
+    fun provideTrainerExercisesDao(db: FitTrainerDatabase): TrainerExercisesDao = db.trainerExercisesDao()
+
+    @Provides
+    fun provideTrainerTemplatesDao(db: FitTrainerDatabase): TrainerTemplatesDao = db.trainerTemplatesDao()
 
     @Provides
     @Singleton

@@ -14,6 +14,7 @@ vi.mock('@/pages/progress/MyProgressPage', () => ({ default: () => <p>Página Mi
 vi.mock('@/pages/student/MyRoutinesPage', () => ({ default: () => <p>Página Mis rutinas</p> }));
 vi.mock('@/pages/student/RoutineDetailPage', () => ({ default: () => <p>Página Detalle de la rutina</p> }));
 vi.mock('@/pages/student/HistoryPage', () => ({ default: () => <p>Página Historial</p> }));
+vi.mock('@/pages/messages/StudentMessagesPage', () => ({ default: () => <p>Página Mensajes</p> }));
 vi.mock('@/pages/student/MyProfilePage', () => ({ default: () => <p>Página Mi perfil</p> }));
 vi.mock('@/pages/student/WorkoutPage', () => ({ default: () => <p>Página Entrenar</p> }));
 
@@ -64,6 +65,7 @@ describe('rutas del alumno', () => {
     ['/alumno/progreso', 'Mi progreso', 'Página Mi progreso'],
     ['/alumno/rutinas', 'Mis rutinas', 'Página Mis rutinas'],
     ['/alumno/historial', 'Historial', 'Página Historial'],
+    ['/alumno/mensajes', 'Mensajes', 'Página Mensajes'],
     ['/alumno/perfil', 'Mi perfil', 'Página Mi perfil'],
   ])('%s muestra su página bajo el título del menú', async (path, title, content) => {
     renderRoute(path);

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.fittrainer.navigation.trainer.TRAINER_TEMPLATES_ROUTE
 import com.fittrainer.ui.routines.detail.ROUTINE_ID_ARG
 
 /** Una pestaña de la barra inferior. isAccountMenu = la que lleva a Estado del servidor y Cerrar sesión. */
@@ -39,6 +40,8 @@ fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
 private fun parentTab(route: String): String? = when {
     route.startsWith("student/history/") -> STUDENT_PROGRESS_ROUTE
     route.startsWith("$STUDENT_ROUTINES_ROUTE/") || route == STUDENT_LIBRARY_ROUTE -> STUDENT_ROUTINES_ROUTE
+    route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE
+    route == TRAINER_TEMPLATES_ROUTE || route.startsWith("$TRAINER_TEMPLATES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == NOTIFICATIONS_ROUTE -> STUDENT_TODAY_ROUTE
     else -> null
 }
@@ -54,10 +57,33 @@ val StudentTabs = listOf(
     Tab("student/profile", "Perfil", Icons.Filled.Person, isAccountMenu = true),
 )
 
+const val TRAINER_HOME_ROUTE = "trainer/home"
+const val TRAINER_STUDENTS_ROUTE = "trainer/students"
+const val TRAINER_MORE_ROUTE = "trainer/more"
+
+/** Invitar alumno (tarjeta E2): cuelga de la pestaña Alumnos. */
+const val TRAINER_INVITE_ROUTE = "trainer/students/invite"
+
+/** Ficha del alumno y su edición (tarjeta E3). La ruta literal de invitar tiene prioridad sobre {studentId}. */
+const val TRAINER_STUDENT_DETAIL_ROUTE = "trainer/students/{studentId}"
+fun trainerStudentDetailRoute(studentId: String) = "trainer/students/$studentId"
+const val TRAINER_STUDENT_EDIT_ROUTE = "trainer/students/{studentId}/edit"
+fun trainerStudentEditRoute(studentId: String) = "trainer/students/$studentId/edit"
+
+/** Sesiones de un alumno y su detalle (tarjeta E4). */
+const val TRAINER_STUDENT_SESSIONS_ROUTE = "trainer/students/{studentId}/sessions"
+fun trainerStudentSessionsRoute(studentId: String) = "trainer/students/$studentId/sessions"
+const val TRAINER_STUDENT_SESSION_ROUTE = "trainer/students/{studentId}/sessions/{sessionId}"
+fun trainerStudentSessionRoute(studentId: String, sessionId: String) = "trainer/students/$studentId/sessions/$sessionId"
+
+/** Medidas de un alumno (tarjeta E6). ?new=true abre directo la hoja "Nueva medida". */
+const val TRAINER_STUDENT_METRICS_ROUTE = "trainer/students/{studentId}/metrics?new={new}"
+fun trainerStudentMetricsRoute(studentId: String, openNew: Boolean) = "trainer/students/$studentId/metrics?new=$openNew"
+
 /** Guía Mobile p.5 — app del entrenador. */
 val TrainerTabs = listOf(
-    Tab("trainer/home", "Inicio", Icons.Filled.Home),
-    Tab("trainer/students", "Alumnos", Icons.Filled.Face),
+    Tab(TRAINER_HOME_ROUTE, "Inicio", Icons.Filled.Home),
+    Tab(TRAINER_STUDENTS_ROUTE, "Alumnos", Icons.Filled.Face),
     Tab("trainer/messages", "Mensajes", Icons.Filled.Email),
-    Tab("trainer/more", "Más", Icons.Filled.Menu, isAccountMenu = true),
+    Tab(TRAINER_MORE_ROUTE, "Más", Icons.Filled.Menu, isAccountMenu = true),
 )

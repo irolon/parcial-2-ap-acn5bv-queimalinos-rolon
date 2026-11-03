@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SavingScreen from '@/components/workout/result/SavingScreen';
 
@@ -33,6 +33,16 @@ describe('SavingScreen: guardando', () => {
     expect(screen.queryByRole('button', { name: /Descartar/ })).not.toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: 'Guardar desde acá' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('bajo "Guardar desde acá" aclara cuándo usarlo, y solo si sube otra pestaña', () => {
+    const hint = 'Usalo solo si la otra pestaña se cerró o dio error.';
+    mount({ saving: true, elsewhere: true });
+    expect(screen.getByText(hint)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Guardar desde acá' })).toHaveAccessibleDescription(hint);
+    cleanup();
+    mount({ saving: true });
+    expect(screen.queryByText(hint)).not.toBeInTheDocument();
   });
 });
 

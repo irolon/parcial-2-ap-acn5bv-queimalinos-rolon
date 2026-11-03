@@ -10,6 +10,8 @@ import RoutinesPage from '@/pages/routines/RoutinesPage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
+import MessagesPage from '@/pages/messages/MessagesPage';
+import StudentMessagesPage from '@/pages/messages/StudentMessagesPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
 import HistoryPage from '@/pages/student/HistoryPage';
@@ -80,6 +82,7 @@ export const routes = [
     alumnos: <StudentsPage />,
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,
+    mensajes: <MessagesPage />,
     desafios: <ChallengesPage />,
   }),
   // Fuera del menú del alumno: el detalle de una rutina y la sesión activa (se entra desde Mis rutinas y Hoy).
@@ -99,6 +102,7 @@ export const routes = [
     progreso: <MyProgressPage />,
     rutinas: <MyRoutinesPage />,
     historial: <HistoryPage />,
+    mensajes: <StudentMessagesPage />,
     perfil: <MyProfilePage />,
   }),
   { path: '*', element: <NotFoundPage /> },

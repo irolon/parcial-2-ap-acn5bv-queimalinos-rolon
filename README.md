@@ -32,10 +32,12 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Gamificación:** logros, rachas y desafíos.
 - [x] **Progreso:** curva de carga por ejercicio (1RM estimado, peso máximo y volumen) y evolución corporal.
 - [x] **Notificaciones:** tabla como fuente de verdad, push FCM (HTTP v1), alerta de inactividad del PT y avisos de récords, rutina modificada y logros.
+- [x] **Mensajería:** chat 1 a 1 entre el PT y cada alumno con texto y fotos (bucket privado de Storage), no leídos y envío masivo.
 
 **Web** (React)
 - [x] Login y alta por invitación, dashboard y panel de alumnos con ficha, biblioteca de ejercicios, editor de rutinas con plantillas, historial de sesiones con comentarios del PT, vista de progreso con gráficos (Recharts), y racha, logros y desafíos del PT (crear, asignar y seguir el progreso).
 - [x] **Portal del alumno:** Hoy con la rutina del día, sesión activa simplificada (se guarda en el navegador y se sube al terminar), Mis rutinas, Historial, Mi progreso con logros y Mi perfil con medidas. Offline y reemplazar ejercicio están solo en el celular; push y pedir turno están pendientes.
+- [x] **Mensajería:** página de Mensajes del PT (lista de conversaciones, botón en la ficha y envío masivo) y del alumno, con badge de no leídos.
 
 **Mobile** (Android)
 - [x] Login, alta por QR, rutina del día offline, biblioteca, sesión activa con timer, avisos de fin de descanso y **sincronización offline** de sesiones con WorkManager.
@@ -43,10 +45,11 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 - [x] **Mis rutinas:** todas las rutinas asignadas con su detalle, offline, y se puede entrenar una rutina que no es la del día (la biblioteca pasa a ser una entrada dentro de Mis rutinas).
 - [x] **Gráficos de progreso** del alumno: curva de carga por ejercicio (1RM estimado, kg máximo o reps) y evolución de sus medidas, con período elegible y offline.
 - [x] **Push y centro de avisos** del alumno: push de comentarios del entrenador, récords y logros (FCM) que abren su pantalla, campana con no leídos en Hoy y lista de avisos offline, con los leídos que se suben al volver la red.
+- [x] **Mapa muscular:** en la sesión activa, el músculo del ejercicio en un cuerpo dibujado (si entra sin scroll); en Hoy, "Ver músculos de hoy" abre el cuerpo con los grupos de la rutina del día. Offline.
 
-**En revisión (PRs abiertas):** logros, racha y desafíos del PT en la web (#42).
+**En revisión (PRs abiertas):** portal del alumno en la web (#59).
 
-**Pendiente:** IA (asistente del alumno y del PT, con n8n), agenda, mensajería, QA y deploy (S7).
+**Pendiente:** IA (asistente del alumno y del PT, con n8n), agenda, chat en el celular, QA y deploy (S7).
 
 > DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
 
