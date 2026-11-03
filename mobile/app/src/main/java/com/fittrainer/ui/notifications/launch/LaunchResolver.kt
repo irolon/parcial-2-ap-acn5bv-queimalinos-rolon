@@ -20,6 +20,9 @@ sealed interface NavTarget {
     data class TrainerSession(val studentId: String, val sessionId: String) : NavTarget
     data class TrainerStudent(val studentId: String) : NavTarget
     data object TrainerNotifications : NavTarget
+    /** Tarjeta 18: el alumno, a su chat (la pestaña Mensajes); el entrenador, al chat de ese alumno. */
+    data object StudentChat : NavTarget
+    data class TrainerChat(val studentId: String) : NavTarget
     data object None : NavTarget
 }
 
@@ -31,21 +34,26 @@ suspend fun resolve(launch: PendingLaunch, session: Session?, sources: LaunchSou
     val owner = session.userId ?: return NavTarget.None
     val trainer = session is Session.Trainer
     val destination = launch.destination
-    if (!fitsRole(destination, trainer)) return NavTarget.None
+    if (!fitsRole(destination, trainer, owner)) return NavTarget.None
     launch.notificationId?.let { sources.markRead(owner, it) }
     return when (destination) {
         is NotificationDestination.SessionDetail -> sessionTarget(owner, destination.sessionId, sources)
         is NotificationDestination.ExerciseChart -> NavTarget.ProgressCharts(destination.exerciseId)
         is NotificationDestination.StudentSession -> NavTarget.TrainerSession(destination.studentId, destination.sessionId)
         is NotificationDestination.StudentProfile -> NavTarget.TrainerStudent(destination.studentId)
+        is NotificationDestination.Conversation -> if (trainer) NavTarget.TrainerChat(destination.studentId) else NavTarget.StudentChat
         NotificationDestination.NotificationsList -> if (trainer) NavTarget.TrainerNotifications else NavTarget.Notifications
     }
 }
 
-/** Los destinos del historial propio son del alumno; los de un alumno a cargo, del entrenador. La lista, de los dos. */
-private fun fitsRole(destination: NotificationDestination, trainer: Boolean): Boolean = when (destination) {
+/**
+ * Los destinos del historial propio son del alumno; los de un alumno a cargo, del entrenador. La lista, de los dos.
+ * Una conversación le sirve al entrenador (si ya no es suya, el chat vuelve atrás) y al alumno solo si es la propia.
+ */
+private fun fitsRole(destination: NotificationDestination, trainer: Boolean, owner: String): Boolean = when (destination) {
     is NotificationDestination.SessionDetail, is NotificationDestination.ExerciseChart -> !trainer
     is NotificationDestination.StudentSession, is NotificationDestination.StudentProfile -> trainer
+    is NotificationDestination.Conversation -> trainer || destination.studentId == owner
     NotificationDestination.NotificationsList -> true
 }
 

@@ -49,7 +49,7 @@ El alumno tiene, en el celular, la misma conversación con su entrenador que ya 
 
 ## 3. Fuera de alcance
 
-- Push de mensajes y su tap a la conversación (necesita backend).
+- ~~Push de mensajes y su tap a la conversación (necesita backend).~~ Hecho del lado del celular el 02/11 (ver abajo); el push lo genera la #70 de Pablo.
 - Fotos desde el celular del PT, varias fotos por mensaje, borrar o editar mensajes.
 - El renombre de las tablas de mensajes (ver 2.5).
 
@@ -58,3 +58,18 @@ El alumno tiene, en el celular, la misma conversación con su entrenador que ya 
 - **Unitarias:** repositorio (enviar foto con y sin texto, 413/415), ViewModel del chat del alumno (polling, leído al llegar, sin red, foto adjunta y sacada, epígrafe), globito (no leídos de Room y polling), compresión (tamaño y orientación con una imagen generada en el test).
 - **Instrumentada:** ninguna nueva de Room (no cambia el esquema).
 - **E2E en el emulador** con el backend local: alumna `alumna.card8` lee el mensaje del PT, contesta con texto y con una foto de la cámara del emulador; `profe.card8` la ve en la web (o por API).
+
+## Tap del push de mensaje (02/11, sobre la #70)
+
+La #70 (backend, de Pablo) manda un push por mensaje nuevo, sin fila en `notifications`, con `data: { type: "message", student_id }`. En el celular:
+
+- `destinationOf("message")` da `NotificationDestination.Conversation(student_id)`. Si no viene el alumno, cae a la lista de avisos, igual que los demás tipos rotos.
+- El resolver lo manda a la pestaña Mensajes si es el alumno (y solo si `student_id` es él: un push viejo de otra cuenta se descarta) y al chat de ese alumno si es el entrenador. No hay aviso para marcar como leído; el chat marca leído al abrirse.
+- Pasos de navegación: el alumno va a su pestaña Mensajes (si ya está ahí, nada); el entrenador pasa por Mensajes y apila el chat, así Atrás vuelve a la lista de conversaciones.
+- Al llegar el push, `PushRefresher` refresca el chat en Room (y al entrenador también la lista de conversaciones, que lleva los globitos), no la lista de avisos.
+- Los mensajes de una misma conversación comparten la notificación (tag `message:<student_id>`): queda el último y no se apilan diez.
+- Si el entrenador ya tiene abierto el chat de ese alumno (desde Mensajes o desde la ficha), no se navega: recrearlo perdería el borrador. El alumno vuelve a su pestaña Mensajes como la dejó (`restoreState`, igual que la barra), con su borrador.
+- **Solo en primer plano:** la #70 manda `notification` + `data`. Con la app en segundo plano, FCM no llama a `onMessageReceived`: Android muestra el aviso solo, con su título y cuerpo, así que ni el refresco ni el tag corren y cada mensaje queda como un aviso aparte. El tap sí funciona igual, porque los `data` llegan como extras del intent. Al abrir la app, el chat y los globitos se refrescan por polling. Para que Android los agrupe también en segundo plano, el backend tendría que mandar `android.notification.tag`; quedó como pedido en `backend/README.md`. Un push solo `data` cambiaría el contrato de todos los tipos y no se pidió.
+- Fuera de alcance: no mostrar el push si esa conversación ya está abierta en pantalla.
+
+Probado con tests (13 nuevos, 1424 en total) y en el emulador simulando el tap (el intent con los mismos extras del push): la alumna cae en su chat; el entrenador, desde Inicio, desde Más, con la app cerrada y recién logueado, cae en el chat de la alumna y Atrás vuelve a Mensajes y a Inicio. Contra FCM real queda para cuando entre la #70.

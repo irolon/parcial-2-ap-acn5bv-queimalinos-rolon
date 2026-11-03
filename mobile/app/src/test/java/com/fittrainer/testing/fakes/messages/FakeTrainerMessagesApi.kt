@@ -52,12 +52,14 @@ class FakeTrainerMessagesApi : TrainerMessagesApi {
     val reads = mutableListOf<String>()
     val broadcasts = mutableListOf<BroadcastRequest>()
     val historyCalls = mutableListOf<String?>()
+    var conversationCalls = 0
     private var nextId = 100
 
     fun page(vararg m: MessageDto, nextBefore: String? = null, name: String = "Ana") =
         HistoryResponse(m.toList(), HistoryMeta(nextBefore), CounterpartDto("s1", name))
 
     override suspend fun conversations(): ConversationListResponse {
+        conversationCalls++
         error?.let { throw it }
         return ConversationListResponse(conversations)
     }

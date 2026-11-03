@@ -8,7 +8,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.fittrainer.MainActivity
 import com.fittrainer.R
 import com.fittrainer.data.auth.tokenstore.TokenStore
-import com.fittrainer.data.notifications.NotificationsRepository
 import com.fittrainer.data.notifications.notificationsAllowed
 import com.fittrainer.di.ApplicationScope
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -21,13 +20,13 @@ import kotlinx.coroutines.launch
 
 /**
  * Recibe los push (al alumno, del entrenador; al entrenador, de sus alumnos). Mostrar la notificación y refrescar Room son dos caminos al mismo
- * destino: si el usuario no toca el push, la lista igual se pone al día.
+ * destino: si el usuario no toca el push, la lista (o el chat, si es un mensaje) igual se pone al día.
  */
 @AndroidEntryPoint
 class FitTrainerMessagingService : FirebaseMessagingService() {
 
     @Inject lateinit var registry: PushTokenRegistry
-    @Inject lateinit var repository: NotificationsRepository
+    @Inject lateinit var refresher: PushRefresher
     @Inject lateinit var tokenStore: TokenStore
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
@@ -40,7 +39,7 @@ class FitTrainerMessagingService : FirebaseMessagingService() {
         // Termina después de que el servicio muere: por eso el scope de la app y no el del servicio.
         appScope.launch {
             val user = tokenStore.current()?.user ?: return@launch
-            repository.refresh(user.id)
+            refresher.onPush(user, message.data)
         }
     }
 
@@ -48,7 +47,7 @@ class FitTrainerMessagingService : FirebaseMessagingService() {
         if (!notificationsAllowed(this)) return
         val title = message.notification?.title ?: message.data["title"] ?: return
         val body = message.notification?.body ?: message.data["body"]
-        val key = message.data["notification_id"] ?: fallbackCodes.incrementAndGet().toString()
+        val key = pushTag(message.data) { fallbackCodes.incrementAndGet().toString() }
         val code = key.hashCode()
         val notification = NotificationCompat.Builder(this, PushChannel.ID)
             .setSmallIcon(R.drawable.ic_stat_workout)
