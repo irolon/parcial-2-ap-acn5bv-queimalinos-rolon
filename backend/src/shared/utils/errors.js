@@ -86,6 +86,12 @@ export const Errors = {
   appointmentLimit: (max) =>
     new AppError(409, 'APPOINTMENT_LIMIT', `Ya tenés ${max} turnos pendientes: esperá a que tu entrenador los confirme`),
   appointmentPast: () => new AppError(409, 'APPOINTMENT_PAST', 'El turno ya pasó'),
+  studentInactive: () => new AppError(409, 'STUDENT_INACTIVE', 'El alumno está dado de baja'),
+  messageEmpty: () =>
+    new AppError(400, 'MESSAGE_EMPTY', 'Escribí un mensaje o adjuntá una foto'),
+  imageTooLarge: () => new AppError(413, 'IMAGE_TOO_LARGE', 'La foto supera 5 MB'),
+  imageTypeInvalid: () =>
+    new AppError(415, 'IMAGE_TYPE_INVALID', 'La foto tiene que ser JPG, PNG o WebP'),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };

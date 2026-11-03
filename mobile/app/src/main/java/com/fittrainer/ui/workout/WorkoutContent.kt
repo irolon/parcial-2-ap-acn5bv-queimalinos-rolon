@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -15,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.workout.canReplace
 import com.fittrainer.data.workout.isPaused
@@ -26,9 +26,13 @@ import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.components.BottomActions
 import com.fittrainer.ui.workout.components.ExerciseHeading
 import com.fittrainer.ui.workout.components.LoadPanel
-import com.fittrainer.ui.workout.components.RestTimer
+import com.fittrainer.ui.workout.components.rest.RestPicker
+import com.fittrainer.ui.workout.components.rest.RestTimer
 import com.fittrainer.ui.workout.components.SetTabs
 import com.fittrainer.ui.workout.components.WorkoutTopBar
+import com.fittrainer.ui.workout.components.muscle.CardIfFitsLayout
+import com.fittrainer.ui.workout.components.muscle.MuscleCard
+import com.fittrainer.ui.workout.components.muscle.showsMuscleCard
 import java.time.Instant
 
 /** Todo lo que la pantalla le pide al VM o abre (diálogos, hojas). */
@@ -48,6 +52,8 @@ class WorkoutActions(
     val onDismissError: () -> Unit,
     /** Tocaron Reemplazar con series ya registradas: se explica por qué no se puede. */
     val onReplaceLocked: () -> Unit = {},
+    /** −15″ / +15″ del descanso del ejercicio, antes de arrancar la serie. */
+    val onPlannedRestAdjust: (Int) -> Unit = {},
 )
 
 /** Serie (mockup p.13) o timer a pantalla completa (p.14). Sin scroll para completar una serie. */
@@ -95,10 +101,21 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
         SetTabs(workout, state.shownSet, actions.onSelectSet)
         ExerciseHeading(exercise.name, actions.onOpenList)
         LoadPanel(suggestedChip(exercise), state.load, actions.onAdjustKg, actions.onEdit)
-        Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-            Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
-        }
-        Spacer(Modifier.weight(1f))
-        BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace, actions.onReplaceLocked)
+        // Al corregir una serie hecha no se muestra: el descanso es de las series que faltan.
+        if (!state.isCorrecting) RestPicker(exercise, actions.onPlannedRestAdjust)
+        // La tarjeta se mide contra el alto que de verdad sobra (fuente grande, banners): si no entra, no se pone.
+        CardIfFitsLayout(
+            gap = with(LocalDensity.current) { Spacing.lg.roundToPx() },
+            card = if (showsMuscleCard(exercise.muscleGroup)) ({ MuscleCard(exercise) }) else null,
+            cta = {
+                Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
+                }
+            },
+            bottom = {
+                BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace, actions.onReplaceLocked)
+            },
+            modifier = Modifier.weight(1f),
+        )
     }
 }

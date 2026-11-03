@@ -54,6 +54,13 @@ describe('session-history.repository', () => {
     expect(q.eq).toHaveBeenCalledWith('id', 's');
   });
 
+  it('el descanso viaja: rest_seconds en las series y en el plan', async () => {
+    await repo.findSetsForSessions(['a']);
+    expect(q.select).toHaveBeenLastCalledWith(expect.stringContaining('rest_seconds'));
+    await repo.findRoutineExercisesByIds(['re']);
+    expect(q.select).toHaveBeenLastCalledWith('id, sets, reps, suggested_kg, rest_seconds');
+  });
+
   it('consultas por lote usan .in(...)', async () => {
     await repo.findSetsForSessions(['a', 'b']);
     expect(q.in).toHaveBeenLastCalledWith('session_id', ['a', 'b']);

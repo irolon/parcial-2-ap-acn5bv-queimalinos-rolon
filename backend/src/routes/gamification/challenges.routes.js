@@ -31,6 +31,12 @@ router.patch(
   controller.update
 );
 router.delete('/:id', ...trainerOnly, validate(validateChallengeIdParam, 'params'), controller.remove);
+router.get(
+  '/:id/active-students',
+  ...trainerOnly,
+  validate(validateChallengeIdParam, 'params'),
+  controller.activeStudents
+);
 router.post(
   '/:id/assignments',
   ...trainerOnly,

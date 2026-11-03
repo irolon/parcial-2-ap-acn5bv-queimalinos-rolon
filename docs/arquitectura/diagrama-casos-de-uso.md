@@ -53,7 +53,8 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-07 | Ver progreso del alumno | Historial de sesiones, curvas de carga, evolución de medidas, gráficos de progresión | PT-07 |
 | CU-08 | Generar rutina con IA | El PT le pasa parámetros del alumno al asistente IA y obtiene una plantilla inicial editable | PT-14 |
 | CU-09 | Comentar sesión del alumno | Dejar notas y feedback sobre sesiones completadas del alumno | PT-08 |
-| CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes | PT-13 |
+| CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes; el alumno responde desde la web. Detalle en [[producto/casos-de-uso#CU-11 — Enviar mensaje al alumno (web)\|casos de uso]] | PT-13 |
+| CU-25 | Crear y asignar desafío | Asigna una plantilla (Desafíos → Plantillas → Asignar) o un desafío propio nuevo (metas de sesiones, racha, volumen o peso corporal; premio "Desafío cumplido" opcional, solo la primera vez) a uno o varios alumnos y sigue su progreso desde la ficha | AL-11 |
 | CU-26 | Gestionar agenda | Cargar disponibilidad horaria, ver el calendario semanal y confirmar, cancelar o crear turnos (web). La solicitud del alumno es CU-19 (mobile) | PT-11 |
 
 ### Alumno
@@ -69,6 +70,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 |
 | CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 |
 | CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 |
+| CU-27 | Recibir y ver avisos | Recibe push de comentarios del PT, récords y logros; los ve en la campana y la lista de avisos (también offline) y quedan leídos al abrirlos | AL-06, AL-11 |
 
 ### Sistema (actor secundario)
 
@@ -93,6 +95,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-05 → CU-08 | `«extend»` | El PT puede opcionalmente partir de una rutina generada por la IA antes de personalizarla |
 | CU-14 → CU-15 | `«extend»` | Consultar al asistente IA durante la sesión es opcional (depende de duda del alumno) |
 | CU-14 → CU-23 | `«extend»` | Si la sesión se ejecutó offline, al recuperar conexión se dispara la sincronización |
+| CU-27 → CU-17 | `«extend»` | Tocar el aviso de un comentario o de un récord abre el historial o los gráficos del alumno |
 | CU-16 → CU-24 | `«extend»` | Tras el feedback, el Sistema evalúa si corresponde otorgar logro, racha o badge |
 | CU-05 → CU-22 | `«extend»` | Si el alumno modifica la rutina asignada, el Sistema notifica al PT (flujo condicional) |
 | CU-19 → CU-26 | `«include»` | Solicitar turno requiere consultar la agenda del PT para ver slots disponibles |
@@ -133,6 +136,7 @@ rectangle "FitTrainer" {
   usecase "CU-09\nComentar sesión\ndel alumno" as CU09
   usecase "CU-26\nGestionar agenda" as CU26
   usecase "CU-11\nEnviar mensaje\nal alumno" as CU11
+  usecase "CU-25\nCrear y asignar\ndesafío" as CU25
 
   ' --- Alumno ---
   usecase "CU-12\nRegistrarse\nvía invitación" as CU12
@@ -144,6 +148,7 @@ rectangle "FitTrainer" {
   usecase "CU-18\nRegistrar medidas\ncorporales" as CU18
   usecase "CU-19\nSolicitar turno\nal PT" as CU19
   usecase "CU-20\nVer logros\ny rachas" as CU20
+  usecase "CU-27\nRecibir y ver\navisos" as CU27
 
   ' --- Sistema ---
   usecase "CU-21\nNotificar inactividad\nde alumno" as CU21
@@ -163,6 +168,7 @@ PT --> CU08
 PT --> CU09
 PT --> CU26
 PT --> CU11
+PT --> CU25
 
 ' --- Asociaciones Alumno ---
 AL --> CU12
@@ -174,6 +180,8 @@ AL --> CU17
 AL --> CU18
 AL --> CU19
 AL --> CU20
+AL --> CU11
+AL --> CU27
 
 ' --- Asociaciones Sistema ---
 SYS --> CU21
@@ -199,6 +207,7 @@ CU15 ..> CU14 : <<extend>>
 CU23 ..> CU14 : <<extend>>
 CU24 ..> CU16 : <<extend>>
 CU22 ..> CU05 : <<extend>>
+CU27 ..> CU17 : <<extend>>
 
 @enduml
 ```

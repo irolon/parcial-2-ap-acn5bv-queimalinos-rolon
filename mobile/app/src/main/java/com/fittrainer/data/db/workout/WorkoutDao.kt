@@ -166,4 +166,11 @@ abstract class WorkoutDao {
         upsertSet(set)
         updateSession(session)
     }
+
+    /** Lo mismo con varias series: la nueva y la anterior, que guarda el descanso que acaba de cerrar. */
+    @Transaction
+    open suspend fun saveSets(sets: List<WorkoutSetEntity>, session: WorkoutSessionEntity) {
+        sets.forEach { upsertSet(it) }
+        updateSession(session)
+    }
 }

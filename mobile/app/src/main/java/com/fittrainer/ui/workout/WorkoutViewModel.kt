@@ -139,6 +139,12 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    /** Cambia el descanso del ejercicio en pantalla para esta sesión (no el que ya está corriendo). */
+    fun onPlannedRestAdjust(deltaSeconds: Int) {
+        val position = active.value?.cursor?.position ?: return
+        write(REST_SAVE_FAILED) { repository.adjustPlannedRest(it, position, deltaSeconds) }
+    }
+
     fun onRestAdjust(deltaSeconds: Int) = write(REST_SAVE_FAILED) { repository.adjustRest(it, deltaSeconds) }
 
     fun onRestTogglePause() = write(REST_SAVE_FAILED) { repository.toggleRestPause(it) }

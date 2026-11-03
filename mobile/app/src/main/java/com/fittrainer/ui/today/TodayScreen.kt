@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +39,7 @@ import com.fittrainer.ui.today.components.NoRoutineState
 import com.fittrainer.ui.today.components.RestState
 import com.fittrainer.ui.today.components.RoutineHeroCard
 import com.fittrainer.ui.today.components.TodayHeader
+import com.fittrainer.ui.today.components.TodayMusclesSheet
 import com.fittrainer.ui.today.components.WeekStrip
 import com.fittrainer.ui.workout.WorkoutEntryViewModel
 
@@ -45,6 +47,8 @@ import com.fittrainer.ui.workout.WorkoutEntryViewModel
 @Composable
 fun TodayScreen(
     onOpenWorkout: () -> Unit,
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
     uploads: UploadStatusViewModel = hiltViewModel(),
@@ -70,6 +74,8 @@ fun TodayScreen(
         uploads = uploadsNoticeUi(uploadCounts, manualUpload),
         onUploadNow = uploads::uploadNow,
         onDismissFailures = uploads::dismissFailures,
+        unreadNotifications = unreadNotifications,
+        onOpenNotifications = onOpenNotifications,
     )
 }
 
@@ -85,8 +91,13 @@ fun TodayBody(
     uploads: UploadsNoticeUi? = null,
     onUploadNow: () -> Unit = {},
     onDismissFailures: () -> Unit = {},
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<RoutineExercise?>(null) }
+    // La clave es la rutina de hoy (null si no toca entrenar): al cambiar o desaparecer, la hoja vuelve a cerrada.
+    val musclesKey = (state.content as? TodayContent.Training)?.routine?.id
+    var musclesOpen by rememberSaveable(musclesKey) { mutableStateOf(false) }
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
         onRefresh = onRefresh,
@@ -97,7 +108,12 @@ fun TodayBody(
             contentPadding = PaddingValues(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            item { TodayHeader(state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine) }
+            item {
+                TodayHeader(
+                    state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine,
+                    unreadNotifications = unreadNotifications, onOpenNotifications = onOpenNotifications,
+                )
+            }
             state.notice?.let { notice -> item { NoticeBanner(notice, onDismissNotice) } }
             val uploadsItem: LazyListScope.() -> Unit = {
                 uploads?.let { ui -> item { UploadsNotice(ui, onUploadNow, onDismissFailures) } }
@@ -109,7 +125,13 @@ fun TodayBody(
             }
             val heroItem: LazyListScope.(Routine) -> Unit = { routine ->
                 item {
-                    RoutineHeroCard(routine, startAction(routine, activeWorkout), { onStartWorkout(routine) }, onContinueWorkout)
+                    RoutineHeroCard(
+                        routine,
+                        startAction(routine, activeWorkout),
+                        onStart = { onStartWorkout(routine) },
+                        onContinue = onContinueWorkout,
+                        onOpenMuscles = { musclesOpen = true },
+                    )
                 }
             }
             todayItems(state, onExerciseClick = { selected = it }, uploadsItem, activeCardItem, heroItem)
@@ -117,6 +139,9 @@ fun TodayBody(
     }
     selected?.let { exercise ->
         ExerciseDetailSheet(exercise.toDetail(), canOpenVideo = !state.isOffline, onDismiss = { selected = null })
+    }
+    musclesSheetRoutine(state.content, musclesOpen)?.let { routine ->
+        TodayMusclesSheet(routine.name, remember(routine) { todayMuscles(routine) }) { musclesOpen = false }
     }
 }
 

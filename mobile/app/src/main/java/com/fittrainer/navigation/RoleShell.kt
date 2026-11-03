@@ -16,12 +16,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.trainerMenuLinks
+import com.fittrainer.navigation.trainer.trainerRoutineRoutes
+import com.fittrainer.navigation.trainer.trainerStudentRoutes
+import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
+import com.fittrainer.ui.notifications.NotificationsScreen
+import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 import com.fittrainer.ui.placeholder.AccountMenuScreen
 import com.fittrainer.ui.placeholder.PlaceholderScreen
+import com.fittrainer.ui.progress.ProgressScreen
 import com.fittrainer.ui.routines.RoutinesScreen
 import com.fittrainer.ui.routines.detail.RoutineDetailScreen
+import com.fittrainer.ui.students.StudentsScreen
+import com.fittrainer.ui.students.overview.HomeNavigation
+import com.fittrainer.ui.students.overview.TrainerHomeScreen
 import com.fittrainer.ui.sync.SignOutSyncState
 import com.fittrainer.ui.sync.SignOutSyncViewModel
 import com.fittrainer.ui.sync.components.PendingUploadsSignOutDialog
@@ -30,7 +40,6 @@ import com.fittrainer.ui.workout.WorkoutEntryViewModel
 import com.fittrainer.ui.workout.WorkoutScreen
 import com.fittrainer.ui.workout.components.ActiveWorkoutSignOutDialog
 import com.fittrainer.ui.workout.components.SignOutFailedDialog
-import com.fittrainer.ui.workout.history.HistoryScreen
 import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 
 /** Scaffold con las 4 pestañas fijas de un rol. Máximo 2 niveles: pestaña → pantalla hija (Estado del servidor, detalle del historial, detalle de rutina, biblioteca). */
@@ -38,15 +47,20 @@ import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 fun RoleShell(
     tabs: List<Tab>,
     onSignOut: () -> Unit,
+    launches: NotificationLaunchViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
     uploads: SignOutSyncViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    val stack by navController.currentBackStack.collectAsStateWithLifecycle()
+    val stackRoutes = stack.map { it.destination.route }
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
+    if (isStudent) NotificationLaunchEffect(launches, navController)
+    val progressOpen by launches.progressOpen.collectAsStateWithLifecycle()
     LaunchedEffect(openRequested) {
         if (openRequested) {
             if (isStudent && entry.hasActiveNow()) navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true }
@@ -82,10 +96,11 @@ fun RoleShell(
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
     val unread = progressUnread(isStudent)
+    val unreadNotifications = notificationsUnread(isStudent)
     val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
-            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, currentRoute, navController, unread)
+            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, stackRoutes, navController, unread)
         },
     ) { padding ->
         NavHost(
@@ -100,14 +115,34 @@ fun RoleShell(
                             title = tab.label,
                             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
                             onSignOut = guardedSignOut,
+                            links = if (isStudent) emptyList() else trainerMenuLinks(navController),
                         )
-                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(onOpenWorkout = openWorkout)
+                        tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
+                            onOpenWorkout = openWorkout,
+                            unreadNotifications = unreadNotifications,
+                            onOpenNotifications = { navController.navigate(NOTIFICATIONS_ROUTE) { launchSingleTop = true } },
+                        )
                         tab.route == STUDENT_ROUTINES_ROUTE -> RoutinesScreen(
                             // Un doble toque no apila dos veces la misma pantalla.
                             onOpenRoutine = { navController.navigate(routineDetailRoute(it)) { launchSingleTop = true } },
                             onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
                         )
-                        tab.route == STUDENT_PROGRESS_ROUTE -> HistoryScreen(onOpen = { navController.navigate(historyDetailRoute(it)) })
+                        tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(
+                            onOpen = { navController.navigate(historyDetailRoute(it)) },
+                            openRequest = progressOpen,
+                            onOpenHandled = launches::onProgressOpenHandled,
+                        )
+                        tab.route == TRAINER_STUDENTS_ROUTE -> StudentsScreen(
+                            onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                            onOpen = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
+                        )
+                        tab.route == TRAINER_HOME_ROUTE -> TrainerHomeScreen(
+                            HomeNavigation(
+                                onStudent = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
+                                onSession = { s, id -> navController.navigate(trainerStudentSessionRoute(s, id)) { launchSingleTop = true } },
+                                onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                            ),
+                        )
                         else -> PlaceholderScreen(tab.label)
                     }
                 }
@@ -115,12 +150,22 @@ fun RoleShell(
             composable(HEALTH_ROUTE) {
                 HealthScreen(onBack = { navController.popBackStack() })
             }
+            composable(NOTIFICATIONS_ROUTE) {
+                NotificationsScreen(
+                    onBack = { navController.popBackStack() },
+                    // Mismo resolver que el push; la lista ya marcó el leído.
+                    onOpen = launches::open,
+                )
+            }
             composable(HISTORY_DETAIL_ROUTE) {
                 HistoryDetailScreen(onBack = { navController.popBackStack() })
             }
             composable(ROUTINE_DETAIL_ROUTE) {
                 RoutineDetailScreen(onBack = { navController.popBackStack() }, onOpenWorkout = openWorkout)
             }
+            trainerStudentRoutes(navController)
+            trainerRoutineRoutes(navController)
+            trainerTemplateRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }

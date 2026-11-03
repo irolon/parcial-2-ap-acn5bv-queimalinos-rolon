@@ -1,11 +1,17 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
+import { fetchAll } from '../../shared/utils/supabase-query.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
+import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
+import { scheduleOf } from '../../models/students/adherence.js';
+import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';
 import {
   STUDENTS_TABLE,
   STUDENT_LIST_COLUMNS,
   STUDENT_DETAIL_COLUMNS,
   STUDENT_LAST_SESSION_VIEW,
 } from '../../models/students/student.model.js';
+import { STUDENT_STREAKS_TABLE } from '../../models/gamification/gamification.model.js';
 
 /** Lista (paginada) los alumnos de un trainer, con filtros opcionales. */
 export async function findStudentsByTrainer({ trainerId, active, search, page, limit }) {
@@ -87,6 +93,16 @@ export async function findLastSessionDates(studentIds) {
   return data;
 }
 
+/** Racha de cada alumno pedido. Los que todavía no la tienen calculada no vienen. */
+export async function findStreaks(studentIds) {
+  const { data, error } = await supabase
+    .from(STUDENT_STREAKS_TABLE)
+    .select('student_id, current_days, longest_days, last_trained_date')
+    .in('student_id', studentIds);
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
 /** Actualiza campos del alumno y devuelve la ficha base. */
 export async function updateStudent(id, fields) {
   const { data, error } = await supabase
@@ -97,4 +113,88 @@ export async function updateStudent(id, fields) {
     .single();
   if (error) throw Errors.internal(error.message);
   return data;
+}
+
+/** Todos los alumnos activos del trainer, por nombre (mensajería: id, name, avatar_url). */
+export async function findActiveStudentsByTrainer(trainerId) {
+  return fetchAll(() =>
+    supabase
+      .from(STUDENTS_TABLE)
+      .select('id, name, avatar_url')
+      .eq('trainer_id', trainerId)
+      .eq('active', true)
+      .order('name')
+      .order('id')
+  );
+}
+
+/** De los `ids` pedidos, los que son alumnos activos del trainer (para validar un envío masivo). */
+export async function findActiveStudentsByIds(trainerId, ids) {
+  const { data, error } = await supabase
+    .from(STUDENTS_TABLE)
+    .select('id')
+    .eq('trainer_id', trainerId)
+    .eq('active', true)
+    .in('id', ids);
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
+/** Agrupa filas por student_id; cada alumno pedido arranca con []. */
+const groupByStudent = (studentIds, rows, pick) => {
+  const out = new Map(studentIds.map((id) => [id, []]));
+  for (const row of rows) out.get(row.student_id)?.push(pick(row));
+  return out;
+};
+
+/**
+ * Rutinas activas de cada alumno como agenda: { days, daySince } (ver models/students/adherence.js →
+ * scheduleOf). daySince sale de la fecha local de creación de cada rutina.
+ */
+export async function findActiveRoutineSchedules(studentIds) {
+  // PostgREST corta en 1000 filas: se pagina con orden estable.
+  const rows = await fetchAll(() =>
+    supabase
+      .from(ROUTINES_TABLE)
+      .select('id, student_id, days, created_at')
+      .in('student_id', studentIds)
+      .eq('active', true)
+      .order('id')
+  );
+  const grouped = groupByStudent(studentIds, rows, (r) => ({ days: r.days ?? [], since: localDate(r.created_at) }));
+  return new Map([...grouped].map(([id, routines]) => [id, scheduleOf(routines)]));
+}
+
+/** Días de las rutinas activas de cada alumno (unión, sin repetidos). */
+export async function findActiveRoutineDays(studentIds) {
+  const schedules = await findActiveRoutineSchedules(studentIds);
+  return new Map([...schedules].map(([id, s]) => [id, s.days]));
+}
+
+/** Fechas locales AR ('YYYY-MM-DD') de las sesiones terminadas desde `fromIso`, por alumno. */
+export async function findFinishedSessionDates(studentIds, fromIso) {
+  const rows = await fetchAll(() =>
+    supabase
+      .from(SESSIONS_TABLE)
+      .select('id, student_id, started_at')
+      .in('student_id', studentIds)
+      .gte('started_at', fromIso)
+      .not('finished_at', 'is', null)
+      .order('id')
+  );
+  return groupByStudent(studentIds, rows, (r) => localDate(r.started_at));
+}
+
+/** Sesiones terminadas del alumno que empezaron en [fromIso, toIso) (id y started_at). */
+export async function findFinishedSessionsBetween(studentId, fromIso, toIso) {
+  return fetchAll(() =>
+    supabase
+      .from(SESSIONS_TABLE)
+      .select('id, started_at')
+      .eq('student_id', studentId)
+      .gte('started_at', fromIso)
+      .lt('started_at', toIso)
+      .not('finished_at', 'is', null)
+      .order('id')
+  );
 }

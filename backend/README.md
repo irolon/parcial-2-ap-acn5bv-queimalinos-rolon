@@ -17,7 +17,7 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`, `agenda` (disponibilidad y turnos).
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`, `messages`, `agenda` (disponibilidad y turnos).
 
 ```
 src/
@@ -107,8 +107,10 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | Método | Ruta | Rol | Descripción |
 |--------|------|-----|-------------|
 | POST | `/api/students` | — | Alta del alumno desde token de invitación |
-| GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`. Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
+| GET | `/api/students` | trainer | Lista los alumnos del PT con `last_session_at`, `days_per_week` y `adherence_7d` (`{ assigned, done, pct }` de los últimos 7 días). Por defecto **solo activos**; `?active=false` trae los dados de baja. También `search`, `page`, `limit` |
+| GET | `/api/students/overview` | trainer | Inicio del entrenador: `active_students`, `sessions_today`, `adherence_7d` (con `delta`), `at_risk`, `attention` (en riesgo y sesiones sin comentar), `recent` y `lists` (hoy, en riesgo, feedback pendiente y alumnos con su adherencia, sin tope). **La web puede usarlo para un dashboard** |
 | GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`), `active_routine` (`{ id, name, days }`) y `last_session_at` |
+| GET | `/api/students/:id/attendance?month=YYYY-MM` | trainer dueño / el propio alumno | Resumen del mes (`sessions`, `assigned_days`, `prs`) y estado de cada día (`trained`, `missed`, `rest`, `upcoming`). `month` por defecto es el actual; futuro → 400. **La web puede usarlo para el calendario de asistencia** |
 | PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) y cancela sus turnos futuros |
 | GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
 | POST | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Carga una medida. 201 si es nueva, 200 si es un reintento con el mismo `id` |
@@ -139,6 +141,7 @@ En el borrado de medidas, una medida inexistente o de otro alumno responde **404
 | POST | `/api/routines/:id/exercises` | trainer | Agrega ejercicios a la rutina, después de los existentes |
 | PATCH | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Edita un ejercicio de la rutina (`sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes`; al menos uno). Devuelve la rutina completa |
 | DELETE | `/api/routines/:id/exercises/:routineExerciseId` | trainer | Quita un ejercicio de la rutina. 204; 409 `ROUTINE_NEEDS_EXERCISE` si es el último |
+| PUT | `/api/routines/:id/exercises/order` | trainer | Reordena los ejercicios: `routine_exercise_ids` con **todos** los de la rutina en el orden nuevo. Devuelve la rutina completa |
 | GET | `/api/routines/today` | student | Rutina activa del alumno para hoy; cada ejercicio trae `last_session_kg` (mayor peso de la última sesión en que lo hizo, o `null`) |
 | GET | `/api/routines/mine` | student | Rutinas activas del alumno con sus ejercicios (caché offline de mobile) |
 
@@ -162,10 +165,10 @@ Escritura del alumno: solo rol `student`; el `student_id` sale del token. Sesió
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/sessions` | Inicia la sesión (id del cliente). Idempotente: 201 si es nueva, 200 en un reintento (completa `finished_at`, `rpe`, `notes`), 409 `SESSION_ID_CONFLICT` si el id es de otro alumno. Un `routine_id` ajeno o borrado se guarda como `null` |
-| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed, unlocked_achievements } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true` |
+| POST | `/api/sessions/:id/sets` | Lote de 1 a 100 series, upsert por `id` (reenviar no duplica; corrige). Siempre 200 `{ data: { saved, failed, unlocked_achievements } }`; fallos por serie: `VALIDATION_ERROR`, `EXERCISE_NOT_FOUND`, `SET_ID_CONFLICT`. Una sustitución deja `has_modifications = true`. Cada serie acepta `rest_seconds` (descanso real después de la serie, 0-3600 o `null`) |
 | PATCH | `/api/sessions/:id` | Cierra la sesión o corrige `finished_at`, `rpe` (1-10), `notes` (al menos uno) |
 | GET | `/api/students/:id/sessions?page=&limit=` | Historial paginado `{ data, meta }`, más recientes primero (trainer: sus alumnos; student: él mismo): `routine`, `duration_min`, `sets`, `volume_kg`, `has_pr`, `trainer_comment` |
-| GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
+| GET | `/api/students/:id/sessions/:sessionId` | trainer / student. Resumen + `exercises` (real vs planificado, sustituciones, `is_pr`, descanso real por serie y `planned.rest_seconds`); 404 `SESSION_NOT_FOUND` si no es de ese alumno |
 | PATCH | `/api/sessions/:id/comment` | Solo `trainer`: `{ trainer_comment }` (≤ 1000 o `null`; `""` borra) en una sesión de sus alumnos (ajena o inexistente: 404). Devuelve el resumen; el alumno lo ve en su historial |
 
 ### Progreso — Fase 3
@@ -188,7 +191,8 @@ Rol: `trainer` / `student`. Sobre un alumno rige la regla de siempre (trainer du
 | GET | `/api/students/:id/achievements` | trainer dueño / el propio alumno | Logros desbloqueados, el más reciente primero |
 | GET | `/api/students/:id/streak` | trainer dueño / el propio alumno | `{ current_streak_days, longest_streak_days, last_session_date }` ([ADR 0005](../docs/adr/0005-racha-contra-dias-asignados.md)) |
 | GET | `/api/students/:id/achievements/progress` | trainer dueño / el propio alumno | Solo lectura: `{ streak, facts, assigned_days, achievements }` con `current`/`target`/`unlocked_at` de cada logro del catálogo (lo usa el celular, tarjeta 15) |
-| GET | `/api/challenges` | trainer/student | Globales + del entrenador. Query `goal_type`; `active_only` se acepta y se ignora |
+| GET | `/api/challenges` | trainer/student | Globales + del entrenador. Query `goal_type`; `active_only` se acepta y se ignora. Para trainer suma `assignments_count` y `active_count` |
+| GET | `/api/challenges/:id/active-students` | trainer | `{ data: string[] }` con los alumnos suyos que lo tienen activo; no visible → 404 `CHALLENGE_NOT_FOUND` |
 | POST | `/api/challenges` | trainer | Crea un desafío (`duration_days` obligatorio). 201 |
 | PATCH | `/api/challenges/:id` | trainer dueño | Edición parcial; global o ajeno → 404 `CHALLENGE_NOT_FOUND`; cambiar `goal_type`/`goal_value` con asignaciones activas → 409 `CHALLENGE_IN_USE` |
 | DELETE | `/api/challenges/:id` | trainer dueño | 204; con cualquier asignación (aun terminada) 409 `CHALLENGE_IN_USE`, para conservar el historial |
@@ -217,6 +221,21 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 **Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno).
 
 **Job de inactividad.** `runInactivityAlerts` recorre los alumnos activos y avisa al PT de los que tienen rutina activa y acumulan 3 o más días asignados sin entrenar desde su última sesión cerrada (desde el alta si nunca entrenaron), como máximo una vez cada 7 días por alumno. Corre a las 03:00 ART justo después del job de gamificación, bajo el mismo `CRON_ENABLED`. A mano: `npm run notifications:inactivity`; correrlo de nuevo es seguro (el límite de 7 días evita duplicados).
+
+### Mensajes — tarjeta 48
+
+Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat con la IA: ese es `POST /chat`). Rol: `trainer` / `student`; el PT solo ve las conversaciones de sus alumnos y el alumno, la suya (si no, 403 `FORBIDDEN`). Se actualiza por polling, sin tiempo real. Respuestas y errores en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/messages/conversations` | Solo PT. Una por alumno activo: `{ data: [{ student, last_message, unread_count }] }`, la más reciente primero |
+| GET | `/api/messages/unread-count` | `{ data: { count } }`. Del PT: solo alumnos activos; del alumno: lo que le escribió su PT |
+| POST | `/api/messages/broadcast` | Solo PT. `{ student_ids, body }` (1–200 ids, texto de hasta 2000). 201 `{ data: { broadcast_id, sent } }`; un id que no es alumno activo del PT: 403 y no se envía a nadie |
+| GET | `/api/messages/:studentId?before=&limit=` | Historial en orden cronológico: `{ data, meta: { next_before }, counterpart }` (50 por página, máx. 100). `next_before` termina en `+00:00`: codificarlo (`%2B`) al reenviarlo |
+| POST | `/api/messages/:studentId` | Envía. `multipart/form-data` con `body` y/o `image` (JPG/PNG/WebP, hasta 5 MB), o JSON `{ body }` de solo texto. 201 `{ data: mensaje }`. 400 `MESSAGE_EMPTY`, 413 `IMAGE_TOO_LARGE`, 415 `IMAGE_TYPE_INVALID` |
+| POST | `/api/messages/:studentId/read` | Marca como leídos los mensajes de la otra parte. 200 `{ data: { updated } }` |
+
+**Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
 
 ### Agenda — Fase 6
 
@@ -272,6 +291,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 ### Alumnos (`/students`)
 
 - **`GET /students`:** cada alumno trae `last_session_at` (timestamp, o `null` si nunca entrenó), que sale de la vista `student_last_session`. **Por defecto trae solo los activos**; los dados de baja se piden con `?active=false`.
+- **`GET /students` (desde el 01/11, app del entrenador):** también trae `days_per_week` (días distintos de sus rutinas activas) y `adherence_7d` `{ assigned, done, pct }`: de los días asignados de hoy-7 a hoy-1 (hora argentina), cuántos tienen una sesión terminada; `pct` es `null` sin rutina. **La web puede usarlos para mostrar la barra de adherencia en la lista de alumnos.** Ver `docs/arquitectura/contratos-api.md`.
 - **`GET /students/:id`:** responde `{ data }`, con `latest_metrics` (la última medida con `bmi`, o `null`) y `active_routine` (`{ id, name, days }`, o `null`).
 - **`PATCH /students/:id`:** devuelve la ficha completa en `{ data }`, con la misma forma que el GET.
 - **Baja del alumno** (`active: false`): no se borra nada.
@@ -297,6 +317,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 - **Nuevo `GET /routines/mine`** (solo alumno): devuelve `{ data: [...] }` con **todas** las rutinas activas del alumno, cada una con `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises` (la misma forma que en `/today`, sin `last_session_kg`), la más nueva primero; `[]` si no tiene. Lo usa la app mobile para guardar la rutina offline y resolver el día en el teléfono: `/today` no distingue "día de descanso" de "sin rutina" y no sirve para un caché que se usa otro día.
 - `GET /routines/today` no cambia.
+- **Nuevo `PUT /routines/:id/exercises/order`** (solo trainer, tarjeta E8 del celular): body `{ "routine_exercise_ids": [...] }` con exactamente los ejercicios de la rutina, en el orden nuevo (1 a 100, sin repetidos; si falta o sobra alguno → 400 `VALIDATION_ERROR` en `routine_exercise_ids`). Deja `order_index` = posición y devuelve el detalle como `GET /routines/:id`. Se agregó para que el entrenador reordene desde el celular; antes el orden solo se fijaba al crear. **Web:** el editor de rutinas puede usarlo para el drag & drop sobre una rutina ya asignada (opcional). Es atómico: lo hace la función SQL `reorder_routine_exercises` (valida el conjunto y guarda todo en una transacción con la rutina bloqueada). **Migración:** `src/database/migrations/2026-11-01-routines-reorder.sql` (también en `schema/03-routines.sql`); ya está aplicada en Supabase dev. En el código, el service se dividió en la carpeta `services/routines/routines.service/`: `routines.service.js` (de 178 a 119 líneas), `routine-exercises.service.js` (ejercicios de una rutina asignada) y `routine-access.service.js` (ownership). `routines.service.js` re-exporta todo; cambia la ruta del import en el controller y en `routine-templates.service.js`.
 
 ### Lo que le toca a la web
 
@@ -323,6 +344,8 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **Sustitución:** `substituted_exercise_id` se reemplaza por `exercise_id` (lo realmente hecho) + `original_exercise_id` (lo planificado).
 - **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
 - **Historial:** `GET /students/:id/sessions`, `GET /students/:id/sessions/:sessionId` y `PATCH /sessions/:id/comment` (solo `trainer`); ver el contrato.
+- **Descanso real (01/11, compatible):** `session_sets.rest_seconds` (migración `2026-11-01-session-sets-rest.sql`). El celular lo manda en cada serie de `POST /sessions/:id/sets`: los segundos que el alumno descansó **después** de esa serie, con su ajuste, la pausa y "Saltar". `null` = sin dato (series anteriores, última serie de la sesión, ejercicio sin descanso). El detalle del historial lo devuelve en cada serie y suma `planned.rest_seconds` (el de la rutina actual).
+  - **Para la web (Pablo):** en el detalle de una sesión del alumno, mostrar el descanso de cada serie ("desc. 2:00") y marcarlo cuando difiere del plan ("desc. 2:00 (plan 1:30)"). Si alguno de los dos es `null`, sin marca.
 
 ### Gamificación (`/achievements`, `/challenges`)
 

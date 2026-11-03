@@ -49,11 +49,12 @@ describe('guard de rutas privadas', () => {
   });
 
   it('con su rol deja pasar y muestra la página', async () => {
-    setSession(TRAINER);
-    const { pathname } = renderRoute('/pt/mensajes');
-    expect(await heading('Mensajes')).toBeInTheDocument();
+    // Todas las secciones del PT ya tienen página: el placeholder se prueba con una del alumno.
+    setSession(STUDENT);
+    const { pathname } = renderRoute('/alumno/asistente');
+    expect(await heading('Asistente IA')).toBeInTheDocument();
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/mensajes');
+    expect(pathname()).toBe('/alumno/asistente');
   });
 
   it.each(['loading', 'idle'])('con status %s muestra el skeleton', async (status) => {

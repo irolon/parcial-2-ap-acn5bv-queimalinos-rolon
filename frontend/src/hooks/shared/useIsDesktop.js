@@ -1,15 +1,17 @@
 import { useSyncExternalStore } from 'react';
 
-const QUERY = '(min-width: 768px)';
+const DESKTOP_QUERY = '(min-width: 768px)';
 
-const subscribe = (onChange) => {
-  const media = window.matchMedia?.(QUERY);
-  media?.addEventListener?.('change', onChange);
-  return () => media?.removeEventListener?.('change', onChange);
+const subscribe = (callback) => {
+  const media = window.matchMedia?.(DESKTOP_QUERY);
+  media?.addEventListener?.('change', callback);
+  return () => media?.removeEventListener?.('change', callback);
 };
-const getSnapshot = () => window.matchMedia?.(QUERY).matches ?? true;
 
-/** `true` desde 768 px de ancho (sin `matchMedia` se asume escritorio). */
+// Sin matchMedia (tests, entornos viejos) se asume escritorio.
+const getSnapshot = () => window.matchMedia?.(DESKTOP_QUERY).matches ?? true;
+
+/** `true` desde 768 px (breakpoint `md` de Tailwind). Se actualiza al redimensionar. */
 export function useIsDesktop() {
   return useSyncExternalStore(subscribe, getSnapshot, () => true);
 }

@@ -9,7 +9,7 @@ with expected (t) as (
          ('achievements'), ('student_achievements'), ('challenges'),
          ('student_challenges'), ('student_streaks'), ('chat_messages'),
          ('ai_routine_generations'), ('appointments'), ('notifications'),
-         ('push_tokens'), ('trainer_availability')
+         ('push_tokens'), ('trainer_availability'), ('messages')
 )
 select 'falta la tabla ' || t as problema
 from expected e
@@ -59,6 +59,14 @@ where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = v.tbl
     and column_name = v.col and is_nullable = 'NO'
+)
+
+union all
+select 'falta la columna session_sets.rest_seconds'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'session_sets'
+    and column_name = 'rest_seconds'
 )
 
 union all

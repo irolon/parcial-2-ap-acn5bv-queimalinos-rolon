@@ -3,6 +3,7 @@ import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import AgendaPage from '@/pages/agenda/AgendaPage';
+import ChallengesPage from '@/pages/challenges/ChallengesPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import RoutineEditorPage from '@/pages/routines/RoutineEditorPage';
@@ -10,6 +11,8 @@ import RoutinesPage from '@/pages/routines/RoutinesPage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
+import MessagesPage from '@/pages/messages/MessagesPage';
+import StudentMessagesPage from '@/pages/messages/StudentMessagesPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
@@ -66,7 +69,12 @@ export const routes = [
     alumnos: <StudentsPage />,
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,
+    mensajes: <MessagesPage />,
+    desafios: <ChallengesPage />,
   }),
-  roleSection(ROLES.STUDENT, STUDENT_NAV, [], { progreso: <MyProgressPage /> }),
+  roleSection(ROLES.STUDENT, STUDENT_NAV, [], {
+    progreso: <MyProgressPage />,
+    mensajes: <StudentMessagesPage />,
+  }),
   { path: '*', element: <NotFoundPage /> },
 ];

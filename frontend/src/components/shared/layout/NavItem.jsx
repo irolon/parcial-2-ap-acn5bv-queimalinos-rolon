@@ -3,8 +3,8 @@ import { COMPACT_SR_ONLY, FOCUS_RING } from './compact';
 
 const base = `group relative mb-0.5 flex items-center gap-2.5 rounded-sm px-2.5 py-[9px] font-display text-[13px] transition-colors md:max-lg:justify-center ${FOCUS_RING}`;
 
-/** Ítem del sidebar. NavLink marca el activo con `aria-current="page"`. */
-export default function NavItem({ to, icon: Icon, label, onNavigate }) {
+/** Ítem del sidebar. NavLink marca el activo con `aria-current="page"`. `badge` es un contador opcional. */
+export default function NavItem({ to, icon: Icon, label, onNavigate, badge }) {
   return (
     <NavLink
       to={to}
@@ -19,6 +19,7 @@ export default function NavItem({ to, icon: Icon, label, onNavigate }) {
     >
       <Icon size={16} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
       <span className={`flex-1 ${COMPACT_SR_ONLY}`}>{label}</span>
+      {badge}
       {/* Tooltip del modo íconos */}
       <span
         aria-hidden="true"

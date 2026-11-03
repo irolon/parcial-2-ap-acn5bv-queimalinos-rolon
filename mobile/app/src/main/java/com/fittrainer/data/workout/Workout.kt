@@ -38,10 +38,15 @@ data class WorkoutExercise(
     val reps: Int?,
     val restSeconds: Int?,
     val suggestedKg: Double?,
+    /** El descanso que eligió el alumno en esta sesión; null = el del plan. */
+    val restOverrideSeconds: Int? = null,
 ) {
     val totalSets: Int get() = (sets ?: DEFAULT_SETS).coerceIn(1, MAX_SET_NUMBER)
     val targetReps: Int get() = reps ?: DEFAULT_REPS
-    val restTotal: Int get() = (restSeconds ?: DEFAULT_REST_SECONDS).coerceAtLeast(0)
+    /** El descanso del plan (del entrenador, o el por defecto). */
+    val plannedRest: Int get() = (restSeconds ?: DEFAULT_REST_SECONDS).coerceAtLeast(0)
+    /** El que corre después de cada serie: el elegido por el alumno, si eligió. */
+    val restTotal: Int get() = (restOverrideSeconds ?: restSeconds ?: DEFAULT_REST_SECONDS).coerceAtLeast(0)
 }
 
 /** Serie confirmada. exerciseId: el realmente ejecutado. */
@@ -55,6 +60,8 @@ data class WorkoutSet(
     val kg: Double,
     val reps: Int,
     val executedAt: Instant,
+    /** Descanso real después de esta serie, en segundos; null mientras no terminó (o si no hubo). */
+    val restSeconds: Int? = null,
 )
 
 /** Dónde está el alumno: ejercicio (posición) y número de serie (desde 1). */
