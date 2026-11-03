@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.trainerChallengeRoutes
 import com.fittrainer.navigation.trainer.trainerExerciseRoutes
 import com.fittrainer.navigation.trainer.trainerMenuLinks
 import com.fittrainer.navigation.trainer.trainerRoutineRoutes
@@ -169,6 +170,7 @@ fun RoleShell(
             trainerRoutineRoutes(navController)
             trainerTemplateRoutes(navController)
             trainerExerciseRoutes(navController)
+            trainerChallengeRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }
