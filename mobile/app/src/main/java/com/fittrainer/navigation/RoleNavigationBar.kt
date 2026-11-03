@@ -37,10 +37,9 @@ fun progressUnread(isStudent: Boolean): Int {
     return badge.unread.collectAsStateWithLifecycle().value
 }
 
-/** Avisos sin leer (campana de Hoy). Mismo criterio que [progressUnread]: solo el shell del alumno pide el ViewModel. */
+/** Avisos sin leer: la campana de Hoy (alumno) y la del Inicio (entrenador, E12). */
 @Composable
-fun notificationsUnread(isStudent: Boolean): Int {
-    if (!isStudent) return 0
+fun notificationsUnread(): Int {
     val bell: NotificationBellViewModel = hiltViewModel()
     LifecycleStartEffect(bell) {
         bell.onAppStart()

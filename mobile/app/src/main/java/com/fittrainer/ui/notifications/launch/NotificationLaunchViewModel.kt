@@ -8,6 +8,7 @@ import com.fittrainer.data.notifications.NotificationLaunchRequests
 import com.fittrainer.data.notifications.PendingLaunch
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.data.session.userId
 import com.fittrainer.ui.progress.ProgressOpen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -51,10 +52,10 @@ class NotificationLaunchViewModel @Inject constructor(
                 start(launch, s, fromList = false)
             }
         }
-        // Si la sesión deja de ser de alumno (logout, otra cuenta), lo que estaba por abrirse se cae.
+        // Sin sesión (logout) lo que estaba por abrirse se cae. Otra cuenta ya lo descarta [start].
         viewModelScope.launch {
             session.collect { s ->
-                if (s !is Session.Student) {
+                if (s.userId == null) {
                     job?.cancel()
                     _target.value = null
                     _progressOpen.value = null

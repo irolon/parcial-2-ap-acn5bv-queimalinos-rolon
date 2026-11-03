@@ -8,8 +8,8 @@ import com.fittrainer.data.notifications.paging.applyRefresh
 import com.fittrainer.data.notifications.reads.uploadReads
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.repository.toDataError
-import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.data.session.userId
 import com.fittrainer.data.session.UserDataCleaner
 import javax.inject.Inject
 import javax.inject.Provider
@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Centro de notificaciones del alumno (tarjeta 17). La UI observa Room; refresh() trae la primera página (y todas
+ * Centro de notificaciones del usuario logueado: el alumno (tarjeta 17) o el entrenador (E12). La UI observa Room; refresh() trae la primera página (y todas
  * las no leídas, para la campana) y loadMore() las siguientes. Las lecturas se guardan primero en Room, en su tabla
  * de pendientes, y suben cuando hay red, una por una. La meta (cursor, everLoaded) se escribe junto con las filas.
  *
@@ -165,7 +165,7 @@ class NotificationsRepository @Inject constructor(
 
     /** Un pedido que volaba durante el logout no puede escribir las filas del dueño anterior después de limpiar. */
     private suspend fun checkOwner(ownerId: String, gen: Int) {
-        val current = (sessionProvider.get().session.first() as? Session.Student)?.user?.id
+        val current = sessionProvider.get().session.first().userId
         if (current != ownerId || gen != clearGeneration) throw AccountChangedException()
     }
 

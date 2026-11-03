@@ -11,6 +11,7 @@ object NotificationTexts {
     const val MARK_ALL_READ = "Marcar todo leído"
     const val EMPTY = "Todavía no tenés avisos"
     const val EMPTY_HINT = "Acá vas a ver los comentarios de tu entrenador, tus récords y tus logros"
+    const val EMPTY_HINT_TRAINER = "Acá vas a ver cuando un alumno cambia un ejercicio, deja de entrenar o logra un récord"
     const val OFFLINE = "Sin conexión · mostrando lo guardado"
     const val NEVER_LOADED = "Conectate una vez para ver tus avisos"
     const val REFRESH_FAILED = "No pudimos actualizar"

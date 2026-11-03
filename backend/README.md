@@ -220,6 +220,8 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 
 **Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno).
 
+**Pendiente para el backend (E12 del celular, 01/11).** El feedback/RPE que deja un alumno al cerrar una sesión no genera ninguna notificación para el PT: hoy solo aparece en `GET /students/overview` (`attention`, sesiones sin comentar). La app del entrenador ya maneja `routine_modified`, `inactivity`, `pr` y `achievement`; si se agrega un tipo para el feedback (por ejemplo `session_feedback` con `student_id` y `session_id`), el celular lo abre en la sesión con un cambio chico. El otro pedido pendiente es **un push a la mañana para el PT** con los alumnos a los que les toca entrenar ese día (por ejemplo, tipo `daily_pending` con `count`, generado por un job como el de inactividad). En el celular, el centro de avisos del entrenador ya muestra esa lista arriba, a partir de `GET /students/overview`; falta solo el push. **Para la web: nada que hacer.**
+
 **Job de inactividad.** `runInactivityAlerts` recorre los alumnos activos y avisa al PT de los que tienen rutina activa y acumulan 3 o más días asignados sin entrenar desde su última sesión cerrada (desde el alta si nunca entrenaron), como máximo una vez cada 7 días por alumno. Corre a las 03:00 ART justo después del job de gamificación, bajo el mismo `CRON_ENABLED`. A mano: `npm run notifications:inactivity`; correrlo de nuevo es seguro (el límite de 7 días evita duplicados).
 
 ### Mensajes — tarjeta 48
