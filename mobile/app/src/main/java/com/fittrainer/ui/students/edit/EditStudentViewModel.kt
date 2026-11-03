@@ -72,7 +72,7 @@ class EditStudentViewModel @Inject constructor(
         }
     }
 
-    fun today(): LocalDate = LocalDate.ofInstant(clock.instant(), ARGENTINA)
+    fun today(): LocalDate = clock.instant().atZone(ARGENTINA).toLocalDate()
 
     fun onChange(change: (EditableStudent) -> EditableStudent, field: EditField) = _state.update { s ->
         val form = s.form ?: return@update s

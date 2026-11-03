@@ -54,6 +54,9 @@ class AssignTemplateController(
 
     fun onPickStudent() = _state.update { it?.copy(pickingStudent = true) }
 
+    /** Cerrar el selector: si ya había un alumno ("Cambiar"), vuelve a la hoja con lo editado; si no, cierra todo. */
+    fun dismissPicker() = _state.update { s -> if (s?.student != null) s.copy(pickingStudent = false) else if (s?.submitting == true) s else null }
+
     /**
      * Elige el alumno y busca sus rutinas activas. Si el GET falla se usa el caché; sin caché queda en
      * FAILED y no se puede asignar hasta reintentar (asignar "a ciegas" dejaría dos rutinas activas).
