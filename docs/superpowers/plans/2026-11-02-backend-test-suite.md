@@ -169,7 +169,7 @@
 
 **Interfaces:** Consumes Task 2. Un PT, un alumno, dos ejercicios propios: P = `IT · Press` (`chest`) y D = `IT · Dominadas` (`back`), y una rutina con P y D en los 7 días (para que `/routines/today` nunca sea `null`).
 
-Reglas del SQL (`04-progress.sql`, `04b-progress-overview.sql`): cuentan las series `completed` con `actual_reps > 0`; e1RM Epley = `kg × (1 + reps/30)` (con 1 rep = kg), excluye reps > 12 y kg 0/null; `max_kg` y volumen incluyen la serie de 13 reps; el día y la semana (lunes) son de Buenos Aires. El SQL no redondea: la API redondea con `round1` (1 decimal, `Math.round`). Récord (`session_records`): e1RM de la sesión **estrictamente** mayor al mejor de las sesiones anteriores; la primera vez no cuenta.
+Reglas del SQL (`04-progress.sql`, `04b-progress-overview.sql`): cuentan las series `completed` con `actual_reps > 0`; e1RM Epley = `kg × (1 + reps/30)` (con 1 rep = kg), excluye reps > 12 y kg 0/null; `max_kg` y volumen incluyen la serie de 13 reps; `max_kg` de un día solo de peso corporal es `null` (no 0); el día y la semana (lunes) son de Buenos Aires. El SQL no redondea: la API redondea con `round1` (1 decimal, `Math.round`). Récord (`session_records`): e1RM de la sesión **estrictamente** mayor al mejor de las sesiones anteriores, contando solo series con kg > 0 (el peso corporal no cuenta); la primera vez con carga no cuenta, aunque antes se haya hecho solo con peso corporal. Requiere la migración `2026-11-02-progress-bodyweight.sql` aplicada en dev (PR `fix/progress-bodyweight`).
 
 **Datos** (cada sesión cierra 1 h después; `executed_at` = inicio + n minutos):
 
@@ -179,20 +179,22 @@ Reglas del SQL (`04-progress.sql`, `04b-progress-overview.sql`): cuentan las ser
 | — | (semana del 12/10 sin sesiones) | | |
 | S2 | `2026-10-20T13:00:00Z` | 20/10 | P 72.5×8 · P 80×3 |
 | S3 | `2026-10-26T02:30:00Z` | **25/10 23:30** | P 75×6 · P 100×5 `completed: false` · D 0×10 |
+| S4 | `2026-10-28T13:00:00Z` | 28/10 | D 10×6 (primera vez con carga después de dos sesiones de peso corporal) |
 
 **Esperados (a mano):**
 
-- e1RM por serie: S1 60×10 = 80.0, 70×5 = 81.667, 65×13 excluida (sería 93.17); S2 72.5×8 = 91.833, 80×3 = 88.0; S3 75×6 = 90.0, la incompleta excluida (sería 116.7).
+- e1RM por serie: S1 60×10 = 80.0, 70×5 = 81.667, 65×13 excluida (sería 93.17); S2 72.5×8 = 91.833, 80×3 = 88.0; S3 75×6 = 90.0, la incompleta excluida (sería 116.7); S4 D 10×6 = 12.0 (D 0×8 y D 0×10 no aportan: con la regla vieja daban 0 y S4 marcaba récord).
 - `GET /progress/exercise/P?student_id=` → `points`:
   `[{ date: '2026-10-06', max_kg: 70, volume_kg: 1795, e1rm_kg: 81.7, sets: 3, reps: 28 }, { date: '2026-10-20', max_kg: 80, volume_kg: 820, e1rm_kg: 91.8, sets: 2, reps: 11 }, { date: '2026-10-25', max_kg: 75, volume_kg: 450, e1rm_kg: 90, sets: 1, reps: 6 }]`; `pr: { max_kg: { value: 80, date: '2026-10-20' }, e1rm_kg: { value: 91.8, date: '2026-10-20' } }`; `default_metric: 'e1rm_kg'`.
-- `GET /progress/exercise/D?student_id=` → `[{ date: '2026-10-06', max_kg: 0, volume_kg: 0, e1rm_kg: null, sets: 1, reps: 8 }, { date: '2026-10-25', max_kg: 0, volume_kg: 0, e1rm_kg: null, sets: 1, reps: 10 }]`; `pr.e1rm_kg: null`, `pr.max_kg: { value: 0, date: '2026-10-06' }`; `default_metric: 'reps'`.
-- `GET /progress/overview?student_id=&from=2026-10-05&to=2026-10-25` → `weekly_volume: [{ week_start: '2026-10-05', volume_kg: 1795, sessions: 1 }, { week_start: '2026-10-12', volume_kg: 0, sessions: 0 }, { week_start: '2026-10-19', volume_kg: 1270, sessions: 2 }]` (si S3 se contara en UTC caería en la semana del 26/10 y la del 19/10 daría 820/1); `exercises`: D primero (`days: 2, last_date: '2026-10-25'`), después P (`days: 3, last_date: '2026-10-25'`).
-- `GET /students/:id/sessions` → S1 `sets: 4, volume_kg: 1795, has_pr: false`; S2 `sets: 2, volume_kg: 820, has_pr: true`; S3 `sets: 2, volume_kg: 450, has_pr: false`. Detalle de S2: el grupo de P con `is_pr: true`. Detalle de S3: ningún grupo con `is_pr`.
-- Alumno `GET /routines/today` → `last_session_kg` P = 75 (la incompleta de 100 no cuenta), D = 0.
+- `GET /progress/exercise/D?student_id=&to=2026-10-25` → `[{ date: '2026-10-06', max_kg: null, volume_kg: 0, e1rm_kg: null, sets: 1, reps: 8 }, { date: '2026-10-25', max_kg: null, volume_kg: 0, e1rm_kg: null, sets: 1, reps: 10 }]`; `pr: { max_kg: null, e1rm_kg: null }`; `default_metric: 'reps'`.
+- `GET /progress/exercise/D?student_id=` (sin rango) → los dos de arriba más `{ date: '2026-10-28', max_kg: 10, volume_kg: 60, e1rm_kg: 12, sets: 1, reps: 6 }`; `pr: { max_kg: { value: 10, date: '2026-10-28' }, e1rm_kg: { value: 12, date: '2026-10-28' } }`; `default_metric: 'e1rm_kg'`.
+- `GET /progress/overview?student_id=&from=2026-10-05&to=2026-10-25` → `weekly_volume: [{ week_start: '2026-10-05', volume_kg: 1795, sessions: 1 }, { week_start: '2026-10-12', volume_kg: 0, sessions: 0 }, { week_start: '2026-10-19', volume_kg: 1270, sessions: 2 }]` (si S3 se contara en UTC caería en la semana del 26/10 y la del 19/10 daría 820/1); `exercises` (no se filtra por rango): D primero (`days: 3, last_date: '2026-10-28'`), después P (`days: 3, last_date: '2026-10-25'`). S4 cae en la semana del 26/10, fuera del rango.
+- `GET /students/:id/sessions` → S1 `sets: 4, volume_kg: 1795, has_pr: false`; S2 `sets: 2, volume_kg: 820, has_pr: true`; S3 `sets: 2, volume_kg: 450, has_pr: false`; S4 `sets: 1, volume_kg: 60, has_pr: false` (peso corporal antes: es la primera vez con carga). Detalle de S2: el grupo de P con `is_pr: true`. Detalle de S3 y de S4: ningún grupo con `is_pr`.
+- Alumno `GET /routines/today` → `last_session_kg` P = 75 (la incompleta de 100 no cuenta), D = 10 (S4).
 
 - [ ] **Step 1:** Escribir `progress-data.js` (sesiones y esperados) y el test con un `it` por endpoint, comparando con `toEqual` / `toMatchObject` (sin rangos).
 - [ ] **Step 2:** `npm run test:integration -- progress` → PASS. Si un número no coincide, revisar primero el cálculo a mano contra el SQL; si el SQL está mal, Q5 (arreglo chico con migración que corre Pablo, o limitación).
-- [ ] **Step 3:** Anotar para Task 12 (limitación, no se arregla acá porque cambia SQL en dev): `session_records` no excluye kg 0, así que un ejercicio hecho primero solo con peso corporal y después con carga marca récord la primera vez con carga; y `max_kg` de peso corporal sale 0 (no `null`).
+- [ ] **Step 3:** Confirmar que en dev está aplicada `2026-11-02-progress-bodyweight.sql` (PR `fix/progress-bodyweight`: `session_records` ignora kg 0/null y `max_kg` de peso corporal es `null`). Si no está, S4 da `has_pr: true` y D trae `max_kg: 0`: no tocar los esperados, pedirle a Pablo que la aplique.
 - [ ] **Step 4:** `--check` → 0, `npm run lint`. **Commit** `test(integration): progreso, volumen semanal y récords con números calculados a mano`.
 
 ### Task 9: Integración — aislamiento entre dos PT y dos alumnos
@@ -351,7 +353,7 @@ Fuera de tabla, a propósito: `POST /notifications/tokens` con un token de otro 
 
 - [ ] **Step 1:** Sacar lo obsoleto: `/api/session-sets` → `POST /api/sessions/:id/sets`; `substituted_exercise_id` → `original_exercise_id`; `calcularVolumenSesion()` y demás funciones que no existen → las unidades reales (`summarizeSets`, `toProgressPoints`, `computePr`, `persistSets`, `dayName`, `assertCanAccessStudent`…); IT de IA (`/api/trainer-ai`, `/api/chat`) → "pendiente (tarjeta 13)"; §3.4 "CI antes de cada merge a `main`" → el CI real (Task 11).
 - [ ] **Step 2:** Columnas **Resultado** (✅/❌/⚠️) y **Evidencia** (archivo de test + fecha de corrida) en las tablas de §3.1 y §3.2; sumar los casos de §6 de la spec (Tasks 3–5, con la evidencia existente de `removeToken`) y los de integración (flujo, idempotencia, progreso, aislamiento: una fila por grupo de la tabla de Task 9/10 con la cantidad de casos y el archivo).
-- [ ] **Step 3:** Sección "Corridas de integración" (fecha, commit, resultado, cantidad de tests, `--check` = 0) con la corrida de Task 13, y "Limitaciones conocidas": racha recalculada con los días asignados de hoy (`findAssignedDays`); lote de series sin transacción (Task 4); `session_records` y peso corporal (Task 8); `GET /appointments` sin paginar.
+- [ ] **Step 3:** Sección "Corridas de integración" (fecha, commit, resultado, cantidad de tests, `--check` = 0) con la corrida de Task 13, y "Limitaciones conocidas": racha recalculada con los días asignados de hoy (`findAssignedDays`); lote de series sin transacción (Task 4); `GET /appointments` sin paginar.
 - [ ] **Step 4: Commit** `docs(tests): plan de pruebas actualizado con resultados y evidencia (tarjeta 52)`.
 
 ### Task 13: Verificación final y PR
