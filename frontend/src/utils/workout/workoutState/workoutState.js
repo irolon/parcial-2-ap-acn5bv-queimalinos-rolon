@@ -68,8 +68,9 @@ export function startWorkout(routine, { now = new Date(), newId = newUuid } = {}
 }
 
 /**
- * Registra una serie del ejercicio a la vista (`set_number` = su posición en el ejercicio) y arranca el descanso. Si
- * había uno abierto, antes lo cierra y lo anota en la serie anterior (`closeRest`).
+ * Registra una serie del ejercicio a la vista (`set_number` = su posición en el ejercicio) y arranca el descanso, salvo
+ * que con ella no falte ninguna serie del plan. Si había uno abierto, antes lo cierra y lo anota en la serie anterior
+ * (`closeRest`).
  * Sin efecto si la sesión ya terminó, si las reps no son un número, si el peso no está vacío y es ilegible
  * (`toSetKg` da NaN) o si el ejercicio ya tiene 100 series.
  */
@@ -90,7 +91,10 @@ export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId 
     kg: actualKg,
     executedAt: iso(now),
   };
-  return startRest({ ...rested, sets: [...rested.sets, set] }, now, set.id);
+  const next = { ...rested, sets: [...rested.sets, set] };
+  // Como el celular (`WorkoutRepository.saveSet`): la serie que completa el plan no arranca descanso (queda null).
+  if (missingSets(next) === 0) return { ...next, restEndsAt: null, restTotalSeconds: null, restSetId: null };
+  return startRest(next, now, set.id);
 }
 
 /**
@@ -128,7 +132,8 @@ export function setCursor(state, index) {
 /**
  * Terminar: fija la hora la primera vez (un reintento horas después no la cambia) y corta el descanso. Como el celular
  * (`WorkoutRepository.finish`): si terminó a mitad, el descanso abierto se anota hasta ahora (o hasta su fin, si ya
- * venció); con el plan completo no se anota, porque en el celular la última serie no arranca descanso (queda null).
+ * venció); con el plan completo no se anota: la última serie no arranca descanso (`registerSet`), y una sesión guardada
+ * antes de esa regla, con el descanso abierto en la última serie, tampoco lo anota (queda null, como en el celular).
  */
 export function finishWorkout(state, now = new Date()) {
   if (state.finishedAt) return state;

@@ -3,7 +3,8 @@ import {
   adjustRest, closeRest, finishWorkout, registerSet, removeSet, setCursor, skipRest, startWorkout,
 } from '@/utils/workout/workoutState/workoutState';
 import { todayRoutine } from '../../../helpers/routines/studentRoutines';
-import { at, freshWorkout, sequentialIds, withSets } from '../../../helpers/workout/workout';
+import { setBody } from '@/utils/workout/uploadPayload';
+import { at, freshWorkout, isoAt, sequentialIds, withSets } from '../../../helpers/workout/workout';
 
 // Press banca a T0 + 60 s: el descanso (90 s) termina a T0 + 150 s y se anota en esa serie (set-1).
 const resting = () => withSets(freshWorkout(), [[0, 60, 10]]);
@@ -55,14 +56,28 @@ describe('descanso real (restSeconds): se anota en la serie que disparó el desc
     expect(restOf(finishWorkout(resting(), at(4000)))).toBe(90);
   });
 
-  it('Terminar con el plan completo no lo anota: en el celular la última serie no arranca descanso (null)', () => {
-    // Press banca 4 × 10 y Remo 3 × 12: las 7 series del plan, la última (set-7) con su descanso abierto.
-    const plan = [0, 0, 0, 0, 1, 1, 1].map((exercise) => [exercise, 60, 10]);
-    const state = withSets(freshWorkout(), plan);
-    expect(state.restSetId).toBe('set-7');
-    const finished = finishWorkout(state, at(9000));
+  // Press banca 4 × 10 y Remo 3 × 12: las 7 series del plan (set-7 es la que lo completa).
+  const fullPlan = () => withSets(freshWorkout(), [0, 0, 0, 0, 1, 1, 1].map((exercise) => [exercise, 60, 10]));
+
+  it('la serie que completa el plan no arranca descanso, como el celular: Saltar no hace nada', () => {
+    const state = fullPlan();
+    expect(restOf(state, 'set-6')).toBe(60);
+    expect(state.restSetId).toBeNull();
+    expect(state.restEndsAt).toBeNull();
+    expect(state.restTotalSeconds).toBeNull();
+    expect(skipRest(state, at(9000))).toBe(state);
+  });
+
+  it('plan completo → Saltar → Terminar: la última serie va con rest_seconds null', () => {
+    const finished = finishWorkout(skipRest(fullPlan(), at(500)), at(9000));
+    const rests = finished.sets.map((set) => setBody(set).rest_seconds);
+    expect(rests).toEqual([60, 60, 60, 60, 60, 60, null]);
+  });
+
+  it('una sesión guardada antes, con el descanso abierto en la última serie, al Terminar tampoco lo anota', () => {
+    const old = { ...fullPlan(), restSetId: 'set-7', restEndsAt: isoAt(480), restTotalSeconds: 60 };
+    const finished = finishWorkout(old, at(9000));
     expect(restOf(finished, 'set-7')).toBeUndefined();
-    expect(restOf(finished, 'set-6')).toBe(60);
     expect(finished.restSetId).toBeNull();
   });
 
