@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
@@ -10,8 +10,8 @@ const SECONDARY = 'h-11 cursor-pointer rounded-lg px-3 font-display text-[13px] 
 /**
  * La subida del entrenamiento terminado:
  * - subiendo: "Guardando tu entrenamiento…", sin botones (no se descarta lo que está en camino);
- * - subiendo en otra pestaña (`elsewhere`): lo dice y ofrece "Guardar desde acá" (`onRetry`), por si la otra falló o
- *   se cerró. Es seguro: el id de la sesión es idempotente;
+ * - subiendo en otra pestaña (`elsewhere`): lo dice y ofrece "Guardar desde acá" (`onRetry`), con la aclaración de
+ *   usarlo solo si la otra falló o se cerró. Es seguro: el id de la sesión es idempotente;
  * - error que se puede reintentar (sin red, 5xx…): "No pudimos guardar tu entrenamiento. Tus series siguen guardadas
  *   en este navegador.", Reintentar y, más chico, Descartar (con confirmación): si el servidor no vuelve, el alumno no
  *   queda sin poder entrenar. Lo que ya se haya subido queda en el servidor; lo demás se pierde;
@@ -20,6 +20,7 @@ const SECONDARY = 'h-11 cursor-pointer rounded-lg px-3 font-display text-[13px] 
  */
 export default function SavingScreen({ saving, elsewhere = false, error, onRetry, onDiscard }) {
   const [confirming, setConfirming] = useState(false);
+  const hintId = useId();
   if (saving) {
     return (
       <Card padding={32} className="mx-auto w-full max-w-xl">
@@ -30,10 +31,13 @@ export default function SavingScreen({ saving, elsewhere = false, error, onRetry
           </p>
         </div>
         {elsewhere && (
-          <div className="mt-4 flex justify-center">
-            <Button variant="ghost" onClick={onRetry}>
+          <div className="mt-4 flex flex-col items-center gap-1.5">
+            <Button variant="ghost" onClick={onRetry} aria-describedby={hintId}>
               Guardar desde acá
             </Button>
+            <p id={hintId} className="font-body text-xs text-ink6">
+              Usalo solo si la otra pestaña se cerró o dio error.
+            </p>
           </div>
         )}
       </Card>
