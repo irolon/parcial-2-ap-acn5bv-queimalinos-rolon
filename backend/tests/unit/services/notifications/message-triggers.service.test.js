@@ -6,7 +6,7 @@ const mockNotify = { notify: jest.fn(), pushOnly: jest.fn() };
 const mockAuthRepo = { findTrainerById: jest.fn() };
 jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => mockNotify);
 jest.unstable_mockModule(src('repositories/auth/auth.repository.js'), () => mockAuthRepo);
-const { onMessageSent, onBroadcastSent } = await import(src('services/notifications/message-triggers.service.js'));
+const { onMessageSent, onBroadcastSent, BROADCAST_CONCURRENCY } = await import(src('services/notifications/message-triggers.service.js'));
 
 const STUDENT = { id: 'st-1', name: 'Lucía', trainer_id: 'tr-1' };
 
@@ -83,6 +83,21 @@ describe('onBroadcastSent', () => {
     void onBroadcastSent({ trainerId: 'tr-1', studentIds: ['a', 'b'], body: 'x' });
     await new Promise((resolve) => setImmediate(resolve));
     expect(mockNotify.pushOnly).toHaveBeenCalledTimes(2);
+  });
+
+  it(`200 alumnos: salen todos, nunca más de ${BROADCAST_CONCURRENCY} pushes a la vez`, async () => {
+    let inFlight = 0;
+    let max = 0;
+    mockNotify.pushOnly.mockImplementation(async () => {
+      inFlight += 1;
+      max = Math.max(max, inFlight);
+      await new Promise((resolve) => setImmediate(resolve));
+      inFlight -= 1;
+    });
+    const ids = Array.from({ length: 200 }, (_, i) => `st-${i}`);
+    await onBroadcastSent({ trainerId: 'tr-1', studentIds: ids, body: 'x' });
+    expect(mockNotify.pushOnly).toHaveBeenCalledTimes(200);
+    expect(max).toBe(BROADCAST_CONCURRENCY);
   });
 
   it('un push que falla no corta a los demás ni se propaga', async () => {

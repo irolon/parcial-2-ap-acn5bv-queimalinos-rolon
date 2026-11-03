@@ -2,8 +2,10 @@ import { pushOnly } from './notify.service.js';
 import { texts } from '../../models/notifications/texts.js';
 import { shouldPush } from '../../models/notifications/push-policy.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
+import { forEachLimit } from '../../shared/utils/async/concurrency.js';
 
 const TYPE = 'message';
+export const BROADCAST_CONCURRENCY = 10;
 
 /** Ejecuta el aviso sin dejar escapar ningún error: un push nunca rompe ni demora el mensaje. */
 async function safely(label, fn) {
@@ -46,17 +48,18 @@ export function onMessageSent({ student, senderRole, body, hasImage }) {
   });
 }
 
-/** Envío masivo del PT: un push por alumno, en paralelo (cada uno falla por separado). Nunca lanza. */
+/**
+ * Envío masivo del PT: un push por alumno, con a lo sumo BROADCAST_CONCURRENCY en vuelo a la vez
+ * (hasta 200 alumnos no salen todos juntos contra Supabase y FCM). Cada uno falla por separado. Nunca lanza.
+ */
 export function onBroadcastSent({ trainerId, studentIds, body }) {
   return safely(`${TYPE} masivo`, async () => {
     if (studentIds.length === 0 || !shouldPush(TYPE, 'student')) return;
     const senderName = await trainerName(trainerId);
     if (!senderName) return;
-    await Promise.all(
-      studentIds.map((id) =>
-        safely(TYPE, () =>
-          pushMessage({ userId: id, userRole: 'student', studentId: id, senderName, body, hasImage: false })
-        )
+    await forEachLimit(studentIds, BROADCAST_CONCURRENCY, (id) =>
+      safely(TYPE, () =>
+        pushMessage({ userId: id, userRole: 'student', studentId: id, senderName, body, hasImage: false })
       )
     );
   });

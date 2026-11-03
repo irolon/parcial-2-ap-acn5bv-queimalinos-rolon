@@ -52,7 +52,10 @@ export async function notify({ userId, userRole, type, title, body = null, data 
   return notification;
 }
 
-/** Push sin fila (p. ej. el resumen de varios logros, que ya tienen su fila). Best-effort, nunca lanza. */
+/**
+ * Push sin fila en `notifications`: el resumen de varios logros (que ya tienen su fila) y el
+ * aviso de mensaje nuevo de la mensajería (que nunca la tiene). Best-effort, nunca lanza.
+ */
 export async function pushOnly({ userId, userRole, title, body = null, data = {} }) {
   if (!isFcmEnabled()) return;
   try {
