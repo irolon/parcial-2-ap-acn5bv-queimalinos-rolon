@@ -30,12 +30,12 @@ import com.fittrainer.ui.theme.Spacing
 import java.time.ZoneId
 
 /**
- * Burbuja del prototipo EM_Mensajes: el alumno a la izquierda en gris y el PT a la derecha en azul, con
- * la hora y "✓✓" cuando el alumno ya lo leyó. Los de una difusión llevan la etiqueta DIFUSIÓN.
+ * Burbuja del prototipo EM_Mensajes: los propios ([mine]) a la derecha en azul y los del otro a la izquierda
+ * en gris, con la hora y "✓✓" cuando el otro ya lo leyó. Para el PT, mine = lo mandó él; para el alumno
+ * (tarjeta 18), lo mandó el alumno. Los de una difusión llevan la etiqueta DIFUSIÓN.
  */
 @Composable
-fun MessageBubble(message: Message, zone: ZoneId) {
-    val mine = message.fromTrainer
+fun MessageBubble(message: Message, zone: ZoneId, mine: Boolean = message.fromTrainer) {
     val shape = if (mine) RoundedCornerShape(18.dp, 18.dp, 4.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp)
     Box(Modifier.fillMaxWidth(), contentAlignment = if (mine) Alignment.CenterEnd else Alignment.CenterStart) {
         Column(

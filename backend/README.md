@@ -241,6 +241,8 @@ Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat c
 
 **Sugerencia para el backend (E11 del celular, 02/11), opcional.** Con la firma best-effort, una foto que no se pudo firmar sale con `image_url: null`. Si el mensaje además tiene texto, no hay forma de distinguirlo de uno de solo texto. El celular guarda los mensajes en Room, así que si eso pasa con una página vieja del chat cargada durante la caída de Storage, la foto no vuelve hasta que se borre el caché. Un campo `has_image` (por ejemplo `Boolean(row.image_path)` en el modelo público) le alcanza al celular para reintentar la firma. Las fotos que ya se veían, y las de solo foto, ya se recuperan sin cambios. **Para la web: nada que hacer.**
 
+**Pendiente para el backend (tarjeta 18 del celular, 02/11).** El criterio de la tarjeta 18 pide que el alumno reciba un **push de mensaje nuevo** y que tocarlo abra la conversación. Hoy los mensajes no generan notificación (solo polling). En el celular, el alumno ya tiene la pestaña Mensajes con su chat y un globito que se actualiza cada 15 s. Si se agrega un tipo de notificación para el destinatario de cada mensaje (por ejemplo `message` con `student_id`, push para el alumno y para el PT), el celular abre el chat con un cambio chico. **Para la web: nada que hacer.**
+
 ### Autenticación
 
 - **Access token:** JWT firmado con `JWT_SECRET` (`{ sub, role, email }`), expira según `JWT_EXPIRES_IN`.
