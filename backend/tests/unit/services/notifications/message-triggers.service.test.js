@@ -41,7 +41,7 @@ describe('onMessageSent', () => {
     await onMessageSent({ student: STUDENT, senderRole: 'student', body: 'mirá', hasImage: true });
     await onMessageSent({ student: STUDENT, senderRole: 'student', body: 'z'.repeat(200), hasImage: false });
     const bodies = mockNotify.pushOnly.mock.calls.map(([c]) => c.body);
-    expect(bodies).toEqual(['📷 Foto', '📷 Foto · mirá', `${'z'.repeat(120)}…`]);
+    expect(bodies).toEqual(['📷 Foto', '📷 Foto · mirá', `${'z'.repeat(119)}…`]);
   });
 
   it('nunca crea fila en notifications (solo push)', async () => {

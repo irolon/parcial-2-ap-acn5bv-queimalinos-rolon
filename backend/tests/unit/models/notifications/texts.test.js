@@ -66,11 +66,11 @@ describe('texts', () => {
     );
   });
 
-  it('comment recorta a 120 caracteres con elipsis', () => {
+  it('comment recorta a 120 caracteres en total, con elipsis', () => {
     const long = 'x'.repeat(130);
     const { title, body } = texts.comment({ date: '2026-10-05', comment: long });
     expect(title).toBe('Tu entrenador comentó tu sesión del 05/10');
-    expect(body).toBe(`${'x'.repeat(120)}…`);
+    expect(body).toBe(`${'x'.repeat(119)}…`);
     expect(texts.comment({ date: '2026-10-05', comment: 'ok' }).body).toBe('ok');
   });
 
@@ -101,10 +101,35 @@ describe('texts · message', () => {
     expect(texts.message({ senderName: 'Ana', body: 'mirá', hasImage: true }).body).toBe('📷 Foto · mirá');
   });
 
-  it('recorta el texto a 120 caracteres con "…"', () => {
-    const long = texts.message({ senderName: 'Ana', body: 'x'.repeat(300), hasImage: false });
-    expect(long.body).toBe(`${'x'.repeat(120)}…`);
-    const exact = texts.message({ senderName: 'Ana', body: 'y'.repeat(120), hasImage: false });
-    expect(exact.body).toBe('y'.repeat(120));
+  const msg = (body) => texts.message({ senderName: 'Ana', body, hasImage: false }).body;
+  const codePoints = (s) => Array.from(s).length;
+
+  it('recorta el texto a 120 caracteres en total, con "…"', () => {
+    expect(msg('x'.repeat(300))).toBe(`${'x'.repeat(119)}…`);
+    expect(msg('y'.repeat(120))).toBe('y'.repeat(120));
+  });
+
+  it('cuenta por puntos de código: 119 letras + 😀 son 120 y no se corta', () => {
+    const text = `${'a'.repeat(119)}😀`;
+    expect(msg(text)).toBe(text);
+  });
+
+  it('121 puntos de código: se corta sin partir el emoji y no pasa de 120', () => {
+    const cut = msg(`${'a'.repeat(118)}😀bc`);
+    expect(cut).toBe(`${'a'.repeat(118)}😀…`);
+    expect(codePoints(cut)).toBe(120);
+    expect(cut.isWellFormed()).toBe(true);
+  });
+
+  it('emoji justo en el límite del corte: queda entero, sin surrogate suelto (�)', () => {
+    const cut = msg('😀'.repeat(121));
+    expect(cut).toBe(`${'😀'.repeat(119)}…`);
+    expect(cut.isWellFormed()).toBe(true);
+  });
+
+  it('el título también cuenta por puntos de código', () => {
+    const { title } = texts.message({ senderName: '😀'.repeat(200), body: 'hola', hasImage: false });
+    expect(codePoints(title)).toBe(150);
+    expect(title.isWellFormed()).toBe(true);
   });
 });
