@@ -17,6 +17,9 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
+import com.fittrainer.ui.messages.trainer.badge.MessagesBadgeViewModel
+import com.fittrainer.ui.messages.trainer.unreadDescription
 import com.fittrainer.ui.notifications.bell.NotificationBellViewModel
 import com.fittrainer.ui.workout.history.badge.ProgressBadgeViewModel
 import com.fittrainer.ui.workout.history.unreadBadgeDescription
@@ -37,6 +40,33 @@ fun progressUnread(isStudent: Boolean): Int {
     return badge.unread.collectAsStateWithLifecycle().value
 }
 
+/** Un globito de pestaña: el número y lo que lee TalkBack. */
+class TabBadge(val count: Int, val description: String)
+
+/** Los globitos del rol: comentarios sin leer en Progreso (alumno) y mensajes sin leer en Mensajes (entrenador, E11). */
+@Composable
+fun tabBadges(isStudent: Boolean): Map<String, TabBadge> {
+    val comments = progressUnread(isStudent)
+    val messages = messagesUnread(isStudent)
+    return buildMap {
+        put(STUDENT_PROGRESS_ROUTE, TabBadge(comments, unreadBadgeDescription(comments)))
+        messages?.let { put(TRAINER_MESSAGES_ROUTE, it) }
+    }
+}
+
+/** Mensajes sin leer del entrenador (E11), con polling mientras la app está en primer plano. Mismo criterio que [progressUnread]. */
+@Composable
+fun messagesUnread(isStudent: Boolean): TabBadge? {
+    if (isStudent) return null
+    val badge: MessagesBadgeViewModel = hiltViewModel()
+    LifecycleStartEffect(badge) {
+        badge.onForeground()
+        onStopOrDispose { badge.onBackground() }
+    }
+    val count = badge.unread.collectAsStateWithLifecycle().value
+    return TabBadge(count, unreadDescription(count))
+}
+
 /** Avisos sin leer: la campana de Hoy (alumno) y la del Inicio (entrenador, E12). */
 @Composable
 fun notificationsUnread(): Int {
@@ -48,9 +78,9 @@ fun notificationsUnread(): Int {
     return bell.unread.collectAsStateWithLifecycle().value
 }
 
-/** Barra de pestañas del rol. backStack: las rutas de abajo hacia arriba. Progreso lleva el badge rojo si hay comentarios sin leer. */
+/** Barra de pestañas del rol. backStack: las rutas de abajo hacia arriba. badges: el globito rojo de cada pestaña que lo lleva (Progreso del alumno, Mensajes del entrenador). */
 @Composable
-fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: NavController, progressUnread: Int) {
+fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: NavController, badges: Map<String, TabBadge>) {
     val routes = tabs.map { it.route }
     val selected = selectedTab(routes, backStack)
     NavigationBar {
@@ -69,10 +99,11 @@ fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: 
                     }
                 },
                 icon = {
-                    if (tab.route == STUDENT_PROGRESS_ROUTE && progressUnread > 0) {
-                        // Corrido hacia arriba y a la derecha: así no tapa la estrella.
-                        val badge = Modifier.offset(x = 8.dp, y = (-6).dp).clearAndSetSemantics { contentDescription = unreadBadgeDescription(progressUnread) }
-                        BadgedBox(badge = { Badge(badge) { Text(unreadBadgeText(progressUnread)) } }) { Icon(tab.icon, contentDescription = null) }
+                    val tabBadge = badges[tab.route]?.takeIf { it.count > 0 }
+                    if (tabBadge != null) {
+                        // Corrido hacia arriba y a la derecha: así no tapa el ícono.
+                        val badge = Modifier.offset(x = 8.dp, y = (-6).dp).clearAndSetSemantics { contentDescription = tabBadge.description }
+                        BadgedBox(badge = { Badge(badge) { Text(unreadBadgeText(tabBadge.count)) } }) { Icon(tab.icon, contentDescription = null) }
                     } else {
                         Icon(tab.icon, contentDescription = null)
                     }

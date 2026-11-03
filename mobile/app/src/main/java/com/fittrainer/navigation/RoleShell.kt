@@ -16,16 +16,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
 import com.fittrainer.navigation.trainer.trainerChallengeRoutes
+import com.fittrainer.navigation.trainer.trainerChatRoute
 import com.fittrainer.navigation.trainer.trainerExerciseRoutes
 import com.fittrainer.navigation.trainer.trainerMenuLinks
+import com.fittrainer.navigation.trainer.trainerMessageRoutes
 import com.fittrainer.navigation.trainer.trainerNotificationRoutes
 import com.fittrainer.navigation.trainer.trainerRoutineRoutes
 import com.fittrainer.navigation.trainer.trainerStudentRoutes
 import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
+import com.fittrainer.ui.messages.trainer.list.ConversationsScreen
 import com.fittrainer.ui.notifications.NotificationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 import com.fittrainer.ui.placeholder.AccountMenuScreen
@@ -100,12 +104,12 @@ fun RoleShell(
     val entryError by entry.error.collectAsStateWithLifecycle()
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
-    val unread = progressUnread(isStudent)
+    val badges = tabBadges(isStudent)
     val unreadNotifications = notificationsUnread()
     val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
-            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, stackRoutes, navController, unread)
+            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, stackRoutes, navController, badges)
         },
     ) { padding ->
         NavHost(
@@ -150,6 +154,7 @@ fun RoleShell(
                             ),
                             unreadNotifications = unreadNotifications,
                         )
+                        tab.route == TRAINER_MESSAGES_ROUTE -> ConversationsScreen(onOpen = { navController.navigate(trainerChatRoute(it)) { launchSingleTop = true } })
                         else -> PlaceholderScreen(tab.label)
                     }
                 }
@@ -176,6 +181,7 @@ fun RoleShell(
             trainerExerciseRoutes(navController)
             trainerChallengeRoutes(navController)
             trainerNotificationRoutes(navController, launches)
+            trainerMessageRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }
