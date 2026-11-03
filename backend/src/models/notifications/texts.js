@@ -5,6 +5,7 @@
 
 export const TITLE_MAX = 150;
 export const COMMENT_PREVIEW_MAX = 120;
+export const MESSAGE_PREVIEW_MAX = 120;
 
 const ELLIPSIS = '…';
 
@@ -62,4 +63,11 @@ export const texts = {
 
   comment: ({ date, comment }) =>
     build(`Tu entrenador comentó tu sesión del ${ddmm(date)}`, preview(comment, COMMENT_PREVIEW_MAX)),
+
+  /** Push de mensaje nuevo: título = quien escribe; cuerpo = el texto recortado, con "📷 Foto" si trae foto. */
+  message: ({ senderName, body, hasImage }) => {
+    const text = body ? preview(body, MESSAGE_PREVIEW_MAX) : null;
+    const photo = '📷 Foto';
+    return build(senderName, hasImage ? (text ? `${photo} · ${text}` : photo) : text);
+  },
 };

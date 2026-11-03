@@ -87,3 +87,24 @@ describe('texts sin detalle', () => {
     expect(texts.achievementForTrainer({ studentName: 'Ana', name: 'X' }).body).toBeNull();
   });
 });
+
+describe('texts · message', () => {
+  it('título = quien escribe; cuerpo = el texto', () => {
+    expect(texts.message({ senderName: 'Ana', body: 'hola', hasImage: false })).toEqual({
+      title: 'Ana',
+      body: 'hola',
+    });
+  });
+
+  it('solo foto → "📷 Foto"; foto y texto → "📷 Foto · <texto>"', () => {
+    expect(texts.message({ senderName: 'Ana', body: null, hasImage: true }).body).toBe('📷 Foto');
+    expect(texts.message({ senderName: 'Ana', body: 'mirá', hasImage: true }).body).toBe('📷 Foto · mirá');
+  });
+
+  it('recorta el texto a 120 caracteres con "…"', () => {
+    const long = texts.message({ senderName: 'Ana', body: 'x'.repeat(300), hasImage: false });
+    expect(long.body).toBe(`${'x'.repeat(120)}…`);
+    const exact = texts.message({ senderName: 'Ana', body: 'y'.repeat(120), hasImage: false });
+    expect(exact.body).toBe('y'.repeat(120));
+  });
+});

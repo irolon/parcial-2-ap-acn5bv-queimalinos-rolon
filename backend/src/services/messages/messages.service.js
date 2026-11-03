@@ -7,6 +7,8 @@ import * as imagesRepo from '../../repositories/messages/message-images.reposito
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import { SENDER_ROLES, toMessage, toPublicPerson } from '../../models/messages/message.model.js';
+import { onMessageSent } from '../notifications/message-triggers.service.js';
+import { runInBackground } from '../../shared/utils/background.js';
 
 const otherRole = (role) => (role === SENDER_ROLES.TRAINER ? SENDER_ROLES.STUDENT : SENDER_ROLES.TRAINER);
 
@@ -75,6 +77,10 @@ export async function send(user, studentId, { body, file }) {
     if (imagePath) await imagesRepo.removeImage(imagePath).catch(() => {});
     throw err;
   }
+  // Push al otro lado sin esperarlo (best-effort): nunca demora ni rompe el envío.
+  runInBackground('messages push', () =>
+    onMessageSent({ student, senderRole: user.role, body: row.body ?? null, hasImage: Boolean(imagePath) })
+  );
   const urls = imagePath ? await signBestEffort([imagePath]) : new Map();
   return toMessage(row, urls.get(imagePath));
 }
