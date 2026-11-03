@@ -40,6 +40,16 @@ describe('ExerciseCurveCard', () => {
     expect(screen.getByText(/Llevás 2 de 3 entrenamientos de Press banca/)).toBeInTheDocument();
   });
 
+  it('peso máximo con días solo de peso corporal (max_kg null): dibuja solo los días con carga, ninguno en 0', () => {
+    const pts = SIX.map((p, i) => (i < 2 ? { ...p, max_kg: null, e1rm_kg: null, volume_kg: 0 } : p));
+    const { container } = render(<ExerciseCurveCard data={curveData(pts)} metric="max_kg" onMetricChange={noop} />);
+    const drawn = dots(container);
+    expect(drawn).toHaveLength(4);
+    expect(drawn.map((c) => Number(c.getAttribute('cy'))).every(Number.isFinite)).toBe(true);
+    render(<CurveTooltip active payload={[{ payload: pts[0] }]} metric="max_kg" />);
+    expect(screen.getByText('Peso máximo: —')).toBeInTheDocument();
+  });
+
   it('no cuenta los puntos sin valor para la métrica: con 6 puntos y 2 valores avisa de la métrica', () => {
     const pts = SIX.map((p, i) => (i < 4 ? { ...p, e1rm_kg: null } : p));
     render(<ExerciseCurveCard data={curveData(pts)} metric="e1rm_kg" onMetricChange={noop} />);
