@@ -50,6 +50,20 @@ export async function findRefreshToken(tokenHash) {
   return data;
 }
 
+/**
+ * Dueño de un refresh token por su hash, esté vigente o no (incluye revocados):
+ * el logout lo usa para borrar el push token aunque sea un reintento.
+ */
+export async function findRefreshTokenOwner(tokenHash) {
+  const { data, error } = await supabase
+    .from(REFRESH_TOKENS_TABLE)
+    .select('user_id, role')
+    .eq('token_hash', tokenHash)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}
+
 /** Marca un refresh token como revocado (logout / rotación). */
 export async function revokeRefreshToken(tokenHash) {
   const { error } = await supabase

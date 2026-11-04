@@ -92,7 +92,11 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 Revoca el refresh token. **No requiere** access token: alcanza con el `refresh_token` del body, así el logout funciona aunque el access haya vencido. **204 No Content**
 
-**Body:** `{ "refresh_token": "string" }`
+**Body:** `{ "refresh_token": "string", "push_token": "string (opcional)" }`
+
+- `push_token` (opcional, 1–4096 caracteres): el token de FCM del dispositivo. Si viene, el servidor lo borra de `push_tokens` **solo si es del dueño del refresh token** (`user_id` + `user_role`). El dueño se busca aunque el refresh ya esté revocado, así el celular puede **reintentar** el logout más tarde (por ejemplo, si cerró sesión sin red) aunque el access haya vencido. Si el refresh no existe no se borra nada. Un error al borrar el push token no hace fallar el logout: responde **204** igual.
+- `push_token` vacío, de más de 4096 caracteres o que no sea texto → **400 VALIDATION_ERROR** (`field: "push_token"`).
+- `DELETE /notifications/tokens/:token` sigue existiendo para dar de baja el token con la sesión abierta.
 
 ---
 
@@ -1243,7 +1247,7 @@ Registra el token de FCM del dispositivo para recibir push. Es un upsert por `to
 
 ### DELETE /notifications/tokens/:token
 
-Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
+Da de baja el token del dispositivo (por ejemplo al cerrar sesión; también se puede mandar como `push_token` en `POST /auth/logout`, que funciona sin access token). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
 
 > El backend también borra solo los tokens que FCM da por inválidos (`UNREGISTERED` o token mal formado); el cliente no tiene que hacer nada.
 

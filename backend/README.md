@@ -94,7 +94,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | POST | `/api/auth/register` | — | Registra un trainer |
 | POST | `/api/auth/login` | — | Login (trainer o alumno; resuelve el rol) |
 | POST | `/api/auth/refresh` | — | Nuevo access token |
-| POST | `/api/auth/logout` | trainer/student | Revoca el refresh token |
+| POST | `/api/auth/logout` | trainer/student | `{ refresh_token, push_token? }`. Revoca el refresh token; con `push_token`, además borra ese token de push si es del dueño del refresh (aunque ya esté revocado, para reintentar sin red). 204 siempre |
 
 ### Invitaciones (onboarding) — Fase 1
 | Método | Ruta | Rol | Descripción |
@@ -214,7 +214,7 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 | PATCH | `/api/notifications/read-all` | Marca todas como leídas. 204 |
 | PATCH | `/api/notifications/:id/read` | Marca una como leída. 204; inexistente o ajena: 404 `NOTIFICATION_NOT_FOUND` |
 | POST | `/api/notifications/tokens` | `{ token, platform }` con `platform` `android` o `web`. Upsert del token de FCM del dispositivo: 201 si es nuevo, 200 si ya existía |
-| DELETE | `/api/notifications/tokens/:token` | Baja el token del usuario. 204 siempre |
+| DELETE | `/api/notifications/tokens/:token` | Baja el token del usuario. 204 siempre. Al cerrar sesión conviene mandarlo como `push_token` en `POST /api/auth/logout`, que no exige access token |
 
 **Push.** Se configura con `FCM_SERVICE_ACCOUNT_PATH` (local) o `FCM_SERVICE_ACCOUNT_JSON` en base64 (VPS); sin credenciales el push queda apagado y las notificaciones se guardan igual. Pasos en [`setup-tecnico.md`](../docs/proceso/setup-tecnico.md). Un token se borra solo cuando FCM lo señala como inválido (`UNREGISTERED` o token mal formado).
 
