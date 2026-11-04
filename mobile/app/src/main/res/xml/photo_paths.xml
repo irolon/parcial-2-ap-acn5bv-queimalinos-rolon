@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Las fotos que la cámara saca para el chat (tarjeta 18): solo esta carpeta de la caché. -->
+<paths>
+    <cache-path name="message_photos" path="message-photos/" />
+</paths>

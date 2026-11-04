@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 
 /** Mensajes por página (el backend permite hasta 100). */
@@ -34,10 +37,13 @@ const val IMAGE_URL_TTL_MS = 50 * 60_000L
 /** Cuántos mensajes se re-piden por vez para renovar fotos. */
 private const val RENEW_PAGE = 100
 private const val STUDENT_INACTIVE = "STUDENT_INACTIVE"
+private val JPEG = "image/jpeg".toMediaType()
+private val TEXT = "text/plain; charset=utf-8".toMediaType()
 
 /**
  * Mensajes del entrenador (E11), offline-first: lista y chats salen de Room. Enviar, leer y difundir
- * son solo online y guardan la respuesta, así se ve enseguida.
+ * son solo online y guardan la respuesta, así se ve enseguida. El chat del alumno (tarjeta 18) usa la misma
+ * caché: ahí `trainerId` es el dueño del caché, o sea, el propio alumno.
  */
 @Singleton
 class TrainerMessagesRepository @Inject constructor(
@@ -130,14 +136,27 @@ class TrainerMessagesRepository @Inject constructor(
 
     /** Solo texto. 409 → StudentInactiveException; 403 → la conversación sale del caché y NotFound. */
     suspend fun send(trainerId: String, studentId: String, text: String): Result<Unit> = call(trainerId, studentId) {
-        val sent = api.send(studentId, SendMessageRequest(text.trim())).data.toEntity(trainerId, clock.millis())
+        saveSent(trainerId, studentId, api.send(studentId, SendMessageRequest(text.trim())).data.toEntity(trainerId, clock.millis()))
+    }
+
+    /** Una foto ya en JPEG con epígrafe opcional (tarjeta 18). 413/415 → PhotoRejectedException; el resto, como [send]. */
+    suspend fun sendPhoto(trainerId: String, studentId: String, jpeg: ByteArray, caption: String?): Result<Unit> = call(trainerId, studentId) {
+        val image = MultipartBody.Part.createFormData("image", "foto.jpg", jpeg.toRequestBody(JPEG))
+        val body = caption?.trim()?.takeIf { it.isNotEmpty() }?.toRequestBody(TEXT)
+        saveSent(trainerId, studentId, api.sendPhoto(studentId, image, body).data.toEntity(trainerId, clock.millis()))
+    }
+
+    private suspend fun saveSent(trainerId: String, studentId: String, sent: TrainerMessageEntity) {
         dao.upsertMessages(listOf(sent))
         dao.getConversation(trainerId, studentId)?.let { dao.upsertConversations(listOf(it.withSent(sent))) }
     }
 
-    /** Marca leídos los mensajes del alumno; en la lista, sus no leídos pasan a 0. */
+    /** Leídos los del otro lado, en el servidor y en Room (también páginas viejas) hasta el más nuevo guardado al pedirlo. */
     suspend fun markRead(trainerId: String, studentId: String): Result<Unit> = call(trainerId, studentId) {
+        val upTo = dao.newestAt(trainerId, studentId)
         api.markRead(studentId)
+        val incoming = if (trainerId == studentId) SENDER_TRAINER else SENDER_STUDENT
+        upTo?.let { dao.markIncomingRead(trainerId, studentId, incoming, clock.millis(), it) }
         dao.markConversationRead(trainerId, studentId)
     }
 
@@ -159,6 +178,7 @@ class TrainerMessagesRepository @Inject constructor(
         Result.failure(
             when {
                 e.code() == 409 && env?.code == STUDENT_INACTIVE -> StudentInactiveException(env.message ?: "El alumno está dado de baja")
+                e.code() == 413 || e.code() == 415 -> PhotoRejectedException()
                 e.code() == 403 -> {
                     studentId?.let { dao.forget(trainerId, it) }
                     DataException(DataError.NotFound, e)

@@ -15,6 +15,9 @@ import com.fittrainer.data.api.messages.ReadResponse
 import com.fittrainer.data.api.messages.SendMessageRequest
 import com.fittrainer.data.api.messages.TrainerMessagesApi
 import kotlinx.coroutines.CompletableDeferred
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okio.Buffer
 
 /** Un mensaje del servidor; [minute] arma el created_at (2026-11-01T12:mm). */
 fun messageDto(
@@ -40,16 +43,23 @@ class FakeTrainerMessagesApi : TrainerMessagesApi {
     var error: Throwable? = null
     var sendError: Throwable? = null
     var gate: CompletableDeferred<Unit>? = null
+    /** Si está, send y sendPhoto esperan a que se complete (un envío lento). */
+    var sendGate: CompletableDeferred<Unit>? = null
     val sent = mutableListOf<Pair<String, String>>()
+    /** Fotos mandadas: (alumno, bytes, epígrafe o null). */
+    val photos = mutableListOf<Triple<String, ByteArray, String?>>()
+    var sender = "trainer"
     val reads = mutableListOf<String>()
     val broadcasts = mutableListOf<BroadcastRequest>()
     val historyCalls = mutableListOf<String?>()
+    var conversationCalls = 0
     private var nextId = 100
 
     fun page(vararg m: MessageDto, nextBefore: String? = null, name: String = "Ana") =
         HistoryResponse(m.toList(), HistoryMeta(nextBefore), CounterpartDto("s1", name))
 
     override suspend fun conversations(): ConversationListResponse {
+        conversationCalls++
         error?.let { throw it }
         return ConversationListResponse(conversations)
     }
@@ -65,7 +75,16 @@ class FakeTrainerMessagesApi : TrainerMessagesApi {
         (sendError ?: error)?.let { throw it }
         sent += studentId to body.body
         val id = "new${nextId++}"
-        return MessageResponse(MessageDto(id, studentId, "trainer", body.body, null, null, null, "2026-11-01T12:59:00.000000+00:00"))
+        return MessageResponse(MessageDto(id, studentId, sender, body.body, null, null, null, "2026-11-01T12:59:00.000000+00:00"))
+    }
+
+    override suspend fun sendPhoto(studentId: String, image: MultipartBody.Part, body: RequestBody?): MessageResponse {
+        sendGate?.await()
+        (sendError ?: error)?.let { throw it }
+        val caption = body?.let { Buffer().also(it::writeTo).readUtf8() }
+        photos += Triple(studentId, Buffer().also(image.body::writeTo).readByteArray(), caption)
+        val id = "new${nextId++}"
+        return MessageResponse(MessageDto(id, studentId, sender, caption, "url-$id", null, null, "2026-11-01T12:59:00.000000+00:00"))
     }
 
     override suspend fun markRead(studentId: String): ReadResponse {
