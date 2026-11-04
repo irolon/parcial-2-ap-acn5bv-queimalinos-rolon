@@ -4,7 +4,7 @@ import com.fittrainer.data.students.ARGENTINA
 import com.fittrainer.data.students.overview.FeedbackItem
 import com.fittrainer.data.students.overview.RiskItem
 import com.fittrainer.data.students.overview.StudentItem
-import com.fittrainer.data.students.overview.StudentStatus
+import com.fittrainer.data.students.StudentStatus
 import com.fittrainer.data.students.overview.TodayItem
 import com.fittrainer.data.students.overview.TrainerOverview
 import java.time.Duration
@@ -20,8 +20,8 @@ const val HOME_INVITE_BODY = "Cuando tengas alumnos, acá vas a ver cómo vienen
 const val HOME_ERROR_TITLE = "No pudimos cargar el inicio"
 const val HOME_REFRESH_FAILED = "No pudimos actualizar. Mostrando el último resumen"
 const val HOME_DAY_LABEL = "PLAN DE HOY"
-const val HOME_BELL = "Pendientes de hoy"
-const val HOME_BELL_EMPTY = "Nadie te debe el entrenamiento de hoy."
+/** La sección del centro de avisos del entrenador con los que hoy deben el entrenamiento (E12). */
+const val PENDING_TODAY = "Pendientes de hoy"
 
 /** Los filtros de la lista del Inicio, en el orden de la fila. */
 enum class HomeFilter(val label: String, val empty: String) {

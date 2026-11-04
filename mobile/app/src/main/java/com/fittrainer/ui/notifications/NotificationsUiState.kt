@@ -7,7 +7,8 @@ import java.time.Instant
 /**
  * groups: avisos por día (Hoy · Ayer · Antes). everLoaded: alguna vez se bajó la lista (si no y no hay red:
  * "Conectate una vez…"). isLoadingMore / loadMoreFailed: el pie de la lista ("Ver más" en curso o falló, con Reintentar).
- * notificationsEnabled arranca en true para que el cartel no parpadee antes de leer el permiso.
+ * notificationsEnabled arranca en true para que el cartel no parpadee antes de leer el permiso. forTrainer: la lista
+ * es del entrenador (E12), que tiene otro texto de vacío.
  */
 data class NotificationsUiState(
     val groups: List<Pair<NotificationGroup, List<AppNotification>>> = emptyList(),
@@ -21,9 +22,10 @@ data class NotificationsUiState(
     val isLoadingMore: Boolean = false,
     val loadMoreFailed: Boolean = false,
     val notificationsEnabled: Boolean = true,
+    val forTrainer: Boolean = false,
 )
 
 sealed interface NotificationsEvent {
-    /** El alumno tocó un aviso: ya quedó leído; la pantalla decide a dónde ir. */
+    /** Se tocó un aviso: ya quedó leído; la pantalla decide a dónde ir. */
     data class Open(val destination: NotificationDestination) : NotificationsEvent
 }

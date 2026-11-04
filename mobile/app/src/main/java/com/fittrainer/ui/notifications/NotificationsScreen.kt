@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -46,12 +47,14 @@ import kotlinx.coroutines.delay
 /** Cada cuánto se vuelve a pedir la hora para el "hace N min" con la lista abierta. */
 private const val MINUTE_MS = 60_000L
 
-/** Lista de avisos del alumno (tarjeta 17), agrupada Hoy · Ayer · Antes. */
+/** Lista de avisos del alumno (tarjeta 17) y del entrenador (E12), agrupada Hoy · Ayer · Antes. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
     onOpen: (NotificationDestination) -> Unit,
+    /** Lo que va arriba de los avisos: los pendientes de hoy del entrenador (E12). */
+    header: LazyListScope.() -> Unit = {},
     viewModel: NotificationsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,6 +84,7 @@ fun NotificationsScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 if (!state.notificationsEnabled) item { PermissionBanner(onActivate = activate) }
+                header()
                 NotificationsStates(state, onRetry = viewModel::onRefresh)
                 state.groups.forEach { (group, items) ->
                     item(key = "header-$group") {

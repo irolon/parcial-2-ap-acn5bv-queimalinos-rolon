@@ -20,7 +20,8 @@ val MUSCLE_ORDER: List<String> = MUSCLES.keys.toList()
 
 fun muscleLabel(raw: String?): String = raw?.let { MUSCLES[it] ?: it }.orEmpty()
 
-private val EQUIPMENT = mapOf(
+/** En el mismo orden que EQUIPMENT del backend (exercise.model.js). */
+private val EQUIPMENT = linkedMapOf(
     "barbell" to "Barra",
     "dumbbell" to "Mancuernas",
     "machine" to "Máquina",
@@ -30,6 +31,9 @@ private val EQUIPMENT = mapOf(
     "band" to "Banda",
 )
 
+val EQUIPMENT_ORDER: List<String> = EQUIPMENT.keys.toList()
+
+/** "barbell" → "Barra"; un valor desconocido se muestra tal cual. */
 fun equipmentLabel(raw: String?): String = raw?.let { EQUIPMENT[it] ?: it }.orEmpty()
 
 /** 40.0 → "40 kg"; 2.5 → "2,5 kg" (coma decimal). */

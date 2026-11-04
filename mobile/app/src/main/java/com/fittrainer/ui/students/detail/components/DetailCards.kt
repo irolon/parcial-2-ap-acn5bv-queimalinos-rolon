@@ -38,6 +38,7 @@ fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
+/** onHistory/onNew en null: sin acciones (E6 las suma). canWrite: "+ Nueva medida" pide red. */
 @Composable
 fun LatestMetricsCard(
     detail: StudentDetail,

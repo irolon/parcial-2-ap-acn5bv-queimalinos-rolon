@@ -1,5 +1,8 @@
-package com.fittrainer.ui.students.overview.components
+package com.fittrainer.ui.students.overview.pending
 
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -14,25 +17,32 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** La hoja de la campana con muchos pendientes: el último se alcanza con scroll y abre su ficha. */
+/** E12: los pendientes de hoy dentro del centro de avisos (antes, la hoja de la campana del Inicio). */
 @RunWith(AndroidJUnit4::class)
-class PendingTodayListTest {
+class PendingTodayItemsTest {
 
     @get:Rule val compose = createComposeRule()
 
     @Test fun conVeinticincoPendientesSeLlegaAlUltimoYAbreSuFicha() {
         val pending = (1..25).map { TodayItem("s$it", "Alumno $it", true, false, null, null, null, null) }
         var opened: String? = null
-        compose.setContent { FitTrainerTheme { PendingTodayList(pending) { opened = it } } }
+        compose.setContent {
+            FitTrainerTheme { LazyColumn(Modifier.testTag(LIST)) { pendingTodayItems(pending) { opened = it } } }
+        }
 
-        compose.onNodeWithTag(PENDING_TODAY_LIST_TAG).performScrollToNode(hasText("Alumno 25"))
+        compose.onNodeWithText("Pendientes de hoy").assertExists()
+        compose.onNodeWithTag(LIST).performScrollToNode(hasText("Alumno 25"))
         compose.onNodeWithText("Alumno 25").performClick()
 
         assertEquals("s25", opened)
     }
 
-    @Test fun sinPendientesMuestraElAviso() {
-        compose.setContent { FitTrainerTheme { PendingTodayList(emptyList()) {} } }
-        compose.onNodeWithText("Nadie te debe el entrenamiento de hoy.").assertExists()
+    @Test fun sinPendientesNoHaySeccion() {
+        compose.setContent { FitTrainerTheme { LazyColumn { pendingTodayItems(emptyList()) {} } } }
+        compose.onNodeWithText("Pendientes de hoy").assertDoesNotExist()
+    }
+
+    private companion object {
+        const val LIST = "list"
     }
 }

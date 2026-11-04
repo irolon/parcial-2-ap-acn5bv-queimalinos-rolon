@@ -3,11 +3,21 @@ package com.fittrainer.data.db
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.fittrainer.data.db.challenges.trainer.TrainerChallengeEntity
+import com.fittrainer.data.db.challenges.trainer.TrainerChallengesDao
+import com.fittrainer.data.db.challenges.trainer.TrainerChallengesSyncEntity
+import com.fittrainer.data.db.challenges.trainer.TrainerStudentChallengeEntity
+import com.fittrainer.data.db.challenges.trainer.TrainerStudentChallengesSyncEntity
 import com.fittrainer.data.db.exercises.trainer.TrainerExerciseEntity
 import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.library.LibraryExerciseEntity
 import com.fittrainer.data.db.library.LibrarySyncEntity
+import com.fittrainer.data.db.messages.trainer.TrainerConversationEntity
+import com.fittrainer.data.db.messages.trainer.TrainerConversationsSyncEntity
+import com.fittrainer.data.db.messages.trainer.TrainerMessageEntity
+import com.fittrainer.data.db.messages.trainer.TrainerMessageThreadEntity
+import com.fittrainer.data.db.messages.trainer.TrainerMessagesDao
 import com.fittrainer.data.db.notifications.NotificationDao
 import com.fittrainer.data.db.notifications.NotificationEntity
 import com.fittrainer.data.db.notifications.NotificationMetaEntity
@@ -94,8 +104,16 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         TrainerExerciseEntity::class,
         TrainerTemplateEntity::class,
         TrainerTemplatesSyncEntity::class,
+        TrainerChallengeEntity::class,
+        TrainerChallengesSyncEntity::class,
+        TrainerStudentChallengeEntity::class,
+        TrainerStudentChallengesSyncEntity::class,
+        TrainerConversationEntity::class,
+        TrainerConversationsSyncEntity::class,
+        TrainerMessageEntity::class,
+        TrainerMessageThreadEntity::class,
     ],
-    version = 19,
+    version = 21,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -118,6 +136,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 16, to = 17),
         AutoMigration(from = 17, to = 18),
         AutoMigration(from = 18, to = 19),
+        AutoMigration(from = 19, to = 20),
+        AutoMigration(from = 20, to = 21),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -137,4 +157,6 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun trainerRoutinesDao(): TrainerRoutinesDao
     abstract fun trainerExercisesDao(): TrainerExercisesDao
     abstract fun trainerTemplatesDao(): TrainerTemplatesDao
+    abstract fun trainerChallengesDao(): TrainerChallengesDao
+    abstract fun trainerMessagesDao(): TrainerMessagesDao
 }

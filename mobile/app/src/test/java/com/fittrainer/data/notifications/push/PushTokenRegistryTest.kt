@@ -28,21 +28,22 @@ class PushTokenRegistryTest {
     }
     private val registry = PushTokenRegistry(api, store, source, logger)
 
-    @Test fun `registraSoloConSesionDeAlumno`() = runTest {
+    // E12: el entrenador también recibe push (el backend toma el rol del JWT).
+    @Test fun `con entrenador tambien registra el token`() = runTest {
         store.save(authState(role = Role.TRAINER))
-        registry.registerIfStudent()
-        assertTrue(api.registered.isEmpty())
+        registry.registerIfSignedIn()
+        assertEquals(listOf(PushTokenDto("fcm-token-1")), api.registered)
     }
 
     @Test fun `sin sesion no llama a la API`() = runTest {
-        registry.registerIfStudent()
+        registry.registerIfSignedIn()
         registry.onNewToken("t")
         assertTrue(api.registered.isEmpty())
     }
 
     @Test fun `con alumno registra el token de FCM con su dueno`() = runTest {
         store.save(authState(role = Role.STUDENT))
-        registry.registerIfStudent()
+        registry.registerIfSignedIn()
         assertEquals(listOf(PushTokenDto("fcm-token-1")), api.registered)
         assertEquals(listOf(authState().user.id), api.owners)
     }
@@ -56,14 +57,14 @@ class PushTokenRegistryTest {
     @Test fun `si falla el alta no lanza y lo loguea`() = runTest {
         store.save(authState(role = Role.STUDENT))
         api.failTokens = IOException("sin red")
-        registry.registerIfStudent()
+        registry.registerIfSignedIn()
         assertEquals(1, errors.size)
     }
 
     @Test fun `si FCM no da token no lanza`() = runTest {
         store.save(authState(role = Role.STUDENT))
         source.error = IOException("SERVICE_NOT_AVAILABLE")
-        registry.registerIfStudent()
+        registry.registerIfSignedIn()
         assertTrue(api.registered.isEmpty())
         assertEquals(1, errors.size)
     }
@@ -74,10 +75,10 @@ class PushTokenRegistryTest {
         assertEquals(listOf("fcm-token-1"), api.removed)
     }
 
-    @Test fun `unregister con entrenador no llama a la API`() = runTest {
+    @Test fun `unregister con entrenador borra su token`() = runTest {
         store.save(authState(role = Role.TRAINER))
         registry.unregister()
-        assertTrue(api.removed.isEmpty())
+        assertEquals(listOf("fcm-token-1"), api.removed)
     }
 
     @Test fun `si FCM no da el token a tiempo no se hace el DELETE`() = runTest {
@@ -92,16 +93,22 @@ class PushTokenRegistryTest {
     @Test fun `alumno que sale y vuelve a entrar registra dos veces`() = runTest {
         val student = Session.Student(authState(role = Role.STUDENT).user)
         store.save(authState(role = Role.STUDENT))
-        registry.registerOnStudentSessions(flowOf(student, Session.LoggedOut, student))
+        registry.registerOnSessions(flowOf(student, Session.LoggedOut, student))
         assertEquals(2, api.registered.size)
     }
 
-    @Test fun `la misma sesion repetida registra una sola vez y un entrenador nunca`() = runTest {
+    @Test fun `la misma sesion repetida registra una sola vez`() = runTest {
         val student = Session.Student(authState(role = Role.STUDENT).user)
-        val trainer = Session.Trainer(authState(role = Role.TRAINER).user)
         store.save(authState(role = Role.STUDENT))
-        registry.registerOnStudentSessions(flowOf(trainer, student, student))
+        registry.registerOnSessions(flowOf(Session.LoggedOut, student, student))
         assertEquals(1, api.registered.size)
+    }
+
+    @Test fun `entrenador que sale y vuelve a entrar registra dos veces`() = runTest {
+        val trainer = Session.Trainer(authState(role = Role.TRAINER).user)
+        store.save(authState(role = Role.TRAINER))
+        registry.registerOnSessions(flowOf(trainer, Session.LoggedOut, trainer))
+        assertEquals(2, api.registered.size)
     }
 
     @Test fun `unregister corta a los 5 segundos si la red no responde`() = runTest {

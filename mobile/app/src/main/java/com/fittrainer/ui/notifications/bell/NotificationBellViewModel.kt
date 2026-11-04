@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fittrainer.data.network.ConnectivityObserver
 import com.fittrainer.data.notifications.NotificationsRepository
-import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.data.session.userId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Campana de Hoy: avisos sin leer. Lee de Room; para que el número aparezca sin abrir la lista, refresca al abrir
+ * Campana de Hoy (alumno) y del Inicio (entrenador, E12): avisos sin leer. Lee de Room; para que el número aparezca sin abrir la lista, refresca al abrir
  * la app (con red y como mucho cada 5 min), sin UI de error. Al volver la red sube las lecturas pendientes.
  */
 @HiltViewModel
@@ -34,7 +34,7 @@ class NotificationBellViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val owner: StateFlow<String?> = sessionRepository.session
-        .map { (it as? Session.Student)?.user?.id }
+        .map { it.userId }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     private var job: Job? = null
@@ -70,7 +70,7 @@ class NotificationBellViewModel @Inject constructor(
 
     /**
      * Cada vez que la app pasa a primer plano. En frío la sesión todavía no salió de DataStore: el dueño se espera
-     * adentro del launch. Si nunca hay alumno el job queda esperando y se cancela con el scope.
+     * adentro del launch. Si nunca hay sesión el job queda esperando y se cancela con el scope.
      */
     fun onAppStart() {
         val last = lastRefreshAt

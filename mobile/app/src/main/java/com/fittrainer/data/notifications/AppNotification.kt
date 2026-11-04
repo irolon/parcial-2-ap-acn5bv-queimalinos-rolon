@@ -2,11 +2,17 @@ package com.fittrainer.data.notifications
 
 import java.time.Instant
 
-/** Tipos de notificación que ve el alumno; los demás del servidor (p. ej. de entrenador) se descartan. */
+/**
+ * Tipos que muestra la app: los del alumno (comment, pr, achievement) y los del entrenador (E12: inactivity,
+ * routine_modified, y también pr y achievement de sus alumnos). El servidor solo manda los del usuario logueado;
+ * los que no están acá (appointment) se descartan.
+ */
 enum class NotificationType(val wire: String) {
     COMMENT("comment"),
     PR("pr"),
     ACHIEVEMENT("achievement"),
+    INACTIVITY("inactivity"),
+    ROUTINE_MODIFIED("routine_modified"),
     ;
 
     companion object {

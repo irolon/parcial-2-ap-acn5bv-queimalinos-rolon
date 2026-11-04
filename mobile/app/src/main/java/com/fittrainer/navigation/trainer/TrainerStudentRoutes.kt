@@ -1,5 +1,7 @@
 package com.fittrainer.navigation.trainer
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,7 +18,9 @@ import com.fittrainer.navigation.trainerStudentEditRoute
 import com.fittrainer.navigation.trainerStudentMetricsRoute
 import com.fittrainer.navigation.trainerStudentSessionRoute
 import com.fittrainer.navigation.trainerStudentSessionsRoute
+import com.fittrainer.ui.challenges.trainer.section.ChallengesSection
 import com.fittrainer.ui.invitations.InviteScreen
+import com.fittrainer.ui.messages.trainer.components.MessageStudentButton
 import com.fittrainer.ui.routines.trainer.section.AssignRoutineAction
 import com.fittrainer.ui.routines.trainer.section.RoutinesSection
 import com.fittrainer.ui.students.detail.StudentDetailScreen
@@ -27,8 +31,9 @@ import com.fittrainer.ui.students.progress.StudentProgressSection
 import com.fittrainer.ui.students.sessions.LatestSessionsSection
 import com.fittrainer.ui.students.sessions.StudentSessionsScreen
 import com.fittrainer.ui.students.sessions.detail.StudentSessionDetailScreen
+import com.fittrainer.ui.theme.Spacing
 
-/** Pantallas que cuelgan de la pestaña Alumnos del entrenador (E2-E6, E8-E9): invitar, ficha, edición y sesiones. */
+/** Pantallas que cuelgan de la pestaña Alumnos del entrenador (E2-E6, E8-E9, E14): invitar, ficha, edición y sesiones. */
 fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
     composable(TRAINER_INVITE_ROUTE) {
         InviteScreen(onBack = { navController.popBackStack() })
@@ -41,8 +46,8 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
             onGone = { navController.popBackStack() },
             onOpenMetrics = { openNew -> navController.navigate(trainerStudentMetricsRoute(id, openNew)) { launchSingleTop = true } },
             extraSections = { _, detail ->
-                item { RoutinesSection(onOpen = { navController.navigate(trainerRoutineRoute(it)) { launchSingleTop = true } }) }
                 item { StudentProgressSection(detail.createdAt) }
+                item { ChallengesSection(canAssign = detail.active) }
                 item {
                     LatestSessionsSection(
                         onOpenAll = { navController.navigate(trainerStudentSessionsRoute(id)) { launchSingleTop = true } },
@@ -50,15 +55,21 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
                     )
                 }
             },
-            headerActions = { offline, detail ->
-                // A un alumno dado de baja no se le crea una rutina nueva (se puede ver y editar la que tiene).
-                if (detail.active) {
-                    AssignRoutineAction(
-                        enabled = !offline,
-                        onNew = { navController.navigate(trainerNewRoutineRoute(id)) { launchSingleTop = true } },
-                        onFromTemplate = { navController.navigate(trainerStudentTemplatesRoute(id)) { launchSingleTop = true } },
-                    )
+            topSections = { offline, detail ->
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        // A un alumno dado de baja no se le crea una rutina nueva (se puede ver y editar la que tiene).
+                        if (detail.active) {
+                            AssignRoutineAction(
+                                enabled = !offline,
+                                onNew = { navController.navigate(trainerNewRoutineRoute(id)) { launchSingleTop = true } },
+                                onFromTemplate = { navController.navigate(trainerStudentTemplatesRoute(id)) { launchSingleTop = true } },
+                            )
+                        }
+                        MessageStudentButton { navController.navigate(trainerStudentChatRoute(id)) { launchSingleTop = true } }
+                    }
                 }
+                item { RoutinesSection(onOpen = { navController.navigate(trainerRoutineRoute(it)) { launchSingleTop = true } }) }
             },
         )
     }

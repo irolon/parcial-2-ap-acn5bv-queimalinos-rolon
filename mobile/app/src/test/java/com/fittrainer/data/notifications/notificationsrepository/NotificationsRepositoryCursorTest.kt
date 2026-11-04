@@ -81,7 +81,7 @@ class NotificationsRepositoryCursorTest {
     @Test fun loadMoreSigueMientrasLaPaginaNoSumaNada() = runTest {
         api.pages = mapOf(
             null to api.page(notificationDto("a", at = at(30)), next = "c1"),
-            "c1" to api.page(notificationDto("i1", "inactivity", at = at(29)), next = "c2"),
+            "c1" to api.page(notificationDto("i1", "appointment", at = at(29)), next = "c2"),
             "c2" to api.page(notificationDto("a", at = at(30)), next = "c3"), // ya guardada: tampoco suma
             "c3" to api.page(notificationDto("b", at = at(27)), next = "c4"),
         )
@@ -95,7 +95,7 @@ class NotificationsRepositoryCursorTest {
     @Test fun loadMoreSinNadaVisibleTerminaCuandoNoHayMas() = runTest {
         api.pages = mapOf(
             null to api.page(notificationDto("a", at = at(30)), next = "c1"),
-            "c1" to api.page(notificationDto("i1", "inactivity", at = at(29))),
+            "c1" to api.page(notificationDto("i1", "appointment", at = at(29))),
         )
         repository.refresh("u1")
         assertEquals(false, repository.loadMore("u1").getOrNull())

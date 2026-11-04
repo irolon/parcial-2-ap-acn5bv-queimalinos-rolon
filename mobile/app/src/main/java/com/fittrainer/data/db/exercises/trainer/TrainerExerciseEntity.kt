@@ -7,7 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
-/** Catálogo del entrenador (E8 lo lee para armar rutinas; E10 suma el alta, la edición y la baja). */
+/** Catálogo del entrenador (E8 lo lee para armar rutinas; E10 da de alta, edita y borra los propios). */
 @Entity(tableName = "trainer_exercises", primaryKeys = ["trainerId", "id"])
 data class TrainerExerciseEntity(
     val trainerId: String,
@@ -28,6 +28,9 @@ abstract class TrainerExercisesDao {
 
     @Upsert
     abstract suspend fun upsert(rows: List<TrainerExerciseEntity>)
+
+    @Query("DELETE FROM trainer_exercises WHERE trainerId = :trainerId AND id = :id")
+    abstract suspend fun delete(trainerId: String, id: String)
 
     @Query("DELETE FROM trainer_exercises WHERE trainerId = :trainerId")
     abstract suspend fun clearOwner(trainerId: String)

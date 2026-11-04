@@ -38,6 +38,7 @@ import com.fittrainer.ui.components.exercise.muscleLabel
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
 import com.fittrainer.ui.routines.trainer.prescription
 import com.fittrainer.ui.students.detail.components.SectionCard
+import com.fittrainer.ui.students.sessions.components.RetryRow
 import com.fittrainer.ui.templates.trainer.ASSIGN_TO_STUDENT
 import com.fittrainer.ui.templates.trainer.TEMPLATE_GONE
 import com.fittrainer.ui.templates.trainer.TEMPLATE_NOT_LOADED
@@ -85,8 +86,10 @@ fun TemplateDetailScreen(onBack: () -> Unit, onAssigned: (String) -> Unit, viewM
             }
         }
         if (state.offline) item { OfflineIndicator(NEEDS_NETWORK) }
+        state.loadError?.let { item { RetryRow(it, viewModel::onRetry) } }
         when {
             !state.loaded -> Unit
+            detail == null && state.loadError != null -> Unit
             detail == null -> item { InfoCard("Sin datos", TEMPLATE_NOT_LOADED) }
             else -> {
                 item {
@@ -109,7 +112,7 @@ fun TemplateDetailScreen(onBack: () -> Unit, onAssigned: (String) -> Unit, viewM
     }
     state.assign?.let { assign ->
         if (assign.pickingStudent) {
-            StudentPickerSheet(state.students, viewModel::onSelectStudent, viewModel::onDismissAssign)
+            StudentPickerSheet(state.students, viewModel::onSelectStudent, viewModel::onDismissPicker)
         } else {
             AssignTemplateSheet(
                 assign, state.offline, viewModel::onPickStudent, viewModel::onNameChange, viewModel::onToggleDay,

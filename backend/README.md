@@ -220,6 +220,8 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 
 **Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno).
 
+**Pendiente para el backend (E12 del celular, 01/11).** El feedback/RPE que deja un alumno al cerrar una sesión no genera ninguna notificación para el PT: hoy solo aparece en `GET /students/overview` (`attention`, sesiones sin comentar). La app del entrenador ya maneja `routine_modified`, `inactivity`, `pr` y `achievement`; si se agrega un tipo para el feedback (por ejemplo `session_feedback` con `student_id` y `session_id`), el celular lo abre en la sesión con un cambio chico. El otro pedido pendiente es **un push a la mañana para el PT** con los alumnos a los que les toca entrenar ese día (por ejemplo, tipo `daily_pending` con `count`, generado por un job como el de inactividad). En el celular, el centro de avisos del entrenador ya muestra esa lista arriba, a partir de `GET /students/overview`; falta solo el push. **Para la web: nada que hacer.**
+
 **Job de inactividad.** `runInactivityAlerts` recorre los alumnos activos y avisa al PT de los que tienen rutina activa y acumulan 3 o más días asignados sin entrenar desde su última sesión cerrada (desde el alta si nunca entrenaron), como máximo una vez cada 7 días por alumno. Corre a las 03:00 ART justo después del job de gamificación, bajo el mismo `CRON_ENABLED`. A mano: `npm run notifications:inactivity`; correrlo de nuevo es seguro (el límite de 7 días evita duplicados).
 
 ### Mensajes — tarjeta 48
@@ -236,6 +238,8 @@ Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat c
 | POST | `/api/messages/:studentId/read` | Marca como leídos los mensajes de la otra parte. 200 `{ data: { updated } }` |
 
 **Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
+
+**Sugerencia para el backend (E11 del celular, 02/11), opcional.** Con la firma best-effort, una foto que no se pudo firmar sale con `image_url: null`. Si el mensaje además tiene texto, no hay forma de distinguirlo de uno de solo texto. El celular guarda los mensajes en Room, así que si eso pasa con una página vieja del chat cargada durante la caída de Storage, la foto no vuelve hasta que se borre el caché. Un campo `has_image` (por ejemplo `Boolean(row.image_path)` en el modelo público) le alcanza al celular para reintentar la firma. Las fotos que ya se veían, y las de solo foto, ya se recuperan sin cambios. **Para la web: nada que hacer.**
 
 ### Agenda — Fase 6
 

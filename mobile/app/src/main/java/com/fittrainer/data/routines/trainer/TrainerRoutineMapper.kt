@@ -49,3 +49,10 @@ fun List<NewRoutineExercise>.toRequestItems() = mapIndexed { index, e ->
 /** Activas primero; dentro de cada grupo, la más nueva primero. */
 fun List<TrainerRoutineSummary>.sortedForSection() =
     sortedWith(compareByDescending<TrainerRoutineSummary> { it.active }.thenByDescending { it.createdAt ?: Instant.EPOCH })
+
+/** Los ejercicios con order_index = posición en [ids]; los que no están en [ids] van después, en su orden. */
+fun List<TrainerRoutineExerciseEntity>.withOrder(ids: List<String>): List<TrainerRoutineExerciseEntity> {
+    val position = ids.withIndex().associate { (i, id) -> id to i }
+    return sortedWith(compareBy({ position[it.id] ?: (ids.size + it.orderIndex) }, { it.orderIndex }))
+        .mapIndexed { index, e -> e.copy(orderIndex = index) }
+}

@@ -10,6 +10,10 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.fittrainer.navigation.trainer.TRAINER_CHALLENGES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_EXERCISES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_TEMPLATES_ROUTE
 import com.fittrainer.ui.routines.detail.ROUTINE_ID_ARG
 
@@ -42,7 +46,11 @@ private fun parentTab(route: String): String? = when {
     route.startsWith("$STUDENT_ROUTINES_ROUTE/") || route == STUDENT_LIBRARY_ROUTE -> STUDENT_ROUTINES_ROUTE
     route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE
     route == TRAINER_TEMPLATES_ROUTE || route.startsWith("$TRAINER_TEMPLATES_ROUTE/") -> TRAINER_MORE_ROUTE
+    route == TRAINER_EXERCISES_ROUTE || route.startsWith("$TRAINER_EXERCISES_ROUTE/") -> TRAINER_MORE_ROUTE
+    route == TRAINER_CHALLENGES_ROUTE || route.startsWith("$TRAINER_CHALLENGES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == NOTIFICATIONS_ROUTE -> STUDENT_TODAY_ROUTE
+    route == TRAINER_NOTIFICATIONS_ROUTE -> TRAINER_HOME_ROUTE
+    route.startsWith("$TRAINER_MESSAGES_ROUTE/") -> TRAINER_MESSAGES_ROUTE
     else -> null
 }
 
@@ -84,6 +92,6 @@ fun trainerStudentMetricsRoute(studentId: String, openNew: Boolean) = "trainer/s
 val TrainerTabs = listOf(
     Tab(TRAINER_HOME_ROUTE, "Inicio", Icons.Filled.Home),
     Tab(TRAINER_STUDENTS_ROUTE, "Alumnos", Icons.Filled.Face),
-    Tab("trainer/messages", "Mensajes", Icons.Filled.Email),
+    Tab(TRAINER_MESSAGES_ROUTE, "Mensajes", Icons.Filled.Email),
     Tab(TRAINER_MORE_ROUTE, "Más", Icons.Filled.Menu, isAccountMenu = true),
 )

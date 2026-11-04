@@ -16,12 +16,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
+import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
+import com.fittrainer.navigation.trainer.trainerChallengeRoutes
+import com.fittrainer.navigation.trainer.trainerChatRoute
+import com.fittrainer.navigation.trainer.trainerExerciseRoutes
 import com.fittrainer.navigation.trainer.trainerMenuLinks
+import com.fittrainer.navigation.trainer.trainerMessageRoutes
+import com.fittrainer.navigation.trainer.trainerNotificationRoutes
 import com.fittrainer.navigation.trainer.trainerRoutineRoutes
 import com.fittrainer.navigation.trainer.trainerStudentRoutes
 import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
 import com.fittrainer.ui.library.LibraryScreen
+import com.fittrainer.ui.messages.trainer.list.ConversationsScreen
 import com.fittrainer.ui.notifications.NotificationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
 import com.fittrainer.ui.placeholder.AccountMenuScreen
@@ -54,12 +62,13 @@ fun RoleShell(
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val stack by navController.currentBackStack.collectAsStateWithLifecycle()
-    val stackRoutes = stack.map { it.destination.route }
+    val stackRoutes = remember(backStack, tabs) {
+        tabBackStack(tabs.map { it.route }, currentRoute) { runCatching { navController.getBackStackEntry(it) }.isSuccess }
+    }
 
     val openRequested by entry.openRequests.collectAsStateWithLifecycle()
     val isStudent = tabs.any { it.route == STUDENT_TODAY_ROUTE }
-    if (isStudent) NotificationLaunchEffect(launches, navController)
+    NotificationLaunchEffect(launches, navController)
     val progressOpen by launches.progressOpen.collectAsStateWithLifecycle()
     LaunchedEffect(openRequested) {
         if (openRequested) {
@@ -95,12 +104,12 @@ fun RoleShell(
     val entryError by entry.error.collectAsStateWithLifecycle()
     entryError?.let { SignOutFailedDialog(it, onDismiss = entry::dismissError) }
 
-    val unread = progressUnread(isStudent)
-    val unreadNotifications = notificationsUnread(isStudent)
+    val badges = tabBadges(isStudent)
+    val unreadNotifications = notificationsUnread()
     val openWorkout: () -> Unit = { navController.navigate(WORKOUT_ROUTE) { launchSingleTop = true } }
     Scaffold(
         bottomBar = {
-            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, stackRoutes, navController, unread)
+            if (currentRoute != WORKOUT_ROUTE) RoleNavigationBar(tabs, stackRoutes, navController, badges)
         },
     ) { padding ->
         NavHost(
@@ -141,8 +150,11 @@ fun RoleShell(
                                 onStudent = { navController.navigate(trainerStudentDetailRoute(it)) { launchSingleTop = true } },
                                 onSession = { s, id -> navController.navigate(trainerStudentSessionRoute(s, id)) { launchSingleTop = true } },
                                 onInvite = { navController.navigate(TRAINER_INVITE_ROUTE) { launchSingleTop = true } },
+                                onNotifications = { navController.navigate(TRAINER_NOTIFICATIONS_ROUTE) { launchSingleTop = true } },
                             ),
+                            unreadNotifications = unreadNotifications,
                         )
+                        tab.route == TRAINER_MESSAGES_ROUTE -> ConversationsScreen(onOpen = { navController.navigate(trainerChatRoute(it)) { launchSingleTop = true } })
                         else -> PlaceholderScreen(tab.label)
                     }
                 }
@@ -166,6 +178,10 @@ fun RoleShell(
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
             trainerTemplateRoutes(navController)
+            trainerExerciseRoutes(navController)
+            trainerChallengeRoutes(navController)
+            trainerNotificationRoutes(navController, launches)
+            trainerMessageRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
                 LibraryScreen(onBack = { navController.popBackStack() })
             }
