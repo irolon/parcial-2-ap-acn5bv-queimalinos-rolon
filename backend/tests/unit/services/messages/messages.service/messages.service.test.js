@@ -121,7 +121,7 @@ describe('send', () => {
       image_path: null,
     });
     expect(mockImagesRepo.uploadImage).not.toHaveBeenCalled();
-    expect(msg).toMatchObject({ sender_role: 'student', image_url: null });
+    expect(msg).toMatchObject({ sender_role: 'student', image_url: null, has_image: false });
   });
 
   it('foto PNG: sube a <studentId>/<uuid>.png con el tipo detectado y devuelve la URL firmada', async () => {
@@ -134,7 +134,7 @@ describe('send', () => {
     expect(mockMessagesRepo.insertMessage).toHaveBeenCalledWith(
       expect.objectContaining({ body: null, image_path: path })
     );
-    expect(msg.image_url).toBe(`https://f/${path}`);
+    expect(msg).toMatchObject({ image_url: `https://f/${path}`, has_image: true });
     expect(JSON.stringify(msg)).not.toContain('image_path');
   });
 
