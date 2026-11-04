@@ -29,6 +29,9 @@ export async function deleteQaData(supabase, trainerIds) {
   for (const table of TABLES_WITHOUT_FK) {
     await run(supabase.from(table).delete().in('user_id', userIds));
   }
+  // Primero los alumnos (cascada a rutinas, routine_exercises, sesiones y series): si se
+  // borra el trainer directo, su cascada a `exercises` choca con la FK de routine_exercises.
+  await run(supabase.from('students').delete().in('trainer_id', confirmed));
   await run(supabase.from('trainers').delete().in('id', confirmed));
   return { trainers: confirmed.length, students: students.length };
 }

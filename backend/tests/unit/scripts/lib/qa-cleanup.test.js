@@ -31,8 +31,20 @@ describe('qa-cleanup — deleteQaData', () => {
       ['notifications', 'delete', [['in', 'user_id', ['t-qa', 's-1', 's-2']]]],
       ['push_tokens', 'delete', [['in', 'user_id', ['t-qa', 's-1', 's-2']]]],
       ['refresh_tokens', 'delete', [['in', 'user_id', ['t-qa', 's-1', 's-2']]]],
+      ['students', 'delete', [['in', 'trainer_id', ['t-qa']]]],
       ['trainers', 'delete', [['in', 'id', ['t-qa']]]],
     ]);
+  });
+
+  // Borrar el trainer de una sola vez choca: la cascada a `exercises` corre antes que la de
+  // students → routines → routine_exercises y la FK (NO ACTION) de routine_exercises corta.
+  it('borra los alumnos antes que el trainer (las rutinas apuntan a sus ejercicios)', async () => {
+    const fake = createFakeSupabase({
+      'trainers:select': { data: [{ id: 't-qa' }], error: null },
+    });
+    await deleteQaData(fake, ['t-qa']);
+    const order = fake.calls.filter((c) => c.op === 'delete').map((c) => c.table);
+    expect(order.slice(-2)).toEqual(['students', 'trainers']);
   });
 
   it('si ningún id es QA no borra nada', async () => {
