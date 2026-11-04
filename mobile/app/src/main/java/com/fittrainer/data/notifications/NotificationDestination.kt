@@ -14,8 +14,13 @@ sealed interface NotificationDestination {
     data class StudentSession(val studentId: String, val sessionId: String) : NotificationDestination
     /** Entrenador (E12): la ficha de un alumno suyo. */
     data class StudentProfile(val studentId: String) : NotificationDestination
+    /** Tarjeta 18: la conversación con [studentId] (el alumno es él mismo; el entrenador, uno de los suyos). */
+    data class Conversation(val studentId: String) : NotificationDestination
     data object NotificationsList : NotificationDestination
 }
+
+/** Push de mensaje nuevo (#70): solo push, nunca está en la lista de avisos. Trae el alumno de la conversación. */
+const val MESSAGE_PUSH_TYPE = "message"
 
 /**
  * Resuelve el destino con el `data` del aviso. Si falta algo o viene roto, abre la lista: nunca crashea.
@@ -30,6 +35,7 @@ fun destinationOf(type: String?, data: Map<String, String>, role: Role = Role.ST
     NotificationType.ACHIEVEMENT.wire -> if (role == Role.TRAINER) studentProfile(data) else null
     NotificationType.ROUTINE_MODIFIED.wire -> studentSession(data)
     NotificationType.INACTIVITY.wire -> studentProfile(data)
+    MESSAGE_PUSH_TYPE -> data.text("student_id")?.let { NotificationDestination.Conversation(it) }
     else -> null
 } ?: NotificationDestination.NotificationsList
 
