@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
+import com.fittrainer.ui.messages.student.badge.StudentMessagesBadgeViewModel
 import com.fittrainer.ui.messages.trainer.badge.MessagesBadgeViewModel
 import com.fittrainer.ui.messages.trainer.unreadDescription
 import com.fittrainer.ui.notifications.bell.NotificationBellViewModel
@@ -43,28 +44,45 @@ fun progressUnread(isStudent: Boolean): Int {
 /** Un globito de pestaña: el número y lo que lee TalkBack. */
 class TabBadge(val count: Int, val description: String)
 
-/** Los globitos del rol: comentarios sin leer en Progreso (alumno) y mensajes sin leer en Mensajes (entrenador, E11). */
+/** Los globitos del rol: comentarios sin leer en Progreso (alumno) y mensajes sin leer en Mensajes (los dos roles: E11 y tarjeta 18). */
 @Composable
 fun tabBadges(isStudent: Boolean): Map<String, TabBadge> {
     val comments = progressUnread(isStudent)
     val messages = messagesUnread(isStudent)
     return buildMap {
         put(STUDENT_PROGRESS_ROUTE, TabBadge(comments, unreadBadgeDescription(comments)))
-        messages?.let { put(TRAINER_MESSAGES_ROUTE, it) }
+        put(if (isStudent) STUDENT_MESSAGES_ROUTE else TRAINER_MESSAGES_ROUTE, messages)
     }
 }
 
-/** Mensajes sin leer del entrenador (E11), con polling mientras la app está en primer plano. Mismo criterio que [progressUnread]. */
+/**
+ * Mensajes sin leer, con polling mientras la app está en primer plano: los de los alumnos para el PT (E11) y los del
+ * PT para el alumno (tarjeta 18). Mismo criterio que [progressUnread]: `isStudent` no cambia en la vida del shell.
+ */
 @Composable
-fun messagesUnread(isStudent: Boolean): TabBadge? {
-    if (isStudent) return null
+fun messagesUnread(isStudent: Boolean): TabBadge {
+    val count = if (isStudent) studentMessagesUnread() else trainerMessagesUnread()
+    return TabBadge(count, unreadDescription(count))
+}
+
+@Composable
+private fun trainerMessagesUnread(): Int {
     val badge: MessagesBadgeViewModel = hiltViewModel()
     LifecycleStartEffect(badge) {
         badge.onForeground()
         onStopOrDispose { badge.onBackground() }
     }
-    val count = badge.unread.collectAsStateWithLifecycle().value
-    return TabBadge(count, unreadDescription(count))
+    return badge.unread.collectAsStateWithLifecycle().value
+}
+
+@Composable
+private fun studentMessagesUnread(): Int {
+    val badge: StudentMessagesBadgeViewModel = hiltViewModel()
+    LifecycleStartEffect(badge) {
+        badge.onForeground()
+        onStopOrDispose { badge.onBackground() }
+    }
+    return badge.unread.collectAsStateWithLifecycle().value
 }
 
 /** Avisos sin leer: la campana de Hoy (alumno) y la del Inicio (entrenador, E12). */
@@ -78,7 +96,7 @@ fun notificationsUnread(): Int {
     return bell.unread.collectAsStateWithLifecycle().value
 }
 
-/** Barra de pestañas del rol. backStack: las rutas de abajo hacia arriba. badges: el globito rojo de cada pestaña que lo lleva (Progreso del alumno, Mensajes del entrenador). */
+/** Barra de pestañas del rol. backStack: las rutas de abajo hacia arriba. badges: el globito rojo de cada pestaña que lo lleva (Progreso del alumno y Mensajes de los dos roles). */
 @Composable
 fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: NavController, badges: Map<String, TabBadge>) {
     val routes = tabs.map { it.route }
@@ -108,7 +126,7 @@ fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: 
                         Icon(tab.icon, contentDescription = null)
                     }
                 },
-                label = { Text(tab.label) },
+                label = { Text(tab.label, maxLines = 1) },
             )
         }
     }

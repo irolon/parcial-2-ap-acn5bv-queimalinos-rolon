@@ -62,6 +62,13 @@ abstract class TrainerMessagesDao {
     @Upsert
     abstract suspend fun upsertThread(thread: TrainerMessageThreadEntity)
 
+    /** Los mensajes de [senderRole] sin leer, creados hasta [upTo], pasan a leídos en [readAt]. */
+    @Query(
+        "UPDATE trainer_messages SET readAt = :readAt WHERE trainerId = :ownerId AND studentId = :studentId " +
+            "AND senderRole = :senderRole AND readAt IS NULL AND createdAt <= :upTo"
+    )
+    abstract suspend fun markIncomingRead(ownerId: String, studentId: String, senderRole: String, readAt: Long, upTo: Long)
+
     @Query("UPDATE trainer_conversations SET unreadCount = 0 WHERE trainerId = :trainerId AND studentId = :studentId")
     abstract suspend fun markConversationRead(trainerId: String, studentId: String)
 

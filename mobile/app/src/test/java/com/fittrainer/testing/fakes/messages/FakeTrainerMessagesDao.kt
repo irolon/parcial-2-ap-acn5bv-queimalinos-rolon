@@ -54,6 +54,10 @@ class FakeTrainerMessagesDao : TrainerMessagesDao() {
     override suspend fun upsertThread(thread: TrainerMessageThreadEntity) =
         threads.update { it + ((thread.trainerId to thread.studentId) to thread) }
 
+    override suspend fun markIncomingRead(ownerId: String, studentId: String, senderRole: String, readAt: Long, upTo: Long) =
+        messages.update { l ->
+            l.map { if (it.of(ownerId, studentId) && it.senderRole == senderRole && it.readAt == null && it.createdAt <= upTo) it.copy(readAt = readAt) else it }
+        }
     override suspend fun markConversationRead(trainerId: String, studentId: String) = conversations.update { l ->
         l.map { if (it.trainerId == trainerId && it.studentId == studentId) it.copy(unreadCount = 0) else it }
     }

@@ -25,6 +25,9 @@ const val STUDENT_TODAY_ROUTE = "student/today"
 const val STUDENT_ROUTINES_ROUTE = "student/routines"
 const val STUDENT_PROGRESS_ROUTE = "student/progress"
 
+/** El chat del alumno con su PT (tarjeta 18): la pestaña es la conversación, no hay lista. */
+const val STUDENT_MESSAGES_ROUTE = "student/messages"
+
 /** Detalle de una sesión del historial (tarjeta 12). */
 const val HISTORY_DETAIL_ROUTE = "student/history/{sessionId}"
 fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
@@ -61,7 +64,9 @@ const val WORKOUT_ROUTE = "student/workout"
 val StudentTabs = listOf(
     Tab(STUDENT_TODAY_ROUTE, "Hoy", Icons.Filled.DateRange),
     Tab(STUDENT_PROGRESS_ROUTE, "Progreso", Icons.Filled.Star),
-    Tab(STUDENT_ROUTINES_ROUTE, "Mis rutinas", Icons.AutoMirrored.Filled.List),
+    // "Rutinas" y no "Mis rutinas": con 5 pestañas (tarjeta 18) el nombre largo se partía en dos líneas. La pantalla sigue diciendo "Mis rutinas".
+    Tab(STUDENT_ROUTINES_ROUTE, "Rutinas", Icons.AutoMirrored.Filled.List),
+    Tab(STUDENT_MESSAGES_ROUTE, "Mensajes", Icons.Filled.Email),
     Tab("student/profile", "Perfil", Icons.Filled.Person, isAccountMenu = true),
 )
 
