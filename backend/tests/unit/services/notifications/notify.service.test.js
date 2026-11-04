@@ -100,6 +100,13 @@ describe('pushOnly', () => {
     expect(mockTokens.deleteTokens).toHaveBeenCalledWith(['b']);
   });
 
+  it('pasa el tag al envío', async () => {
+    mockTokens.findTokensForUser.mockResolvedValue(['a']);
+    mockFcm.sendToToken.mockResolvedValue({ ok: true });
+    await pushOnly({ userId: 'u-1', userRole: 'student', title: 'T', tag: 'message:u-1' });
+    expect(mockFcm.sendToToken).toHaveBeenCalledWith('a', expect.objectContaining({ tag: 'message:u-1' }));
+  });
+
   it('sin FCM no hace nada y un fallo no lanza', async () => {
     mockFcm.isFcmEnabled.mockReturnValue(false);
     await pushOnly({ userId: 'u-1', title: 'T' });

@@ -23,7 +23,7 @@ describe('onMessageSent', () => {
     expect(mockAuthRepo.findTrainerById).toHaveBeenCalledWith('tr-1');
     expect(mockNotify.pushOnly).toHaveBeenCalledWith({
       userId: 'st-1', userRole: 'student', title: 'Carla', body: 'hola',
-      data: { type: 'message', student_id: 'st-1' },
+      data: { type: 'message', student_id: 'st-1' }, tag: 'message:st-1',
     });
   });
 
@@ -32,7 +32,7 @@ describe('onMessageSent', () => {
     expect(mockAuthRepo.findTrainerById).not.toHaveBeenCalled();
     expect(mockNotify.pushOnly).toHaveBeenCalledWith({
       userId: 'tr-1', userRole: 'trainer', title: 'Lucía', body: 'listo',
-      data: { type: 'message', student_id: 'st-1' },
+      data: { type: 'message', student_id: 'st-1' }, tag: 'message:st-1',
     });
   });
 
@@ -73,8 +73,8 @@ describe('onBroadcastSent', () => {
     expect(mockAuthRepo.findTrainerById).toHaveBeenCalledTimes(1);
     const data = (id) => ({ type: 'message', student_id: id });
     expect(mockNotify.pushOnly.mock.calls.map(([c]) => c)).toEqual([
-      { userId: 'a', userRole: 'student', title: 'Carla', body: 'feriado', data: data('a') },
-      { userId: 'b', userRole: 'student', title: 'Carla', body: 'feriado', data: data('b') },
+      { userId: 'a', userRole: 'student', title: 'Carla', body: 'feriado', data: data('a'), tag: 'message:a' },
+      { userId: 'b', userRole: 'student', title: 'Carla', body: 'feriado', data: data('b'), tag: 'message:b' },
     ]);
   });
 

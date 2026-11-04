@@ -21,7 +21,10 @@ const trainerName = async (trainerId) => (await authRepo.findTrainerById(trainer
 /** Push sin fila al alumno de la conversación (o a su PT): `data` lleva el tipo y el alumno. */
 function pushMessage({ userId, userRole, studentId, senderName, body, hasImage }) {
   const { title, body: text } = texts.message({ senderName, body, hasImage });
-  return pushOnly({ userId, userRole, title, body: text, data: { type: TYPE, student_id: studentId } });
+  // Un aviso por conversación en la bandeja: el mensaje nuevo pisa al anterior del mismo alumno.
+  return pushOnly({
+    userId, userRole, title, body: text, data: { type: TYPE, student_id: studentId }, tag: `message:${studentId}`,
+  });
 }
 
 /**
