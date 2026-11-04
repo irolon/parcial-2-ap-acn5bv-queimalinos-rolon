@@ -18,7 +18,8 @@
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"scripts/**/*.js\"",
     "gamification:daily": "node scripts/gamification-daily.js",
     "notifications:inactivity": "node scripts/notifications-inactivity.js",
-    "db:check-anon": "node src/database/checks/check-anon-access.js"
+    "db:check-anon": "node src/database/checks/check-anon-access.js",
+    "test:integration:clean": "node scripts/integration-clean.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
