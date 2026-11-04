@@ -117,4 +117,16 @@ where not exists (
 
 union all
 select 'falta la función session_records(uuid, uuid[])'
-where to_regprocedure('public.session_records(uuid, uuid[])') is null;
+where to_regprocedure('public.session_records(uuid, uuid[])') is null
+
+union all
+select 'session_records debería ignorar el peso corporal (falta 2026-11-02-progress-bodyweight.sql)'
+from pg_proc
+where oid = to_regprocedure('public.session_records(uuid, uuid[])')
+  and prosrc not like '%actual_kg > 0%'
+
+union all
+select 'exercise_progress debería devolver max_kg null en peso corporal (falta 2026-11-02-progress-bodyweight.sql)'
+from pg_proc
+where oid = to_regprocedure('public.exercise_progress(uuid, uuid, date, date)')
+  and prosrc not like '%nullif(max(ss.actual_kg), 0)%';

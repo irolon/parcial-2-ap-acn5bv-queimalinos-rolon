@@ -770,7 +770,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 - `duration_min`: minutos enteros entre `started_at` y `finished_at`; `null` si la sesión no se cerró.
 - `routine`: `null` si la sesión no tiene rutina o se borró.
 - `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
-- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
+- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos, y con kg mayor a 0: el peso corporal no cuenta) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio con carga no cuenta (aunque antes lo haya hecho solo con peso corporal).
 - `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
 - **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
 
@@ -871,7 +871,7 @@ Curva de carga de un ejercicio: un punto por día con series que cuentan (`compl
 }
 ```
 
-- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
+- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg mayor a 0: un día solo de peso corporal trae `null`, no 0); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
 - `pr`: mayor `max_kg` y mayor `e1rm_kg` del rango, con su fecha (la primera en alcanzarse); `null` cada uno si no hay valores. Sin series: `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
 - `default_metric`: métrica que los clientes grafican por defecto, en escalones: `e1rm_kg` si algún punto lo tiene mayor a 0; si no, `max_kg` si algún punto tiene `max_kg > 0` (ejercicios con peso hechos siempre con más de 12 repeticiones); si no, `reps` (peso corporal, como dominadas o flexiones, con `actual_kg` nulo o 0). Sin puntos: `e1rm_kg`.
 - Una serie sustituida cuenta para el ejercicio realmente hecho, no para el original.
