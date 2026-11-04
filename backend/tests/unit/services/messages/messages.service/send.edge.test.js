@@ -26,7 +26,7 @@ describe('send: firma posterior al insert (best-effort)', () => {
     const log = jest.spyOn(console, 'error').mockImplementation(() => {});
     const msg = await service.send(TRAINER, STUDENT_ID, { body: 'hola', file: { buffer: PNG } });
     expect(mockMessagesRepo.insertMessage).toHaveBeenCalledTimes(1);
-    expect(msg).toMatchObject({ body: 'hola', image_url: null });
+    expect(msg).toMatchObject({ body: 'hola', image_url: null, has_image: true });
     expect(mockImagesRepo.removeImage).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalled();
     log.mockRestore();

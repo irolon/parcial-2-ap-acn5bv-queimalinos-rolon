@@ -1260,13 +1260,15 @@ Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Un
   "sender_role": "trainer",
   "body": "¡Buen entrenamiento hoy!",
   "image_url": "https://…/message-images/…?token=…",
+  "has_image": true,
   "broadcast_id": null,
   "read_at": null,
   "created_at": "2026-10-31T14:05:00.123456+00:00"
 }
 ```
 
-- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`. Si los dos vienen en `null` es un mensaje de solo foto cuya URL no se pudo firmar (ver abajo): la web muestra "Foto no disponible".
+- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`.
+- `has_image` es `true` si el mensaje tiene foto, aunque su URL no se haya podido firmar (ver abajo). `has_image: true` con `image_url: null` es una foto sin firmar: la web muestra "Foto no disponible" (con o sin texto) y el celular, que cachea los mensajes, sabe que tiene que volver a pedir el historial para firmarla.
 - `image_url` es una URL firmada que vence a la hora (3600 s); el `image_path` del bucket nunca sale. Si hace falta, se vuelve a pedir el historial para obtener una nueva.
 - La firma es best-effort: si Storage falla al firmar, la respuesta igual sale bien (200 en el historial, 201 en el envío) con `image_url: null` en las fotos afectadas, y el error se registra en el servidor. El próximo pedido del historial las vuelve a firmar.
 - `broadcast_id` lo comparten los mensajes de un mismo envío masivo; `null` si es un mensaje normal.
@@ -1349,7 +1351,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 
 ```json
 {
-  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
+  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "has_image": false, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
   "meta": { "next_before": "2026-10-31T14:00:00.000000+00:00" },
   "counterpart": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null }
 }
@@ -1358,7 +1360,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 - `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
 - `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
 - `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
-- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y no responde 500.
+- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y `has_image: true`, y no responde 500.
 
 **Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.
 
@@ -1378,7 +1380,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 **201 Created** con el mensaje creado:
 
 ```json
-{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
+{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "has_image": true, "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
 ```
 
 **Errores**
@@ -1394,7 +1396,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 
 > Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
 >
-> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
+> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` y `has_image: true` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
 
 ### POST /messages/:studentId/read
 
