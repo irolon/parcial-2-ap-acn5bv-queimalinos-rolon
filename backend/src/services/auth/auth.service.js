@@ -9,6 +9,7 @@ import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/auth/auth.repository.js';
 import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
 import { toTrainer } from '../../models/auth/trainer.model.js';
 import { toStudent } from '../../models/students/student.model.js';
 import { isActive } from '../../models/auth/refresh-token.model.js';
@@ -86,7 +87,24 @@ export async function refresh({ refresh_token }) {
   return { token, expires_in: env.JWT_EXPIRES_IN };
 }
 
-/** Revoca un refresh token (logout). Idempotente. */
-export async function logout({ refresh_token }) {
-  await repository.revokeRefreshToken(hashToken(refresh_token));
+/**
+ * Revoca un refresh token (logout). Idempotente. Con push_token, además borra
+ * ese token de push si es del dueño del refresh (vigente o ya revocado, para
+ * que el celular pueda reintentar). Sin dueño no se borra nada.
+ */
+export async function logout({ refresh_token, push_token }) {
+  const tokenHash = hashToken(refresh_token);
+  await repository.revokeRefreshToken(tokenHash);
+  if (push_token) await removePushToken(tokenHash, push_token);
+}
+
+/** Best-effort: un error acá se loguea y no hace fallar el logout. */
+async function removePushToken(tokenHash, pushToken) {
+  try {
+    const owner = await repository.findRefreshTokenOwner(tokenHash);
+    if (!owner) return;
+    await pushTokensRepo.deleteTokenForUser({ id: owner.user_id, role: owner.role }, pushToken);
+  } catch (err) {
+    console.error('[auth] logout: no se pudo borrar el push token', err.message);
+  }
 }

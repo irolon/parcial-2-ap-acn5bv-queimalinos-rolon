@@ -13,6 +13,7 @@ export const mockRepo = {
   findRefreshToken: jest.fn(),
   revokeRefreshToken: jest.fn(),
   revokeAllForUser: jest.fn(),
+  findRefreshTokenOwner: jest.fn(),
 };
 jest.unstable_mockModule(src('repositories/auth/auth.repository.js'), () => mockRepo);
 
@@ -24,6 +25,13 @@ export const mockStudentsRepo = {
 jest.unstable_mockModule(
   src('repositories/students/students.repository.js'),
   () => mockStudentsRepo
+);
+
+// El logout borra el push token del dueño del refresh.
+export const mockPushTokensRepo = { deleteTokenForUser: jest.fn() };
+jest.unstable_mockModule(
+  src('repositories/notifications/push-tokens.repository.js'),
+  () => mockPushTokensRepo
 );
 
 export const authService = await import(src('services/auth/auth.service.js'));
