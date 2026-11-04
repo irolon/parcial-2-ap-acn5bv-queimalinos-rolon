@@ -3,6 +3,9 @@ import { getBodyProgress, getExerciseProgress, getOverview } from '@/api/progres
 
 export const PROGRESS_KEY = ['progress'];
 
+/** Clave del progreso corporal de un alumno: la comparten `useBodyProgress` y las mutaciones de medidas. */
+export const bodyProgressKey = (studentId) => [...PROGRESS_KEY, 'body', studentId];
+
 export function useProgressOverview(studentId, range) {
   return useQuery({
     queryKey: [...PROGRESS_KEY, 'overview', studentId, range?.from ?? null, range?.to ?? null],
@@ -23,7 +26,7 @@ export function useExerciseProgress(exerciseId, studentId, range) {
 
 export function useBodyProgress(studentId) {
   return useQuery({
-    queryKey: [...PROGRESS_KEY, 'body', studentId],
+    queryKey: bodyProgressKey(studentId),
     queryFn: () => getBodyProgress(studentId),
     enabled: Boolean(studentId),
   });
