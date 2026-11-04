@@ -24,6 +24,11 @@ describe('routine.model · dayName', () => {
     const lunesTempranoUTC = new Date('2026-08-24T01:30:00Z');
     expect(dayName(lunesTempranoUTC)).toBe('sunday');
   });
+
+  it('frontera de medianoche: 23:59 AR (02:59Z) todavía es el día argentino', () => {
+    expect(dayName(new Date('2026-08-24T02:59:00Z'))).toBe('sunday');
+    expect(dayName(new Date('2026-08-24T03:00:00Z'))).toBe('monday');
+  });
 });
 
 describe('routine.model · toStudentRoutines', () => {

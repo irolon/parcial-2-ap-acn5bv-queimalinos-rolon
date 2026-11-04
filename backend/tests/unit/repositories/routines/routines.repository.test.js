@@ -4,13 +4,21 @@ import { fileURLToPath } from 'node:url';
 // Rutas absolutas: el mock tiene que resolver al MISMO archivo que importa el repositorio.
 const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
 
-const query = { select: jest.fn(), eq: jest.fn(), order: jest.fn() };
-query.select.mockReturnValue(query);
-query.eq.mockReturnValue(query);
+const query = {
+  select: jest.fn(),
+  eq: jest.fn(),
+  order: jest.fn(),
+  contains: jest.fn(),
+  limit: jest.fn(),
+  maybeSingle: jest.fn(),
+};
+for (const method of ['select', 'eq', 'contains', 'limit']) query[method].mockReturnValue(query);
 const supabase = { from: jest.fn(() => query) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
-const { findRoutinesByTrainer } = await import(src('repositories/routines/routines.repository.js'));
+const { findRoutinesByTrainer, findActiveRoutineForStudentToday } = await import(
+  src('repositories/routines/routines.repository.js')
+);
 const { ROUTINE_COLUMNS } = await import(src('models/routines/routine.model.js'));
 
 describe('routines.repository · findRoutinesByTrainer', () => {
@@ -39,6 +47,34 @@ describe('routines.repository · findRoutinesByTrainer', () => {
   it('un error de la base es 500', async () => {
     query.order.mockResolvedValue({ data: null, error: { message: 'boom' } });
     await expect(findRoutinesByTrainer({ trainerId: 't-1' })).rejects.toEqual(
+      expect.objectContaining({ statusCode: 500 })
+    );
+  });
+});
+
+describe('routines.repository · findActiveRoutineForStudentToday', () => {
+  beforeEach(() => {
+    for (const method of ['eq', 'contains', 'order', 'limit']) query[method].mockClear();
+    query.order.mockReturnValue(query);
+  });
+
+  it('rutina activa del alumno que incluye el día; con dos, la más reciente', async () => {
+    const latest = { id: 'rt-new', days: ['monday'] };
+    query.maybeSingle.mockResolvedValue({ data: latest, error: null });
+
+    await expect(findActiveRoutineForStudentToday('st-1', 'monday')).resolves.toBe(latest);
+
+    expect(supabase.from).toHaveBeenCalledWith('routines');
+    expect(query.eq).toHaveBeenCalledWith('student_id', 'st-1');
+    expect(query.eq).toHaveBeenCalledWith('active', true);
+    expect(query.contains).toHaveBeenCalledWith('days', ['monday']);
+    expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(query.limit).toHaveBeenCalledWith(1);
+  });
+
+  it('un error de la base es 500', async () => {
+    query.maybeSingle.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    await expect(findActiveRoutineForStudentToday('st-1', 'monday')).rejects.toEqual(
       expect.objectContaining({ statusCode: 500 })
     );
   });
