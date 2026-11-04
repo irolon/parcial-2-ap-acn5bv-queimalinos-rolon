@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { msUntilNextRun, startScheduler } from '../../../../src/shared/utils/scheduler.js';
+import { msUntilNextRun, startScheduler } from '../../../../../src/shared/utils/async/scheduler.js';
 
 const HOUR = 60 * 60 * 1000;
 

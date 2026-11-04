@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as progressService from '../../services/progress/progress.service.js';
 
 /** GET /progress/exercise/:exerciseId — 200 → { data } */

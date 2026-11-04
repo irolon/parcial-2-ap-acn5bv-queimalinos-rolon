@@ -56,7 +56,7 @@ Los disparadores nunca rompen la operación que los origina (try/catch + log).
 - `routine_modified` (PT): "{alumno} modificó su rutina" / "En la sesión del {dd/mm} sustituyó {original} por {nuevo}" (varias: "…sustituyó {n} ejercicios").
 - `pr` alumno: "¡Nuevo récord en {ejercicio}!" (varios: "¡{n} récords nuevos!") / "Sesión del {dd/mm}". PT: "{alumno} hizo un récord en {ejercicio}" (varios: "{alumno} hizo {n} récords").
 - `achievement` alumno: "¡Logro desbloqueado: {nombre}!" / descripción. Push resumen con varios: "Desbloqueaste {n} logros" / nombres separados por coma. PT: "{alumno} desbloqueó {nombre}".
-- `comment` (alumno): "Tu entrenador comentó tu sesión del {dd/mm}" / primeros 120 caracteres del comentario.
+- `comment` (alumno): "Tu entrenador comentó tu sesión del {dd/mm}" / el comentario, recortado a 120 caracteres en total (119 + "…", por puntos de código).
 - Título ≤ 150 caracteres (se recorta).
 
 ## 4. Endpoints

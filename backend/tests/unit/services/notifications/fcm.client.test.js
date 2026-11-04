@@ -99,6 +99,14 @@ describe('sendToToken', () => {
     });
   });
 
+  it('con tag, lo manda como android.notification.tag (agrupa en la bandeja)', async () => {
+    global.fetch.mockResolvedValueOnce(tokenReply()).mockResolvedValueOnce(reply(200));
+    await fcm.sendToToken('tok', { ...MSG, tag: 'message:st-1' });
+    expect(JSON.parse(global.fetch.mock.calls[1][1].body).message.android).toEqual({
+      priority: 'high', notification: { tag: 'message:st-1' },
+    });
+  });
+
   it('respeta validateOnly', async () => {
     global.fetch.mockResolvedValueOnce(tokenReply()).mockResolvedValueOnce(reply(200));
     await fcm.sendToToken('tok', MSG, { validateOnly: true });

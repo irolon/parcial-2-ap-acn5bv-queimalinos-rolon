@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as service from '../../services/messages/messages.service.js';
 import * as broadcastService from '../../services/messages/broadcast.service.js';
 import { listConversations } from '../../services/messages/conversations.service.js';
