@@ -47,8 +47,8 @@ class FitTrainerMessagingService : FirebaseMessagingService() {
         if (!notificationsAllowed(this)) return
         val title = message.notification?.title ?: message.data["title"] ?: return
         val body = message.notification?.body ?: message.data["body"]
-        val key = pushTag(message.data) { fallbackCodes.incrementAndGet().toString() }
-        val code = key.hashCode()
+        val slot = pushSlot(message.data) { fallbackCodes.incrementAndGet().toString() }
+        val code = slot.tag.hashCode()
         val notification = NotificationCompat.Builder(this, PushChannel.ID)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle(title)
@@ -58,7 +58,7 @@ class FitTrainerMessagingService : FirebaseMessagingService() {
             .build()
         // El permiso ya se chequeó arriba; el lint no lo ve a través de la función.
         @Suppress("MissingPermission")
-        NotificationManagerCompat.from(this).notify("push:$key", PUSH_NOTIFICATION_ID, notification)
+        NotificationManagerCompat.from(this).notify(slot.tag, slot.id, notification)
     }
 
     private fun tapIntent(context: Context, data: Map<String, String>, code: Int): PendingIntent {
@@ -72,8 +72,5 @@ class FitTrainerMessagingService : FirebaseMessagingService() {
     private companion object {
         // Sin notification_id (resumen de logros) cada push necesita su propio request code.
         val fallbackCodes = AtomicInteger(2000)
-
-        // Fijo y distinto de los de WorkoutNotifications (1001, 1002); lo que distingue cada push es el tag.
-        const val PUSH_NOTIFICATION_ID = 3001
     }
 }

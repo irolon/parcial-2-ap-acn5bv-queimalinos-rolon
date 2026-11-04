@@ -12,7 +12,7 @@ import retrofit2.http.Query
 
 /**
  * Mensajes del entrenador (E11, backend de la tarjeta 48). Conversación ajena o inexistente → 403
- * FORBIDDEN; alumno dado de baja al enviar → 409 STUDENT_INACTIVE. Sin push: la app hace polling. Historial,
+ * FORBIDDEN; alumno dado de baja al enviar → 409 STUDENT_INACTIVE. Polling y, desde la #70, push de mensaje nuevo. Historial,
  * envío y leído son los mismos endpoints para el alumno (tarjeta 18), con su propio id.
  */
 interface TrainerMessagesApi {

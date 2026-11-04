@@ -12,6 +12,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -69,10 +70,21 @@ class PushTokenRegistryTest {
         assertEquals(1, errors.size)
     }
 
-    @Test fun `unregister borra el token actual del alumno`() = runTest {
+    @Test fun `unregister borra el token actual del alumno y lo devuelve`() = runTest {
         store.save(authState(role = Role.STUDENT))
-        registry.unregister()
+        assertEquals("fcm-token-1", registry.unregister())
         assertEquals(listOf("fcm-token-1"), api.removed)
+    }
+
+    // #72: el logout lo manda igual, y ese sí se reintenta sin red.
+    @Test fun `si el DELETE falla igual devuelve el token`() = runTest {
+        store.save(authState(role = Role.STUDENT))
+        api.failTokens = IOException("sin red")
+        assertEquals("fcm-token-1", registry.unregister())
+    }
+
+    @Test fun `sin sesion unregister no devuelve token`() = runTest {
+        assertNull(registry.unregister())
     }
 
     @Test fun `unregister con entrenador borra su token`() = runTest {

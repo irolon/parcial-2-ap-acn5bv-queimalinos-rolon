@@ -25,7 +25,7 @@ const val BADGE_POLL_MS = 15_000L
 
 /**
  * El globito de la pestaña Mensajes (E11): la suma de no leídos de Room. Con la app en primer plano
- * refresca la lista cada 15 s (no hay push de mensajes); un refresco fallido deja lo guardado.
+ * refresca la lista cada 15 s, además del push de mensaje (#70); un refresco fallido deja lo guardado.
  */
 @HiltViewModel
 class MessagesBadgeViewModel @Inject constructor(

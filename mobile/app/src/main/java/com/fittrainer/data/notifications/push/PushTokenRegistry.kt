@@ -32,6 +32,20 @@ class PushTokenRegistry @Inject constructor(
         ownerId()?.let { register(it, source.token()) }
     }
 
+    /**
+     * Como [registerIfSignedIn], pero dice si quedó bien: true si se registró o no hay sesión (nada que restaurar),
+     * false si falló. Lo usa el reintento del logout para no dar por restaurado un alta que no llegó.
+     */
+    suspend fun registerCurrent(): Boolean {
+        var ok = false
+        safely("No se pudo registrar el token de push") {
+            val owner = ownerId()
+            if (owner != null) register(owner, source.token())
+            ok = true
+        }
+        return ok
+    }
+
     /** FCM rotó el token: se registra el nuevo (si hay alguien logueado). */
     suspend fun onNewToken(token: String) = safely("No se pudo registrar el token nuevo de push") {
         ownerId()?.let { register(it, token) }
@@ -41,18 +55,26 @@ class PushTokenRegistry @Inject constructor(
      * Baja del token del dispositivo. Va ANTES de borrar el JWT (la request lo necesita). Cada paso tiene
      * su propio tope corto: leer el token (2 s) y el DELETE (5 s); si no hay red, el logout no se queda
      * esperando. Si el token no se pudo leer, no hay nada que borrar.
+     *
+     * Devuelve el token leído (null si no había sesión o FCM no lo dio), aunque el DELETE haya fallado: el
+     * logout lo manda también, y ese sí se reintenta sin red (#72).
      */
-    suspend fun unregister() = safely("No se pudo dar de baja el token de push") {
-        val owner = ownerId() ?: return@safely
-        val token = withTimeoutOrNull(TOKEN_READ_TIMEOUT_MS) { source.token() }
-        if (token == null) {
-            logger.failed("No se pudo dar de baja el token de push", IllegalStateException("FCM no dio el token a tiempo"))
-            return@safely
+    suspend fun unregister(): String? {
+        var read: String? = null
+        safely("No se pudo dar de baja el token de push") {
+            val owner = ownerId() ?: return@safely
+            val token = withTimeoutOrNull(TOKEN_READ_TIMEOUT_MS) { source.token() }
+            if (token == null) {
+                logger.failed("No se pudo dar de baja el token de push", IllegalStateException("FCM no dio el token a tiempo"))
+                return@safely
+            }
+            read = token
+            val done = withTimeoutOrNull(UNREGISTER_TIMEOUT_MS) { api.removeToken(RequiredUser(owner), token) }
+            if (done == null) {
+                logger.failed("No se pudo dar de baja el token de push", IllegalStateException("El DELETE no respondió a tiempo"))
+            }
         }
-        val done = withTimeoutOrNull(UNREGISTER_TIMEOUT_MS) { api.removeToken(RequiredUser(owner), token) }
-        if (done == null) {
-            logger.failed("No se pudo dar de baja el token de push", IllegalStateException("El DELETE no respondió a tiempo"))
-        }
+        return read
     }
 
     /**

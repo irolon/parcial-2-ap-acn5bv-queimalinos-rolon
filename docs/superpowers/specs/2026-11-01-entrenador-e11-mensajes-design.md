@@ -8,7 +8,7 @@ tarjeta: E11
 - **Fecha:** 2026-11-01.
 - **Rama:** `feature/android-entrenador-mensajes`, apilada sobre `feature/android-entrenador-notificaciones` (E12, PR #67), con `origin/feature/messaging` (#47, aprobada y todavía sin mergear) mergeada. Cuando la #47 entre a develop, el diff se achica solo.
 - **Diseño:** prototipo `EM_Mensajes` (`docs/design/prototype-src/ent-mobile.jsx`): cabecera con avatar y nombre, burbujas (alumno a la izquierda en gris; PT a la derecha en azul, con hora y ✓✓), separador de día y caja de texto redonda con botón de enviar. "EN LÍNEA" no aplica: no hay presencia.
-- **API:** la de la #47 (`docs/arquitectura/contratos-api.md` § Mensajes): `GET /messages/conversations`, `GET /messages/:studentId` (paginado hacia atrás con `before`), `POST /messages/:studentId`, `POST /messages/:studentId/read`, `POST /messages/broadcast`. Sin push: se actualiza por polling, como la web (4 s con el chat abierto, 15 s para la lista y el globito).
+- **API:** la de la #47 (`docs/arquitectura/contratos-api.md` § Mensajes): `GET /messages/conversations`, `GET /messages/:studentId` (paginado hacia atrás con `before`), `POST /messages/:studentId`, `POST /messages/:studentId/read`, `POST /messages/broadcast`. Se actualiza por polling, como la web (4 s con el chat abierto, 15 s para la lista y el globito). Desde la #70 también llega un push por mensaje nuevo (ver el spec de la tarjeta 18).
 
 > **Cómo quedó (01/11):**
 > - **E2E en el emulador** con el backend local y Supabase dev, que ya tiene la tabla `messages` y el bucket:
