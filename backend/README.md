@@ -241,6 +241,10 @@ Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat c
 
 **Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
 
+**Sugerencia para el backend (E11 del celular, 02/11), opcional.** Con la firma best-effort, una foto que no se pudo firmar sale con `image_url: null`. Si el mensaje además tiene texto, no hay forma de distinguirlo de uno de solo texto. El celular guarda los mensajes en Room, así que si eso pasa con una página vieja del chat cargada durante la caída de Storage, la foto no vuelve hasta que se borre el caché. Un campo `has_image` (por ejemplo `Boolean(row.image_path)` en el modelo público) le alcanza al celular para reintentar la firma. Las fotos que ya se veían, y las de solo foto, ya se recuperan sin cambios. **Para la web: nada que hacer.**
+
+**Push de mensajes en el celular (tarjeta 18, 02/11).** El celular ya abre el chat al tocar el push `message` de la #70: el alumno va a su pestaña Mensajes y el PT, al chat del `student_id`. Con la app en primer plano, además, refresca el chat en Room y los mensajes de una misma conversación se pisan en una sola notificación. **Pedido chico para el backend:** el push sale con `notification` + `data`, así que con la app en segundo plano lo muestra Android sin pasar por la app y cada mensaje queda como un aviso aparte. Si `fcm.client` suma `android.notification.tag = "message:<student_id>"` para el tipo `message`, Android también los agrupa en segundo plano. El refresco en segundo plano necesitaría un push solo `data`, que cambia el contrato de todos los tipos, así que no lo pido: al abrir la app, el chat y los globitos se actualizan solos. **Para la web: nada que hacer.**
+
 ### Autenticación
 
 - **Access token:** JWT firmado con `JWT_SECRET` (`{ sub, role, email }`), expira según `JWT_EXPIRES_IN`.

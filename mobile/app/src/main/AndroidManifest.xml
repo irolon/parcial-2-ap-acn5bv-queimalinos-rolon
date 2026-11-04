@@ -73,6 +73,17 @@
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_workout" />
 
+        <!-- Fotos de la cámara para el chat (tarjeta 18): la cámara del sistema escribe en la caché de la app. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.photos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/photo_paths" />
+        </provider>
+
         <!-- WorkManager se configura en FitTrainerApp (HiltWorkerFactory): sin su inicializador por defecto. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
