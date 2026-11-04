@@ -36,12 +36,25 @@ describe('sessionBody: POST /sessions con los campos y el orden de CreateSession
 });
 
 describe('setBody: una serie como SessionSetDto del celular', () => {
-  it('los ocho campos en orden, sin sustitución', () => {
+  it('los nueve campos en orden, sin sustitución; sin descanso cerrado, rest_seconds null', () => {
     const [set] = withSets(freshWorkout(), [[0, 62.5, 8]]).sets;
     expect(JSON.stringify(setBody(set))).toBe(
       '{"id":"set-1","exercise_id":"e-1","original_exercise_id":null,"routine_exercise_id":"re-1",'
-        + '"set_number":1,"actual_reps":8,"actual_kg":62.5,"executed_at":"2026-11-01T13:01:00.000Z"}',
+        + '"set_number":1,"actual_reps":8,"actual_kg":62.5,"executed_at":"2026-11-01T13:01:00.000Z",'
+        + '"rest_seconds":null}',
     );
+  });
+
+  it('manda el descanso real de la serie (la siguiente, un minuto después, lo cerró a los 60 s)', () => {
+    const [first, second] = withSets(freshWorkout(), [[0, 60, 10], [0, 60, 10]]).sets;
+    expect(setBody(first).rest_seconds).toBe(60);
+    expect(setBody(second).rest_seconds).toBeNull();
+  });
+
+  it('una serie guardada en localStorage antes del campo sigue subiendo, con rest_seconds null', () => {
+    const { restSeconds, ...old } = { ...finishedWorkout(1).sets[0], restSeconds: undefined };
+    expect(restSeconds).toBeUndefined();
+    expect(setBody(old)).toMatchObject({ id: 'set-001', rest_seconds: null });
   });
 
   it('una serie sin peso (peso corporal) va con actual_kg 0, como el celular', () => {

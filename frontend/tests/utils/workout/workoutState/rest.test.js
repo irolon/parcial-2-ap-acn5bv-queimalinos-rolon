@@ -63,7 +63,6 @@ describe('adjustRest', () => {
     const state = resting();
     expect(adjustRest(state, 15, at(120)).restTotalSeconds).toBe(105);
     expect(adjustRest(state, -15, at(120)).restTotalSeconds).toBe(75);
-    expect(adjustRest(state, 15, at(500)).restTotalSeconds).toBe(105);
     expect(adjustRest(adjustRest(state, -60, at(60)), -60, at(60)).restTotalSeconds).toBe(0);
   });
 
@@ -73,8 +72,10 @@ describe('adjustRest', () => {
     expect(restRemaining(adjusted, at(140))).toBe(0);
   });
 
-  it('+15 sobre un descanso ya cumplido vuelve a contar 15 s desde ahora', () => {
-    expect(adjustRest(resting(), 15, at(500)).restEndsAt).toBe(isoAt(515));
+  it('sobre un descanso ya cumplido no cambia nada: moverle el fin inflaría el real', () => {
+    const state = resting();
+    expect(adjustRest(state, 15, at(500))).toBe(state);
+    expect(adjustRest(state, -15, at(150))).toBe(state);
   });
 
   it('sin descanso en curso, o con un ajuste que no es número, no cambia nada', () => {
