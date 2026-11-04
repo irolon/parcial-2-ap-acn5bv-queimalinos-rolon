@@ -22,11 +22,12 @@ import okio.Buffer
 /** Un mensaje del servidor; [minute] arma el created_at (2026-11-01T12:mm). */
 fun messageDto(
     id: String, minute: Int, fromTrainer: Boolean = false, student: String = "s1", read: Boolean = false,
-    broadcast: String? = null, image: String? = null, body: String? = "Mensaje $id",
+    broadcast: String? = null, image: String? = null, body: String? = "Mensaje $id", hasImage: Boolean? = null,
 ) =
     MessageDto(
         id, student, if (fromTrainer) "trainer" else "student", body, image, broadcast,
         if (read) "2026-11-01T13:00:00.000000+00:00" else null, "2026-11-01T12:%02d:00.000000+00:00".format(minute),
+        hasImage,
     )
 
 fun conversationDto(id: String, name: String, unread: Int = 0, last: String? = "Hola") = ConversationDto(

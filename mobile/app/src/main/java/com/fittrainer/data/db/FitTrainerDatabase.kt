@@ -113,7 +113,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         TrainerMessageEntity::class,
         TrainerMessageThreadEntity::class,
     ],
-    version = 21,
+    version = 22,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -138,6 +138,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 18, to = 19),
         AutoMigration(from = 19, to = 20),
         AutoMigration(from = 20, to = 21),
+        // v22: has_image en los mensajes (#73), columna con default 0.
+        AutoMigration(from = 21, to = 22),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {

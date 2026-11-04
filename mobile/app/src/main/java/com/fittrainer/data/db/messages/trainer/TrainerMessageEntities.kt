@@ -1,5 +1,6 @@
 package com.fittrainer.data.db.messages.trainer
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
@@ -27,7 +28,8 @@ data class TrainerConversationsSyncEntity(
 
 /**
  * Un mensaje de una conversación. readAt: cuándo lo leyó el otro lado (null = sin leer). fetchedAt: cuándo
- * se bajó la fila, o sea, cuándo se firmó imageUrl (vence a la hora).
+ * se bajó la fila, o sea, cuándo se firmó imageUrl (vence a la hora). hasImage (v22, #73): tiene foto aunque
+ * imageUrl sea null porque la firma falló; las filas de antes de la v22 quedan en false hasta el próximo refresco.
  */
 @Entity(
     tableName = "trainer_messages",
@@ -45,6 +47,7 @@ data class TrainerMessageEntity(
     val readAt: Long?,
     val createdAt: Long,
     val fetchedAt: Long,
+    @ColumnInfo(defaultValue = "0") val hasImage: Boolean = false,
 )
 
 /** Estado de un chat: el nombre del alumno y el cursor de la página anterior (null = no hay más). Sin fila = nunca se bajó. */

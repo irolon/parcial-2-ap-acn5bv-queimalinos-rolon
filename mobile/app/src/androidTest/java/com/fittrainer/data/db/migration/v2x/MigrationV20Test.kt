@@ -1,4 +1,4 @@
-package com.fittrainer.data.db.migration
+package com.fittrainer.data.db.migration.v2x
 
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4

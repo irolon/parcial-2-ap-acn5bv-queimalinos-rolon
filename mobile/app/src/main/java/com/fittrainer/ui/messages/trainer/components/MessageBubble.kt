@@ -61,11 +61,12 @@ fun MessageBubble(message: Message, zone: ZoneId, mine: Boolean = message.fromTr
                         modifier = Modifier.widthIn(max = 240.dp).heightIn(max = 240.dp).clip(RoundedCornerShape(12.dp)),
                     )
                 }
-                message.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = FtColors.TextPrimary) }
-                // Solo foto y sin URL: el backend no la pudo firmar; vuelve en el próximo refresco.
-                if (message.body == null && message.imageUrl == null) {
+                // Tiene foto pero sin URL: el backend no la pudo firmar; vuelve en el próximo refresco. Va donde iría la
+                // foto, arriba del texto, como en la web (#73).
+                if (message.hasImage && message.imageUrl == null) {
                     Text(PHOTO_UNAVAILABLE, style = MaterialTheme.typography.bodyMedium, color = FtColors.TextSecondary)
                 }
+                message.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = FtColors.TextPrimary) }
             }
             Text(
                 bubbleTime(message.at, zone) + if (mine && message.read) " · ✓✓" else "",
