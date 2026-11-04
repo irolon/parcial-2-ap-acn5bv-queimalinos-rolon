@@ -16,6 +16,14 @@ import { Errors } from '../../../../src/shared/utils/errors.js';
 beforeEach(resetMocks);
 
 describe('listForStudent', () => {
+  it('alumno ajeno → 403 sin consultar sus desafíos', async () => {
+    mockAccess.assertCanAccessStudent.mockRejectedValue(Errors.forbidden());
+    await expect(assignments.listForStudent(TRAINER, 'st-9')).rejects.toMatchObject({
+      statusCode: 403,
+    });
+    expect(sc.findByStudent).not.toHaveBeenCalled();
+  });
+
   it('devuelve la forma pública con progress_pct', async () => {
     sc.findByStudent.mockResolvedValue([assignmentRow()]);
     const [item] = await assignments.listForStudent(TRAINER, 'st-1');
