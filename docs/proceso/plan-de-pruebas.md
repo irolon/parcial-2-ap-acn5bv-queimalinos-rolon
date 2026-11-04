@@ -61,8 +61,8 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | ID | Unidad | Caso | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
 | UT-01 | `register` (`hashPassword`) | Registro de un trainer | Guarda el hash, nunca la contraseña plana | ✅ | `services/auth/auth.service/register-login.test.js` · 03/11 |
-| UT-02 | `authenticate` (`verifyAccessToken`) | JWT válido | `req.user = { id, role, email }` | ⚠️ | Sin test unitario del middleware; lo ejercita cada llamada autenticada de la integración (§3.2) |
-| UT-03 | `authenticate` | JWT expirado o sin token | 401 `UNAUTHORIZED` | ⚠️ | Sin token → 401 en `routes/messages/messages.routes/messages.http.test.js` · 03/11; el expirado no tiene test |
+| UT-02 | `authenticate` (`verifyAccessToken`) | JWT válido | `req.user = { id, role, email }` | ✅ | `shared/middlewares/auth.middleware.test.js` · 04/11 |
+| UT-03 | `authenticate` | JWT expirado o sin token | 401 `UNAUTHORIZED` | ✅ | `shared/middlewares/auth.middleware.test.js` (expirado, otra firma y sin Bearer) · 04/11 |
 | UT-04 | `login` / `refresh` | Contraseña incorrecta, refresh expirado, cuenta dada de baja | `INVALID_CREDENTIALS` / rechazo / `ACCOUNT_DISABLED` | ✅ | `services/auth/auth.service/register-login.test.js`, `refresh-logout.test.js`, `account-disabled.test.js` · 03/11 |
 | UT-05 | `createInvitation` (`buildWhatsappShareUrl`) | Canal `both` con teléfono | `https://wa.me/<phone>?text=<encoded>` | ✅ | `services/invitations/invitations.service.test.js` · 03/11 |
 | UT-06 | `createInvitation` (`toQrDataUrl`) | Canal `qr` | `qr_base64` presente, sin link de WhatsApp | ✅ | `services/invitations/invitations.service.test.js` · 03/11 |
@@ -72,7 +72,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 
 | ID | Unidad | Caso | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| UT-08 | validación de ejercicios | Objeto sin nombre | Error de validación | ⚠️ | `validations/exercises/exercises.validation.test.js` cubre los campos opcionales; el nombre faltante no tiene test |
+| UT-08 | validación de ejercicios | Objeto sin nombre | Error de validación | ✅ | `validations/exercises/exercises.validation.test.js` (sin `name`, vacío, en blanco, `null`, 1 y 121 caracteres) · 04/11 |
 | UT-09 | `summarizeSets` | Series de una sesión | Cantidad de series y volumen (reps × kg) | ✅ | `models/sessions/session-history.model.test.js` · 03/11 |
 | UT-10 | `toProgressPoints` | Historial de series | Un punto por día argentino; e1RM Epley solo hasta 12 reps; peso corporal sin `max_kg` | ✅ | `models/progress/progress.model.test.js` · 03/11 |
 | UT-11 | `computePr` | Serie nueva + historial | Récord solo si supera el previo (la primera vez no cuenta) | ✅ | `models/progress/progress.model.test.js` · 03/11 |
@@ -127,12 +127,12 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | ID | Endpoint | Método | Descripción | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|---|
 | IT-01 | `/api/auth/register` | POST | Registro con datos válidos | 201 + token JWT | ✅ | `flow.int.test.js` · 04/11 |
-| IT-02 | `/api/auth/register` | POST | Email ya registrado | 409 `EMAIL_ALREADY_EXISTS` | ⚠️ | Sin test (el mapeo `23505` → 409 está en `auth.repository.js`) |
+| IT-02 | `/api/auth/register` | POST | Email ya registrado | 409 `EMAIL_ALREADY_EXISTS` | ✅ | `rejections.int.test.js` (mismo email y en mayúsculas; no crea otra cuenta) · 04/11 |
 | IT-03 | `/api/auth/login` | POST | Credenciales correctas | 200 + token JWT | ✅ | `flow.int.test.js` · 04/11 |
 | IT-04 | `/api/auth/login` | POST | Contraseña incorrecta | 401 | ✅ | Unitario `services/auth/auth.service/register-login.test.js` · 03/11 |
 | IT-05 | `/api/invitations` | POST | Crear invitación canal QR | 201 + `qr_base64` | ✅ | `flow.int.test.js` · 04/11 |
 | IT-06 | `/api/invitations` | POST | Crear invitación canal WhatsApp | 201 + `whatsapp_share_url` | ✅ | Unitario `services/invitations/invitations.service.test.js` · 03/11 |
-| IT-07 | `/api/invitations` | POST | Canal `both` sin teléfono | 400 `VALIDATION_ERROR` | ⚠️ | Sin test |
+| IT-07 | `/api/invitations` | POST | Canal `both` sin teléfono | 400 `VALIDATION_ERROR` | ✅ | `rejections.int.test.js` (sin teléfono, vacío y con menos de 8 dígitos; no guarda la invitación) · 04/11 |
 | IT-08 | `/api/invitations/:token` | GET | Token válido | 200 + datos precargados | ✅ | `flow.int.test.js` · 04/11 |
 | IT-09 | `/api/invitations/:token` | GET | Token expirado | 410 `INVITATION_EXPIRED` | ✅ | Unitario `services/invitations/invitations.service.test.js` · 03/11 |
 | IT-10 | `/api/students` | GET | Trainer autenticado | 200 + lista de alumnos | ✅ | `smoke.int.test.js`, `isolation/lists.int.test.js` · 04/11 |
@@ -279,6 +279,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 04/11/2026 | `435780f` | `sets-idempotency` | ✅ 5/5 | 26,4 s | 0 |
 | 04/11/2026 | `d25d75f` | `progress` | ✅ 7/7 | 27,2 s | 0 |
 | 04/11/2026 | `a9bb46c` | Suite completa (8 archivos) | ✅ 164/164 | 186 s | 0 |
+| 04/11/2026 | `cd437ba` | Suite completa (9 archivos, suma `rejections`) | ✅ 168/168 | 193 s | 0 |
 
 Fechas en UTC (en Argentina fue la noche del 03/11). Al cerrar la tarjeta 52 se suma la corrida final sobre la rama combinada con `develop`.
 
@@ -292,7 +293,6 @@ Fechas en UTC (en Argentina fue la noche del 03/11). Al cerrar la tarjeta 52 se 
 | Lote de series | `POST /sessions/:id/sets` no es transaccional: si un `update` falla a mitad, responde 500 y lo ya insertado queda guardado. El reintento del mismo lote completa sin duplicar. | `services/sessions/persist-sets.test.js`, `session-sets.service/partial-failure.test.js`. |
 | Turnos (#49) | `GET /appointments` no está paginado: trae todo el rango `from`/`to` pedido. | Sin test de volumen (tarjeta 24). |
 | Aislamiento de la agenda | Disponibilidad y turnos (filas 106–113) se prueban cuando entre la #49. | IT-35 ⚠️. |
-| Huecos | Sin test del JWT expirado (UT-03), del ejercicio sin nombre (UT-08), del email duplicado (IT-02) ni del canal `both` sin teléfono (IT-07). | ⚠️ en las tablas. |
 
 ---
 
