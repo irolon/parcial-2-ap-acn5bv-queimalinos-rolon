@@ -2,8 +2,13 @@ import { createApp } from '../../../src/app.js';
 
 // Levanta un Express real en un puerto libre (supertest no está en devDependencies) y le pega con fetch.
 // startServer(options) pasa las opciones a createApp (por ejemplo, límites bajos para el rate limiting).
-export async function startServer(options) {
-  const server = createApp(options).listen(0, '127.0.0.1');
+export function startServer(options) {
+  return listen(createApp(options));
+}
+
+/** Igual que startServer, pero con una app de Express armada por el test. */
+export async function listen(app) {
+  const server = app.listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   return {

@@ -61,10 +61,15 @@ for (const [field, key, fallback] of RATE_LIMIT_VARS) {
 }
 
 // trust proxy: cantidad de saltos de proxy (en el VPS detrás de nginx, 1). Sin definir, apagado.
+// En producción es obligatoria: sin ella, detrás de nginx todos los clientes comparten la IP del
+// proxy y el rate limiting los cuenta juntos. "0" explícito = sin proxy.
 const rawTrustProxy = process.env.TRUST_PROXY?.trim();
 const trustProxy = rawTrustProxy ? Number(rawTrustProxy) : undefined;
 if (trustProxy !== undefined && (!Number.isInteger(trustProxy) || trustProxy < 0)) {
   errors.push('TRUST_PROXY debe ser un entero mayor o igual a 0 (cantidad de saltos de proxy)');
+}
+if (trustProxy === undefined && defaults.NODE_ENV === 'production') {
+  errors.push('Falta la variable de entorno TRUST_PROXY (obligatoria en producción; 0 si no hay proxy)');
 }
 
 const port = Number.parseInt(defaults.PORT, 10);

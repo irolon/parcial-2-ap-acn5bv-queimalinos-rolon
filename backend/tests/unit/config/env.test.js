@@ -96,3 +96,36 @@ describe('env.RATE_LIMITS y TRUST_PROXY', () => {
   });
 });
 
+describe('TRUST_PROXY en producción', () => {
+  const run = async (vars) => {
+    const exit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const env = await loadEnv({ NODE_ENV: 'production', ...PROD, ...vars });
+    const result = { env, exit: exit.mock.calls, log: log.mock.calls.flat().join(' ') };
+    exit.mockRestore();
+    log.mockRestore();
+    return result;
+  };
+
+  it('sin definir corta el arranque', async () => {
+    const { exit, log } = await run({ TRUST_PROXY: undefined });
+    expect(exit).toEqual([[1]]);
+    expect(log).toContain('TRUST_PROXY');
+  });
+
+  it('vacía cuenta como sin definir', async () => {
+    const { exit } = await run({ TRUST_PROXY: '  ' });
+    expect(exit).toEqual([[1]]);
+  });
+
+  it('"0" explícito (sin proxy) es válido', async () => {
+    const { env, exit } = await run({ TRUST_PROXY: '0' });
+    expect(exit).toEqual([]);
+    expect(env.TRUST_PROXY).toBe(0);
+  });
+
+  it('fuera de producción no es obligatoria', async () => {
+    const { exit } = await run({ NODE_ENV: 'development', TRUST_PROXY: undefined });
+    expect(exit).toEqual([]);
+  });
+});
