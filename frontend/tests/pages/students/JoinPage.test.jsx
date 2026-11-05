@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 import { stubStudentHome } from '../../helpers/student/home';
+import { user } from '../../helpers/shared/user';
 
 const TOKEN = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b';
 const INVITATION = {
@@ -31,7 +31,6 @@ afterEach(() => {
 });
 
 async function fill(password, confirm = password) {
-  const user = userEvent.setup();
   await user.type(await screen.findByLabelText('Contraseña'), password);
   await user.type(screen.getByLabelText('Repetí la contraseña'), confirm);
   await user.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
@@ -78,7 +77,6 @@ describe('JoinPage', () => {
     renderRoute(`/join?token=${TOKEN}`);
     await fill('Secreta123', 'Otra12345');
     expect(await screen.findByText('Las contraseñas no coinciden')).toBeInTheDocument();
-    const user = userEvent.setup();
     await user.clear(screen.getByLabelText('Contraseña'));
     await user.type(screen.getByLabelText('Contraseña'), 'corta');
     await user.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
@@ -128,7 +126,7 @@ describe('JoinPage', () => {
     renderRoute(`/join?token=${TOKEN}`);
     const retry = await screen.findByRole('button', { name: 'Reintentar' });
     fail = false;
-    await userEvent.setup().click(retry);
+    await user.click(retry);
     expect(await screen.findByText('Laura Pereyra')).toBeInTheDocument();
   });
 
@@ -140,7 +138,7 @@ describe('JoinPage', () => {
     expect(pathname()).toBe('/join');
     expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument();
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Cerrar sesión y aceptar la invitación' }));
+    await user.click(screen.getByRole('button', { name: 'Cerrar sesión y aceptar la invitación' }));
     expect(await screen.findByLabelText('Contraseña')).toBeInTheDocument();
     expect(screen.getByText('Tomás Ruiz')).toBeInTheDocument();
     expect(useAuthStore.getState().user).toBeNull();

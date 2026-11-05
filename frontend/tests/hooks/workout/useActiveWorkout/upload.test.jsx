@@ -10,7 +10,6 @@ import {
   STUDENT, renderActiveWorkout, stubUpload, train, uploadNow,
 } from '../../../helpers/workout/activeWorkout';
 import { at, isoAt } from '../../../helpers/workout/workout';
-import { todayRoutine } from '../../../helpers/routines/studentRoutines';
 
 const sessionPosts = (fetchMock) => calls(fetchMock).filter(([path]) => path === '/sessions');
 
@@ -33,10 +32,7 @@ describe('useActiveWorkout: upload', () => {
     vi.setSystemTime(at(0));
     const fetchMock = stubUpload();
     const view = renderActiveWorkout();
-    act(() => { view.result.current.start(todayRoutine()); });
-    act(() => { view.result.current.register(62.5, 10); });
-    vi.setSystemTime(at(90));
-    act(() => { view.result.current.register(null, 12); });
+    train(view, { betweenSets: () => vi.setSystemTime(at(90)) });
     act(() => { view.result.current.finish(); });
     const invalidate = vi.spyOn(view.client, 'invalidateQueries');
     const result = await uploadNow(view);

@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
  */
 export const setupUser = (options = {}) => userEvent.setup({ delay: null, ...options });
 
-const METHODS = ['click', 'dblClick', 'clear', 'keyboard', 'paste', 'selectOptions', 'tab', 'type', 'upload'];
+const METHODS = ['click', 'dblClick', 'clear', 'keyboard', 'paste', 'selectOptions', 'tab', 'type'];
 
 /** Como la API directa de `userEvent` (cada llamada arranca de cero), pero sin la pausa: ver `setupUser`. */
 export const user = Object.fromEntries(METHODS.map((method) => [method, (...args) => setupUser()[method](...args)]));
