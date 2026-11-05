@@ -13,7 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.agenda.AppointmentStatus
-import com.fittrainer.ui.agenda.trainer.statusLabel
+import com.fittrainer.ui.agenda.statusColor
+import com.fittrainer.ui.agenda.statusLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 

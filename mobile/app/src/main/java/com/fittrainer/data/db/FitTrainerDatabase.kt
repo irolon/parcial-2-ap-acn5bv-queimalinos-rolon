@@ -8,6 +8,11 @@ import com.fittrainer.data.db.agenda.TrainerAgendaWeekEntity
 import com.fittrainer.data.db.agenda.TrainerAppointmentEntity
 import com.fittrainer.data.db.agenda.TrainerAvailabilityEntity
 import com.fittrainer.data.db.agenda.TrainerAvailabilitySyncEntity
+import com.fittrainer.data.db.agenda.student.StudentAgendaDao
+import com.fittrainer.data.db.agenda.student.StudentAppointmentEntity
+import com.fittrainer.data.db.agenda.student.StudentAppointmentsSyncEntity
+import com.fittrainer.data.db.agenda.student.StudentFreeSlotEntity
+import com.fittrainer.data.db.agenda.student.StudentFreeSlotsSyncEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengeEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengesDao
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengesSyncEntity
@@ -121,8 +126,12 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         TrainerAgendaWeekEntity::class,
         TrainerAvailabilityEntity::class,
         TrainerAvailabilitySyncEntity::class,
+        StudentAppointmentEntity::class,
+        StudentAppointmentsSyncEntity::class,
+        StudentFreeSlotEntity::class,
+        StudentFreeSlotsSyncEntity::class,
     ],
-    version = 23,
+    version = 24,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -151,6 +160,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 21, to = 22),
         // v23: agenda del entrenador (E13), cuatro tablas nuevas.
         AutoMigration(from = 22, to = 23),
+        // v24: turnos del alumno (tarjeta 16), cuatro tablas nuevas.
+        AutoMigration(from = 23, to = 24),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -173,4 +184,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun trainerChallengesDao(): TrainerChallengesDao
     abstract fun trainerMessagesDao(): TrainerMessagesDao
     abstract fun trainerAgendaDao(): TrainerAgendaDao
+    abstract fun studentAgendaDao(): StudentAgendaDao
 }

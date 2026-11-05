@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.student.studentAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerChallengeRoutes
 import com.fittrainer.navigation.trainer.trainerExerciseRoutes
@@ -126,6 +127,7 @@ fun RoleShell(
             composable(ROUTINE_DETAIL_ROUTE) {
                 RoutineDetailScreen(onBack = { navController.popBackStack() }, onOpenWorkout = openWorkout)
             }
+            studentAgendaRoutes(navController)
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
             trainerTemplateRoutes(navController)

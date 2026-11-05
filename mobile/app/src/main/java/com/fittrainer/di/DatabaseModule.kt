@@ -6,6 +6,7 @@ import androidx.room.Room
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.agenda.TrainerAgendaDao
+import com.fittrainer.data.db.agenda.student.StudentAgendaDao
 import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.messages.trainer.TrainerMessagesDao
@@ -108,6 +109,9 @@ object DatabaseModule {
 
     @Provides
     fun provideTrainerAgendaDao(db: FitTrainerDatabase): TrainerAgendaDao = db.trainerAgendaDao()
+
+    @Provides
+    fun provideStudentAgendaDao(db: FitTrainerDatabase): StudentAgendaDao = db.studentAgendaDao()
 
     @Provides
     @Singleton

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.navigation.student.STUDENT_APPOINTMENTS_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_AGENDA_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_CHAT_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
@@ -67,6 +68,12 @@ fun navSteps(nav: PendingNav, currentRoute: String?, currentStudentId: String? =
         currentRoute == TRAINER_AGENDA_ROUTE -> emptyList()
         nav.fromList -> listOf(NavStep.Push(TRAINER_AGENDA_ROUTE))
         else -> listOf(NavStep.Tab(TRAINER_MORE_ROUTE), NavStep.Push(TRAINER_AGENDA_ROUTE))
+    }
+    // Tarjeta 16, igual que la agenda del PT: desde un push Perfil → Mis turnos; ya abierta, se queda.
+    NavTarget.StudentAppointments -> when {
+        currentRoute == STUDENT_APPOINTMENTS_ROUTE -> emptyList()
+        nav.fromList -> listOf(NavStep.Push(STUDENT_APPOINTMENTS_ROUTE))
+        else -> listOf(NavStep.Tab(STUDENT_PROFILE_ROUTE), NavStep.Push(STUDENT_APPOINTMENTS_ROUTE))
     }
     NavTarget.None -> emptyList()
 }

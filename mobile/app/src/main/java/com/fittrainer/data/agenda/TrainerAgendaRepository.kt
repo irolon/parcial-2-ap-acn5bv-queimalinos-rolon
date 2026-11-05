@@ -3,6 +3,7 @@ package com.fittrainer.data.agenda
 import com.fittrainer.data.api.agenda.AgendaApi
 import com.fittrainer.data.api.agenda.UpdateAppointmentRequest
 import com.fittrainer.data.api.errorEnvelope
+import com.fittrainer.data.auth.RequiredUser
 import com.fittrainer.data.db.agenda.TrainerAgendaDao
 import com.fittrainer.data.db.agenda.TrainerAgendaWeekEntity
 import com.fittrainer.data.db.agenda.TrainerAvailabilitySyncEntity
@@ -56,13 +57,13 @@ class TrainerAgendaRepository @Inject constructor(
 
     /** Un solo GET de lunes a domingo; reemplaza en Room solo los turnos de esa semana. */
     suspend fun refreshWeek(trainerId: String, weekStart: LocalDate): Result<Unit> = call(trainerId, null) { save ->
-        val rows = api.appointments(weekStart.toString(), weekEnd(weekStart).toString()).data.map { it.toEntity(trainerId) }
+        val rows = api.appointments(RequiredUser(trainerId), weekStart.toString(), weekEnd(weekStart).toString()).data.map { it.toEntity(trainerId) }
         val bounds = weekBounds(weekStart)
         save { dao.replaceWeek(TrainerAgendaWeekEntity(trainerId, weekStart.toString(), clock.millis()), bounds.from, bounds.to, rows) }
     }
 
     suspend fun refreshAvailability(trainerId: String): Result<Unit> = call(trainerId, null) { save ->
-        val rows = api.availability().data.map { it.toEntity(trainerId) }
+        val rows = api.availability(RequiredUser(trainerId)).data.map { it.toEntity(trainerId) }
         save { dao.replaceAvailability(TrainerAvailabilitySyncEntity(trainerId, clock.millis()), rows) }
     }
 
@@ -72,7 +73,7 @@ class TrainerAgendaRepository @Inject constructor(
      */
     suspend fun updateStatus(trainerId: String, appointmentId: String, status: AppointmentStatus): Result<Unit> =
         call(trainerId, appointmentId) { save ->
-            val updated = api.updateStatus(appointmentId, UpdateAppointmentRequest(status.wire)).data
+            val updated = api.updateStatus(RequiredUser(trainerId), appointmentId, UpdateAppointmentRequest(status.wire)).data
             save { dao.upsertAppointments(listOf(updated.toEntity(trainerId))) }
         }
 

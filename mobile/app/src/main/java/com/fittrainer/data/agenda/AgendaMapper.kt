@@ -11,11 +11,12 @@ import java.time.format.DateTimeParseException
 /** El nombre que muestra la web cuando el alumno no tiene (studentName de status.js). */
 const val STUDENT_FALLBACK_NAME = "Alumno"
 
-private fun millis(iso: String): Long = OffsetDateTime.parse(iso).toInstant().toEpochMilli()
+/** Un ISO con zona → epoch millis. */
+internal fun isoMillis(iso: String): Long = OffsetDateTime.parse(iso).toInstant().toEpochMilli()
 
 /** created_at solo sirve de referencia: si falta o no se puede leer queda en 0, sin perder el turno. */
-private fun createdMillis(iso: String?): Long = try {
-    iso?.let(::millis) ?: 0L
+internal fun createdMillis(iso: String?): Long = try {
+    iso?.let(::isoMillis) ?: 0L
 } catch (e: DateTimeParseException) {
     0L
 }
@@ -25,7 +26,7 @@ private fun hourOf(time: String): Int = time.substringBefore(':').toInt()
 
 fun AppointmentDto.toEntity(trainerId: String) = TrainerAppointmentEntity(
     trainerId, id, student.id, student.name?.takeIf { it.isNotBlank() } ?: STUDENT_FALLBACK_NAME, student.avatarUrl,
-    millis(scheduledAt), status, notes, createdMillis(createdAt),
+    isoMillis(scheduledAt), status, notes, createdMillis(createdAt),
 )
 
 fun AvailabilitySlotDto.toEntity(trainerId: String) = TrainerAvailabilityEntity(trainerId, weekday, hourOf(startTime), hourOf(endTime))

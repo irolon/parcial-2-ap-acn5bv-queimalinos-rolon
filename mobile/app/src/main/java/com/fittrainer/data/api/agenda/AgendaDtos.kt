@@ -41,6 +41,23 @@ data class AppointmentDto(
     @SerialName("created_at") val createdAt: String? = null,
 )
 
-/** status: confirmed | cancelled (el PT no reabre ni reconfirma). */
+/** status: confirmed | cancelled (nadie reabre un cancelado; el alumno solo cancela). */
 @Serializable
 data class UpdateAppointmentRequest(val status: String)
+
+@Serializable
+data class FreeSlotsResponse(val data: List<FreeSlotDto> = emptyList())
+
+/** Un horario libre: starts_at en ISO UTC; dura 60 min. */
+@Serializable
+data class FreeSlotDto(@SerialName("starts_at") val startsAt: String)
+
+/**
+ * El pedido del alumno. scheduled_at: ISO con zona ("2026-11-06T18:00:00-03:00"). notes null no viaja: el Json de
+ * la app no codifica los valores por defecto (encodeDefaults = false).
+ */
+@Serializable
+data class CreateAppointmentRequest(
+    @SerialName("scheduled_at") val scheduledAt: String,
+    val notes: String? = null,
+)
