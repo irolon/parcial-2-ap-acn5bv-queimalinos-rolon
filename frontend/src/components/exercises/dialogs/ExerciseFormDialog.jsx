@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
@@ -30,12 +30,14 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
   const update = useUpdateExercise();
   const editing = Boolean(exercise);
   const saving = create.isPending || update.isPending;
+  // `isPending` llega en el render siguiente: un segundo submit antes de ese render mandaría otro POST.
+  const sending = useRef(false);
   const defaults = formDefaults(exercise);
   const { fields } = errors;
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (saving) return;
+    if (saving || sending.current) return;
     const built = buildExerciseBody(new FormData(event.currentTarget));
     // Editar manda solo lo que cambió: un dato viejo sin tocar no bloquea ni se reescribe.
     const body = editing ? changedFields(built, initialBody(exercise)) : built;
@@ -49,11 +51,14 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
       return;
     }
     setErrors(NO_FIELD_ERRORS);
+    sending.current = true;
     try {
       await (editing ? update.mutateAsync({ id: exercise.id, body }) : create.mutateAsync(body));
       onClose();
     } catch (error) {
       setErrors(toExerciseErrors(error));
+    } finally {
+      sending.current = false;
     }
   }
 
