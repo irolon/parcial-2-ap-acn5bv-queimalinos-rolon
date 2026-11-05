@@ -198,3 +198,7 @@ Se ejecutan automáticamente (CI) antes de cada merge a `main`. Incluyen todos l
 | Tests E2E Android (modo offline incluido) | Pablo | Semana 13-14 |
 | Pruebas de usabilidad | Ambos | Semana 14 |
 | Corrección de bugs | Ambos | Semana 15 |
+
+---
+
+**Seguridad y carga:** la auditoría de seguridad (aislamiento, RLS, secretos, headers, rate limiting, validación, dependencias y errores) y la prueba de carga con k6 están en [`auditoria-seguridad.md`](auditoria-seguridad.md) (tarjeta 54).
