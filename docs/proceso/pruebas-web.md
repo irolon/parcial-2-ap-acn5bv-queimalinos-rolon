@@ -40,6 +40,7 @@ Severidad: **crítico** (pérdida de datos, flujo crítico que no se puede termi
 | B4 | Ficha del alumno (PT) | Los avisos de progreso le hablan al PT como si fuera el alumno: "vas a ver **tu** progresión acá". | Un texto neutro, que sirva para los dos. | Menor | Arreglado (`ce22069`) |
 | B5 | Detalle de sesión | Los kilos salen con punto ("22.5 kg") y el resto de la web usa coma ("47,5 kg"). | "22,5 kg". | Menor | Arreglado (`ce22069`) |
 | B6 | Cualquier pantalla del alumno o del PT | Recargar con el backend caído manda al login, aunque la sesión sigue guardada (es a propósito: `restore()` pasa a `anonymous` sin red, `useAuthStore.js`). No se pierde nada: con la red de vuelta, recargar restaura todo, incluida la sesión de entrenamiento. | Un estado "Sin conexión, reintentando" en vez del login. | Menor | Documentado (más de 30 min: estado nuevo en los guards de ruta) |
+| B7 | Formularios y confirmaciones (ejercicio, nuevo turno, cargar y borrar medida, borrar desafío, guardar como plantilla) | Un doble click rápido en el botón manda dos requests: el guard mira `isPending`, que llega recién en el render siguiente. Lo destapó la estabilización de los tests (sección 5). | Un solo request. | Menor | Arreglado (`119b0db`, `77f668f`) |
 
 ## 4. Arreglos
 
@@ -51,6 +52,7 @@ Cada arreglo con su test primero (falla sin el cambio) y verificado después en 
 | B3 | Estado vacío de las alertas: "Nadie lleva más de 7 días sin entrenar". | `DashboardPage.test.jsx`: con un alumno recién creado que nunca entrenó, no aparece "Todos tus alumnos entrenaron". | Dashboard de Martina (Pedro nunca entrenó). |
 | B4 | "aparece la progresión acá" / "aparece el volumen semanal acá" en vez de "vas a ver tu…". | `ProgressPanel/panel.test.jsx`, `WeeklyVolumeCard.test.jsx` (texto completo). | Ficha de Lucía como PT. |
 | B5 | El detalle de sesión formatea los kilos con `kgText` (es-AR), el real y el del plan. | `SessionDetail.test.jsx`: 27.5 → "27,5 kg", plan "/ 22,5 kg", ningún "x.y kg". | Detalle de la sesión de Lucía: "22,5 kg". |
+| B7 | Hook `useSubmitLock` (`src/hooks/shared/`): un ref sincrónico que deja pasar una sola corrida a la vez, en los seis diálogos. `AssignRoutineDialog` ya tenía el suyo. | Un test "un doble click en … manda un solo …" por diálogo, con `userEvent` sin pausa: fallaban todos salvo guardar como plantilla, que se salvaba de casualidad por un render de la validación. Más 5 tests del hook. | Tests (la carrera depende de microsegundos). |
 
 **Para el futuro (no se hace en esta tarjeta):**
 - **B6:** un estado `offline` en `useAuthStore` que los guards de ruta muestren como "Sin conexión, reintentando" (con un reintento de `restore()` al volver la red) en vez de mandar al login.
@@ -75,7 +77,7 @@ Criterio de la spec: un test es inestable si falla alguna vez en 3 corridas con 
 | `RoutineEditorPage/assign` y `save-template` | `userEvent` con `delay: 0` espera un `setTimeout(0)` en cada paso, que en Windows son ~15,6 ms: un clic costaba ~100 ms y armar una rutina pasaba los 5 s con la suite en paralelo. | `tests/helpers/shared/user.js`, `userEvent` sin pausa, en el editor, la biblioteca, invitar alumno y mensajes: el test largo baja de 2,2 s a 0,86 s (`39178b8`). |
 | `ProgressPanel/panel`, `StudentsPage/list` | El primer render en un worker nuevo tarda ~3 veces más (JIT en frío) y lo pagaba el primer test del archivo, que con shuffle podía ser cualquiera. | `tests/helpers/shared/warmUp.js` monta la pantalla una vez en `beforeAll`; sale el `timeout: 4000` que lo tapaba (`39178b8`). |
 
-Sacar la pausa de `userEvent` destapó un bug real: **un doble click en Guardar del formulario de ejercicio mandaba dos POST**, porque el guard miraba `isPending`, que llega recién en el render siguiente. Se arregló con un ref sincrónico (`119b0db`).
+Sacar la pausa de `userEvent` destapó un bug real: **un doble click en Guardar del formulario de ejercicio mandaba dos POST**, porque el guard miraba `isPending`, que llega recién en el render siguiente. Se arregló con un ref sincrónico (`119b0db`), y después en los otros cinco diálogos que tenían el mismo guard (B7).
 
 **Después:** las carpetas sospechosas 10 de 10 en verde (114 tests cada vez); la suite con shuffle 3 de 3 (1850/1850); la configuración de CI 3 de 3 y `npm test` en verde; lint limpio.
 
