@@ -85,7 +85,7 @@ describe('ProgressPanel', () => {
     stubProgress({ overview: { exercises: [], weekly_volume: [] } });
     renderWithQuery(<ProgressPanel studentId="st-9" />);
     expect(await screen.findByText('Todavía no hay entrenamientos registrados')).toBeInTheDocument();
-    expect(screen.getByText('Después de 3 entrenamientos vas a ver tu progresión acá.')).toBeInTheDocument();
+    expect(screen.getByText('Después de 3 entrenamientos aparece la progresión acá.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Ejercicio')).not.toBeInTheDocument();
     expect(screen.queryByText('Volumen semanal')).not.toBeInTheDocument();
   });

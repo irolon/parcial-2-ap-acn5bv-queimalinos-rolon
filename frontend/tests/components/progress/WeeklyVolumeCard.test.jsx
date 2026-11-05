@@ -16,7 +16,7 @@ describe('WeeklyVolumeCard', () => {
 
   it('con menos de 3 semanas entrenadas muestra el aviso', () => {
     render(<WeeklyVolumeCard weeks={[week('05', 4000, 2), week('12', 0, 0), week('19', 100, 1)]} />);
-    expect(screen.getByText(/Llevás 2 de 3 semanas entrenadas/)).toBeInTheDocument();
+    expect(screen.getByText('Llevás 2 de 3 semanas entrenadas: después de la tercera aparece el volumen semanal acá')).toBeInTheDocument();
   });
 
   it('cuenta las semanas con sesiones aunque el volumen sea 0 (peso corporal)', () => {
