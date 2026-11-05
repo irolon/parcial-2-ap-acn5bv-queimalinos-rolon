@@ -10,6 +10,7 @@ import {
   STUDENT, renderActiveWorkout, stubUpload, train, uploadNow,
 } from '../../../helpers/workout/activeWorkout';
 import { at, isoAt } from '../../../helpers/workout/workout';
+import { todayRoutine } from '../../../helpers/routines/studentRoutines';
 
 const sessionPosts = (fetchMock) => calls(fetchMock).filter(([path]) => path === '/sessions');
 
@@ -26,9 +27,16 @@ afterEach(() => {
 
 describe('useActiveWorkout: upload', () => {
   it('sube, borra la sesión del navegador, refresca lo que cambió y devuelve el resultado', async () => {
+    // Las series se suben por executedAt y, si empatan, por id (al azar): registradas en el mismo milisegundo, el orden
+    // de abajo saldría a cara o cruz. Con el reloj falso, la segunda va 90 s después, como en el gimnasio.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(0));
     const fetchMock = stubUpload();
     const view = renderActiveWorkout();
-    train(view);
+    act(() => { view.result.current.start(todayRoutine()); });
+    act(() => { view.result.current.register(62.5, 10); });
+    vi.setSystemTime(at(90));
+    act(() => { view.result.current.register(null, 12); });
     act(() => { view.result.current.finish(); });
     const invalidate = vi.spyOn(view.client, 'invalidateQueries');
     const result = await uploadNow(view);
