@@ -172,7 +172,7 @@ Cada fila de la tabla de la tarea 9 del plan es un caso `it.each` con el código
 | IT-32 | Alumno B sobre datos del alumno A (49–73) | perfil, asistencia, medidas, sesiones y series (ids de A), progreso, logros, racha, desafíos, mensajes, notificaciones y tokens push | 25 + 14 controles | ✅ | `isolation/student-cross.int.test.js` · 39/39 · 04/11 |
 | IT-33 | Rol equivocado (74–93) | alumno en endpoints de PT y PT en endpoints de alumno → 403 `FORBIDDEN` aunque el recurso sea propio | 20 | ✅ | `isolation/wrong-role.int.test.js` · 20/20 · 04/11 |
 | IT-34 | Listados (94–105) | 8 listados del PT B y 4 del alumno B → 200 sin nada de A; `unread-count` exacto; control de que B ve lo suyo | 14 | ✅ | `isolation/lists.int.test.js` · 14/14 · 04/11 |
-| IT-35 | Agenda (106–113) | disponibilidad y turnos entre PT y alumnos | 8 | ⚠️ | Pendiente: se escribe cuando entre la #49 (tarea 10 del plan) |
+| IT-35 | Agenda (106–113) | PT B y alumno B sobre el turno de A (`PATCH`/`POST /appointments` → 403 `FORBIDDEN`, el turno de A sigue confirmado), listados de turnos y franjas solo propios, huecos libres del alumno B solo en el horario de B (A atiende 08–10 y B 18–20), alumno en `/availability` → 403; control de que A ve su turno y sus huecos | 8 (la #113 en 2 casos) + 1 control | ✅ | `isolation/agenda.int.test.js` · 10/10 · 05/11 |
 
 ### 3.3 Pruebas End-to-End (E2E)
 
@@ -281,6 +281,8 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 04/11/2026 | `d25d75f` | `progress` | ✅ 7/7 | 27,2 s | 0 |
 | 04/11/2026 | `a9bb46c` | Suite completa (8 archivos) | ✅ 164/164 | 186 s | 0 |
 | 04/11/2026 | `cd437ba` | Suite completa (9 archivos, suma `rejections`) | ✅ 168/168 | 193 s | 0 |
+| 05/11/2026 | `8ef9fa5` | Suite completa con `develop` traído (#70–#75) | ✅ 168/168 | 208 s | 0 |
+| 05/11/2026 | `751e605` | Suite completa con la agenda (#49) y `isolation/agenda` | ✅ 178/178 | 219 s | 0 |
 
 Fechas en UTC (en Argentina fue la noche del 03/11). Al cerrar la tarjeta 52 se suma la corrida final sobre la rama combinada con `develop`.
 
@@ -293,7 +295,6 @@ Fechas en UTC (en Argentina fue la noche del 03/11). Al cerrar la tarjeta 52 se 
 | Racha | Se recalcula con los días asignados **de hoy** (`findAssignedDays`): si el PT cambia los días de la rutina, la racha pasada se mide con los días nuevos. | `models/gamification/streak/*.test.js` usan los días que reciben; no hay historial de días asignados. |
 | Lote de series | `POST /sessions/:id/sets` no es transaccional: si un `update` falla a mitad, responde 500 y lo ya insertado queda guardado. El reintento del mismo lote completa sin duplicar. | `services/sessions/persist-sets.test.js`, `session-sets.service/partial-failure.test.js`. |
 | Turnos (#49) | `GET /appointments` no está paginado: trae todo el rango `from`/`to` pedido. | Sin test de volumen (tarjeta 24). |
-| Aislamiento de la agenda | Disponibilidad y turnos (filas 106–113) se prueban cuando entre la #49. | IT-35 ⚠️. |
 
 ---
 
