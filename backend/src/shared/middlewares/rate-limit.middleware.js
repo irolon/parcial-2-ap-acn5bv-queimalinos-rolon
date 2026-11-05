@@ -1,4 +1,4 @@
-import { rateLimit } from 'express-rate-limit';
+import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 import { env } from '../../config/env.js';
 
 /** Cuerpo del 429, con el formato de error del contrato. */
@@ -14,13 +14,13 @@ const LIMITED_BODY = {
  * Limitador en memoria (el VPS corre una sola instancia). Responde 429 con el formato del
  * contrato; `standardHeaders` manda RateLimit-* y, al pasarse, Retry-After en segundos.
  */
-export function createRateLimiter({ limit, windowMs, keyGenerator }) {
+export function createRateLimiter({ limit, windowMs, keyGenerator = ipKey }) {
   const limiter = rateLimit({
     windowMs,
     limit,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    ...(keyGenerator ? { keyGenerator } : {}),
+    keyGenerator,
     handler: (_req, res, _next, options) => res.status(options.statusCode).json(LIMITED_BODY),
   });
   // Marca para el barrido de rutas (tests/unit/app): estas capas de la app no son el endpoint.
@@ -28,11 +28,16 @@ export function createRateLimiter({ limit, windowMs, keyGenerator }) {
   return limiter;
 }
 
+/** Clave por IP. Las IPv6 se agrupan por subred /56 (un cliente suele tener toda la subred). */
+function ipKey(req) {
+  return ipKeyGenerator(req.ip);
+}
+
 /** Clave del login: IP + email en minúsculas (otro email desde la misma IP tiene su propio cupo). */
-const loginKey = (req) => {
+function loginKey(req) {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-  return `${req.ip}|${email}`;
-};
+  return `${ipKey(req)}|${email}`;
+}
 
 /**
  * Monta los limitadores sobre las rutas sensibles. Va después de express.json() (el del login
@@ -44,7 +49,13 @@ export function applyRateLimits(app, limits = env.RATE_LIMITS) {
   // Un limitador (y un contador) por endpoint: registrarse no gasta el cupo del refresh.
   const byIp = (limit) => createRateLimiter({ limit, windowMs });
 
-  app.post('/api/auth/login', createRateLimiter({ limit: limits.login, windowMs, keyGenerator: loginKey }));
+  // Login: tope por IP + email (fuerza bruta a una cuenta) y tope por IP sola (password spraying:
+  // muchos emails desde la misma IP).
+  app.post(
+    '/api/auth/login',
+    createRateLimiter({ limit: limits.login, windowMs, keyGenerator: loginKey }),
+    byIp(limits.loginIp),
+  );
   app.post('/api/auth/register', byIp(limits.auth));
   app.post('/api/auth/refresh', byIp(limits.auth));
   app.get('/api/invitations/:token', byIp(limits.public));

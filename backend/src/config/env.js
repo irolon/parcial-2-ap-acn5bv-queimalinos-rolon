@@ -44,18 +44,20 @@ if (required.JWT_SECRET && required.JWT_SECRET.length < 32) {
 // Rate limiting (en memoria, una sola instancia). En test los límites por defecto son 100 veces
 // mayores, así la suite de integración (muchos registros desde la misma IP) no los toca.
 const limitScale = isTest ? 100 : 1;
-const RATE_LIMIT_DEFAULTS = {
-  RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000,
-  RATE_LIMIT_LOGIN_MAX: 10 * limitScale,
-  RATE_LIMIT_AUTH_MAX: 30 * limitScale,
-  RATE_LIMIT_PUBLIC_MAX: 30 * limitScale,
-};
+// Cada variable se parsea una vez directo a la forma que usa la app ({ windowMs, login, ... }).
+const RATE_LIMIT_VARS = [
+  ['windowMs', 'RATE_LIMIT_WINDOW_MS', 15 * 60 * 1000],
+  ['login', 'RATE_LIMIT_LOGIN_MAX', 10 * limitScale], // por IP + email
+  ['loginIp', 'RATE_LIMIT_LOGIN_IP_MAX', 50 * limitScale], // por IP (password spraying)
+  ['auth', 'RATE_LIMIT_AUTH_MAX', 30 * limitScale],
+  ['public', 'RATE_LIMIT_PUBLIC_MAX', 30 * limitScale],
+];
 const rateLimits = {};
-for (const [key, fallback] of Object.entries(RATE_LIMIT_DEFAULTS)) {
+for (const [field, key, fallback] of RATE_LIMIT_VARS) {
   const raw = process.env[key];
   const value = raw === undefined || raw.trim() === '' ? fallback : Number(raw);
   if (!Number.isInteger(value) || value <= 0) errors.push(`${key} debe ser un entero positivo`);
-  rateLimits[key] = value;
+  rateLimits[field] = value;
 }
 
 // trust proxy: cantidad de saltos de proxy (en el VPS detrás de nginx, 1). Sin definir, apagado.
@@ -86,12 +88,7 @@ export const env = {
   FRONTEND_URL: defaults.FRONTEND_URL,
   CRON_ENABLED: defaults.CRON_ENABLED,
   TRUST_PROXY: trustProxy,
-  RATE_LIMITS: {
-    windowMs: rateLimits.RATE_LIMIT_WINDOW_MS,
-    login: rateLimits.RATE_LIMIT_LOGIN_MAX,
-    auth: rateLimits.RATE_LIMIT_AUTH_MAX,
-    public: rateLimits.RATE_LIMIT_PUBLIC_MAX,
-  },
+  RATE_LIMITS: rateLimits,
   // Push (FCM HTTP v1): opcionales; sin credenciales el push es no-op. En test se ignoran.
   FCM_SERVICE_ACCOUNT_PATH: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_PATH,
   FCM_SERVICE_ACCOUNT_JSON: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_JSON,

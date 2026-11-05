@@ -23,13 +23,13 @@ import appointmentsRoutes from './routes/agenda/appointments.routes.js';
 import messagesRoutes from './routes/messages/messages.routes.js';
 
 /**
- * Arma la app. `rateLimits` ({ windowMs, login, auth, public }) pisa los límites del env;
- * lo usan los tests para probar el 429 con límites bajos.
+ * Arma la app. `rateLimits` ({ windowMs, login, loginIp, auth, public }) y `trustProxy` pisan
+ * los valores del env; los usan los tests (límites bajos, IP del cliente por X-Forwarded-For).
  */
-export function createApp({ rateLimits } = {}) {
+export function createApp({ rateLimits, trustProxy = env.TRUST_PROXY } = {}) {
   const app = express();
   // Detrás de nginx: cantidad de saltos de proxy, así req.ip es la IP real del cliente.
-  if (env.TRUST_PROXY !== undefined) app.set('trust proxy', env.TRUST_PROXY);
+  if (trustProxy !== undefined) app.set('trust proxy', trustProxy);
 
   // Seguridad y utilidades base.
   app.use(helmet());
