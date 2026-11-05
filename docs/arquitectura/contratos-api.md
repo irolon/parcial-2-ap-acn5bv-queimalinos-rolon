@@ -47,6 +47,8 @@ Todos los errores siguen el mismo formato:
 
 - JSON mal formado → `400 VALIDATION_ERROR` ("El cuerpo no es JSON válido", `details: []`).
 - Body de más de 100 kB → `413 PAYLOAD_TOO_LARGE` ("El cuerpo es demasiado grande", `details: []`).
+- `Content-Encoding` no soportado (por ejemplo `br`) o charset que no es UTF → `415 UNSUPPORTED_MEDIA_TYPE` ("Codificación del cuerpo no soportada", `details: []`).
+- Cualquier otro error del cliente al leer el body (por ejemplo, la conexión se corta a mitad) → `400 VALIDATION_ERROR` ("El cuerpo de la solicitud es inválido", `details: []`).
 - Error no controlado → `500 INTERNAL_ERROR` ("Error interno del servidor"). Fuera de `development`, `details` va vacío y nunca se manda el stack.
 
 **Rate limiting**
@@ -56,10 +58,11 @@ Contadores en memoria por endpoint, en ventanas de 15 minutos (configurables por
 | Endpoint | Límite | Clave |
 |---|---|---|
 | `POST /auth/login` | 10 | IP + email (en minúsculas) |
+| `POST /auth/login` (además) | 50 | IP (frena probar muchos emails desde la misma IP) |
 | `POST /auth/register`, `POST /auth/refresh` | 30 cada uno | IP |
 | `GET /invitations/:token`, `POST /students` | 30 cada uno | IP |
 
-Se cuentan todos los intentos, no solo los fallidos. Al pasarse → `429 RATE_LIMIT_EXCEEDED` ("Demasiados intentos. Probá de nuevo en unos minutos.", `details: []`) con el header `Retry-After` (segundos). Todas las respuestas de esos endpoints traen además `RateLimit` y `RateLimit-Policy`.
+Las IPv6 cuentan por subred /56. Se cuentan todos los intentos, no solo los fallidos. Al pasarse → `429 RATE_LIMIT_EXCEEDED` ("Demasiados intentos. Probá de nuevo en unos minutos.", `details: []`) con el header `Retry-After` (segundos). Todas las respuestas de esos endpoints traen además `RateLimit` y `RateLimit-Policy`.
 
 ---
 

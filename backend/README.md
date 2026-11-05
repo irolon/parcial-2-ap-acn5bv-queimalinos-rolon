@@ -280,11 +280,14 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 | Endpoint | Límite por ventana | Clave | Variable |
 |---|---|---|---|
 | `POST /api/auth/login` | 10 | IP + email en minúsculas | `RATE_LIMIT_LOGIN_MAX` |
+| `POST /api/auth/login` (además, contra password spraying) | 50 | IP | `RATE_LIMIT_LOGIN_IP_MAX` |
 | `POST /api/auth/register`, `POST /api/auth/refresh` | 30 cada uno | IP | `RATE_LIMIT_AUTH_MAX` |
 | `GET /api/invitations/:token`, `POST /api/students` | 30 cada uno | IP | `RATE_LIMIT_PUBLIC_MAX` |
 
 - Ventana: `RATE_LIMIT_WINDOW_MS` (por defecto 15 min). Con `NODE_ENV=test` los máximos por defecto son 100 veces mayores, así la suite de integración no los toca; los tests del limitador arman la app con `createApp({ rateLimits })`.
-- `TRUST_PROXY`: saltos de proxy (en el VPS detrás de nginx, `1`). Sin eso, detrás del proxy todos los clientes tendrían la IP de nginx y compartirían el cupo. Por defecto, apagado.
+- Las IPv6 se agrupan por subred /56 (`ipKeyGenerator` de express-rate-limit 8): cambiar de dirección dentro de la misma subred no da un cupo nuevo.
+- `TRUST_PROXY`: saltos de proxy (en el VPS detrás de nginx, `1`). Sin eso, detrás del proxy todos los clientes tendrían la IP de nginx y compartirían el cupo. Por defecto, apagado; con `NODE_ENV=production` es obligatoria (si falta, la app no arranca) y `0` explícito significa sin proxy.
+- Body con `Content-Encoding` o charset no soportados → `415 UNSUPPORTED_MEDIA_TYPE`; cualquier otro error 4xx al leer el body → `400 VALIDATION_ERROR` (nunca 500).
 
 ## Notas de implementación (desvíos respecto del DER de Notion)
 
