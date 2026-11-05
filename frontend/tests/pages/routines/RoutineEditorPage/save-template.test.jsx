@@ -4,7 +4,7 @@ import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { fillRoutine, renderEditor, warmUpEditor } from '../../../helpers/routines/editor';
 import { api, open, post } from '../../../helpers/routines/templates';
-import { bodyOf, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
+import { bodyOf, calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 
 beforeAll(warmUpEditor);
 
@@ -38,6 +38,16 @@ describe('RoutineEditorPage: guardar como plantilla', () => {
       level: 'advanced',
       structure: { version: 1, days: ['monday'], exercises: [exercise('ex-squat', 0), exercise('ex-plank', 1)] },
     });
+  });
+
+  it('un doble click en Guardar manda un solo POST', async () => {
+    const createTemplate = vi.fn(() => jsonResponse(201, { data: { id: 't-2' } }));
+    const { fetchMock } = await renderEditor({ api: api({ handlers: { createTemplate } }) });
+    await fillRoutine(['Sentadilla']);
+    await open('Guardar como plantilla');
+    await user.dblClick(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
+    expect(await screen.findByText('Plantilla guardada')).toBeVisible();
+    expect(calls(fetchMock).filter(([p, init]) => p === '/routine-templates' && init?.method === 'POST')).toHaveLength(1);
   });
 
   it('sin ejercicios no guarda y lo pide', async () => {
