@@ -15,7 +15,8 @@ npm run test:integration:clean              # borra los de QA creados hace más 
 ```
 
 **Precondición:** `backend/.env` con `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` de dev (no se
-commitea). Si falta o sigue en los valores de test (`localhost:54321`), la suite se corta antes de
+commitea). Si falta, sigue en los valores de test (`localhost:54321`) o apunta a otro proyecto que
+no sea el de dev (`QA_SUPABASE_PROJECTS` en `scripts/lib/qa-env.js`), la suite se corta antes de
 crear nada con `Integración frenada: …`.
 
 ## Datos de QA
@@ -23,9 +24,13 @@ crear nada con `Integración frenada: …`.
 - Todo se crea **por la API**, con emails `it.<corrida>.<rol>@test.fittrainer.dev` y nombres
   `IT · …` (`tests/helpers/integration/run-id.js`).
 - Al terminar cada archivo (aunque fallen sus tests) el `afterAll` borra la corrida: primero
-  `notifications`, `push_tokens` y `refresh_tokens` del PT y sus alumnos (no tienen FK) y después
-  los `trainers` (cascada al resto). Es lo único que se hace directo contra la base
+  `notifications`, `push_tokens` y `refresh_tokens` del PT y sus alumnos (no tienen FK), después
+  los `students` de esos PT (cascada a rutinas, sesiones y series) y al final los `trainers`
+  (cascada al resto: si se borra el trainer primero, su cascada a `exercises` choca con la FK de
+  `routine_exercises`). Es lo único que se hace directo contra la base
   (`scripts/lib/qa-cleanup.js`), y solo toca trainers cuyo email es de QA.
 - Si una corrida se corta a la fuerza, `npm run test:integration:clean` es la red de seguridad.
+- `--check` cuenta **todos** los datos de QA de la base, de cualquier corrida: si otra persona está
+  corriendo la suite al mismo tiempo, puede dar más de 0 sin que nada haya quedado colgado.
 
 Durante la integración FCM está apagado (`NODE_ENV=test`), no se suben fotos y no corren jobs.

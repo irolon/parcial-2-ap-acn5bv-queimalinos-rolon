@@ -4,7 +4,7 @@ import {
   QA_EMAIL_LIKE,
 } from '../../../../scripts/lib/qa-env.js';
 
-const REAL_URL = 'https://abc.supabase.co';
+const REAL_URL = 'https://yqjhonnetginzayzymyr.supabase.co';
 
 describe('qa-env — constantes', () => {
   it('el dominio y el patrón de los emails de QA', () => {
@@ -25,6 +25,8 @@ describe('qa-env — assertRealSupabase', () => {
     ['key de test', { SUPABASE_URL: REAL_URL, SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key' }],
     ['key vacía', { SUPABASE_URL: REAL_URL, SUPABASE_SERVICE_ROLE_KEY: '' }],
     ['sin key', { SUPABASE_URL: REAL_URL }],
+    ['otro proyecto (por ejemplo, producción)', { SUPABASE_URL: 'https://abc.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'x' }],
+    ['dev con path extra', { SUPABASE_URL: `${REAL_URL}.evil.com`, SUPABASE_SERVICE_ROLE_KEY: 'x' }],
   ])('%s → frena y nombra la variable', (_name, env) => {
     expect(() => assertRealSupabase(env)).toThrow(/^Integración frenada:.*SUPABASE_/);
   });
@@ -38,7 +40,12 @@ describe('qa-env — assertRealSupabase', () => {
     expect(() => assertRealSupabase(env)).toThrow(/SUPABASE_SERVICE_ROLE_KEY/);
   });
 
-  it('URL real y key real → no lanza', () => {
+  it('otro proyecto nombra SUPABASE_URL y dice que no es dev', () => {
+    const env = { SUPABASE_URL: 'https://abc.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'eyJ.real.key' };
+    expect(() => assertRealSupabase(env)).toThrow(/SUPABASE_URL no es el proyecto de dev/);
+  });
+
+  it('URL de dev y key real → no lanza', () => {
     const env = { SUPABASE_URL: REAL_URL, SUPABASE_SERVICE_ROLE_KEY: 'eyJ.real.key' };
     expect(() => assertRealSupabase(env)).not.toThrow();
   });

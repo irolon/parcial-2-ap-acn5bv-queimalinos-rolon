@@ -71,7 +71,10 @@ export function runCases(cases, getWorlds) {
     const res = await sendCase(c, w);
     expect({ status: res.status, body: res.body }).toMatchObject({ status: c.status });
     if (c.code) expect(res.body.error?.code).toBe(c.code);
-    if (c.status >= 400) expect(res.body.data).toBeUndefined();
+    if (c.status >= 400) {
+      expect(res.body.data).toBeUndefined();
+      expectNoLeak(res.body, w.A); // ni el mensaje ni los details del error traen ids de A
+    }
     if (c.check) await c.check(res, w);
   });
 }

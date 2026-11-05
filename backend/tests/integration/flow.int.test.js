@@ -5,7 +5,7 @@ import {
   setRow,
   uploadSession,
 } from '../helpers/integration/fixtures.js';
-import { trackStudent, trackTrainer } from '../helpers/integration/registry.js';
+import { trackTrainer } from '../helpers/integration/registry.js';
 import { QA_PASSWORD, qaEmail, qaName } from '../helpers/integration/run-id.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -61,7 +61,6 @@ describe('integración — flujo de punta a punta', () => {
       .post('/students')
       .send({ token: invitationToken, password: QA_PASSWORD });
     expect(res.status).toBe(201);
-    trackStudent(res.body.student.id);
     student.id = res.body.student.id;
     student.token = res.body.token;
     expect(student.token).toEqual(expect.any(String));

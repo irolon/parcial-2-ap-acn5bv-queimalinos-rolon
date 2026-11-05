@@ -28,6 +28,7 @@ Este archivo es la fuente de verdad del flujo de trabajo. La documentación del 
 - Las ramas de trabajo salen de `develop` y vuelven a `develop` por PR:
   - `feature/` para funcionalidad;
   - `fix/` para correcciones;
+  - `test/` para pruebas y su infraestructura, sin cambios de código de producción;
   - `docs/` para cambios que son solo documentación.
 - Nombre de rama en inglés, kebab-case, sin número de tarjeta. Ejemplo: `feature/exercises-library`.
 - **Nadie pushea directo a `develop` ni a `master`.**
@@ -130,7 +131,7 @@ src/
 tests/
   unit/<capa>/<módulo>/   (mismo árbol que src; unit/scripts/lib/ espeja scripts/lib/, sin módulo)
   integration/
-  helpers/<módulo>/
+  helpers/<módulo>/       (helpers/integration/ para la suite de integración, con isolation/ y progress/; helpers/scripts/ para los tests de scripts/lib/)
 scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en scripts/lib/)
 ```
 

@@ -1,6 +1,6 @@
 import { api, expectStatus } from './api.js';
 import { QA_PASSWORD, qaEmail, qaName } from './run-id.js';
-import { trackStudent, trackTrainer } from './registry.js';
+import { trackTrainer } from './registry.js';
 
 /** Registra un PT QA por la API y lo anota para el teardown. */
 export async function createTrainer(label) {
@@ -29,6 +29,5 @@ export async function inviteAndJoin(trainer, label) {
     .post('/students')
     .send({ token: invitation.body.data.token, password: QA_PASSWORD });
   expectStatus(res, 201, 'POST /students');
-  trackStudent(res.body.student.id);
   return { id: res.body.student.id, token: res.body.token, email, trainerId: trainer.id };
 }
