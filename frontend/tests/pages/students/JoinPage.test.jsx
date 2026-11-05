@@ -132,13 +132,25 @@ describe('JoinPage', () => {
     expect(await screen.findByText('Laura Pereyra')).toBeInTheDocument();
   });
 
-  it('con sesión iniciada redirige a la home del rol', async () => {
-    const fetchMock = stubFetch(async () => jsonResponse(200, INVITATION));
+  it('con sesión iniciada no pierde el link: avisa y deja cerrar sesión para aceptar (B2)', async () => {
+    stubFetch(async (url) => (String(url).includes('/auth/logout') ? jsonResponse(204, null) : jsonResponse(200, INVITATION)));
     setSession(TRAINER);
     const { pathname } = renderRoute(`/join?token=${TOKEN}`);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/dashboard');
-    // El dashboard pide sus alumnos, pero no se consulta la invitación.
-    expect(calls(fetchMock).filter(([path]) => path.includes('invitation'))).toEqual([]);
+    expect(await screen.findByText(/Tenés una sesión abierta como Laura Pereyra/)).toBeInTheDocument();
+    expect(pathname()).toBe('/join');
+    expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Cerrar sesión y aceptar la invitación' }));
+    expect(await screen.findByLabelText('Contraseña')).toBeInTheDocument();
+    expect(screen.getByText('Tomás Ruiz')).toBeInTheDocument();
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(pathname()).toBe('/join');
+  });
+
+  it('con sesión iniciada ofrece volver a la cuenta sin tocar la sesión', async () => {
+    stubFetch(async () => jsonResponse(200, INVITATION));
+    setSession(TRAINER);
+    renderRoute(`/join?token=${TOKEN}`);
+    expect(await screen.findByRole('link', { name: 'Volver a mi cuenta' })).toHaveAttribute('href', '/pt/dashboard');
   });
 });
