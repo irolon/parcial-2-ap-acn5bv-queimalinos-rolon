@@ -46,7 +46,7 @@ describe('changeStatus · notificaciones', () => {
     expect(mockNotify.notify).toHaveBeenCalledWith({
       userId: STUDENT.id, userRole: 'student', type: 'appointment',
       title: 'Tu turno del vie 06/11 a las 18:00 quedó confirmado', body: null,
-      data: { appointment_id: APPT_ID }, push: true,
+      data: { appointment_id: APPT_ID, scheduled_at: '2026-11-06T21:00:00.000Z' }, push: true,
     });
   });
 
@@ -67,7 +67,7 @@ describe('changeStatus · notificaciones', () => {
       expect(mockNotify.notify).toHaveBeenCalledWith({
         userId: TRAINER.id, userRole: 'trainer', type: 'appointment',
         title: 'Lucía canceló su turno del vie 06/11 a las 18:00', body: null,
-        data: { appointment_id: APPT_ID }, push: false,
+        data: { appointment_id: APPT_ID, scheduled_at: '2026-11-06T21:00:00.000Z' }, push: false,
       });
     }
   );
