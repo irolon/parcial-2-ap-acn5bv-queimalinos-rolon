@@ -266,7 +266,7 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 
 **Topes.** El alumno puede tener hasta 3 turnos `pending` a futuro (el 4.º: 409 `APPOINTMENT_LIMIT`) y ningún rol agenda a más de 1 año. Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`) se guardan la baja y después se cancelan sus turnos futuros. `GET /appointments` no pagina (límite documentado en el spec de agenda).
 
-**Notificaciones.** Tipo `appointment` con `data: { appointment_id }`: al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
+**Notificaciones.** Tipo `appointment` con `data: { appointment_id, scheduled_at }` (la fecha deja abrir la agenda en la semana del turno): al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
 
 ### Autenticación
 
