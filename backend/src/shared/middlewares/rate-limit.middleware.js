@@ -15,7 +15,7 @@ const LIMITED_BODY = {
  * contrato; `standardHeaders` manda RateLimit-* y, al pasarse, Retry-After en segundos.
  */
 export function createRateLimiter({ limit, windowMs, keyGenerator }) {
-  return rateLimit({
+  const limiter = rateLimit({
     windowMs,
     limit,
     standardHeaders: 'draft-7',
@@ -23,6 +23,9 @@ export function createRateLimiter({ limit, windowMs, keyGenerator }) {
     ...(keyGenerator ? { keyGenerator } : {}),
     handler: (_req, res, _next, options) => res.status(options.statusCode).json(LIMITED_BODY),
   });
+  // Marca para el barrido de rutas (tests/unit/app): estas capas de la app no son el endpoint.
+  limiter.isRateLimit = true;
+  return limiter;
 }
 
 /** Clave del login: IP + email en minúsculas (otro email desde la misma IP tiene su propio cupo). */

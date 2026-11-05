@@ -19,6 +19,7 @@ const guards = [authenticate, requireRole('trainer', 'student')];
 /** El body del POST depende del rol: el PT manda student_id, el alumno no. */
 const validateCreateByRole = (req, res, next) =>
   validate(req.user.role === 'trainer' ? validateTrainerCreate : validateStudentRequest)(req, res, next);
+validateCreateByRole.validates = 'body'; // valida el body (para el barrido de rutas)
 
 router.get('/', ...guards, validate((query) => validateRangeQuery(query, LIST_MAX_DAYS), 'query'), controller.list);
 router.post('/', ...guards, validateCreateByRole, controller.create);
