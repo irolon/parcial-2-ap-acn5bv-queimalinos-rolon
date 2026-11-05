@@ -5,6 +5,7 @@ import morgan from 'morgan';
 
 import { env } from './config/env.js';
 import { notFoundHandler, errorHandler } from './shared/middlewares/error.middleware.js';
+import { applyRateLimits } from './shared/middlewares/rate-limit.middleware.js';
 import healthRoutes from './routes/health/health.routes.js';
 import authRoutes from './routes/auth/auth.routes.js';
 import invitationsRoutes from './routes/invitations/invitations.routes.js';
@@ -21,8 +22,14 @@ import availabilityRoutes from './routes/agenda/availability.routes.js';
 import appointmentsRoutes from './routes/agenda/appointments.routes.js';
 import messagesRoutes from './routes/messages/messages.routes.js';
 
-export function createApp() {
+/**
+ * Arma la app. `rateLimits` ({ windowMs, login, auth, public }) pisa los límites del env;
+ * lo usan los tests para probar el 429 con límites bajos.
+ */
+export function createApp({ rateLimits } = {}) {
   const app = express();
+  // Detrás de nginx: cantidad de saltos de proxy, así req.ip es la IP real del cliente.
+  if (env.TRUST_PROXY !== undefined) app.set('trust proxy', env.TRUST_PROXY);
 
   // Seguridad y utilidades base.
   app.use(helmet());
@@ -32,6 +39,9 @@ export function createApp() {
 
   // Health checks (fuera de /api, como en el README).
   app.use('/health', healthRoutes);
+
+  // Rate limiting en login, registro, refresh e invitaciones (públicos).
+  applyRateLimits(app, rateLimits);
 
   // API REST — todos los módulos cuelgan de /api.
   app.use('/api/auth', authRoutes);

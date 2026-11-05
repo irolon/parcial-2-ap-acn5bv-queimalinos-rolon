@@ -49,6 +49,18 @@ Todos los errores siguen el mismo formato:
 - Body de más de 100 kB → `413 PAYLOAD_TOO_LARGE` ("El cuerpo es demasiado grande", `details: []`).
 - Error no controlado → `500 INTERNAL_ERROR` ("Error interno del servidor"). Fuera de `development`, `details` va vacío y nunca se manda el stack.
 
+**Rate limiting**
+
+Contadores en memoria por endpoint, en ventanas de 15 minutos (configurables por env):
+
+| Endpoint | Límite | Clave |
+|---|---|---|
+| `POST /auth/login` | 10 | IP + email (en minúsculas) |
+| `POST /auth/register`, `POST /auth/refresh` | 30 cada uno | IP |
+| `GET /invitations/:token`, `POST /students` | 30 cada uno | IP |
+
+Se cuentan todos los intentos, no solo los fallidos. Al pasarse → `429 RATE_LIMIT_EXCEEDED` ("Demasiados intentos. Probá de nuevo en unos minutos.", `details: []`) con el header `Retry-After` (segundos). Todas las respuestas de esos endpoints traen además `RateLimit` y `RateLimit-Policy`.
+
 ---
 
 ## Módulo: Auth
@@ -70,7 +82,7 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 **201 Created** — `{ trainer, token, refresh_token }`
 
-**Errores:** `400 VALIDATION_ERROR`, `409 EMAIL_ALREADY_EXISTS`, `500 INTERNAL_ERROR`
+**Errores:** `400 VALIDATION_ERROR`, `409 EMAIL_ALREADY_EXISTS`, `429 RATE_LIMIT_EXCEEDED`, `500 INTERNAL_ERROR`
 
 ### POST /auth/login
 
@@ -82,7 +94,7 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 **200 OK** — `{ user, token, refresh_token, expires_in }`
 
-**Errores:** `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `401 ACCOUNT_DISABLED`
+**Errores:** `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `401 ACCOUNT_DISABLED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /auth/refresh
 
@@ -93,6 +105,8 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 ```
 
 **200 OK** — `{ token, expires_in }`
+
+**Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del token).
 
 ### POST /auth/logout
 
@@ -159,7 +173,7 @@ Valida un token y retorna los datos precargados. Público.
 
 `goal` puede ser `null` si el PT no lo cargó al invitar.
 
-**Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`
+**Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /students (desde invitación)
 
@@ -175,6 +189,8 @@ Crea el alumno desde el token de invitación. Público.
 ```
 
 **201 Created** — `{ student, token, refresh_token }`
+
+**Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del alta).
 
 ---
 

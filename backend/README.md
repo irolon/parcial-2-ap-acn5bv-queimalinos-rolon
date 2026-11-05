@@ -273,6 +273,19 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 - **Access token:** JWT firmado con `JWT_SECRET` (`{ sub, role, email }`), expira según `JWT_EXPIRES_IN`.
 - **Refresh token:** token opaco; en la DB se guarda solo su hash SHA-256. El logout lo revoca.
 
+### Rate limiting
+
+`express-rate-limit` en memoria (una sola instancia), en `src/shared/middlewares/rate-limit.middleware.js`. Al pasarse: `429 RATE_LIMIT_EXCEEDED` con `Retry-After`.
+
+| Endpoint | Límite por ventana | Clave | Variable |
+|---|---|---|---|
+| `POST /api/auth/login` | 10 | IP + email en minúsculas | `RATE_LIMIT_LOGIN_MAX` |
+| `POST /api/auth/register`, `POST /api/auth/refresh` | 30 cada uno | IP | `RATE_LIMIT_AUTH_MAX` |
+| `GET /api/invitations/:token`, `POST /api/students` | 30 cada uno | IP | `RATE_LIMIT_PUBLIC_MAX` |
+
+- Ventana: `RATE_LIMIT_WINDOW_MS` (por defecto 15 min). Con `NODE_ENV=test` los máximos por defecto son 100 veces mayores, así la suite de integración no los toca; los tests del limitador arman la app con `createApp({ rateLimits })`.
+- `TRUST_PROXY`: saltos de proxy (en el VPS detrás de nginx, `1`). Sin eso, detrás del proxy todos los clientes tendrían la IP de nginx y compartirían el cupo. Por defecto, apagado.
+
 ## Notas de implementación (desvíos respecto del DER de Notion)
 
 Estos ajustes fueron necesarios para que el backend funcione. Todos están aplicados en `src/database/schema/`.
