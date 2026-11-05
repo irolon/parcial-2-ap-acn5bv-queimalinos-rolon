@@ -33,11 +33,12 @@ abstract class TrainerMessagesDao {
 
     /**
      * El mensaje con foto más nuevo cuya URL se firmó antes de [signedBefore] (null = ninguno por renovar). Cuenta
-     * también el de solo foto (body null) que llegó sin URL porque falló la firma: queda con fetchedAt 0.
+     * también el que tiene foto (hasImage, #73, o solo foto: body null) y llegó sin URL porque falló la firma: queda
+     * con fetchedAt 0.
      */
     @Query(
         "SELECT MAX(createdAt) FROM trainer_messages WHERE trainerId = :trainerId AND studentId = :studentId " +
-            "AND (imageUrl IS NOT NULL OR body IS NULL) AND fetchedAt < :signedBefore"
+            "AND (imageUrl IS NOT NULL OR body IS NULL OR hasImage = 1) AND fetchedAt < :signedBefore"
     )
     abstract suspend fun newestStaleImageAt(trainerId: String, studentId: String, signedBefore: Long): Long?
 

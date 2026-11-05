@@ -25,7 +25,10 @@ data class Conversation(
 
 data class ConversationsCache(val conversations: List<Conversation>, val fetchedAt: Instant)
 
-/** Un mensaje. read: el otro lado ya lo leyó (para los del PT, el "✓✓"). */
+/**
+ * Un mensaje. read: el otro lado ya lo leyó (para los del PT, el "✓✓"). hasImage con imageUrl null: tiene foto pero
+ * no se pudo firmar (se reintenta en el próximo refresco).
+ */
 data class Message(
     val id: String,
     val fromTrainer: Boolean,
@@ -34,6 +37,7 @@ data class Message(
     val broadcast: Boolean,
     val read: Boolean,
     val at: Instant,
+    val hasImage: Boolean = imageUrl != null || body == null,
 )
 
 /** Un chat guardado: hasMore = hay mensajes más viejos para pedir. */
