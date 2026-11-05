@@ -43,6 +43,12 @@ Todos los errores siguen el mismo formato:
 }
 ```
 
+**Errores comunes a todos los endpoints con body**
+
+- JSON mal formado → `400 VALIDATION_ERROR` ("El cuerpo no es JSON válido", `details: []`).
+- Body de más de 100 kB → `413 PAYLOAD_TOO_LARGE` ("El cuerpo es demasiado grande", `details: []`).
+- Error no controlado → `500 INTERNAL_ERROR` ("Error interno del servidor"). Fuera de `development`, `details` va vacío y nunca se manda el stack.
+
 ---
 
 ## Módulo: Auth
