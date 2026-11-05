@@ -92,7 +92,11 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 Revoca el refresh token. **No requiere** access token: alcanza con el `refresh_token` del body, así el logout funciona aunque el access haya vencido. **204 No Content**
 
-**Body:** `{ "refresh_token": "string" }`
+**Body:** `{ "refresh_token": "string", "push_token": "string (opcional)" }`
+
+- `push_token` (opcional, 1–4096 caracteres): el token de FCM del dispositivo. Si viene, el servidor lo borra de `push_tokens` **solo si es del dueño del refresh token** (`user_id` + `user_role`). El dueño se busca aunque el refresh ya esté revocado, así el celular puede **reintentar** el logout más tarde (por ejemplo, si cerró sesión sin red) aunque el access haya vencido. Si el refresh no existe no se borra nada. Un error al borrar el push token no hace fallar el logout: responde **204** igual.
+- `push_token` vacío, de más de 4096 caracteres o que no sea texto → **400 VALIDATION_ERROR** (`field: "push_token"`).
+- `DELETE /notifications/tokens/:token` sigue existiendo para dar de baja el token con la sesión abierta.
 
 ---
 
@@ -301,7 +305,7 @@ Actualiza un alumno. Solo el trainer dueño. Hay que mandar al menos un campo.
 | `name` | 2–100 caracteres |
 | `goal` | `tonify`, `weight_loss`, `hypertrophy` o `strength` |
 | `level` | `beginner`, `intermediate` o `advanced` |
-| `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`. **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña |
+| `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; además, sus turnos futuros `pending` o `confirmed` pasan a `cancelled` (liberan el horario, sin notificaciones). **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña; los turnos cancelados no vuelven |
 | `birth_date` | `YYYY-MM-DD`, no futura, o `null` |
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
@@ -463,6 +467,12 @@ Reordena los ejercicios de una rutina propia (trainer dueño). Body: `{ "routine
 Rutina activa del alumno para hoy. Solo alumnos.
 
 **200 OK** — incluye `routine_id`, `name`, `goal`, `days` y `exercises[]`, cada uno con `last_session_kg`: el mayor `actual_kg` de las series completadas con repeticiones del ejercicio en la **última sesión** (por `started_at`) en que el alumno lo hizo, a 1 decimal. Es `null` si nunca lo hizo o no cargó peso. Se calcula con una sola consulta por rutina (función SQL `last_session_kg`).
+
+### GET /routines/mine
+
+Todas las rutinas **activas** del alumno con sus ejercicios, la más nueva primero. Solo alumnos (otro rol → 403). La usan el caché offline del celular (que resuelve el día en el teléfono) y la web del alumno (Mis rutinas, y para distinguir "hoy es descanso" de "sin rutina asignada").
+
+**200 OK** — `{ data: [...] }` (arreglo vacío si no tiene rutinas). Cada elemento: `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises[]` ordenados por `order_index`, cada uno con `routine_exercise_id`, `exercise`, `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` y `order_index`. A diferencia de `GET /routines/today`, no trae `last_session_kg`.
 
 ---
 
@@ -766,7 +776,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 - `duration_min`: minutos enteros entre `started_at` y `finished_at`; `null` si la sesión no se cerró.
 - `routine`: `null` si la sesión no tiene rutina o se borró.
 - `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
-- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
+- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos, y con kg mayor a 0: el peso corporal no cuenta) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio con carga no cuenta (aunque antes lo haya hecho solo con peso corporal).
 - `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
 - **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
 
@@ -867,7 +877,7 @@ Curva de carga de un ejercicio: un punto por día con series que cuentan (`compl
 }
 ```
 
-- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
+- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg mayor a 0: un día solo de peso corporal trae `null`, no 0); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
 - `pr`: mayor `max_kg` y mayor `e1rm_kg` del rango, con su fecha (la primera en alcanzarse); `null` cada uno si no hay valores. Sin series: `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
 - `default_metric`: métrica que los clientes grafican por defecto, en escalones: `e1rm_kg` si algún punto lo tiene mayor a 0; si no, `max_kg` si algún punto tiene `max_kg > 0` (ejercicios con peso hechos siempre con más de 12 repeticiones); si no, `reps` (peso corporal, como dominadas o flexiones, con `actual_kg` nulo o 0). Sin puntos: `e1rm_kg`.
 - Una serie sustituida cuenta para el ejercicio realmente hecho, no para el original.
@@ -1153,6 +1163,152 @@ Envía un mensaje al asistente IA en sesión.
 
 ---
 
+## Módulo: Disponibilidad
+
+Franjas semanales del entrenador (hora de Argentina, UTC-3 fijo; `weekday` 1 = lunes … 7 = domingo) y horarios libres para pedir turno. Todos los endpoints piden `Authorization: Bearer <token>`. Las franjas son de horas en punto y se parten en turnos de 60 min.
+
+### GET /availability
+
+**Rol:** `trainer`. Sin token → 401; con rol alumno → 403.
+
+**200 OK** — franjas propias, ordenadas por día y hora:
+
+```json
+{ "data": [{ "weekday": 1, "start_time": "09:00", "end_time": "13:00" }] }
+```
+
+### PUT /availability
+
+**Rol:** `trainer`. Reemplaza toda la disponibilidad de forma atómica (RPC `replace_trainer_availability`). `{ "slots": [] }` la vacía.
+
+**Body**
+
+```json
+{ "slots": [{ "weekday": 1, "start_time": "09:00", "end_time": "13:00" }] }
+```
+
+- `slots`: de 0 a 50. `weekday` entero 1–7; `start_time` y `end_time` con formato `HH:00` (hora en punto), `start_time < end_time`. Las franjas no pueden superponerse dentro del mismo día.
+- **Límite:** la disponibilidad llega hasta las 23 h; la última franja posible es de 22 a 23 (no hay `24:00`).
+- Dos guardados simultáneos del mismo entrenador van en fila (advisory lock en la RPC): gana el último, sin franjas mezcladas.
+
+**200 OK** — lo guardado, con la misma forma que el `GET`.
+
+**Errores:** 400 `VALIDATION_ERROR` con `details` por franja (`slots[i]`, `slots[i].weekday`, `slots[i].start_time`, `slots[i].end_time`); las superpuestas dan un detalle por franja ("La franja se superpone con otra del mismo día").
+
+### GET /availability/free
+
+**Rol:** `trainer` y `student`. Horarios libres para pedir turno.
+
+**Query (obligatorios)**
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `from` | `YYYY-MM-DD` | Primer día (hora de Argentina), inclusive |
+| `to` | `YYYY-MM-DD` | Último día (hora de Argentina), inclusive. Rango de 1 a 31 días |
+
+**200 OK**
+
+```json
+{ "data": [{ "starts_at": "2026-11-06T21:00:00.000Z" }] }
+```
+
+- `starts_at` es ISO UTC, ordenado. Cada uno es un turno de 60 min.
+- Salen los horarios dentro de la disponibilidad, de la próxima hora en punto en adelante y sin turno `pending` o `confirmed`. Los turnos cancelados liberan el horario.
+- El alumno ve la agenda de **su** entrenador y solo hasta ahora + 28 días. Un alumno sin entrenador recibe `[]` (a propósito, no es un error). El entrenador ve la suya, sin ese tope.
+
+**Errores:** 400 `VALIDATION_ERROR` (falta `from` o `to`, formato inválido, `to < from` o más de 31 días); 403 `FORBIDDEN` si el alumno está inactivo.
+
+---
+
+## Módulo: Turnos
+
+Turnos de 60 min entre el entrenador y sus alumnos. Endpoints con `Authorization: Bearer <token>`, roles `trainer` y `student`; cada uno trabaja solo con sus propios turnos. Sin token → 401.
+
+**Turno** (forma de todas las respuestas):
+
+```json
+{
+  "id": "uuid",
+  "trainer_id": "uuid",
+  "student": { "id": "uuid", "name": "Lucía Gómez", "avatar_url": null },
+  "scheduled_at": "2026-11-06T21:00:00.000Z",
+  "duration_min": 60,
+  "status": "pending",
+  "notes": null,
+  "created_at": "2026-10-31T15:20:11.123456+00:00"
+}
+```
+
+- `status`: `pending | confirmed | cancelled`. `scheduled_at` es ISO UTC; `notes` es `string` o `null`.
+- Un horario solo admite un turno `pending` o `confirmed` por entrenador (índice único parcial). Un turno cancelado se puede volver a pedir.
+- La base exige que todo turno dure 60 min y empiece en hora en punto (checks `appointments_duration_60` y `appointments_on_the_hour`).
+- Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`), sus turnos futuros `pending` o `confirmed` pasan a `cancelled`.
+
+### GET /appointments
+
+Lista los turnos propios (todos los estados) ordenados por `scheduled_at`.
+
+**Query (obligatorios):** `from` y `to` (`YYYY-MM-DD`, días de Argentina, ambos inclusivos, rango de 1 a 62 días).
+
+**200 OK** — `{ "data": [turno] }`
+
+**Errores:** 400 `VALIDATION_ERROR` (falta alguno, formato inválido, `to < from` o más de 62 días).
+
+### POST /appointments
+
+**Rol:** `student` pide un turno; `trainer` agenda uno a mano. El `trainer_id` sale del alumno o del token.
+
+**Body del alumno**
+
+```json
+{ "scheduled_at": "2026-11-06T18:00:00-03:00", "notes": "opcional, hasta 500 caracteres" }
+```
+
+**Body del entrenador**
+
+```json
+{ "student_id": "uuid", "scheduled_at": "2026-11-06T18:00:00-03:00", "notes": "opcional" }
+```
+
+- `scheduled_at`: ISO 8601 con zona, en hora en punto. `notes` vacío o con solo espacios se guarda como `null`.
+- **Los dos roles:** hora en punto, a futuro y hasta 1 año: el día (de Argentina) del turno no puede pasar del de hoy + 365 días.
+- **Alumno:** nace `pending`. Tiene que caer dentro de la disponibilidad de su entrenador, a futuro y hasta 28 días adelante. Puede tener como máximo **3 turnos `pending` a futuro**: el 4.º da 409 `APPOINTMENT_LIMIT` (los confirmados, cancelados y pasados no cuentan). Notifica al entrenador (solo en la base). Un alumno sin entrenador recibe 403, a propósito.
+- **Entrenador:** nace `confirmed`. No exige disponibilidad, tope de 28 días ni tope de pendientes (solo hora en punto, a futuro y hasta 1 año). Notifica al alumno con push.
+
+**201 Created** — `{ "data": turno }`
+
+**Errores:**
+
+| Status | Code | Cuándo |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Body inválido |
+| 400 | `SLOT_UNAVAILABLE` | "El turno tiene que empezar en una hora en punto", "El turno tiene que ser a futuro", "Solo se puede agendar hasta 365 días adelante"; solo alumno: "Solo se puede pedir turno hasta 28 días adelante", "Ese horario está fuera de la disponibilidad de tu entrenador" |
+| 403 | `FORBIDDEN` | Alumno sin entrenador o inactivo; entrenador con un `student_id` de otro entrenador, inexistente o inactivo |
+| 409 | `SLOT_TAKEN` | "Ese horario ya está ocupado" (también si dos pedidos llegan a la vez: el segundo pierde) |
+| 409 | `APPOINTMENT_LIMIT` | Solo alumno: "Ya tenés 3 turnos pendientes: esperá a que tu entrenador los confirme" (ya tiene 3 `pending` a futuro). El chequeo no es atómico: dos pedidos simultáneos podrían dejar 4 |
+
+### PATCH /appointments/:id
+
+Confirma o cancela un turno.
+
+**Body:** `{ "status": "confirmed" | "cancelled" }`
+
+**Transiciones permitidas**
+
+| Rol | Desde | Hacia |
+|---|---|---|
+| `trainer` | `pending` | `confirmed` |
+| `trainer` | `pending`, `confirmed` | `cancelled` |
+| `student` | `pending`, `confirmed` | `cancelled` |
+
+El alumno no confirma, el entrenador no reconfirma y nadie reabre un cancelado. El cambio es optimista: solo se aplica si el turno sigue en el estado que se leyó, así dos cambios simultáneos no se pisan. Un alumno dado de baja **sí** puede cancelar los suyos.
+
+**200 OK** — `{ "data": turno }`
+
+**Errores:** 400 `VALIDATION_ERROR` (`id` no UUID o `status` distinto de los dos valores); 403 `FORBIDDEN` (turno ajeno o inexistente, no se distingue); 409 `APPOINTMENT_PAST` ("El turno ya pasó": `scheduled_at <= ahora`, se chequea antes que la transición); 409 `INVALID_STATUS_TRANSITION` ("No se puede pasar el turno a ese estado", también si el estado cambió en el medio).
+
+---
+
 ## Módulo: Notificaciones
 
 La tabla `notifications` es la fuente de verdad; el push al celular es un aviso aparte y best-effort ([[adr/0006-notificaciones-tabla-fuente-de-verdad-fcm-v1|ADR 0006]]). Todos los endpoints piden `Authorization: Bearer <token>`, roles `trainer` y `student`, y trabajan **solo con las notificaciones y tokens del usuario autenticado**. Sin token → 401 `UNAUTHORIZED`; con un dato inválido → 400 `VALIDATION_ERROR`.
@@ -1203,11 +1359,13 @@ Lista las notificaciones propias, las más nuevas primero (`created_at` desc).
 | `pr` | Se cierra una sesión con récords; una por sesión | Alumno y PT del alumno | Alumno (el PT solo la ve en la lista) | `student_id`, `session_id`, `exercise_ids` |
 | `achievement` | Se desbloquea un logro al cerrar una sesión; una por logro, para el alumno y para el PT. Los que desbloquea el job nocturno quedan solo en la base | Alumno y PT del alumno | Alumno (con varios logros en la sesión, un único push resumen); el PT solo la ve en la lista | `student_id`, `achievement_code` |
 | `comment` | El PT guarda un comentario de sesión no vacío y distinto del anterior (`PATCH /sessions/:id/comment`) | Alumno | Alumno | `session_id` |
-| `appointment` | Reservado para la agenda (otra tarjeta); todavía no se crea | — | — | — |
+| `appointment` | Cambios en un turno (ver Módulo: Turnos). El PT confirma, cancela o agenda a mano: `Tu turno del vie 06/11 a las 18:00 quedó confirmado` / `… fue cancelado` / `Tu entrenador te agendó un turno el vie 06/11 a las 18:00`. El alumno pide o cancela: `Lucía pidió un turno para el vie 06/11 a las 18:00` / `Lucía canceló su turno del vie 06/11 a las 18:00` | Alumno (acciones del PT) o PT (acciones del alumno) | Alumno; el PT solo la ve en la lista | `appointment_id` |
 
-El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
+El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el turno (`appointment_id`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
 
 **Payload del push.** El mensaje FCM lleva `notification` (`title`, `body`) y un `data` con el de la fila más dos campos: `type` (el tipo de la notificación, para elegir la pantalla) y `notification_id` (el id de la fila, para llamar a `PATCH /notifications/:id/read` al tocarla). Todos los valores viajan como texto, como exige FCM: los arrays y objetos van serializados en JSON (por ejemplo, `exercise_ids` llega como `"[\"uuid-1\",\"uuid-2\"]"` y hay que parsearlo en la app). El push resumen de varios logros no tiene fila: lleva `type: "achievement"` y `student_id`, sin `notification_id`. La fila guardada no cambia: `type` ya es una columna y el id es el de la fila.
+
+**Push de mensaje nuevo (`message`, sin fila).** Cada mensaje de la [mensajería](#post-messagesstudentid) manda un push al otro lado de la conversación (PT → alumno; alumno → su PT; el envío masivo, uno por alumno, de a 10 a la vez) y **no crea fila en `notifications`**: `message` no es un valor de `notifications.type` y nunca aparece en `GET /notifications`. `notification`: `title` = nombre de quien escribe; `body` = el texto, y si pasa de 120 caracteres (puntos de código, como `char_length`: un emoji cuenta 1 y nunca se parte) se corta a 119 más "…", 120 en total; `📷 Foto` si es solo foto o `📷 Foto · <texto>` si tiene las dos. `data`: `{ "type": "message", "student_id": "uuid" }` (el alumno de la conversación, para abrir el chat; sin `notification_id`). `android.notification.tag`: `message:<student_id>`, así Android deja un solo aviso por conversación en la bandeja, también con la app en segundo plano. Best-effort: si FCM falla el mensaje se guarda y responde igual.
 
 ### PATCH /notifications/read-all
 
@@ -1241,7 +1399,7 @@ Registra el token de FCM del dispositivo para recibir push. Es un upsert por `to
 
 ### DELETE /notifications/tokens/:token
 
-Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
+Da de baja el token del dispositivo (por ejemplo al cerrar sesión; también se puede mandar como `push_token` en `POST /auth/logout`, que funciona sin access token). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
 
 > El backend también borra solo los tokens que FCM da por inválidos (`UNREGISTERED` o token mal formado); el cliente no tiene que hacer nada.
 
@@ -1260,13 +1418,15 @@ Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Un
   "sender_role": "trainer",
   "body": "¡Buen entrenamiento hoy!",
   "image_url": "https://…/message-images/…?token=…",
+  "has_image": true,
   "broadcast_id": null,
   "read_at": null,
   "created_at": "2026-10-31T14:05:00.123456+00:00"
 }
 ```
 
-- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`. Si los dos vienen en `null` es un mensaje de solo foto cuya URL no se pudo firmar (ver abajo): la web muestra "Foto no disponible".
+- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`.
+- `has_image` es `true` si el mensaje tiene foto, aunque su URL no se haya podido firmar (ver abajo). `has_image: true` con `image_url: null` es una foto sin firmar: la web muestra "Foto no disponible" (con o sin texto) y el celular, que cachea los mensajes, sabe que tiene que volver a pedir el historial para firmarla.
 - `image_url` es una URL firmada que vence a la hora (3600 s); el `image_path` del bucket nunca sale. Si hace falta, se vuelve a pedir el historial para obtener una nueva.
 - La firma es best-effort: si Storage falla al firmar, la respuesta igual sale bien (200 en el historial, 201 en el envío) con `image_url: null` en las fotos afectadas, y el error se registra en el servidor. El próximo pedido del historial las vuelve a firmar.
 - `broadcast_id` lo comparten los mensajes de un mismo envío masivo; `null` si es un mensaje normal.
@@ -1349,7 +1509,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 
 ```json
 {
-  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
+  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "has_image": false, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
   "meta": { "next_before": "2026-10-31T14:00:00.000000+00:00" },
   "counterpart": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null }
 }
@@ -1358,7 +1518,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 - `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
 - `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
 - `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
-- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y no responde 500.
+- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y `has_image: true`, y no responde 500.
 
 **Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.
 
@@ -1378,7 +1538,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 **201 Created** con el mensaje creado:
 
 ```json
-{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
+{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "has_image": true, "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
 ```
 
 **Errores**
@@ -1394,7 +1554,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 
 > Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
 >
-> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
+> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` y `has_image: true` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
 
 ### POST /messages/:studentId/read
 

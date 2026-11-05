@@ -31,7 +31,9 @@ function Failure({ message, onRetry, onDiscard }) {
  * `isLastMine` muestra ✓ / ✓✓; los temporales (`status`) muestran "Enviando…" o el fallo con Reintentar / Descartar.
  */
 export default function MessageBubble({ message, mine, isLastMine, senderName, onOpenImage, onRetry, onDiscard }) {
-  const { body, image_url: imageUrl, status } = message;
+  const { body, image_url: imageUrl, has_image: hasImage, status } = message;
+  // Foto cuya firma falló: lo avisa `has_image`; sin ese campo, un mensaje sin texto ni foto también lo es.
+  const photoMissing = !imageUrl && (hasImage || !body);
   const alt = `Foto enviada por ${senderName}`;
   return (
     <div className={`flex max-w-[70%] flex-col ${mine ? 'items-end self-end' : 'items-start self-start'}`}>
@@ -41,9 +43,8 @@ export default function MessageBubble({ message, mine, isLastMine, senderName, o
             <img src={imageUrl} alt={alt} className={`block w-full max-w-[240px] rounded-lg ${body ? 'mb-2' : ''}`} />
           </button>
         )}
+        {photoMissing && <p className={`italic opacity-70 ${body ? 'mb-2' : ''}`}>Foto no disponible</p>}
         {body && <p className="whitespace-pre-wrap break-words">{body}</p>}
-        {/* Todo mensaje tiene texto o foto: sin ninguno de los dos, la firma de la foto falló. */}
-        {!body && !imageUrl && <p className="italic opacity-70">Foto no disponible</p>}
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-2 px-1 font-mono text-[9px] text-ink6">
         {message.broadcast_id && <span className="text-cool">Envío masivo</span>}

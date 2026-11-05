@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as authService from '../../services/auth/auth.service.js';
 
 /** POST /auth/register — registra un trainer. 201 → { trainer, token, refresh_token } */

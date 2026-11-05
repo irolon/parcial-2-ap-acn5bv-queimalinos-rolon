@@ -68,7 +68,7 @@ export function validateLogin(body) {
   return { email: email.toLowerCase(), password: body.password };
 }
 
-/** Valida el body de POST /auth/refresh y /auth/logout. */
+/** Valida el body de POST /auth/refresh. */
 export function validateRefresh(body) {
   if (!isString(body.refresh_token) || body.refresh_token.trim() === '') {
     throw Errors.validation('Error de validación', [
@@ -76,4 +76,22 @@ export function validateRefresh(body) {
     ]);
   }
   return { refresh_token: body.refresh_token.trim() };
+}
+
+const PUSH_TOKEN_MAX = 4096; // mismo límite que el alta de tokens en notifications
+
+/**
+ * Valida el body de POST /auth/logout: refresh_token y, opcional, el push_token
+ * del dispositivo para borrarlo en el servidor junto con la sesión.
+ */
+export function validateLogout(body) {
+  const { refresh_token } = validateRefresh(body);
+  const pushToken = body.push_token;
+  if (pushToken === undefined) return { refresh_token };
+  if (!isString(pushToken) || pushToken.length < 1 || pushToken.length > PUSH_TOKEN_MAX) {
+    throw Errors.validation('Error de validación', [
+      { field: 'push_token', message: `push_token debe tener entre 1 y ${PUSH_TOKEN_MAX} caracteres` },
+    ]);
+  }
+  return { refresh_token, push_token: pushToken };
 }

@@ -79,6 +79,13 @@ export const Errors = {
       'EXERCISE_IN_USE',
       'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno'
     ),
+  slotTaken: () => new AppError(409, 'SLOT_TAKEN', 'Ese horario ya está ocupado'),
+  slotUnavailable: (message) => new AppError(400, 'SLOT_UNAVAILABLE', message),
+  invalidStatusTransition: () =>
+    new AppError(409, 'INVALID_STATUS_TRANSITION', 'No se puede pasar el turno a ese estado'),
+  appointmentLimit: (max) =>
+    new AppError(409, 'APPOINTMENT_LIMIT', `Ya tenés ${max} turnos pendientes: esperá a que tu entrenador los confirme`),
+  appointmentPast: () => new AppError(409, 'APPOINTMENT_PAST', 'El turno ya pasó'),
   studentInactive: () => new AppError(409, 'STUDENT_INACTIVE', 'El alumno está dado de baja'),
   messageEmpty: () =>
     new AppError(400, 'MESSAGE_EMPTY', 'Escribí un mensaje o adjuntá una foto'),

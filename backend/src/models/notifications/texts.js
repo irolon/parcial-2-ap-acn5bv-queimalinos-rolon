@@ -3,17 +3,23 @@
  * devuelven { title, body } (body null si no hay detalle); el título se recorta al límite de la columna.
  */
 
+import { appointmentLabel } from '../../shared/utils/dates/labels.js';
+
 export const TITLE_MAX = 150;
 export const COMMENT_PREVIEW_MAX = 120;
+export const MESSAGE_PREVIEW_MAX = 120;
 
 const ELLIPSIS = '…';
 
-/** Recorta a `max` caracteres agregando "…" si hubo corte (el total no pasa de `max`). */
-const clip = (text, max) =>
-  text.length > max ? `${text.slice(0, max - 1)}${ELLIPSIS}` : text;
-
-/** Primeros `max` caracteres y "…" si el texto era más largo. */
-const preview = (text, max) => (text.length > max ? `${text.slice(0, max)}${ELLIPSIS}` : text);
+/**
+ * Recorta a `max` caracteres agregando "…" si hubo corte (el total no pasa de `max`).
+ * Cuenta por puntos de código (como char_length de Postgres y la validación de mensajes),
+ * así que nunca parte un emoji ni cuenta 😀 como dos.
+ */
+const clip = (text, max) => {
+  const chars = Array.from(text);
+  return chars.length > max ? `${chars.slice(0, max - 1).join('')}${ELLIPSIS}` : text;
+};
 
 /** 'YYYY-MM-DD' → 'dd/mm'. */
 const ddmm = (date) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
@@ -61,5 +67,28 @@ export const texts = {
   achievementForTrainer: ({ studentName, name }) => build(`${studentName} desbloqueó ${name}`, null),
 
   comment: ({ date, comment }) =>
-    build(`Tu entrenador comentó tu sesión del ${ddmm(date)}`, preview(comment, COMMENT_PREVIEW_MAX)),
+    build(`Tu entrenador comentó tu sesión del ${ddmm(date)}`, clip(comment, COMMENT_PREVIEW_MAX)),
+
+  // Turnos: `scheduledAt` es el instante del turno; el texto lleva día y hora de Argentina.
+  appointmentConfirmed: ({ scheduledAt }) =>
+    build(`Tu turno del ${appointmentLabel(scheduledAt)} quedó confirmado`, null),
+
+  appointmentCancelled: ({ scheduledAt }) =>
+    build(`Tu turno del ${appointmentLabel(scheduledAt)} fue cancelado`, null),
+
+  appointmentCreatedByTrainer: ({ scheduledAt }) =>
+    build(`Tu entrenador te agendó un turno el ${appointmentLabel(scheduledAt)}`, null),
+
+  appointmentRequested: ({ studentName, scheduledAt }) =>
+    build(`${studentName} pidió un turno para el ${appointmentLabel(scheduledAt)}`, null),
+
+  appointmentCancelledByStudent: ({ studentName, scheduledAt }) =>
+    build(`${studentName} canceló su turno del ${appointmentLabel(scheduledAt)}`, null),
+
+  /** Push de mensaje nuevo: título = quien escribe; cuerpo = el texto recortado, con "📷 Foto" si trae foto. */
+  message: ({ senderName, body, hasImage }) => {
+    const text = body ? clip(body, MESSAGE_PREVIEW_MAX) : null;
+    const photo = '📷 Foto';
+    return build(senderName, hasImage ? (text ? `${photo} · ${text}` : photo) : text);
+  },
 };

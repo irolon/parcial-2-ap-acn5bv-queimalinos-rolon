@@ -114,7 +114,7 @@ set search_path = public
 as $$
   select
     (s.started_at at time zone 'America/Argentina/Buenos_Aires')::date as "date",
-    max(ss.actual_kg) as max_kg,
+    nullif(max(ss.actual_kg), 0) as max_kg,  -- día solo de peso corporal: null, no 0
     sum(ss.actual_reps * coalesce(ss.actual_kg, 0)) as volume_kg,
     max(case when ss.actual_reps > 12 then null  -- Epley sobreestima: no cuenta
              when coalesce(ss.actual_kg, 0) = 0 then null  -- peso corporal (el celular manda 0)
@@ -165,10 +165,10 @@ grant execute on function last_session_kg(uuid, uuid[]) to service_role;
 
 -- ── session_records (tarjeta 33) ─────────────────────────────────────────────
 -- Récords personales por sesión: devuelve (sesión, ejercicio) cuando el mejor
--- 1RM estimado (Epley; solo series completadas con 0 < reps <= 12 y kg no nulo:
--- Epley sobreestima por encima de 12 reps) de
+-- 1RM estimado (Epley; solo series completadas con 0 < reps <= 12 y kg > 0:
+-- Epley sobreestima por encima de 12 reps y el peso corporal no tiene 1RM) de
 -- esa sesión supera ESTRICTAMENTE al mejor de todas las sesiones anteriores del
--- alumno. La primera vez que hace un ejercicio no cuenta (no hay anterior).
+-- alumno. La primera vez que hace un ejercicio con carga no cuenta (no hay anterior).
 create or replace function session_records(p_student_id uuid, p_session_ids uuid[])
 returns table (session_id uuid, exercise_id uuid)
 language sql stable security invoker set search_path = public
@@ -181,7 +181,7 @@ as $$
     join session_sets ss on ss.session_id = s.id
     where s.student_id = p_student_id
       and ss.completed and ss.actual_reps > 0 and ss.actual_reps <= 12
-      and ss.actual_kg is not null
+      and ss.actual_kg > 0  -- excluye nulo y 0 (peso corporal)
     group by s.id, s.started_at, ss.exercise_id
   )
   select b.sid, b.eid

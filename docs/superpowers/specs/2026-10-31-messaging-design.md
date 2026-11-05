@@ -154,6 +154,7 @@ Editar o borrar mensajes, varias fotos por mensaje, fotos en el envío masivo, p
 - La firma de la URL de la foto después del insert es best-effort: si falla, responde 201 con `image_url: null` (y se loguea) para que Reintentar no duplique el mensaje.
 - multer limita `fields: 1`, `fieldSize: 16 KB` y `parts: 2` (el `body` + la `image`): un formulario con más partes da 400 antes de bufferear.
 - La web vacía la caché de TanStack Query al cerrar sesión o entrar con otro usuario (las claves no llevan el usuario). Un poll que falla con datos muestra un aviso arriba y deja montado el composer; el error de pantalla completa es solo para la primera carga. Un mensaje de solo foto sin URL firmada se dibuja como "Foto no disponible".
+- **Push (02/11, tarjeta 18 del celular; cambia Q1/Q8).** Los mensajes ahora mandan push al otro lado de la conversación (también el masivo, uno por alumno), antes "sin push ni notificaciones". Sigue sin haber filas en `notifications`: es solo push, con `data: { type: "message", student_id }`. Detalle en `contratos-api.md` (Notificaciones, "Push de mensaje nuevo").
 
 ### Deuda técnica conocida
 

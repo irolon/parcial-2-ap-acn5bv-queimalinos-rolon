@@ -40,14 +40,18 @@ const List = ({ items }) => (
   </ul>
 );
 
-/** Desafíos activos con su barra; el resto, en un "Historial (N)" colapsado. */
-export default function ChallengeProgressList({ items }) {
+/**
+ * Desafíos activos con su barra; el resto, en un "Historial (N)" colapsado. `viewer` es quién mira (`'trainer'` por
+ * defecto o `'student'`) y solo cambia el texto del vacío: "Sin desafíos activos" o "No tenés desafíos activos".
+ */
+export default function ChallengeProgressList({ items, viewer = 'trainer' }) {
   const [open, setOpen] = useState(false);
   const active = items.filter((a) => a.status === 'active');
   const history = items.filter((a) => a.status !== 'active');
+  const noActive = viewer === 'student' ? 'No tenés desafíos activos' : 'Sin desafíos activos';
   return (
     <div className="flex flex-col gap-3.5">
-      {active.length > 0 ? <List items={active} /> : <p className="font-body text-sm text-ink6">Sin desafíos activos</p>}
+      {active.length > 0 ? <List items={active} /> : <p className="font-body text-sm text-ink6">{noActive}</p>}
       {history.length > 0 && (
         <div className="flex flex-col gap-3">
           <button

@@ -2,6 +2,7 @@ package com.fittrainer.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import com.fittrainer.navigation.student.studentMenuLinks
 import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
 import com.fittrainer.navigation.trainer.trainerChatRoute
@@ -36,7 +37,7 @@ internal fun TabScreen(
             title = tab.label,
             onServerStatus = { navController.navigate(HEALTH_ROUTE) },
             onSignOut = guardedSignOut,
-            links = if (isStudent) emptyList() else trainerMenuLinks(navController),
+            links = if (isStudent) studentMenuLinks(navController) else trainerMenuLinks(navController),
         )
         tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
             onOpenWorkout = openWorkout,

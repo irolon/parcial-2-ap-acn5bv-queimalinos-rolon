@@ -4,7 +4,7 @@
  * cuenta porque todavía no terminó. Sin rutina activa no hay plan: pct null.
  * Los días anteriores al alta del alumno (`since`) o a la rutina que asigna ese día de
  * la semana (`daySince`) no cuentan: un alumno nuevo no arranca con días "faltados".
- * Funciones puras sobre fechas locales 'YYYY-MM-DD' (ver shared/utils/dates.js).
+ * Funciones puras sobre fechas locales 'YYYY-MM-DD' (ver shared/utils/dates/dates.js).
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
 

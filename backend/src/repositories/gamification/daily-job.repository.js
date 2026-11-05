@@ -7,7 +7,7 @@ import {
   CHALLENGE_STATUS,
   CHALLENGE_GRACE_DAYS,
 } from '../../models/gamification/gamification.model.js';
-import { DAY_MS } from '../../shared/utils/dates.js';
+import { DAY_MS } from '../../shared/utils/dates/dates.js';
 
 /**
  * Ids de los alumnos activos con al menos una sesión cerrada o una asignación

@@ -2,7 +2,7 @@ import * as overviewRepo from '../../repositories/students/overview.repository.j
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import { buildOverview } from '../../models/students/overview.js';
 import { addDays } from '../../models/gamification/streak.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 
 export const RECENT_LIMIT = 10;
 

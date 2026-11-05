@@ -30,7 +30,10 @@ data class LastMessageDto(
     @SerialName("created_at") val createdAt: String,
 )
 
-/** Un mensaje. imageUrl es una URL firmada que vence a la hora; readAt la completa el otro lado. */
+/**
+ * Un mensaje. imageUrl es una URL firmada que vence a la hora; readAt la completa el otro lado. hasImage (#73): el
+ * mensaje tiene foto aunque imageUrl venga null (la firma falló); null si el backend todavía no manda el campo.
+ */
 @Serializable
 data class MessageDto(
     val id: String,
@@ -41,6 +44,7 @@ data class MessageDto(
     @SerialName("broadcast_id") val broadcastId: String? = null,
     @SerialName("read_at") val readAt: String? = null,
     @SerialName("created_at") val createdAt: String,
+    @SerialName("has_image") val hasImage: Boolean? = null,
 )
 
 /** data en orden cronológico (el más viejo primero). */

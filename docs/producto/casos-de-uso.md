@@ -18,9 +18,32 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - 🟣 **Sistema** — procesos automáticos (cron jobs, notificaciones, detección de logros)
 - 🟡 **Asistente IA** — actor automatizado vía n8n (tanto para PT como para alumno)
 
-> **Sobre las plataformas en los casos de uso:** cuando se menciona "la app" sin distinguir, se refiere indistintamente a la web o la mobile (ambas soportan a ambos roles con paridad funcional). En los casos donde el flujo tiene un dispositivo típico asociado (ej: registro de sesión en el gym), se aclara la plataforma esperada.
+> **Sobre las plataformas en los casos de uso:** cuando se menciona "la app" sin distinguir, se refiere indistintamente a la web o la mobile (ambas soportan a ambos roles). En los casos donde el flujo tiene un dispositivo típico asociado (ej: registro de sesión en el gym), se aclara la plataforma esperada. Las diferencias del alumno entre la web y la mobile están en la tabla de abajo.
 
 ---
+
+## Qué hace el alumno en cada plataforma
+
+El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero **no hacen lo mismo**: la mobile es la que se usa en el gym (sesión completa, con modo offline y reemplazo de ejercicios) y la web cubre lo central, además de lo que en la mobile todavía está pendiente. La columna Mobile refleja lo que hay hoy en el código de la mobile de `develop`.
+
+| Función | Web | Mobile |
+|---|---|---|
+| Hoy: rutina del día, plan y semana (CU-13) | Sí | Sí |
+| Mis rutinas (solo lectura) y biblioteca de ejercicios | Mis rutinas: Sí. Biblioteca: no, solo el video de cada ejercicio | Sí |
+| Ejecutar una sesión (CU-05 / CU-14) | **Simplificada:** un ejercicio por vez, descanso con cuenta regresiva y borrar series antes de subir. Se guarda en el navegador y se sube entera al terminar; necesita red para subir | Completa, con modo offline y sincronización |
+| Feedback post-entreno, RPE y nota (CU-16) | Sí | Sí |
+| Reemplazar un ejercicio | No | Sí |
+| Sesión libre (sin rutina) | No | No |
+| Historial de sesiones, con el comentario del entrenador en solo lectura (CU-17) | Sí | Sí |
+| Mi progreso: racha, logros con su avance y desafíos activos (CU-17, CU-20) | Sí (no puede sumarse a un desafío) | Pendiente |
+| Gráficos de progreso (CU-17) | Sí | Sí (cargas y medidas, en Progreso) |
+| Mi perfil: datos en solo lectura y medidas con gráfico e historial (CU-18) | Sí (el alumno borra solo las medidas que cargó él) | Pendiente: hoy el perfil solo tiene Estado del servidor y Cerrar sesión |
+| Notificaciones push y lista de avisos (CU-27) | No | Sí |
+| Pedir turno al entrenador (CU-19) | No | Pendiente (tarjeta de Igna) |
+| Asistente IA (CU-06 / CU-15) | **Pendiente** (tarjetas de IA pospuestas) | **Pendiente** |
+
+---
+
 
 ## CU-01 — Generar invitación para un alumno (WhatsApp o QR)
 
@@ -154,7 +177,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El alumno está autenticado. Tiene al menos una rutina activa asignada. La mobile es la plataforma esperada por el contexto (gym), pero también es factible desde web. |
+| Precondiciones | El alumno está autenticado. Tiene al menos una rutina activa asignada. La mobile es la plataforma esperada por el contexto (gym); desde la web se puede hacer una versión simplificada (ver "Qué hace el alumno en cada plataforma"). |
 | Postcondiciones | Se crea un registro en `sessions`. Cada serie ejecutada queda guardada en `session_sets`. Si hubo modificaciones, `sessions.has_modifications = true` y el PT recibe notificación. |
 
 **Flujo principal**
@@ -174,11 +197,13 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 - **1a:** El alumno entrena otra rutina (no la del día) desde Mis rutinas → abre su detalle y toca "Empezar"; sigue en el paso 3. Si ya tiene una sesión abierta de otra rutina, primero tiene que terminarla.
 - **4a:** El alumno saltea una serie → la marca como omitida (`completed = false`).
 - **4b:** El alumno reemplaza un ejercicio (máquina ocupada o no disponible) → abre el chat IA o lo selecciona manualmente. Se registra `substituted_exercise_id` y `has_modifications = true`.
-- **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente, puede retomar más tarde desde cualquier dispositivo.
+- **6a:** El alumno abandona la sesión sin finalizar → queda guardada parcialmente y puede retomarla más tarde, pero en el mismo dispositivo: la de la web vive en ese navegador y la del celular, en el celular (no pasa de uno a otro).
+- **W1 (web):** la sesión vive en el navegador (`localStorage`) y se sube entera al terminar, con el mismo contrato de la mobile. Si queda una a medias, Hoy ofrece "Continuar" o "Descartar"; no incluye 4b (reemplazar ejercicio).
 
 **Flujos de error**
 
 - **E1:** Sin conexión (escenario típico de la mobile en el gym) → los datos se guardan localmente (modo offline) y se sincronizan al recuperar red. El asistente IA queda deshabilitado con aviso.
+- **E2 (web):** si falla la subida, las series siguen guardadas en el navegador y la pantalla ofrece Reintentar (reintentar no duplica). Si el error es permanente, ofrece "Descartar entrenamiento". No hay sincronización en segundo plano: con la sesión terminada pero sin guardar, Hoy ofrece "Terminar de guardar".
 
 ---
 
@@ -188,7 +213,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 | Campo | Detalle |
 |---|---|
-| Precondiciones | El alumno tiene una sesión activa y conexión a internet. Disponible desde web o mobile. |
+| Precondiciones | El alumno tiene una sesión activa y conexión a internet. **Pendiente en ambas plataformas** (tarjetas de IA pospuestas); el menú del alumno en la web no lo muestra. |
 | Postcondiciones | El mensaje queda guardado en `chat_messages`. El alumno recibe respuesta con sugerencias o información. |
 
 **Flujo principal**
@@ -304,6 +329,41 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 
 ---
 
+## CU-26 — Gestionar agenda (web)
+
+**Actor:** Personal Trainer (y Alumno, vía mobile, para la solicitud de turno)
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El PT está autenticado en la web. Para pedir un turno, el alumno está activo y autenticado en mobile. |
+| Postcondiciones | La disponibilidad del PT queda en `trainer_availability`. Los turnos quedan en `appointments` con su estado (`pending`, `confirmed` o `cancelled`); nada se borra. Cada cambio de estado del PT genera una notificación (con push) para el alumno. |
+
+**Flujo principal**
+
+1. El PT abre "Agenda" y, en "Disponibilidad", carga sus franjas semanales por día (horas en punto, sin solaparse). Se guarda todo junto.
+2. Dos alumnos piden un turno en franjas libres de las próximas 4 semanas. Cada turno queda `pending` y el PT recibe una notificación (sin push).
+3. El PT ve la semana en el calendario (lunes a domingo) con los dos turnos pendientes.
+4. Abre uno y lo **confirma**: pasa a `confirmed` y el alumno recibe un push.
+5. Abre el otro y lo **cancela** (con confirmación): pasa a `cancelled`, la franja se libera y el alumno recibe un push.
+
+**Flujos alternativos**
+
+- **2a:** Dos solicitudes llegan para el mismo horario → la primera queda `pending`; la segunda falla con 409 `SLOT_TAKEN` (índice único parcial en la base, aunque lleguen al mismo tiempo) y se rechaza.
+- **2b:** El alumno pide un horario fuera de la disponibilidad del PT o a más de 28 días → 400 `SLOT_UNAVAILABLE`.
+- **2c:** El horario ya pasó o no es una hora en punto → 400 `SLOT_UNAVAILABLE`.
+- **2d:** El alumno está inactivo → 403 al pedir un turno y al consultar `/availability/free`. Sí puede cancelar los que ya tiene.
+- **2e:** El alumno ya tiene 3 turnos `pending` a futuro → el 4.º pedido da 409 `APPOINTMENT_LIMIT`.
+- **2f:** El turno cae a más de 1 año (hoy + 365 días), lo pida el alumno o lo agende el PT → 400 `SLOT_UNAVAILABLE`.
+- **2g:** El PT da de baja a un alumno → sus turnos futuros `pending` o `confirmed` pasan a `cancelled` y liberan el horario.
+- **4a:** El estado cambió en el medio (por ejemplo, el alumno canceló mientras el PT confirmaba) → 409 `INVALID_STATUS_TRANSITION` y la pantalla se refresca.
+- **4b:** El turno ya pasó → 409 `APPOINTMENT_PAST`; no se puede cambiar.
+- **5a:** El alumno cancela su propio turno (`pending` o `confirmed`) → pasa a `cancelled` y el PT recibe una notificación (sin push).
+- **6:** Alta manual: el PT crea un turno para uno de sus alumnos activos con "Nuevo turno". No exige disponibilidad y queda `confirmed`; el alumno recibe un push. Si el horario está ocupado → 409 `SLOT_TAKEN`.
+
+**Nota:** la pantalla donde el alumno ve las franjas libres y pide o cancela el turno es de mobile (tarjeta de Igna, CU-19). Los endpoints ya están listos (`GET /availability/free`, `POST /appointments`, `PATCH /appointments/:id`).
+
+---
+
 ## CU-11 — Enviar mensaje al alumno (web)
 
 **Actores:** Personal Trainer y Alumno
@@ -355,7 +415,7 @@ Describen las interacciones entre los actores y el sistema para lograr un objeti
 1. El PT entra a "Desafíos" del menú. La página tiene dos secciones: "Plantillas" (los 4 desafíos globales que vienen con la app: "12 sesiones en 30 días", "Racha de 2 semanas", "10 toneladas en 4 semanas" y "8 sesiones en 4 semanas") y "Mis desafíos" (los que creó él).
 2. En "Plantillas" elige una y toca "Asignar". Las plantillas se asignan directamente, sin copiarse ni modificarse.
 3. El PT elige alumnos con un buscador (hasta 50 por vez) y confirma con "Asignar". El sistema crea los `student_challenges` con `started_at = now` y `ends_at = now + duration_days`.
-4. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. La vista del alumno (desafío activo y progreso) está pendiente: tarjeta 50 (paridad de rol, vistas del alumno en la web) y la mobile.
+4. El PT sigue el progreso del desafío en la card "Logros y racha" de la ficha de cada alumno. El alumno ve su desafío activo y su avance en "Mi progreso" de la web (tarjeta 50); la vista en la mobile está pendiente.
 
 **Flujos alternativos**
 

@@ -67,8 +67,11 @@ y cuál se grafica por defecto.
   repeticiones trae `e1rm_kg` en `null`. La curva sirve para ver la tendencia
   de un alumno, no como valor absoluto de su máximo.
 - Los ejercicios de **peso corporal no tienen 1RM**: su punto trae `e1rm_kg` en
-  `null`, `max_kg` en `null` (sin `actual_kg`) o en 0 (el celular siempre manda
-  un número y usa 0 como piso), y solo `sets`, `reps` y `volume_kg` (0). Como el
+  `null`, `max_kg` en `null` (sin `actual_kg` o con 0, que es lo que manda el
+  celular: `nullif(max(kg), 0)` desde el 02/11), y solo `sets`, `reps` y
+  `volume_kg` (0). Tampoco cuentan para los récords (`session_records` filtra
+  `actual_kg > 0`): la primera sesión con carga después de hacerlo solo con peso
+  corporal es "la primera vez" y no marca récord. Como el
   gráfico por defecto saldría vacío o plano, para esos ejercicios
   `default_metric` es `reps`: se mira `max_kg > 0`, no `max_kg` distinto de `null`.
 - Un ejercicio **con peso pero siempre de más de 12 repeticiones** (abdominales

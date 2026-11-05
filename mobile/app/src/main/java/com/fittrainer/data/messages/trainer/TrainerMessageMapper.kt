@@ -33,6 +33,8 @@ internal fun MessageDto.toEntity(trainerId: String, fetchedAt: Long) = TrainerMe
     readAt = readAt?.let(::millis),
     createdAt = millis(createdAt),
     fetchedAt = fetchedAt,
+    // Sin el campo (backend anterior a la #73): con URL tiene foto, y sin texto solo puede ser una foto.
+    hasImage = hasImage ?: (imageUrl != null || body == null),
 )
 
 internal fun TrainerConversationEntity.toDomain() = Conversation(
@@ -48,6 +50,7 @@ internal fun TrainerMessageEntity.toDomain() = Message(
     fromTrainer = senderRole == SENDER_TRAINER,
     body = body,
     imageUrl = imageUrl,
+    hasImage = hasImage || imageUrl != null || body == null,
     broadcast = broadcastId != null,
     read = readAt != null,
     at = Instant.ofEpochMilli(createdAt),
@@ -56,7 +59,7 @@ internal fun TrainerMessageEntity.toDomain() = Message(
 /** La vista previa de la lista después de que el PT manda [message]. */
 internal fun TrainerConversationEntity.withSent(message: TrainerMessageEntity) = copy(
     lastBody = message.body,
-    lastHasImage = message.imageUrl != null,
+    lastHasImage = message.hasImage || message.imageUrl != null,
     lastSenderRole = message.senderRole,
     lastAt = message.createdAt,
 )

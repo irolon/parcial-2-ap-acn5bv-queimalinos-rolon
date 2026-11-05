@@ -39,6 +39,21 @@ describe('StudentProfilePage: baja y reactivación', () => {
     expect(screen.getByRole('button', { name: 'Reactivar' })).toBeVisible();
   });
 
+  it('si la baja falla después de guardarse (500), la ficha se refresca y muestra Dado de baja', async () => {
+    const user = userEvent.setup();
+    const { detail, update } = mutableStudent(studentDetail());
+    update.mockImplementationOnce(async (init) => {
+      await update.getMockImplementation()(init);
+      return errorResponse(500, 'INTERNAL', 'No se pudieron cancelar los turnos');
+    });
+    await loadProfile({ detail, handlers: { update } });
+    await user.click(screen.getByRole('button', { name: 'Dar de baja' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Dar de baja' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('No se pudieron cancelar los turnos');
+    expect(await screen.findByText('Dado de baja')).toBeVisible();
+  });
+
   it('cancelar no hace request', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await loadProfile({ detail: studentDetail() });

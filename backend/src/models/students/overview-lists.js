@@ -3,7 +3,7 @@
  * hoy, en riesgo, feedback pendiente y alumnos. Funciones puras, fechas en hora argentina.
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d } from './adherence.js';
 import { activityStatus, daysWithoutTraining } from './activity.js';
 

@@ -26,7 +26,7 @@ class NotificationsRepositoryUnreadTest {
 
     @Test fun campanaCuentaUnaNoLeidaMasViejaQueLaPagina1() = runTest {
         api.pages = mapOf(null to api.page(*twentyRead(), next = "c1"))
-        api.unreadPage = api.page(notificationDto("vieja", "comment", at = at(1)), notificationDto("ajena", "appointment", at = at(1)))
+        api.unreadPage = api.page(notificationDto("vieja", "comment", at = at(1)), notificationDto("ajena", "desconocido", at = at(1)))
         repository.refresh("u1")
         assertEquals(1, repository.observeUnread("u1").first())
         assertEquals(1, api.unreadCalls)

@@ -1,7 +1,7 @@
 import { supabase } from '../../config/supabase.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { fetchAll } from '../../shared/utils/supabase-query.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
 import { scheduleOf } from '../../models/students/adherence.js';
 import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';

@@ -32,7 +32,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | Actor | Tipo | Descripción |
 |---|---|---|
 | Personal Trainer | Principal | Profesional que gestiona alumnos, arma rutinas y monitorea progreso. Uso típico desde web. |
-| Alumno | Principal | Cliente del PT que ejecuta entrenamientos y registra su progreso. Uso típico desde mobile. |
+| Alumno | Principal | Cliente del PT que ejecuta entrenamientos y registra su progreso. Uso típico desde mobile; la web cubre la rutina del día, una sesión simplificada, historial, progreso, logros y medidas (ver Plataforma abajo). |
 | Sistema | Secundario | Procesos automáticos (cron jobs, notificaciones push, sincronización offline) sin intervención humana. |
 | Asistente IA | Secundario (externo) | Servicio de IA (n8n + LLM) que asiste tanto al PT (armado de rutinas) como al alumno (dudas en sesión). |
 
@@ -53,24 +53,26 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-07 | Ver progreso del alumno | Historial de sesiones, curvas de carga, evolución de medidas, gráficos de progresión | PT-07 |
 | CU-08 | Generar rutina con IA | El PT le pasa parámetros del alumno al asistente IA y obtiene una plantilla inicial editable | PT-14 |
 | CU-09 | Comentar sesión del alumno | Dejar notas y feedback sobre sesiones completadas del alumno | PT-08 |
-| CU-10 | Gestionar agenda | Cargar disponibilidad horaria, aceptar/rechazar turnos solicitados por alumnos | PT-11 |
 | CU-11 | Enviar mensaje al alumno | Chat 1 a 1 o broadcast con soporte de texto e imágenes; el alumno responde desde la web. Detalle en [[producto/casos-de-uso#CU-11 — Enviar mensaje al alumno (web)\|casos de uso]] | PT-13 |
 | CU-25 | Crear y asignar desafío | Asigna una plantilla (Desafíos → Plantillas → Asignar) o un desafío propio nuevo (metas de sesiones, racha, volumen o peso corporal; premio "Desafío cumplido" opcional, solo la primera vez) a uno o varios alumnos y sigue su progreso desde la ficha | AL-11 |
+| CU-26 | Gestionar agenda | Cargar disponibilidad horaria, ver el calendario semanal y confirmar, cancelar o crear turnos (web). La solicitud del alumno es CU-19 (mobile) | PT-11 |
 
 ### Alumno
 
-| ID | Caso de uso | Descripción | RF |
-|---|---|---|---|
-| CU-12 | Registrarse vía invitación | Acepta link de WhatsApp o escanea QR del PT, confirma datos y elige contraseña | AL-01 |
-| CU-13 | Ver rutina del día | Visualiza los ejercicios asignados para el día actual | AL-02 |
-| CU-14 | Ejecutar sesión de entrenamiento | Realiza el entrenamiento registrando peso y reps por serie, con timer de descanso | AL-03, AL-04 |
-| CU-15 | Consultar asistente IA | Chat para reemplazar ejercicios, consultar técnica o calentamientos durante la sesión | AL-05 |
-| CU-16 | Registrar feedback post-entreno | Indica cómo se sintió (RPE 1-10) y nota libre al cerrar la sesión | AL-08 |
-| CU-17 | Ver historial y progreso | Consulta sesiones pasadas, evolución de cargas, volumen total y gráficos por ejercicio | AL-06 |
-| CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 |
-| CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 |
-| CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 |
-| CU-27 | Recibir y ver avisos | Recibe push de comentarios del PT, récords y logros; los ve en la campana y la lista de avisos (también offline) y quedan leídos al abrirlos | AL-06, AL-11 |
+| ID | Caso de uso | Descripción | RF | Plataforma |
+|---|---|---|---|---|
+| CU-12 | Registrarse vía invitación | Acepta link de WhatsApp o escanea QR del PT, confirma datos y elige contraseña | AL-01 | Web y mobile |
+| CU-13 | Ver rutina del día | Visualiza los ejercicios asignados para el día actual | AL-02 | Web y mobile |
+| CU-14 | Ejecutar sesión de entrenamiento | Realiza el entrenamiento registrando peso y reps por serie, con timer de descanso | AL-03, AL-04 | Web (simplificada, se sube al terminar) y mobile (completa, con modo offline) |
+| CU-15 | Consultar asistente IA | Chat para reemplazar ejercicios, consultar técnica o calentamientos durante la sesión | AL-05 | Pendiente en ambas |
+| CU-16 | Registrar feedback post-entreno | Indica cómo se sintió (RPE 1-10) y nota libre al cerrar la sesión | AL-08 | Web y mobile |
+| CU-17 | Ver historial y progreso | Consulta sesiones pasadas, evolución de cargas, volumen total y gráficos por ejercicio | AL-06 | Web y mobile |
+| CU-18 | Registrar medidas corporales | Carga peso y medidas periódicamente para tracking de evolución | AL-07 | Web (mobile pendiente) |
+| CU-19 | Solicitar turno al PT | Ver disponibilidad del PT y reservar horario de clase o consulta | AL-12 | Pendiente (mobile) |
+| CU-20 | Ver logros y rachas | Consulta badges obtenidos, racha de días consecutivos y desafíos asignados | AL-11 | Web (mobile pendiente) |
+| CU-27 | Recibir y ver avisos | Recibe push de comentarios del PT, récords y logros; los ve en la campana y la lista de avisos (también offline) y quedan leídos al abrirlos | AL-06, AL-11 | Mobile |
+
+La web no tiene sesión offline, reemplazo de ejercicio ni push, y pedir turno está pendiente en las dos; la mobile todavía no tiene la carga de medidas ni la racha, los logros y los desafíos del alumno; el detalle está en [[producto/casos-de-uso#Qué hace el alumno en cada plataforma|Qué hace el alumno en cada plataforma]].
 
 ### Sistema (actor secundario)
 
@@ -98,7 +100,7 @@ Diagrama UML con los actores del sistema y sus casos de uso principales, incluye
 | CU-27 → CU-17 | `«extend»` | Tocar el aviso de un comentario o de un récord abre el historial o los gráficos del alumno |
 | CU-16 → CU-24 | `«extend»` | Tras el feedback, el Sistema evalúa si corresponde otorgar logro, racha o badge |
 | CU-05 → CU-22 | `«extend»` | Si el alumno modifica la rutina asignada, el Sistema notifica al PT (flujo condicional) |
-| CU-19 → CU-10 | `«include»` | Solicitar turno requiere consultar la agenda del PT para ver slots disponibles |
+| CU-19 → CU-26 | `«include»` | Solicitar turno requiere consultar la agenda del PT para ver slots disponibles |
 
 ---
 
@@ -134,7 +136,7 @@ rectangle "FitTrainer" {
   usecase "CU-07\nVer progreso\ndel alumno" as CU07
   usecase "CU-08\nGenerar rutina\ncon IA" as CU08
   usecase "CU-09\nComentar sesión\ndel alumno" as CU09
-  usecase "CU-10\nGestionar agenda" as CU10
+  usecase "CU-26\nGestionar agenda" as CU26
   usecase "CU-11\nEnviar mensaje\nal alumno" as CU11
   usecase "CU-25\nCrear y asignar\ndesafío" as CU25
 
@@ -166,7 +168,7 @@ PT --> CU06
 PT --> CU07
 PT --> CU08
 PT --> CU09
-PT --> CU10
+PT --> CU26
 PT --> CU11
 PT --> CU25
 
@@ -199,7 +201,7 @@ CU03 ..> CU02 : <<include>>
 CU05 ..> CU06 : <<include>>
 CU14 ..> CU13 : <<include>>
 CU14 ..> CU16 : <<include>>
-CU19 ..> CU10 : <<include>>
+CU19 ..> CU26 : <<include>>
 
 ' --- Relaciones extend ---
 CU08 ..> CU05 : <<extend>>
@@ -238,7 +240,7 @@ Diagrama UML con los tres actores del sistema y sus casos de uso, incluyendo rel
 | Actor | Tipo | Descripción |
 |---|---|---|
 | Personal Trainer | Principal | Usa la app web para gestionar alumnos, rutinas y progreso |
-| Alumno | Principal | Usa la app mobile para entrenar y registrar su progreso |
+| Alumno | Principal | Usa la app mobile para entrenar y registrar su progreso; también puede usar la web (rutina del día, sesión simplificada, historial, progreso y medidas) |
 | Sistema | Secundario | Ejecuta procesos automáticos (cron jobs, notificaciones push) |
 
 ---

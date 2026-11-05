@@ -28,6 +28,6 @@ FitTrainer responde a una necesidad concreta del personal trainer independiente 
 | Seguimiento del progreso | De memoria o por preguntas sueltas; sin gráficos ni histórico real | Tablero con gráficos de progresión por ejercicio, evolución de medidas, alertas de inactividad y notificación de modificaciones |
 | Consultas durante la sesión | El alumno llama o escribe al entrenador, con respuestas demoradas o sin respuesta | Asistente IA disponible 24/7 para sustituciones, técnica y calentamiento, con contexto de la rutina y el equipamiento |
 | Adherencia del alumno | Motivación irregular, sin recompensas por sostener el plan | Sistema de logros, rachas y desafíos que sostiene la motivación y el vínculo con el entrenador |
-| Movilidad del entrenador | Atado a la PC para gestionar alumnos y revisar progresos | Gestiona desde la web (en casa) y desde el celular (en el gym o la calle), con paridad funcional total |
+| Movilidad del entrenador | Atado a la PC para gestionar alumnos y revisar progresos | Gestiona desde la web (en casa) y desde el celular (en el gym o la calle), con todo lo del entrenador en las dos plataformas |
 | Imagen profesional | Percepción de informalidad por el uso de WhatsApp y Excel | Marca personal profesional respaldada por una herramienta dedicada, con datos del progreso como evidencia del servicio |
 | Costo del software | Apps internacionales en inglés desde USD 19 a USD 65 mensuales | Plan freemium en español con precio en pesos accesible para el entrenador local |

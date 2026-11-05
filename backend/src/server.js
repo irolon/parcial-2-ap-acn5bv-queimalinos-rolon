@@ -1,6 +1,6 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
-import { startScheduler } from './shared/utils/scheduler.js';
+import { startScheduler } from './shared/utils/async/scheduler.js';
 import { runDailyGamification } from './services/gamification/daily-job.service.js';
 import { runInactivityAlerts } from './services/notifications/inactivity-job.service.js';
 

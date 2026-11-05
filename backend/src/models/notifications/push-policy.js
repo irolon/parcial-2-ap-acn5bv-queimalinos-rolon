@@ -10,6 +10,9 @@ export const PUSH_POLICY = {
   pr: { student: true },
   achievement: { student: true },
   comment: { student: true },
+  appointment: { student: true },
+  // Solo push, sin fila: cada mensaje del chat avisa al otro lado de la conversación.
+  message: { trainer: true, student: true },
 };
 
 /**

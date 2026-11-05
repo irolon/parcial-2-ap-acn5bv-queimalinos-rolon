@@ -26,7 +26,7 @@ Los archivos están en el repo, en `docs/design/` (ver su `README.md`), y en Dri
 | Alumno · Hoy / Rutina del día | Rutina de hoy con el plan de ejercicios, racha semanal, nota del entrenador y próximo turno |
 | Alumno · Sesión activa | Registro de peso y reps por serie durante el entrenamiento |
 | Alumno · Mi progreso | Gráficos de cargas y medidas |
-| Alumno · Asistente IA | Chat para dudas de técnica y sustituciones de ejercicios |
+| Alumno · Asistente IA | Chat para dudas de técnica y sustituciones de ejercicios (**A4, pendiente:** no está en la web ni en el menú hasta que exista su tarjeta de IA) |
 | Alumno · Mi perfil | Datos personales |
 | Entrenador · Dashboard | Alumnos activos, sesiones, adherencia, alertas de inactividad y actividad reciente |
 | Entrenador · Panel de alumnos | Lista de alumnos |
@@ -50,6 +50,10 @@ Los archivos están en el repo, en `docs/design/` (ver su `README.md`), y en Dri
 | Entrenador · Perfil del alumno | Ficha de cada alumno |
 | Entrenador · Mensajes | Mensajería con alumnos |
 | Entrenador · Generar QR | Invitación por QR desde el celular |
+
+## Estado del alumno en la web
+
+Implementado en la tarjeta 50: A1 Hoy (sin la nota del entrenador ni el próximo turno), A2 Sesión activa (simplificada), A3 Mi progreso (con racha y logros) y A5 Mi perfil (con medidas). **A4 Asistente IA queda pendiente** en la web y en la mobile. Qué hace el alumno en cada plataforma: [[producto/casos-de-uso|Casos de uso]].
 
 ## Lo que el diseño dice distinto de lo decidido
 

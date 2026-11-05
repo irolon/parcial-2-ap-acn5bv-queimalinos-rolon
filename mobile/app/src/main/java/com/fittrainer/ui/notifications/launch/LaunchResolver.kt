@@ -23,6 +23,10 @@ sealed interface NavTarget {
     /** Tarjeta 18: el alumno, a su chat (la pestaña Mensajes); el entrenador, al chat de ese alumno. */
     data object StudentChat : NavTarget
     data class TrainerChat(val studentId: String) : NavTarget
+    /** E13: la agenda del entrenador (Más → Agenda). */
+    data object TrainerAgenda : NavTarget
+    /** Tarjeta 16: los turnos del alumno (Perfil → Mis turnos). */
+    data object StudentAppointments : NavTarget
     data object None : NavTarget
 }
 
@@ -42,17 +46,21 @@ suspend fun resolve(launch: PendingLaunch, session: Session?, sources: LaunchSou
         is NotificationDestination.StudentSession -> NavTarget.TrainerSession(destination.studentId, destination.sessionId)
         is NotificationDestination.StudentProfile -> NavTarget.TrainerStudent(destination.studentId)
         is NotificationDestination.Conversation -> if (trainer) NavTarget.TrainerChat(destination.studentId) else NavTarget.StudentChat
+        NotificationDestination.Agenda -> NavTarget.TrainerAgenda
+        NotificationDestination.StudentAppointments -> NavTarget.StudentAppointments
         NotificationDestination.NotificationsList -> if (trainer) NavTarget.TrainerNotifications else NavTarget.Notifications
     }
 }
 
 /**
- * Los destinos del historial propio son del alumno; los de un alumno a cargo, del entrenador. La lista, de los dos.
+ * Los destinos del historial propio y los turnos propios son del alumno; los de un alumno a cargo, del entrenador. La
+ * lista, de los dos.
  * Una conversación le sirve al entrenador (si ya no es suya, el chat vuelve atrás) y al alumno solo si es la propia.
  */
 private fun fitsRole(destination: NotificationDestination, trainer: Boolean, owner: String): Boolean = when (destination) {
-    is NotificationDestination.SessionDetail, is NotificationDestination.ExerciseChart -> !trainer
-    is NotificationDestination.StudentSession, is NotificationDestination.StudentProfile -> trainer
+    is NotificationDestination.SessionDetail, is NotificationDestination.ExerciseChart,
+    NotificationDestination.StudentAppointments -> !trainer
+    is NotificationDestination.StudentSession, is NotificationDestination.StudentProfile, NotificationDestination.Agenda -> trainer
     is NotificationDestination.Conversation -> trainer || destination.studentId == owner
     NotificationDestination.NotificationsList -> true
 }
