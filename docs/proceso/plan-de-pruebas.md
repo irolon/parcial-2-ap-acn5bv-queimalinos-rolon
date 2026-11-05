@@ -283,8 +283,9 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 04/11/2026 | `cd437ba` | Suite completa (9 archivos, suma `rejections`) | ✅ 168/168 | 193 s | 0 |
 | 05/11/2026 | `8ef9fa5` | Suite completa con `develop` traído (#70–#75) | ✅ 168/168 | 208 s | 0 |
 | 05/11/2026 | `751e605` | Suite completa con la agenda (#49) y `isolation/agenda` | ✅ 178/178 | 219 s | 0 |
+| 05/11/2026 | `52465a3` | **Corrida final** sobre `develop` con la #49 mergeada, guard solo contra dev y rechazos sin ids de A | ✅ 178/178 | 220 s | 0 |
 
-Fechas en UTC (en Argentina fue la noche del 03/11). Al cerrar la tarjeta 52 se suma la corrida final sobre la rama combinada con `develop`.
+Fechas en UTC (en Argentina fue la noche del 03/11). La corrida final de la tarjeta 52 es la de `52465a3`.
 
 ---
 
