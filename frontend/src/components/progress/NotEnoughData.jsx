@@ -6,8 +6,8 @@ export default function NotEnoughData({ count, exerciseName, rangeLimited = fals
   let text;
   if (exerciseName && metricLimited) text = 'Pocos datos de esta métrica: probá con otra';
   else if (exerciseName && rangeLimited) text = 'Pocos entrenamientos en este rango: probá con Todo';
-  else if (exerciseName) text = `Llevás ${count} de ${MIN_POINTS} entrenamientos de ${exerciseName}: después del tercero aparece la progresión acá`;
-  else text = `Llevás ${count} de ${MIN_POINTS} semanas entrenadas: después de la tercera aparece el volumen semanal acá`;
+  else if (exerciseName) text = `Hay ${count} de ${MIN_POINTS} entrenamientos de ${exerciseName}: después del tercero aparece la progresión acá`;
+  else text = `Hay ${count} de ${MIN_POINTS} semanas entrenadas: después de la tercera aparece el volumen semanal acá`;
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
       <LineChart size={28} className="text-ink5" aria-hidden="true" />
