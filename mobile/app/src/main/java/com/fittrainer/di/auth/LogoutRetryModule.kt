@@ -1,4 +1,4 @@
-package com.fittrainer.di
+package com.fittrainer.di.auth
 
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
