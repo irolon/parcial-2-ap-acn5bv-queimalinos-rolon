@@ -3,6 +3,7 @@ package com.fittrainer.testing.fakes.auth
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.LoginRequest
 import com.fittrainer.data.api.LoginResponse
+import com.fittrainer.data.api.LogoutRequest
 import com.fittrainer.data.api.RefreshRequest
 import com.fittrainer.data.api.RefreshResponse
 import com.fittrainer.data.api.RegisterStudentRequest
@@ -29,6 +30,8 @@ class FakeAuthApi : AuthApi {
     var logoutGate: CompletableDeferred<Unit>? = null
     /** Códigos que devuelven los próximos logout, en orden; vacío = 204. */
     val logoutCodes = ArrayDeque<Int>()
+    /** Corre en cada logout, antes de responder. */
+    var onLogout: (suspend () -> Unit)? = null
 
     var registerResponse = RegisterStudentResponse(StudentDto("s1", "Tomás Rivera", "tomas@test.com"), "access-s", "refresh-s")
     var registerError: Throwable? = null
@@ -36,7 +39,7 @@ class FakeAuthApi : AuthApi {
 
     val loginCalls = mutableListOf<LoginRequest>()
     val refreshCalls = mutableListOf<RefreshRequest>()
-    val logoutCalls = mutableListOf<Pair<String, RefreshRequest>>()
+    val logoutCalls = mutableListOf<Pair<String?, LogoutRequest>>()
 
     override suspend fun login(body: LoginRequest): LoginResponse {
         loginCalls += body
@@ -58,8 +61,9 @@ class FakeAuthApi : AuthApi {
         return refreshResponse
     }
 
-    override suspend fun logout(bearer: String, body: RefreshRequest): Response<Unit> {
+    override suspend fun logout(bearer: String?, body: LogoutRequest): Response<Unit> {
         logoutCalls += bearer to body
+        onLogout?.invoke()
         logoutGate?.await()
         logoutError?.let { throw it }
         val code = logoutCodes.removeFirstOrNull() ?: 204

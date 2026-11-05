@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 
 /**
  * El globito de la pestaña Mensajes del alumno (tarjeta 18): los mensajes del PT sin leer que hay en Room. Con la
- * app en primer plano refresca el chat cada 15 s (no hay push de mensajes); un refresco fallido deja lo guardado.
+ * app en primer plano refresca el chat cada 15 s, además del push de mensaje (#70); un refresco fallido deja lo guardado.
  */
 @HiltViewModel
 class StudentMessagesBadgeViewModel @Inject constructor(

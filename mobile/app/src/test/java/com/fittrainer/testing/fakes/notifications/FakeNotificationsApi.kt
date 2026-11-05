@@ -59,8 +59,12 @@ class FakeNotificationsApi : NotificationsApi {
     /** Se ejecuta al borrar un token: los tests miran el estado del dispositivo en ese momento. */
     var onRemove: suspend () -> Unit = {}
 
+    /** Se ejecuta al registrar un token. */
+    var onRegister: suspend () -> Unit = {}
+
     override suspend fun registerToken(owner: RequiredUser, body: PushTokenDto) {
         owners += owner.userId
+        onRegister()
         failTokens?.let { throw it }
         registered += body
     }

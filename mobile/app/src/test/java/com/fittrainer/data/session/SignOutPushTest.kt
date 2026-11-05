@@ -20,10 +20,11 @@ import org.junit.Test
 class SignOutPushTest {
 
     private val notifApi = FakeNotificationsApi()
+    private val authApi = FakeAuthApi()
     private val store = FakeTokenStore()
     private val push = PushTokenRegistry(notifApi, store, FakeFcmTokenSource(), SilentLogger())
     private val sessions = TokenSessionRepository(
-        store, AuthRepository(FakeAuthApi(), store, fixedClock()), emptySet(), push,
+        store, AuthRepository(authApi, store, fixedClock()), emptySet(), push,
     )
 
     @Test fun `borraElTokenAntesQueElJwt`() = runTest {
@@ -46,6 +47,16 @@ class SignOutPushTest {
 
         assertEquals(Session.LoggedOut, sessions.session.first())
         assertTrue(notifApi.removed.isEmpty())
+    }
+
+    // #72: si el DELETE no llegó, el logout lleva el token igual (y ese se reintenta sin red).
+    @Test fun `elLogoutLlevaElTokenAunqueFalleElDelete`() = runTest {
+        store.save(authState())
+        notifApi.failTokens = IOException("sin red")
+
+        sessions.signOut()
+
+        assertEquals("fcm-token-1", authApi.logoutCalls.single().second.pushToken)
     }
 
     /** El Log real no existe en los tests JVM. */

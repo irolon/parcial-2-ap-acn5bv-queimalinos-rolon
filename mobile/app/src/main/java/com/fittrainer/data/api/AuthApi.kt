@@ -26,6 +26,16 @@ data class RefreshRequest(@SerialName("refresh_token") val refreshToken: String)
 @Serializable
 data class RefreshResponse(val token: String)
 
+/**
+ * Body de `POST /auth/logout`. Con [pushToken] el backend borra además el token de push de este celular si es del
+ * dueño del refresh, aunque ya esté revocado (#72): por eso se puede reintentar. Sin token no se manda el campo.
+ */
+@Serializable
+data class LogoutRequest(
+    @SerialName("refresh_token") val refreshToken: String,
+    @SerialName("push_token") val pushToken: String? = null,
+)
+
 @Serializable
 data class RegisterStudentRequest(val token: String, val password: String)
 
@@ -51,6 +61,7 @@ interface AuthApi {
     @POST("auth/refresh")
     suspend fun refresh(@Body body: RefreshRequest): RefreshResponse
 
+    /** No exige access token: sin [bearer] (null) Retrofit no manda el header, como en el reintento sin red. */
     @POST("auth/logout")
-    suspend fun logout(@Header("Authorization") bearer: String, @Body body: RefreshRequest): Response<Unit>
+    suspend fun logout(@Header("Authorization") bearer: String?, @Body body: LogoutRequest): Response<Unit>
 }

@@ -2,9 +2,14 @@ package com.fittrainer.data.auth
 
 import com.fittrainer.data.api.AuthApi
 import com.fittrainer.data.api.LoginRequest
+import com.fittrainer.data.api.LogoutRequest
 import com.fittrainer.data.api.RefreshRequest
 import com.fittrainer.data.api.RegisterStudentRequest
 import com.fittrainer.data.api.UserDto
+import com.fittrainer.data.auth.logout.LogoutRetryQueue
+import com.fittrainer.data.auth.logout.NoLogoutRetry
+import com.fittrainer.data.auth.logout.PendingLogout
+import com.fittrainer.data.auth.logout.logoutNeedsRetry
 import com.fittrainer.data.auth.tokenstore.TokenStore
 import com.fittrainer.data.invitation.toInvitationError
 import com.fittrainer.data.repository.DataError
@@ -23,6 +28,8 @@ class AuthRepository @Inject constructor(
     private val api: AuthApi,
     private val tokenStore: TokenStore,
     private val clock: Clock,
+    /** Donde queda el logout que no llegó, para reintentarlo con red. */
+    private val retry: LogoutRetryQueue = NoLogoutRetry,
 ) {
     suspend fun login(email: String, password: String): Result<AuthUser> {
         val (response, user) = try {
@@ -67,13 +74,18 @@ class AuthRepository @Inject constructor(
      *
      * Devuelve [LogoutResult.Incomplete] si el cierre local no quedó guardado en ningún lado (la sesión
      * solo está oculta en este proceso); aun así se revoca, porque limita el daño si reaparece.
+     *
+     * Con [pushToken], la revocación le pide además al backend que borre el token de push de este celular (#72).
+     * El logout queda guardado en [retry] ANTES de cerrar la sesión y esperar la red: si matan el proceso a mitad,
+     * el reintento programado lo manda igual. Si llegó, se suelta.
      */
-    suspend fun logout(): LogoutResult {
+    suspend fun logout(pushToken: String? = null): LogoutResult {
         val state = try {
             tokenStore.read() ?: return LogoutResult.Closed
         } catch (e: IOException) {
             null
         }
+        state?.let { retry.hold(PendingLogout(it.refreshToken, pushToken)) }
         val result = try {
             tokenStore.clear()
             LogoutResult.Closed
@@ -84,21 +96,25 @@ class AuthRepository @Inject constructor(
             // se avisa y se revoca igual en el backend.
             LogoutResult.Incomplete
         }
-        state?.let { revoke(it) }
+        state?.let { if (revoke(it, pushToken)) retry.release(it.refreshToken, pushTokenRemoved = pushToken != null) }
         return result
     }
 
-    /** Revoca el refresh token. Con el access vencido (401) lo renueva una vez y reintenta. */
-    private suspend fun revoke(state: AuthState) {
-        val body = RefreshRequest(state.refreshToken)
-        try {
-            if (api.logout("Bearer ${state.accessToken}", body).code() != 401) return
-            val access = api.refresh(body).token
-            api.logout("Bearer $access", body)
+    /**
+     * Revoca el refresh token. Con el access vencido (401) lo renueva una vez y reintenta. false si no llegó (sin
+     * red, error del servidor, o no se pudo renovar): queda en [retry], que lo reenvía con red sin access token.
+     */
+    private suspend fun revoke(state: AuthState, pushToken: String?): Boolean {
+        val body = LogoutRequest(state.refreshToken, pushToken)
+        return try {
+            var code = api.logout("Bearer ${state.accessToken}", body).code()
+            if (code == 401) code = api.logout("Bearer ${api.refresh(RefreshRequest(state.refreshToken)).token}", body).code()
+            code != 401 && !logoutNeedsRetry(code)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Sin red o refresh rechazado: la sesión local ya está cerrada.
+            // Sin red o refresh rechazado: la sesión local ya está cerrada; el reintento no necesita el access.
+            false
         }
     }
 

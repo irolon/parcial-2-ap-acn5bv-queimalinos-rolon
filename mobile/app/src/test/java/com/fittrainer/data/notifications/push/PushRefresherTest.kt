@@ -71,9 +71,14 @@ class PushRefresherTest {
         assertEquals(0, agendaApi.weekCalls.size)
     }
 
-    @Test fun losMensajesDeUnaConversacionCompartenLaNotificacion() {
-        assertEquals("message:s1", pushTag(message) { "x" })
-        assertEquals("n1", pushTag(mapOf("type" to "comment", "notification_id" to "n1")) { "x" })
-        assertEquals("x", pushTag(mapOf("type" to "message")) { "x" })
+    @Test fun losDemasPushLlevanSuPropioTagYElIdFijo() {
+        assertEquals(PushSlot("push:n1", 3001), pushSlot(mapOf("type" to "comment", "notification_id" to "n1")) { "x" })
+        assertEquals(PushSlot("push:x", 3001), pushSlot(mapOf("type" to "message")) { "x" })
+    }
+
+    // Codex (#70 ronda 3): con la app cerrada Android lo publica con el tag del backend e id 0 (SDK de FCM);
+    // con el mismo par, el aviso de primer plano y el de segundo plano se pisan.
+    @Test fun elMensajeUsaElMismoParQueFcmEnSegundoPlano() {
+        assertEquals(PushSlot("message:s1", 0), pushSlot(message) { "x" })
     }
 }
