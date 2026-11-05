@@ -25,7 +25,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.fittrainer.ui.agenda.trainer.components.statusTextColor
+import com.fittrainer.ui.agenda.APPOINTMENT_PAST
+import com.fittrainer.ui.agenda.CANCEL_APPOINTMENT
+import com.fittrainer.ui.agenda.CANCEL_BACK
+import com.fittrainer.ui.agenda.CANCEL_YES
+import com.fittrainer.ui.agenda.statusLabel
+import com.fittrainer.ui.agenda.statusTextColor
+import com.fittrainer.ui.agenda.timeRangeLabel
 import com.fittrainer.ui.students.components.StudentAvatar
 import com.fittrainer.ui.students.initials
 import com.fittrainer.ui.theme.FtColors

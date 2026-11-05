@@ -3,6 +3,7 @@ package com.fittrainer.ui.agenda.trainer
 import com.fittrainer.data.agenda.AppointmentStatus
 import com.fittrainer.data.agenda.TrainerAgendaRepository
 import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.ui.agenda.APPOINTMENT_GONE
 import com.fittrainer.testing.fakes.agenda.FakeAgendaApi
 import com.fittrainer.testing.fakes.agenda.FakeTrainerAgendaDao
 import com.fittrainer.testing.fakes.agenda.appointmentDto

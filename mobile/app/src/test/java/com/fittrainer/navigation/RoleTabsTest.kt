@@ -1,5 +1,7 @@
 package com.fittrainer.navigation
 
+import com.fittrainer.navigation.student.STUDENT_APPOINTMENTS_ROUTE
+import com.fittrainer.navigation.student.STUDENT_REQUEST_APPOINTMENT_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_AGENDA_ROUTE
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,6 +36,13 @@ class RoleTabsTest {
     @Test fun masQuedaMarcadaEnLaAgenda() {
         assertTrue(isTabSelected(TRAINER_MORE_ROUTE, TRAINER_AGENDA_ROUTE))
         assertFalse(isTabSelected(TRAINER_HOME_ROUTE, TRAINER_AGENDA_ROUTE))
+    }
+
+    @Test fun perfilQuedaMarcadaEnLosTurnosDelAlumno() {
+        assertTrue(isTabSelected(STUDENT_PROFILE_ROUTE, STUDENT_APPOINTMENTS_ROUTE))
+        assertTrue(isTabSelected(STUDENT_PROFILE_ROUTE, STUDENT_REQUEST_APPOINTMENT_ROUTE))
+        assertFalse(isTabSelected(STUDENT_TODAY_ROUTE, STUDENT_APPOINTMENTS_ROUTE))
+        assertTrue(StudentTabs.any { it.route == STUDENT_PROFILE_ROUTE && it.isAccountMenu })
     }
 
     @Test fun conLaSesionActivaNingunaPestanaQuedaMarcada() {

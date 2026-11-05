@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fittrainer.ui.agenda.AGENDA_RETRY
 import com.fittrainer.ui.agenda.trainer.components.AgendaHeader
 import com.fittrainer.ui.agenda.trainer.components.AgendaLegend
 import com.fittrainer.ui.agenda.trainer.components.DayCard

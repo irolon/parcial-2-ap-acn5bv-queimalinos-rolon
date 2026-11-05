@@ -19,27 +19,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.agenda.Appointment
 import com.fittrainer.data.agenda.AppointmentStatus
-import com.fittrainer.ui.agenda.trainer.hourLabel
-import com.fittrainer.ui.agenda.trainer.statusLabel
+import com.fittrainer.ui.agenda.hourLabel
+import com.fittrainer.ui.agenda.statusColor
+import com.fittrainer.ui.agenda.statusLabel
+import com.fittrainer.ui.agenda.statusTextColor
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
-
-/** Los colores de la web: pendiente en aviso (warn), confirmado en verde (good), cancelado en gris. */
-fun statusColor(status: AppointmentStatus): Color = when (status) {
-    AppointmentStatus.PENDING -> FtColors.Amber
-    AppointmentStatus.CONFIRMED -> FtColors.Green
-    AppointmentStatus.CANCELLED -> FtColors.Ink5
-}
-
-/** El texto del estado; el cancelado va en gris claro para que se lea sobre la tarjeta. */
-fun statusTextColor(status: AppointmentStatus): Color =
-    if (status == AppointmentStatus.CANCELLED) FtColors.TextSecondary else statusColor(status)
 
 /** Un turno del día: hora, nombre y estado en mono. Toda la fila es el toque (mínimo 44); TalkBack la lee entera. */
 @Composable

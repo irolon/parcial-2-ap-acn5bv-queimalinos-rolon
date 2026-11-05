@@ -26,6 +26,9 @@ const val STUDENT_TODAY_ROUTE = "student/today"
 const val STUDENT_ROUTINES_ROUTE = "student/routines"
 const val STUDENT_PROGRESS_ROUTE = "student/progress"
 
+/** Perfil: el menú de la cuenta del alumno; de ahí cuelgan sus turnos (tarjeta 16). */
+const val STUDENT_PROFILE_ROUTE = "student/profile"
+
 /** El chat del alumno con su PT (tarjeta 18): la pestaña es la conversación, no hay lista. */
 const val STUDENT_MESSAGES_ROUTE = "student/messages"
 
@@ -41,13 +44,17 @@ const val ROUTINE_DETAIL_ROUTE = "student/routines/{$ROUTINE_ID_ARG}"
 fun routineDetailRoute(routineId: String) = "student/routines/$routineId"
 const val STUDENT_LIBRARY_ROUTE = "student/library"
 
-/** Las pantallas hijas dejan marcada su pestaña: el historial cuelga de Progreso; el detalle y la biblioteca, de Mis rutinas; los avisos, de Hoy. */
+/**
+ * Las pantallas hijas dejan marcada su pestaña: el historial cuelga de Progreso; el detalle y la biblioteca, de Mis
+ * rutinas; los avisos, de Hoy; los turnos, de Perfil.
+ */
 fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
     currentRoute == tabRoute || (currentRoute != null && parentTab(currentRoute) == tabRoute)
 
 private fun parentTab(route: String): String? = when {
     route.startsWith("student/history/") -> STUDENT_PROGRESS_ROUTE
     route.startsWith("$STUDENT_ROUTINES_ROUTE/") || route == STUDENT_LIBRARY_ROUTE -> STUDENT_ROUTINES_ROUTE
+    route.startsWith("$STUDENT_PROFILE_ROUTE/") -> STUDENT_PROFILE_ROUTE
     route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE
     route == TRAINER_TEMPLATES_ROUTE || route.startsWith("$TRAINER_TEMPLATES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == TRAINER_EXERCISES_ROUTE || route.startsWith("$TRAINER_EXERCISES_ROUTE/") -> TRAINER_MORE_ROUTE
@@ -69,7 +76,7 @@ val StudentTabs = listOf(
     // "Rutinas" y no "Mis rutinas": con 5 pestañas (tarjeta 18) el nombre largo se partía en dos líneas. La pantalla sigue diciendo "Mis rutinas".
     Tab(STUDENT_ROUTINES_ROUTE, "Rutinas", Icons.AutoMirrored.Filled.List),
     Tab(STUDENT_MESSAGES_ROUTE, "Mensajes", Icons.Filled.Email),
-    Tab("student/profile", "Perfil", Icons.Filled.Person, isAccountMenu = true),
+    Tab(STUDENT_PROFILE_ROUTE, "Perfil", Icons.Filled.Person, isAccountMenu = true),
 )
 
 const val TRAINER_HOME_ROUTE = "trainer/home"

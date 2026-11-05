@@ -14,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.fittrainer.data.agenda.Appointment
+import com.fittrainer.ui.agenda.dayLabel
 import com.fittrainer.ui.agenda.trainer.AgendaDay
 import com.fittrainer.ui.agenda.trainer.NO_APPOINTMENTS
-import com.fittrainer.ui.agenda.trainer.dayLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 

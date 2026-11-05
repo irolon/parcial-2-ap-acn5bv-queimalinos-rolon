@@ -17,6 +17,8 @@ import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
+import com.fittrainer.ui.agenda.ACTION_FAILED
+import com.fittrainer.ui.agenda.APPOINTMENT_GONE
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate

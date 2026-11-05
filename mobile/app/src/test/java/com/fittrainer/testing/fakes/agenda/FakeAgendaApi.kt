@@ -7,11 +7,17 @@ import com.fittrainer.data.api.agenda.AppointmentResponse
 import com.fittrainer.data.api.agenda.AppointmentStudentDto
 import com.fittrainer.data.api.agenda.AvailabilityResponse
 import com.fittrainer.data.api.agenda.AvailabilitySlotDto
+import com.fittrainer.data.api.agenda.CreateAppointmentRequest
+import com.fittrainer.data.api.agenda.FreeSlotDto
+import com.fittrainer.data.api.agenda.FreeSlotsResponse
 import com.fittrainer.data.api.agenda.UpdateAppointmentRequest
+import com.fittrainer.data.auth.AccountChangedException
+import com.fittrainer.data.auth.RequiredUser
 import com.fittrainer.data.students.ARGENTINA
 import com.fittrainer.testing.fakes.auth.httpError
 import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import kotlinx.coroutines.CompletableDeferred
 
 /** Un turno del wire. at: ISO UTC (vie 06/11 18:00 de Argentina = "2026-11-06T21:00:00.000Z"). */
@@ -26,7 +32,8 @@ fun apiErrorWithMessage(status: Int, code: String, message: String) =
 
 /**
  * Backend en memoria. Las transiciones son las del PATCH: pending → confirmed, pending o confirmed → cancelled;
- * lo que empieza antes de [now] da 409 APPOINTMENT_PAST; un id que no está, 403.
+ * lo que empieza antes de [now] da 409 APPOINTMENT_PAST; un id que no está, 403. El alumno (tarjeta 16) pide de
+ * [free]: un horario que no está ahí da 409 SLOT_TAKEN, y el que sale bien deja de estar libre.
  */
 class FakeAgendaApi : AgendaApi {
     val appointments = mutableListOf<AppointmentDto>()
@@ -39,14 +46,31 @@ class FakeAgendaApi : AgendaApi {
     val weekCalls = mutableListOf<Pair<String, String>>()
     val patchCalls = mutableListOf<Pair<String, String>>()
     var availabilityCalls = 0
+    /** Los horarios libres, en ISO UTC. */
+    val free = mutableListOf<String>()
+    val freeCalls = mutableListOf<Pair<String, String>>()
+    val createCalls = mutableListOf<CreateAppointmentRequest>()
+    /** El [RequiredUser] de cada llamada, en orden. */
+    val owners = mutableListOf<String>()
+    /** La cuenta logueada: con otra, la request no sale (como AuthInterceptor). null = no se chequea. */
+    var loggedIn: String? = null
+    /** El GET de libres toma la foto ANTES de esperar, como [weekGate]. */
+    var freeGate: CompletableDeferred<Unit>? = null
+    var createError: Throwable? = null
+    /** El POST espera acá antes de responder: un pedido en vuelo. */
+    var createGate: CompletableDeferred<Unit>? = null
 
-    override suspend fun availability(): AvailabilityResponse {
+    override suspend fun availability(owner: RequiredUser): AvailabilityResponse {
+        owners += owner.userId
+        check(owner)
         availabilityCalls++
         error?.let { throw it }
         return AvailabilityResponse(slots)
     }
 
-    override suspend fun appointments(from: String, to: String): AppointmentListResponse {
+    override suspend fun appointments(owner: RequiredUser, from: String, to: String): AppointmentListResponse {
+        owners += owner.userId
+        check(owner)
         weekCalls += from to to
         val first = LocalDate.parse(from)
         val last = LocalDate.parse(to)
@@ -59,7 +83,9 @@ class FakeAgendaApi : AgendaApi {
         return AppointmentListResponse(snapshot)
     }
 
-    override suspend fun updateStatus(id: String, body: UpdateAppointmentRequest): AppointmentResponse {
+    override suspend fun updateStatus(owner: RequiredUser, id: String, body: UpdateAppointmentRequest): AppointmentResponse {
+        owners += owner.userId
+        check(owner)
         patchCalls += id to body.status
         writeError?.let { throw it }
         val index = appointments.indexOfFirst { it.id == id }
@@ -73,4 +99,32 @@ class FakeAgendaApi : AgendaApi {
         appointments[index] = updated
         return AppointmentResponse(updated)
     }
+
+    override suspend fun freeSlots(owner: RequiredUser, from: String, to: String): FreeSlotsResponse {
+        owners += owner.userId
+        check(owner)
+        freeCalls += from to to
+        val snapshot = free.sorted().map { FreeSlotDto(it) }
+        freeGate?.await()
+        error?.let { throw it }
+        return FreeSlotsResponse(snapshot)
+    }
+
+    override suspend fun create(owner: RequiredUser, body: CreateAppointmentRequest): AppointmentResponse {
+        owners += owner.userId
+        check(owner)
+        createCalls += body
+        createGate?.await()
+        createError?.let { throw it }
+        val at = OffsetDateTime.parse(body.scheduledAt).toInstant()
+        if (free.none { Instant.parse(it) == at }) throw apiErrorWithMessage(409, "SLOT_TAKEN", "Ese horario ya está ocupado")
+        free.removeAll { Instant.parse(it) == at }
+        val created = AppointmentDto("new-${createCalls.size}", "t1", AppointmentStudentDto("u1", "Ana Pérez", null), at.toString(), 60, "pending", body.notes)
+        appointments += created
+        return AppointmentResponse(created)
+    }
+}
+
+private fun FakeAgendaApi.check(owner: RequiredUser) {
+    if (loggedIn != null && loggedIn != owner.userId) throw AccountChangedException()
 }
