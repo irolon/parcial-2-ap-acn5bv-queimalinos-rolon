@@ -6,9 +6,14 @@ const cell = (value, unit) => (value == null ? '—' : `${formatNumber(value)} $
 const TH = 'px-2 py-2 text-left font-mono text-[10px] font-normal uppercase tracking-[0.8px] text-ink6';
 const TD = 'px-2 py-2 font-body text-sm text-bone0';
 
-/** Tabla de medidas de la más nueva a la más vieja; `onDelete(metric)` pide borrar una fila. */
-export default function MetricsHistory({ metrics, onDelete }) {
+/**
+ * Tabla de medidas de la más nueva a la más vieja; `onDelete(metric)` pide borrar una fila.
+ * `canDelete(metric)` dice en cuáles se ofrece (por defecto, en todas: el entrenador borra cualquiera);
+ * si en ninguna, la tabla no lleva la columna de acciones.
+ */
+export default function MetricsHistory({ metrics, onDelete, canDelete = () => true }) {
   const rows = [...metrics].reverse();
+  const withActions = rows.some((m) => canDelete(m));
   return (
     <Card title="Historial de medidas">
       {rows.length === 0 ? (
@@ -23,9 +28,11 @@ export default function MetricsHistory({ metrics, onDelete }) {
                     {h}
                   </th>
                 ))}
-                <th scope="col" className="w-10">
-                  <span className="sr-only">Acciones</span>
-                </th>
+                {withActions && (
+                  <th scope="col" className="w-12">
+                    <span className="sr-only">Acciones</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -38,16 +45,20 @@ export default function MetricsHistory({ metrics, onDelete }) {
                     <td className={TD}>{m.bmi == null ? '—' : formatBmi(m.bmi)}</td>
                     <td className={TD}>{cell(m.body_fat_pct, '%')}</td>
                     <td className={TD}>{cell(m.waist_cm, 'cm')}</td>
-                    <td className="px-2 py-1">
-                      <button
-                        type="button"
-                        aria-label={`Borrar medida del ${date}`}
-                        onClick={() => onDelete?.(m)}
-                        className="rounded p-1.5 text-ink6 hover:text-hot focus-visible:outline-2 focus-visible:outline-accentText"
-                      >
-                        <Trash2 size={16} aria-hidden="true" />
-                      </button>
-                    </td>
+                    {withActions && (
+                      <td className="px-2 py-1">
+                        {canDelete(m) && (
+                          <button
+                            type="button"
+                            aria-label={`Borrar medida del ${date}`}
+                            onClick={() => onDelete?.(m)}
+                            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-ink6 hover:text-hot focus-visible:outline-2 focus-visible:outline-accentText"
+                          >
+                            <Trash2 size={16} aria-hidden="true" />
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

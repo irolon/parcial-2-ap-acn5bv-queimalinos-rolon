@@ -61,7 +61,19 @@ describe('MessageBubble', () => {
   });
 
   it('un mensaje con texto y sin foto no dice "Foto no disponible"', () => {
-    show(base);
+    show({ ...base, has_image: false });
+    expect(screen.queryByText('Foto no disponible')).not.toBeInTheDocument();
+  });
+
+  it('con texto y has_image sin image_url (firma fallida) dice "Foto no disponible" y muestra el texto', () => {
+    show({ ...base, has_image: true });
+    expect(screen.getByText('Foto no disponible')).toBeInTheDocument();
+    expect(screen.getByText('Buen laburo')).toBeInTheDocument();
+  });
+
+  it('con has_image e image_url muestra la foto, no el aviso', () => {
+    show({ ...base, has_image: true, image_url: 'https://x/f.jpg' });
+    expect(screen.getByAltText('Foto enviada por Laura')).toBeInTheDocument();
     expect(screen.queryByText('Foto no disponible')).not.toBeInTheDocument();
   });
 

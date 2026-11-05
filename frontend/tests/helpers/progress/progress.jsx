@@ -51,15 +51,18 @@ export const BODY = {
 
 export const EMPTY_BODY = { points: [], summary: { weight_kg: null, body_fat_pct: null, waist_cm: null } };
 
-/** Stub de `/progress/*`; `exercise` es `(id) => data`. */
-export function stubProgress({ overview = OVERVIEW, exercise = exerciseData, body = EMPTY_BODY } = {}) {
+/**
+ * Stub de `/progress/*`; `exercise` es `(id) => data`. Lo que no es de `/progress` lo contesta `otherwise(path)`
+ * (una Response, o `null` para pasar) y, si nadie lo contesta, da 500.
+ */
+export function stubProgress({ overview = OVERVIEW, exercise = exerciseData, body = EMPTY_BODY, otherwise } = {}) {
   return stubFetch(async (url) => {
     const path = url.replace(/^.*\/api/, '');
     if (path.startsWith('/progress/overview')) return jsonResponse(200, { data: overview });
     if (path.startsWith('/progress/body/')) return jsonResponse(200, { data: body });
     const match = /^\/progress\/exercise\/([^/?]+)/.exec(path);
     if (match) return jsonResponse(200, { data: exercise(match[1]) });
-    return jsonResponse(500, { error: { code: 'INTERNAL', message: 'Sin handler' } });
+    return otherwise?.(path) ?? jsonResponse(500, { error: { code: 'INTERNAL', message: 'Sin handler' } });
   });
 }
 

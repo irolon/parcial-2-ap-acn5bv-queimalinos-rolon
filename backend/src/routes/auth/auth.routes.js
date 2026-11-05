@@ -4,6 +4,7 @@ import {
   validateRegister,
   validateLogin,
   validateRefresh,
+  validateLogout,
 } from '../../validations/auth/auth.validation.js';
 import * as authController from '../../controllers/auth/auth.controller.js';
 
@@ -13,7 +14,8 @@ router.post('/register', validate(validateRegister), authController.register);
 router.post('/login', validate(validateLogin), authController.login);
 router.post('/refresh', validate(validateRefresh), authController.refresh);
 // Sin authenticate: se revoca con el refresh token del body, y así el logout
-// funciona aunque el access token ya haya vencido.
-router.post('/logout', validate(validateRefresh), authController.logout);
+// funciona aunque el access token ya haya vencido. Si viene push_token, se
+// borra el del dueño del refresh token.
+router.post('/logout', validate(validateLogout), authController.logout);
 
 export default router;

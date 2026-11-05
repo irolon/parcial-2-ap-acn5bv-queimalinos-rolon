@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as challengesService from '../../services/gamification/challenges.service.js';
 import * as assignmentsService from '../../services/gamification/challenge-assignments.service.js';
 

@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase.js';
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 
 const VERSION = '0.1.0';
 

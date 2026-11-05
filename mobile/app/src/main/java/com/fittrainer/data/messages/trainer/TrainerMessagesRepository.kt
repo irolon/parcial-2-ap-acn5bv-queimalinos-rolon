@@ -108,8 +108,9 @@ class TrainerMessagesRepository @Inject constructor(
 
     /**
      * Si Storage falla, el backend igual responde con image_url null en esas fotos. Una que ya tenía URL la
-     * conserva con su fetchedAt viejo (si no venció se sigue viendo, y la renovación la vuelve a pedir); una de
-     * solo foto sin URL guardada queda con fetchedAt 0, así se reintenta en el próximo refresco.
+     * conserva con su fetchedAt viejo (si no venció se sigue viendo, y la renovación la vuelve a pedir); una con
+     * foto (hasImage, también con texto desde la #73) sin URL guardada queda con fetchedAt 0, así se reintenta en
+     * el próximo refresco.
      */
     private suspend fun keepSigned(trainerId: String, rows: List<TrainerMessageEntity>): List<TrainerMessageEntity> {
         val unsigned = rows.filter { it.imageUrl == null }.map { it.id }
@@ -120,7 +121,7 @@ class TrainerMessagesRepository @Inject constructor(
             when {
                 row.imageUrl != null -> row
                 old != null -> row.copy(imageUrl = old.imageUrl, fetchedAt = old.fetchedAt)
-                row.body == null -> row.copy(fetchedAt = 0)
+                row.hasImage -> row.copy(fetchedAt = 0)
                 else -> row
             }
         }

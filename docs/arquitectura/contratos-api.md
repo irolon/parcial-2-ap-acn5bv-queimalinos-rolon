@@ -92,7 +92,11 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 Revoca el refresh token. **No requiere** access token: alcanza con el `refresh_token` del body, así el logout funciona aunque el access haya vencido. **204 No Content**
 
-**Body:** `{ "refresh_token": "string" }`
+**Body:** `{ "refresh_token": "string", "push_token": "string (opcional)" }`
+
+- `push_token` (opcional, 1–4096 caracteres): el token de FCM del dispositivo. Si viene, el servidor lo borra de `push_tokens` **solo si es del dueño del refresh token** (`user_id` + `user_role`). El dueño se busca aunque el refresh ya esté revocado, así el celular puede **reintentar** el logout más tarde (por ejemplo, si cerró sesión sin red) aunque el access haya vencido. Si el refresh no existe no se borra nada. Un error al borrar el push token no hace fallar el logout: responde **204** igual.
+- `push_token` vacío, de más de 4096 caracteres o que no sea texto → **400 VALIDATION_ERROR** (`field: "push_token"`).
+- `DELETE /notifications/tokens/:token` sigue existiendo para dar de baja el token con la sesión abierta.
 
 ---
 
@@ -464,6 +468,12 @@ Rutina activa del alumno para hoy. Solo alumnos.
 
 **200 OK** — incluye `routine_id`, `name`, `goal`, `days` y `exercises[]`, cada uno con `last_session_kg`: el mayor `actual_kg` de las series completadas con repeticiones del ejercicio en la **última sesión** (por `started_at`) en que el alumno lo hizo, a 1 decimal. Es `null` si nunca lo hizo o no cargó peso. Se calcula con una sola consulta por rutina (función SQL `last_session_kg`).
 
+### GET /routines/mine
+
+Todas las rutinas **activas** del alumno con sus ejercicios, la más nueva primero. Solo alumnos (otro rol → 403). La usan el caché offline del celular (que resuelve el día en el teléfono) y la web del alumno (Mis rutinas, y para distinguir "hoy es descanso" de "sin rutina asignada").
+
+**200 OK** — `{ data: [...] }` (arreglo vacío si no tiene rutinas). Cada elemento: `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises[]` ordenados por `order_index`, cada uno con `routine_exercise_id`, `exercise`, `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` y `order_index`. A diferencia de `GET /routines/today`, no trae `last_session_kg`.
+
 ---
 
 ## Módulo: Plantillas de rutinas
@@ -766,7 +776,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 - `duration_min`: minutos enteros entre `started_at` y `finished_at`; `null` si la sesión no se cerró.
 - `routine`: `null` si la sesión no tiene rutina o se borró.
 - `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
-- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio no cuenta.
+- `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos, y con kg mayor a 0: el peso corporal no cuenta) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio con carga no cuenta (aunque antes lo haya hecho solo con peso corporal).
 - `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
 - **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
 
@@ -867,7 +877,7 @@ Curva de carga de un ejercicio: un punto por día con series que cuentan (`compl
 }
 ```
 
-- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
+- `points`: ascendente por `date`. `max_kg` = mayor `actual_kg` (`null` si ninguna serie tiene kg mayor a 0: un día solo de peso corporal trae `null`, no 0); `volume_kg` = Σ `actual_reps × actual_kg` (kg nulo cuenta 0); `e1rm_kg` = máximo por serie de Epley (`reps = 1 → kg`; `reps > 1 → kg × (1 + reps/30)`), contando solo series de hasta 12 repeticiones y con kg mayor a 0 (las de más no aportan al 1RM pero sí a `max_kg`, `volume_kg`, `sets` y `reps`; un día con solo series de más de 12 trae `e1rm_kg: null`); `sets` y `reps` = cantidad de series y suma de repeticiones. Números a 1 decimal.
 - `pr`: mayor `max_kg` y mayor `e1rm_kg` del rango, con su fecha (la primera en alcanzarse); `null` cada uno si no hay valores. Sin series: `points: []` y `pr: { max_kg: null, e1rm_kg: null }`.
 - `default_metric`: métrica que los clientes grafican por defecto, en escalones: `e1rm_kg` si algún punto lo tiene mayor a 0; si no, `max_kg` si algún punto tiene `max_kg > 0` (ejercicios con peso hechos siempre con más de 12 repeticiones); si no, `reps` (peso corporal, como dominadas o flexiones, con `actual_kg` nulo o 0). Sin puntos: `e1rm_kg`.
 - Una serie sustituida cuenta para el ejercicio realmente hecho, no para el original.
@@ -1209,6 +1219,8 @@ El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que e
 
 **Payload del push.** El mensaje FCM lleva `notification` (`title`, `body`) y un `data` con el de la fila más dos campos: `type` (el tipo de la notificación, para elegir la pantalla) y `notification_id` (el id de la fila, para llamar a `PATCH /notifications/:id/read` al tocarla). Todos los valores viajan como texto, como exige FCM: los arrays y objetos van serializados en JSON (por ejemplo, `exercise_ids` llega como `"[\"uuid-1\",\"uuid-2\"]"` y hay que parsearlo en la app). El push resumen de varios logros no tiene fila: lleva `type: "achievement"` y `student_id`, sin `notification_id`. La fila guardada no cambia: `type` ya es una columna y el id es el de la fila.
 
+**Push de mensaje nuevo (`message`, sin fila).** Cada mensaje de la [mensajería](#post-messagesstudentid) manda un push al otro lado de la conversación (PT → alumno; alumno → su PT; el envío masivo, uno por alumno, de a 10 a la vez) y **no crea fila en `notifications`**: `message` no es un valor de `notifications.type` y nunca aparece en `GET /notifications`. `notification`: `title` = nombre de quien escribe; `body` = el texto, y si pasa de 120 caracteres (puntos de código, como `char_length`: un emoji cuenta 1 y nunca se parte) se corta a 119 más "…", 120 en total; `📷 Foto` si es solo foto o `📷 Foto · <texto>` si tiene las dos. `data`: `{ "type": "message", "student_id": "uuid" }` (el alumno de la conversación, para abrir el chat; sin `notification_id`). `android.notification.tag`: `message:<student_id>`, así Android deja un solo aviso por conversación en la bandeja, también con la app en segundo plano. Best-effort: si FCM falla el mensaje se guarda y responde igual.
+
 ### PATCH /notifications/read-all
 
 Marca como leídas todas las no leídas del usuario. **204 No Content**, también si no había ninguna.
@@ -1241,7 +1253,7 @@ Registra el token de FCM del dispositivo para recibir push. Es un upsert por `to
 
 ### DELETE /notifications/tokens/:token
 
-Da de baja el token del dispositivo (por ejemplo al cerrar sesión). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
+Da de baja el token del dispositivo (por ejemplo al cerrar sesión; también se puede mandar como `push_token` en `POST /auth/logout`, que funciona sin access token). Solo borra si el token es del usuario autenticado; si no existe o es de otro usuario responde igual. **204 No Content** siempre. El `:token` va codificado en la URL (`encodeURIComponent`).
 
 > El backend también borra solo los tokens que FCM da por inválidos (`UNREGISTERED` o token mal formado); el cliente no tiene que hacer nada.
 
@@ -1260,13 +1272,15 @@ Mensajería interna 1 a 1 entre el PT y cada uno de sus alumnos (tarjeta 48). Un
   "sender_role": "trainer",
   "body": "¡Buen entrenamiento hoy!",
   "image_url": "https://…/message-images/…?token=…",
+  "has_image": true,
   "broadcast_id": null,
   "read_at": null,
   "created_at": "2026-10-31T14:05:00.123456+00:00"
 }
 ```
 
-- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`. Si los dos vienen en `null` es un mensaje de solo foto cuya URL no se pudo firmar (ver abajo): la web muestra "Foto no disponible".
+- `sender_role` es `trainer` o `student`. `body` e `image_url` pueden ser `null`.
+- `has_image` es `true` si el mensaje tiene foto, aunque su URL no se haya podido firmar (ver abajo). `has_image: true` con `image_url: null` es una foto sin firmar: la web muestra "Foto no disponible" (con o sin texto) y el celular, que cachea los mensajes, sabe que tiene que volver a pedir el historial para firmarla.
 - `image_url` es una URL firmada que vence a la hora (3600 s); el `image_path` del bucket nunca sale. Si hace falta, se vuelve a pedir el historial para obtener una nueva.
 - La firma es best-effort: si Storage falla al firmar, la respuesta igual sale bien (200 en el historial, 201 en el envío) con `image_url: null` en las fotos afectadas, y el error se registra en el servidor. El próximo pedido del historial las vuelve a firmar.
 - `broadcast_id` lo comparten los mensajes de un mismo envío masivo; `null` si es un mensaje normal.
@@ -1349,7 +1363,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 
 ```json
 {
-  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
+  "data": [ { "id": "uuid", "student_id": "uuid", "sender_role": "student", "body": "Hola profe", "image_url": null, "has_image": false, "broadcast_id": null, "read_at": "2026-10-31T14:06:00.000000+00:00", "created_at": "2026-10-31T14:00:00.000000+00:00" } ],
   "meta": { "next_before": "2026-10-31T14:00:00.000000+00:00" },
   "counterpart": { "id": "uuid", "name": "Juan Pérez", "avatar_url": null }
 }
@@ -1358,7 +1372,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 - `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
 - `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
 - `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
-- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y no responde 500.
+- Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y `has_image: true`, y no responde 500.
 
 **Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.
 
@@ -1378,7 +1392,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 **201 Created** con el mensaje creado:
 
 ```json
-{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
+{ "data": { "id": "uuid", "student_id": "uuid", "sender_role": "trainer", "body": "Mirá cómo quedó la rutina", "image_url": "https://…", "has_image": true, "broadcast_id": null, "read_at": null, "created_at": "2026-10-31T14:05:00.123456+00:00" } }
 ```
 
 **Errores**
@@ -1394,7 +1408,7 @@ También acepta `application/json` `{ "body": "…" }` para mensajes de solo tex
 
 > Si falla el guardado del mensaje, se intenta borrar la foto ya subida del bucket (best-effort: si el borrado falla, queda un archivo huérfano).
 >
-> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
+> Si el mensaje se guardó pero falla la firma de la URL de la foto, igual responde **201** con `image_url: null` y `has_image: true` (se registra el error): así Reintentar no duplica el mensaje. La foto vuelve firmada en el próximo historial.
 
 ### POST /messages/:studentId/read
 

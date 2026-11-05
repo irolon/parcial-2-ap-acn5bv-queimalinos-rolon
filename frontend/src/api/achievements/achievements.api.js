@@ -14,6 +14,15 @@ export async function getStudentAchievements(id) {
   return res.data;
 }
 
+/**
+ * GET /students/:id/achievements/progress → `{ streak, facts, assigned_days, achievements }`: todo el catálogo con
+ * `criteria_type`, `current`, `target` y `unlocked_at` (null si todavía no lo desbloqueó). Solo lectura.
+ */
+export async function getAchievementProgress(id) {
+  const res = await request(student(id, 'achievements/progress'));
+  return res.data;
+}
+
 /** GET /students/:id/streak → `{ current_streak_days, longest_streak_days, last_session_date }`. */
 export async function getStudentStreak(id) {
   const res = await request(student(id, 'streak'));

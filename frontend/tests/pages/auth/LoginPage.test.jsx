@@ -5,6 +5,7 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { STUDENT, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+import { stubStudentHome } from '../../helpers/student/home';
 
 beforeEach(() => {
   resetAuthStore();
@@ -68,7 +69,8 @@ describe('LoginPage', () => {
 
   it('mientras envía, el botón queda en loading; al terminar va a la home del rol', async () => {
     let answer;
-    stubFetch(() => new Promise((resolve) => (answer = resolve)));
+    // Lo único que queda colgado es el login; Hoy, al que se llega, pide la rutina, el historial y la racha.
+    stubStudentHome({}, () => new Promise((resolve) => (answer = resolve)));
     renderRoute('/login');
     await submit();
     const button = screen.getByRole('button', { name: 'Ingresar' });

@@ -24,13 +24,17 @@ export const MAX_BROADCAST = 200;
 /** Vigencia de las URLs firmadas de las fotos. */
 export const SIGNED_URL_SECONDS = 3600;
 
-/** Forma pública del mensaje: `image_path` nunca sale, se reemplaza por `image_url` firmada. */
+/**
+ * Forma pública del mensaje: `image_path` nunca sale, se reemplaza por `image_url` firmada.
+ * `has_image` distingue una foto que no se pudo firmar (`image_url: null`) de un mensaje de solo texto.
+ */
 export const toMessage = (row, imageUrl = null) => ({
   id: row.id,
   student_id: row.student_id,
   sender_role: row.sender_role,
   body: row.body ?? null,
   image_url: imageUrl ?? null,
+  has_image: Boolean(row.image_path),
   broadcast_id: row.broadcast_id ?? null,
   read_at: row.read_at ?? null,
   created_at: row.created_at,

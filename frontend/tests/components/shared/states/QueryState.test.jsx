@@ -37,4 +37,11 @@ describe('QueryState', () => {
     renderQuery({ isPending: false, isError: false, data: ['a', 'b'] });
     expect(screen.getByText('datos: a,b')).toBeInTheDocument();
   });
+
+  it('un refetch fallido que conserva los datos no los tapa con el error', () => {
+    renderQuery({ isPending: false, isError: true, error: new Error('boom'), data: ['a', 'b'], refetch: vi.fn() });
+    expect(screen.getByText('datos: a,b')).toBeInTheDocument();
+    expect(screen.queryByText('boom')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });

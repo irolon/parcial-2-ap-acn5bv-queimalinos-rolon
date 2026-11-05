@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as studentsService from '../../services/students/students.service.js';
 import * as attendanceService from '../../services/students/attendance.service.js';
 import * as overviewService from '../../services/students/overview.service.js';

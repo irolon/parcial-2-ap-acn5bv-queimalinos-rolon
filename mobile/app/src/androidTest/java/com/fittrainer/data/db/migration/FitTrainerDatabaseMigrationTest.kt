@@ -14,8 +14,8 @@ import org.junit.runner.RunWith
 
 /**
  * Las bases de los usuarios se migran, nunca se borran: desde la cola offline (S3) Room guarda
- * registros pendientes de subir. Cada versión nueva suma su caso en esta carpeta (v9 en adelante:
- * [MigrationV9Test], [MigrationV10Test], [MigrationV11Test]).
+ * registros pendientes de subir. Cada versión nueva suma su caso en esta carpeta (v9; de la v10 a la v19 en v1x/,
+ * desde la v20 en v2x/).
  */
 @RunWith(AndroidJUnit4::class)
 class FitTrainerDatabaseMigrationTest {

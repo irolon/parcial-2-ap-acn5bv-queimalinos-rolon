@@ -1,8 +1,7 @@
 import { categoryIcon } from '@/components/achievements/categoryIcon';
+import Block from '@/components/achievements/AchievementBlock';
 import AchievementList from '@/components/achievements/AchievementList';
 import ChallengeProgressList from '@/components/achievements/ChallengeProgressList';
-import ErrorState from '@/components/shared/states/ErrorState';
-import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
 import {
   useStudentAchievementsQuery,
@@ -12,20 +11,6 @@ import {
 import { durationLabel } from '@/utils/challenges/challengeFormat';
 
 const { Icon: StreakIcon } = categoryIcon('streak');
-
-/** Un bloque con su propia carga y error. */
-function Block({ title, query, children }) {
-  let body;
-  if (query.isPending) body = <LoadingState rows={1} />;
-  else if (query.isError) body = <ErrorState message={query.error?.message} onRetry={() => query.refetch()} />;
-  else body = children(query.data);
-  return (
-    <section className="flex flex-col gap-2.5">
-      <h3 className="font-display text-xs font-semibold uppercase tracking-wide text-ink6">{title}</h3>
-      {body}
-    </section>
-  );
-}
 
 /** Racha, logros y desafíos de un alumno. */
 export default function AchievementsCard({ studentId }) {

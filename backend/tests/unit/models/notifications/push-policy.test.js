@@ -14,6 +14,8 @@ describe('shouldPush', () => {
     ['achievement', 'trainer', { fromJob: true }, false],
     ['comment', 'student', undefined, true],
     ['comment', 'trainer', undefined, false],
+    ['message', 'student', undefined, true],
+    ['message', 'trainer', undefined, true],
     ['appointment', 'student', undefined, false],
     ['desconocido', 'trainer', undefined, false],
   ])('%s para %s %j → %s', (type, role, opts, expected) => {

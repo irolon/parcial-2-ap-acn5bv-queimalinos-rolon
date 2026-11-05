@@ -33,7 +33,7 @@ class FakeTrainerMessagesDao : TrainerMessagesDao() {
     override suspend fun newestAt(trainerId: String, studentId: String) =
         messages.value.filter { it.of(trainerId, studentId) }.maxOfOrNull { it.createdAt }
     override suspend fun newestStaleImageAt(trainerId: String, studentId: String, signedBefore: Long) =
-        messages.value.filter { it.of(trainerId, studentId) && (it.imageUrl != null || it.body == null) && it.fetchedAt < signedBefore }.maxOfOrNull { it.createdAt }
+        messages.value.filter { it.of(trainerId, studentId) && (it.imageUrl != null || it.body == null || it.hasImage) && it.fetchedAt < signedBefore }.maxOfOrNull { it.createdAt }
     override suspend fun getMessages(trainerId: String, ids: List<String>) =
         messages.value.filter { it.trainerId == trainerId && it.id in ids }
     override suspend fun oldestAt(trainerId: String, studentId: String) =
