@@ -14,13 +14,18 @@ class NotificationMapperTest {
 
     @Test fun soloGuardaLosTiposConocidos() {
         val saved = listOf("comment", "pr", "achievement", "appointment", "otro").map { dto(it).toEntity("u1") != null }
-        assertEquals(listOf(true, true, true, false, false), saved)
+        // E13: appointment ya se guarda (antes se descartaba).
+        assertEquals(listOf(true, true, true, true, false), saved)
     }
 
     // E12: los avisos del entrenador también se guardan.
     @Test fun guardaLosTiposDelEntrenador() {
         val saved = listOf("inactivity", "routine_modified").map { dto(it).toEntity("t1")?.toModel()?.type }
         assertEquals(listOf(NotificationType.INACTIVITY, NotificationType.ROUTINE_MODIFIED), saved)
+    }
+
+    @Test fun guardaLosAvisosDeTurnos() {
+        assertEquals(NotificationType.APPOINTMENT, dto("appointment").toEntity("t1")?.toModel()?.type)
     }
 
     @Test fun fechaConZYConOffsetDanElMismoInstante() {
@@ -40,6 +45,6 @@ class NotificationMapperTest {
     }
 
     @Test fun tipoDesconocidoNoSeConvierteAModelo() {
-        assertNull(dto().toEntity("u1")!!.copy(type = "appointment").toModel())
+        assertNull(dto().toEntity("u1")!!.copy(type = "otro").toModel())
     }
 }

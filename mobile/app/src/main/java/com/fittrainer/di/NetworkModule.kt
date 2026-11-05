@@ -7,6 +7,7 @@ import com.fittrainer.data.api.FitTrainerApi
 import com.fittrainer.data.api.InvitationApi
 import com.fittrainer.data.api.RoutineApi
 import com.fittrainer.data.api.SessionApi
+import com.fittrainer.data.api.agenda.AgendaApi
 import com.fittrainer.data.api.challenges.TrainerChallengesApi
 import com.fittrainer.data.api.exercises.TrainerExercisesApi
 import com.fittrainer.data.api.invitation.TrainerInvitationApi
@@ -111,6 +112,11 @@ object NetworkModule {
     @Singleton
     fun provideTrainerChallengesApi(client: OkHttpClient, json: Json): TrainerChallengesApi =
         retrofit(client, json).create(TrainerChallengesApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAgendaApi(client: OkHttpClient, json: Json): AgendaApi =
+        retrofit(client, json).create(AgendaApi::class.java)
 
     @Provides
     @Singleton

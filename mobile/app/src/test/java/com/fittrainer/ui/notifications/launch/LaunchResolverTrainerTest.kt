@@ -41,6 +41,16 @@ class LaunchResolverTrainerTest {
         assertEquals(NavTarget.TrainerStudent("st1"), target)
     }
 
+    @Test fun unTurnoAbreLaAgendaYMarcaLeido() = runTest {
+        val sources = Sources()
+        assertEquals(NavTarget.TrainerAgenda, resolve(PendingLaunch(NotificationDestination.Agenda, "n3"), trainer, sources))
+        assertEquals(listOf("markRead:t1:n3"), sources.calls)
+    }
+
+    @Test fun laAgendaConSesionDeAlumnoSeDescarta() = runTest {
+        assertEquals(NavTarget.None, resolve(PendingLaunch(NotificationDestination.Agenda, "n3"), student, Sources()))
+    }
+
     @Test fun laListaDelEntrenadorEsLaSuya() = runTest {
         val target = resolve(PendingLaunch(NotificationDestination.NotificationsList, null), trainer, Sources())
         assertEquals(NavTarget.TrainerNotifications, target)

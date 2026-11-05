@@ -26,6 +26,20 @@ class NotificationDestinationTrainerTest {
         assertEquals(list, destinationOf("achievement", logro, Role.STUDENT))
     }
 
+    // E13: el aviso solo trae appointment_id; el PT va a su agenda y el alumno se queda en la lista.
+    @Test fun unTurnoAbreLaAgendaDelEntrenadorYLaListaDelAlumno() {
+        val data = mapOf("appointment_id" to "a1")
+        assertEquals(NotificationDestination.Agenda, destinationOf("appointment", data, Role.TRAINER))
+        assertEquals(list, destinationOf("appointment", data, Role.STUDENT))
+        assertEquals(NotificationDestination.Agenda, destinationOf("appointment", emptyMap(), Role.TRAINER))
+    }
+
+    // El push de turno solo le llega al alumno y se resuelve sin rol: a la lista.
+    @Test fun elPushDeTurnoSinRolAbreLaLista() {
+        val launch = launchFromExtras(mapOf("type" to "appointment", "appointment_id" to "a1", "notification_id" to "n5"))
+        assertEquals(PendingLaunch(list, "n5"), launch)
+    }
+
     @Test fun datosIncompletosAbrenLaLista() {
         assertEquals(list, destinationOf("routine_modified", mapOf("student_id" to "st1")))
         assertEquals(list, destinationOf("routine_modified", mapOf("session_id" to "se1")))

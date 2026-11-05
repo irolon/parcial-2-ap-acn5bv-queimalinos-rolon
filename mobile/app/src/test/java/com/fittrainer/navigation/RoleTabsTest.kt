@@ -1,5 +1,6 @@
 package com.fittrainer.navigation
 
+import com.fittrainer.navigation.trainer.TRAINER_AGENDA_ROUTE
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,6 +29,11 @@ class RoleTabsTest {
     @Test fun alumnosQuedaMarcadaAlInvitar() {
         assertTrue(isTabSelected(TRAINER_STUDENTS_ROUTE, TRAINER_INVITE_ROUTE))
         assertFalse(isTabSelected("trainer/home", TRAINER_INVITE_ROUTE))
+    }
+
+    @Test fun masQuedaMarcadaEnLaAgenda() {
+        assertTrue(isTabSelected(TRAINER_MORE_ROUTE, TRAINER_AGENDA_ROUTE))
+        assertFalse(isTabSelected(TRAINER_HOME_ROUTE, TRAINER_AGENDA_ROUTE))
     }
 
     @Test fun conLaSesionActivaNingunaPestanaQuedaMarcada() {

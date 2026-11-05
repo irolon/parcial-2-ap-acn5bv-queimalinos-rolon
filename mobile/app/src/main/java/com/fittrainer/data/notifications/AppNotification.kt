@@ -4,8 +4,9 @@ import java.time.Instant
 
 /**
  * Tipos que muestra la app: los del alumno (comment, pr, achievement) y los del entrenador (E12: inactivity,
- * routine_modified, y también pr y achievement de sus alumnos). El servidor solo manda los del usuario logueado;
- * los que no están acá (appointment) se descartan.
+ * routine_modified, y también pr y achievement de sus alumnos). appointment (E13) es de los dos: al PT le avisa que
+ * un alumno pidió o canceló un turno; al alumno, lo que hizo el PT. El servidor solo manda los del usuario logueado;
+ * los que no están acá se descartan.
  */
 enum class NotificationType(val wire: String) {
     COMMENT("comment"),
@@ -13,6 +14,7 @@ enum class NotificationType(val wire: String) {
     ACHIEVEMENT("achievement"),
     INACTIVITY("inactivity"),
     ROUTINE_MODIFIED("routine_modified"),
+    APPOINTMENT("appointment"),
     ;
 
     companion object {

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.fittrainer.navigation.trainer.TRAINER_AGENDA_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_CHALLENGES_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_EXERCISES_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
@@ -51,6 +52,7 @@ private fun parentTab(route: String): String? = when {
     route == TRAINER_TEMPLATES_ROUTE || route.startsWith("$TRAINER_TEMPLATES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == TRAINER_EXERCISES_ROUTE || route.startsWith("$TRAINER_EXERCISES_ROUTE/") -> TRAINER_MORE_ROUTE
     route == TRAINER_CHALLENGES_ROUTE || route.startsWith("$TRAINER_CHALLENGES_ROUTE/") -> TRAINER_MORE_ROUTE
+    route == TRAINER_AGENDA_ROUTE -> TRAINER_MORE_ROUTE
     route == NOTIFICATIONS_ROUTE -> STUDENT_TODAY_ROUTE
     route == TRAINER_NOTIFICATIONS_ROUTE -> TRAINER_HOME_ROUTE
     route.startsWith("$TRAINER_MESSAGES_ROUTE/") -> TRAINER_MESSAGES_ROUTE
