@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as achievementsService from '../../services/gamification/achievements.service.js';
 import * as progressService from '../../services/gamification/progress/achievement-progress.service.js';
 

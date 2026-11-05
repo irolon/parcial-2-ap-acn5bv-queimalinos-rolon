@@ -24,7 +24,7 @@ src/
 ├── config/                  # env.js (variables de entorno) y supabase.js (cliente service role)
 ├── shared/                  # transversal a todos los módulos
 │   ├── middlewares/         # authenticate, requireRole, validate, errores
-│   └── utils/               # errors, password (bcrypt), jwt, qr, asyncHandler
+│   └── utils/               # errors, password (bcrypt), jwt, qr; async/ (asyncHandler, background, scheduler)
 ├── controllers/<modulo>/<modulo>.controller.js
 ├── services/<modulo>/<modulo>.service.js
 ├── repositories/<modulo>/<modulo>.repository.js
@@ -94,7 +94,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | POST | `/api/auth/register` | — | Registra un trainer |
 | POST | `/api/auth/login` | — | Login (trainer o alumno; resuelve el rol) |
 | POST | `/api/auth/refresh` | — | Nuevo access token |
-| POST | `/api/auth/logout` | trainer/student | Revoca el refresh token |
+| POST | `/api/auth/logout` | trainer/student | `{ refresh_token, push_token? }`. Revoca el refresh token; con `push_token`, además borra ese token de push si es del dueño del refresh (aunque ya esté revocado, para reintentar sin red). 204 siempre |
 
 ### Invitaciones (onboarding) — Fase 1
 | Método | Ruta | Rol | Descripción |
@@ -214,11 +214,11 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 | PATCH | `/api/notifications/read-all` | Marca todas como leídas. 204 |
 | PATCH | `/api/notifications/:id/read` | Marca una como leída. 204; inexistente o ajena: 404 `NOTIFICATION_NOT_FOUND` |
 | POST | `/api/notifications/tokens` | `{ token, platform }` con `platform` `android` o `web`. Upsert del token de FCM del dispositivo: 201 si es nuevo, 200 si ya existía |
-| DELETE | `/api/notifications/tokens/:token` | Baja el token del usuario. 204 siempre |
+| DELETE | `/api/notifications/tokens/:token` | Baja el token del usuario. 204 siempre. Al cerrar sesión conviene mandarlo como `push_token` en `POST /api/auth/logout`, que no exige access token |
 
 **Push.** Se configura con `FCM_SERVICE_ACCOUNT_PATH` (local) o `FCM_SERVICE_ACCOUNT_JSON` en base64 (VPS); sin credenciales el push queda apagado y las notificaciones se guardan igual. Pasos en [`setup-tecnico.md`](../docs/proceso/setup-tecnico.md). Un token se borra solo cuando FCM lo señala como inválido (`UNREGISTERED` o token mal formado).
 
-**Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno).
+**Disparadores.** Se llaman desde Sessions y nunca rompen la operación que los origina: `routine_modified` (PT), `pr` y `achievement` al cerrar una sesión (alumno con push, PT solo en la base) y `comment` cuando el PT comenta (alumno). Desde Messages sale el push `message` (solo push, sin fila; ver Mensajes).
 
 **Pendiente para el backend (E12 del celular, 01/11).** El feedback/RPE que deja un alumno al cerrar una sesión no genera ninguna notificación para el PT: hoy solo aparece en `GET /students/overview` (`attention`, sesiones sin comentar). La app del entrenador ya maneja `routine_modified`, `inactivity`, `pr` y `achievement`; si se agrega un tipo para el feedback (por ejemplo `session_feedback` con `student_id` y `session_id`), el celular lo abre en la sesión con un cambio chico. El otro pedido pendiente es **un push a la mañana para el PT** con los alumnos a los que les toca entrenar ese día (por ejemplo, tipo `daily_pending` con `count`, generado por un job como el de inactividad). En el celular, el centro de avisos del entrenador ya muestra esa lista arriba, a partir de `GET /students/overview`; falta solo el push. **Para la web: nada que hacer.**
 
@@ -227,6 +227,8 @@ Rol: `trainer` / `student`; todo es propio del usuario autenticado. La tabla `no
 ### Mensajes — tarjeta 48
 
 Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat con la IA: ese es `POST /chat`). Rol: `trainer` / `student`; el PT solo ve las conversaciones de sus alumnos y el alumno, la suya (si no, 403 `FORBIDDEN`). Se actualiza por polling, sin tiempo real. Respuestas y errores en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+**Push de mensaje nuevo (tarjeta 18 del celular).** Cada mensaje avisa por push al otro lado de la conversación: si escribe el PT, al alumno; si escribe el alumno, a su PT; el envío masivo manda un push por alumno, en paralelo. Es **solo push, sin fila en `notifications`** (la lista de avisos no se llena con el chat). Título: el nombre de quien escribe; cuerpo: el texto recortado a 120 caracteres, `📷 Foto` si es solo foto o `📷 Foto · <texto>` si trae las dos. `data`: `{ type: "message", student_id }` (el alumno de la conversación, para abrir el chat). Es best-effort y no se espera: un fallo de FCM nunca demora ni rompe el `POST`. **Celular:** falta abrir el chat al tocar el push.
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
@@ -239,9 +241,9 @@ Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat c
 
 **Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
 
-**Sugerencia para el backend (E11 del celular, 02/11), opcional.** Con la firma best-effort, una foto que no se pudo firmar sale con `image_url: null`. Si el mensaje además tiene texto, no hay forma de distinguirlo de uno de solo texto. El celular guarda los mensajes en Room, así que si eso pasa con una página vieja del chat cargada durante la caída de Storage, la foto no vuelve hasta que se borre el caché. Un campo `has_image` (por ejemplo `Boolean(row.image_path)` en el modelo público) le alcanza al celular para reintentar la firma. Las fotos que ya se veían, y las de solo foto, ya se recuperan sin cambios. **Para la web: nada que hacer.**
+**`has_image` en los mensajes (E11 del celular, 03/11).** Cada mensaje trae `has_image` (`Boolean(image_path)`, sin exponer el path): con `has_image: true` e `image_url: null` la foto no se pudo firmar, aunque el mensaje tenga texto. El celular reintenta la firma pidiendo el historial; la web muestra "Foto no disponible".
 
-**Push de mensajes en el celular (tarjeta 18, 02/11).** El celular ya abre el chat al tocar el push `message` de la #70: el alumno va a su pestaña Mensajes y el PT, al chat del `student_id`. Con la app en primer plano, además, refresca el chat en Room y los mensajes de una misma conversación se pisan en una sola notificación. **Pedido chico para el backend:** el push sale con `notification` + `data`, así que con la app en segundo plano lo muestra Android sin pasar por la app y cada mensaje queda como un aviso aparte. Si `fcm.client` suma `android.notification.tag = "message:<student_id>"` para el tipo `message`, Android también los agrupa en segundo plano. El refresco en segundo plano necesitaría un push solo `data`, que cambia el contrato de todos los tipos, así que no lo pido: al abrir la app, el chat y los globitos se actualizan solos. **Para la web: nada que hacer.**
+**Push de mensajes en el celular (tarjeta 18, 02/11).** El celular ya abre el chat al tocar el push `message` de la #70: el alumno va a su pestaña Mensajes y el PT, al chat del `student_id`. Con la app en primer plano, además, refresca el chat en Room y los mensajes de una misma conversación se pisan en una sola notificación. Con la app en segundo plano Android muestra el push sin pasar por la app; por eso el push `message` sale con `android.notification.tag = "message:<student_id>"` y Android también deja un solo aviso por conversación. El refresco en segundo plano necesitaría un push solo `data`, que cambia el contrato de todos los tipos, así que no lo pido: al abrir la app, el chat y los globitos se actualizan solos. **Para la web: nada que hacer.**
 
 ### Agenda — Fase 6
 
@@ -351,7 +353,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 - **Cierre:** `POST /sessions` acepta `finished_at` y además existe `PATCH /sessions/:id`.
 - **Historial:** `GET /students/:id/sessions`, `GET /students/:id/sessions/:sessionId` y `PATCH /sessions/:id/comment` (solo `trainer`); ver el contrato.
 - **Descanso real (01/11, compatible):** `session_sets.rest_seconds` (migración `2026-11-01-session-sets-rest.sql`). El celular lo manda en cada serie de `POST /sessions/:id/sets`: los segundos que el alumno descansó **después** de esa serie, con su ajuste, la pausa y "Saltar". `null` = sin dato (series anteriores, última serie de la sesión, ejercicio sin descanso). El detalle del historial lo devuelve en cada serie y suma `planned.rest_seconds` (el de la rutina actual).
-  - **Para la web (Pablo):** en el detalle de una sesión del alumno, mostrar el descanso de cada serie ("desc. 2:00") y marcarlo cuando difiere del plan ("desc. 2:00 (plan 1:30)"). Si alguno de los dos es `null`, sin marca.
+  - **Para la web (Pablo):** en el detalle de una sesión del alumno, mostrar el descanso de cada serie ("desc. 2:00") y marcarlo cuando difiere del plan ("desc. 2:00 (plan 1:30)"). Si alguno de los dos es `null`, sin marca. **Hecho** en la web: el detalle muestra la columna "Desc." y la sesión web del alumno también manda `rest_seconds` (spec del alumno en la web, §8).
 
 ### Gamificación (`/achievements`, `/challenges`)
 

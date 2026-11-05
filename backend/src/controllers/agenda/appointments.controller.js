@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as service from '../../services/agenda/appointments.service.js';
 
 /** GET /appointments?from&to — 200 → { data: [turno] } */

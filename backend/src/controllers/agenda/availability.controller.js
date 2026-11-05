@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as service from '../../services/agenda/availability.service.js';
 import * as freeService from '../../services/agenda/free-slots.service.js';
 

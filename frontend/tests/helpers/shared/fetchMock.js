@@ -17,6 +17,15 @@ export function errorResponse(status, code, message = code, details) {
 }
 
 /**
+ * Arma la respuesta de un GET falso: `answer` es el dato (200), un status de error (número, da un error con ese status)
+ * o una función (también async) que lo arma en cada pedido.
+ */
+export async function reply(answer) {
+  const value = await (typeof answer === 'function' ? answer() : answer);
+  return typeof value === 'number' ? errorResponse(value, 'INTERNAL') : jsonResponse(200, { data: value });
+}
+
+/**
  * Stub de `fetch` + `VITE_API_URL`. Llamar a `vi.unstubAllGlobals/Envs` en el afterEach.
  * El badge de "Mensajes" del sidebar consulta `/messages/unread-count` en toda pantalla con layout:
  * esa ruta se contesta aparte (`unread` no leídos, 0 por defecto; `unread: null` la deja pasar a `impl`) y no llega a `impl` ni a las llamadas del mock.

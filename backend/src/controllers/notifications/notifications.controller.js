@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as service from '../../services/notifications/notifications.service.js';
 
 /** GET /notifications — 200 → { data, meta } */

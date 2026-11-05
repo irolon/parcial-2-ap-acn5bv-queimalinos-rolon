@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as bodyMetricsService from '../../services/body-metrics/body-metrics.service.js';
 
 /** GET /students/:id/metrics — historial ascendente con IMC. 200 → { data } */

@@ -56,7 +56,7 @@ Los disparadores nunca rompen la operación que los origina (try/catch + log).
 - `routine_modified` (PT): "{alumno} modificó su rutina" / "En la sesión del {dd/mm} sustituyó {original} por {nuevo}" (varias: "…sustituyó {n} ejercicios").
 - `pr` alumno: "¡Nuevo récord en {ejercicio}!" (varios: "¡{n} récords nuevos!") / "Sesión del {dd/mm}". PT: "{alumno} hizo un récord en {ejercicio}" (varios: "{alumno} hizo {n} récords").
 - `achievement` alumno: "¡Logro desbloqueado: {nombre}!" / descripción. Push resumen con varios: "Desbloqueaste {n} logros" / nombres separados por coma. PT: "{alumno} desbloqueó {nombre}".
-- `comment` (alumno): "Tu entrenador comentó tu sesión del {dd/mm}" / primeros 120 caracteres del comentario.
+- `comment` (alumno): "Tu entrenador comentó tu sesión del {dd/mm}" / el comentario, recortado a 120 caracteres en total (119 + "…", por puntos de código).
 - Título ≤ 150 caracteres (se recorta).
 
 ## 4. Endpoints
@@ -122,4 +122,5 @@ Migración `backend/src/database/migrations/2026-10-30-notifications.sql` (y en 
 - **Payload del push:** `notify` envía `{ ...data, type, notification_id }` (la fila no cambia) y el push resumen de logros lleva `type: 'achievement'` y `student_id`, para que la app navegue y marque la notificación como leída.
 - **Índice de inactividad:** `(created_at desc) where type = 'inactivity'`, porque `findLastInactivityNotifications` filtra solo por tipo y fecha.
 - **Una `pr` y una `routine_modified` por sesión, también con lotes en paralelo (re-review de #36):** como los disparadores no se esperan, dos lotes de series de la misma sesión podían pasar los dos el `existsForSession` antes de insertar. El índice único parcial `uq_notifications_session` sobre `(type, user_id, data->>'session_id') where type in ('pr', 'routine_modified')` lo impide en la base: el insert que pierde devuelve `null` (`23505`) y `notify` no guarda ni manda push. `existsForSession` sigue como atajo para no consultar nombres de más.
+- **Push token en el logout (sugerencia de la review de #70):** `POST /auth/logout` acepta `push_token` opcional y lo borra si es del dueño del refresh token (buscado aunque esté revocado, para que el celular reintente sin access token). Sin dueño no borra nada y un error al borrar no rompe el logout (204 igual). `DELETE /notifications/tokens/:token` sigue.
 - **Deuda:** `findLastClosedSessionStarts` trae las sesiones cerradas de todos los alumnos cada noche para quedarse con la última, y `findAssignedDays` se consulta alumno por alumno. Crecen con el historial y la cantidad de alumnos; conviene agregar en la base (última sesión por alumno, días asignados en lote) cuando haga falta.

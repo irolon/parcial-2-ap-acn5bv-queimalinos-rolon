@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../shared/utils/asyncHandler.js';
+import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as exercisesService from '../../services/exercises/exercises.service.js';
 
 /** GET /exercises — biblioteca visible para el trainer (globales + propios). */

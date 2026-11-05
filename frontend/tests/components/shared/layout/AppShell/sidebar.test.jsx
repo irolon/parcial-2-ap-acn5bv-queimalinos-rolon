@@ -86,7 +86,6 @@ describe('AppShell: sidebar del alumno', () => {
       'Mis rutinas',
       'Historial',
       'Mensajes',
-      'Asistente IA',
       'Mi perfil',
     ]);
     expect(within(sidebar).getByRole('link', { name: 'Mi progreso' })).toHaveAttribute(

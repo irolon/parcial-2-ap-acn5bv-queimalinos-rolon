@@ -6,18 +6,20 @@ import LoadingState from '@/components/shared/states/LoadingState';
 import SessionRow from '@/components/sessions/SessionRow';
 import { useSessionsInfinite } from '@/hooks/sessions/useSessions';
 
-function Body({ query, studentId }) {
+function Body({ query, studentId, viewer }) {
   if (query.isPending) return <LoadingState rows={2} />;
   if (query.isError && !query.data) {
     return <ErrorState message="No pudimos cargar las sesiones." onRetry={() => query.refetch()} />;
   }
   const sessions = query.data.pages.flatMap((page) => page.data);
-  if (sessions.length === 0) return <EmptyState title="Todavía no entrenó" />;
+  if (sessions.length === 0) {
+    return <EmptyState title={viewer === 'student' ? 'Todavía no entrenaste' : 'Todavía no entrenó'} />;
+  }
   return (
     <>
       <ul>
         {sessions.map((session) => (
-          <SessionRow key={session.id} studentId={studentId} session={session} />
+          <SessionRow key={session.id} studentId={studentId} session={session} viewer={viewer} />
         ))}
       </ul>
       {query.hasNextPage && (
@@ -36,12 +38,16 @@ function Body({ query, studentId }) {
   );
 }
 
-/** Bloque "Últimas sesiones" de la ficha del alumno: de a 20, con detalle y comentario. */
-export default function SessionsHistory({ studentId }) {
+/**
+ * Bloque "Últimas sesiones" del alumno: de a 20, con detalle y comentario.
+ * `viewer` es quién mira: el entrenador (por defecto) en la ficha del alumno, que puede comentar cada sesión,
+ * o `'student'`, el propio alumno en su Historial, con los textos en segunda persona y el comentario de solo lectura.
+ */
+export default function SessionsHistory({ studentId, viewer = 'trainer' }) {
   const query = useSessionsInfinite(studentId);
   return (
     <Card title="Últimas sesiones" className="min-w-0">
-      <Body query={query} studentId={studentId} />
+      <Body query={query} studentId={studentId} viewer={viewer} />
     </Card>
   );
 }

@@ -136,6 +136,10 @@ scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en
 
 Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación); `agenda` (agrupa `/availability` y `/appointments`: la disponibilidad define qué turnos se pueden pedir).
 
+Excepciones de nombre en la web (`frontend/`):
+- `student`: portal del alumno (`pages/student`, `components/student` y sus tests/helpers); agrupa pantallas del rol alumno que combinan varios recursos.
+- `workout`: la sesión activa del alumno en la web (`hooks/workout`, `utils/workout`, `components/workout`); mismo nombre que la excepción de mobile (recurso `sessions`).
+
 #### Web (`frontend/`)
 
 ```

@@ -39,7 +39,7 @@ describe('message.model', () => {
       const msg = toMessage(row, 'https://firmada');
       expect(msg).toEqual({
         id: 'm1', student_id: 's1', sender_role: 'trainer', body: 'hola', image_url: 'https://firmada',
-        broadcast_id: null, read_at: null, created_at: '2026-10-31T10:00:00Z',
+        has_image: true, broadcast_id: null, read_at: null, created_at: '2026-10-31T10:00:00Z',
       });
       expect(msg).not.toHaveProperty('image_path');
     });
@@ -49,6 +49,11 @@ describe('message.model', () => {
       expect(msg.image_url).toBeNull();
       expect(msg.body).toBeNull();
       expect(msg.broadcast_id).toBe('b1');
+    });
+
+    it('has_image: true con foto aunque no se haya firmado; false sin foto', () => {
+      expect(toMessage(row)).toMatchObject({ image_url: null, has_image: true });
+      expect(toMessage({ ...row, image_path: null })).toMatchObject({ image_url: null, has_image: false });
     });
   });
 

@@ -99,8 +99,12 @@ function stringifyData(data) {
   return out;
 }
 
-/** Envía un push a un token. Nunca lanza: devuelve { ok } o { ok:false, reason, status }. */
-export async function sendToToken(token, { title, body, data = {} }, { validateOnly = false } = {}) {
+/**
+ * Envía un push a un token. Nunca lanza: devuelve { ok } o { ok:false, reason, status }.
+ * `tag` (opcional) va como `android.notification.tag`: Android reemplaza en la bandeja el aviso anterior
+ * con el mismo tag, también con la app en segundo plano (p. ej. un aviso por conversación).
+ */
+export async function sendToToken(token, { title, body, data = {}, tag }, { validateOnly = false } = {}) {
   try {
     const acc = loadServiceAccount();
     const accessToken = await getAccessToken();
@@ -111,7 +115,12 @@ export async function sendToToken(token, { title, body, data = {} }, { validateO
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         validate_only: validateOnly,
-        message: { token, notification: { title, body }, data: stringData, android: { priority: 'high' } },
+        message: {
+          token,
+          notification: { title, body },
+          data: stringData,
+          android: tag ? { priority: 'high', notification: { tag } } : { priority: 'high' },
+        },
       }),
     });
     if (res.ok) return { ok: true };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatSessionDate } from '@/utils/sessions/format';
+import { formatDuration, formatSessionDate, restVsPlan } from '@/utils/sessions/format';
 
 describe('formatSessionDate', () => {
   it('arma día y mes abreviado en mayúsculas, en hora local', () => {
@@ -18,5 +18,23 @@ describe('formatDuration', () => {
   it('usa la prima U+2032 y — sin duración', () => {
     expect(formatDuration(54)).toBe('54\u2032');
     expect(formatDuration(null)).toBe('—');
+  });
+});
+
+describe('restVsPlan: descanso real de una serie contra el plan, como el historial del celular', () => {
+  it('distinto del plan: los dos en m:ss', () => {
+    expect(restVsPlan(120, 90)).toEqual({ rest: '2:00', plan: '1:30' });
+    expect(restVsPlan(0, 60)).toEqual({ rest: '0:00', plan: '1:00' });
+  });
+
+  it('igual al plan o sin plan: solo el real', () => {
+    expect(restVsPlan(90, 90)).toEqual({ rest: '1:30', plan: null });
+    expect(restVsPlan(95, null)).toEqual({ rest: '1:35', plan: null });
+    expect(restVsPlan(95, undefined)).toEqual({ rest: '1:35', plan: null });
+  });
+
+  it('sin descanso registrado (null o sesión vieja sin el campo): nada', () => {
+    expect(restVsPlan(null, 90)).toBeNull();
+    expect(restVsPlan(undefined, 90)).toBeNull();
   });
 });
