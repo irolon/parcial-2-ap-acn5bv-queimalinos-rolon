@@ -58,4 +58,25 @@ Cada arreglo con su test primero (falla sin el cambio) y verificado después en 
 
 ## 5. Tests automáticos de la web
 
-Se completa con la línea base y la estabilización de los tests inestables.
+Criterio de la spec: un test es inestable si falla alguna vez en 3 corridas con la configuración de CI (`--maxWorkers=2 --testTimeout=15000`) más 1 con la de fábrica. Además se forzó con estrés: toda la suite con `--maxWorkers=100%` y orden al azar (`--sequence.shuffle`), y las carpetas sospechosas 10 veces seguidas.
+
+**Línea base (antes de tocar nada):** las 4 corridas del criterio en verde. El estrés sí rompía:
+
+| Corrida | Fallos |
+|---|---|
+| Suite entera con shuffle (2 corridas) | `useActiveWorkout/upload`, `ProgressPanel/panel` (2 tests), `StudentsPage/list`, `RoutineEditorPage/assign` |
+| Editor de rutinas, biblioteca, invitar alumno y mensajes, 10 veces | `RoutineEditorPage/assign` en 9 de 10 y `save-template` en 5 de 10 (se pasaban de los 5 s) |
+
+**Causas y arreglos** (sin subir timeouts ni agregar esperas):
+
+| Tests | Causa | Arreglo |
+|---|---|---|
+| `useActiveWorkout/upload` | Las series se suben ordenadas por `executedAt` y, si empatan, por id (un UUID al azar). El test registraba dos series en el mismo milisegundo. | Reloj falso y la segunda serie 90 s después (`6fe2a34`). |
+| `RoutineEditorPage/assign` y `save-template` | `userEvent` con `delay: 0` espera un `setTimeout(0)` en cada paso, que en Windows son ~15,6 ms: un clic costaba ~100 ms y armar una rutina pasaba los 5 s con la suite en paralelo. | `tests/helpers/shared/user.js`, `userEvent` sin pausa, en el editor, la biblioteca, invitar alumno y mensajes: el test largo baja de 2,2 s a 0,86 s (`39178b8`). |
+| `ProgressPanel/panel`, `StudentsPage/list` | El primer render en un worker nuevo tarda ~3 veces más (JIT en frío) y lo pagaba el primer test del archivo, que con shuffle podía ser cualquiera. | `tests/helpers/shared/warmUp.js` monta la pantalla una vez en `beforeAll`; sale el `timeout: 4000` que lo tapaba (`39178b8`). |
+
+Sacar la pausa de `userEvent` destapó un bug real: **un doble click en Guardar del formulario de ejercicio mandaba dos POST**, porque el guard miraba `isPending`, que llega recién en el render siguiente. Se arregló con un ref sincrónico (`119b0db`).
+
+**Después:** las carpetas sospechosas 10 de 10 en verde (114 tests cada vez); la suite con shuffle 3 de 3 (1850/1850); la configuración de CI 3 de 3 y `npm test` en verde; lint limpio.
+
+`reorder.test` queda con el `userEvent` de fábrica: el teclado de dnd-kit necesita la pausa entre teclas.
