@@ -17,7 +17,7 @@ API REST (monolito modular) en **Node.js + Express**, datos en **Supabase/Postgr
 
 ## Estructura
 
-Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`, `messages`.
+Módulos implementados: `health`, `auth`, `invitations`, `students`, `body-metrics`, `exercises`, `routines`, `routine-templates`, `sessions`, `gamification`, `notifications`, `messages`, `agenda` (disponibilidad y turnos).
 
 ```
 src/
@@ -111,7 +111,7 @@ Rol: `—` público · `trainer` / `student` requieren `Authorization: Bearer <t
 | GET | `/api/students/overview` | trainer | Inicio del entrenador: `active_students`, `sessions_today`, `adherence_7d` (con `delta`), `at_risk`, `attention` (en riesgo y sesiones sin comentar), `recent` y `lists` (hoy, en riesgo, feedback pendiente y alumnos con su adherencia, sin tope). **La web puede usarlo para un dashboard** |
 | GET | `/api/students/:id` | trainer dueño / el propio alumno | Ficha completa: `gym_equipment`, `injuries`, `level`, `latest_metrics` (con `bmi`), `active_routine` (`{ id, name, days }`) y `last_session_at` |
 | GET | `/api/students/:id/attendance?month=YYYY-MM` | trainer dueño / el propio alumno | Resumen del mes (`sessions`, `assigned_days`, `prs`) y estado de cada día (`trained`, `missed`, `rest`, `upcoming`). `month` por defecto es el actual; futuro → 400. **La web puede usarlo para el calendario de asistencia** |
-| PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) |
+| PATCH | `/api/students/:id` | trainer dueño | Edita `name`, `goal`, `level`, `active`, `birth_date`, `gym_equipment`, `injuries` (al menos uno). `active: false` = baja: revoca sus refresh tokens (el alumno puede seguir usando la app hasta 1 h, `JWT_EXPIRES_IN`) y cancela sus turnos futuros |
 | GET | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Historial de medidas, de la más vieja a la más nueva, con `bmi` |
 | POST | `/api/students/:id/metrics` | trainer dueño / el propio alumno | Carga una medida. 201 si es nueva, 200 si es un reintento con el mismo `id` |
 | DELETE | `/api/students/:id/metrics/:metricId` | trainer dueño (cualquiera) / alumno (solo las suyas) | Borra una medida. 204 |
@@ -244,6 +244,29 @@ Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat c
 **`has_image` en los mensajes (E11 del celular, 03/11).** Cada mensaje trae `has_image` (`Boolean(image_path)`, sin exponer el path): con `has_image: true` e `image_url: null` la foto no se pudo firmar, aunque el mensaje tenga texto. El celular reintenta la firma pidiendo el historial; la web muestra "Foto no disponible".
 
 **Push de mensajes en el celular (tarjeta 18, 02/11).** El celular ya abre el chat al tocar el push `message` de la #70: el alumno va a su pestaña Mensajes y el PT, al chat del `student_id`. Con la app en primer plano, además, refresca el chat en Room y los mensajes de una misma conversación se pisan en una sola notificación. Con la app en segundo plano Android muestra el push sin pasar por la app; por eso el push `message` sale con `android.notification.tag = "message:<student_id>"` y Android también deja un solo aviso por conversación. El refresco en segundo plano necesitaría un push solo `data`, que cambia el contrato de todos los tipos, así que no lo pido: al abrir la app, el chat y los globitos se actualizan solos. **Para la web: nada que hacer.**
+
+### Agenda — Fase 6
+
+Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de la disponibilidad son de Argentina (UTC-3 fijo) y los turnos duran 60 min. El anti-solapamiento lo garantiza el índice único parcial `uq_appointments_trainer_slot` (turno vivo = `pending` o `confirmed`). Body, errores y ejemplos en [`contratos-api.md`](../docs/arquitectura/contratos-api.md).
+
+| Método | Ruta | Rol | Descripción |
+|--------|------|-----|-------------|
+| GET | `/api/availability` | trainer | Franjas semanales propias (`weekday` 1-7, `start_time`, `end_time` `HH:MM`) |
+| PUT | `/api/availability` | trainer | `{ slots }` (0 a 50, horas en punto, sin superponerse). Reemplaza todo de forma atómica (RPC `replace_trainer_availability`); 400 `VALIDATION_ERROR` con `details` por franja |
+| GET | `/api/availability/free?from=&to=` | trainer / student | Horarios libres `{ starts_at }` (UTC), rango de 1 a 31 días. El alumno ve a su PT hasta 28 días adelante; alumno inactivo: 403 |
+| GET | `/api/appointments?from=&to=` | trainer / student | Turnos propios de todos los estados, rango de 1 a 62 días (días de Argentina) |
+| POST | `/api/appointments` | student | `{ scheduled_at, notes? }`. 201 `pending` dentro de la disponibilidad y hasta 28 días; 400 `SLOT_UNAVAILABLE`, 403 sin PT o inactivo, 409 `SLOT_TAKEN`, 409 `APPOINTMENT_LIMIT` (3 pendientes). Notifica al PT |
+| POST | `/api/appointments` | trainer | `{ student_id, scheduled_at, notes? }`. 201 `confirmed`, sin exigir disponibilidad. 403 si el alumno es de otro PT o está inactivo. Push al alumno |
+| PATCH | `/api/appointments/:id` | trainer / student | `{ status }` con `confirmed` o `cancelled`. PT: `pending`→`confirmed`, cualquier vivo→`cancelled`; alumno: solo cancelar. 409 `APPOINTMENT_PAST` si ya pasó, 409 `INVALID_STATUS_TRANSITION`; ajeno o inexistente 403 |
+
+**Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda.sql`:
+- `src/database/migrations/2026-10-31-agenda.sql`: tabla `trainer_availability`, índice único parcial de `appointments` y la RPC.
+- `2026-11-01-agenda-followup.sql`: checks de 60 min y hora en punto, y advisory lock en la RPC.
+- `2026-11-01-agenda-inactive-student.sql`: trigger `appointments_student_active` (no se agenda a un alumno dado de baja, ni con un alta en vuelo durante la baja).
+
+**Topes.** El alumno puede tener hasta 3 turnos `pending` a futuro (el 4.º: 409 `APPOINTMENT_LIMIT`) y ningún rol agenda a más de 1 año. Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`) se guardan la baja y después se cancelan sus turnos futuros. `GET /appointments` no pagina (límite documentado en el spec de agenda).
+
+**Notificaciones.** Tipo `appointment` con `data: { appointment_id }`: al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
 
 ### Autenticación
 

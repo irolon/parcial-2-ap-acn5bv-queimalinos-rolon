@@ -33,13 +33,13 @@ describe('guard de rutas privadas', () => {
     stubFetch(async () =>
       jsonResponse(200, { user: TRAINER, token: 'a', refresh_token: 'r', expires_in: '1h' }),
     );
-    const { pathname } = renderRoute('/pt/agenda');
+    const { pathname } = renderRoute('/pt/mensajes');
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText('Email'), 'laura@fit.com');
     await user.type(screen.getByLabelText('Contraseña'), 'Secreta123');
     await user.click(screen.getByRole('button', { name: 'Ingresar' }));
-    expect(await heading('Agenda')).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/agenda');
+    expect(await heading('Mensajes')).toBeInTheDocument();
+    expect(pathname()).toBe('/pt/mensajes');
   });
 
   it('con sesión de otro rol manda a la home de su rol', async () => {
@@ -67,10 +67,11 @@ describe('guard de rutas privadas', () => {
   });
 
   it('con su rol deja pasar y muestra la página', async () => {
+    // Ya no quedan secciones "Próximamente": se prueba con una página real del PT.
     setSession(TRAINER);
     const { pathname } = renderRoute('/pt/agenda');
     expect(await heading('Agenda')).toBeInTheDocument();
-    expect(screen.getByText('Próximamente')).toBeInTheDocument();
+    expect(screen.queryByText('Próximamente')).not.toBeInTheDocument();
     expect(pathname()).toBe('/pt/agenda');
   });
 

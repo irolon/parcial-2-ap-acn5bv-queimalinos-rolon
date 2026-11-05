@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** Antes de esto no hay datos de la app: un año menor se rechaza (y no se recorren siglos de días). */

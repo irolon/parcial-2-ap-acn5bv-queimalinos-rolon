@@ -9,7 +9,7 @@ with expected (t) as (
          ('achievements'), ('student_achievements'), ('challenges'),
          ('student_challenges'), ('student_streaks'), ('chat_messages'),
          ('ai_routine_generations'), ('appointments'), ('notifications'),
-         ('push_tokens'), ('messages')
+         ('push_tokens'), ('trainer_availability'), ('messages')
 )
 select 'falta la tabla ' || t as problema
 from expected e
@@ -91,10 +91,29 @@ where to_regclass('public.idx_session_sets_exercise_session') is null
 
 union all
 select 'falta la función ' || f
-from (values ('exercise_progress'), ('last_session_kg'), ('progress_exercises'), ('weekly_volume')) v (f)
+from (values ('exercise_progress'), ('last_session_kg'), ('progress_exercises'), ('weekly_volume'),
+        ('replace_trainer_availability')) v (f)
 where not exists (
   select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.proname = v.f
+)
+
+union all
+select 'falta el índice uq_appointments_trainer_slot'
+where to_regclass('public.uq_appointments_trainer_slot') is null
+
+union all
+select 'falta el check ' || c || ' en appointments'
+from (values ('appointments_duration_60'), ('appointments_on_the_hour')) v (c)
+where not exists (
+  select 1 from pg_constraint where conrelid = to_regclass('public.appointments') and conname = v.c
+)
+
+union all
+select 'falta el trigger appointments_student_active'
+where not exists (
+  select 1 from pg_trigger
+  where tgrelid = to_regclass('public.appointments') and tgname = 'appointments_student_active' and not tgisinternal
 )
 
 union all

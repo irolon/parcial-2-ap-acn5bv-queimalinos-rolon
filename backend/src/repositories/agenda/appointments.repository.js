@@ -1,0 +1,97 @@
+import { supabase } from '../../config/supabase.js';
+import { Errors } from '../../shared/utils/errors.js';
+import { unwrap } from '../../shared/utils/supabase-query.js';
+import { APPOINTMENTS_TABLE, APPOINTMENT_COLUMNS, STATUS } from '../../models/agenda/appointment.model.js';
+
+const UNIQUE_VIOLATION = '23505';
+/** SQLSTATE del trigger appointments_student_active: el alumno está dado de baja. */
+const STUDENT_INACTIVE = 'FT001';
+
+/**
+ * Turnos con el alumno embebido, entre `fromUtc` (incluido) y `toUtc` (excluido), ordenados.
+ * `filter` es { trainer_id } o { student_id }.
+ */
+export async function findAppointmentsInRange(filter, fromUtc, toUtc) {
+  let query = supabase.from(APPOINTMENTS_TABLE).select(APPOINTMENT_COLUMNS);
+  for (const [column, value] of Object.entries(filter)) query = query.eq(column, value);
+  return unwrap(
+    await query
+      .gte('scheduled_at', fromUtc.toISOString())
+      .lt('scheduled_at', toUtc.toISOString())
+      .order('scheduled_at')
+  );
+}
+
+/** `scheduled_at` de los turnos que ocupan horario (pending y confirmed) del entrenador en el rango [from, to). */
+export async function findTakenInRange(trainerId, fromUtc, toUtc) {
+  const rows = unwrap(
+    await supabase
+      .from(APPOINTMENTS_TABLE)
+      .select('scheduled_at')
+      .eq('trainer_id', trainerId)
+      .in('status', [STATUS.PENDING, STATUS.CONFIRMED])
+      .gte('scheduled_at', fromUtc.toISOString())
+      .lt('scheduled_at', toUtc.toISOString())
+  );
+  return rows.map((r) => r.scheduled_at);
+}
+
+/** Cuántos turnos `pending` con `scheduled_at` posterior a `nowUtc` tiene el alumno. */
+export async function countFuturePending(studentId, nowUtc) {
+  const { count, error } = await supabase
+    .from(APPOINTMENTS_TABLE)
+    .select('id', { count: 'exact', head: true })
+    .eq('student_id', studentId)
+    .eq('status', STATUS.PENDING)
+    .gt('scheduled_at', nowUtc.toISOString());
+  if (error) throw Errors.internal(error.message);
+  return count ?? 0;
+}
+
+/** Cancela los turnos futuros (pending o confirmed) del alumno y devuelve cuántos cambió. */
+export async function cancelFutureForStudent(studentId, nowUtc) {
+  const rows = unwrap(
+    await supabase
+      .from(APPOINTMENTS_TABLE)
+      .update({ status: STATUS.CANCELLED })
+      .eq('student_id', studentId)
+      .in('status', [STATUS.PENDING, STATUS.CONFIRMED])
+      .gt('scheduled_at', nowUtc.toISOString())
+      .select('id')
+  );
+  return rows.length;
+}
+
+/**
+ * Inserta el turno. Si el horario ya está ocupado (índice único parcial, 23505) lanza SLOT_TAKEN; si el alumno se
+ * dio de baja mientras tanto (trigger, FT001), FORBIDDEN, igual que el chequeo del service.
+ */
+export async function insertAppointment(row) {
+  const res = await supabase.from(APPOINTMENTS_TABLE).insert(row).select(APPOINTMENT_COLUMNS).single();
+  if (res.error?.code === UNIQUE_VIOLATION) throw Errors.slotTaken();
+  if (res.error?.code === STUDENT_INACTIVE) throw Errors.forbidden();
+  return unwrap(res);
+}
+
+/** Turno con el alumno embebido, o null si no existe. */
+export async function findAppointmentById(id) {
+  return unwrap(
+    await supabase.from(APPOINTMENTS_TABLE).select(APPOINTMENT_COLUMNS).eq('id', id).maybeSingle()
+  );
+}
+
+/**
+ * Cambia el estado solo si el turno sigue en `fromStatus` (condición optimista).
+ * Devuelve el turno actualizado, o null si nadie lo actualizó porque el estado cambió en el medio.
+ */
+export async function updateStatus(id, fromStatus, toStatus) {
+  return unwrap(
+    await supabase
+      .from(APPOINTMENTS_TABLE)
+      .update({ status: toStatus })
+      .eq('id', id)
+      .eq('status', fromStatus)
+      .select(APPOINTMENT_COLUMNS)
+      .maybeSingle()
+  );
+}

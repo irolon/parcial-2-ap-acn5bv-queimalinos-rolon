@@ -1,6 +1,6 @@
 /**
  * Asistencia de un mes (GET /students/:id/attendance). Funciones puras sobre fechas locales
- * 'YYYY-MM-DD' (hora argentina, ver shared/utils/dates.js).
+ * 'YYYY-MM-DD' (hora argentina, ver shared/utils/dates/dates.js).
  *
  * status de cada día:
  * - trained: al menos una sesión terminada ese día (asignado o no);

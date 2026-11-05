@@ -8,7 +8,8 @@ import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
-import { localDate } from '../../shared/utils/dates.js';
+import * as appointments from '../agenda/appointments.service.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
 
 /**
@@ -37,7 +38,7 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
     studentsRepo.findLastSessionDates(ids),
     studentsRepo.findStreaks(ids),
     studentsRepo.findActiveRoutineSchedules(ids),
-    // AR = UTC-3 fijo (sin horario de verano), la misma zona que TIMEZONE de shared/utils/dates.js.
+    // AR = UTC-3 fijo (sin horario de verano), la misma zona que TIMEZONE de shared/utils/dates/dates.js.
     studentsRepo.findFinishedSessionDates(ids, `${adherenceWindowStart(today)}T00:00:00-03:00`),
   ]);
   const lastByStudent = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
@@ -90,6 +91,12 @@ export async function getById(user, studentId) {
  * baja (aunque ya estuviera inactivo; revocar es idempotente). Si la revocación
  * falla, la baja no se guarda y el reintento la completa; al revés, un alumno
  * quedaría inactivo con tokens vivos que volverían a andar al reactivarlo.
+ * Los turnos futuros (pending o confirmed) se cancelan DESPUÉS de guardar la
+ * baja: cancelar no tiene vuelta atrás, y si la baja fallara el alumno quedaría
+ * activo sin sus turnos. Si cancelar falla, el reintento (active:false de nuevo)
+ * los vuelve a cancelar. Un alta de turno en vuelo no se cuela: la base rechaza
+ * el insert de un alumno inactivo (trigger appointments_student_active, que
+ * además bloquea la fila del alumno hasta que el alta termine).
  */
 export async function update(user, studentId, fields) {
   if (user.role !== 'trainer') throw Errors.forbidden();
@@ -97,6 +104,7 @@ export async function update(user, studentId, fields) {
 
   if (fields.active === false) await authRepo.revokeAllForUser(studentId, 'student');
   const updated = await studentsRepo.updateStudent(studentId, fields);
+  if (fields.active === false) await appointments.cancelFutureForStudent(studentId);
   return buildDetail(updated);
 }
 

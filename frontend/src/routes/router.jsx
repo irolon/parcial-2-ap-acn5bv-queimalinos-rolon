@@ -2,6 +2,7 @@ import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import AgendaPage from '@/pages/agenda/AgendaPage';
 import ChallengesPage from '@/pages/challenges/ChallengesPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
@@ -79,6 +80,7 @@ export const routes = [
     { path: NEW_ROUTINE.path, element: <RoutineEditorPage /> },
   ], {
     dashboard: <DashboardPage />,
+    agenda: <AgendaPage />,
     alumnos: <StudentsPage />,
     rutinas: <RoutinesPage />,
     biblioteca: <ExerciseLibraryPage />,

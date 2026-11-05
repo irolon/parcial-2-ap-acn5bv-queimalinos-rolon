@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   mockData, mockHistory, mockNotify, triggers, arrange, SESSION, STUDENT_ID, TRAINER_ID, EX_A, EX_B,
-} from '../../../helpers/notifications/triggers.setup.js';
+} from '../../../../helpers/notifications/triggers.setup.js';
 
 beforeEach(() => {
   jest.resetAllMocks();
