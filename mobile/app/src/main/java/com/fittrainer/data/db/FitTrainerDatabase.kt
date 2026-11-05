@@ -3,6 +3,11 @@ package com.fittrainer.data.db
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.fittrainer.data.db.agenda.TrainerAgendaDao
+import com.fittrainer.data.db.agenda.TrainerAgendaWeekEntity
+import com.fittrainer.data.db.agenda.TrainerAppointmentEntity
+import com.fittrainer.data.db.agenda.TrainerAvailabilityEntity
+import com.fittrainer.data.db.agenda.TrainerAvailabilitySyncEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengeEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengesDao
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengesSyncEntity
@@ -112,8 +117,12 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         TrainerConversationsSyncEntity::class,
         TrainerMessageEntity::class,
         TrainerMessageThreadEntity::class,
+        TrainerAppointmentEntity::class,
+        TrainerAgendaWeekEntity::class,
+        TrainerAvailabilityEntity::class,
+        TrainerAvailabilitySyncEntity::class,
     ],
-    version = 22,
+    version = 23,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -140,6 +149,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 20, to = 21),
         // v22: has_image en los mensajes (#73), columna con default 0.
         AutoMigration(from = 21, to = 22),
+        // v23: agenda del entrenador (E13), cuatro tablas nuevas.
+        AutoMigration(from = 22, to = 23),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -161,4 +172,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun trainerTemplatesDao(): TrainerTemplatesDao
     abstract fun trainerChallengesDao(): TrainerChallengesDao
     abstract fun trainerMessagesDao(): TrainerMessagesDao
+    abstract fun trainerAgendaDao(): TrainerAgendaDao
 }

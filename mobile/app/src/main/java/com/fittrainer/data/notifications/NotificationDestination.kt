@@ -16,6 +16,8 @@ sealed interface NotificationDestination {
     data class StudentProfile(val studentId: String) : NotificationDestination
     /** Tarjeta 18: la conversación con [studentId] (el alumno es él mismo; el entrenador, uno de los suyos). */
     data class Conversation(val studentId: String) : NotificationDestination
+    /** Entrenador (E13): la agenda en la semana actual (el aviso solo trae appointment_id). */
+    data object Agenda : NotificationDestination
     data object NotificationsList : NotificationDestination
 }
 
@@ -26,6 +28,8 @@ const val MESSAGE_PUSH_TYPE = "message"
  * Resuelve el destino con el `data` del aviso. Si falta algo o viene roto, abre la lista: nunca crashea.
  * [role] decide los tipos que comparten nombre (`pr`, `achievement`). Los push del entrenador (`inactivity`,
  * `routine_modified`) son tipos que el alumno nunca recibe: el intent de un push se resuelve sin saber el rol.
+ * `appointment` lleva al PT a su agenda; el alumno se queda en la lista (sus turnos son la tarjeta 16). Su push solo
+ * le llega al alumno, así que el default sin rol es la lista.
  */
 fun destinationOf(type: String?, data: Map<String, String>, role: Role = Role.STUDENT): NotificationDestination = when (type) {
     NotificationType.COMMENT.wire -> data.text("session_id")?.let { NotificationDestination.SessionDetail(it) }
@@ -35,6 +39,7 @@ fun destinationOf(type: String?, data: Map<String, String>, role: Role = Role.ST
     NotificationType.ACHIEVEMENT.wire -> if (role == Role.TRAINER) studentProfile(data) else null
     NotificationType.ROUTINE_MODIFIED.wire -> studentSession(data)
     NotificationType.INACTIVITY.wire -> studentProfile(data)
+    NotificationType.APPOINTMENT.wire -> if (role == Role.TRAINER) NotificationDestination.Agenda else null
     MESSAGE_PUSH_TYPE -> data.text("student_id")?.let { NotificationDestination.Conversation(it) }
     else -> null
 } ?: NotificationDestination.NotificationsList

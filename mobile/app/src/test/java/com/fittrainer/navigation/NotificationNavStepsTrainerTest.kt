@@ -1,5 +1,6 @@
 package com.fittrainer.navigation
 
+import com.fittrainer.navigation.trainer.TRAINER_AGENDA_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
 import com.fittrainer.ui.notifications.launch.NavTarget
 import com.fittrainer.ui.notifications.launch.PendingNav
@@ -26,6 +27,14 @@ class NotificationNavStepsTrainerTest {
     @Test fun inactividadAbreLaFicha() {
         assertEquals(listOf(students, profile), navSteps(PendingNav(NavTarget.TrainerStudent("st1"), false), TRAINER_HOME_ROUTE))
         assertEquals(listOf(profile), navSteps(PendingNav(NavTarget.TrainerStudent("st1"), true), TRAINER_NOTIFICATIONS_ROUTE))
+    }
+
+    // E13: un aviso de turno lleva a la agenda (Más → Agenda desde un push; apilada sobre la lista desde la lista).
+    @Test fun unTurnoAbreLaAgendaSalvoQueYaEsteAbierta() {
+        val agenda = NavStep.Push(TRAINER_AGENDA_ROUTE)
+        assertEquals(listOf(NavStep.Tab(TRAINER_MORE_ROUTE), agenda), navSteps(PendingNav(NavTarget.TrainerAgenda, false), TRAINER_HOME_ROUTE))
+        assertEquals(listOf(agenda), navSteps(PendingNav(NavTarget.TrainerAgenda, true), TRAINER_NOTIFICATIONS_ROUTE))
+        assertEquals(emptyList<NavStep>(), navSteps(PendingNav(NavTarget.TrainerAgenda, false), TRAINER_AGENDA_ROUTE))
     }
 
     @Test fun laListaDelEntrenadorCuelgaDeInicioSalvoQueYaEsteAhi() {

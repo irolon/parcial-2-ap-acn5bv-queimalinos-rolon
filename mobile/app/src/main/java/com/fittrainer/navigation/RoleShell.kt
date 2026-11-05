@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.trainer.trainerAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerChallengeRoutes
 import com.fittrainer.navigation.trainer.trainerExerciseRoutes
 import com.fittrainer.navigation.trainer.trainerMessageRoutes
@@ -130,6 +131,7 @@ fun RoleShell(
             trainerTemplateRoutes(navController)
             trainerExerciseRoutes(navController)
             trainerChallengeRoutes(navController)
+            trainerAgendaRoutes(navController)
             trainerNotificationRoutes(navController, launches)
             trainerMessageRoutes(navController)
             composable(STUDENT_LIBRARY_ROUTE) {
