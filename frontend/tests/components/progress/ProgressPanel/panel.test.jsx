@@ -1,9 +1,15 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import ProgressPanel from '@/components/progress/ProgressPanel';
 import { BODY, EXERCISES, WEEKS, exerciseData, progressUrls, renderWithQuery, stubProgress } from '../../../helpers/progress/progress';
+import { warmUp } from '../../../helpers/shared/warmUp';
 
 vi.mock('recharts', async (importOriginal) => (await import('../../../helpers/progress/recharts')).mockRecharts(importOriginal));
+
+beforeAll(() => warmUp(() => {
+  stubProgress();
+  renderWithQuery(<ProgressPanel studentId="st-9" />);
+}, () => screen.getByRole('img', { name: 'Progresión de Press banca' })));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -16,9 +22,7 @@ describe('ProgressPanel', () => {
   it('muestra el primer ejercicio con su métrica por defecto y pide con student_id', async () => {
     const fetchMock = stubProgress();
     renderWithQuery(<ProgressPanel studentId="st-9" />);
-    expect(
-      await screen.findByRole('img', { name: 'Progresión de Press banca' }, { timeout: 4000 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'Progresión de Press banca' })).toBeInTheDocument();
     expect(pressed('1RM estimado')).toBe(true);
     expect(screen.getByLabelText('Ejercicio')).toHaveValue('ex-1');
     expect(screen.getByLabelText('Rango')).toHaveValue('3m');

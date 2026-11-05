@@ -1,10 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { fillRoutine, renderEditor } from '../../../helpers/routines/editor';
+import { fillRoutine, renderEditor, warmUpEditor } from '../../../helpers/routines/editor';
 import { api, open, post } from '../../../helpers/routines/templates';
 import { bodyOf, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();
@@ -25,8 +27,8 @@ describe('RoutineEditorPage: guardar como plantilla', () => {
     const dialog = within(screen.getByRole('dialog'));
     expect(dialog.getByLabelText('Nombre')).toHaveValue('Fuerza A');
     expect(dialog.getByLabelText('Objetivo')).toHaveValue('strength');
-    await userEvent.selectOptions(dialog.getByLabelText('Nivel (opcional)'), 'advanced');
-    await userEvent.click(dialog.getByRole('button', { name: 'Guardar' }));
+    await user.selectOptions(dialog.getByLabelText('Nivel (opcional)'), 'advanced');
+    await user.click(dialog.getByRole('button', { name: 'Guardar' }));
     expect(await screen.findByText('Plantilla guardada')).toBeVisible();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const exercise = (id, order) => ({ exercise_id: id, sets: 3, reps: 10, rest_seconds: 90, suggested_kg: null, tempo: null, notes: null, order });
@@ -42,7 +44,7 @@ describe('RoutineEditorPage: guardar como plantilla', () => {
     const { fetchMock } = await renderEditor({ api: api() });
     await fillRoutine([]);
     await open('Guardar como plantilla');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(screen.getByText('Agregá al menos un ejercicio')).toBeVisible();
     expect(post(fetchMock, '/routine-templates')).toBeUndefined();
   });
@@ -52,9 +54,9 @@ describe('RoutineEditorPage: guardar como plantilla con valores inválidos', () 
   it('revisa las filas, no manda nada y marca la celda', async () => {
     const { fetchMock } = await renderEditor({ api: api() });
     await fillRoutine(['Sentadilla', 'Plancha']);
-    await userEvent.clear(screen.getByLabelText('Reps de Sentadilla'));
+    await user.clear(screen.getByLabelText('Reps de Sentadilla'));
     await open('Guardar como plantilla');
-    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
     expect(screen.getByText('Revisá los valores de los ejercicios en la tabla')).toBeVisible();
     expect(post(fetchMock, '/routine-templates')).toBeUndefined();
     expect(screen.getByLabelText('Reps de Sentadilla')).toHaveAttribute('aria-invalid', 'true');
@@ -71,11 +73,11 @@ describe('RoutineEditorPage: guardar como plantilla con errores del servidor', (
     await renderEditor({ api: api({ handlers: { createTemplate } }) });
     await fillRoutine(['Sentadilla', 'Plancha']);
     await open('Guardar como plantilla');
-    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
     const dialog = within(await screen.findByRole('dialog'));
     expect(await dialog.findByText('Revisá los datos de la rutina')).toBeVisible();
     expect(dialog.getByText('Ya tenés una plantilla con ese nombre')).toBeVisible();
-    await userEvent.click(dialog.getByRole('button', { name: 'Cancelar' }));
+    await user.click(dialog.getByRole('button', { name: 'Cancelar' }));
     expect(screen.getByLabelText('Reps de Plancha')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Reps fuera de rango')).toBeVisible();
     expect(screen.getByText('Revisá 1 campo')).toBeVisible();

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { LIBRARY } from '../../../helpers/exercises/fixtures';
 import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
@@ -31,7 +31,7 @@ describe('ExerciseLibraryPage: editar ejercicio', () => {
     });
     renderRoute(PAGE_PATH);
     await screen.findByText(/^\d+ EJERCICIOS$/);
-    const user = userEvent.setup();
+    const user = setupUser();
     await user.click(page().getByRole('button', { name: 'Editar Press inclinado con mancuernas' }));
 
     expect(await screen.findByRole('dialog', { name: 'Editar ejercicio' })).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('ExerciseLibraryPage: editar ejercicio', () => {
     const fetchMock = stubLibrary({ list, handlers: { update: () => jsonResponse(200, { data: list[0] }) } });
     renderRoute(PAGE_PATH);
     await screen.findByText(/^\d+ EJERCICIOS$/);
-    const user = userEvent.setup();
+    const user = setupUser();
     await user.click(page().getByRole('button', { name: `Editar ${name}` }));
     await screen.findByRole('dialog', { name: 'Editar ejercicio' });
     return { user, fetchMock };

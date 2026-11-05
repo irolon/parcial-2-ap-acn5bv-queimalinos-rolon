@@ -1,8 +1,9 @@
 import { screen } from '@testing-library/react';
 import { LIBRARY } from '../exercises/fixtures';
 import { TRAINER, renderRoute, setSession } from '../routes/renderRoute';
-import userEvent from '@testing-library/user-event';
+import { user } from '../shared/user';
 import { stubRoutinesApi } from './routines';
+import { warmUp } from '../shared/warmUp';
 
 export const DRAFT_STORAGE_KEY = `fittrainer.routine-draft.${TRAINER.id}`;
 
@@ -14,6 +15,13 @@ export async function renderEditor({ exercises = LIBRARY, path = '/pt/rutinas/nu
   await screen.findByLabelText('Buscar ejercicio');
   return { ...utils, fetchMock };
 }
+
+/** Para `beforeAll`: el primer render del editor en el worker, fuera de los tests (ver `warmUp`). */
+export const warmUpEditor = () => warmUp(() => {
+  setSession(TRAINER);
+  stubRoutinesApi({ exercises: LIBRARY });
+  renderRoute('/pt/rutinas/nueva');
+}, () => screen.getByLabelText('Buscar ejercicio'));
 
 /** Deja un borrador guardado como lo escribe el editor. */
 export function storeDraft(overrides = {}) {
@@ -35,8 +43,10 @@ export function rowNames() {
 
 /** Arma una rutina válida: nombre, objetivo, un día y los ejercicios pedidos (en ese orden). */
 export async function fillRoutine(names = ['Sentadilla', 'Plancha', 'Press banca plano']) {
-  await userEvent.type(screen.getByLabelText('Nombre de la rutina'), 'Fuerza A');
-  await userEvent.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Lunes' }));
-  for (const name of names) await userEvent.click(screen.getByRole('button', { name: `Agregar ${name}` }));
+  // Pegado y no tipeado: el nombre no es lo que se prueba, y cada tecla vuelve a dibujar el editor entero.
+  await user.click(screen.getByLabelText('Nombre de la rutina'));
+  await user.paste('Fuerza A');
+  await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+  await user.click(screen.getByRole('checkbox', { name: 'Lunes' }));
+  for (const name of names) await user.click(screen.getByRole('button', { name: `Agregar ${name}` }));
 }
