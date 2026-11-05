@@ -4,7 +4,7 @@
  * arman KPIs, "requieren atención", actividad reciente y las listas de los filtros de la app. Fechas en hora argentina.
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d } from './adherence.js';
 import { activityStatus } from './activity.js';
 import { feedbackList, riskList, studentsList, todayList } from './overview-lists.js';

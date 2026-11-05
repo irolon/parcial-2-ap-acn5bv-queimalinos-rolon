@@ -1,4 +1,4 @@
-import { localDate } from '../../../../src/shared/utils/dates.js';
+import { localDate } from '../../../../../src/shared/utils/dates/dates.js';
 
 describe('localDate', () => {
   it('devuelve el día de Buenos Aires aunque en UTC ya sea el siguiente', () => {

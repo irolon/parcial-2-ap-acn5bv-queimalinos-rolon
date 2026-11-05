@@ -1,7 +1,7 @@
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import { fetchSessionRecords } from '../../repositories/sessions/session-history.repository.js';
 import { buildAttendance, monthRange } from '../../models/students/attendance.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import { assertCanAccessStudent } from './student-access.service.js';
 
 /** Argentina no tiene horario de verano: el día local empieza a las 00:00 -03:00. */

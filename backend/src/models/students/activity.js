@@ -6,7 +6,7 @@
  * - new: nunca entrenó y tiene menos de 7 días de alta;
  * - active: el resto.
  */
-import { localDate, DAY_MS } from '../../shared/utils/dates.js';
+import { localDate, DAY_MS } from '../../shared/utils/dates/dates.js';
 
 export const INACTIVITY_DAYS = 7;
 

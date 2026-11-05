@@ -1,4 +1,4 @@
-import { texts } from '../../../../src/models/notifications/texts.js';
+import { texts } from '../../../../../src/models/notifications/texts.js';
 
 describe('texts', () => {
   it('inactivity', () => {

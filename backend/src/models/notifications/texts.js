@@ -3,6 +3,8 @@
  * devuelven { title, body } (body null si no hay detalle); el título se recorta al límite de la columna.
  */
 
+import { appointmentLabel } from '../../shared/utils/dates/labels.js';
+
 export const TITLE_MAX = 150;
 export const COMMENT_PREVIEW_MAX = 120;
 export const MESSAGE_PREVIEW_MAX = 120;
@@ -66,6 +68,22 @@ export const texts = {
 
   comment: ({ date, comment }) =>
     build(`Tu entrenador comentó tu sesión del ${ddmm(date)}`, clip(comment, COMMENT_PREVIEW_MAX)),
+
+  // Turnos: `scheduledAt` es el instante del turno; el texto lleva día y hora de Argentina.
+  appointmentConfirmed: ({ scheduledAt }) =>
+    build(`Tu turno del ${appointmentLabel(scheduledAt)} quedó confirmado`, null),
+
+  appointmentCancelled: ({ scheduledAt }) =>
+    build(`Tu turno del ${appointmentLabel(scheduledAt)} fue cancelado`, null),
+
+  appointmentCreatedByTrainer: ({ scheduledAt }) =>
+    build(`Tu entrenador te agendó un turno el ${appointmentLabel(scheduledAt)}`, null),
+
+  appointmentRequested: ({ studentName, scheduledAt }) =>
+    build(`${studentName} pidió un turno para el ${appointmentLabel(scheduledAt)}`, null),
+
+  appointmentCancelledByStudent: ({ studentName, scheduledAt }) =>
+    build(`${studentName} canceló su turno del ${appointmentLabel(scheduledAt)}`, null),
 
   /** Push de mensaje nuevo: título = quien escribe; cuerpo = el texto recortado, con "📷 Foto" si trae foto. */
   message: ({ senderName, body, hasImage }) => {

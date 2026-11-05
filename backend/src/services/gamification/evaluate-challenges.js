@@ -1,7 +1,7 @@
 import { challengeProgress } from '../../models/gamification/challenge-progress.js';
 import { computeStreak } from '../../models/gamification/streak.js';
 import { CHALLENGE_STATUS, GOAL_TYPE } from '../../models/gamification/gamification.model.js';
-import { localDate } from '../../shared/utils/dates.js';
+import { localDate } from '../../shared/utils/dates/dates.js';
 import * as dataRepo from '../../repositories/gamification/evaluate-data.repository.js';
 
 const ms = (value) => new Date(value).getTime();

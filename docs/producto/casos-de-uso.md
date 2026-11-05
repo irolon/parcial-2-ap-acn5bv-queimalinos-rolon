@@ -329,6 +329,41 @@ El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero 
 
 ---
 
+## CU-26 — Gestionar agenda (web)
+
+**Actor:** Personal Trainer (y Alumno, vía mobile, para la solicitud de turno)
+
+| Campo | Detalle |
+|---|---|
+| Precondiciones | El PT está autenticado en la web. Para pedir un turno, el alumno está activo y autenticado en mobile. |
+| Postcondiciones | La disponibilidad del PT queda en `trainer_availability`. Los turnos quedan en `appointments` con su estado (`pending`, `confirmed` o `cancelled`); nada se borra. Cada cambio de estado del PT genera una notificación (con push) para el alumno. |
+
+**Flujo principal**
+
+1. El PT abre "Agenda" y, en "Disponibilidad", carga sus franjas semanales por día (horas en punto, sin solaparse). Se guarda todo junto.
+2. Dos alumnos piden un turno en franjas libres de las próximas 4 semanas. Cada turno queda `pending` y el PT recibe una notificación (sin push).
+3. El PT ve la semana en el calendario (lunes a domingo) con los dos turnos pendientes.
+4. Abre uno y lo **confirma**: pasa a `confirmed` y el alumno recibe un push.
+5. Abre el otro y lo **cancela** (con confirmación): pasa a `cancelled`, la franja se libera y el alumno recibe un push.
+
+**Flujos alternativos**
+
+- **2a:** Dos solicitudes llegan para el mismo horario → la primera queda `pending`; la segunda falla con 409 `SLOT_TAKEN` (índice único parcial en la base, aunque lleguen al mismo tiempo) y se rechaza.
+- **2b:** El alumno pide un horario fuera de la disponibilidad del PT o a más de 28 días → 400 `SLOT_UNAVAILABLE`.
+- **2c:** El horario ya pasó o no es una hora en punto → 400 `SLOT_UNAVAILABLE`.
+- **2d:** El alumno está inactivo → 403 al pedir un turno y al consultar `/availability/free`. Sí puede cancelar los que ya tiene.
+- **2e:** El alumno ya tiene 3 turnos `pending` a futuro → el 4.º pedido da 409 `APPOINTMENT_LIMIT`.
+- **2f:** El turno cae a más de 1 año (hoy + 365 días), lo pida el alumno o lo agende el PT → 400 `SLOT_UNAVAILABLE`.
+- **2g:** El PT da de baja a un alumno → sus turnos futuros `pending` o `confirmed` pasan a `cancelled` y liberan el horario.
+- **4a:** El estado cambió en el medio (por ejemplo, el alumno canceló mientras el PT confirmaba) → 409 `INVALID_STATUS_TRANSITION` y la pantalla se refresca.
+- **4b:** El turno ya pasó → 409 `APPOINTMENT_PAST`; no se puede cambiar.
+- **5a:** El alumno cancela su propio turno (`pending` o `confirmed`) → pasa a `cancelled` y el PT recibe una notificación (sin push).
+- **6:** Alta manual: el PT crea un turno para uno de sus alumnos activos con "Nuevo turno". No exige disponibilidad y queda `confirmed`; el alumno recibe un push. Si el horario está ocupado → 409 `SLOT_TAKEN`.
+
+**Nota:** la pantalla donde el alumno ve las franjas libres y pide o cancela el turno es de mobile (tarjeta de Igna, CU-19). Los endpoints ya están listos (`GET /availability/free`, `POST /appointments`, `PATCH /appointments/:id`).
+
+---
+
 ## CU-11 — Enviar mensaje al alumno (web)
 
 **Actores:** Personal Trainer y Alumno
