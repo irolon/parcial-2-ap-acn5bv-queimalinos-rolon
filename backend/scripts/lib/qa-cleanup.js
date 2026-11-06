@@ -5,7 +5,7 @@ import { QA_EMAIL_LIKE } from './qa-env.js';
  * directo contra la base). Lo comparten el afterAll de cada archivo y
  * `npm run test:integration:clean`. Solo toca trainers cuyo email es de QA.
  */
-const TABLES_WITHOUT_FK = ['notifications', 'push_tokens', 'refresh_tokens'];
+export const TABLES_WITHOUT_FK = ['notifications', 'push_tokens', 'refresh_tokens'];
 
 async function run(query) {
   const { data, error } = await query;
