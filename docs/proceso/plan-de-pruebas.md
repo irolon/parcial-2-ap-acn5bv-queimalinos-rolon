@@ -4,7 +4,7 @@ aliases: [Plan de Pruebas — FitTrainer]
 notion: https://app.notion.com/p/33c5ffbef7b581798c54e8c3e85a4125
 notion_editado: 2026-05-01
 migrado: 2026-10-17
-actualizado: 2026-11-04
+actualizado: 2026-11-05
 tags: [proceso]
 ---
 
@@ -98,7 +98,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 |---|---|---|---|---|---|
 | UT-22 | `assertCanAccessStudent` | PT o alumno sobre un alumno ajeno | 403 antes de leer datos | ✅ | `services/students/student-access.service.test.js` (y los servicios que lo usan) · 03/11 |
 | UT-23 | desafíos (`PATCH`/`DELETE`) | Desafío ajeno, global o inexistente | 404 `CHALLENGE_NOT_FOUND`; no se llama a update/remove | ✅ | `services/gamification/challenges.service/write.test.js` · 03/11 |
-| UT-24 | desafíos del alumno | `GET /students/:id/challenges` de un alumno ajeno | 403 sin consultar sus desafíos | ✅ | `services/gamification/challenges.service/list.test.js` · 03/11 |
+| UT-24 | desafíos del alumno | `GET /students/:id/challenges` de un alumno ajeno | 403 sin consultar sus desafíos | ✅ | `services/gamification/challenge-assignments.service.test.js` (`listForStudent`) · 03/11 |
 | UT-25 | asignaciones de desafíos | Desafío ajeno | `CHALLENGE_NOT_FOUND` | ✅ | `services/gamification/challenge-assignments.service.test.js` · 03/11 |
 | UT-26 | `removeToken` | `DELETE /notifications/tokens/:token` | Borra solo el token del usuario | ✅ | `services/notifications/notifications.service.test.js` · 03/11 |
 
@@ -108,6 +108,8 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 |---|---|---|---|---|---|
 | UT-27 | `assertRealSupabase` | Sin `SUPABASE_URL` real (sigue en `localhost:54321`) | Corta la suite con un mensaje claro | ✅ | `scripts/lib/qa-env.test.js` · 03/11 |
 | UT-28 | `deleteQaData` | Datos de una corrida | Borra filas sin FK, después alumnos y por último el trainer (sin romper FK) | ✅ | `scripts/lib/qa-cleanup.test.js` · 03/11 |
+| UT-31 | `settleInFlight` | Avisos lanzados con `void` / `runInBackground` | Espera a todos (también a los rechazados y a los que se lanzan mientras tanto) antes del borrado | ✅ | `shared/utils/async/in-flight.test.js` · 05/11 |
+| UT-32 | `findOrphanRows` / `deleteOrphanRows` | Filas de `notifications`, `push_tokens` y `refresh_tokens` sin usuario | Las cuenta por tabla (paginando) y borra solo las que, releídas, siguen sin dueño | ✅ | `scripts/lib/qa-orphans.test.js` · 05/11 |
 
 #### IA (pendiente)
 
@@ -140,7 +142,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-12 | `/api/students` | GET | Alumno autenticado intenta listar | 403 `FORBIDDEN` | ✅ | `isolation/wrong-role.int.test.js` (#74) · 04/11 |
 | IT-13 | `/api/routines` | POST | Crear rutina válida | 201 + rutina creada | ✅ | `flow.int.test.js` · 04/11 |
 | IT-14 | `/api/sessions` | POST | Subir una sesión | 201 + `id` | ✅ | `flow.int.test.js`, `sets-idempotency.int.test.js` · 04/11 |
-| IT-15 | `/api/sessions/:id/sets` | POST | Lote con sustitución (`original_exercise_id`) | 200 + aviso al PT con from/to | ✅ | Unitario `services/sessions/session-sets.service/triggers.test.js` · 03/11 |
+| IT-15 | `/api/sessions/:id/sets` | POST | Lote con sustitución (`original_exercise_id`) | 200 + aviso al PT con from/to | ✅ | Unitario `services/sessions/session-sets.service/triggers.test.js` · 03/11; `progress.int.test.js` (S5: `has_modifications`, el detalle agrupa D con original P y la serie suma a D, no a P) · 05/11 |
 | IT-16 | `/api/progress/exercise/:id` | GET | Trainer ve progreso de su alumno | 200 + datos | ✅ | `flow.int.test.js`, `progress.int.test.js` · 04/11 |
 | IT-17 | `/api/progress/exercise/:id` | GET | Trainer ve alumno ajeno | 403 | ✅ | `isolation/trainer-cross.int.test.js` (#40) · 04/11 |
 | IT-18 | IA del entrenador (generar rutina) | POST | Solicitud válida | 200 + propuesta estructurada | ⚠️ | Pendiente (tarjeta 13) |
@@ -151,7 +153,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-23 | `/api/students/:id/achievements` | GET | Alumno con logros | 200 + lista | ✅ | `flow.int.test.js` · 04/11 |
 | IT-24 | `/api/students/:id/streak` | GET | Alumno con sesiones | 200 + `current_streak_days` | ✅ | `flow.int.test.js` · 04/11 |
 | IT-25 | `/api/challenges` | POST | Trainer crea challenge propio | 201 + challenge creado | ✅ | `isolation/*` (lo arma `buildWorld`) · 04/11 |
-| IT-26 | `/api/challenges/:id/assignments` | POST | Asignar challenge a sus alumnos | 201 | ✅ | `isolation/trainer-cross.int.test.js` (#48) · 04/11 |
+| IT-26 | `/api/challenges/:id/assignments` | POST | Asignar challenge a sus alumnos | 201 | ✅ | `isolation/lists.int.test.js` (IT-26: `created` con la asignación de su alumno, `skipped` vacío) · 05/11 |
 
 #### Flujo, idempotencia y progreso
 
@@ -160,7 +162,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-27 | `smoke.int.test.js` | PT recién registrado lista alumnos vacío; el alumno ve su perfil; la limpieza borra la corrida y es idempotente | 3 | ✅ | 3/3 · 04/11 |
 | IT-28 | `flow.int.test.js` | PT se registra → invita por QR → alta del alumno → ejercicio y rutina → rutina de hoy y las suyas → sesión con 3 series → historial y detalle → progreso y resumen → comentario del PT → racha y logros | 10 | ✅ | 10/10 · 04/11 |
 | IT-29 | `sets-idempotency.int.test.js` | `POST /sessions` con reintento; mismo lote dos veces (3 series, no 6); id repetido en el lote; serie con ejercicio inexistente y reintento corregido; el alumno B no reusa ids de A | 5 | ✅ | 5/5 · 04/11 |
-| IT-30 | `progress.int.test.js` | Tres semanas con números calculados a mano: e1RM Epley, serie de 13 reps, peso corporal, semana vacía, sesión cerca de la medianoche AR, `weekly_volume`, récords y `last_session_kg` | 7 | ✅ | 7/7 · 04/11 |
+| IT-30 | `progress.int.test.js` | Tres semanas con números calculados a mano: e1RM Epley, serie de 13 reps, peso corporal, semana vacía, sesión cerca de la medianoche AR, `weekly_volume`, récords, `last_session_kg` y una serie sustituida (planificado P, hecho D) que suma a D y no a P | 8 | ✅ | 8/8 · 05/11 |
 
 #### Aislamiento (dos PT, cada uno con un alumno)
 
@@ -171,8 +173,8 @@ Cada fila de la tabla de la tarea 9 del plan es un caso `it.each` con el código
 | IT-31 | PT B sobre datos de A (1–48) | alumnos, medidas, asistencia, sesiones y comentarios, logros, racha, desafíos y asignaciones, rutinas y sus ejercicios, plantillas, ejercicios, progreso, mensajes y masivos | 48 + 18 controles | ✅ | `isolation/trainer-cross.int.test.js` · 66/66 · 04/11 |
 | IT-32 | Alumno B sobre datos del alumno A (49–73) | perfil, asistencia, medidas, sesiones y series (ids de A), progreso, logros, racha, desafíos, mensajes, notificaciones y tokens push | 25 + 14 controles | ✅ | `isolation/student-cross.int.test.js` · 39/39 · 04/11 |
 | IT-33 | Rol equivocado (74–93) | alumno en endpoints de PT y PT en endpoints de alumno → 403 `FORBIDDEN` aunque el recurso sea propio | 20 | ✅ | `isolation/wrong-role.int.test.js` · 20/20 · 04/11 |
-| IT-34 | Listados (94–105) | 8 listados del PT B y 4 del alumno B → 200 sin nada de A; `unread-count` exacto; control de que B ve lo suyo | 14 | ✅ | `isolation/lists.int.test.js` · 14/14 · 04/11 |
-| IT-35 | Agenda (106–113) | PT B y alumno B sobre el turno de A (`PATCH`/`POST /appointments` → 403 `FORBIDDEN`, el turno de A sigue confirmado), listados de turnos y franjas solo propios, huecos libres del alumno B solo en el horario de B (A atiende 08–10 y B 18–20), alumno en `/availability` → 403; control de que A ve su turno y sus huecos | 8 (la #113 en 2 casos) + 1 control | ✅ | `isolation/agenda.int.test.js` · 10/10 · 05/11 |
+| IT-34 | Listados (94–105) | 8 listados del PT B y 4 del alumno B → 200 sin nada de A; `unread-count` exacto; control positivo por listado (plantillas, ejercicios, desafíos, conversaciones y notificaciones traen lo de B); asignación de desafío (IT-26) | 14 + 6 controles + 1 | ✅ | `isolation/lists.int.test.js` · 21/21 · 05/11 |
+| IT-35 | Agenda (106–113) | PT B y alumno B sobre el turno de A (`PATCH`/`POST /appointments` → 403 `FORBIDDEN` sin ningún id de A en el body, el turno de A sigue confirmado), listados de turnos y franjas solo propios, huecos libres del alumno B solo en el horario de B (A atiende 08–10 y B 18–20), alumno en `/availability` → 403; control de que A ve su turno y sus huecos | 8 (la #113 en 2 casos) + 1 control | ✅ | `isolation/agenda.int.test.js` · 10/10 · 05/11 |
 
 ### 3.3 Pruebas End-to-End (E2E)
 
@@ -255,7 +257,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 
 ## 6. Datos de Prueba
 
-**Integración (automática):** cada corrida crea sus PT y alumnos con emails `it.<corrida>.<rol>@test.fittrainer.dev` y los borra al terminar, aunque fallen los tests. `npm run test:integration:clean` borra lo que haya quedado de corridas de hace más de una hora; nunca toca filas que no creó.
+**Integración (automática):** cada corrida crea sus PT y alumnos con emails `it.<corrida>.<rol>@test.fittrainer.dev` y los borra al terminar, aunque fallen los tests. `npm run test:integration:clean` borra lo que haya quedado de corridas de hace más de una hora; de los usuarios solo toca trainers con email de QA. Además borra las filas de `notifications`, `push_tokens` y `refresh_tokens` cuyo `user_id` ya no está en `trainers` ni en `students` (sin FK, nadie las puede leer); `--check` las cuenta. Antes de borrar, cada `afterAll` espera a los avisos que quedaron corriendo, para que no aparezcan filas así.
 
 **Trainer de prueba (manual):**
 
@@ -284,6 +286,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 05/11/2026 | `8ef9fa5` | Suite completa con `develop` traído (#70–#75) | ✅ 168/168 | 208 s | 0 |
 | 05/11/2026 | `751e605` | Suite completa con la agenda (#49) y `isolation/agenda` | ✅ 178/178 | 219 s | 0 |
 | 05/11/2026 | `52465a3` | **Corrida final** sobre `develop` con la #49 mergeada, guard solo contra dev y rechazos sin ids de A | ✅ 178/178 | 220 s | 0 |
+| 05/11/2026 | `633fdec` | Review de la #76: teardown que espera los avisos, serie sustituida, agenda con `expectNoLeak`, controles por listado e IT-26 (dos corridas) | ✅ 186/186 y 186/186 | 334 s y 310 s | 0 QA y 0 filas sin dueño |
 
 Fechas en UTC (en Argentina fue la noche del 03/11). La corrida final de la tarjeta 52 es la de `52465a3`.
 
