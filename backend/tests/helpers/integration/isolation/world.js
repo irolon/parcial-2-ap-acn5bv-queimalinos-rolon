@@ -2,6 +2,7 @@ import { api, expectStatus } from '../api.js';
 import { createTrainer, inviteAndJoin } from '../actors.js';
 import { createExercise, createRoutine, setRow, uploadSession } from '../fixtures.js';
 import { RUN_ID, qaName } from '../run-id.js';
+import { settleInFlight } from '../../../../src/shared/utils/async/in-flight.js';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -11,15 +12,13 @@ async function send(res, status, what) {
   return r.body.data;
 }
 
-/** Espera la notificación `comment` del alumno (se crea al comentar la sesión). */
+/** Id de la notificación `comment` del alumno (el aviso corre sin esperarse: primero se asienta). */
 async function commentNotificationId(student) {
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    const list = await send(api(student.token).get('/notifications'), 200, 'GET /notifications');
-    const found = list.find((n) => n.type === 'comment');
-    if (found) return found.id;
-    await new Promise((resolve) => setTimeout(resolve, 300));
-  }
-  throw new Error('buildWorld: no apareció la notificación del comentario');
+  await settleInFlight();
+  const list = await send(api(student.token).get('/notifications'), 200, 'GET /notifications');
+  const found = list.find((n) => n.type === 'comment');
+  if (!found) throw new Error('buildWorld: no apareció la notificación del comentario');
+  return found.id;
 }
 
 /**
