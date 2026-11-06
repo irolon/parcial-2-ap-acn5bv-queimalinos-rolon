@@ -63,9 +63,14 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | UT-10 | Gamificación | `calcularStreakDias()` | Array de fechas de sesiones | Número de días consecutivos hasta hoy |
 | UT-11 | Gamificación | `evaluarCriteriosLogro()` | Achievement.criteria + datos del alumno | True si cumple, False si no |
 | UT-12 | Gamificación | `actualizarProgresoChallenge()` | Sesión finalizada + challenge activo | current_progress incrementado correctamente |
-| UT-13 | TrainerAI | `buildPromptForRoutineGeneration()` | Parámetros del alumno + biblioteca | String con prompt estructurado |
-| UT-14 | TrainerAI | `parseRoutineFromAIResponse()` | JSON del LLM | Estructura validada de rutina o error |
+| UT-13 | TrainerAI | `buildContext()` / `generateRoutine()` | Parámetros + alumno con nombre, email y nacimiento | Payload a n8n (`params`, `library`, `previous_templates`, `base_template`) sin datos personales; biblioteca filtrada por equipamiento + `bodyweight` (el prompt lo arma n8n) |
+| UT-14 | TrainerAI | `validateProposal()` | JSON de n8n | Propuesta saneada (campos de más descartados) o 502 `AI_INVALID_RESPONSE`: ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días ≠ frecuencia, `{ "error": "INVALID_JSON" }` |
 | UT-15 | StudentAI | `buildContextForChat()` | Sesión activa | Objeto con contexto enriquecido para n8n |
+| UT-16 | TrainerAI | `validateGenerateRoutine()` / `validateSaveAsTemplate()` | Body con cada regla rota | 400 `VALIDATION_ERROR` con el campo; goal/level opcionales solo con `student_id` |
+| UT-17 | TrainerAI | `resolveParams()` | `student_id` del trainer, ajeno o dado de baja | Completa goal, level, equipamiento y lesiones con el alumno; 404 `STUDENT_NOT_FOUND` si es ajeno o inactivo |
+| UT-18 | TrainerAI | `requestRoutineProposal()` | Webhook ok, timeout, 5xx, sin URL | Secreto en `x-webhook-secret` y `AbortSignal.timeout(30000)`; timeout, 5xx o sin URL → 503 `AI_UNAVAILABLE` |
+| UT-19 | TrainerAI | `generateRoutine()` (límite) | 20 generaciones o 20 intentos (también fallidos) en la última hora; o una generación del trainer en curso | 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n; las fallidas no se guardan pero cuentan |
+| UT-20 | TrainerAI | `saveAsTemplate()` | Generación de 1 y de varios bloques | Una plantilla por bloque (`<nombre> · <bloque>`, ≤120); 404 ajena, 409 ya guardada, 400 `TEMPLATE_EXERCISES_UNAVAILABLE` sin crear nada |
 
 ### 3.2 Pruebas de Integración
 
@@ -90,15 +95,18 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-15 | `/api/session-sets` | POST | Batch con sustitución de ejercicio | 201 + sessions.has_modifications=true |
 | IT-16 | `/api/progress/exercise/:id` | GET | Trainer ve progreso de su alumno | 200 + datos |
 | IT-17 | `/api/progress/exercise/:id` | GET | Trainer ve alumno ajeno | 403 Forbidden |
-| IT-18 | `/api/trainer-ai/generate-routine` | POST | Solicitud válida con todos los parámetros | 200 + routine_proposal estructurada |
-| IT-19 | `/api/trainer-ai/generate-routine` | POST | n8n inalcanzable (mock timeout) | 503 AI_UNAVAILABLE |
-| IT-20 | `/api/trainer-ai/refine` | POST | Refinar generación previa | 200 + nueva propuesta |
+| IT-18 | `/api/trainer-ai/generate-routine` | POST | Solicitud válida con alumno (n8n simulado por un servidor local) | 200 + `routine_proposal` con bloques y nombres; n8n recibe el secreto y ningún dato personal |
+| IT-19 | `/api/trainer-ai/generate-routine` | POST | n8n responde 502 `LLM_UNAVAILABLE` / `{ "error": "INVALID_JSON" }` | 503 `AI_UNAVAILABLE` / 502 `AI_INVALID_RESPONSE`, sin guardar la generación |
+| IT-20 | ~~`/api/trainer-ai/refine`~~ | POST | Fuera de alcance (tarjeta 15): el PT ajusta en el editor | — |
 | IT-21 | `/api/chat` | POST | Mensaje con sesión activa | 200 + respuesta IA |
 | IT-22 | `/api/chat` | POST | Sesión finalizada | 400 SESSION_FINISHED |
 | IT-23 | `/api/students/:id/achievements` | GET | Alumno con logros desbloqueados | 200 + lista poblada |
 | IT-24 | `/api/students/:id/streak` | GET | Alumno con sesiones consecutivas | 200 + current_streak_days correcto |
 | IT-25 | `/api/challenges` | POST | Trainer crea challenge personalizado | 201 + challenge creado |
 | IT-26 | `/api/students/:id/challenges` | POST | Asignar challenge al alumno | 201 + status=active |
+| IT-27 | `/api/trainer-ai/save-as-template` | POST | Guardar una propuesta de 2 bloques | 201 + 2 plantillas en `GET /routine-templates` con `generated_by_ai = true`; la generación queda con `routine_template_ids` |
+| IT-28 | `/api/trainer-ai/save-as-template` | POST | Guardar dos veces la misma propuesta | 409 `GENERATION_ALREADY_SAVED` |
+| IT-29 | `/api/trainer-ai/*` | POST | Otro PT guarda la generación, o genera con el alumno o la plantilla ajenos | 404 `GENERATION_NOT_FOUND` / `STUDENT_NOT_FOUND` / `TEMPLATE_NOT_FOUND`, sin ids ajenos en el body |
 
 ### 3.3 Pruebas End-to-End (E2E)
 

@@ -20,6 +20,7 @@ import notificationsRoutes from './routes/notifications/notifications.routes.js'
 import availabilityRoutes from './routes/agenda/availability.routes.js';
 import appointmentsRoutes from './routes/agenda/appointments.routes.js';
 import messagesRoutes from './routes/messages/messages.routes.js';
+import trainerAiRoutes from './routes/trainer-ai/trainer-ai.routes.js';
 
 export function createApp() {
   const app = express();
@@ -48,6 +49,7 @@ export function createApp() {
   app.use('/api/availability', availabilityRoutes);
   app.use('/api/appointments', appointmentsRoutes);
   app.use('/api/messages', messagesRoutes);
+  app.use('/api/trainer-ai', trainerAiRoutes);
 
   // 404 + manejador central de errores (siempre al final).
   app.use(notFoundHandler);

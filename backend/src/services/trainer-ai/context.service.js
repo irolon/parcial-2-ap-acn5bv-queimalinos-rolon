@@ -1,0 +1,113 @@
+import { Errors } from '../../shared/utils/errors.js';
+import { EQUIPMENT } from '../../models/exercises/exercise.model.js';
+import { LIBRARY_LIMIT } from '../../models/trainer-ai/ai-generation.model.js';
+import { structureDays, structureExercises } from '../../models/routine-templates/routine-template.model.js';
+import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as contextRepository from '../../repositories/trainer-ai/ai-context.repository.js';
+import * as templatesRepository from '../../repositories/routine-templates/routine-templates.repository.js';
+import { getOwnedTemplate } from '../routine-templates/routine-templates.service.js';
+
+const BODYWEIGHT = 'bodyweight';
+
+/** Alumno activo del trainer; 404 STUDENT_NOT_FOUND si no existe, es ajeno o está dado de baja. */
+async function getActiveStudent(trainerId, studentId) {
+  const student = await studentsRepository.findStudentById(studentId);
+  if (!student || student.trainer_id !== trainerId || !student.active) throw Errors.studentNotFound();
+  return student;
+}
+
+/** Equipamiento válido sin repetidos; el del alumno solo si el body no lo trae; vacío → solo bodyweight. */
+function resolveEquipment(fromBody, fromStudent) {
+  const list =
+    fromBody !== undefined ? fromBody : [...new Set((fromStudent ?? []).filter((e) => EQUIPMENT.includes(e)))];
+  return list.length > 0 ? list : [BODYWEIGHT];
+}
+
+/** Lesiones: las del alumno solo si el body no trae el campo (null explícito = sin lesiones). */
+const resolveInjuries = (fromBody, student) =>
+  fromBody !== undefined ? fromBody : student?.injuries?.trim() || null;
+
+/**
+ * Parámetros resueltos de la generación: el body validado y, si vino student_id, lo que
+ * falte (campo ausente, no vacío) se completa con el alumno. No incluye nombre, email, nacimiento ni student_id;
+ * `injuries` y `preferences` son texto libre del PT que sí viaja a la IA.
+ */
+export async function resolveParams(trainerId, body) {
+  const student = body.student_id ? await getActiveStudent(trainerId, body.student_id) : null;
+  const params = {
+    goal: body.goal ?? student?.goal ?? null,
+    level: body.level ?? student?.level ?? null,
+    frequency_per_week: body.frequency_per_week,
+    session_duration_min: body.session_duration_min,
+    available_equipment: resolveEquipment(body.available_equipment, student?.gym_equipment),
+    injuries: resolveInjuries(body.injuries, student),
+    preferences: body.preferences ?? null,
+  };
+  const details = ['goal', 'level']
+    .filter((field) => !params[field])
+    .map((field) => ({ field, message: `${field} es obligatorio: el alumno no lo tiene cargado` }));
+  if (details.length > 0) throw Errors.validation('Error de validación', details);
+  return params;
+}
+
+const namesOf = (structure, byId) =>
+  structureExercises(structure).map((e) => byId.get(e.exercise_id)?.name).filter(Boolean);
+
+function toBaseTemplate(template, byId) {
+  return {
+    goal: template.goal,
+    level: template.level,
+    days: structureDays(template.structure),
+    exercises: structureExercises(template.structure).map((e) => ({
+      exercise_id: e.exercise_id,
+      exercise_name: byId.get(e.exercise_id)?.name ?? null,
+      sets: e.sets,
+      reps: e.reps,
+      rest_seconds: e.rest_seconds ?? null,
+      suggested_kg: e.suggested_kg ?? null,
+      notes: e.notes ?? null,
+    })),
+  };
+}
+
+/**
+ * Biblioteca con los ejercicios accesibles de la plantilla base primero (el filtro de
+ * equipamiento o el corte alfabético podían dejarlos afuera, y la IA los copia), sin
+ * repetir y dentro del tope de LIBRARY_LIMIT.
+ */
+async function withBaseExercises(trainerId, library, base) {
+  if (!base) return library;
+  const ids = [...new Set(structureExercises(base.structure).map((e) => e.exercise_id))];
+  const fromBase = await contextRepository.findLibraryByIds(trainerId, ids);
+  const seen = new Set(fromBase.map((e) => e.id));
+  return [...fromBase, ...library.filter((e) => !seen.has(e.id))].slice(0, LIBRARY_LIMIT);
+}
+
+/**
+ * Contexto para n8n: la biblioteca filtrada por equipamiento (más bodyweight y los de la base), las
+ * plantillas recientes del trainer y la plantilla base (404 TEMPLATE_NOT_FOUND si es ajena).
+ * Sin el nombre de las plantillas: los PT suelen ponerles el del alumno.
+ */
+export async function buildContext(trainerId, params, baseTemplateId) {
+  const equipment = [...new Set([...params.available_equipment, BODYWEIGHT])];
+  const [library, recent, base] = await Promise.all([
+    contextRepository.findLibraryForEquipment(trainerId, equipment),
+    contextRepository.findRecentTemplates(trainerId),
+    baseTemplateId ? getOwnedTemplate(trainerId, baseTemplateId) : null,
+  ]);
+  const ids = [...recent, ...(base ? [base] : [])].flatMap((t) =>
+    structureExercises(t.structure).map((e) => e.exercise_id)
+  );
+  const found = ids.length > 0 ? await templatesRepository.findExercisesByIds([...new Set(ids)]) : [];
+  const byId = new Map(found.map((e) => [e.id, e]));
+  return {
+    library: await withBaseExercises(trainerId, library, base),
+    previous_templates: recent.map((t) => ({
+      goal: t.goal,
+      level: t.level,
+      days: structureDays(t.structure),
+      exercise_names: namesOf(t.structure, byId),
+    })),
+    base_template: base ? toBaseTemplate(base, byId) : null,
+  };
+}

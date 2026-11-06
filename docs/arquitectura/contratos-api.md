@@ -555,27 +555,63 @@ Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda
 
 ## Módulo: Asistente IA del entrenador
 
+Spec: `docs/superpowers/specs/2026-11-06-trainer-ai-design.md` (tarjeta 15). La UI es la tarjeta 16. **La IA nunca asigna:** propone, el PT revisa y guarda como plantilla; asignar es el paso explícito de `POST /routine-templates/:id/instantiate`.
+
 ### POST /trainer-ai/generate-routine
 
-Pide al asistente IA que genere una propuesta de rutina para un alumno.
+Pide una propuesta de rutina: de 1 a 7 **bloques**, cada uno con nombre, días y ejercicios, sin repetir días entre bloques (1 bloque = la misma rutina en todos sus días; 2 o más = un split).
 
 **Headers:** `Authorization: Bearer <token>` (rol: trainer)
 
 **Body**
 
+| Campo | Regla |
+|---|---|
+| `student_id` | Opcional. Tiene que ser un alumno **activo del trainer** (si no, 404 `STUDENT_NOT_FOUND`). Lo que falte del body se completa con el alumno: `goal`, `level`, `gym_equipment` → `available_equipment` e `injuries` Solo se completa un campo **ausente** del body: `injuries` vacío o `null` es "sin lesiones" y `available_equipment` `[]` o `null` es "solo bodyweight" (el PT los borró a propósito). |
+| `goal` | `hypertrophy \| strength \| weight_loss \| tonify`. Obligatorio, salvo que lo complete el alumno. |
+| `level` | `beginner \| intermediate \| advanced`. Obligatorio, salvo que lo complete el alumno. |
+| `frequency_per_week` | Entero de 1 a 7. Obligatorio. |
+| `session_duration_min` | Entero de 20 a 180. Opcional (por defecto 60). |
+| `available_equipment` | Subconjunto sin repetidos de `barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`. `[]` o `null` → solo `bodyweight` (no se completa con el alumno). |
+| `injuries`, `preferences` | Texto opcional, hasta 500 caracteres cada uno. `injuries` vacío o `null` explícito = sin lesiones (no se completa con el alumno). |
+| `base_template_id` | Opcional. Una plantilla del trainer para adaptarla (si no, 404 `TEMPLATE_NOT_FOUND`). |
+
+Los campos de más se descartan.
+
+**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 30 s. **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
+
 ```json
 {
-  "student_id": "uuid (opcional, si es para un alumno específico)",
-  "goal": "hypertrophy | strength | weight_loss | tonify",
-  "level": "beginner | intermediate | advanced",
-  "frequency_per_week": 4,
-  "session_duration_min": 60,
-  "available_equipment": ["barbell", "dumbbell", "machine", "cable"],
-  "injuries": "string (opcional, ej: 'rodilla derecha')",
-  "preferences": "string (opcional, ej: 'priorizar tren superior')",
-  "base_template_id": "uuid (opcional, si quiere adaptar una plantilla existente)"
+  "params": {
+    "goal": "hypertrophy", "level": "beginner", "frequency_per_week": 3, "session_duration_min": 60,
+    "available_equipment": ["dumbbell", "bodyweight"], "injuries": "string | null", "preferences": "string | null"
+  },
+  "library": [ { "id": "uuid", "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" } ],
+  "previous_templates": [ { "goal": "…", "level": "… | null", "days": ["monday"], "exercise_names": ["…"] } ],
+  "base_template": null
 }
 ```
+
+- `library`: ejercicios accesibles (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, hasta 200. Con `base_template_id` van además, primero y dentro de los 200, los ejercicios de la plantilla base que siguen accesibles (aunque su equipamiento no esté en la lista).
+- `previous_templates`: las 3 plantillas más recientes del trainer, sin su nombre (los PT suelen ponerle el del alumno).
+- `base_template`: `null`, o (sin el nombre de la plantilla) `{ goal, level, days, exercises: [{ exercise_id, exercise_name, sets, reps, rest_seconds, suggested_kg, notes }] }` si vino `base_template_id`.
+- `params.injuries` y `params.preferences` son **texto libre que se manda a la IA** tal cual (la IA necesita las lesiones). La UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales.
+
+**Respuesta esperada de n8n** (el backend la valida):
+
+```json
+{
+  "routines": [
+    { "name": "Empuje", "days": ["monday", "thursday"],
+      "exercises": [ { "exercise_id": "uuid", "sets": 4, "reps": 8, "rest_seconds": 90, "suggested_kg": null, "notes": "Bajada controlada" } ] }
+  ],
+  "rationale": "Por qué se armó así"
+}
+```
+
+Reglas: 1 a 7 bloques; `name` de 1 a 60; `days` de `monday..sunday`, al menos 1, sin repetidos ni dentro del bloque ni entre bloques, y el total de días igual a `frequency_per_week`; 1 a 15 ejercicios por bloque, cada `exercise_id` **de la biblioteca que se mandó**; `sets` entero 1-10, `reps` entero 1-50, `rest_seconds` entero 0-600, `suggested_kg` `null` o número 0-500, `notes` opcional hasta 200; `rationale` de 1 a 1000. Un tipo incorrecto (`"sets": "cuatro"`) se rechaza; los campos de más se descartan. Si n8n no pudo parsear lo que devolvió el LLM responde `200 { "error": "INVALID_JSON" }`, que no pasa esta validación.
+
+**Guardado:** una fila en `ai_routine_generations` con `trainer_id`, `student_id`, `input_params` (los `params` de arriba más `base_template_id`, sin la biblioteca) y `generated_routine` (la propuesta validada). Las fallidas no se guardan (pero cuentan para el límite).
 
 **200 OK**
 
@@ -584,40 +620,51 @@ Pide al asistente IA que genere una propuesta de rutina para un alumno.
   "data": {
     "generation_id": "uuid",
     "routine_proposal": {
-      "name": "Hipertrofia 4 días",
-      "goal": "hypertrophy",
-      "days": ["monday", "tuesday", "thursday", "friday"],
-      "exercises": [
-        {
-          "day": "monday",
-          "exercise_id": "uuid",
-          "exercise_name": "Press banca plano",
-          "sets": 4,
-          "reps": 8,
-          "rest_seconds": 90,
-          "suggested_kg": null,
-          "notes": "Bajada controlada en 3 segundos"
-        }
+      "routines": [
+        { "name": "Empuje", "days": ["monday", "thursday"],
+          "exercises": [ { "exercise_id": "uuid", "exercise_name": "Press banca plano", "sets": 4, "reps": 8, "rest_seconds": 90, "suggested_kg": null, "notes": "Bajada controlada" } ] }
       ],
-      "rationale": "Se priorizó volumen en pectoral y dorsal por el objetivo de hipertrofia..."
+      "rationale": "…"
     }
   }
 }
 ```
 
-**Errores:** `400 VALIDATION_ERROR`, `503 AI_UNAVAILABLE` (n8n timeout 30s), `429 RATE_LIMIT_EXCEEDED`
+**Errores**
 
-### POST /trainer-ai/refine
-
-Pide a la IA que refine una rutina propuesta (más volumen, sustituir ejercicio, etc.).
-
-**Body:** `{ "generation_id": "uuid", "instruction": "string" }`
+| Código | Cuándo |
+|---|---|
+| 400 `VALIDATION_ERROR` | Body inválido, o falta `goal`/`level` y el alumno no lo tiene cargado |
+| 404 `STUDENT_NOT_FOUND` | `student_id` inexistente, de otro trainer o dado de baja |
+| 404 `TEMPLATE_NOT_FOUND` | `base_template_id` inexistente o de otro trainer |
+| 429 `RATE_LIMIT_EXCEEDED` | 20 intentos del trainer en la última hora: cuentan todos los que llegan a n8n, exitosos o fallidos (en memoria), y las generaciones guardadas en la base; aplica `max(guardadas, intentos) ≥ 20`. También si ya hay una generación del trainer en curso ("Ya hay una propuesta en curso…", `Retry-After` = lo que le falta a la generación en curso para los 30 s del timeout de n8n, redondeado hacia arriba, mínimo 1). Header `Retry-After` en segundos |
+| 502 `AI_INVALID_RESPONSE` | La propuesta no pasa la validación (los detalles van al log, `details: []`). No se guarda nada |
+| 503 `AI_UNAVAILABLE` | Falta `N8N_TRAINER_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 30 s, error de red o n8n responde no 2xx (p. ej. `502 { "error": "LLM_UNAVAILABLE" }`). Mensaje: "El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano." |
 
 ### POST /trainer-ai/save-as-template
 
-Marca una generación IA como plantilla reutilizable.
+Guarda la propuesta como plantillas: **una por bloque**.
 
-**Body:** `{ "generation_id": "uuid", "template_name": "string" }`
+**Headers:** `Authorization: Bearer <token>` (rol: trainer)
+
+**Body:** `{ "generation_id": "uuid", "template_name": "string (1-120)" }`
+
+- Cada plantilla queda con `generated_by_ai = true`, `goal` y `level` de la generación, `frequency_per_week` = días del bloque y `structure` v1 (`days` y `exercises` con `order`).
+- Nombre: `template_name` si hay un solo bloque, o `"<template_name> · <bloque>"` (cortado a 120) si hay varios.
+- Los ejercicios se revalidan (globales o propios y que sigan existiendo).
+- **Todo o nada** (función SQL `save_ai_generation_templates`): se crean todas las plantillas y la generación queda con `was_used = true`, `routine_template_id` = la primera y `routine_template_ids` = todas, o no queda nada.
+
+**201 Created**
+
+```json
+{ "data": { "generation_id": "uuid", "templates": [ { "id": "uuid", "name": "Fuerza · Empuje", "days": ["monday", "thursday"] } ] } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR`; 404 `GENERATION_NOT_FOUND` (inexistente o de otro trainer); 409 `GENERATION_ALREADY_SAVED`; **400 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio dejó de existir o de ser accesible, con `details: [{ "field": "exercise_id", "message": "<id>" }]` (no se crea nada).
+
+### POST /trainer-ai/refine — fuera de alcance
+
+Descartado en la tarjeta 15: el PT ajusta la propuesta en el editor (tarjeta 16) antes o después de guardarla.
 
 ---
 
@@ -1587,7 +1634,7 @@ Marca como leídos los mensajes de la **otra** parte: el PT marca los del alumno
 > **Nota:** Esta es la versión 1.1 del contrato (Abril 2026). Cambios respecto a v1.0:
 > - Añadidos endpoints de plantillas de rutinas (`/routine-templates`: CRUD, `from-routine` e `instantiate` como copia, sin `customizations`).
 > - Añadidos `PATCH` y `DELETE /routines/:id/exercises/:routineExerciseId`.
-> - Añadido módulo completo de Asistente IA del entrenador (`/trainer-ai/*`).
+> - Asistente IA del entrenador (`/trainer-ai/*`): `generate-routine` propone 1 a 7 bloques y `save-as-template` crea una plantilla por bloque (tarjeta 15); `refine` queda fuera de alcance.
 > - Añadido módulo completo de Gamificación (`/students/:id/achievements`, `/streak`, `/challenges`).
 > - Añadido `GET /students/:id/achievements/progress` (progreso de logros, solo lectura; tarjeta 15).
 > - Modificado `POST /invitations` para soportar canal `whatsapp | qr | both`.

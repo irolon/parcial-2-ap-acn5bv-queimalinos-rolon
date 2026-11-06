@@ -4,6 +4,9 @@ const ISO_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\
 
 export const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
 
+/** Entero entre `min` y `max` (inclusive). */
+export const isIntBetween = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
+
 /**
  * Formato ISO y fecha/hora reales tal como están escritas (sin mirar la zona):
  * Date.parse no sirve solo, porque acepta "02-30" y la corre al 2 de marzo.

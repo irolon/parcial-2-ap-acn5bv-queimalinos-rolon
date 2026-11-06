@@ -7,8 +7,9 @@
 export const CHALLENGE_ALREADY_ACTIVE = 'CHALLENGE_ALREADY_ACTIVE';
 
 export class AppError extends Error {
-  constructor(statusCode, code, message, details = []) {
+  constructor(statusCode, code, message, details = [], headers = undefined) {
     super(message);
+    if (headers) this.headers = headers;
     this.name = 'AppError';
     this.statusCode = statusCode;
     this.code = code;
@@ -39,9 +40,9 @@ export const Errors = {
       'La plantilla está incompleta: editala antes de asignarla',
       details
     ),
-  templateExercisesUnavailable: (missingIds) =>
+  templateExercisesUnavailable: (missingIds, status = 409) =>
     new AppError(
-      409,
+      status,
       'TEMPLATE_EXERCISES_UNAVAILABLE',
       'La plantilla tiene ejercicios que ya no están disponibles',
       missingIds.map((id) => ({ field: 'exercise_id', message: id }))
@@ -92,6 +93,25 @@ export const Errors = {
   imageTooLarge: () => new AppError(413, 'IMAGE_TOO_LARGE', 'La foto supera 5 MB'),
   imageTypeInvalid: () =>
     new AppError(415, 'IMAGE_TYPE_INVALID', 'La foto tiene que ser JPG, PNG o WebP'),
+  studentNotFound: () => new AppError(404, 'STUDENT_NOT_FOUND', 'El alumno no existe'),
+  aiUnavailable: () =>
+    new AppError(
+      503,
+      'AI_UNAVAILABLE',
+      'El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.'
+    ),
+  aiInvalidResponse: () =>
+    new AppError(502, 'AI_INVALID_RESPONSE', 'El asistente devolvió una propuesta inválida. Probá de nuevo.'),
+  generationNotFound: () => new AppError(404, 'GENERATION_NOT_FOUND', 'La propuesta no existe'),
+  generationAlreadySaved: () =>
+    new AppError(409, 'GENERATION_ALREADY_SAVED', 'Esta propuesta ya se guardó como plantilla'),
+  rateLimitExceeded: (
+    retryAfterSeconds,
+    message = 'Llegaste al límite de propuestas por hora. Probá de nuevo más tarde.'
+  ) =>
+    new AppError(429, 'RATE_LIMIT_EXCEEDED', message, [], {
+      'Retry-After': String(retryAfterSeconds),
+    }),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };
