@@ -5,7 +5,7 @@ Escenario de la tarjeta 54 contra los dos endpoints calientes, para medir RNF-01
 - `GET /routines/today`: la pantalla de inicio del alumno.
 - `POST /sessions/:id/sets`: el lote de series que sube el celular (3 series nuevas por iteración).
 
-Rampa de 0 a 100 usuarios virtuales en 30 s, meseta de 60 s y bajada de 10 s. Cada usuario virtual hace las dos requests y espera 1–3 s, como un alumno real. Umbrales: `p(95) < 500 ms` y errores < 1 %.
+Rampa de 0 a 100 usuarios virtuales en 30 s, meseta de 60 s y bajada de 10 s. Cada usuario virtual hace las dos requests y espera 1–3 s, como un alumno real. Umbrales: `p(95) < 500 ms`, errores < 1 % y más del 99 % de los checks OK (si no, una corrida con todas las series rechazadas pasaría igual).
 
 ## Cómo correrla
 

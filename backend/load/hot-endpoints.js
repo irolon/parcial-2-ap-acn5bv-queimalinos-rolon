@@ -31,6 +31,8 @@ export const options = {
     'http_req_duration{endpoint:today}': ['p(95)<500'],
     'http_req_duration{endpoint:sets}': ['p(95)<500'],
     http_req_failed: ['rate<0.01'],
+    // Sin esto, una corrida con todas las series rechazadas (200 con failed) pasaría igual.
+    checks: ['rate>0.99'],
   },
 };
 
