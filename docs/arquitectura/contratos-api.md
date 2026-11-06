@@ -637,7 +637,7 @@ Reglas: 1 a 7 bloques; `name` de 1 a 60; `days` de `monday..sunday`, al menos 1,
 | 400 `VALIDATION_ERROR` | Body inválido, o falta `goal`/`level` y el alumno no lo tiene cargado |
 | 404 `STUDENT_NOT_FOUND` | `student_id` inexistente, de otro trainer o dado de baja |
 | 404 `TEMPLATE_NOT_FOUND` | `base_template_id` inexistente o de otro trainer |
-| 429 `RATE_LIMIT_EXCEEDED` | 20 intentos del trainer en la última hora: cuentan todos los que llegan a n8n, exitosos o fallidos (en memoria), y las generaciones guardadas en la base; aplica `max(guardadas, intentos) ≥ 20`. También si ya hay una generación del trainer en curso ("Ya hay una propuesta en curso…", `Retry-After: 30`). Header `Retry-After` en segundos |
+| 429 `RATE_LIMIT_EXCEEDED` | 20 intentos del trainer en la última hora: cuentan todos los que llegan a n8n, exitosos o fallidos (en memoria), y las generaciones guardadas en la base; aplica `max(guardadas, intentos) ≥ 20`. También si ya hay una generación del trainer en curso ("Ya hay una propuesta en curso…", `Retry-After: 30`). Header `Retry-After` en segundos, expuesto por CORS (`Access-Control-Expose-Headers`) para que la web lo lea |
 | 502 `AI_INVALID_RESPONSE` | La propuesta no pasa la validación (los detalles van al log, `details: []`). No se guarda nada |
 | 503 `AI_UNAVAILABLE` | Falta `N8N_TRAINER_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 30 s, error de red o n8n responde no 2xx (p. ej. `502 { "error": "LLM_UNAVAILABLE" }`). Mensaje: "El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano." |
 
