@@ -105,14 +105,13 @@ export const Errors = {
   generationNotFound: () => new AppError(404, 'GENERATION_NOT_FOUND', 'La propuesta no existe'),
   generationAlreadySaved: () =>
     new AppError(409, 'GENERATION_ALREADY_SAVED', 'Esta propuesta ya se guardó como plantilla'),
-  rateLimitExceeded: (retryAfterSeconds) =>
-    new AppError(
-      429,
-      'RATE_LIMIT_EXCEEDED',
-      'Llegaste al límite de propuestas por hora. Probá de nuevo más tarde.',
-      [],
-      { 'Retry-After': String(retryAfterSeconds) }
-    ),
+  rateLimitExceeded: (
+    retryAfterSeconds,
+    message = 'Llegaste al límite de propuestas por hora. Probá de nuevo más tarde.'
+  ) =>
+    new AppError(429, 'RATE_LIMIT_EXCEEDED', message, [], {
+      'Retry-After': String(retryAfterSeconds),
+    }),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };

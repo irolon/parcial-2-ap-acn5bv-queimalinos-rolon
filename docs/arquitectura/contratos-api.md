@@ -610,7 +610,7 @@ Los campos de más se descartan.
 
 Reglas: 1 a 7 bloques; `name` de 1 a 60; `days` de `monday..sunday`, al menos 1, sin repetidos ni dentro del bloque ni entre bloques, y el total de días igual a `frequency_per_week`; 1 a 15 ejercicios por bloque, cada `exercise_id` **de la biblioteca que se mandó**; `sets` entero 1-10, `reps` entero 1-50, `rest_seconds` entero 0-600, `suggested_kg` `null` o número 0-500, `notes` opcional hasta 200; `rationale` de 1 a 1000. Un tipo incorrecto (`"sets": "cuatro"`) se rechaza; los campos de más se descartan. Si n8n no pudo parsear lo que devolvió el LLM responde `200 { "error": "INVALID_JSON" }`, que no pasa esta validación.
 
-**Guardado:** una fila en `ai_routine_generations` con `trainer_id`, `student_id`, `input_params` (los `params` de arriba más `base_template_id`, sin la biblioteca) y `generated_routine` (la propuesta validada). Las fallidas no se guardan.
+**Guardado:** una fila en `ai_routine_generations` con `trainer_id`, `student_id`, `input_params` (los `params` de arriba más `base_template_id`, sin la biblioteca) y `generated_routine` (la propuesta validada). Las fallidas no se guardan (pero cuentan para el límite).
 
 **200 OK**
 
@@ -636,7 +636,7 @@ Reglas: 1 a 7 bloques; `name` de 1 a 60; `days` de `monday..sunday`, al menos 1,
 | 400 `VALIDATION_ERROR` | Body inválido, o falta `goal`/`level` y el alumno no lo tiene cargado |
 | 404 `STUDENT_NOT_FOUND` | `student_id` inexistente, de otro trainer o dado de baja |
 | 404 `TEMPLATE_NOT_FOUND` | `base_template_id` inexistente o de otro trainer |
-| 429 `RATE_LIMIT_EXCEEDED` | Más de 20 generaciones del trainer en la última hora (contadas en la base). Header `Retry-After` en segundos |
+| 429 `RATE_LIMIT_EXCEEDED` | 20 intentos del trainer en la última hora: cuentan todos los que llegan a n8n, exitosos o fallidos (en memoria), y las generaciones guardadas en la base; aplica `max(guardadas, intentos) ≥ 20`. También si ya hay una generación del trainer en curso ("Ya hay una propuesta en curso…", `Retry-After: 30`). Header `Retry-After` en segundos |
 | 502 `AI_INVALID_RESPONSE` | La propuesta no pasa la validación (los detalles van al log, `details: []`). No se guarda nada |
 | 503 `AI_UNAVAILABLE` | Falta `N8N_TRAINER_AI_WEBHOOK_URL`, timeout de 30 s, error de red o n8n responde no 2xx (p. ej. `502 { "error": "LLM_UNAVAILABLE" }`). Mensaje: "El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano." |
 

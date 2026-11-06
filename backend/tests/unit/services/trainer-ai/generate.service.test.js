@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
 import { Errors } from '../../../../src/shared/utils/errors.js';
+import { generationLimiter } from '../../../../src/services/trainer-ai/generation-limiter.js';
 import {
   generateService,
   mockGenerationsRepo,
@@ -24,6 +25,7 @@ describe('trainer-ai · generate.service · generateRoutine', () => {
   let warn;
   beforeEach(() => {
     warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    generationLimiter.clear();
     mockGenerationsRepo.findGenerationTimesSince.mockResolvedValue([]);
     mockGenerationsRepo.createGeneration.mockImplementation(async (f) => ({ id: GENERATION_ID, ...f }));
     mockContextRepo.findLibraryForEquipment.mockResolvedValue(LIBRARY);
@@ -73,7 +75,7 @@ describe('trainer-ai · generate.service · generateRoutine', () => {
     });
   });
 
-  it('una propuesta inválida es 502 y no se guarda (no cuenta para el límite)', async () => {
+  it('una propuesta inválida es 502 y no se guarda', async () => {
     mockClient.requestRoutineProposal.mockResolvedValue({ error: 'INVALID_JSON' });
     await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).rejects.toMatchObject({ statusCode: 502, code: 'AI_INVALID_RESPONSE' });
     expect(mockGenerationsRepo.createGeneration).not.toHaveBeenCalled();
@@ -105,6 +107,38 @@ describe('trainer-ai · generate.service · generateRoutine', () => {
         headers: { 'Retry-After': '600' },
       });
       expect(mockClient.requestRoutineProposal).not.toHaveBeenCalled();
+    });
+
+    it('los intentos fallidos también cuentan: 20 fallas seguidas → la 21 es 429 sin llamar a n8n', async () => {
+      mockClient.requestRoutineProposal.mockRejectedValue(Errors.aiUnavailable());
+      for (let i = 0; i < 20; i += 1) {
+        await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).rejects.toMatchObject({ statusCode: 503 });
+      }
+      await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).rejects.toMatchObject({ statusCode: 429 });
+      expect(mockClient.requestRoutineProposal).toHaveBeenCalledTimes(20);
+    });
+  });
+
+  describe('una generación en curso por trainer', () => {
+    it('una segunda request mientras la primera espera a n8n → 429 sin llamar a n8n; al terminar se libera', async () => {
+      let answer;
+      mockClient.requestRoutineProposal.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+      const first = generateService.generateRoutine(TRAINER_ID, BODY, NOW);
+      await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).rejects.toMatchObject({
+        statusCode: 429,
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: expect.stringContaining('Ya hay una propuesta en curso'),
+      });
+      answer(ONE_BLOCK);
+      await expect(first).resolves.toBeDefined();
+      await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).resolves.toBeDefined();
+      expect(mockClient.requestRoutineProposal).toHaveBeenCalledTimes(2);
+    });
+
+    it('si la generación falla también se libera', async () => {
+      mockClient.requestRoutineProposal.mockRejectedValueOnce(Errors.aiUnavailable());
+      await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).rejects.toMatchObject({ statusCode: 503 });
+      await expect(generateService.generateRoutine(TRAINER_ID, BODY, NOW)).resolves.toBeDefined();
     });
   });
 });

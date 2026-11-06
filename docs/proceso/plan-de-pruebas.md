@@ -69,7 +69,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | UT-16 | TrainerAI | `validateGenerateRoutine()` / `validateSaveAsTemplate()` | Body con cada regla rota | 400 `VALIDATION_ERROR` con el campo; goal/level opcionales solo con `student_id` |
 | UT-17 | TrainerAI | `resolveParams()` | `student_id` del trainer, ajeno o dado de baja | Completa goal, level, equipamiento y lesiones con el alumno; 404 `STUDENT_NOT_FOUND` si es ajeno o inactivo |
 | UT-18 | TrainerAI | `requestRoutineProposal()` | Webhook ok, timeout, 5xx, sin URL | Secreto en `x-webhook-secret` y `AbortSignal.timeout(30000)`; timeout, 5xx o sin URL → 503 `AI_UNAVAILABLE` |
-| UT-19 | TrainerAI | `generateRoutine()` (límite) | 20 generaciones en la última hora | 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n; las fallidas no se guardan |
+| UT-19 | TrainerAI | `generateRoutine()` (límite) | 20 generaciones o 20 intentos (también fallidos) en la última hora; o una generación del trainer en curso | 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n; las fallidas no se guardan pero cuentan |
 | UT-20 | TrainerAI | `saveAsTemplate()` | Generación de 1 y de varios bloques | Una plantilla por bloque (`<nombre> · <bloque>`, ≤120); 404 ajena, 409 ya guardada, 400 `TEMPLATE_EXERCISES_UNAVAILABLE` sin crear nada |
 
 ### 3.2 Pruebas de Integración

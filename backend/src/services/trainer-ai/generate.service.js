@@ -1,24 +1,18 @@
-import { Errors } from '../../shared/utils/errors.js';
 import * as generationsRepository from '../../repositories/trainer-ai/ai-generations.repository.js';
-import {
-  GENERATION_LIMIT,
-  GENERATION_WINDOW_MS,
-  retryAfterSeconds,
-} from '../../models/trainer-ai/ai-generation.model.js';
+import { GENERATION_LIMIT, GENERATION_WINDOW_MS } from '../../models/trainer-ai/ai-generation.model.js';
 import { resolveParams, buildContext } from './context.service.js';
 import { requestRoutineProposal } from './n8n.client.js';
 import { validateProposal } from './proposal.js';
+import { generationLimiter } from './generation-limiter.js';
 
 /**
- * 429 si el trainer ya tiene GENERATION_LIMIT generaciones guardadas en la última hora.
- * Se cuenta en la base (sobrevive a un reinicio); las fallidas no se guardan y no cuentan.
+ * 429 si el trainer llegó al límite en la última hora: cuenta las guardadas en la base
+ * (sobreviven a un reinicio) y los intentos en memoria (también los fallidos).
  */
 async function assertUnderLimit(trainerId, now) {
   const since = new Date(now.getTime() - GENERATION_WINDOW_MS).toISOString();
   const rows = await generationsRepository.findGenerationTimesSince(trainerId, since, GENERATION_LIMIT);
-  if (rows.length >= GENERATION_LIMIT) {
-    throw Errors.rateLimitExceeded(retryAfterSeconds(rows[0].created_at, now));
-  }
+  generationLimiter.assertUnderLimit(trainerId, rows.map((r) => r.created_at), now);
 }
 
 /** La propuesta con el nombre de cada ejercicio (sale de la biblioteca que se mandó). */
@@ -41,12 +35,23 @@ function withExerciseNames(proposal, library) {
  * POST /trainer-ai/generate-routine: resuelve los parámetros, arma el contexto sin datos
  * personales, pide la propuesta a n8n, la valida contra el esquema y la biblioteca y la
  * guarda. La IA nunca asigna: la propuesta queda para revisar y guardar como plantilla.
+ * Una sola generación en curso por trainer (la segunda concurrente es 429).
  */
 export async function generateRoutine(trainerId, body, now = new Date()) {
+  generationLimiter.start(trainerId);
+  try {
+    return await generate(trainerId, body, now);
+  } finally {
+    generationLimiter.finish(trainerId);
+  }
+}
+
+async function generate(trainerId, body, now) {
   await assertUnderLimit(trainerId, now);
   const params = await resolveParams(trainerId, body);
   const context = await buildContext(trainerId, params, body.base_template_id);
 
+  generationLimiter.recordAttempt(trainerId, now);
   const raw = await requestRoutineProposal({ params, ...context });
   const proposal = validateProposal(raw, {
     frequency: params.frequency_per_week,

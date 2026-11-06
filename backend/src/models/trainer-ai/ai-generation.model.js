@@ -9,9 +9,11 @@ export const AI_GENERATIONS_TABLE = 'ai_routine_generations';
 export const GENERATION_COLUMNS =
   'id, trainer_id, student_id, input_params, generated_routine, was_used, routine_template_id, routine_template_ids, created_at';
 
-/** Límite de generaciones guardadas por trainer en la ventana (RNF de costo de la IA). */
+/** Límite de intentos de generación por trainer en la ventana (RNF de costo de la IA). */
 export const GENERATION_LIMIT = 20;
 export const GENERATION_WINDOW_MS = 60 * 60 * 1000;
+/** Retry-After cuando ya hay una generación en curso: lo que tarda n8n como máximo (30 s). */
+export const IN_PROGRESS_RETRY_SECONDS = 30;
 
 export const DEFAULT_SESSION_MIN = 60;
 export const MAX_TEXT_LENGTH = 500;

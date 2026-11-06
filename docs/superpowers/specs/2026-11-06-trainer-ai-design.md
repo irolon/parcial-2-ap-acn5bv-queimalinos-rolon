@@ -69,7 +69,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 - `rationale` de 1 a 1000 caracteres;
 - cualquier campo de más se descarta; un tipo incorrecto (por ejemplo `"sets": "cuatro"`) se rechaza.
 
-**Límite:** 20 generaciones por trainer en la última hora, contadas en `ai_routine_generations`, así que sobrevive a un reinicio. Pasado el límite, **429 `RATE_LIMIT_EXCEEDED`** con `Retry-After`. Las fallidas no se guardan y no cuentan.
+**Límite:** 20 **intentos** por trainer en la última hora: cuenta cada llamada a n8n, exitosa o fallida (502/503), en una ventana deslizante en memoria del proceso, y también las generaciones guardadas en `ai_routine_generations` (así el límite sobrevive a un reinicio). Aplica a `max(guardadas, intentos) ≥ 20`. Pasado el límite, **429 `RATE_LIMIT_EXCEEDED`** con `Retry-After`. Además, **una sola generación en curso por trainer**: una segunda request mientras la primera espera a n8n es 429 `RATE_LIMIT_EXCEEDED` ("Ya hay una propuesta en curso…", `Retry-After: 30`). Las fallidas no se guardan en la base, pero cuentan como intento.
 
 **Guardado:** una fila en `ai_routine_generations` con `trainer_id`, `student_id`, `input_params` (los parámetros resueltos, sin la biblioteca) y `generated_routine` (la propuesta validada).
 
@@ -115,7 +115,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 ## Pruebas
 
-- **Unitarias:** validación del body (cada regla); completar con el alumno; contexto sin PII (el payload no trae `name`, `email` ni `birth_date`); filtro de la biblioteca por equipamiento; cliente del webhook (secreto en el header, timeout → 503, 5xx → 503, sin URL → 503); validación de la propuesta (cada regla, el ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días distinto de la frecuencia, campos de más descartados); límite → 429; guardar (1 bloque y varios, nombres, 404, 409, ejercicio que ya no existe → 400 sin crear nada).
+- **Unitarias:** validación del body (cada regla); completar con el alumno; contexto sin PII (el payload no trae `name`, `email` ni `birth_date`); filtro de la biblioteca por equipamiento; cliente del webhook (secreto en el header, timeout → 503, 5xx → 503, sin URL → 503); validación de la propuesta (cada regla, el ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días distinto de la frecuencia, campos de más descartados); límite → 429 (también por intentos fallidos y por una generación en curso); guardar (1 bloque y varios, nombres, 404, 409, ejercicio que ya no existe → 400 sin crear nada).
 - **Integración** contra Supabase dev, con el webhook simulado por un servidor HTTP local en el test: generar → guardar → las plantillas aparecen en `GET /routine-templates` con `generated_by_ai = true`; aislamiento: un trainer no puede guardar ni ver la generación de otro (404, sin ids ajenos en el body).
 - **Prueba real con n8n y KIMI:** pendiente de Igna. En la PR queda el paso a paso para correrla.
 
