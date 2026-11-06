@@ -45,10 +45,11 @@ describe('trainer-ai · n8n.client', () => {
     timeout.mockRestore();
   });
 
-  it('sin URL configurada responde 503 sin llamar a n8n', async () => {
+  it('sin URL configurada responde 503 sin llamar a n8n y lo loguea', async () => {
     env.N8N_TRAINER_AI_WEBHOOK_URL = undefined;
     await expect503(requestRoutineProposal(PAYLOAD));
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('N8N_TRAINER_AI_WEBHOOK_URL'));
   });
 
   it('timeout (AbortSignal.timeout) → 503', async () => {
@@ -74,10 +75,10 @@ describe('trainer-ai · n8n.client', () => {
     });
   });
 
-  it('sin secreto configurado manda el header vacío (n8n lo rechaza)', async () => {
-    env.N8N_WEBHOOK_SECRET = undefined;
-    fetchMock.mockResolvedValue(reply(200, {}));
-    await requestRoutineProposal(PAYLOAD);
-    expect(fetchMock.mock.calls[0][1].headers['x-webhook-secret']).toBe('');
+  it.each([undefined, ''])('sin secreto configurado (%p) responde 503 sin llamar a n8n y lo loguea', async (secret) => {
+    env.N8N_WEBHOOK_SECRET = secret;
+    await expect503(requestRoutineProposal(PAYLOAD));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('N8N_WEBHOOK_SECRET'));
   });
 });
