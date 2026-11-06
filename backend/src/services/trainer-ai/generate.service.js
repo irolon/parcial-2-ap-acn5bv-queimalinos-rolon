@@ -38,7 +38,7 @@ function withExerciseNames(proposal, library) {
  * Una sola generación en curso por trainer (la segunda concurrente es 429).
  */
 export async function generateRoutine(trainerId, body, now = new Date()) {
-  generationLimiter.start(trainerId);
+  generationLimiter.start(trainerId, now);
   try {
     return await generate(trainerId, body, now);
   } finally {
