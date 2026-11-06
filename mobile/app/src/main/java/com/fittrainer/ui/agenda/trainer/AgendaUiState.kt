@@ -8,6 +8,9 @@ import com.fittrainer.data.agenda.weekDays
 import java.time.Instant
 import java.time.LocalDate
 
+/** Argumento opcional de la ruta: el lunes (`YYYY-MM-DD`) en que abre la agenda; sin él, la semana actual. */
+const val AGENDA_WEEK_ARG = "week"
+
 /** Qué se puede hacer con un turno: nada, avisar que ya pasó, confirmar o cancelar, o solo cancelar. */
 enum class AppointmentActions { NONE, PAST, CONFIRM_OR_CANCEL, CANCEL }
 

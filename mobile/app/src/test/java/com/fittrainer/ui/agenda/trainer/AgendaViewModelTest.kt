@@ -1,5 +1,6 @@
 package com.fittrainer.ui.agenda.trainer
 
+import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.agenda.TrainerAgendaRepository
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.agenda.FakeAgendaApi
@@ -41,7 +42,7 @@ class AgendaViewModelTest {
     private val clock = MutableClock(Instant.parse("2026-11-04T12:00:00Z").toEpochMilli())
     private val repo = TrainerAgendaRepository(api, FakeTrainerAgendaDao(), clock)
 
-    private fun TestScope.started() = AgendaViewModel(repo, FakeTrainerSession(), connectivity, clock).also {
+    private fun TestScope.started(saved: SavedStateHandle = SavedStateHandle()) = AgendaViewModel(repo, FakeTrainerSession(), connectivity, clock, saved).also {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { it.uiState.collect {} }
         it.onStart()
         advanceUntilIdle()
@@ -144,5 +145,22 @@ class AgendaViewModelTest {
         assertEquals(listOf("mie", "vie"), vm.uiState.value.ids())
         vm.onDismissNotice()
         assertNull(vm.uiState.value.notice)
+    }
+
+    // #78: el aviso de un turno abre la agenda en su semana (argumento de la ruta) y la refresca.
+    @Test fun `abre en la semana del argumento de la ruta`() = runTest {
+        val state = started(SavedStateHandle(mapOf(AGENDA_WEEK_ARG to "2026-11-11"))).uiState.value
+        assertEquals(LocalDate.parse("2026-11-09"), state.weekStart)
+        assertEquals(listOf("lun"), state.ids())
+        assertEquals(listOf("2026-11-09"), api.weekCalls.map { it.first })
+    }
+
+    // Con la agenda ya abierta, otro aviso la pasa a la semana de su turno.
+    @Test fun `onShowWeek pasa a esa semana y la refresca`() = runTest {
+        val vm = started()
+        vm.onShowWeek(LocalDate.parse("2026-11-09"))
+        advanceUntilIdle()
+        assertEquals(LocalDate.parse("2026-11-09"), vm.uiState.value.weekStart)
+        assertEquals(listOf("2026-11-02", "2026-11-09"), api.weekCalls.map { it.first })
     }
 }

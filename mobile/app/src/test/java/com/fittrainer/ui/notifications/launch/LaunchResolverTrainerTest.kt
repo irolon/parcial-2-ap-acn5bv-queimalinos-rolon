@@ -6,6 +6,7 @@ import com.fittrainer.data.notifications.NotificationDestination
 import com.fittrainer.data.notifications.PendingLaunch
 import com.fittrainer.data.session.Role
 import com.fittrainer.data.session.Session
+import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -43,12 +44,13 @@ class LaunchResolverTrainerTest {
 
     @Test fun unTurnoAbreLaAgendaYMarcaLeido() = runTest {
         val sources = Sources()
-        assertEquals(NavTarget.TrainerAgenda, resolve(PendingLaunch(NotificationDestination.Agenda, "n3"), trainer, sources))
+        val week = LocalDate.parse("2026-11-23")
+        assertEquals(NavTarget.TrainerAgenda(week), resolve(PendingLaunch(NotificationDestination.Agenda(week), "n3"), trainer, sources))
         assertEquals(listOf("markRead:t1:n3"), sources.calls)
     }
 
     @Test fun laAgendaConSesionDeAlumnoSeDescarta() = runTest {
-        assertEquals(NavTarget.None, resolve(PendingLaunch(NotificationDestination.Agenda, "n3"), student, Sources()))
+        assertEquals(NavTarget.None, resolve(PendingLaunch(NotificationDestination.Agenda(), "n3"), student, Sources()))
     }
 
     @Test fun laListaDelEntrenadorEsLaSuya() = runTest {

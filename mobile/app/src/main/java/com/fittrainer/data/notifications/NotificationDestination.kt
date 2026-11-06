@@ -1,6 +1,8 @@
 package com.fittrainer.data.notifications
 
+import com.fittrainer.data.agenda.weekStartOfIso
 import com.fittrainer.data.session.Role
+import java.time.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
@@ -16,8 +18,8 @@ sealed interface NotificationDestination {
     data class StudentProfile(val studentId: String) : NotificationDestination
     /** Tarjeta 18: la conversación con [studentId] (el alumno es él mismo; el entrenador, uno de los suyos). */
     data class Conversation(val studentId: String) : NotificationDestination
-    /** Entrenador (E13): la agenda en la semana actual (el aviso solo trae appointment_id). */
-    data object Agenda : NotificationDestination
+    /** Entrenador (E13): la agenda en la semana del turno (`scheduled_at`, #78); sin fecha, la semana actual. */
+    data class Agenda(val weekStart: LocalDate? = null) : NotificationDestination
     /** Alumno (tarjeta 16): «Mis turnos», en Perfil. */
     data object StudentAppointments : NotificationDestination
     data object NotificationsList : NotificationDestination
@@ -42,7 +44,8 @@ fun destinationOf(type: String?, data: Map<String, String>, role: Role = Role.ST
     NotificationType.ROUTINE_MODIFIED.wire -> studentSession(data)
     NotificationType.INACTIVITY.wire -> studentProfile(data)
     NotificationType.APPOINTMENT.wire ->
-        if (role == Role.TRAINER) NotificationDestination.Agenda else NotificationDestination.StudentAppointments
+        if (role == Role.TRAINER) NotificationDestination.Agenda(weekStartOfIso(data.text("scheduled_at")))
+        else NotificationDestination.StudentAppointments
     MESSAGE_PUSH_TYPE -> data.text("student_id")?.let { NotificationDestination.Conversation(it) }
     else -> null
 } ?: NotificationDestination.NotificationsList

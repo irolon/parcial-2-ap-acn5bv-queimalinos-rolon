@@ -31,4 +31,15 @@ class AgendaWeekTest {
         assertEquals(Instant.parse("2026-11-02T03:00:00Z").toEpochMilli(), bounds.from)
         assertEquals(Instant.parse("2026-11-09T03:00:00Z").toEpochMilli(), bounds.to)
     }
+
+    // #78: la fecha del aviso y el argumento de la ruta; lo que falta o viene roto da null (semana actual).
+    @Test fun `el lunes de una fecha ISO y de un dia de la ruta`() {
+        assertEquals(LocalDate.parse("2026-11-02"), weekStartOfIso("2026-11-09T02:30:00.000Z"))
+        assertEquals(null, weekStartOfIso("09/11/2026"))
+        assertEquals(null, weekStartOfIso(null))
+        assertEquals(LocalDate.parse("2026-11-23"), weekStartOfDay("2026-11-27"))
+        assertEquals(LocalDate.parse("2026-11-23"), weekStartOfDay("2026-11-23"))
+        assertEquals(null, weekStartOfDay("2026-13-01"))
+        assertEquals(null, weekStartOfDay(null))
+    }
 }

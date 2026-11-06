@@ -17,6 +17,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,15 +36,27 @@ import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import java.time.LocalDate
 
 /**
  * Agenda del entrenador (E13), desde Más: la semana en lista por día, como la web debajo de 768 px. Tocar un turno
  * abre su hoja, desde donde se confirma o se cancela. «Nuevo turno» y la disponibilidad se editan en la web.
+ * [requestedWeek]: un aviso de turno tocado con la agenda ya abierta; se muestra esa semana y se avisa con [onWeekShown].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgendaScreen(onBack: () -> Unit, viewModel: AgendaViewModel = hiltViewModel()) {
+fun AgendaScreen(
+    onBack: () -> Unit,
+    requestedWeek: LocalDate? = null,
+    onWeekShown: () -> Unit = {},
+    viewModel: AgendaViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(requestedWeek) {
+        val week = requestedWeek ?: return@LaunchedEffect
+        viewModel.onShowWeek(week)
+        onWeekShown()
+    }
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
         onStopOrDispose { }

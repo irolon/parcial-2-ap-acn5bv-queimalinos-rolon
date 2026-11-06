@@ -28,6 +28,10 @@ class InvitationMessagesTest {
         )
         assertEquals(InvitationMessage("Sin conexión con el servidor", canRetry = true, offerLogin = false), msg(DataError.Offline))
         assertEquals(InvitationMessage("No se pudo completar el alta", canRetry = true, offerLogin = false), msg(DataError.Http(500)))
+        assertEquals(
+            InvitationMessage("Demasiados intentos. Probá de nuevo en unos minutos.", canRetry = true, offerLogin = false),
+            msg(DataError.Http(429)),
+        )
         assertEquals(InvitationMessage("No se pudo completar el alta", canRetry = true, offerLogin = false), invitationMessage(null))
     }
 

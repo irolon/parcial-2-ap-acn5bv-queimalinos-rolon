@@ -8,5 +8,5 @@ fun trainerMenuLinks(navController: NavHostController): List<MenuLink> = listOf(
     MenuLink("Plantillas") { navController.navigate(TRAINER_TEMPLATES_ROUTE) { launchSingleTop = true } },
     MenuLink("Biblioteca") { navController.navigate(TRAINER_EXERCISES_ROUTE) { launchSingleTop = true } },
     MenuLink("Desafíos") { navController.navigate(TRAINER_CHALLENGES_ROUTE) { launchSingleTop = true } },
-    MenuLink("Agenda") { navController.navigate(TRAINER_AGENDA_ROUTE) { launchSingleTop = true } },
+    MenuLink("Agenda") { navController.navigate(trainerAgendaRoute()) { launchSingleTop = true } },
 )
