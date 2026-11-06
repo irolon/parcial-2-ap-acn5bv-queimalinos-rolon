@@ -70,6 +70,17 @@ describe('RoutinesPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Nueva rutina' })).toBeVisible();
   });
 
+  it('"Rutina con IA" está junto a "Nueva rutina", también sin rutinas', async () => {
+    stubRoutinesApi({ routines: [routine()] });
+    const { unmount } = renderRoute('/pt/rutinas');
+    expect(await main().findByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia');
+    unmount();
+    stubRoutinesApi();
+    renderRoute('/pt/rutinas');
+    await main().findByText('Todavía no armaste rutinas');
+    expect(main().getByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia');
+  });
+
   it('si falla la carga ofrece reintentar', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: { code: 'INTERNAL', message: 'Se rompió' } }), { status: 500, headers: { 'Content-Type': 'application/json' } })));
     renderRoute('/pt/rutinas');
