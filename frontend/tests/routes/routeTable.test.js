@@ -63,7 +63,7 @@ describe('tabla de rutas', () => {
 
   it('arma los links del asistente IA y de un bloque en el editor', () => {
     expect(AI_ROUTINE.path).toBe('/pt/rutinas/ia');
-    expect(aiRoutineHref()).toBe('/pt/rutinas/ia');
+    expect(aiRoutineHref()).toBe('/pt/rutinas/ia?nueva=1');
     expect(aiRoutineHref('st-1')).toBe('/pt/rutinas/ia?alumno=st-1');
     expect(aiBlockHref({ studentId: 'st-1', generationId: 'g-1', index: 2 })).toBe('/pt/rutinas/nueva?alumno=st-1&ia=g-1&bloque=2');
     expect(aiBlockHref({ studentId: null, generationId: 'g-1', index: 0 })).toBe('/pt/rutinas/nueva?ia=g-1&bloque=0');

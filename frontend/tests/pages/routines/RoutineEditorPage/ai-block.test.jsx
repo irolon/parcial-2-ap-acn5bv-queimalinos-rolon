@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { DRAFT_STORAGE_KEY, renderEditor, rowNames, storeDraft } from '../../../helpers/routines/editor';
 import { bodyOf, calls, jsonResponse } from '../../../helpers/shared/fetchMock';
@@ -123,6 +123,33 @@ describe('RoutineEditorPage: bloque de la IA', () => {
     await renderEditor({ path: BLOCK_0 });
     expect(await screen.findByDisplayValue('Empuje fuerte')).toBeVisible();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('si el borrador es otro bloque de la propuesta, lo nombra al preguntar', async () => {
+    storeProposal({ editing: 0 });
+    storeDraft({ name: 'Empuje' });
+    await renderEditor({ path: '/pt/rutinas/nueva?ia=g-split&bloque=1' });
+    const confirm = within(await screen.findByRole('dialog'));
+    expect(confirm.getByText('Si lo reemplazás, se pierde el bloque "Empuje" que estabas editando. No se puede deshacer.')).toBeVisible();
+    expect(confirm.queryByText(/a mano/)).not.toBeInTheDocument();
+  });
+
+  it('con `bloque` vacío no carga el bloque 0', async () => {
+    storeProposal();
+    await renderEditor({ path: '/pt/rutinas/nueva?ia=g-split&bloque=' });
+    expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('');
+  });
+
+  it('si se sale del bloque sin desmontar el editor (otra URL), al asignar va a la ficha', async () => {
+    const user = setupUser();
+    storeProposal();
+    const { router } = await renderEditor({ path: BLOCK_0, api: { students: [ANA], handlers: { create: created } } });
+    await screen.findByDisplayValue('Empuje');
+    await act(() => router.navigate('/pt/rutinas/nueva?alumno=st-9'));
+    await user.click(screen.getByRole('button', { name: 'Asignar a alumno' }));
+    await user.click(await screen.findByRole('button', { name: 'Asignar' }));
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/pt/alumnos/st-9'));
+    expect(storedProposal().assigned).toEqual({});
   });
 
   it('con una propuesta que ya no está (otra generación) abre el editor como siempre', async () => {

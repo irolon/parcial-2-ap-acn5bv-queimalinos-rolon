@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FORM, buildGenerateBody, formFromStudent, validateAiForm } from '@/utils/trainer-ai/aiForm';
+import { DEFAULT_FORM, buildGenerateBody, formFromStudent, studentPrefill, validateAiForm } from '@/utils/trainer-ai/aiForm';
 import { studentDetail } from '../../helpers/students/fixtures';
 
 const valid = { ...DEFAULT_FORM, goal: 'strength', level: 'beginner' };
@@ -18,10 +18,22 @@ describe('aiForm', () => {
     });
   });
 
-  it('lo que la ficha no tiene queda vacío y se conserva el resto del formulario', () => {
-    const base = { ...valid, frequency: '5', preferences: 'Poco tiempo' };
-    const form = formFromStudent(studentDetail({ goal: null, level: null, gym_equipment: null, injuries: null }), base);
-    expect(form).toMatchObject({ goal: '', level: '', equipment: [], injuries: '', frequency: '5', preferences: 'Poco tiempo' });
+  it('lo que la ficha no tiene no pisa lo que ya estaba en el formulario', () => {
+    const base = { ...valid, equipment: ['dumbbell'], injuries: 'Rodilla', frequency: '5', preferences: 'Poco tiempo' };
+    const form = formFromStudent(studentDetail({ id: 'st-2', goal: null, level: null, gym_equipment: null, injuries: null }), base);
+    expect(form).toMatchObject({
+      studentId: 'st-2', goal: 'strength', level: 'beginner', equipment: ['dumbbell'], injuries: 'Rodilla', frequency: '5', preferences: 'Poco tiempo',
+    });
+  });
+
+  it('al cambiar de alumno se vacía lo que se había precargado del anterior y el PT no tocó', () => {
+    const ana = studentDetail({ id: 'st-1', goal: 'strength', level: 'advanced', gym_equipment: ['barbell'], injuries: 'Hombro' });
+    const prefilled = studentPrefill(ana);
+    expect(prefilled).toEqual({ goal: 'strength', level: 'advanced', equipment: ['barbell'], injuries: 'Hombro' });
+    const touched = { ...formFromStudent(ana), level: 'beginner' };
+    const luis = studentDetail({ id: 'st-2', goal: null, level: null, gym_equipment: null, injuries: null });
+    expect(formFromStudent(luis, touched, prefilled)).toMatchObject({ studentId: 'st-2', goal: '', level: 'beginner', equipment: [], injuries: '' });
+    expect(studentPrefill(luis)).toEqual({});
   });
 
   it('valida con las reglas del backend', () => {
@@ -49,6 +61,13 @@ describe('aiForm', () => {
     expect(buildGenerateBody(full)).toEqual({
       student_id: 'st-1', base_template_id: 't-1', goal: 'strength', level: 'beginner', frequency_per_week: 4, session_duration_min: 45,
       available_equipment: ['dumbbell'], injuries: 'Rodilla', preferences: 'Poco tiempo',
+    });
+  });
+
+  it('con alumno manda siempre lesiones (null si el PT las borró) y el equipamiento, para que el backend no los complete', () => {
+    const body = buildGenerateBody({ ...valid, studentId: 'st-1', injuries: '  ', equipment: [] });
+    expect(body).toEqual({
+      student_id: 'st-1', goal: 'strength', level: 'beginner', frequency_per_week: 3, session_duration_min: 60, available_equipment: [], injuries: null,
     });
   });
 });

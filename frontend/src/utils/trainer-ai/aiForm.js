@@ -32,16 +32,31 @@ const GOALS = ROUTINE_GOAL_OPTIONS.map((o) => o.value);
 const LEVELS = LEVEL_OPTIONS.filter((o) => o.value).map((o) => o.value);
 const known = (list, value) => (list.includes(value) ? value : '');
 
-/** Precarga desde la ficha (`GET /students/:id`): lo que no tenga queda vacío; el resto de `base` se conserva. */
-export function formFromStudent(student, base = DEFAULT_FORM) {
-  return {
-    ...base,
-    studentId: student.id,
-    goal: known(GOALS, student.goal),
-    level: known(LEVELS, student.level),
-    equipment: (student.gym_equipment ?? []).filter((item) => EQUIPMENT.includes(item)),
-    injuries: student.injuries ?? '',
-  };
+/** Lo que la ficha del alumno (`GET /students/:id`) tiene para precargar: solo los campos con datos. */
+export function studentPrefill(student) {
+  const prefill = {};
+  const goal = known(GOALS, student.goal);
+  const level = known(LEVELS, student.level);
+  const equipment = (student.gym_equipment ?? []).filter((item) => EQUIPMENT.includes(item));
+  if (goal) prefill.goal = goal;
+  if (level) prefill.level = level;
+  if (equipment.length > 0) prefill.equipment = equipment;
+  if (student.injuries?.trim()) prefill.injuries = student.injuries;
+  return prefill;
+}
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * Formulario con el alumno elegido: pisa solo lo que su ficha tiene; lo demás de `base` se conserva. `previous` es la
+ * precarga del alumno anterior (`studentPrefill`): lo que vino de él y el PT no tocó vuelve a vacío.
+ */
+export function formFromStudent(student, base = DEFAULT_FORM, previous = {}) {
+  const form = { ...base, studentId: student.id };
+  for (const [field, value] of Object.entries(previous)) {
+    if (same(form[field], value)) form[field] = DEFAULT_FORM[field];
+  }
+  return { ...form, ...studentPrefill(student) };
 }
 
 const intBetween = (value, min, max) => {
@@ -62,7 +77,10 @@ export function validateAiForm(form) {
   return Object.fromEntries(Object.entries(checks).filter(([, ok]) => !ok).map(([field]) => [field, FIELD_MESSAGES[field]]));
 }
 
-/** Body de `POST /trainer-ai/generate-routine`; los textos vacíos no se mandan. */
+/**
+ * Body de `POST /trainer-ai/generate-routine`; los textos vacíos no se mandan. Con alumno, `injuries` va siempre
+ * (`null` si está vacío): el backend completa con el alumno solo lo ausente y así respeta lo que el PT borró.
+ */
 export function buildGenerateBody(form) {
   const body = {};
   if (form.studentId) body.student_id = form.studentId;
@@ -77,5 +95,6 @@ export function buildGenerateBody(form) {
   for (const field of ['injuries', 'preferences']) {
     if (form[field].trim()) body[field] = form[field].trim();
   }
+  if (form.studentId && !body.injuries) body.injuries = null;
   return body;
 }

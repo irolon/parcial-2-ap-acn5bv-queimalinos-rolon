@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import Button from '@/components/shared/ui/Button';
 import Input from '@/components/shared/ui/Input';
@@ -8,7 +8,7 @@ import { useTemplatesQuery } from '@/hooks/routine-templates/useRoutineTemplates
 import { useStudentPrefill } from '@/hooks/trainer-ai/useStudentPrefill';
 import { ROUTINE_GOAL_OPTIONS } from '@/utils/routines/routineForm';
 import { LEVEL_OPTIONS } from '@/utils/students/studentOptions';
-import { MAX_AI_TEXT, formFromStudent, validateAiForm } from '@/utils/trainer-ai/aiForm';
+import { MAX_AI_TEXT, formFromStudent, studentPrefill, validateAiForm } from '@/utils/trainer-ai/aiForm';
 import EquipmentChips from './EquipmentChips';
 import StudentField from './StudentField';
 
@@ -24,7 +24,8 @@ function TemplateSelect({ value, error, onChange }) {
 }
 
 /**
- * Parámetros de la propuesta. `initial` es el formulario (ver `aiForm`) y `student` el alumno elegido (`{ id, name }`).
+ * Parámetros de la propuesta. `initial` es el formulario (ver `aiForm`) y `student` el alumno elegido
+ * (`{ id, name, prefill }`, `prefill` = lo que se precargó de su ficha, para vaciarlo si se cambia de alumno).
  * `errors` trae los del servidor (`fields`, `form`); los del cliente se calculan al enviar.
  * `onSubmit(form, student)` recibe el formulario ya validado.
  */
@@ -32,6 +33,8 @@ export default function AiRoutineForm({ initial, student: initialStudent, errors
   const [form, setForm] = useState(initial);
   const [student, setStudent] = useState(initialStudent);
   const [errors, setErrors] = useState(serverErrors?.fields ?? {});
+  const prefilled = useRef(initialStudent?.prefill ?? {});
+  const picked = useRef(initialStudent?.id ?? null);
   const fetchStudent = useStudentPrefill();
   const set = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -40,12 +43,16 @@ export default function AiRoutineForm({ initial, student: initialStudent, errors
   const bind = (field) => ({ value: form[field], error: errors[field], onChange: (event) => set(field, event.target.value) });
 
   async function pickStudent(next) {
+    picked.current = next?.id ?? null;
     setStudent(next);
     set('studentId', next?.id ?? '');
     if (!next) return;
     try {
       const detail = await fetchStudent(next.id);
-      setForm((f) => (f.studentId === next.id ? formFromStudent(detail, f) : f));
+      if (picked.current !== next.id) return;
+      const previous = prefilled.current;
+      prefilled.current = studentPrefill(detail);
+      setForm((f) => formFromStudent(detail, f, previous));
     } catch {
       /* sin la ficha se completa a mano */
     }
@@ -55,7 +62,7 @@ export default function AiRoutineForm({ initial, student: initialStudent, errors
     event.preventDefault();
     const found = validateAiForm(form);
     setErrors(found);
-    if (Object.keys(found).length === 0) onSubmit(form, student);
+    if (Object.keys(found).length === 0) onSubmit(form, student && { ...student, prefill: prefilled.current });
   }
 
   return (

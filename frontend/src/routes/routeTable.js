@@ -79,8 +79,12 @@ export const AI_ROUTINE = {
   subtitle: 'RUTINAS › ASISTENTE IA · REVISÁ LA PROPUESTA ANTES DE ASIGNARLA',
 };
 
-/** Link al asistente; con `studentId` llega con el alumno y sus datos precargados. */
-export const aiRoutineHref = (studentId) => (studentId ? `${AI_ROUTINE.path}?alumno=${studentId}` : AI_ROUTINE.path);
+/**
+ * Entrada al asistente: abre siempre el formulario (aunque haya una propuesta sin terminar). Con `studentId` llega con
+ * el alumno y sus datos precargados (`?alumno=`); sin alumno, con `?nueva=1`. Sin ninguno de los dos (la vuelta del
+ * editor) se muestra la propuesta guardada.
+ */
+export const aiRoutineHref = (studentId) => `${AI_ROUTINE.path}?${studentId ? `alumno=${studentId}` : 'nueva=1'}`;
 
 /** Link al editor con un bloque de la propuesta (`ia` = generación, `bloque` = índice) y el alumno si hay. */
 export function aiBlockHref({ studentId, generationId, index }) {

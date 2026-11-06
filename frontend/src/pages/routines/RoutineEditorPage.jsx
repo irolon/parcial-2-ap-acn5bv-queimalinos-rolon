@@ -20,10 +20,15 @@ import * as editor from '@/utils/routines/editorState';
 import { validateRoutine } from '@/utils/routines/routineForm';
 import { serverErrorsFor, templateErrorsFor } from '@/utils/routines/serverErrors';
 import { toAssignedBlock } from '@/utils/trainer-ai/assignedBlock';
-import { fromBlock } from '@/utils/trainer-ai/blockEditor';
 
 const missingNotice = (n) => `Quitamos ${n} ${n === 1 ? 'ejercicio que ya no está' : 'ejercicios que ya no están'} en la biblioteca`;
-const NO_DRAFT = { ready: false, restored: false, missing: 0 };
+const NO_DRAFT = { ready: false, aiKey: null, restored: false, missing: 0 };
+
+/** El borrador del arranque (el guardado, si el editor está vacío) o, ya arrancado, lo que hay escrito. */
+function currentDraft(ready, state, trainerId, byId) {
+  if (ready) return editor.isBlank(state) ? null : { state, missing: 0 };
+  return trainerId && editor.isBlank(state) ? restoreDraft(readDraft(trainerId), byId) : null;
+}
 
 /** Editor de rutinas: biblioteca a la izquierda, cabecera y tabla editable a la derecha, con borrador local. */
 export default function RoutineEditorPage() {
@@ -52,21 +57,20 @@ export default function RoutineEditorPage() {
     setServerErrors(null);
   };
 
-  if (library && !draft.ready) {
-    // Se intenta restaurar una sola vez, con la biblioteca ya cargada (ver `useRoutineDraft`).
-    // Si ya hay algo escrito no se pisa: se marca listo sin restaurar.
-    const found = trainerId && editor.isBlank(state) ? restoreDraft(readDraft(trainerId), byId) : null;
-    // Un bloque de la IA (`?ia=&bloque=`) se carga como una plantilla; si hay un borrador que no es ese mismo bloque
-    // ya cargado (una recarga), se muestra el borrador y se pregunta antes de reemplazarlo.
-    const block = ai.source && !(found && ai.source.draftIsBlock) ? fromBlock(ai.source.block, ai.source.goal, byId) : null;
-    const shown = block && !found ? block : found;
-    if (shown) setState(shown.state);
-    if (block && found) setDialog({ type: 'aiReplace', next: block });
-    if (block && !found) {
+  if (library && draft.aiKey !== ai.key) {
+    // Al montar se intenta restaurar el borrador una sola vez, con la biblioteca ya cargada (ver `useRoutineDraft`);
+    // si ya hay algo escrito no se pisa. Si después cambia `?ia=&bloque=` sin desmontar, lo que hay hace de borrador.
+    // Qué se muestra y si se pregunta antes de pisarlo con el bloque de la IA lo decide `useAiBlock` (`start`).
+    const found = currentDraft(draft.ready, state, trainerId, byId);
+    const plan = ai.start(found, byId);
+    if (plan.state && plan.state !== state) setState(plan.state);
+    if (plan.ask) setDialog({ type: 'aiReplace', next: plan.ask, draftBlockName: ai.source.draftBlockName });
+    if (plan.loaded) {
       ai.markLoaded();
-      setNotice(block.missing > 0 ? missingNotice(block.missing) : null);
+      setNotice(plan.loaded.missing > 0 ? missingNotice(plan.loaded.missing) : null);
     }
-    setDraft({ ready: true, restored: Boolean(found), missing: found?.missing ?? 0 });
+    const restored = { restored: Boolean(found), missing: found?.missing ?? 0 };
+    setDraft({ ...(draft.ready ? draft : restored), ready: true, aiKey: ai.key });
   }
 
   const { savedAt, cancel: cancelDraft } = useRoutineDraft(trainerId, state, { enabled: draft.ready });

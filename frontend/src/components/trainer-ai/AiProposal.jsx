@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import { Link } from 'react-router';
-import Button from '@/components/shared/ui/Button';
+import Button, { buttonClass } from '@/components/shared/ui/Button';
 import { NEW_ROUTINE, aiBlockHref } from '@/routes/routeTable';
-import { GHOST_LINK } from './links';
 import ProposalBlock from './ProposalBlock';
 import SaveTemplatesDialog from './SaveTemplatesDialog';
 
@@ -48,7 +47,7 @@ export default function AiProposal({ session, manualHref, onSaved, onAgain }) {
       <div className="flex flex-wrap items-center justify-end gap-3">
         {saved ? <SavedNotice saved={saved} /> : <Button variant="ghost" onClick={() => setSaving(true)}>Guardar como plantillas</Button>}
         <Button variant="ghost" onClick={onAgain}>Generar otra</Button>
-        <Link to={manualHref} className={GHOST_LINK}>Armar a mano</Link>
+        <Link to={manualHref} className={buttonClass({ variant: 'ghost' })}>Armar a mano</Link>
       </div>
       {saving && (
         <SaveTemplatesDialog

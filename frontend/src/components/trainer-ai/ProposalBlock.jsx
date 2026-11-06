@@ -1,17 +1,18 @@
 import { useId } from 'react';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router';
+import { buttonClass } from '@/components/shared/ui/Button';
 import Pill from '@/components/shared/ui/Pill';
 import { profileHref } from '@/routes/routeTable';
 import { DAY_OPTIONS, formatRoutineDays, sortDays } from '@/utils/students/routineDays';
 import { differsFromProposal } from '@/utils/trainer-ai/assignedBlock';
-import { PRIMARY_LINK_SM } from './links';
 
 // Mismo formato visual que la tabla del editor (`ExerciseTable`), en modo lectura.
 const HEAD = 'px-2 py-2 text-left font-mono text-[9px] font-normal uppercase tracking-[1px] text-ink6';
 const CELL = 'px-2 py-2.5 align-top font-body text-sm text-bone0';
 const COLUMNS = ['#', 'Ejercicio', 'Series × reps', 'Descanso', 'Peso sugerido', 'Notas'];
-const orDash = (value) => (value === null || value === undefined || value === '' ? '—' : value);
+/** `format(value)`, o una raya si no hay valor. */
+const orDash = (value, format = (v) => v) => (value === null || value === undefined || value === '' ? '—' : format(value));
 
 /** L M X J V S D como los chips del editor, marcados los del bloque (solo lectura). */
 function BlockDays({ days }) {
@@ -58,7 +59,7 @@ export default function ProposalBlock({ block: proposed, editHref, assigned }) {
           <h2 id={titleId} className="font-display text-[15px] font-semibold text-bone0">{block.name}</h2>
           <BlockDays days={block.days} />
         </div>
-        {assigned ? <AssignedMark assigned={assigned} changed={changed} /> : <Link to={editHref} className={PRIMARY_LINK_SM}>Editar y asignar</Link>}
+        {assigned ? <AssignedMark assigned={assigned} changed={changed} /> : <Link to={editHref} className={buttonClass({ size: 'sm' })}>Editar y asignar</Link>}
       </div>
       <div className="overflow-x-auto rounded-xl border border-ink2">
         <table className="w-full min-w-max border-collapse">
@@ -71,8 +72,8 @@ export default function ProposalBlock({ block: proposed, editHref, assigned }) {
                 <td className="px-2 py-2.5 align-top font-mono text-xs text-ink6">{index + 1}</td>
                 <td className={CELL}>{item.exercise_name ?? 'Ejercicio'}</td>
                 <td className={CELL}>{`${item.sets} × ${item.reps}`}</td>
-                <td className={CELL}>{item.rest_seconds == null ? '—' : `${item.rest_seconds} s`}</td>
-                <td className={CELL}>{item.suggested_kg == null ? '—' : `${item.suggested_kg} kg`}</td>
+                <td className={CELL}>{orDash(item.rest_seconds, (v) => `${v} s`)}</td>
+                <td className={CELL}>{orDash(item.suggested_kg, (v) => `${v} kg`)}</td>
                 <td className={`${CELL} max-w-56 text-ink6`}>{orDash(item.notes)}</td>
               </tr>
             ))}

@@ -13,6 +13,23 @@ const SIZES = {
   lg: 'h-14 px-6 text-base',
 };
 
+/**
+ * Clases de `Button` para otro elemento (p. ej. un `Link` de react-router con aspecto de botón): mismo `variant`,
+ * `size` y foco. Es el único lugar con esos estilos.
+ */
+export function buttonClass({ variant = 'primary', size = 'md', full = false, className = '' } = {}) {
+  return [
+    'inline-flex items-center justify-center gap-2 rounded-lg border font-display font-semibold',
+    'tracking-[-0.1px] cursor-pointer transition-colors',
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText',
+    'disabled:cursor-not-allowed disabled:opacity-50',
+    VARIANTS[variant] ?? VARIANTS.primary,
+    SIZES[size] ?? SIZES.md,
+    full ? 'w-full' : '',
+    className,
+  ].join(' ');
+}
+
 export default function Button({
   variant = 'primary',
   size = 'md',
@@ -24,16 +41,7 @@ export default function Button({
   children,
   ...rest
 }) {
-  const classes = [
-    'inline-flex items-center justify-center gap-2 rounded-lg border font-display font-semibold',
-    'tracking-[-0.1px] cursor-pointer transition-colors',
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentText',
-    'disabled:cursor-not-allowed disabled:opacity-50',
-    VARIANTS[variant] ?? VARIANTS.primary,
-    SIZES[size] ?? SIZES.md,
-    full ? 'w-full' : '',
-    className,
-  ].join(' ');
+  const classes = buttonClass({ variant, size, full, className });
 
   return (
     <button

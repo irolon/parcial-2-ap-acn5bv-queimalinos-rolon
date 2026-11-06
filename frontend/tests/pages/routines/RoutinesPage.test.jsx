@@ -73,12 +73,12 @@ describe('RoutinesPage', () => {
   it('"Rutina con IA" está junto a "Nueva rutina", también sin rutinas', async () => {
     stubRoutinesApi({ routines: [routine()] });
     const { unmount } = renderRoute('/pt/rutinas');
-    expect(await main().findByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia');
+    expect(await main().findByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia?nueva=1');
     unmount();
     stubRoutinesApi();
     renderRoute('/pt/rutinas');
     await main().findByText('Todavía no armaste rutinas');
-    expect(main().getByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia');
+    expect(main().getByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia?nueva=1');
   });
 
   it('si falla la carga ofrece reintentar', async () => {

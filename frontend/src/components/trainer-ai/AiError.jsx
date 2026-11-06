@@ -1,8 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router';
-import Button from '@/components/shared/ui/Button';
+import Button, { buttonClass } from '@/components/shared/ui/Button';
 import { useCountdown } from '@/hooks/trainer-ai/useCountdown';
-import { GHOST_LINK } from './links';
 
 function Retry({ wait, onRetry }) {
   const left = useCountdown(wait);
@@ -25,7 +24,7 @@ export default function AiError({ error, manualHref, onRetry }) {
       <p className="max-w-md font-body text-sm text-bone0">{error.message}</p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Retry wait={error.kind === 'rate' ? error.retryAfter : 0} onRetry={onRetry} />
-        <Link to={manualHref} className={GHOST_LINK}>Armar a mano</Link>
+        <Link to={manualHref} className={buttonClass({ variant: 'ghost' })}>Armar a mano</Link>
       </div>
     </div>
   );

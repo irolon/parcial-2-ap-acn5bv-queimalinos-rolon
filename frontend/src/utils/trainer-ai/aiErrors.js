@@ -13,8 +13,13 @@ const FORM_FIELD = {
   preferences: 'preferences',
 };
 
+/** El alumno elegido (o el de `?alumno=`) no es un activo del entrenador. */
+export const STUDENT_NOT_FOUND = 'Ese alumno no está activo o no existe';
+/** Segundos de espera de un 429 que no trajo `Retry-After`. */
+const DEFAULT_RETRY_AFTER = 30;
+
 const NOT_FOUND = {
-  STUDENT_NOT_FOUND: { studentId: 'Ese alumno no está activo o no existe' },
+  STUDENT_NOT_FOUND: { studentId: STUDENT_NOT_FOUND },
   TEMPLATE_NOT_FOUND: { baseTemplateId: 'Esa plantilla ya no existe' },
 };
 
@@ -30,14 +35,14 @@ function validationFields(details) {
 /**
  * Qué mostrar ante un error de generar:
  * - `fields`: vuelve al formulario con errores en su campo (400, y 404 del alumno o la plantilla);
- * - `rate`: el mensaje del backend y la cuenta atrás de `Retry-After`;
+ * - `rate`: el mensaje del backend y la cuenta atrás de `Retry-After` (30 s si no vino);
  * - `invalid` (502) y `unavailable` (503, sin red o cualquier otro): mensaje fijo con salidas.
  */
 export function aiErrorOf(error) {
   const code = error?.code;
   if (code === 'VALIDATION_ERROR') return validationFields(error.details);
   if (NOT_FOUND[code]) return { kind: 'fields', fields: NOT_FOUND[code] };
-  if (code === 'RATE_LIMIT_EXCEEDED') return { kind: 'rate', message: error.message, retryAfter: error.retryAfter ?? 0 };
+  if (code === 'RATE_LIMIT_EXCEEDED') return { kind: 'rate', message: error.message, retryAfter: error.retryAfter ?? DEFAULT_RETRY_AFTER };
   if (code === 'AI_INVALID_RESPONSE') return { kind: 'invalid', message: INVALID };
   return { kind: 'unavailable', message: UNAVAILABLE };
 }

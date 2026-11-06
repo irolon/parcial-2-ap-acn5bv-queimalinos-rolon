@@ -63,6 +63,20 @@ describe('AiRoutinePage: formulario', () => {
     expect(screen.getByLabelText('Lesiones')).toHaveValue('');
   });
 
+  it('al elegir un alumno no borra lo que su ficha no tiene', async () => {
+    const user = setupUser();
+    renderAi('/pt/rutinas/ia', { detail: (id) => details[id], students: [student({ id: 'st-2', name: 'Luis Gil' })] });
+    await findGenerateButton();
+    await user.type(screen.getByLabelText('Lesiones'), 'Rodilla');
+    await user.click(chip('Mancuernas'));
+    const select = screen.getByLabelText('Alumno');
+    await within(select).findByRole('option', { name: 'Luis Gil' });
+    await user.selectOptions(select, 'st-2');
+    await vi.waitFor(() => expect(screen.getByLabelText('Objetivo')).toHaveValue('weight_loss'));
+    expect(screen.getByLabelText('Lesiones')).toHaveValue('Rodilla');
+    expect(chip('Banda')).toHaveAttribute('aria-checked', 'true');
+  });
+
   it('sin alumno arranca vacío, con 3 días y 60 minutos, y ofrece las plantillas', async () => {
     renderAi('/pt/rutinas/ia', { templates: [{ id: 't-1', name: 'Full body', goal: 'hypertrophy', days: ['monday'], exercise_count: 2 }] });
     await findGenerateButton();

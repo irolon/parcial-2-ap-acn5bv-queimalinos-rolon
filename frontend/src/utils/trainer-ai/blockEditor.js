@@ -20,3 +20,21 @@ export function fromBlock(block, goal, exercisesById = new Map()) {
     },
   };
 }
+
+/** Índice de `?bloque=`: un entero no negativo, o `null` (vacío, ausente o cualquier otra cosa no es el bloque 0). */
+export function blockIndexOf(raw) {
+  return typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : null;
+}
+
+/**
+ * Qué muestra el editor al arrancar con un bloque (`source` de `useAiBlock`, o `null`) y el borrador recuperado
+ * (`found`, o `null`): `state` (o `null` = dejarlo como está), `ask` = el bloque convertido si hay que preguntar
+ * antes de pisar el borrador, y `loaded` = el bloque convertido si se cargó directo. Si el borrador ya es ese bloque
+ * (una recarga), se recupera sin preguntar.
+ */
+export function planBlockStart(source, found, exercisesById) {
+  const block = source && !(found && source.draftIsBlock) ? fromBlock(source.block, source.goal, exercisesById) : null;
+  if (!block) return { state: found?.state ?? null, ask: null, loaded: null };
+  if (found) return { state: found.state, ask: block, loaded: null };
+  return { state: block.state, ask: null, loaded: block };
+}

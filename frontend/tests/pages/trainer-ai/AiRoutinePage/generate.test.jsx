@@ -53,13 +53,26 @@ describe('AiRoutinePage: generar', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
     fireEvent.click(screen.getByRole('button', { name: 'Generar propuesta' }));
     expect(screen.getByText('Armando la rutina…')).toBeVisible();
+    expect(screen.getByText('Mirando los datos del alumno y tu biblioteca…')).toBeVisible();
     expect(screen.getByText('0 s')).toBeVisible();
+    expect(screen.getByText('Segundos transcurridos:')).toHaveClass('sr-only');
     await act(() => vi.advanceTimersByTimeAsync(8000));
     expect(screen.getByText('Eligiendo ejercicios de tu biblioteca…')).toBeVisible();
     expect(screen.getByText('8 s')).toBeVisible();
     await act(() => vi.advanceTimersByTimeAsync(10000));
     expect(screen.getByText('Ya casi…')).toBeVisible();
     expect(screen.getByText('18 s')).toBeVisible();
+  });
+
+  it('sin alumno, el primer mensaje de la espera no habla del alumno', async () => {
+    const user = setupUser();
+    renderAi('/pt/rutinas/ia', { generate: hangingGenerate() });
+    await findGenerateButton();
+    await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+    await user.selectOptions(screen.getByLabelText('Nivel'), 'beginner');
+    await user.click(screen.getByRole('button', { name: 'Generar propuesta' }));
+    expect(screen.getByText('Mirando tu biblioteca…')).toBeVisible();
+    expect(screen.queryByText(/datos del alumno/)).not.toBeInTheDocument();
   });
 
   it('"Cancelar" aborta el pedido y vuelve al formulario con los datos intactos', async () => {
