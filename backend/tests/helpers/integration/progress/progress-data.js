@@ -2,7 +2,7 @@
 // (ver la tarea 8 del plan de la suite). P = IT · Press (chest), D = IT · Dominadas (back).
 // Cada sesión cierra 1 h después de empezar; la serie n se hace a los n minutos.
 
-/** Series: [ejercicio, kg, reps, completed?]. */
+/** Series: [ejercicio, kg, reps, completed?, planificado?] (el último solo si hubo sustitución). */
 export const SESSIONS = {
   S1: {
     startedAt: '2026-10-06T13:00:00Z',
@@ -31,6 +31,9 @@ export const SESSIONS = {
   },
   // Primera vez de D con carga después de dos sesiones de peso corporal: no es récord.
   S4: { startedAt: '2026-10-28T13:00:00Z', sets: [['D', 10, 6]] },
+  // Sustitución: estaba planificado P y se hizo D. Cuenta para D (curva, días, última carga) y
+  // no para P. Más liviana que S4, así no cambia los récords de D.
+  S5: { startedAt: '2026-10-30T13:00:00Z', sets: [['D', 8, 5, true, 'P']] },
 };
 
 const D_BODYWEIGHT_POINTS = [
@@ -57,6 +60,8 @@ export const EXPECTED = {
     points: [
       ...D_BODYWEIGHT_POINTS,
       { date: '2026-10-28', max_kg: 10, volume_kg: 60, e1rm_kg: 12, sets: 1, reps: 6 },
+      // S5 sustituida: 8 × 5 → volumen 40, e1RM 8 × (1 + 5/30) = 9,33.
+      { date: '2026-10-30', max_kg: 8, volume_kg: 40, e1rm_kg: 9.3, sets: 1, reps: 5 },
     ],
     pr: { max_kg: { value: 10, date: '2026-10-28' }, e1rm_kg: { value: 12, date: '2026-10-28' } },
     default_metric: 'e1rm_kg',
@@ -68,7 +73,7 @@ export const EXPECTED = {
     { week_start: '2026-10-19', volume_kg: 1270, sessions: 2 },
   ],
   overviewExercises: [
-    { key: 'D', muscle_group: 'back', days: 3, last_date: '2026-10-28' },
+    { key: 'D', muscle_group: 'back', days: 4, last_date: '2026-10-30' },
     { key: 'P', muscle_group: 'chest', days: 3, last_date: '2026-10-25' },
   ],
   sessionSummaries: {
@@ -76,7 +81,9 @@ export const EXPECTED = {
     S2: { sets: 2, volume_kg: 820, has_pr: true },
     S3: { sets: 2, volume_kg: 450, has_pr: false },
     S4: { sets: 1, volume_kg: 60, has_pr: false },
+    S5: { sets: 1, volume_kg: 40, has_pr: false },
   },
-  // last_session_kg de /routines/today: la serie incompleta de 100 kg no cuenta.
-  lastSessionKg: { P: 75, D: 10 },
+  // last_session_kg de /routines/today: la serie incompleta de 100 kg no cuenta y la sustituida
+  // de S5 es la última de D, no de P.
+  lastSessionKg: { P: 75, D: 8 },
 };

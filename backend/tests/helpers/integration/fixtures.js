@@ -29,9 +29,10 @@ export async function createRoutine(trainer, studentId, { label, exerciseIds, da
   return { id: res.body.data.id, routineExerciseIds: res.body.data.exercises.map((e) => e.id) };
 }
 
-/** Una serie para POST /sessions/:id/sets. */
+/** Una serie para POST /sessions/:id/sets (`originalExerciseId`: el planificado si se sustituyó). */
 export function setRow({
   exerciseId,
+  originalExerciseId = null,
   setNumber,
   reps,
   kg,
@@ -42,6 +43,7 @@ export function setRow({
   return {
     id,
     exercise_id: exerciseId,
+    original_exercise_id: originalExerciseId,
     set_number: setNumber,
     actual_reps: reps,
     actual_kg: kg,

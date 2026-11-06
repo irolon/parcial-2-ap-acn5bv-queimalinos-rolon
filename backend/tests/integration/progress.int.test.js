@@ -36,9 +36,10 @@ describe('integración — progreso con números conocidos', () => {
     });
 
     for (const [name, { startedAt, sets }] of Object.entries(SESSIONS)) {
-      const rows = sets.map(([key, kg, reps, completed = true], i) =>
+      const rows = sets.map(([key, kg, reps, completed = true, planned], i) =>
         setRow({
           exerciseId: ex[key],
+          originalExerciseId: planned ? ex[planned] : null,
           setNumber: i + 1,
           reps,
           kg,
@@ -109,6 +110,20 @@ describe('integración — progreso con números conocidos', () => {
     expect(s2.find((g) => g.exercise.id === ex.P).is_pr).toBe(true);
     expect((await detail('S3')).some((g) => g.is_pr)).toBe(false);
     expect((await detail('S4')).some((g) => g.is_pr)).toBe(false);
+  });
+
+  it('sustitución: la serie de S5 (planificado P, hecho D) suma a D y no a P', async () => {
+    const res = await asTrainer(`/students/${student.id}/sessions/${sessionIds.S5}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.has_modifications).toBe(true);
+    expect(res.body.data.exercises.map((g) => [g.exercise.id, g.original_exercise?.id])).toEqual([
+      [ex.D, ex.P],
+    ]);
+    const d = await curve('D');
+    expect(d.points.at(-1)).toEqual(EXPECTED.pullupCurve.points.at(-1));
+    const p = await curve('P');
+    expect(p.points.map((pt) => pt.date)).not.toContain('2026-10-30');
+    expect(p.points).toEqual(EXPECTED.pressCurve.points);
   });
 
   it('rutina de hoy: última carga de cada ejercicio (la serie incompleta no cuenta)', async () => {
