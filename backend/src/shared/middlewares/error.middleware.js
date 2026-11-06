@@ -14,9 +14,13 @@ const BODY_PARSER_ERRORS = {
   'charset.unsupported': Errors.unsupportedBodyEncoding,
 };
 
+// Los errores de zlib (gzip/deflate corrupto) llegan sin `type`, con code Z_* y 400 + expose.
+const isBodyParserError = (err) =>
+  typeof err?.type === 'string' || (typeof err?.code === 'string' && err.code.startsWith('Z_'));
+
 /** Traduce un error del body-parser; cualquier otro 4xx suyo (expose) es un 400, nunca un 500. */
 function fromBodyParser(err) {
-  if (err instanceof AppError || typeof err?.type !== 'string') return err;
+  if (err instanceof AppError || !isBodyParserError(err)) return err;
   const known = BODY_PARSER_ERRORS[err.type];
   if (known) return known();
   const clientError = err.expose && err.status >= 400 && err.status < 500;

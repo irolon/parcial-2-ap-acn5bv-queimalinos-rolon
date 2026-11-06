@@ -52,6 +52,17 @@ describe('errores del body (createApp)', () => {
     expect(res.status).toBe(415);
     expect(res.body).toEqual(UNSUPPORTED);
   });
+
+  it('gzip corrupto → 400 VALIDATION_ERROR, nunca 500', async () => {
+    const res = await http.send('post', '/api/auth/register', {
+      raw: 'esto no es gzip',
+      headers: { 'content-encoding': 'gzip' },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({
+      error: { code: 'VALIDATION_ERROR', message: 'El cuerpo de la solicitud es inválido', details: [] },
+    });
+  });
 });
 
 /** App mínima cuyo único endpoint falla con `err`, para probar el errorHandler. */
