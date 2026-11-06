@@ -1,10 +1,12 @@
 import AssignRoutineDialog from './AssignRoutineDialog';
+import ReplaceDraftDialog from './ReplaceDraftDialog';
 import SaveTemplateDialog from './SaveTemplateDialog';
 import UseTemplateDialog from './UseTemplateDialog';
 
 /**
  * Modal abierto del editor (`dialog` = `{ type }`) o nada. `on` trae los manejadores de la página:
  * `assigned`, `invalid`, `templateGone`, `invalidRows`, `invalidTemplate`, `load`, `saved`, `close` y `hasContent` (si el editor tiene algo que perder).
+ * `aiReplace` (`dialog.next` = el bloque de la IA ya convertido) usa `loadBlock(next)` y `keepDraft`.
  */
 export default function RoutineDialogs({ dialog, state, byId, preselectedStudentId, on }) {
   switch (dialog?.type) {
@@ -23,6 +25,8 @@ export default function RoutineDialogs({ dialog, state, byId, preselectedStudent
       return <UseTemplateDialog hasContent={on.hasContent} exercisesById={byId} onLoad={on.load} onClose={on.close} />;
     case 'save':
       return <SaveTemplateDialog state={state} onSaved={on.saved} onInvalid={on.invalidRows} onServerInvalid={on.invalidTemplate} onClose={on.close} />;
+    case 'aiReplace':
+      return <ReplaceDraftDialog onReplace={() => on.loadBlock(dialog.next)} onKeep={on.keepDraft} />;
     default:
       return null;
   }

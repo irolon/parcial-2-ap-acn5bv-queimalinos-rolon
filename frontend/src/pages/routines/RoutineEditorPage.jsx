@@ -13,11 +13,13 @@ import Button from '@/components/shared/ui/Button';
 import { useExercisesQuery } from '@/hooks/exercises/useExercises';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useRoutineDraft } from '@/hooks/routines/useRoutineDraft';
-import { profileHref } from '@/routes/routeTable';
+import { useAiBlock } from '@/hooks/trainer-ai/useAiBlock';
+import { AI_ROUTINE, profileHref } from '@/routes/routeTable';
 import { clearDraft, readDraft, restoreDraft } from '@/utils/routines/draft';
 import * as editor from '@/utils/routines/editorState';
 import { validateRoutine } from '@/utils/routines/routineForm';
 import { serverErrorsFor, templateErrorsFor } from '@/utils/routines/serverErrors';
+import { fromBlock } from '@/utils/trainer-ai/blockEditor';
 
 const missingNotice = (n) => `Quitamos ${n} ${n === 1 ? 'ejercicio que ya no está' : 'ejercicios que ya no están'} en la biblioteca`;
 const NO_DRAFT = { ready: false, restored: false, missing: 0 };
@@ -39,6 +41,7 @@ export default function RoutineEditorPage() {
   const [notice, setNotice] = useState(null);
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const ai = useAiBlock(trainerId, params);
   const replaceState = (next) => {
     setState(next);
     setServerErrors(null);
@@ -52,7 +55,16 @@ export default function RoutineEditorPage() {
     // Se intenta restaurar una sola vez, con la biblioteca ya cargada (ver `useRoutineDraft`).
     // Si ya hay algo escrito no se pisa: se marca listo sin restaurar.
     const found = trainerId && editor.isBlank(state) ? restoreDraft(readDraft(trainerId), byId) : null;
-    if (found) setState(found.state);
+    // Un bloque de la IA (`?ia=&bloque=`) se carga como una plantilla; si hay un borrador que no es ese mismo bloque
+    // ya cargado (una recarga), se muestra el borrador y se pregunta antes de reemplazarlo.
+    const block = ai.source && !(found && ai.source.draftIsBlock) ? fromBlock(ai.source.block, ai.source.goal, byId) : null;
+    const shown = block && !found ? block : found;
+    if (shown) setState(shown.state);
+    if (block && found) setDialog({ type: 'aiReplace', next: block });
+    if (block && !found) {
+      ai.markLoaded();
+      setNotice(block.missing > 0 ? missingNotice(block.missing) : null);
+    }
     setDraft({ ready: true, restored: Boolean(found), missing: found?.missing ?? 0 });
   }
 
@@ -73,7 +85,20 @@ export default function RoutineEditorPage() {
     hasContent: !editor.isBlank(state),
     assigned: (student) => {
       cancelDraft();
-      navigate(profileHref(student.id));
+      if (!ai.source) return navigate(profileHref(student.id));
+      ai.markAssigned(student);
+      return navigate(AI_ROUTINE.path);
+    },
+    loadBlock: (next) => {
+      replaceState(next.state);
+      setDraft({ ...draft, restored: false, missing: 0 });
+      setNotice(next.missing > 0 ? missingNotice(next.missing) : null);
+      ai.markLoaded();
+      setDialog(null);
+    },
+    keepDraft: () => {
+      ai.dismiss();
+      setDialog(null);
     },
     invalid: (error) => setServerErrors(serverErrorsFor(error, state)),
     templateGone: () => apply(editor.clearTemplate),
