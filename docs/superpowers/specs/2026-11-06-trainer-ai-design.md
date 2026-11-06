@@ -39,8 +39,10 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 **Contexto que sale hacia n8n, sin datos personales (RNF-26):**
 - los parámetros resueltos de arriba (nunca nombre, email ni fecha de nacimiento del alumno);
 - la **biblioteca**: los ejercicios accesibles para el trainer (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, con `{ id, name, muscle_group, equipment }` y hasta 200;
-- `previous_templates`: las 3 plantillas más recientes del trainer, como `{ name, goal, level, days, exercise_names[] }`;
-- `base_template`: la estructura de la plantilla base, si vino, con los nombres de sus ejercicios.
+- `previous_templates`: las 3 plantillas más recientes del trainer, como `{ goal, level, days, exercise_names[] }`, **sin el nombre de la plantilla** (los PT suelen ponerle el nombre del alumno);
+- `base_template`: la estructura de la plantilla base, si vino, con los nombres de sus ejercicios y también sin su nombre.
+
+`injuries` (y `preferences`) es **texto libre que se manda a la IA** tal cual: la IA lo necesita para cuidar al alumno. Por eso la UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales (nombre, documento, contacto).
 
 **Webhook:** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **30 s** (`AbortSignal.timeout`). Las dos variables son opcionales en `env.js`, porque la app tiene que arrancar sin IA. Si falta la URL, si se corta por timeout o si n8n responde algo que no es 2xx, el backend responde **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.").
 
@@ -115,7 +117,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 ## Pruebas
 
-- **Unitarias:** validación del body (cada regla); completar con el alumno; contexto sin PII (el payload no trae `name`, `email` ni `birth_date`); filtro de la biblioteca por equipamiento; cliente del webhook (secreto en el header, timeout → 503, 5xx → 503, sin URL → 503); validación de la propuesta (cada regla, el ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días distinto de la frecuencia, campos de más descartados); límite → 429 (también por intentos fallidos y por una generación en curso); guardar (1 bloque y varios, nombres, 404, 409, ejercicio que ya no existe → 400 sin crear nada).
+- **Unitarias:** validación del body (cada regla); completar con el alumno; contexto sin PII (el payload no trae `name`, `email` ni `birth_date` del alumno ni el nombre de ninguna plantilla); filtro de la biblioteca por equipamiento; cliente del webhook (secreto en el header, timeout → 503, 5xx → 503, sin URL → 503); validación de la propuesta (cada regla, el ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días distinto de la frecuencia, campos de más descartados); límite → 429 (también por intentos fallidos y por una generación en curso); guardar (1 bloque y varios, nombres, 404, 409, ejercicio que ya no existe → 400 sin crear nada).
 - **Integración** contra Supabase dev, con el webhook simulado por un servidor HTTP local en el test: generar → guardar → las plantillas aparecen en `GET /routine-templates` con `generated_by_ai = true`; aislamiento: un trainer no puede guardar ni ver la generación de otro (404, sin ids ajenos en el body).
 - **Prueba real con n8n y KIMI:** pendiente de Igna. En la PR queda el paso a paso para correrla.
 

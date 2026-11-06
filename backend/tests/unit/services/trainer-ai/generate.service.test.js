@@ -7,9 +7,11 @@ import {
   mockContextRepo,
   mockStudentsRepo,
   mockTemplatesRepo,
+  mockTemplatesService,
   mockClient,
   TRAINER_ID,
   STUDENT_ID,
+  TEMPLATE_ID,
   GENERATION_ID,
   STUDENT,
   LIBRARY,
@@ -51,6 +53,17 @@ describe('trainer-ai · generate.service · generateRoutine', () => {
     const sent = JSON.stringify(mockClient.requestRoutineProposal.mock.calls[0][0]);
     for (const value of [STUDENT.name, STUDENT.email, STUDENT.birth_date, STUDENT_ID]) expect(sent).not.toContain(value);
     for (const key of ['"name":"Lucía', '"email"', '"birth_date"', '"student_id"']) expect(sent).not.toContain(key);
+  });
+
+  it('ningún nombre de plantilla (previas ni base) llega al payload: los PT les ponen el nombre del alumno', async () => {
+    const template = (name) => ({ name, goal: 'strength', level: null, structure: { days: ['monday'], exercises: [] } });
+    mockContextRepo.findRecentTemplates.mockResolvedValue([template('Rutina de Lucía Pérez')]);
+    mockTemplatesService.getOwnedTemplate.mockResolvedValue(template('Plan Juan Gómez'));
+    await generateService.generateRoutine(TRAINER_ID, { ...BODY, base_template_id: TEMPLATE_ID }, NOW);
+    const sent = mockClient.requestRoutineProposal.mock.calls[0][0];
+    expect(JSON.stringify(sent)).not.toMatch(/Lucía|Juan/);
+    expect(sent.previous_templates[0]).not.toHaveProperty('name');
+    expect(sent.base_template).not.toHaveProperty('name');
   });
 
   it('guarda la generación (params resueltos sin la biblioteca) y devuelve la propuesta con nombres', async () => {

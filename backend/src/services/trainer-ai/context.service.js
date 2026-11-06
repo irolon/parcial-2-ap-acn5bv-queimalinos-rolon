@@ -23,7 +23,8 @@ function resolveEquipment(fromBody, fromStudent) {
 
 /**
  * Parámetros resueltos de la generación: el body validado y, si vino student_id, lo que
- * falte se completa con el alumno. Nunca incluye datos personales (nombre, email, nacimiento).
+ * falte se completa con el alumno. No incluye nombre, email, nacimiento ni student_id;
+ * `injuries` y `preferences` son texto libre del PT que sí viaja a la IA.
  */
 export async function resolveParams(trainerId, body) {
   const student = body.student_id ? await getActiveStudent(trainerId, body.student_id) : null;
@@ -48,7 +49,6 @@ const namesOf = (structure, byId) =>
 
 function toBaseTemplate(template, byId) {
   return {
-    name: template.name,
     goal: template.goal,
     level: template.level,
     days: structureDays(template.structure),
@@ -67,6 +67,7 @@ function toBaseTemplate(template, byId) {
 /**
  * Contexto para n8n: la biblioteca filtrada por equipamiento (más bodyweight), las
  * plantillas recientes del trainer y la plantilla base (404 TEMPLATE_NOT_FOUND si es ajena).
+ * Sin el nombre de las plantillas: los PT suelen ponerles el del alumno.
  */
 export async function buildContext(trainerId, params, baseTemplateId) {
   const equipment = [...new Set([...params.available_equipment, BODYWEIGHT])];
@@ -83,7 +84,6 @@ export async function buildContext(trainerId, params, baseTemplateId) {
   return {
     library,
     previous_templates: recent.map((t) => ({
-      name: t.name,
       goal: t.goal,
       level: t.level,
       days: structureDays(t.structure),

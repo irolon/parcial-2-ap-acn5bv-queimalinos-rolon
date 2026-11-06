@@ -21,11 +21,11 @@ describe('ai-context.repository', () => {
     expect(callsOf('limit')).toEqual([[200]]);
   });
 
-  it('findRecentTemplates: las 3 más nuevas del trainer con su structure', async () => {
+  it('findRecentTemplates: las 3 más nuevas del trainer con su structure, sin el nombre', async () => {
     fake.result = { data: [], error: null };
     await repo.findRecentTemplates('t-1');
     expect(fake.tables).toEqual(['routine_templates']);
-    expect(callsOf('select')).toEqual([['name, goal, level, structure']]);
+    expect(callsOf('select')).toEqual([['goal, level, structure']]);
     expect(callsOf('eq')).toEqual([['trainer_id', 't-1']]);
     expect(callsOf('order')).toEqual([['created_at', { ascending: false }]]);
     expect(callsOf('limit')).toEqual([[3]]);

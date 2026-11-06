@@ -20,12 +20,12 @@ export async function findLibraryForEquipment(trainerId, equipment) {
   );
 }
 
-/** Las plantillas más recientes del trainer (contexto de estilo para la IA). */
+/** Las plantillas más recientes del trainer (contexto de estilo para la IA), sin el nombre. */
 export async function findRecentTemplates(trainerId) {
   return unwrap(
     await supabase
       .from(ROUTINE_TEMPLATES_TABLE)
-      .select('name, goal, level, structure')
+      .select('goal, level, structure')
       .eq('trainer_id', trainerId)
       .order('created_at', { ascending: false })
       .limit(PREVIOUS_TEMPLATES)

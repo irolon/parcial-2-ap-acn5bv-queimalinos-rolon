@@ -93,20 +93,19 @@ describe('trainer-ai · context.service · buildContext', () => {
     expect(context.library).toEqual(LIBRARY);
   });
 
-  it('previous_templates con nombre, goal, level, días y nombres de ejercicios; sin base → null', async () => {
+  it('previous_templates con goal, level, días y nombres de ejercicios, sin el nombre de la plantilla; sin base → null', async () => {
     const context = await contextService.buildContext(TRAINER_ID, PARAMS);
     expect(context.previous_templates).toEqual([
-      { name: 'Previa', goal: 'strength', level: null, days: ['monday'], exercise_names: ['Press banca plano'] },
+      { goal: 'strength', level: null, days: ['monday'], exercise_names: ['Press banca plano'] },
     ]);
     expect(context.base_template).toBeNull();
   });
 
-  it('base_template: la estructura de la plantilla propia con los nombres de sus ejercicios', async () => {
+  it('base_template: la estructura de la plantilla propia con los nombres de sus ejercicios, sin su nombre', async () => {
     mockTemplatesService.getOwnedTemplate.mockResolvedValue({ id: TEMPLATE_ID, ...TEMPLATE, structure: { days: ['friday'], exercises: [{ exercise_id: EX2, sets: 3, reps: 12, rest_seconds: 60 }] } });
     const context = await contextService.buildContext(TRAINER_ID, PARAMS, TEMPLATE_ID);
     expect(mockTemplatesService.getOwnedTemplate).toHaveBeenCalledWith(TRAINER_ID, TEMPLATE_ID);
     expect(context.base_template).toEqual({
-      name: 'Previa',
       goal: 'strength',
       level: null,
       days: ['friday'],

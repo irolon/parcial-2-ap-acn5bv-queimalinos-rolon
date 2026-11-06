@@ -587,14 +587,15 @@ Los campos de más se descartan.
     "available_equipment": ["dumbbell", "bodyweight"], "injuries": "string | null", "preferences": "string | null"
   },
   "library": [ { "id": "uuid", "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" } ],
-  "previous_templates": [ { "name": "…", "goal": "…", "level": "… | null", "days": ["monday"], "exercise_names": ["…"] } ],
+  "previous_templates": [ { "goal": "…", "level": "… | null", "days": ["monday"], "exercise_names": ["…"] } ],
   "base_template": null
 }
 ```
 
 - `library`: ejercicios accesibles (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, hasta 200.
-- `previous_templates`: las 3 plantillas más recientes del trainer.
-- `base_template`: `null`, o `{ name, goal, level, days, exercises: [{ exercise_id, exercise_name, sets, reps, rest_seconds, suggested_kg, notes }] }` si vino `base_template_id`.
+- `previous_templates`: las 3 plantillas más recientes del trainer, sin su nombre (los PT suelen ponerle el del alumno).
+- `base_template`: `null`, o (sin el nombre de la plantilla) `{ goal, level, days, exercises: [{ exercise_id, exercise_name, sets, reps, rest_seconds, suggested_kg, notes }] }` si vino `base_template_id`.
+- `params.injuries` y `params.preferences` son **texto libre que se manda a la IA** tal cual (la IA necesita las lesiones). La UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales.
 
 **Respuesta esperada de n8n** (el backend la valida):
 
