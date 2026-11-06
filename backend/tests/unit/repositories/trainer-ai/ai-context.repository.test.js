@@ -21,6 +21,20 @@ describe('ai-context.repository', () => {
     expect(callsOf('limit')).toEqual([[200]]);
   });
 
+  it('findLibraryByIds: los ejercicios de esos ids que siguen accesibles (globales o propios)', async () => {
+    fake.result = { data: [{ id: 'e2' }], error: null };
+    await expect(repo.findLibraryByIds('t-1', ['e1', 'e2'])).resolves.toEqual([{ id: 'e2' }]);
+    expect(fake.tables).toEqual(['exercises']);
+    expect(callsOf('select')).toEqual([['id, name, muscle_group, equipment']]);
+    expect(callsOf('or')).toEqual([['is_global.eq.true,trainer_id.eq.t-1']]);
+    expect(callsOf('in')).toEqual([['id', ['e1', 'e2']]]);
+  });
+
+  it('findLibraryByIds sin ids no consulta la base', async () => {
+    await expect(repo.findLibraryByIds('t-1', [])).resolves.toEqual([]);
+    expect(fake.tables).toEqual([]);
+  });
+
   it('findRecentTemplates: las 3 más nuevas del trainer con su structure, sin el nombre', async () => {
     fake.result = { data: [], error: null };
     await repo.findRecentTemplates('t-1');

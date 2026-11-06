@@ -592,7 +592,7 @@ Los campos de más se descartan.
 }
 ```
 
-- `library`: ejercicios accesibles (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, hasta 200.
+- `library`: ejercicios accesibles (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, hasta 200. Con `base_template_id` van además, primero y dentro de los 200, los ejercicios de la plantilla base que siguen accesibles (aunque su equipamiento no esté en la lista).
 - `previous_templates`: las 3 plantillas más recientes del trainer, sin su nombre (los PT suelen ponerle el del alumno).
 - `base_template`: `null`, o (sin el nombre de la plantilla) `{ goal, level, days, exercises: [{ exercise_id, exercise_name, sets, reps, rest_seconds, suggested_kg, notes }] }` si vino `base_template_id`.
 - `params.injuries` y `params.preferences` son **texto libre que se manda a la IA** tal cual (la IA necesita las lesiones). La UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales.

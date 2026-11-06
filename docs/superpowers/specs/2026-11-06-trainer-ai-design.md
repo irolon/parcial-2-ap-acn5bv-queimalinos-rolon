@@ -38,7 +38,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 **Contexto que sale hacia n8n, sin datos personales (RNF-26):**
 - los parámetros resueltos de arriba (nunca nombre, email ni fecha de nacimiento del alumno);
-- la **biblioteca**: los ejercicios accesibles para el trainer (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, con `{ id, name, muscle_group, equipment }` y hasta 200;
+- la **biblioteca**: los ejercicios accesibles para el trainer (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, con `{ id, name, muscle_group, equipment }` y hasta 200. Si vino `base_template_id`, se suman **siempre** los ejercicios de la plantilla base que siguen accesibles para el trainer (aunque el equipamiento o el corte alfabético los dejaran afuera), primero, sin repetir y dentro de los 200: la IA los copia de la base y, si no estuvieran, la propuesta fallaría con 502;
 - `previous_templates`: las 3 plantillas más recientes del trainer, como `{ goal, level, days, exercise_names[] }`, **sin el nombre de la plantilla** (los PT suelen ponerle el nombre del alumno);
 - `base_template`: la estructura de la plantilla base, si vino, con los nombres de sus ejercicios y también sin su nombre.
 

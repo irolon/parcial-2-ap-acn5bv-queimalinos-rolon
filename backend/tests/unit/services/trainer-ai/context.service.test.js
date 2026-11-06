@@ -84,6 +84,7 @@ describe('trainer-ai · context.service · buildContext', () => {
   beforeEach(() => {
     mockContextRepo.findLibraryForEquipment.mockResolvedValue(LIBRARY);
     mockContextRepo.findRecentTemplates.mockResolvedValue([TEMPLATE]);
+    mockContextRepo.findLibraryByIds.mockResolvedValue([]);
     mockTemplatesRepo.findExercisesByIds.mockResolvedValue([{ id: EX1, name: 'Press banca plano' }, { id: EX2, name: 'Flexiones' }]);
   });
 
@@ -110,6 +111,37 @@ describe('trainer-ai · context.service · buildContext', () => {
       level: null,
       days: ['friday'],
       exercises: [{ exercise_id: EX2, exercise_name: 'Flexiones', sets: 3, reps: 12, rest_seconds: 60, suggested_kg: null, notes: null }],
+    });
+  });
+
+  describe('la biblioteca incluye los ejercicios de la plantilla base', () => {
+    const EX3 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3';
+    const EX_GONE = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa9';
+    const SQUAT = { id: EX3, name: 'Sentadilla con kettlebell', muscle_group: 'legs', equipment: 'kettlebell' };
+    const base = (ids) => ({ id: TEMPLATE_ID, ...TEMPLATE, structure: { days: ['friday'], exercises: ids.map((exercise_id) => ({ exercise_id, sets: 3, reps: 10 })) } });
+
+    it('suma los accesibles que el filtro de equipamiento dejó afuera, primero y sin repetir', async () => {
+      mockTemplatesService.getOwnedTemplate.mockResolvedValue(base([EX3, EX1, EX_GONE]));
+      mockContextRepo.findLibraryByIds.mockResolvedValue([SQUAT, LIBRARY[0]]);
+      const context = await contextService.buildContext(TRAINER_ID, PARAMS, TEMPLATE_ID);
+      expect(mockContextRepo.findLibraryByIds).toHaveBeenCalledWith(TRAINER_ID, [EX3, EX1, EX_GONE]);
+      expect(context.library).toEqual([SQUAT, LIBRARY[0], LIBRARY[1]]);
+    });
+
+    it('entran dentro del tope de 200 con prioridad (se corta lo último de la biblioteca)', async () => {
+      const full = Array.from({ length: 200 }, (_, i) => ({ id: `lib-${i}`, name: `E${i}`, muscle_group: 'chest', equipment: 'barbell' }));
+      mockContextRepo.findLibraryForEquipment.mockResolvedValue(full);
+      mockTemplatesService.getOwnedTemplate.mockResolvedValue(base([EX3]));
+      mockContextRepo.findLibraryByIds.mockResolvedValue([SQUAT]);
+      const context = await contextService.buildContext(TRAINER_ID, PARAMS, TEMPLATE_ID);
+      expect(context.library).toHaveLength(200);
+      expect(context.library[0]).toEqual(SQUAT);
+      expect(context.library.map((e) => e.id)).not.toContain('lib-199');
+    });
+
+    it('sin plantilla base no consulta ejercicios extra', async () => {
+      await contextService.buildContext(TRAINER_ID, PARAMS);
+      expect(mockContextRepo.findLibraryByIds).not.toHaveBeenCalled();
     });
   });
 

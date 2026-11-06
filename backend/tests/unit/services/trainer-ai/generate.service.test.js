@@ -32,6 +32,7 @@ describe('trainer-ai · generate.service · generateRoutine', () => {
     mockGenerationsRepo.createGeneration.mockImplementation(async (f) => ({ id: GENERATION_ID, ...f }));
     mockContextRepo.findLibraryForEquipment.mockResolvedValue(LIBRARY);
     mockContextRepo.findRecentTemplates.mockResolvedValue([]);
+    mockContextRepo.findLibraryByIds.mockResolvedValue([]);
     mockTemplatesRepo.findExercisesByIds.mockResolvedValue([]);
     mockClient.requestRoutineProposal.mockResolvedValue(ONE_BLOCK);
   });

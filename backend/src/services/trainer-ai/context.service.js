@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { EQUIPMENT } from '../../models/exercises/exercise.model.js';
+import { LIBRARY_LIMIT } from '../../models/trainer-ai/ai-generation.model.js';
 import { structureDays, structureExercises } from '../../models/routine-templates/routine-template.model.js';
 import * as studentsRepository from '../../repositories/students/students.repository.js';
 import * as contextRepository from '../../repositories/trainer-ai/ai-context.repository.js';
@@ -65,7 +66,20 @@ function toBaseTemplate(template, byId) {
 }
 
 /**
- * Contexto para n8n: la biblioteca filtrada por equipamiento (más bodyweight), las
+ * Biblioteca con los ejercicios accesibles de la plantilla base primero (el filtro de
+ * equipamiento o el corte alfabético podían dejarlos afuera, y la IA los copia), sin
+ * repetir y dentro del tope de LIBRARY_LIMIT.
+ */
+async function withBaseExercises(trainerId, library, base) {
+  if (!base) return library;
+  const ids = [...new Set(structureExercises(base.structure).map((e) => e.exercise_id))];
+  const fromBase = await contextRepository.findLibraryByIds(trainerId, ids);
+  const seen = new Set(fromBase.map((e) => e.id));
+  return [...fromBase, ...library.filter((e) => !seen.has(e.id))].slice(0, LIBRARY_LIMIT);
+}
+
+/**
+ * Contexto para n8n: la biblioteca filtrada por equipamiento (más bodyweight y los de la base), las
  * plantillas recientes del trainer y la plantilla base (404 TEMPLATE_NOT_FOUND si es ajena).
  * Sin el nombre de las plantillas: los PT suelen ponerles el del alumno.
  */
@@ -82,7 +96,7 @@ export async function buildContext(trainerId, params, baseTemplateId) {
   const found = ids.length > 0 ? await templatesRepository.findExercisesByIds([...new Set(ids)]) : [];
   const byId = new Map(found.map((e) => [e.id, e]));
   return {
-    library,
+    library: await withBaseExercises(trainerId, library, base),
     previous_templates: recent.map((t) => ({
       goal: t.goal,
       level: t.level,

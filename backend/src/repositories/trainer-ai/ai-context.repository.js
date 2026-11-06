@@ -20,6 +20,18 @@ export async function findLibraryForEquipment(trainerId, equipment) {
   );
 }
 
+/** Los ejercicios de `ids` que siguen accesibles para el trainer (globales o propios). */
+export async function findLibraryByIds(trainerId, ids) {
+  if (ids.length === 0) return [];
+  return unwrap(
+    await supabase
+      .from(EXERCISES_TABLE)
+      .select('id, name, muscle_group, equipment')
+      .or(`is_global.eq.true,trainer_id.eq.${trainerId}`)
+      .in('id', ids)
+  );
+}
+
 /** Las plantillas más recientes del trainer (contexto de estilo para la IA), sin el nombre. */
 export async function findRecentTemplates(trainerId) {
   return unwrap(

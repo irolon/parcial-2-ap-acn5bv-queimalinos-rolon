@@ -13,7 +13,11 @@ export const mockGenerationsRepo = {
 };
 jest.unstable_mockModule(src('repositories/trainer-ai/ai-generations.repository.js'), () => mockGenerationsRepo);
 
-export const mockContextRepo = { findLibraryForEquipment: jest.fn(), findRecentTemplates: jest.fn() };
+export const mockContextRepo = {
+  findLibraryForEquipment: jest.fn(),
+  findRecentTemplates: jest.fn(),
+  findLibraryByIds: jest.fn(),
+};
 jest.unstable_mockModule(src('repositories/trainer-ai/ai-context.repository.js'), () => mockContextRepo);
 
 export const mockStudentsRepo = { findStudentById: jest.fn() };
