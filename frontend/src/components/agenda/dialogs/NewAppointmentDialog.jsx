@@ -5,6 +5,7 @@ import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import Textarea from '@/components/shared/ui/Textarea';
 import { useAppointments, useCreateAppointment, useFreeSlots } from '@/hooks/agenda/useAgenda';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { useStudentsQuery } from '@/hooks/students/useStudents';
 import { arParts } from '@/utils/agenda';
 import { MAX_NOTES, hourChoices, lastBookableDate, scheduledAt } from './newAppointmentForm';
@@ -20,6 +21,7 @@ function Form({ create, onClose }) {
   const [hour, setHour] = useState('');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
+  const lock = useSubmitLock();
   const students = useStudentsQuery({ active: true });
   const free = useFreeSlots(date, date);
   const day = useAppointments(date, date);
@@ -32,7 +34,10 @@ function Form({ create, onClose }) {
 
   function submit(event) {
     event.preventDefault();
-    if (create.isPending) return;
+    lock(save);
+  }
+
+  async function save() {
     const found = {};
     if (!student) found.student = 'Elegí el alumno del turno';
     if (!date || date < today) found.date = 'Elegí una fecha desde hoy';
@@ -43,10 +48,12 @@ function Form({ create, onClose }) {
     if (Object.keys(found).length > 0) return;
     const body = { student_id: student, scheduled_at: scheduledAt(date, hour) };
     if (notes.trim()) body.notes = notes.trim();
-    create.mutate(body, {
-      onSuccess: onClose,
-      onError: (error) => setErrors({ form: error.code === 'SLOT_TAKEN' ? SLOT_TAKEN : error.message }),
-    });
+    try {
+      await create.mutateAsync(body);
+      onClose();
+    } catch (error) {
+      setErrors({ form: error.code === 'SLOT_TAKEN' ? SLOT_TAKEN : error.message });
+    }
   }
 
   const studentOptions = [
