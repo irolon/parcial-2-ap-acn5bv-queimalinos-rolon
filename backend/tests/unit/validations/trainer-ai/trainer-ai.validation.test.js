@@ -87,10 +87,20 @@ describe('trainer-ai.validation · validateGenerateRoutine', () => {
     expect(validateGenerateRoutine({ ...BASE, available_equipment: [] }).available_equipment).toEqual([]);
   });
 
-  it('un texto vacío o null queda como no enviado', () => {
-    const out = validateGenerateRoutine({ ...BASE, injuries: '   ', preferences: null });
-    expect(out).not.toHaveProperty('injuries');
-    expect(out).not.toHaveProperty('preferences');
+  it('preferences vacío o null queda como no enviado', () => {
+    expect(validateGenerateRoutine({ ...BASE, preferences: null })).not.toHaveProperty('preferences');
+    expect(validateGenerateRoutine({ ...BASE, preferences: '  ' })).not.toHaveProperty('preferences');
+  });
+
+  it('injuries vacío o null explícito es "sin lesiones" (null); ausente no viaja', () => {
+    expect(validateGenerateRoutine({ ...BASE, injuries: '   ' }).injuries).toBeNull();
+    expect(validateGenerateRoutine({ ...BASE, injuries: null }).injuries).toBeNull();
+    expect(validateGenerateRoutine(BASE)).not.toHaveProperty('injuries');
+  });
+
+  it('available_equipment null explícito es lista vacía; ausente no viaja', () => {
+    expect(validateGenerateRoutine({ ...BASE, available_equipment: null }).available_equipment).toEqual([]);
+    expect(validateGenerateRoutine(BASE)).not.toHaveProperty('available_equipment');
   });
 });
 

@@ -2,8 +2,8 @@ import { Errors } from '../../shared/utils/errors.js';
 import {
   GENERATION_LIMIT,
   GENERATION_WINDOW_MS,
-  IN_PROGRESS_RETRY_SECONDS,
   retryAfterSeconds,
+  inProgressRetrySeconds,
 } from '../../models/trainer-ai/ai-generation.model.js';
 
 /** Segundos hasta que `times` (más viejos primero) quede por debajo del límite, o null si ya está. */
@@ -21,7 +21,7 @@ function waitFor(times, now) {
  * El reloj se inyecta (`now`) para poder probarlo.
  */
 export function createGenerationLimiter() {
-  const inFlight = new Set();
+  const inFlight = new Map(); // trainerId → cuándo arrancó su generación (ms)
   const attempts = new Map();
 
   /** Intentos del trainer dentro de la ventana (descarta los viejos). */
@@ -34,15 +34,18 @@ export function createGenerationLimiter() {
   }
 
   return {
-    /** Toma el lugar del trainer; 429 si ya tiene una generación en curso. Sincrónico: sin carreras. */
-    start(trainerId) {
+    /**
+     * Toma el lugar del trainer; 429 si ya tiene una generación en curso, con Retry-After =
+     * lo que le falta para el timeout de n8n. Sincrónico: sin carreras.
+     */
+    start(trainerId, now = new Date()) {
       if (inFlight.has(trainerId)) {
         throw Errors.rateLimitExceeded(
-          IN_PROGRESS_RETRY_SECONDS,
+          inProgressRetrySeconds(inFlight.get(trainerId), now),
           'Ya hay una propuesta en curso. Esperá a que termine antes de pedir otra.'
         );
       }
-      inFlight.add(trainerId);
+      inFlight.set(trainerId, now.getTime());
     },
 
     finish(trainerId) {

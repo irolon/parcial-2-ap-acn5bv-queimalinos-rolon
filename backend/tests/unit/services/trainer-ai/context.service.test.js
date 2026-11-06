@@ -54,6 +54,18 @@ describe('trainer-ai · context.service · resolveParams', () => {
     expect(params).toMatchObject({ goal: 'hypertrophy', level: 'beginner', available_equipment: ['bodyweight'], injuries: 'Rodilla' });
   });
 
+  it('injuries null explícito (el PT las borró) no se completa con las del alumno', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT);
+    const params = await contextService.resolveParams(TRAINER_ID, {
+      student_id: STUDENT_ID,
+      frequency_per_week: 2,
+      session_duration_min: 60,
+      injuries: null,
+      available_equipment: [],
+    });
+    expect(params).toMatchObject({ injuries: null, available_equipment: ['bodyweight'], goal: 'strength' });
+  });
+
   it('descarta equipamiento del alumno que no es de la lista', async () => {
     mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, gym_equipment: ['rack', 'band'] });
     const params = await contextService.resolveParams(TRAINER_ID, { student_id: STUDENT_ID, frequency_per_week: 2 });

@@ -16,15 +16,20 @@ async function getActiveStudent(trainerId, studentId) {
   return student;
 }
 
-/** Equipamiento válido sin repetidos; vacío → solo bodyweight. */
+/** Equipamiento válido sin repetidos; el del alumno solo si el body no lo trae; vacío → solo bodyweight. */
 function resolveEquipment(fromBody, fromStudent) {
-  const list = fromBody ?? [...new Set((fromStudent ?? []).filter((e) => EQUIPMENT.includes(e)))];
+  const list =
+    fromBody !== undefined ? fromBody : [...new Set((fromStudent ?? []).filter((e) => EQUIPMENT.includes(e)))];
   return list.length > 0 ? list : [BODYWEIGHT];
 }
 
+/** Lesiones: las del alumno solo si el body no trae el campo (null explícito = sin lesiones). */
+const resolveInjuries = (fromBody, student) =>
+  fromBody !== undefined ? fromBody : student?.injuries?.trim() || null;
+
 /**
  * Parámetros resueltos de la generación: el body validado y, si vino student_id, lo que
- * falte se completa con el alumno. No incluye nombre, email, nacimiento ni student_id;
+ * falte (campo ausente, no vacío) se completa con el alumno. No incluye nombre, email, nacimiento ni student_id;
  * `injuries` y `preferences` son texto libre del PT que sí viaja a la IA.
  */
 export async function resolveParams(trainerId, body) {
@@ -35,7 +40,7 @@ export async function resolveParams(trainerId, body) {
     frequency_per_week: body.frequency_per_week,
     session_duration_min: body.session_duration_min,
     available_equipment: resolveEquipment(body.available_equipment, student?.gym_equipment),
-    injuries: body.injuries ?? (student?.injuries?.trim() || null),
+    injuries: resolveInjuries(body.injuries, student),
     preferences: body.preferences ?? null,
   };
   const details = ['goal', 'level']

@@ -12,7 +12,7 @@ export const GENERATION_COLUMNS =
 /** Límite de intentos de generación por trainer en la ventana (RNF de costo de la IA). */
 export const GENERATION_LIMIT = 20;
 export const GENERATION_WINDOW_MS = 60 * 60 * 1000;
-/** Retry-After cuando ya hay una generación en curso: lo que tarda n8n como máximo (30 s). */
+/** Lo que tarda n8n como máximo (30 s): tope del Retry-After con una generación en curso. */
 export const IN_PROGRESS_RETRY_SECONDS = 30;
 
 export const DEFAULT_SESSION_MIN = 60;
@@ -25,6 +25,12 @@ export const PREVIOUS_TEMPLATES = 3;
 /** Segundos hasta que la generación más vieja de la ventana salga de ella (mínimo 1). */
 export function retryAfterSeconds(oldestCreatedAt, now = new Date()) {
   const freeAt = new Date(oldestCreatedAt).getTime() + GENERATION_WINDOW_MS;
+  return Math.max(1, Math.ceil((freeAt - now.getTime()) / 1000));
+}
+
+/** Segundos que le faltan a la generación en curso (arrancó en `startedAtMs`) para el timeout (mínimo 1). */
+export function inProgressRetrySeconds(startedAtMs, now = new Date()) {
+  const freeAt = startedAtMs + IN_PROGRESS_RETRY_SECONDS * 1000;
   return Math.max(1, Math.ceil((freeAt - now.getTime()) / 1000));
 }
 

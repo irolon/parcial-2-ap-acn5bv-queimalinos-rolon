@@ -27,13 +27,13 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 | Campo | Regla |
 |---|---|
-| `student_id` | Opcional. Si viene, tiene que ser un alumno **activo del trainer** (si no, 404 `STUDENT_NOT_FOUND`). Lo que falte del body se completa con los datos del alumno: `goal`, `level`, `gym_equipment` → `available_equipment` e `injuries`. |
+| `student_id` | Opcional. Si viene, tiene que ser un alumno **activo del trainer** (si no, 404 `STUDENT_NOT_FOUND`). Lo que falte del body se completa con los datos del alumno: `goal`, `level`, `gym_equipment` → `available_equipment` e `injuries` Solo se completa un campo **ausente** del body: `injuries` vacío o `null` es "sin lesiones" y `available_equipment` `[]` o `null` es "solo bodyweight" (el PT los borró a propósito). |
 | `goal` | `hypertrophy \| strength \| weight_loss \| tonify`. Obligatorio, salvo que lo complete el alumno. |
 | `level` | `beginner \| intermediate \| advanced`. Obligatorio, salvo que lo complete el alumno. |
 | `frequency_per_week` | Entero de 1 a 7. Obligatorio. |
 | `session_duration_min` | Entero de 20 a 180. Opcional (por defecto 60). |
-| `available_equipment` | Subconjunto sin repetidos de `barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`. Si queda vacío, solo `bodyweight`. |
-| `injuries`, `preferences` | Texto opcional, hasta 500 caracteres cada uno. |
+| `available_equipment` | Subconjunto sin repetidos de `barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`. `[]` o `null` → solo `bodyweight` (no se completa con el alumno). |
+| `injuries`, `preferences` | Texto opcional, hasta 500 caracteres cada uno. `injuries` vacío o `null` explícito = sin lesiones (no se completa con el alumno). |
 | `base_template_id` | Opcional. Una plantilla del trainer (si no, 404 `TEMPLATE_NOT_FOUND`), para adaptarla. |
 
 **Contexto que sale hacia n8n, sin datos personales (RNF-26):**
@@ -71,7 +71,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 - `rationale` de 1 a 1000 caracteres;
 - cualquier campo de más se descarta; un tipo incorrecto (por ejemplo `"sets": "cuatro"`) se rechaza.
 
-**Límite:** 20 **intentos** por trainer en la última hora: cuenta cada llamada a n8n, exitosa o fallida (502/503), en una ventana deslizante en memoria del proceso, y también las generaciones guardadas en `ai_routine_generations` (así el límite sobrevive a un reinicio). Aplica a `max(guardadas, intentos) ≥ 20`. Pasado el límite, **429 `RATE_LIMIT_EXCEEDED`** con `Retry-After`. Además, **una sola generación en curso por trainer**: una segunda request mientras la primera espera a n8n es 429 `RATE_LIMIT_EXCEEDED` ("Ya hay una propuesta en curso…", `Retry-After: 30`). Las fallidas no se guardan en la base, pero cuentan como intento.
+**Límite:** 20 **intentos** por trainer en la última hora: cuenta cada llamada a n8n, exitosa o fallida (502/503), en una ventana deslizante en memoria del proceso, y también las generaciones guardadas en `ai_routine_generations` (así el límite sobrevive a un reinicio). Aplica a `max(guardadas, intentos) ≥ 20`. Pasado el límite, **429 `RATE_LIMIT_EXCEEDED`** con `Retry-After`. Además, **una sola generación en curso por trainer**: una segunda request mientras la primera espera a n8n es 429 `RATE_LIMIT_EXCEEDED` ("Ya hay una propuesta en curso…", `Retry-After` = lo que le falta a la generación en curso para los 30 s del timeout de n8n, redondeado hacia arriba, mínimo 1). Las fallidas no se guardan en la base, pero cuentan como intento.
 
 **Guardado:** una fila en `ai_routine_generations` con `trainer_id`, `student_id`, `input_params` (los parámetros resueltos, sin la biblioteca) y `generated_routine` (la propuesta validada).
 

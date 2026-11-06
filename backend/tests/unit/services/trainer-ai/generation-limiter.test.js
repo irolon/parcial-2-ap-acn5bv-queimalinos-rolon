@@ -15,15 +15,31 @@ describe('trainer-ai · generation-limiter', () => {
 
   describe('una generación en curso por trainer', () => {
     it('la segunda concurrente es 429 "Ya hay una propuesta en curso" con Retry-After', () => {
-      limiter.start(T1);
+      limiter.start(T1, NOW);
       let error;
       try {
-        limiter.start(T1);
+        limiter.start(T1, NOW);
       } catch (err) {
         error = err;
       }
       expect(error).toMatchObject({ statusCode: 429, code: 'RATE_LIMIT_EXCEEDED', headers: { 'Retry-After': '30' } });
       expect(error.message).toMatch('Ya hay una propuesta en curso');
+    });
+
+    it('Retry-After es lo que le falta a la generación en curso (redondeado hacia arriba, mínimo 1)', () => {
+      limiter.start(T1, NOW);
+      const later = (ms) => new Date(NOW.getTime() + ms);
+      const retryAt = (ms) => {
+        try {
+          limiter.start(T1, later(ms));
+        } catch (err) {
+          return err.headers['Retry-After'];
+        }
+        return undefined;
+      };
+      expect(retryAt(12_300)).toBe('18');
+      expect(retryAt(29_999)).toBe('1');
+      expect(retryAt(45_000)).toBe('1');
     });
 
     it('otro trainer no se bloquea y al terminar se libera', () => {
