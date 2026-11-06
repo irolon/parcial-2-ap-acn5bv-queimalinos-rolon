@@ -36,8 +36,23 @@ function optionalUuid(body, field, details, out) {
   else out[field] = body[field];
 }
 
+/**
+ * injuries: ausente no viaja (el service la completa con el alumno); vacío, solo espacios
+ * o null explícito es "sin lesiones" (null) y no se completa.
+ */
+function clearableInjuries(body, details, out) {
+  if (body.injuries === undefined) return;
+  optionalText(body, 'injuries', details, out);
+  if (!details.some((d) => d.field === 'injuries')) out.injuries ??= null;
+}
+
+/** Ausente no viaja (lo completa el alumno); null o [] explícito queda vacío (solo bodyweight). */
 function validateEquipment(value, details, out) {
-  if (value === undefined || value === null) return;
+  if (value === undefined) return;
+  if (value === null) {
+    out.available_equipment = [];
+    return;
+  }
   const valid =
     Array.isArray(value) && value.every((e) => EQUIPMENT.includes(e)) && new Set(value).size === value.length;
   if (!valid) {
@@ -69,7 +84,7 @@ export function validateGenerateRoutine(body) {
     details.push({ field: 'session_duration_min', message: 'session_duration_min debe ser un entero de 20 a 180' });
   } else out.session_duration_min = body.session_duration_min;
   validateEquipment(body.available_equipment, details, out);
-  optionalText(body, 'injuries', details, out);
+  clearableInjuries(body, details, out);
   optionalText(body, 'preferences', details, out);
   optionalUuid(body, 'base_template_id', details, out);
 
