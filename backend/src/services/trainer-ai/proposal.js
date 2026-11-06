@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { DAYS } from '../../models/routines/routine.model.js';
+import { isIntBetween } from '../../shared/utils/validators.js';
 
 /**
  * Validación de la propuesta que devuelve n8n (la IA no es confiable): esquema, tipos,
@@ -10,12 +11,14 @@ const MAX_BLOCKS = 7;
 const MAX_EXERCISES = 15;
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
-const isIntBetween = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
 const isTextBetween = (v, min, max) => typeof v === 'string' && v.trim().length >= min && v.trim().length <= max;
 const isKg = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 500;
 
 function cleanExercise(raw, path, ctx) {
-  if (!isObject(raw)) return ctx.problems.push(`${path}: no es un objeto`) && null;
+  if (!isObject(raw)) {
+    ctx.problems.push(`${path}: no es un objeto`);
+    return null;
+  }
   const { exercise_id, sets, reps, rest_seconds } = raw;
   const suggested_kg = raw.suggested_kg ?? null;
   const notes = raw.notes ?? null;
@@ -36,7 +39,10 @@ function cleanExercise(raw, path, ctx) {
 }
 
 function cleanBlock(raw, path, ctx) {
-  if (!isObject(raw)) return ctx.problems.push(`${path}: no es un objeto`) && null;
+  if (!isObject(raw)) {
+    ctx.problems.push(`${path}: no es un objeto`);
+    return null;
+  }
   const { name, days, exercises } = raw;
   if (!isTextBetween(name, 1, 60)) ctx.problems.push(`${path}.name: de 1 a 60 caracteres`);
   const validDays =

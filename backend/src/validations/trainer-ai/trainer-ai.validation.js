@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { isUuid } from '../../shared/utils/validators.js';
+import { isUuid, isIntBetween } from '../../shared/utils/validators.js';
 import { ROUTINE_GOALS } from '../../models/routines/routine.model.js';
 import { TEMPLATE_LEVELS } from '../../models/routine-templates/routine-template.model.js';
 import { EQUIPMENT } from '../../models/exercises/exercise.model.js';
@@ -12,7 +12,6 @@ import {
 const fail = (details) => {
   throw Errors.validation('Error de validación', details);
 };
-const isIntBetween = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
 
 /** `body[field]` opcional: undefined si no vino; si vino tiene que ser uno de `allowed`. */
 function optionalEnum(body, field, allowed, details, out) {
