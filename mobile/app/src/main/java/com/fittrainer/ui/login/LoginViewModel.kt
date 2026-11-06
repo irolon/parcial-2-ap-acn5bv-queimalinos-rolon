@@ -14,6 +14,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Al loguearse no navega: AppNavHost observa la sesión y cambia de pantalla solo. */
+/** 429 del rate limit del backend (#80): login, alta e invitaciones. Es pasajero, se reintenta en unos minutos. */
+const val TOO_MANY_REQUESTS = 429
+const val TOO_MANY_ATTEMPTS = "Demasiados intentos. Probá de nuevo en unos minutos."
+
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -55,6 +59,7 @@ class LoginViewModel @Inject constructor(
     private fun toMessage(error: Throwable): String = when ((error as? DataException)?.error) {
         DataError.InvalidCredentials -> "Email o contraseña incorrectos"
         DataError.Offline -> "Sin conexión con el servidor"
+        DataError.Http(TOO_MANY_REQUESTS) -> TOO_MANY_ATTEMPTS
         else -> "No se pudo iniciar sesión"
     }
 

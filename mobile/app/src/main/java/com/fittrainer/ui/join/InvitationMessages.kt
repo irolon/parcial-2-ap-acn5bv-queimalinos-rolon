@@ -2,6 +2,8 @@ package com.fittrainer.ui.join
 
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
+import com.fittrainer.ui.login.TOO_MANY_ATTEMPTS
+import com.fittrainer.ui.login.TOO_MANY_REQUESTS
 
 /** Qué se le dice al alumno y qué puede hacer: reintentar (falla pasajera) o ir al login. */
 data class InvitationMessage(val text: String, val canRetry: Boolean, val offerLogin: Boolean)
@@ -16,6 +18,7 @@ fun invitationMessage(error: Throwable?): InvitationMessage = when ((error as? D
     DataError.StudentEmailExists ->
         InvitationMessage("Ya hay una cuenta con ese email. Iniciá sesión.", false, true)
     DataError.Offline -> InvitationMessage("Sin conexión con el servidor", true, false)
+    DataError.Http(TOO_MANY_REQUESTS) -> InvitationMessage(TOO_MANY_ATTEMPTS, true, false)
     else -> InvitationMessage("No se pudo completar el alta", true, false)
 }
 

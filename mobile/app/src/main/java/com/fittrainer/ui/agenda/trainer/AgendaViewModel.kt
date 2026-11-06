@@ -1,5 +1,6 @@
 package com.fittrainer.ui.agenda.trainer
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fittrainer.data.agenda.AgendaWeekCache
@@ -12,6 +13,7 @@ import com.fittrainer.data.agenda.TrainerAgendaRepository
 import com.fittrainer.data.agenda.localDay
 import com.fittrainer.data.agenda.shiftWeek
 import com.fittrainer.data.agenda.weekStartOf
+import com.fittrainer.data.agenda.weekStartOfDay
 import com.fittrainer.data.network.ConnectivityObserver
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
@@ -57,7 +59,7 @@ private data class WeekRead(val weekStart: LocalDate, val loaded: Boolean, val c
 /**
  * Agenda del entrenador (E13): la semana y la disponibilidad salen de Room. Se refrescan juntas al entrar, al
  * cambiar de semana, al volver la red y con pull-to-refresh; nunca dos pedidos a la vez para la misma semana.
- * Confirmar y cancelar son solo con red.
+ * Confirmar y cancelar son solo con red. Abre en la semana de [AGENDA_WEEK_ARG] (un aviso de turno) o en la actual.
  */
 @HiltViewModel
 class AgendaViewModel @Inject constructor(
@@ -65,12 +67,13 @@ class AgendaViewModel @Inject constructor(
     sessionRepository: SessionRepository,
     connectivity: ConnectivityObserver,
     private val clock: Clock,
+    saved: SavedStateHandle,
 ) : ViewModel() {
 
     private val trainerId = sessionRepository.session.map { (it as? Session.Trainer)?.user?.id }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
-    private val weekStart = MutableStateFlow(weekStartOf(clock.instant()))
+    private val weekStart = MutableStateFlow(weekStartOfDay(saved[AGENDA_WEEK_ARG]) ?: weekStartOf(clock.instant()))
     private val showCancelled = MutableStateFlow(false)
     private val inFlight = MutableStateFlow<Set<LocalDate>>(emptySet())
     private val failed = MutableStateFlow<Set<LocalDate>>(emptySet())
@@ -119,6 +122,7 @@ class AgendaViewModel @Inject constructor(
     fun onPrevWeek() = goTo(shiftWeek(weekStart.value, -1))
     fun onNextWeek() = goTo(shiftWeek(weekStart.value, 1))
     fun onThisWeek() = goTo(weekStartOf(clock.instant()))
+    fun onShowWeek(start: LocalDate) = goTo(start)
     fun onToggleCancelled(show: Boolean) {
         showCancelled.value = show
     }

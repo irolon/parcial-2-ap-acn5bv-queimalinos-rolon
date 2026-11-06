@@ -30,5 +30,13 @@ fun weekBounds(weekStart: LocalDate): WeekBounds = WeekBounds(
     weekStart.plusWeeks(1).atStartOfDay(ARGENTINA).toInstant().toEpochMilli(),
 )
 
+/** El lunes de la semana de un instante ISO (`scheduled_at` de un aviso, #78); null si falta o viene roto. */
+fun weekStartOfIso(raw: String?): LocalDate? =
+    raw?.let { runCatching { weekStartOf(Instant.parse(it)) }.getOrNull() }
+
+/** El lunes de la semana de un día `YYYY-MM-DD` (el argumento de la ruta); null si falta o viene roto. */
+fun weekStartOfDay(raw: String?): LocalDate? =
+    raw?.let { runCatching { LocalDate.parse(it).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) }.getOrNull() }
+
 /** El día de Argentina en que cae un instante. */
 fun localDay(at: Instant): LocalDate = at.atZone(ARGENTINA).toLocalDate()

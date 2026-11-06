@@ -1,5 +1,6 @@
 package com.fittrainer.ui.agenda.trainer
 
+import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.agenda.AppointmentStatus
 import com.fittrainer.data.agenda.TrainerAgendaRepository
 import com.fittrainer.testing.MainDispatcherRule
@@ -39,7 +40,7 @@ class AgendaViewModelSheetTest {
     private val clock = MutableClock(Instant.parse("2026-11-04T12:00:00Z").toEpochMilli())
     private val repo = TrainerAgendaRepository(api, FakeTrainerAgendaDao(), clock)
 
-    private fun TestScope.started() = AgendaViewModel(repo, FakeTrainerSession(), connectivity, clock).also {
+    private fun TestScope.started() = AgendaViewModel(repo, FakeTrainerSession(), connectivity, clock, SavedStateHandle()).also {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { it.uiState.collect {} }
         it.onStart()
         advanceUntilIdle()
