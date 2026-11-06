@@ -145,10 +145,12 @@ describe('JoinPage', () => {
     expect(pathname()).toBe('/join');
   });
 
-  it('con sesión iniciada ofrece volver a la cuenta sin tocar la sesión', async () => {
-    stubFetch(async () => jsonResponse(200, INVITATION));
+  it('con sesión iniciada ofrece volver a la cuenta sin tocar la sesión ni pedir la invitación', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(200, INVITATION));
     setSession(TRAINER);
     renderRoute(`/join?token=${TOKEN}`);
     expect(await screen.findByRole('link', { name: 'Volver a mi cuenta' })).toHaveAttribute('href', '/pt/dashboard');
+    // No gasta el cupo del limitador de `GET /invitations/:token` (#80) hasta que la sesión se cierre.
+    expect(calls(fetchMock).some(([url]) => String(url).includes('/invitations/'))).toBe(false);
   });
 });

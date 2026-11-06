@@ -42,7 +42,8 @@ export default function JoinPage() {
   const query = useQuery({
     queryKey: ['invitation', token],
     queryFn: () => getInvitation(token),
-    enabled: valid,
+    // Con una sesión abierta no se pide hasta que se cierre: no gasta el cupo del limitador de la invitación.
+    enabled: valid && status === 'anonymous',
     retry: false,
   });
 

@@ -54,7 +54,7 @@ describe('ExerciseCurveCard', () => {
     const pts = SIX.map((p, i) => (i < 4 ? { ...p, e1rm_kg: null } : p));
     render(<ExerciseCurveCard data={curveData(pts)} metric="e1rm_kg" onMetricChange={noop} />);
     expect(screen.getByText('Pocos datos de esta métrica: probá con otra')).toBeInTheDocument();
-    expect(screen.queryByText(/^Hay d de 3/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
   });
 });
 
@@ -81,7 +81,7 @@ describe('CurveTooltip', () => {
   it('con días suficientes en total pero pocos en el rango sugiere probar con Todo', () => {
     render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="3m" totalDays={10} />);
     expect(screen.getByText('Pocos entrenamientos en este rango: probá con Todo')).toBeInTheDocument();
-    expect(screen.queryByText(/^Hay d de 3/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
   });
 
   it('con el rango en Todo y pocos entrenamientos no sugiere probar con Todo', () => {
@@ -96,7 +96,7 @@ describe('CurveTooltip', () => {
     for (const range of ['all', '3m']) {
       const { unmount } = render(<ExerciseCurveCard data={curveData(curl)} metric="e1rm_kg" onMetricChange={noop} range={range} totalDays={10} />);
       expect(screen.getByText('Pocos datos de esta métrica: probá con otra')).toBeInTheDocument();
-      expect(screen.queryByText(/^Hay d de 3/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
       expect(screen.queryByText(/probá con Todo/)).not.toBeInTheDocument();
       unmount();
     }

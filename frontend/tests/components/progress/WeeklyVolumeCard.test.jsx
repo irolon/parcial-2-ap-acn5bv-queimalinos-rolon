@@ -22,7 +22,7 @@ describe('WeeklyVolumeCard', () => {
   it('cuenta las semanas con sesiones aunque el volumen sea 0 (peso corporal)', () => {
     const weeks = [week('05', 0, 2), week('12', 0, 1), week('19', 0, 3)];
     render(<WeeklyVolumeCard weeks={weeks} />);
-    expect(screen.queryByText(/^Hay d de 3/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Volumen semanal' })).toBeInTheDocument();
   });
 
