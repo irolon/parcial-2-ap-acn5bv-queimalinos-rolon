@@ -13,6 +13,7 @@ export function notFoundHandler(req, _res, next) {
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, _req, res, _next) {
   if (err instanceof AppError) {
+    if (err.headers) res.set(err.headers);
     return res.status(err.statusCode).json({
       error: { code: err.code, message: err.message, details: err.details },
     });
