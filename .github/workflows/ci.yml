@@ -5,10 +5,18 @@ on:
   push:
     branches: [develop]
 
+# El CI solo lee el repo: no comenta, no pushea ni publica nada.
+permissions:
+  contents: read
+
 jobs:
   backend:
-    name: Backend (lint + unitarios)
+    name: Backend (lint + unitarios, Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    # 20 = el mínimo que declara `engines` en backend/package.json; 22 = .nvmrc y el Dockerfile.
+    strategy:
+      matrix:
+        node: [20, 22]
     defaults:
       run:
         working-directory: backend
@@ -16,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
