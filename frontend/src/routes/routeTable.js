@@ -72,6 +72,25 @@ export const NEW_ROUTINE = { path: `${ROUTINES_PATH}/nueva` };
 /** Link al editor; con `studentId` llega con el alumno preseleccionado. */
 export const newRoutineHref = (studentId) => (studentId ? `${NEW_ROUTINE.path}?alumno=${studentId}` : NEW_ROUTINE.path);
 
+/** Asistente IA del entrenador (fuera del menú): se entra desde la ficha del alumno o desde Rutinas. */
+export const AI_ROUTINE = {
+  path: `${ROUTINES_PATH}/ia`,
+  title: 'Rutina con IA',
+  subtitle: 'RUTINAS › ASISTENTE IA · REVISÁ LA PROPUESTA ANTES DE ASIGNARLA',
+};
+
+/** Link al asistente; con `studentId` llega con el alumno y sus datos precargados. */
+export const aiRoutineHref = (studentId) => (studentId ? `${AI_ROUTINE.path}?alumno=${studentId}` : AI_ROUTINE.path);
+
+/** Link al editor con un bloque de la propuesta (`ia` = generación, `bloque` = índice) y el alumno si hay. */
+export function aiBlockHref({ studentId, generationId, index }) {
+  const params = new URLSearchParams();
+  if (studentId) params.set('alumno', studentId);
+  params.set('ia', generationId);
+  params.set('bloque', String(index));
+  return `${NEW_ROUTINE.path}?${params}`;
+}
+
 // Ficha del alumno: la página fija su propio título con `usePageHeader`.
 export const STUDENT_PROFILE = { path: `${STUDENTS_PATH}/:id` };
 
