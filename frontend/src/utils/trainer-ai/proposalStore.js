@@ -1,5 +1,6 @@
 // La sesión del asistente vive en `sessionStorage` para que el ida y vuelta con el editor y una recarga no la pierdan.
-// Forma: `{ form, student, generationId, proposal, assigned: { [bloque]: { studentId } }, saved, editing }`.
+// Forma: `{ form, student, generationId, proposal, saved, editing,
+//   assigned: { [bloque]: { studentId, studentName, routineId, block: { name, days, exercises } } } }`.
 
 export const AI_SESSION_KEY = (trainerId) => `fittrainer.ai-proposal.${trainerId}`;
 

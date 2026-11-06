@@ -90,9 +90,27 @@ describe('RoutineEditorPage: bloque de la IA', () => {
     expect(bodyOf(post[1])).toMatchObject({ student_id: 'st-9', name: 'Empuje', goal: 'hypertrophy', days: ['monday'] });
     expect(bodyOf(post[1]).exercises.map((e) => [e.exercise_id, e.sets])).toEqual([['ex-bench', 5], ['ex-plank', 3]]);
     const push = within(await screen.findByRole('region', { name: 'Empuje' }));
-    expect(push.getByText('Asignado')).toBeVisible();
+    expect(push.getByText('Asignado · con tus cambios')).toBeVisible();
+    expect(push.getAllByRole('row').slice(1).map((row) => row.cells[1].textContent)).toEqual(['Press banca plano', 'Plancha']);
+    expect(push.getByText('5 × 8')).toBeVisible();
+    expect(push.queryByText('Press inclinado con mancuernas')).not.toBeInTheDocument();
+    expect(push.getByRole('link', { name: 'Ver la rutina en la ficha de Ana Paz' })).toHaveAttribute('href', '/pt/alumnos/st-9');
+    expect(storedProposal().assigned[0]).toMatchObject({ studentId: 'st-9', routineId: 'r-1', block: { name: 'Empuje', days: ['monday'] } });
     expect(within(screen.getByRole('region', { name: 'Piernas' })).getByRole('link', { name: 'Editar y asignar' })).toBeVisible();
     expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('asignado sin tocar nada: vuelve con "Asignado" a secas y los ejercicios de la propuesta', async () => {
+    const user = setupUser();
+    storeProposal();
+    await renderEditor({ path: BLOCK_0, api: { students: [ANA], handlers: { create: created } } });
+    await screen.findByDisplayValue('Empuje');
+    await user.click(screen.getByRole('button', { name: 'Asignar a alumno' }));
+    await user.click(await screen.findByRole('button', { name: 'Asignar' }));
+    const push = within(await screen.findByRole('region', { name: 'Empuje' }));
+    expect(push.getByText('Asignado')).toBeVisible();
+    expect(push.queryByText(/con tus cambios/)).not.toBeInTheDocument();
+    expect(push.getByText('Press inclinado con mancuernas')).toBeVisible();
   });
 
   it('al volver a abrir el mismo bloque (recarga) recupera lo editado sin preguntar', async () => {

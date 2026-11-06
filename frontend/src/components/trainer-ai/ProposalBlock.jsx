@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import Pill from '@/components/shared/ui/Pill';
 import { profileHref } from '@/routes/routeTable';
 import { DAY_OPTIONS, formatRoutineDays, sortDays } from '@/utils/students/routineDays';
+import { differsFromProposal } from '@/utils/trainer-ai/assignedBlock';
 import { PRIMARY_LINK_SM } from './links';
 
 // Mismo formato visual que la tabla del editor (`ExerciseTable`), en modo lectura.
@@ -31,10 +32,10 @@ function BlockDays({ days }) {
   );
 }
 
-function AssignedMark({ assigned }) {
+function AssignedMark({ assigned, changed }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Pill tone="good"><Check size={12} aria-hidden="true" /> Asignado</Pill>
+      <Pill tone="good"><Check size={12} aria-hidden="true" /> {changed ? 'Asignado · con tus cambios' : 'Asignado'}</Pill>
       <Link to={profileHref(assigned.studentId)} className="font-body text-sm text-accentText underline hover:text-bone0">
         Ver la rutina en la ficha de {assigned.studentName}
       </Link>
@@ -42,9 +43,14 @@ function AssignedMark({ assigned }) {
   );
 }
 
-/** Un bloque de la propuesta: nombre, días, tabla de ejercicios y "Editar y asignar" (o la marca "Asignado"). */
-export default function ProposalBlock({ block, editHref, assigned }) {
+/**
+ * Un bloque de la propuesta: nombre, días, tabla de ejercicios y "Editar y asignar" (o la marca "Asignado").
+ * Ya asignado muestra lo que se asignó desde el editor (`assigned.block`), que puede no ser lo que propuso la IA.
+ */
+export default function ProposalBlock({ block: proposed, editHref, assigned }) {
   const titleId = useId();
+  const block = assigned?.block ?? proposed;
+  const changed = Boolean(assigned?.block) && differsFromProposal(assigned.block, proposed);
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-4 rounded-xl border border-ink2 bg-ink1 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -52,7 +58,7 @@ export default function ProposalBlock({ block, editHref, assigned }) {
           <h2 id={titleId} className="font-display text-[15px] font-semibold text-bone0">{block.name}</h2>
           <BlockDays days={block.days} />
         </div>
-        {assigned ? <AssignedMark assigned={assigned} /> : <Link to={editHref} className={PRIMARY_LINK_SM}>Editar y asignar</Link>}
+        {assigned ? <AssignedMark assigned={assigned} changed={changed} /> : <Link to={editHref} className={PRIMARY_LINK_SM}>Editar y asignar</Link>}
       </div>
       <div className="overflow-x-auto rounded-xl border border-ink2">
         <table className="w-full min-w-max border-collapse">

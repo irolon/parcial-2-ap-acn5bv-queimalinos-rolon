@@ -19,6 +19,7 @@ import { clearDraft, readDraft, restoreDraft } from '@/utils/routines/draft';
 import * as editor from '@/utils/routines/editorState';
 import { validateRoutine } from '@/utils/routines/routineForm';
 import { serverErrorsFor, templateErrorsFor } from '@/utils/routines/serverErrors';
+import { toAssignedBlock } from '@/utils/trainer-ai/assignedBlock';
 import { fromBlock } from '@/utils/trainer-ai/blockEditor';
 
 const missingNotice = (n) => `Quitamos ${n} ${n === 1 ? 'ejercicio que ya no está' : 'ejercicios que ya no están'} en la biblioteca`;
@@ -83,10 +84,10 @@ export default function RoutineEditorPage() {
   const on = {
     close: () => setDialog(null),
     hasContent: !editor.isBlank(state),
-    assigned: (student) => {
+    assigned: (student, routine) => {
       cancelDraft();
       if (!ai.source) return navigate(profileHref(student.id));
-      ai.markAssigned(student);
+      ai.markAssigned(student, { routineId: routine?.id ?? null, block: toAssignedBlock(state, byId) });
       return navigate(AI_ROUTINE.path);
     },
     loadBlock: (next) => {
