@@ -8,6 +8,7 @@ import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import RoutineEditorPage from '@/pages/routines/RoutineEditorPage';
 import RoutinesPage from '@/pages/routines/RoutinesPage';
+import AiRoutinePage from '@/pages/trainer-ai/AiRoutinePage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
@@ -25,6 +26,7 @@ import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequireRole, RootRedirect } from './guards';
 import {
+  AI_ROUTINE,
   NEW_ROUTINE,
   NEW_STUDENT,
   ROLES,
@@ -78,6 +80,11 @@ export const routes = [
     },
     { path: STUDENT_PROFILE.path, element: <StudentProfilePage /> },
     { path: NEW_ROUTINE.path, element: <RoutineEditorPage /> },
+    {
+      path: AI_ROUTINE.path,
+      handle: { title: AI_ROUTINE.title, subtitle: AI_ROUTINE.subtitle },
+      element: <AiRoutinePage />,
+    },
   ], {
     dashboard: <DashboardPage />,
     agenda: <AgendaPage />,

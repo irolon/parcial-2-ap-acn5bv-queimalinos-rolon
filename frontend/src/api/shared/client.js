@@ -2,12 +2,14 @@
 // El store de auth se registra con `configureClient` (así no hay import circular).
 
 export class ApiError extends Error {
-  constructor({ status, code, message, details = null }) {
+  constructor({ status, code, message, details = null, retryAfter = null }) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
     this.details = details;
+    /** Segundos del header `Retry-After` (p. ej. en un 429), o `null` si no vino. */
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -64,6 +66,12 @@ async function readBody(res) {
   }
 }
 
+// `Retry-After` en segundos (la forma de fecha HTTP el backend no la usa).
+function retryAfterOf(res) {
+  const raw = res.headers?.get?.('Retry-After')?.trim();
+  return raw && /^\d+$/.test(raw) ? Number(raw) : null;
+}
+
 async function send(path, { method, body, auth, signal }) {
   const headers = { Accept: 'application/json' };
   // Con FormData el navegador pone `multipart/form-data` con su boundary: no se pisa.
@@ -93,6 +101,7 @@ async function send(path, { method, body, auth, signal }) {
     code: error.code ?? 'HTTP_ERROR',
     message: error.message ?? 'Error inesperado del servidor',
     details: error.details ?? null,
+    retryAfter: retryAfterOf(res),
   });
 }
 

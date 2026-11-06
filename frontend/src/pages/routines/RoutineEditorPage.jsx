@@ -13,14 +13,22 @@ import Button from '@/components/shared/ui/Button';
 import { useExercisesQuery } from '@/hooks/exercises/useExercises';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useRoutineDraft } from '@/hooks/routines/useRoutineDraft';
-import { profileHref } from '@/routes/routeTable';
+import { useAiBlock } from '@/hooks/trainer-ai/useAiBlock';
+import { AI_ROUTINE, profileHref } from '@/routes/routeTable';
 import { clearDraft, readDraft, restoreDraft } from '@/utils/routines/draft';
 import * as editor from '@/utils/routines/editorState';
 import { validateRoutine } from '@/utils/routines/routineForm';
 import { serverErrorsFor, templateErrorsFor } from '@/utils/routines/serverErrors';
+import { toAssignedBlock } from '@/utils/trainer-ai/assignedBlock';
 
 const missingNotice = (n) => `Quitamos ${n} ${n === 1 ? 'ejercicio que ya no está' : 'ejercicios que ya no están'} en la biblioteca`;
-const NO_DRAFT = { ready: false, restored: false, missing: 0 };
+const NO_DRAFT = { ready: false, aiKey: null, restored: false, missing: 0 };
+
+/** El borrador del arranque (el guardado, si el editor está vacío) o, ya arrancado, lo que hay escrito. */
+function currentDraft(ready, state, trainerId, byId) {
+  if (ready) return editor.isBlank(state) ? null : { state, missing: 0 };
+  return trainerId && editor.isBlank(state) ? restoreDraft(readDraft(trainerId), byId) : null;
+}
 
 /** Editor de rutinas: biblioteca a la izquierda, cabecera y tabla editable a la derecha, con borrador local. */
 export default function RoutineEditorPage() {
@@ -39,6 +47,7 @@ export default function RoutineEditorPage() {
   const [notice, setNotice] = useState(null);
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const ai = useAiBlock(trainerId, params);
   const replaceState = (next) => {
     setState(next);
     setServerErrors(null);
@@ -48,12 +57,20 @@ export default function RoutineEditorPage() {
     setServerErrors(null);
   };
 
-  if (library && !draft.ready) {
-    // Se intenta restaurar una sola vez, con la biblioteca ya cargada (ver `useRoutineDraft`).
-    // Si ya hay algo escrito no se pisa: se marca listo sin restaurar.
-    const found = trainerId && editor.isBlank(state) ? restoreDraft(readDraft(trainerId), byId) : null;
-    if (found) setState(found.state);
-    setDraft({ ready: true, restored: Boolean(found), missing: found?.missing ?? 0 });
+  if (library && draft.aiKey !== ai.key) {
+    // Al montar se intenta restaurar el borrador una sola vez, con la biblioteca ya cargada (ver `useRoutineDraft`);
+    // si ya hay algo escrito no se pisa. Si después cambia `?ia=&bloque=` sin desmontar, lo que hay hace de borrador.
+    // Qué se muestra y si se pregunta antes de pisarlo con el bloque de la IA lo decide `useAiBlock` (`start`).
+    const found = currentDraft(draft.ready, state, trainerId, byId);
+    const plan = ai.start(found, byId);
+    if (plan.state && plan.state !== state) setState(plan.state);
+    if (plan.ask) setDialog({ type: 'aiReplace', next: plan.ask, draftBlockName: ai.source.draftBlockName });
+    if (plan.loaded) {
+      ai.markLoaded();
+      setNotice(plan.loaded.missing > 0 ? missingNotice(plan.loaded.missing) : null);
+    }
+    const restored = { restored: Boolean(found), missing: found?.missing ?? 0 };
+    setDraft({ ...(draft.ready ? draft : restored), ready: true, aiKey: ai.key });
   }
 
   const { savedAt, cancel: cancelDraft } = useRoutineDraft(trainerId, state, { enabled: draft.ready });
@@ -71,9 +88,22 @@ export default function RoutineEditorPage() {
   const on = {
     close: () => setDialog(null),
     hasContent: !editor.isBlank(state),
-    assigned: (student) => {
+    assigned: (student, routine) => {
       cancelDraft();
-      navigate(profileHref(student.id));
+      if (!ai.source) return navigate(profileHref(student.id));
+      ai.markAssigned(student, { routineId: routine?.id ?? null, block: toAssignedBlock(state, byId) });
+      return navigate(AI_ROUTINE.path);
+    },
+    loadBlock: (next) => {
+      replaceState(next.state);
+      setDraft({ ...draft, restored: false, missing: 0 });
+      setNotice(next.missing > 0 ? missingNotice(next.missing) : null);
+      ai.markLoaded();
+      setDialog(null);
+    },
+    keepDraft: () => {
+      ai.dismiss();
+      setDialog(null);
     },
     invalid: (error) => setServerErrors(serverErrorsFor(error, state)),
     templateGone: () => apply(editor.clearTemplate),
