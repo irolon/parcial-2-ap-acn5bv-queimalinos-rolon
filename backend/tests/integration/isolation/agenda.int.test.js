@@ -1,5 +1,6 @@
 import { api } from '../../helpers/integration/api.js';
 import { arDate, buildAgendaWorld } from '../../helpers/integration/isolation/agenda-world.js';
+import { expectNoLeak } from '../../helpers/integration/isolation/isolation.js';
 
 // Aislamiento de la agenda (filas 106–113 de la tarea 10). A atiende de 08 a 10 y
 // B de 18 a 20 (hora de Argentina), así los huecos libres de cada uno se distinguen.
@@ -9,9 +10,13 @@ const range = () => `from=${arDate(0)}&to=${arDate(7)}`;
 const ids = (res) => res.body.data.map((x) => x.id);
 const arHour = ({ starts_at }) => (new Date(starts_at).getUTCHours() + 21) % 24;
 
+// Ids de A que no pueden aparecer en un rechazo (las franjas no tienen id).
+const idsOfA = () => ({ trainer: A.trainer, student: A.student, appointmentId: A.appointmentId });
+
 function expectForbidden(res) {
   expect({ status: res.status, code: res.body.error?.code }).toEqual({ status: 403, code: 'FORBIDDEN' });
   expect(res.body.data).toBeUndefined();
+  expectNoLeak(res.body, idsOfA()); // ni el mensaje ni los details traen ids de A
 }
 
 describe('integración — aislamiento: agenda', () => {
