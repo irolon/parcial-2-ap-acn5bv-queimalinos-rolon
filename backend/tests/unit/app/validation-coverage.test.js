@@ -12,9 +12,7 @@ const WITHOUT_BODY = {
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];
 const routes = listRoutes(createApp());
-// Las capas de rate limiting que la app monta antes de los routers no son endpoints.
-const endpoints = routes.filter((r) => !r.handlers.every((h) => h.isRateLimit));
-const withBody = endpoints.filter((r) => WITH_BODY.includes(r.method));
+const withBody = routes.filter((r) => WITH_BODY.includes(r.method));
 const key = (r) => `${r.method} ${r.path}`;
 const validatesBody = (r) => r.handlers.some((h) => h.validates === 'body');
 
@@ -39,14 +37,14 @@ describe('validación de entrada en todas las rutas con body', () => {
     }
   });
 
-  it('los limitadores van montados antes que los routers', () => {
-    const limited = routes.filter((r) => r.handlers.every((h) => h.isRateLimit)).map(key);
-    expect(limited).toEqual([
-      'POST /api/auth/login',
-      'POST /api/auth/register',
-      'POST /api/auth/refresh',
-      'GET /api/invitations/:token',
-      'POST /api/students',
+  it('los endpoints públicos sensibles arrancan su cadena con su limitador (y ninguno más lo tiene)', () => {
+    const limited = routes.filter((r) => r.handlers.some((h) => h.rateLimit));
+    expect(limited.map((r) => [key(r), r.handlers[0].rateLimit])).toEqual([
+      ['POST /api/auth/register', 'register'],
+      ['POST /api/auth/login', 'login'],
+      ['POST /api/auth/refresh', 'refresh'],
+      ['GET /api/invitations/:token', 'invitation'],
+      ['POST /api/students', 'studentSignup'],
     ]);
   });
 });

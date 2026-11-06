@@ -1,30 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
-import { fileURLToPath } from 'node:url';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { LIMITED, login, startServer } from '../../../../helpers/shared/rate-limit.setup.js';
 
-// Supabase falso: toda consulta vuelve vacía (la invitación no existe → 404), sin red.
-const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
-const empty = () =>
-  new Proxy({}, {
-    get: (_t, m) => (m === 'then' ? (res) => res({ data: null, error: null }) : () => empty()),
-  });
-jest.unstable_mockModule(src('config/supabase.js'), () => ({
-  supabase: { from: () => empty(), rpc: () => empty() },
-}));
-const { startServer } = await import('../../../helpers/app/http.setup.js');
-
-const LIMITED = {
-  error: {
-    code: 'RATE_LIMIT_EXCEEDED',
-    message: 'Demasiados intentos. Probá de nuevo en unos minutos.',
-    details: [],
-  },
-};
 const rateLimits = { windowMs: 60_000, login: 10, loginIp: 50, auth: 2, public: 2 };
-const login = (http, email, ip) =>
-  http.send('post', '/api/auth/login', {
-    json: { email },
-    headers: ip ? { 'x-forwarded-for': ip } : {},
-  });
 
 describe('rate limiting', () => {
   let http;

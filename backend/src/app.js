@@ -5,7 +5,7 @@ import morgan from 'morgan';
 
 import { env } from './config/env.js';
 import { notFoundHandler, errorHandler } from './shared/middlewares/error.middleware.js';
-import { applyRateLimits } from './shared/middlewares/rate-limit.middleware.js';
+import { createRateLimiters } from './shared/middlewares/rate-limit.middleware.js';
 import healthRoutes from './routes/health/health.routes.js';
 import authRoutes from './routes/auth/auth.routes.js';
 import invitationsRoutes from './routes/invitations/invitations.routes.js';
@@ -40,8 +40,9 @@ export function createApp({ rateLimits, trustProxy = env.TRUST_PROXY } = {}) {
   // Health checks (fuera de /api, como en el README).
   app.use('/health', healthRoutes);
 
-  // Rate limiting en login, registro, refresh e invitaciones (públicos).
-  applyRateLimits(app, rateLimits);
+  // Limitadores de login, registro, refresh e invitaciones (públicos). Los corre limitRate(...)
+  // en la cadena de cada endpoint, dentro de su router.
+  app.locals.rateLimiters = createRateLimiters(rateLimits);
 
   // API REST — todos los módulos cuelgan de /api.
   app.use('/api/auth', authRoutes);
