@@ -277,6 +277,10 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 
 `express-rate-limit` en memoria (una sola instancia), en `src/shared/middlewares/rate-limit.middleware.js`. Al pasarse: `429 RATE_LIMIT_EXCEEDED` con `Retry-After`.
 
+Cada endpoint lleva su limitador en la cadena de su router (`limitRate('login')`, etc.; los arma `createApp` en `app.locals.rateLimiters`), así una ruta con doble barra (`/api/auth//login`) no lo esquiva. En el login corre primero el tope por IP y después el de IP + email (email acotado a 254 caracteres).
+
+**Los clientes deben tratar el 429 como un error temporal**: no es un problema de credenciales ni de sesión. En particular, un 429 del refresh no cierra la sesión (la web y el celular conservan el refresh token y reintentan después). Los cupos son por IP, y detrás de un NAT (gimnasio, oficina, CGNAT del celular) varios usuarios comparten el mismo cupo.
+
 | Endpoint | Límite por ventana | Clave | Variable |
 |---|---|---|---|
 | `POST /api/auth/login` | 10 | IP + email en minúsculas | `RATE_LIMIT_LOGIN_MAX` |
@@ -287,7 +291,7 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 - Ventana: `RATE_LIMIT_WINDOW_MS` (por defecto 15 min). Con `NODE_ENV=test` los máximos por defecto son 100 veces mayores, así la suite de integración no los toca; los tests del limitador arman la app con `createApp({ rateLimits })`.
 - Las IPv6 se agrupan por subred /56 (`ipKeyGenerator` de express-rate-limit 8): cambiar de dirección dentro de la misma subred no da un cupo nuevo.
 - `TRUST_PROXY`: saltos de proxy (en el VPS detrás de nginx, `1`). Sin eso, detrás del proxy todos los clientes tendrían la IP de nginx y compartirían el cupo. Por defecto, apagado; con `NODE_ENV=production` es obligatoria (si falta, la app no arranca) y `0` explícito significa sin proxy.
-- Body con `Content-Encoding` o charset no soportados → `415 UNSUPPORTED_MEDIA_TYPE`; cualquier otro error 4xx al leer el body → `400 VALIDATION_ERROR` (nunca 500).
+- Body con `Content-Encoding` o charset no soportados → `415 UNSUPPORTED_MEDIA_TYPE`; gzip/deflate corrupto o cualquier otro error 4xx al leer el body → `400 VALIDATION_ERROR` (nunca 500).
 
 ## Notas de implementación (desvíos respecto del DER de Notion)
 
