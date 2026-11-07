@@ -1,3 +1,11 @@
+import { argentinaDate, pad } from '@/utils/dates';
+
+/** El día de Argentina de `now` (aaaa-mm-dd): la conversación y el límite son de ese día. */
+export function chatDayOf(now = new Date()) {
+  const { year, month, day } = argentinaDate(now);
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+
 /**
  * La conversación del día (lo de GET /chat/today) con un intercambio más al final: la consulta del alumno y la
  * respuesta del POST /chat (con sus sugerencias), y el `remaining_today` nuevo. Sin conversación cargada (falló el

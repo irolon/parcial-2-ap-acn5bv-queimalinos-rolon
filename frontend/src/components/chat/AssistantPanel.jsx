@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { useChatToday, useSendChat } from '@/hooks/chat/useChat';
 import { useOnline } from '@/hooks/shared/useOnline';
+import { useToday } from '@/hooks/shared/useToday';
+import { chatDayOf } from '@/utils/chat/chatDay';
 import { LIMIT_TEXT, OFFLINE_TEXT, chatProblem } from '@/utils/chat/chatProblem';
 import ChatComposer from './ChatComposer';
 import ChatLog from './ChatLog';
@@ -41,17 +43,29 @@ function useClearOnReconnect(online, offlineFailure, reset) {
   }, [online, offlineFailure, reset]);
 }
 
+/** Pasada la medianoche se olvida el error de la última consulta (un 429 del límite de ayer ya no vale). */
+function useClearOnNewDay(today, reset) {
+  const lastDay = useRef(today);
+  useEffect(() => {
+    if (today === lastDay.current) return;
+    lastDay.current = today;
+    reset();
+  }, [today, reset]);
+}
+
 /**
  * El asistente durante la sesión activa: la conversación del día, sobre qué ejercicio se pregunta (`exercise`, el
  * de la sesión a la vista, o null), atajos, el contador y los avisos. La consulta viaja con `sessionId` y el
  * ejercicio. Si falla, el texto queda en la caja para Reintentar. Sin conexión o en el límite la caja se deshabilita; el
- * estado de conexión sigue al del navegador: al volver, se va el aviso y la caja se habilita.
+ * estado de conexión sigue al del navegador: al volver, se va el aviso y la caja se habilita. Con el panel abierto pasada
+ * la medianoche de Argentina (`useToday`) se pide la conversación del día nuevo y se olvida el error de ayer.
  * No toca la sesión: lo que pase acá no frena el registro de series ni el descanso. Cerrar y Escape llaman a `onClose`.
  */
 export default function AssistantPanel({ exercise, sessionId, onClose }) {
   const online = useOnline();
-  const day = useChatToday();
-  const send = useSendChat();
+  const now = useToday();
+  const day = useChatToday(now);
+  const send = useSendChat(now);
   const [text, setText] = useState('');
   const panelRef = useRef(null);
   useEffect(() => panelRef.current?.focus({ preventScroll: true }), []);
@@ -60,6 +74,7 @@ export default function AssistantPanel({ exercise, sessionId, onClose }) {
   const remaining = day.data?.remaining_today;
   const blocked = !online || remaining === 0 || problem?.kind === 'limit';
   useClearOnReconnect(online, problem?.kind === 'offline', send.reset);
+  useClearOnNewDay(chatDayOf(now), send.reset);
   const ask = () => {
     const message = text.trim();
     if (!message || send.isPending) return;

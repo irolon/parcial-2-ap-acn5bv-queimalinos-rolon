@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendExchange, withoutRemaining } from '@/utils/chat/chatDay';
+import { appendExchange, chatDayOf, withoutRemaining } from '@/utils/chat/chatDay';
 
 const NOW = new Date('2026-11-07T13:30:00.000Z');
 const reply = {
@@ -36,5 +36,12 @@ describe('withoutRemaining', () => {
   it('deja el contador en 0 sin tocar los mensajes', () => {
     expect(withoutRemaining({ messages: [earlier], remaining_today: 3 })).toEqual({ messages: [earlier], remaining_today: 0 });
     expect(withoutRemaining(undefined)).toEqual({ messages: [], remaining_today: 0 });
+  });
+});
+
+describe('chatDayOf', () => {
+  it('el día de Argentina (UTC-3), no el de UTC ni el del navegador', () => {
+    expect(chatDayOf(new Date('2026-11-08T02:59:59Z'))).toBe('2026-11-07');
+    expect(chatDayOf(new Date('2026-11-08T03:00:00Z'))).toBe('2026-11-08');
   });
 });
