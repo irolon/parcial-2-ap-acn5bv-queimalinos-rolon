@@ -26,7 +26,7 @@ export const MAX_REASON_LENGTH = 200;
 export const CHAT_WEBHOOK_TIMEOUT_MS = 9000;
 
 export const CHAT_UNAVAILABLE_MESSAGE = 'El asistente no está disponible ahora. Seguí con tu entrenamiento.';
-export const CHAT_INVALID_MESSAGE = 'El asistente respondió algo inválido. Probá de nuevo.';
+export const CHAT_INVALID_MESSAGE = 'El asistente respondió algo que no entendimos. Probá de nuevo.';
 
 /** Límites UTC del día de Argentina de `now`: [fromIso, toIso). */
 export function chatDayBounds(now) {

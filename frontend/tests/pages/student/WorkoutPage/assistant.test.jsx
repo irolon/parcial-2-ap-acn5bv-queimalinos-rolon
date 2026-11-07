@@ -91,7 +91,7 @@ describe('WorkoutPage: el panel del asistente', () => {
   });
 
   it('con el asistente caído la sesión sigue: se registra la serie igual', async () => {
-    stubChat({ send: [[503, 'AI_UNAVAILABLE']] });
+    stubChat({ send: [[503, 'AI_UNAVAILABLE', 'El asistente no está disponible ahora. Seguí con tu entrenamiento.']] });
     renderWorkoutPage();
     const user = setup();
     await user.click(assistantButton());

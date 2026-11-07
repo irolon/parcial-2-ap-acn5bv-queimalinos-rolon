@@ -1,16 +1,13 @@
 import { ApiError, request } from '@/api/shared/client';
 
 /**
- * Tope del lado del cliente: el backend corta a n8n a los 10 s y contesta 503, así que esto solo salta si ese 503
- * tampoco llega (servidor colgado). Se trata igual que el 503: el asistente no está disponible.
+ * Tope del lado del cliente: el backend corta a n8n a los 9 s y contesta 503, así que esto solo salta si ese 503
+ * tampoco llega (servidor colgado). Se trata igual que el 503: el asistente no está disponible. Sin `message`: el
+ * texto lo pone `chatProblem` (el mismo que el del 503 del servidor).
  */
 export const CHAT_TIMEOUT_MS = 12_000;
 
-const UNAVAILABLE = {
-  status: 503,
-  code: 'AI_UNAVAILABLE',
-  message: 'El asistente no está disponible ahora. Seguí con tu entrenamiento.',
-};
+const UNAVAILABLE = { status: 503, code: 'AI_UNAVAILABLE', message: '' };
 
 /** GET /chat/today (alumno) → `{ messages: [{ id, role, content, created_at }], remaining_today }`. */
 export async function getChatToday() {

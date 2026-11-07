@@ -39,8 +39,17 @@ describe('AssistantPanel: cuando el asistente falla', () => {
   });
 
   it('502: avisa que la respuesta no se entendió, con Reintentar', async () => {
-    await askAndFail([502, 'AI_INVALID_RESPONSE']);
+    await askAndFail([502, 'AI_INVALID_RESPONSE', 'El asistente respondió algo que no entendimos. Probá de nuevo.']);
     expect(await screen.findByRole('alert')).toHaveTextContent('El asistente respondió algo que no entendimos. Probá de nuevo.');
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+
+  it('429 CHAT_IN_PROGRESS (otra pestaña esperando respuesta): lo que dice el servidor, sin tocar el contador', async () => {
+    await askAndFail([429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.']);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Esperá la respuesta anterior.');
+    expect(screen.getByText('Te quedan 20 consultas hoy')).toBeInTheDocument();
+    expect(chatBox()).toBeEnabled();
+    expect(chatBox()).toHaveValue('¿Cómo es la técnica?');
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
   });
 

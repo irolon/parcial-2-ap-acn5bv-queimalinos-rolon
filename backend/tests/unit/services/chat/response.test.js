@@ -75,6 +75,6 @@ describe('chat · validateChatResponse', () => {
   });
 
   it('el 502 trae el mensaje del chat, no el de la propuesta de rutinas', () => {
-    expect(() => check(null)).toThrow('El asistente respondió algo inválido. Probá de nuevo.');
+    expect(() => check(null)).toThrow('El asistente respondió algo que no entendimos. Probá de nuevo.');
   });
 });

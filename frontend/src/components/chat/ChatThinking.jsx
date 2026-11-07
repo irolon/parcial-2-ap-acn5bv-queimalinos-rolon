@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-// El backend corta a los 10 s: la barra se llena en ese tiempo, así se ve cuánto puede faltar como mucho.
+// Tope visual del spec (RNF-04: respuesta en menos de 10 s). El backend corta a los 9 s, así que la barra no llega a
+// llenarse sin que aparezca la respuesta o el aviso.
 const VISUAL_CAP = 'width 10s linear';
 
 /** "Pensando…" mientras el asistente contesta, con una barra que se llena en 10 s. */

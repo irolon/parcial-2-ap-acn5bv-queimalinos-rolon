@@ -9,19 +9,41 @@ describe('chatProblem', () => {
     expect(chatProblem(null)).toBeNull();
   });
 
-  it('cada error del asistente tiene su aviso y dice si se puede reintentar', () => {
-    expect(chatProblem(apiError(429, 'CHAT_LIMIT_REACHED'))).toEqual({
+  it('cada error del asistente tiene su aviso (local si el servidor no manda texto) y dice si se puede reintentar', () => {
+    expect(chatProblem(apiError(429, 'CHAT_LIMIT_REACHED', ''))).toEqual({
       kind: 'limit', text: 'Llegaste al límite de consultas de hoy. Mañana podés seguir.', retry: false,
     });
     expect(chatProblem(apiError(0, 'NETWORK_ERROR'))).toEqual({
       kind: 'offline', text: 'El asistente necesita conexión', retry: true,
     });
-    expect(chatProblem(apiError(503, 'AI_UNAVAILABLE'))).toEqual({
+    expect(chatProblem(apiError(503, 'AI_UNAVAILABLE', ''))).toEqual({
       kind: 'unavailable', text: 'El asistente no está disponible ahora. Seguí con tu entrenamiento.', retry: true,
     });
-    expect(chatProblem(apiError(502, 'AI_INVALID_RESPONSE'))).toEqual({
+    expect(chatProblem(apiError(502, 'AI_INVALID_RESPONSE', ''))).toEqual({
       kind: 'invalid', text: 'El asistente respondió algo que no entendimos. Probá de nuevo.', retry: true,
     });
+  });
+
+  it('503, 502 y 429 del asistente: el texto del servidor cuando viene; sin texto, el local', () => {
+    expect(chatProblem(apiError(503, 'AI_UNAVAILABLE', 'No anda, seguí.'))).toMatchObject({ kind: 'unavailable', text: 'No anda, seguí.' });
+    expect(chatProblem(apiError(502, 'AI_INVALID_RESPONSE', 'Rara.'))).toMatchObject({ kind: 'invalid', text: 'Rara.' });
+    expect(chatProblem(apiError(429, 'CHAT_LIMIT_REACHED', 'Basta por hoy.'))).toMatchObject({ kind: 'limit', text: 'Basta por hoy.' });
+    expect(chatProblem(apiError(503, 'AI_UNAVAILABLE', ''))).toMatchObject({
+      text: 'El asistente no está disponible ahora. Seguí con tu entrenamiento.',
+    });
+  });
+
+  it('un 502/503 que no es del backend (proxy, sin código) usa el texto local, no "Error inesperado del servidor"', () => {
+    expect(chatProblem(apiError(502, undefined, 'Error inesperado del servidor'))).toEqual({
+      kind: 'unavailable', text: 'El asistente no está disponible ahora. Seguí con tu entrenamiento.', retry: true,
+    });
+  });
+
+  it('429 CHAT_IN_PROGRESS (otra consulta en curso): el texto del servidor, con Reintentar y sin tocar el límite', () => {
+    expect(chatProblem(apiError(429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.'))).toEqual({
+      kind: 'busy', text: 'Esperá la respuesta anterior.', retry: true,
+    });
+    expect(chatProblem(apiError(429, 'CHAT_IN_PROGRESS', ''))).toMatchObject({ text: 'Esperá la respuesta anterior.' });
   });
 
   it('sesión terminada o ajena: el texto del servidor, sin reintentar', () => {
