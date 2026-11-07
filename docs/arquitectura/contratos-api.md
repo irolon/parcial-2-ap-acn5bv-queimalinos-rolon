@@ -1185,28 +1185,95 @@ Desafíos del alumno (activos, completados y fallidos), el más nuevo primero. R
 
 ## Módulo: Chat IA del alumno
 
+Spec: `docs/superpowers/specs/2026-11-07-student-ai-chat-design.md` (tarjeta 13). El asistente responde dudas del alumno durante la sesión (reemplazos, técnica, máquina ocupada). Tabla `chat_messages` (`session_id` admite null). **Sin conexión** el cliente deshabilita el chat (AL-10): el backend no tiene un error propio para eso.
+
 ### POST /chat
 
-Envía un mensaje al asistente IA en sesión.
+Envía un mensaje al asistente IA.
 
-**Headers:** `Authorization: Bearer <token>` (rol: alumno)
+**Headers:** `Authorization: Bearer <token>` (rol: alumno; otro rol → 403)
 
 **Body**
 
 ```json
+{ "message": "string (1-500)", "session_id": "uuid (opcional)", "current_exercise_id": "uuid (opcional)" }
+```
+
+- `message` se recorta; vacío o de más de 500 → 400 `VALIDATION_ERROR`. `null` en los opcionales = no enviado. Los campos de más se descartan, incluido el `context.gym_equipment` del contrato viejo: el equipamiento sale de la ficha del alumno (lo carga el PT).
+- `session_id`: la sesión se guarda en el servidor recién al terminar (offline-first), así que **si no existe se acepta** y el mensaje queda sin sesión. Si existe, tiene que ser del alumno (si no, 404 `SESSION_NOT_FOUND`, sin revelar que existe) y no estar terminada (400 `SESSION_FINISHED`).
+- `current_exercise_id`: si no es un ejercicio accesible para el alumno (global o de su PT), **se ignora sin error**.
+- **Límite:** 20 mensajes del alumno (`role = 'user'`) por día de Argentina (UTC-3, de 00:00 a 00:00). Las fallas no se guardan, así que no cuentan.
+
+**Llamada a n8n.** `POST ${N8N_STUDENT_AI_WEBHOOK_URL}` (workflow `student-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **10 s** (RNF-04). **Sin datos personales** (RNF-26: nunca nombre, email, fecha de nacimiento, avatar ni ids del alumno o de la sesión). El payload tiene exactamente estas claves:
+
+```json
 {
-  "session_id": "uuid",
-  "message": "string (1–500 chars)",
-  "context": {
-    "current_exercise_id": "uuid (opcional)",
-    "gym_equipment": ["barbell", "dumbbell", "cable"]
+  "message": "¿Con qué reemplazo el press de banca?",
+  "exercise": { "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" },
+  "student": { "goal": "hypertrophy | null", "level": "beginner | null", "gym_equipment": ["dumbbell"], "injuries": "string | null" },
+  "alternatives": [ { "id": "uuid", "name": "Press con mancuernas", "muscle_group": "chest", "equipment": "dumbbell" } ],
+  "history": [ { "role": "user", "content": "…" }, { "role": "assistant", "content": "…" } ]
+}
+```
+
+- `exercise`: el ejercicio actual, o `null` si no vino o no es accesible.
+- `student.gym_equipment`: el de la ficha, solo valores válidos (`barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`) y sin repetir. `injuries` recortado (vacío → `null`).
+- `alternatives`: hasta 30 ejercicios accesibles (globales y del PT del alumno) del mismo grupo muscular que `exercise` (de todos si es `null`), sin el ejercicio actual, cuyo equipamiento esté en `gym_equipment` o sea `bodyweight`; por nombre.
+- `history`: los últimos 6 mensajes del día del alumno (antes de este), en orden.
+
+**Respuesta esperada de n8n** (el backend la valida):
+
+```json
+{ "response": "texto (1-1500)", "suggestions": [ { "exercise_id": "uuid", "reason": "texto (1-200)" } ] }
+```
+
+- `response` obligatorio (se recorta). Falta, vacío, no es texto, pasa de 1500, o la respuesta trae `error` (p. ej. `{ "error": "INVALID_JSON" }`) → 502 `AI_INVALID_RESPONSE`.
+- `suggestions` es informativo: se queda con las **3 primeras válidas**, solo con `exercise_id` de `alternatives`, `reason` de 1 a 200 y sin repetir. Las que no cumplen (o un `suggestions` que no es lista) **se descartan sin rechazar la respuesta**. El nombre sale de la biblioteca, no de la IA.
+
+**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`). Las sugerencias no se guardan. La sesión no se toca nunca.
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "message_id": "uuid (el de la respuesta)",
+    "response": "Probá con press con mancuernas…",
+    "suggestions": [ { "exercise_id": "uuid", "name": "Press con mancuernas", "reason": "Mismo patrón con tu equipamiento" } ],
+    "remaining_today": 17
   }
 }
 ```
 
-**200 OK** — `{ message_id, response, suggestions[] }`
+**Errores**
 
-**Errores:** `503 AI_UNAVAILABLE` (n8n timeout 10s), `400 SESSION_FINISHED`, `503 OFFLINE_MODE` (sin conexión)
+| Código | Cuándo |
+|---|---|
+| 400 `VALIDATION_ERROR` | Body inválido (`message`, `session_id` o `current_exercise_id`) |
+| 400 `SESSION_FINISHED` | La sesión existe y ya terminó. No se llama a n8n |
+| 404 `SESSION_NOT_FOUND` | La sesión existe y es de otro alumno. No se llama a n8n |
+| 429 `CHAT_LIMIT_REACHED` | 20 mensajes del alumno hoy (día de Argentina). "Llegaste al límite de consultas de hoy. Mañana podés seguir." Sin `Retry-After`. No se llama a n8n |
+| 502 `AI_INVALID_RESPONSE` | La respuesta de n8n no pasa la validación o no es JSON. No se guarda nada |
+| 503 `AI_UNAVAILABLE` | Falta `N8N_STUDENT_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 10 s, error de red o n8n responde no 2xx. "El asistente no está disponible ahora. Seguí con tu entrenamiento." No se guarda nada |
+
+### GET /chat/today
+
+La conversación del día del alumno (día de Argentina), para que el panel la recupere al recargar.
+
+**Headers:** `Authorization: Bearer <token>` (rol: alumno; otro rol → 403)
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "messages": [ { "id": "uuid", "role": "user | assistant", "content": "…", "created_at": "ISO 8601" } ],
+    "remaining_today": 17
+  }
+}
+```
+
+`messages` va del más viejo al más nuevo (en el mismo instante, el del alumno antes que la respuesta), sin las sugerencias. `remaining_today` = 20 − mensajes del alumno hoy, nunca negativo. Solo devuelve los del alumno autenticado.
 
 ---
 

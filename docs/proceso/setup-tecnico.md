@@ -68,8 +68,8 @@ Completá `backend/.env`:
 | `FCM_SERVICE_ACCOUNT_PATH` | No | Ruta al JSON de la cuenta de servicio de Firebase (desarrollo local, fuera del repo). Ver [Firebase / FCM](#firebase--fcm-push) |
 | `FCM_SERVICE_ACCOUNT_JSON` | No | El mismo JSON en base64 (VPS). Si están las dos, gana la ruta. Sin ninguna, el push queda apagado y las notificaciones se guardan igual |
 | `N8N_TRAINER_AI_WEBHOOK_URL` | No | URL del webhook `trainer-ia` de n8n (asistente IA del entrenador), p. ej. `http://n8n:5678/webhook/trainer-ia` en el compose. Sin ella la app arranca igual y `POST /trainer-ai/generate-routine` responde 503 `AI_UNAVAILABLE`. **Para que la IA funcione hacen falta esta y `N8N_WEBHOOK_SECRET`.** Ver `n8n/README.md` |
-| `N8N_WEBHOOK_SECRET` | No | Secreto compartido con n8n: el backend lo manda en el header `x-webhook-secret` y n8n lo compara con su credencial *Header Auth* (`FitTrainer webhook`). Tiene que ser el mismo valor de los dos lados. **Obligatoria para usar la IA:** si falta, el backend no llama a n8n, lo loguea y responde 503 `AI_UNAVAILABLE` |
-| `N8N_WEBHOOK_URL` | No | Chat IA del alumno (tarjeta 13). Se usa en fases posteriores; dejala vacía |
+| `N8N_WEBHOOK_SECRET` | No | Secreto compartido con n8n: el backend lo manda en el header `x-webhook-secret` y n8n lo compara con su credencial *Header Auth* (`FitTrainer webhook`). Tiene que ser el mismo valor de los dos lados y es uno solo para los dos asistentes (entrenador y alumno). **Obligatoria para usar la IA:** si falta, el backend no llama a n8n, lo loguea y responde 503 `AI_UNAVAILABLE` |
+| `N8N_STUDENT_AI_WEBHOOK_URL` | No | URL del webhook `student-ia` de n8n (chat IA del alumno durante la sesión, tarjeta 13), p. ej. `http://n8n:5678/webhook/student-ia` en el compose. Sin ella la app arranca igual y `POST /chat` responde 503 `AI_UNAVAILABLE` ("El asistente no está disponible ahora. Seguí con tu entrenamiento."). Usa el mismo `N8N_WEBHOOK_SECRET`. Ver `n8n/README.md` |
 
 Para generar un `JWT_SECRET`:
 

@@ -65,12 +65,17 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | UT-12 | Gamificación | `actualizarProgresoChallenge()` | Sesión finalizada + challenge activo | current_progress incrementado correctamente |
 | UT-13 | TrainerAI | `buildContext()` / `generateRoutine()` | Parámetros + alumno con nombre, email y nacimiento | Payload a n8n (`params`, `library`, `previous_templates`, `base_template`) sin datos personales; biblioteca filtrada por equipamiento + `bodyweight` (el prompt lo arma n8n) |
 | UT-14 | TrainerAI | `validateProposal()` | JSON de n8n | Propuesta saneada (campos de más descartados) o 502 `AI_INVALID_RESPONSE`: ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días ≠ frecuencia, `{ "error": "INVALID_JSON" }` |
-| UT-15 | StudentAI | `buildContextForChat()` | Sesión activa | Objeto con contexto enriquecido para n8n |
+| UT-15 | StudentAI | `buildChatContext()` / `sendMessage()` | Alumno con nombre, email, nacimiento y equipamiento; ejercicio actual accesible, ajeno o ausente; 8 mensajes del día | Payload a n8n con exactamente `message`, `exercise`, `student`, `alternatives`, `history`, sin datos personales; alternativas (≤30) del grupo del ejercicio con el equipamiento del alumno + `bodyweight`; ejercicio inaccesible → `exercise: null` sin error; `history` = últimos 6 |
 | UT-16 | TrainerAI | `validateGenerateRoutine()` / `validateSaveAsTemplate()` | Body con cada regla rota | 400 `VALIDATION_ERROR` con el campo; goal/level opcionales solo con `student_id` |
 | UT-17 | TrainerAI | `resolveParams()` | `student_id` del trainer, ajeno o dado de baja | Completa goal, level, equipamiento y lesiones con el alumno; 404 `STUDENT_NOT_FOUND` si es ajeno o inactivo |
 | UT-18 | TrainerAI | `requestRoutineProposal()` | Webhook ok, timeout, 5xx, sin URL | Secreto en `x-webhook-secret` y `AbortSignal.timeout(30000)`; timeout, 5xx o sin URL → 503 `AI_UNAVAILABLE` |
 | UT-19 | TrainerAI | `generateRoutine()` (límite) | 20 generaciones o 20 intentos (también fallidos) en la última hora; o una generación del trainer en curso | 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n; las fallidas no se guardan pero cuentan |
 | UT-20 | TrainerAI | `saveAsTemplate()` | Generación de 1 y de varios bloques | Una plantilla por bloque (`<nombre> · <bloque>`, ≤120); 404 ajena, 409 ya guardada, 400 `TEMPLATE_EXERCISES_UNAVAILABLE` sin crear nada |
+| UT-21 | StudentAI | `validateChatBody()` | Body con `message` vacío, de 501, ids inválidos, `context` viejo | 400 `VALIDATION_ERROR` con el campo; `message` recortado; los campos de más se descartan |
+| UT-22 | StudentAI | `resolveSessionId()` | Sesión propia en curso, inexistente, ajena, terminada | Su id / `null` (offline-first, se acepta) / 404 `SESSION_NOT_FOUND` / 400 `SESSION_FINISHED`, sin llamar a n8n |
+| UT-23 | StudentAI | `validateChatResponse()` | JSON de n8n | `response` recortado; sugerencias inventadas, sin `reason`, repetidas o de más de 3 se descartan sin rechazar; `response` vacío, de más de 1500 o `{ "error": … }` → 502 `AI_INVALID_RESPONSE` |
+| UT-24 | StudentAI | `postToN8n()` | Webhook del chat ok, timeout, 5xx, sin URL o sin secreto | URL de `N8N_STUDENT_AI_WEBHOOK_URL`, secreto en `x-webhook-secret`, `AbortSignal.timeout(10000)`; fallas → 503 "El asistente no está disponible ahora. Seguí con tu entrenamiento." |
+| UT-25 | StudentAI | `sendMessage()` / `getToday()` (límite y guardado) | 19 y 20 mensajes del alumno hoy; 23:59 y 00:00 de Argentina; falla de n8n | 20 → 429 `CHAT_LIMIT_REACHED` sin llamar a n8n; el día corta a las 00:00 AR; el par se guarda en una inserción solo si sale bien; las fallas no se guardan ni cuentan; `remaining_today` nunca negativo |
 
 ### 3.2 Pruebas de Integración
 
@@ -96,10 +101,10 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-16 | `/api/progress/exercise/:id` | GET | Trainer ve progreso de su alumno | 200 + datos |
 | IT-17 | `/api/progress/exercise/:id` | GET | Trainer ve alumno ajeno | 403 Forbidden |
 | IT-18 | `/api/trainer-ai/generate-routine` | POST | Solicitud válida con alumno (n8n simulado por un servidor local) | 200 + `routine_proposal` con bloques y nombres; n8n recibe el secreto y ningún dato personal |
-| IT-19 | `/api/trainer-ai/generate-routine` | POST | n8n responde 502 `LLM_UNAVAILABLE` / `{ "error": "INVALID_JSON" }` | 503 `AI_UNAVAILABLE` / 502 `AI_INVALID_RESPONSE`, sin guardar la generación |
+| IT-19 | `/api/trainer-ai/generate-routine`, `/api/chat` | POST | n8n responde 502 `LLM_UNAVAILABLE` / `{ "error": "INVALID_JSON" }` | 503 `AI_UNAVAILABLE` / 502 `AI_INVALID_RESPONSE`, sin guardar la generación ni los mensajes del chat (no cuentan para el límite) |
 | IT-20 | ~~`/api/trainer-ai/refine`~~ | POST | Fuera de alcance (tarjeta 15): el PT ajusta en el editor | — |
-| IT-21 | `/api/chat` | POST | Mensaje con sesión activa | 200 + respuesta IA |
-| IT-22 | `/api/chat` | POST | Sesión finalizada | 400 SESSION_FINISHED |
+| IT-21 | `/api/chat` | POST | Mensaje con sesión en curso y ejercicio actual (n8n simulado por un servidor local) | 200 + `response`, sugerencias solo de `alternatives` con nombre y `remaining_today: 19`; n8n recibe el secreto y ningún dato personal; el par queda en `chat_messages` con la sesión. Con una sesión que todavía no subió: 200 y el par sin sesión |
+| IT-22 | `/api/chat` | POST | Sesión finalizada | 400 `SESSION_FINISHED` sin llamar a n8n |
 | IT-23 | `/api/students/:id/achievements` | GET | Alumno con logros desbloqueados | 200 + lista poblada |
 | IT-24 | `/api/students/:id/streak` | GET | Alumno con sesiones consecutivas | 200 + current_streak_days correcto |
 | IT-25 | `/api/challenges` | POST | Trainer crea challenge personalizado | 201 + challenge creado |
@@ -107,6 +112,9 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-27 | `/api/trainer-ai/save-as-template` | POST | Guardar una propuesta de 2 bloques | 201 + 2 plantillas en `GET /routine-templates` con `generated_by_ai = true`; la generación queda con `routine_template_ids` |
 | IT-28 | `/api/trainer-ai/save-as-template` | POST | Guardar dos veces la misma propuesta | 409 `GENERATION_ALREADY_SAVED` |
 | IT-29 | `/api/trainer-ai/*` | POST | Otro PT guarda la generación, o genera con el alumno o la plantilla ajenos | 404 `GENERATION_NOT_FOUND` / `STUDENT_NOT_FOUND` / `TEMPLATE_NOT_FOUND`, sin ids ajenos en el body |
+| IT-30 | `/api/chat/today` | GET | Después de enviar | 200 + los mensajes del día en orden (alumno, asistente) y `remaining_today`; el siguiente `POST /chat` manda ese par como `history` |
+| IT-31 | `/api/chat`, `/api/chat/today` | POST / GET | Otro alumno pide su conversación o usa la sesión ajena; un PT usa el chat | `{ messages: [], remaining_today: 20 }` / 404 `SESSION_NOT_FOUND` sin llamar a n8n / 403 |
+| IT-32 | `/api/chat` | POST | Alumno con 20 mensajes hoy | 429 `CHAT_LIMIT_REACHED` sin llamar a n8n |
 
 ### 3.3 Pruebas End-to-End (E2E)
 
