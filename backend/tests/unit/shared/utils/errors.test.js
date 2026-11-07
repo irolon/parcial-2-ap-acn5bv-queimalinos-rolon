@@ -68,6 +68,7 @@ describe('Errors del asistente IA del entrenador', () => {
 describe('Errors del chat IA del alumno', () => {
   it.each([
     ['chatLimitReached', [], 429, 'CHAT_LIMIT_REACHED', 'Llegaste al límite de consultas de hoy. Mañana podés seguir.'],
+    ['chatInProgress', [], 429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.'],
     ['sessionFinished', [], 400, 'SESSION_FINISHED', 'La sesión ya terminó'],
     ['aiUnavailable', ['Seguí con tu entrenamiento.'], 503, 'AI_UNAVAILABLE', 'Seguí con tu entrenamiento.'],
     ['aiInvalidResponse', ['Otra vez.'], 502, 'AI_INVALID_RESPONSE', 'Otra vez.'],

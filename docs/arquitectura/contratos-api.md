@@ -1203,6 +1203,7 @@ Envía un mensaje al asistente IA.
 - `session_id`: la sesión se guarda en el servidor recién al terminar (offline-first), así que **si no existe se acepta** y el mensaje queda sin sesión. Si existe, tiene que ser del alumno (si no, 404 `SESSION_NOT_FOUND`, sin revelar que existe) y no estar terminada (400 `SESSION_FINISHED`).
 - `current_exercise_id`: si no es un ejercicio accesible para el alumno (global o de su PT), **se ignora sin error**.
 - **Límite:** 20 mensajes del alumno (`role = 'user'`) por día de Argentina (UTC-3, de 00:00 a 00:00). Las fallas no se guardan, así que no cuentan.
+- **Una consulta a la vez por alumno** (en memoria, por proceso): mientras una está en curso, otra del mismo alumno (otra pestaña, web y celular) es 429 `CHAT_IN_PROGRESS`. Sin esto, dos envíos a la vez con 19 pasarían los dos el límite.
 
 **Llamada a n8n.** `POST ${N8N_STUDENT_AI_WEBHOOK_URL}` (workflow `student-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **9 s**, para que el alumno vea el aviso antes de los 10 s del RNF-04 contando el viaje de vuelta. **Sin datos personales** (RNF-26: nunca nombre, email, fecha de nacimiento, avatar ni ids del alumno o de la sesión). El payload tiene exactamente estas claves:
 
@@ -1230,7 +1231,7 @@ Envía un mensaje al asistente IA.
 - `response` obligatorio (se recorta). Falta, vacío, no es texto, pasa de 1500, o la respuesta trae `error` (p. ej. `{ "error": "INVALID_JSON" }`) → 502 `AI_INVALID_RESPONSE`.
 - `suggestions` es informativo: se queda con las **3 primeras válidas**, solo con `exercise_id` de `alternatives`, `reason` de 1 a 200 y sin repetir. Las que no cumplen (o un `suggestions` que no es lista) **se descartan sin rechazar la respuesta**. El nombre sale de la biblioteca, no de la IA.
 
-**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`). Las sugerencias no se guardan. La sesión no se toca nunca.
+**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`) y los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyó el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche). A igual `created_at` se ordena primero el del alumno. Las sugerencias no se guardan. La sesión no se toca nunca.
 
 **200 OK**
 
@@ -1253,6 +1254,8 @@ Envía un mensaje al asistente IA.
 | 400 `SESSION_FINISHED` | La sesión existe y ya terminó. No se llama a n8n |
 | 404 `SESSION_NOT_FOUND` | La sesión existe y es de otro alumno. No se llama a n8n |
 | 429 `CHAT_LIMIT_REACHED` | 20 mensajes del alumno hoy (día de Argentina). "Llegaste al límite de consultas de hoy. Mañana podés seguir." Sin `Retry-After`. No se llama a n8n |
+| 429 `CHAT_IN_PROGRESS` | El alumno ya tiene una consulta en curso. "Esperá la respuesta anterior." Código propio (no `CHAT_LIMIT_REACHED`) para que el cliente no deje el contador en 0. No se llama a n8n |
+| 500 `INTERNAL_ERROR` | La inserción del par no devolvió la respuesta guardada |
 | 502 `AI_INVALID_RESPONSE` | La respuesta de n8n no pasa la validación o no es JSON. No se guarda nada |
 | 503 `AI_UNAVAILABLE` | Falta `N8N_STUDENT_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 9 s, error de red o n8n responde no 2xx. "El asistente no está disponible ahora. Seguí con tu entrenamiento." No se guarda nada |
 

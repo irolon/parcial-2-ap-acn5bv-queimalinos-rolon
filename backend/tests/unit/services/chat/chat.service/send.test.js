@@ -84,8 +84,14 @@ describe('chat · chat.service · sendMessage', () => {
     const data = await send();
     expect(mockMessagesRepo.insertExchange).toHaveBeenCalledTimes(1);
     expect(mockMessagesRepo.insertExchange).toHaveBeenCalledWith([
-      { student_id: STUDENT_ID, session_id: SESSION_ID, role: 'user', content: BODY.message },
-      { student_id: STUDENT_ID, session_id: SESSION_ID, role: 'assistant', content: 'Probá con mancuernas.' },
+      { student_id: STUDENT_ID, session_id: SESSION_ID, role: 'user', content: BODY.message, created_at: NOW.toISOString() },
+      {
+        student_id: STUDENT_ID,
+        session_id: SESSION_ID,
+        role: 'assistant',
+        content: 'Probá con mancuernas.',
+        created_at: NOW.toISOString(),
+      },
     ]);
     expect(data).toEqual({
       message_id: 'msg-assistant',

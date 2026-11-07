@@ -4,8 +4,8 @@ import { CHAT_MESSAGES_TABLE, CHAT_MESSAGE_COLUMNS } from '../../models/chat/cha
 
 /**
  * Mensajes del alumno con created_at en [fromIso, toIso), más viejos primero. El par se
- * inserta junto (mismo now()), así que a igual instante va primero el del alumno
- * ('user' > 'assistant' en orden descendente).
+ * inserta junto con el mismo created_at (el instante de la consulta), así que a igual
+ * instante va primero el del alumno ('user' > 'assistant' en orden descendente).
  */
 export async function findDayMessages(studentId, fromIso, toIso) {
   return unwrap(

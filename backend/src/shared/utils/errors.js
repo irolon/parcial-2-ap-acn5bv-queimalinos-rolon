@@ -100,6 +100,7 @@ export const Errors = {
     new AppError(502, 'AI_INVALID_RESPONSE', message),
   chatLimitReached: () =>
     new AppError(429, 'CHAT_LIMIT_REACHED', 'Llegaste al límite de consultas de hoy. Mañana podés seguir.'),
+  chatInProgress: () => new AppError(429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.'),
   sessionFinished: () => new AppError(400, 'SESSION_FINISHED', 'La sesión ya terminó'),
   generationNotFound: () => new AppError(404, 'GENERATION_NOT_FOUND', 'La propuesta no existe'),
   generationAlreadySaved: () =>
