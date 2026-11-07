@@ -320,7 +320,7 @@ Antes de abrir una PR: `npm test` y `npm run lint` en verde, y probar a mano lo 
 > Con HTTP no funciona: la app corta cualquier host que no sea `10.0.2.2` o `localhost`. Conectá el celular por USB y corré `adb reverse tcp:3001 tcp:3001`.
 
 > [!note]- ❌ `npm install` o el server fallan por la versión de Node
-> Usá Node 22 (`nvm use`). El backend funciona desde Node 20, pero la web (Vite 8) necesita 20.19 o más.
+> Usá Node 22 (`nvm use`). El backend necesita Node 22 (el cliente de Supabase usa el WebSocket nativo) y la web (Vite 8), 20.19 o más.
 
 ---
 

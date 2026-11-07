@@ -287,6 +287,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 05/11/2026 | `751e605` | Suite completa con la agenda (#49) y `isolation/agenda` | ✅ 178/178 | 219 s | 0 |
 | 05/11/2026 | `52465a3` | **Corrida final** sobre `develop` con la #49 mergeada, guard solo contra dev y rechazos sin ids de A | ✅ 178/178 | 220 s | 0 |
 | 05/11/2026 | `633fdec` | Review de la #76: teardown que espera los avisos, serie sustituida, agenda con `expectNoLeak`, controles por listado e IT-26 (dos corridas) | ✅ 186/186 y 186/186 | 334 s y 310 s | 0 QA y 0 filas sin dueño |
+| 07/11/2026 | `ad22303` | Segunda review de la #76: clean que solo informa las filas sin dueño (`--orphans` para borrarlas) y controles de `/students/overview`, `/routines` y `/notifications` del PT | ✅ 190/190 | 228 s | 0 QA y 0 filas sin dueño |
 
 Fechas en UTC (en Argentina fue la noche del 03/11). La corrida final de la tarjeta 52 es la de `52465a3`.
 
