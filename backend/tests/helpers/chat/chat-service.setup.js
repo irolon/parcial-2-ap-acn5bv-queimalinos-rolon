@@ -21,7 +21,7 @@ export const mockMessagesRepo = { findDayMessages: jest.fn(), insertExchange: je
 jest.unstable_mockModule(src('repositories/chat/chat-messages.repository.js'), () => mockMessagesRepo);
 
 export const mockClient = { postToN8n: jest.fn() };
-jest.unstable_mockModule(src('services/trainer-ai/n8n.client.js'), () => mockClient);
+jest.unstable_mockModule(src('shared/utils/n8n.client.js'), () => mockClient);
 
 export const contextService = await import(src('services/chat/context.service.js'));
 export const chatService = await import(src('services/chat/chat.service.js'));
