@@ -41,7 +41,7 @@ Los mensajes del día del alumno en orden, más `remaining_today`, para que el p
 
 ## Workflow `n8n/workflows/student-ia.json`
 
-Igual que `trainer-ia`: Webhook (Header Auth, credencial "FitTrainer webhook") → Code (prompt) → HTTP Request a KIMI (credencial "KIMI", timeout de 8 s para quedar debajo de los 10 del backend, `json_object`) → Code (parseo) → Respond to Webhook.
+Igual que `trainer-ia`: Webhook (Header Auth, credencial "FitTrainer webhook") → Code (prompt) → HTTP Request a KIMI (credencial "KIMI", timeout de 8 s para quedar debajo de los 9 del backend, `json_object`) → Code (parseo) → Respond to Webhook.
 
 **Prompt de sistema** (en español rioplatense neutro):
 - Es el asistente de entrenamiento del alumno durante la sesión. Respuestas cortas y prácticas: hasta 3 párrafos breves.

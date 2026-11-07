@@ -138,7 +138,7 @@ Archivo: `n8n/workflows/student-ia.json`. Misma estructura que `trainer-ia`:
 
 1. **Webhook student-ia**: `POST /webhook/student-ia`, credencial `FitTrainer webhook` (header `x-webhook-secret`).
 2. **Armar prompt** (Code): prompt de sistema en español rioplatense neutro (asistente en plena sesión, hasta 3 párrafos breves, nada de consejos médicos y ante dolor o lesión parar y consultar al entrenador o a un profesional, lesiones como restricciones, reemplazos solo de `alternatives` por id respetando el equipamiento, fuera de tema se redirige al entrenamiento, esquema de salida). El `history` va como turnos previos del chat (`user` / `assistant`, hasta 6) para que entienda repreguntas como "¿y otra opción?". Acá están el **modelo** (`kimi-k2-turbo-preview`), la temperatura (0.4) y `max_tokens` (600).
-3. **KIMI chat completions** (HTTP Request): mismo endpoint y credencial `KIMI`, `json_object`, timeout de **8 s** (el backend corta a los 10 s).
+3. **KIMI chat completions** (HTTP Request): mismo endpoint y credencial `KIMI`, `json_object`, timeout de **8 s** (el backend corta a los 9 s).
 4. **Parsear JSON** (Code): igual que en `trainer-ia`.
 5. **Responder respuesta** / **Responder error KIMI** (Respond to Webhook).
 

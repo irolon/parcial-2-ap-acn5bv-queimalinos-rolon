@@ -74,8 +74,9 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | UT-21 | StudentAI | `validateChatBody()` | Body con `message` vacío, de 501, ids inválidos, `context` viejo | 400 `VALIDATION_ERROR` con el campo; `message` recortado; los campos de más se descartan |
 | UT-22 | StudentAI | `resolveSessionId()` | Sesión propia en curso, inexistente, ajena, terminada | Su id / `null` (offline-first, se acepta) / 404 `SESSION_NOT_FOUND` / 400 `SESSION_FINISHED`, sin llamar a n8n |
 | UT-23 | StudentAI | `validateChatResponse()` | JSON de n8n | `response` recortado; sugerencias inventadas, sin `reason`, repetidas o de más de 3 se descartan sin rechazar; `response` vacío, de más de 1500 o `{ "error": … }` → 502 `AI_INVALID_RESPONSE` |
-| UT-24 | StudentAI | `postToN8n()` | Webhook del chat ok, timeout, 5xx, sin URL o sin secreto | URL de `N8N_STUDENT_AI_WEBHOOK_URL`, secreto en `x-webhook-secret`, `AbortSignal.timeout(10000)`; fallas → 503 "El asistente no está disponible ahora. Seguí con tu entrenamiento." |
+| UT-24 | StudentAI | `postToN8n()` | Webhook del chat ok, timeout, 5xx, sin URL o sin secreto | URL de `N8N_STUDENT_AI_WEBHOOK_URL`, secreto en `x-webhook-secret`, `AbortSignal.timeout(9000)`; fallas → 503 "El asistente no está disponible ahora. Seguí con tu entrenamiento." |
 | UT-25 | StudentAI | `sendMessage()` / `getToday()` (límite y guardado) | 19 y 20 mensajes del alumno hoy; 23:59 y 00:00 de Argentina; falla de n8n | 20 → 429 `CHAT_LIMIT_REACHED` sin llamar a n8n; el día corta a las 00:00 AR; el par se guarda en una inserción solo si sale bien; las fallas no se guardan ni cuentan; `remaining_today` nunca negativo |
+| UT-26 | StudentAI | `sendMessage()` (concurrencia y día) | Dos consultas a la vez del mismo alumno con 19; consulta a las 23:59:55 AR; inserción sin filas | La segunda → 429 `CHAT_IN_PROGRESS` sin llamar a n8n y el lugar se libera al terminar (bien o mal); el par se guarda con `created_at` de la consulta (queda en ese día); sin filas → 500 `INTERNAL_ERROR` |
 
 ### 3.2 Pruebas de Integración
 
