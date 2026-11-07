@@ -67,7 +67,8 @@ export const env = {
   // Push (FCM HTTP v1): opcionales; sin credenciales el push es no-op. En test se ignoran.
   FCM_SERVICE_ACCOUNT_PATH: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_PATH,
   FCM_SERVICE_ACCOUNT_JSON: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_JSON,
-  // Asistente IA del entrenador (n8n): opcionales; sin la URL la IA responde 503 y la app arranca igual.
+  // Asistentes IA (n8n): opcionales; sin la URL o el secreto la IA responde 503 y la app arranca igual.
   N8N_TRAINER_AI_WEBHOOK_URL: optional('N8N_TRAINER_AI_WEBHOOK_URL'),
+  N8N_STUDENT_AI_WEBHOOK_URL: optional('N8N_STUDENT_AI_WEBHOOK_URL'),
   N8N_WEBHOOK_SECRET: optional('N8N_WEBHOOK_SECRET'),
 };

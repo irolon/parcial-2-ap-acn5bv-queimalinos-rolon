@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { env } from '../../../../src/config/env.js';
-import { requestRoutineProposal, WEBHOOK_TIMEOUT_MS } from '../../../../src/services/trainer-ai/n8n.client.js';
+import { requestRoutineProposal, postToN8n, WEBHOOK_TIMEOUT_MS } from '../../../../src/services/trainer-ai/n8n.client.js';
 
 const URL = 'http://n8n.test/webhook/trainer-ia';
 const PAYLOAD = { params: { goal: 'strength' }, library: [], previous_templates: [], base_template: null };
@@ -80,5 +80,48 @@ describe('trainer-ai · n8n.client', () => {
     await expect503(requestRoutineProposal(PAYLOAD));
     expect(fetchMock).not.toHaveBeenCalled();
     expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('N8N_WEBHOOK_SECRET'));
+  });
+
+  describe('postToN8n (genérico: la URL sale de la variable que se pasa)', () => {
+    const CHAT_URL = 'http://n8n.test/webhook/student-ia';
+    const ORIGINAL_CHAT = env.N8N_STUDENT_AI_WEBHOOK_URL;
+    const OPTIONS = { timeoutMs: 10000, tag: 'chat', unavailableMessage: 'Seguí entrenando.', invalidMessage: 'Respuesta rara.' };
+    beforeEach(() => {
+      env.N8N_STUDENT_AI_WEBHOOK_URL = CHAT_URL;
+    });
+    afterEach(() => {
+      env.N8N_STUDENT_AI_WEBHOOK_URL = ORIGINAL_CHAT;
+    });
+
+    it('usa la URL de esa variable, el secreto compartido y el timeout que se le pide', async () => {
+      const timeout = jest.spyOn(AbortSignal, 'timeout');
+      fetchMock.mockResolvedValue(reply(200, { response: 'ok' }));
+      await expect(postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', { message: 'hola' }, OPTIONS)).resolves.toEqual({ response: 'ok' });
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe(CHAT_URL);
+      expect(init.headers['x-webhook-secret']).toBe('secreto');
+      expect(timeout).toHaveBeenCalledWith(10000);
+      timeout.mockRestore();
+    });
+
+    it('sin esa variable → 503 con el mensaje pedido, sin llamar a n8n y lo loguea con el nombre', async () => {
+      env.N8N_STUDENT_AI_WEBHOOK_URL = undefined;
+      await expect(postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', {}, OPTIONS)).rejects.toMatchObject({
+        statusCode: 503,
+        message: 'Seguí entrenando.',
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(errorLog).toHaveBeenCalledWith(expect.stringMatching(/^\[chat\].*N8N_STUDENT_AI_WEBHOOK_URL/));
+    });
+
+    it('5xx → 503 y 2xx no JSON → 502, con los mensajes pedidos', async () => {
+      fetchMock.mockResolvedValueOnce(reply(500, {}));
+      await expect(postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', {}, OPTIONS)).rejects.toMatchObject({ message: 'Seguí entrenando.' });
+      fetchMock.mockResolvedValueOnce(reply(200, '<html>'));
+      await expect(postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', {}, OPTIONS)).rejects.toMatchObject({
+        statusCode: 502,
+        message: 'Respuesta rara.',
+      });
+    });
   });
 });

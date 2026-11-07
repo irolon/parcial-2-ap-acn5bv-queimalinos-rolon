@@ -64,3 +64,17 @@ describe('Errors del asistente IA del entrenador', () => {
     expect(Errors.templateExercisesUnavailable(['ex-1']).statusCode).toBe(409);
   });
 });
+
+describe('Errors del chat IA del alumno', () => {
+  it.each([
+    ['chatLimitReached', [], 429, 'CHAT_LIMIT_REACHED', 'Llegaste al límite de consultas de hoy. Mañana podés seguir.'],
+    ['sessionFinished', [], 400, 'SESSION_FINISHED', 'La sesión ya terminó'],
+    ['aiUnavailable', ['Seguí con tu entrenamiento.'], 503, 'AI_UNAVAILABLE', 'Seguí con tu entrenamiento.'],
+    ['aiInvalidResponse', ['Otra vez.'], 502, 'AI_INVALID_RESPONSE', 'Otra vez.'],
+  ])('%s', (name, args, status, code, message) => {
+    const err = Errors[name](...args);
+    expect(err.statusCode).toBe(status);
+    expect(err.code).toBe(code);
+    expect(err.message).toBe(message);
+  });
+});
