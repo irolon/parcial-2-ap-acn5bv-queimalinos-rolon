@@ -2,13 +2,11 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import * as authApi from '@/api/auth/auth.api';
 import * as studentsApi from '@/api/students/students.api';
-import { configureClient } from '@/api/shared/client';
+import { configureClient, isNetworkError } from '@/api/shared/client';
 
 export const SESSION_STORAGE_KEY = 'fittrainer.session';
 
 const EMPTY_SESSION = { user: null, token: null, refreshToken: null };
-
-const isNetworkError = (err) => err?.status === 0 || err?.code === 'NETWORK_ERROR';
 
 // Sin conexión con el servidor no se sabe si la sesión sigue válida: se pasa a
 // `anonymous` y se descarta el access, pero `user` y `refreshToken` quedan guardados
