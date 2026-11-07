@@ -4,8 +4,9 @@ import { TABLES_WITHOUT_FK } from './qa-cleanup.js';
  * Filas sin dueño en las tablas sin FK (`notifications`, `push_tokens`, `refresh_tokens`):
  * su `user_id` no está ni en `trainers` ni en `students`. Los ids son uuid y no se reusan,
  * así que una fila así no la puede leer nadie: es lo que la cascada habría borrado si la
- * tabla tuviera FK. No se mira el email (el usuario ya no existe para saber si era de QA):
- * se borra solo lo que, releído justo antes, sigue sin dueño.
+ * tabla tuviera FK. No se mira el email (el usuario ya no existe para saber si era de QA), así
+ * que no se sabe si la creó la integración: el clean las informa y las borra solo con
+ * `--orphans`, y aun así solo lo que, releído justo antes, sigue sin dueño.
  */
 const PAGE = 1000;
 const CHUNK = 100; // ids por `.in()`, para no pasarse del largo de la URL
@@ -16,12 +17,13 @@ async function run(query) {
   return data ?? [];
 }
 
+/** Lee `column` entera, de a páginas. El `id` desempata para que el orden sea estable entre páginas. */
 async function readColumn(supabase, table, column) {
   const values = [];
   for (let from = 0; ; from += PAGE) {
-    const rows = await run(
-      supabase.from(table).select(column).order(column).range(from, from + PAGE - 1)
-    );
+    let query = supabase.from(table).select(column).order(column);
+    if (column !== 'id') query = query.order('id');
+    const rows = await run(query.range(from, from + PAGE - 1));
     values.push(...rows.map((r) => r[column]));
     if (rows.length < PAGE) return values;
   }

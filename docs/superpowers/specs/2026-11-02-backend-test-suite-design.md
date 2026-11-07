@@ -67,7 +67,7 @@ Un alumno con sesiones en tres semanas pasadas (vía `started_at`) y series arma
 - **Id de corrida:** `Date.now().toString(36)` + 4 caracteres al azar. Emails `it.<corrida>.<rol>@test.fittrainer.dev`.
 - **Teardown (`afterAll`, aunque fallen los tests):** con el cliente de servicio, borrar `notifications`, `push_tokens` y `refresh_tokens` por `user_id in (PT y alumnos de la corrida)` (no tienen FK) y después los `trainers` de la corrida (cascada a todo lo demás). Sin fotos, Storage no queda sucio.
 - **`npm run test:integration:clean`:** script que busca `trainers` con email `it.%@test.fittrainer.dev` creados hace más de una hora y los borra igual que el teardown (incluidos sus alumnos y las filas sin FK).
-- La integración nunca toca filas que no creó.
+- La integración nunca toca filas que no creó. Las filas de `notifications`, `push_tokens` y `refresh_tokens` cuyo `user_id` ya no existe (sin dueño) no se sabe quién las creó: el clean solo las informa, `--check` las cuenta (sale con 1 si hay) y se borran únicamente con el flag explícito `--orphans`.
 
 ## 6. Tests unitarios nuevos
 

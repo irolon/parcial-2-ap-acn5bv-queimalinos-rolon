@@ -109,7 +109,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | UT-27 | `assertRealSupabase` | Sin `SUPABASE_URL` real (sigue en `localhost:54321`) | Corta la suite con un mensaje claro | ✅ | `scripts/lib/qa-env.test.js` · 03/11 |
 | UT-28 | `deleteQaData` | Datos de una corrida | Borra filas sin FK, después alumnos y por último el trainer (sin romper FK) | ✅ | `scripts/lib/qa-cleanup.test.js` · 03/11 |
 | UT-31 | `settleInFlight` | Avisos lanzados con `void` / `runInBackground` | Espera a todos (también a los rechazados y a los que se lanzan mientras tanto) antes del borrado | ✅ | `shared/utils/async/in-flight.test.js` · 05/11 |
-| UT-32 | `findOrphanRows` / `deleteOrphanRows` | Filas de `notifications`, `push_tokens` y `refresh_tokens` sin usuario | Las cuenta por tabla (paginando) y borra solo las que, releídas, siguen sin dueño | ✅ | `scripts/lib/qa-orphans.test.js` · 05/11 |
+| UT-32 | `findOrphanRows` / `deleteOrphanRows` | Filas de `notifications`, `push_tokens` y `refresh_tokens` sin usuario | Las cuenta por tabla (paginando con orden estable: `user_id` y desempate por `id`) y borra solo las que, releídas, siguen sin dueño | ✅ | `scripts/lib/qa-orphans.test.js` · 05/11 |
 
 #### IA (pendiente)
 
@@ -257,7 +257,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 
 ## 6. Datos de Prueba
 
-**Integración (automática):** cada corrida crea sus PT y alumnos con emails `it.<corrida>.<rol>@test.fittrainer.dev` y los borra al terminar, aunque fallen los tests. `npm run test:integration:clean` borra lo que haya quedado de corridas de hace más de una hora; de los usuarios solo toca trainers con email de QA. Además borra las filas de `notifications`, `push_tokens` y `refresh_tokens` cuyo `user_id` ya no está en `trainers` ni en `students` (sin FK, nadie las puede leer); `--check` las cuenta. Antes de borrar, cada `afterAll` espera a los avisos que quedaron corriendo, para que no aparezcan filas así.
+**Integración (automática):** cada corrida crea sus PT y alumnos con emails `it.<corrida>.<rol>@test.fittrainer.dev` y los borra al terminar, aunque fallen los tests. `npm run test:integration:clean` borra lo que haya quedado de corridas de hace más de una hora; de los usuarios solo toca trainers con email de QA. Además informa las filas de `notifications`, `push_tokens` y `refresh_tokens` cuyo `user_id` ya no está en `trainers` ni en `students` (sin FK, nadie las puede leer) sin borrarlas, porque no se sabe si las creó la integración: `--check` las cuenta y solo `-- --orphans` las borra. Antes de borrar, cada `afterAll` espera a los avisos que quedaron corriendo, para que no aparezcan filas así.
 
 **Trainer de prueba (manual):**
 

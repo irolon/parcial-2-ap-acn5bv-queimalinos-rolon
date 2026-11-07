@@ -11,7 +11,8 @@ Desde `backend/`:
 npm run test:integration                    # toda la suite (en serie, timeout 30 s)
 npm run test:integration -- smoke           # un archivo
 npm run test:integration:clean -- --check   # cuenta los QA que quedaron y las filas sin dueño (debe dar 0)
-npm run test:integration:clean              # borra los QA de hace más de 1 hora y las filas sin dueño
+npm run test:integration:clean              # borra los QA de hace más de 1 hora e informa las filas sin dueño
+npm run test:integration:clean -- --orphans # además borra las filas sin dueño (a mano, mirando antes)
 ```
 
 **Precondición:** `backend/.env` con `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` de dev (no se
@@ -36,8 +37,10 @@ crear nada con `Integración frenada: …`.
 - Si una corrida se corta a la fuerza, `npm run test:integration:clean` es la red de seguridad.
 - **Filas sin dueño:** `notifications`, `push_tokens` y `refresh_tokens` no tienen FK. Una fila
   cuyo `user_id` no está ni en `trainers` ni en `students` no la puede leer nadie (los uuid no se
-  reusan): es lo que habría borrado la cascada. `--check` las cuenta por tabla y el clean las
-  borra, releyendo justo antes que el usuario siga sin existir (`scripts/lib/qa-orphans.js`).
+  reusan): es lo que habría borrado la cascada. Como el usuario ya no existe, no se sabe si era de
+  QA, así que el clean solo las informa (la integración nunca toca filas que no creó). `--check`
+  las cuenta por tabla y sale con 1; `--orphans` las borra, releyendo justo antes que el usuario
+  siga sin existir (`scripts/lib/qa-orphans.js`).
 - `--check` cuenta **todos** los datos de QA de la base, de cualquier corrida: si otra persona está
   corriendo la suite al mismo tiempo, puede dar más de 0 sin que nada haya quedado colgado.
 

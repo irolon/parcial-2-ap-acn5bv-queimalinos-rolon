@@ -40,6 +40,15 @@ describe('qa-orphans — findOrphanRows', () => {
     expect(ranges).toEqual([[0, 999], [1000, 1999]]);
   });
 
+  it('ordena por user_id y desempata por id para que las páginas sean estables', async () => {
+    const fake = createFakeSupabase();
+    await findOrphanRows(fake);
+    const orders = (table) =>
+      fake.calls.find((c) => c.table === table).filters.filter(([m]) => m === 'order').map(([, col]) => col);
+    expect(orders('notifications')).toEqual(['user_id', 'id']);
+    expect(orders('trainers')).toEqual(['id']);
+  });
+
   it('un error de supabase rechaza', async () => {
     const fake = createFakeSupabase({ 'push_tokens:select': { data: null, error: { message: 'boom' } } });
     await expect(findOrphanRows(fake)).rejects.toThrow(/boom/);
