@@ -27,7 +27,7 @@ MIS 13 · equipo [HQlSV6vC](https://trello.com/c/HQlSV6vC). La rama sale de `fea
 - `alternatives`: hasta 30 ejercicios accesibles del mismo grupo muscular (o de todos, si no hay ejercicio actual) cuyo equipamiento esté en el `gym_equipment` del alumno o sea `bodyweight`, como `{ id, name, muscle_group, equipment }`;
 - `history`: los últimos 6 mensajes del día, en orden, como `{ role, content }`.
 
-**Timeout de 10 s** (RNF-04), con `AbortSignal.timeout`. Si falta la URL o el secreto, si se corta o si n8n responde algo que no es 2xx → **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Seguí con tu entrenamiento."). La sesión no se toca nunca.
+**Timeout de 9 s**, con `AbortSignal.timeout`, para que el aviso llegue antes de los 10 s del RNF-04 contando el viaje de vuelta (con 10 s se medía 10,6 s en el cliente). Si falta la URL o el secreto, si se corta o si n8n responde algo que no es 2xx → **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Seguí con tu entrenamiento."). La sesión no se toca nunca.
 
 **Respuesta esperada de n8n:** `{ "response": "texto (1-1500)", "suggestions": [ { "exercise_id": "uuid", "reason": "texto (1-200)" } ] }`. Se valida: `response` obligatorio; `suggestions` de 0 a 3 y solo con ids de `alternatives`; las que no cumplen **se descartan, sin rechazar la respuesta**; un `response` inválido o `{ "error": … }` → **502 `AI_INVALID_RESPONSE`**.
 

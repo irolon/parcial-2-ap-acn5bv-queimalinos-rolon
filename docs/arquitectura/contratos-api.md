@@ -1204,7 +1204,7 @@ Envía un mensaje al asistente IA.
 - `current_exercise_id`: si no es un ejercicio accesible para el alumno (global o de su PT), **se ignora sin error**.
 - **Límite:** 20 mensajes del alumno (`role = 'user'`) por día de Argentina (UTC-3, de 00:00 a 00:00). Las fallas no se guardan, así que no cuentan.
 
-**Llamada a n8n.** `POST ${N8N_STUDENT_AI_WEBHOOK_URL}` (workflow `student-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **10 s** (RNF-04). **Sin datos personales** (RNF-26: nunca nombre, email, fecha de nacimiento, avatar ni ids del alumno o de la sesión). El payload tiene exactamente estas claves:
+**Llamada a n8n.** `POST ${N8N_STUDENT_AI_WEBHOOK_URL}` (workflow `student-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **9 s**, para que el alumno vea el aviso antes de los 10 s del RNF-04 contando el viaje de vuelta. **Sin datos personales** (RNF-26: nunca nombre, email, fecha de nacimiento, avatar ni ids del alumno o de la sesión). El payload tiene exactamente estas claves:
 
 ```json
 {
@@ -1254,7 +1254,7 @@ Envía un mensaje al asistente IA.
 | 404 `SESSION_NOT_FOUND` | La sesión existe y es de otro alumno. No se llama a n8n |
 | 429 `CHAT_LIMIT_REACHED` | 20 mensajes del alumno hoy (día de Argentina). "Llegaste al límite de consultas de hoy. Mañana podés seguir." Sin `Retry-After`. No se llama a n8n |
 | 502 `AI_INVALID_RESPONSE` | La respuesta de n8n no pasa la validación o no es JSON. No se guarda nada |
-| 503 `AI_UNAVAILABLE` | Falta `N8N_STUDENT_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 10 s, error de red o n8n responde no 2xx. "El asistente no está disponible ahora. Seguí con tu entrenamiento." No se guarda nada |
+| 503 `AI_UNAVAILABLE` | Falta `N8N_STUDENT_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 9 s, error de red o n8n responde no 2xx. "El asistente no está disponible ahora. Seguí con tu entrenamiento." No se guarda nada |
 
 ### GET /chat/today
 

@@ -18,8 +18,12 @@ export const MAX_SUGGESTIONS = 3;
 export const MAX_MESSAGE_LENGTH = 500;
 export const MAX_RESPONSE_LENGTH = 1500;
 export const MAX_REASON_LENGTH = 200;
-/** RNF-04: el asistente responde en 10 s o el alumno sigue sin él. */
-export const CHAT_WEBHOOK_TIMEOUT_MS = 10000;
+/**
+ * RNF-04: el asistente responde en menos de 10 s o el alumno sigue sin él. Se corta a los 9 s para que el aviso
+ * llegue antes de los 10 contando el viaje de vuelta (medido: con 10 s el alumno lo veía a los 10,6). El nodo de
+ * KIMI del workflow corta a los 8 s, debajo de este.
+ */
+export const CHAT_WEBHOOK_TIMEOUT_MS = 9000;
 
 export const CHAT_UNAVAILABLE_MESSAGE = 'El asistente no está disponible ahora. Seguí con tu entrenamiento.';
 export const CHAT_INVALID_MESSAGE = 'El asistente respondió algo inválido. Probá de nuevo.';

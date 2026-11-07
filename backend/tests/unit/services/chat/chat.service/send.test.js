@@ -53,7 +53,7 @@ describe('chat · chat.service · sendMessage', () => {
       history: [],
     });
     expect(options).toMatchObject({
-      timeoutMs: 10000,
+      timeoutMs: 9000,
       tag: 'chat',
       unavailableMessage: 'El asistente no está disponible ahora. Seguí con tu entrenamiento.',
     });
