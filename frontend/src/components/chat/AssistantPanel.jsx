@@ -22,18 +22,30 @@ export const ASSISTANT_SHEET_SPACE = 'pb-[50dvh] xl:pb-0';
 
 const LOAD_ERROR = 'No pudimos cargar la conversación de hoy.';
 
-// El aviso que toca, de a uno: sin conexión, el error de la última consulta, la carga fallida o el límite.
+// El aviso que toca, de a uno: sin conexión (sin Reintentar: no serviría), el error de la última consulta, la carga
+// fallida o el límite.
 function noticeFor({ online, problem, day, remaining, retrySend }) {
-  if (!online && problem?.kind !== 'offline') return { text: OFFLINE_TEXT };
+  if (!online) return { text: OFFLINE_TEXT };
   if (problem) return { text: problem.text, onRetry: problem.retry ? retrySend : undefined };
   if (day.isError && !day.data) return { text: LOAD_ERROR, onRetry: () => day.refetch() };
   return remaining === 0 ? { text: LIMIT_TEXT } : null;
 }
 
+/** Al volver la conexión se olvida la falla de red de la última consulta (el texto sigue en la caja para mandarlo). */
+function useClearOnReconnect(online, offlineFailure, reset) {
+  const wasOnline = useRef(online);
+  useEffect(() => {
+    const reconnected = online && !wasOnline.current;
+    wasOnline.current = online;
+    if (reconnected && offlineFailure) reset();
+  }, [online, offlineFailure, reset]);
+}
+
 /**
  * El asistente durante la sesión activa: la conversación del día, sobre qué ejercicio se pregunta (`exercise`, el
  * de la sesión a la vista, o null), atajos, el contador y los avisos. La consulta viaja con `sessionId` y el
- * ejercicio. Si falla, el texto queda en la caja para Reintentar. Sin conexión o en el límite la caja se deshabilita.
+ * ejercicio. Si falla, el texto queda en la caja para Reintentar. Sin conexión o en el límite la caja se deshabilita; el
+ * estado de conexión sigue al del navegador: al volver, se va el aviso y la caja se habilita.
  * No toca la sesión: lo que pase acá no frena el registro de series ni el descanso. Cerrar y Escape llaman a `onClose`.
  */
 export default function AssistantPanel({ exercise, sessionId, onClose }) {
@@ -46,7 +58,8 @@ export default function AssistantPanel({ exercise, sessionId, onClose }) {
 
   const problem = chatProblem(send.error);
   const remaining = day.data?.remaining_today;
-  const blocked = !online || remaining === 0 || ['offline', 'limit'].includes(problem?.kind);
+  const blocked = !online || remaining === 0 || problem?.kind === 'limit';
+  useClearOnReconnect(online, problem?.kind === 'offline', send.reset);
   const ask = () => {
     const message = text.trim();
     if (!message || send.isPending) return;
