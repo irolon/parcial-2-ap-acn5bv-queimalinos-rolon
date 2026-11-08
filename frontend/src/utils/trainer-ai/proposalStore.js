@@ -38,3 +38,13 @@ export function writeAiSession(trainerId, data) {
     /* sin almacenamiento: la propuesta solo vive en memoria */
   }
 }
+
+/** Borra la sesión del asistente del entrenador (al cerrar sesión: tiene lesiones y datos del alumno). */
+export function clearAiSession(trainerId) {
+  if (!trainerId) return;
+  try {
+    sessionStorage.removeItem(AI_SESSION_KEY(trainerId));
+  } catch {
+    /* sin almacenamiento: no hay nada que borrar */
+  }
+}
