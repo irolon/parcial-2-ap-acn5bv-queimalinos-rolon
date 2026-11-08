@@ -7,8 +7,8 @@ export const WEBHOOK_TIMEOUT_MS = 30000;
 /**
  * Llama al webhook `trainer-ia` de n8n con el contexto (sin datos personales) y devuelve
  * el JSON que respondió, sin validar. Sin URL o sin secreto configurados (no se llama a
- * n8n), por timeout, error de red o respuesta no 2xx → 503 AI_UNAVAILABLE. Un 2xx que no
- * es JSON → 502 AI_INVALID_RESPONSE. Las variables se leen en cada llamada (la app arranca sin IA).
+ * n8n), por timeout, error de red (también mientras se lee el body) o respuesta no 2xx →
+ * 503 AI_UNAVAILABLE. Un 2xx cuyo body no es JSON → 502 AI_INVALID_RESPONSE. Las variables se leen en cada llamada (la app arranca sin IA).
  */
 export async function requestRoutineProposal(payload) {
   const url = env.N8N_TRAINER_AI_WEBHOOK_URL;
@@ -20,24 +20,27 @@ export async function requestRoutineProposal(payload) {
     }
   }
 
-  let res;
+  let body;
   try {
-    res = await fetch(url, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-webhook-secret': secret },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
     });
+    if (!res.ok) {
+      console.error('[trainer-ai] n8n respondió', res.status);
+      throw Errors.aiUnavailable();
+    }
+    // La lectura del body es transporte: un corte o el timeout acá también es 503.
+    body = await res.text();
   } catch (err) {
+    if (err.code === 'AI_UNAVAILABLE') throw err;
     console.error('[trainer-ai] n8n no respondió:', err.name, err.message);
     throw Errors.aiUnavailable();
   }
-  if (!res.ok) {
-    console.error('[trainer-ai] n8n respondió', res.status);
-    throw Errors.aiUnavailable();
-  }
   try {
-    return await res.json();
+    return JSON.parse(body);
   } catch {
     console.error('[trainer-ai] n8n respondió algo que no es JSON');
     throw Errors.aiInvalidResponse();
