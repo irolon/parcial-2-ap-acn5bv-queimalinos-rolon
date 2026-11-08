@@ -45,3 +45,11 @@ describe('trainer-ai.routes', () => {
     expect(mounted).toBe(true);
   });
 });
+
+describe('CORS del asistente', () => {
+  it('expone Retry-After para que la web muestre la cuenta atrás del 429', async () => {
+    const { default: request } = await import('supertest');
+    const res = await request(createApp()).get('/health').set('Origin', 'http://localhost:5173');
+    expect(res.headers['access-control-expose-headers']).toMatch(/Retry-After/i);
+  });
+});
