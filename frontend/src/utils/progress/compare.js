@@ -20,9 +20,19 @@ const hasValue = (v) => v !== null && v !== undefined;
 
 const byDaysThenName = (a, b) => b.days - a.days || a.name.localeCompare(b.name, 'es');
 
-/** Ejercicios con al menos MIN_POINTS días (de todo el historial), de más a menos días; hasta `max`. */
-export function compareCandidates(exercises, max = MAX_CANDIDATES) {
-  return exercises.filter((e) => e.days >= MIN_POINTS).sort(byDaysThenName).slice(0, max);
+/** Entrenó desde `from` (`YYYY-MM-DD`, o nada para todo el historial), según su `last_date` del overview. */
+export const trainedSince = (exercise, from) => !from || !exercise.last_date || exercise.last_date >= from;
+
+/**
+ * Ejercicios con al menos MIN_POINTS días (de todo el historial) y, con `from`, entrenados desde esa fecha, de más
+ * a menos días; hasta `max`. Se filtra por `from` antes de cortar: si la rutina cambió, los de la vieja tienen más
+ * días pero ningún punto en el rango, y taparían a los nuevos.
+ */
+export function compareCandidates(exercises, { from, max = MAX_CANDIDATES } = {}) {
+  return exercises
+    .filter((e) => e.days >= MIN_POINTS && trainedSince(e, from))
+    .sort(byDaysThenName)
+    .slice(0, max);
 }
 
 /** 1RM estimado si algún punto lo tiene (compara series con distintas reps); si no, el peso máximo. */
@@ -32,6 +42,9 @@ const validCount = (points) => {
   const metric = compareMetric(points);
   return points.filter((p) => hasValue(p[metric])).length;
 };
+
+/** Tiene kg pero menos de MIN_POINTS puntos válidos: no alcanza para dibujar su línea. */
+export const tooFewPoints = (points) => hasKg(points) && validCount(points) < MIN_POINTS;
 
 /** Hay puntos pero ninguno con kg: peso corporal (sin puntos no se sabe). */
 export const isBodyweight = (points) => points.length > 0 && !hasKg(points);

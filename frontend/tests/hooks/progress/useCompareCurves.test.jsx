@@ -11,7 +11,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const ex = (id, name, days) => ({ id, name, days, muscle_group: 'x', last_date: '2026-10-27' });
+const ex = (id, name, days, last = '2026-10-27') => ({ id, name, days, muscle_group: 'x', last_date: last });
 const EXERCISES = [
   ex('ex-1', 'Press banca', 8), ex('ex-2', 'Sentadilla', 7), ex('ex-3', 'Peso muerto', 6), ex('ex-4', 'Dominadas', 9),
   ex('ex-5', 'Remo', 5), ex('ex-6', 'Fondos', 4), ex('ex-7', 'Militar', 3), ex('ex-8', 'Curl', 2),
@@ -25,12 +25,12 @@ const points = (n, kg) => Array.from({ length: n }, (_, i) => ({
 }));
 
 // Dominadas (ex-4) es de peso corporal; con el rango corto solo Remo (ex-5) tiene 3 puntos.
-function stub() {
+function stub(counts = COUNTS) {
   return stubFetch(async (url) => {
     const path = url.replace(/^.*\/api/, '');
     const id = /^\/progress\/exercise\/([^/?]+)/.exec(path)[1];
     const short = path.includes(`from=${SHORT.from}`);
-    const count = id === 'ex-4' ? 6 : short && id !== 'ex-5' ? 1 : COUNTS[id];
+    const count = id === 'ex-4' ? 6 : short && id !== 'ex-5' ? 1 : counts[id];
     return jsonResponse(200, { data: { exercise: { id }, points: points(count, id === 'ex-4' ? null : 80), pr: {}, default_metric: 'e1rm_kg' } });
   });
 }
@@ -81,6 +81,62 @@ describe('useCompareCurves', () => {
     act(() => result.current.setSlot(0, 'ex-7'));
     rerender({ range: SHORT });
     await waitFor(() => expect(result.current.slots).toEqual(['ex-5', null, null]));
+  });
+
+  it('volver al rango anterior no trae de vuelta la elección a mano', async () => {
+    stub();
+    const { result, rerender } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setSlot(0, 'ex-7'));
+    expect(result.current.slots).toEqual(['ex-7', 'ex-2', 'ex-3']);
+    rerender({ range: SHORT });
+    await waitFor(() => expect(result.current.slots).toEqual(['ex-5', null, null]));
+    rerender({ range: RANGE });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.slots).toEqual(['ex-1', 'ex-2', 'ex-3']);
+  });
+
+  it('una elegida a mano con 1 o 2 puntos en el rango no se dibuja y queda marcada', async () => {
+    stub({ ...COUNTS, 'ex-7': 2 });
+    const { result } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setSlot(1, 'ex-6'));
+    expect(result.current.slots).toEqual(['ex-1', 'ex-6', 'ex-3']);
+    expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-3']);
+    expect(result.current.few).toEqual(new Set(['ex-6']));
+    act(() => result.current.setSlot(1, 'ex-7'));
+    await waitFor(() => expect(result.current.slotLoading).toEqual([false, false, false]));
+    expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-3']);
+    expect(result.current.few).toEqual(new Set(['ex-6', 'ex-7']));
+  });
+
+  it('con un cambio de rutina los candidatos salen de los que entrenó en el rango', async () => {
+    const old = '2026-09-20';
+    const exercises = [
+      ex('ex-1', 'Press banca', 20, old), ex('ex-2', 'Sentadilla', 19, old), ex('ex-3', 'Peso muerto', 18, old),
+      ex('ex-5', 'Remo', 17, old), ex('ex-6', 'Fondos', 16, old), ex('ex-7', 'Militar', 15, old),
+      ex('n-1', 'Hip thrust', 5, '2026-11-06'), ex('n-2', 'Prensa', 4, '2026-11-04'), ex('n-3', 'Estocadas', 4, '2026-11-02'),
+    ];
+    const fetchMock = stubFetch(async (url) => {
+      const id = /\/progress\/exercise\/([^/?]+)/.exec(url)[1];
+      const n = id.startsWith('n-') ? 4 : 0;
+      return jsonResponse(200, { data: { exercise: { id }, points: points(n, 80), pr: {}, default_metric: 'e1rm_kg' } });
+    });
+    const { result } = mount(({ range }) => useCompareCurves('s-1', exercises, range), { range: SHORT });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(ids(fetchMock)).toEqual(['n-1', 'n-3', 'n-2']);
+    expect(result.current.slots).toEqual(['n-1', 'n-3', 'n-2']);
+    expect(result.current.few).toEqual(new Set(['ex-1', 'ex-2', 'ex-3', 'ex-5', 'ex-6', 'ex-7']));
+  });
+
+  it('si nadie entrenó en el rango no pide curvas pero tampoco se oculta (queda el selector de rango)', async () => {
+    const fetchMock = stub();
+    const old = [ex('ex-1', 'Press banca', 8, '2026-09-20'), ex('ex-4', 'Dominadas', 9, '2026-09-20')];
+    const { result } = mount(({ range }) => useCompareCurves('s-1', old, range), { range: SHORT });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(ids(fetchMock)).toEqual([]);
+    expect(result.current.lines).toEqual([]);
+    expect(result.current.hidden).toBe(false);
   });
 
   it('se oculta sin candidatos o si todos son de peso corporal', async () => {

@@ -12,7 +12,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const ex = (id, name, days) => ({ id, name, days, muscle_group: 'x', last_date: '2026-10-27' });
+// `last_date` de hoy: el rango de la tarjeta sale de la fecha real y deja afuera los que no entrenaron en él.
+const ex = (id, name, days, last = rangeFor('1m').to) => ({ id, name, days, muscle_group: 'x', last_date: last });
 const EXERCISES = [
   ex('ex-1', 'Press banca', 8), ex('ex-2', 'Sentadilla', 7), ex('ex-3', 'Peso muerto', 6), ex('ex-4', 'Dominadas', 9),
   ex('ex-5', 'Remo', 5), ex('ex-6', 'Fondos', 4), ex('ex-7', 'Militar', 3),
@@ -64,6 +65,18 @@ describe('CompareCard', () => {
     expect(select.getByRole('option', { name: 'Militar' })).toBeEnabled();
   });
 
+  it('los de menos de 3 entrenamientos en el rango van deshabilitados y la elegida a mano no se dibuja', async () => {
+    load({ counts: (id) => (id === 'ex-7' ? 2 : COUNTS[id]) });
+    await chart('Press banca, Sentadilla y Peso muerto');
+    const few = (name) => within(screen.getByLabelText('Ejercicio 2')).getByRole('option', { name: `${name} (menos de 3 entrenamientos en el rango)` });
+    expect(few('Fondos')).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Ejercicio 2'), { target: { value: 'ex-7' } });
+    expect(await screen.findByText('Menos de 3 entrenamientos en el rango: no se dibuja.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ejercicio 2')).toHaveAccessibleDescription('Menos de 3 entrenamientos en el rango: no se dibuja.');
+    expect(await chart('Press banca y Peso muerto')).toBeInTheDocument();
+    expect(few('Militar')).toBeDisabled();
+  });
+
   it('cambiar el select 2 pide la curva nueva y reemplaza esa línea', async () => {
     const { fetchMock } = load();
     await chart('Press banca, Sentadilla y Peso muerto');
@@ -90,6 +103,16 @@ describe('CompareCard', () => {
     expect(await screen.findByText('En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo.')).toBeInTheDocument();
     expect(screen.getByLabelText('Rango de la comparación')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('si nadie entrenó en el rango de 1 mes no pide curvas y deja volver a uno más largo', async () => {
+    const old = rangeFor('3m').from;
+    const { fetchMock } = load({ exercises: [ex('ex-1', 'Press banca', 8, old), ex('ex-2', 'Sentadilla', 7, old)] });
+    await chart('Press banca y Sentadilla');
+    fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: '1m' } });
+    expect(await screen.findByText('En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo.')).toBeInTheDocument();
+    expect(progressUrls(fetchMock, 'exercise').filter((p) => p.includes(`from=${rangeFor('1m').from}`))).toEqual([]);
+    expect(within(screen.getByLabelText('Ejercicio 1')).getByRole('option', { name: 'Press banca (menos de 3 entrenamientos en el rango)' })).toBeDisabled();
   });
 
   it('sin candidatos, o si todos son de peso corporal, no muestra la tarjeta', async () => {

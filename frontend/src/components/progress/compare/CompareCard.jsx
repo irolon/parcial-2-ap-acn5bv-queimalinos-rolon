@@ -51,6 +51,7 @@ function Body({ compare }) {
         slots={compare.slots}
         options={compare.options}
         bodyweight={compare.bodyweight}
+        few={compare.few}
         maxOnly={maxOnly}
         loading={compare.slotLoading}
         onChange={compare.setSlot}

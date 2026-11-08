@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compareCandidates, compareMetric, mergeSeries, pickTop, timeTicks } from '@/utils/progress/compare';
 
-const ex = (id, days, name = id) => ({ id, name, days, muscle_group: 'x', last_date: '2026-10-27' });
+const ex = (id, days, name = id, last = '2026-10-27') => ({ id, name, days, muscle_group: 'x', last_date: last });
 const pt = (day, kg, e1rm = kg + 10) => ({ date: `2026-10-${String(day).padStart(2, '0')}`, max_kg: kg, e1rm_kg: e1rm });
 const curve = (id, points, days = 5, name = id) => ({ id, name, days, points });
 const kgPoints = (n) => Array.from({ length: n }, (_, i) => pt(i + 1, 80 + i));
@@ -16,13 +16,21 @@ describe('compareCandidates', () => {
   it('corta en 6 por defecto o en el máximo pedido', () => {
     const many = [3, 4, 5, 6, 7, 8, 9, 10].map((d) => ex(`e${d}`, d));
     expect(compareCandidates(many).map((e) => e.id)).toEqual(['e10', 'e9', 'e8', 'e7', 'e6', 'e5']);
-    expect(compareCandidates(many, 2)).toHaveLength(2);
+    expect(compareCandidates(many, { max: 2 })).toHaveLength(2);
   });
 
   it('a igual cantidad de días desempata por nombre y no muta la lista', () => {
     const list = [ex('a', 4, 'Sentadilla'), ex('b', 4, 'Press banca')];
     expect(compareCandidates(list).map((e) => e.id)).toEqual(['b', 'a']);
     expect(list[0].id).toBe('a');
+  });
+
+  it('con `from` descarta los que no entrenó desde esa fecha antes de cortar en 6', () => {
+    const old = [10, 11, 12, 13, 14, 15].map((d) => ex(`old${d}`, d, `old${d}`, '2026-09-20'));
+    const fresh = [ex('n1', 4, 'n1', '2026-11-02'), ex('n2', 5, 'n2', '2026-10-05')];
+    expect(compareCandidates([...old, ...fresh], { from: '2026-10-05' }).map((e) => e.id)).toEqual(['n2', 'n1']);
+    expect(compareCandidates([...old, ...fresh])).toHaveLength(6);
+    expect(compareCandidates([...old, ...fresh], { from: null })[0].id).toBe('old15');
   });
 });
 

@@ -24,22 +24,22 @@ Hoy la web dibuja **un** ejercicio por vez (`ExerciseCurveCard` dentro de `Progr
 | 5 | **Fuera de `ProgressPanel`**: componente propio, montado a nivel página. |
 | 6 | **Métrica**: 1RM estimado (`e1rm_kg`), que hace comparables series con distintas repeticiones (ADR 0004); si un ejercicio no tiene ningún `e1rm_kg`, su `max_kg`. Los de peso corporal (`hasKg` falso) no entran: no se comparan kg con repeticiones. |
 | 7 | **Rango propio** (select con `RANGES`: 1 mes, 3 meses, todo; por defecto 3 meses ≈ las 12 semanas de E3). No se comparte con el de `ProgressPanel` porque ese estado vive adentro del panel, que no se toca. Con el mismo rango, las curvas comparten caché con el panel (misma query key). |
-| 8 | **"Más entrenados en el rango"**: candidatos = ejercicios de `overview.exercises` con `days ≥ 3`, ordenados por `days` (hasta 6); se piden sus curvas del rango, se descartan los que no tienen kg (eso solo se sabe con la curva) y se eligen los 3 con más puntos válidos (≥ 3), desempate por `days` y nombre. Así no se pide la curva de todo el catálogo. |
+| 8 | **"Más entrenados en el rango"**: candidatos = ejercicios de `overview.exercises` con `days ≥ 3` y `last_date` dentro del rango (`≥ from`; `days` es de todo el historial, así que sin este filtro, con un cambio de rutina, los 6 serían de la rutina vieja y taparían a los nuevos), ordenados por `days` (hasta 6); se piden sus curvas del rango, se descartan los que no tienen kg (eso solo se sabe con la curva) y se eligen los 3 con más puntos válidos (≥ 3), desempate por `days` y nombre. Así no se pide la curva de todo el catálogo. |
 | 9 | **También en la ficha del PT**: sí. `StudentProfilePage.jsx` no está en ninguna PR abierta y la sección "Progreso" ya existe; la tarjeta va arriba de `ProgressPanel`, sin tocar `ProfileActions.jsx` ni el panel. |
 
 ## Diseño
 
 `CompareCard` (`Card` "Progresión comparada", `extra` = select de rango compacto):
 
-- Fila de 3 selects (`Select` existente), cada uno con un punto del color de su línea y el label "Ejercicio 1/2/3". Opciones: todos los de `overview.exercises` con `days ≥ 3` (los de peso corporal ya detectados, deshabilitados con "sin peso registrado"), sin los ya elegidos en los otros dos. Elegir uno que no estaba pedido dispara su curva.
+- Fila de 3 selects (`Select` existente), cada uno con un punto del color de su línea y el label "Ejercicio 1/2/3". Opciones: todos los de `overview.exercises` con `days ≥ 3` (los de peso corporal ya detectados, deshabilitados con "sin peso registrado"; los que tienen menos de 3 puntos en el rango, porque su `last_date` es anterior o porque su curva ya llegó corta, deshabilitados con "menos de 3 entrenamientos en el rango"), sin los ya elegidos en los otros dos. Elegir uno que no estaba pedido dispara su curva; si llega con menos de 3 puntos no se dibuja y su select lo avisa debajo ("Menos de 3 entrenamientos en el rango: no se dibuja."). Al cambiar el rango, la elección a mano se borra y las 3 vuelven a salir solas (volver al rango anterior no la trae de vuelta).
 - Gráfico (`CompareChart`, `h-64`, `role="img"`, `aria-label="Progresión comparada de Press banca, Sentadilla y Peso muerto"`): `LineChart` con eje X de tiempo (`time`, `scale="time"`), eje Y en kg, una `Line` por ejercicio (`connectNulls`, puntos de 3,5 px, sin resaltar récords). Colores: `--color-accent`, `--color-cool`, `--color-hot`.
 - Tooltip: la fecha larga y una fila por ejercicio con valor ese día ("Press banca: 88,7 kg").
 - Debajo, una línea mono: "1RM ESTIMADO · KG" (o "PESO MÁXIMO · KG" si todos los elegidos caen en `max_kg`; si se mezclan, cada select aclara "(peso máx.)").
 
 **Estados**
-- El overview no tiene ningún candidato (`days ≥ 3`), o todos resultan de peso corporal: **no se muestra la tarjeta** (el vacío ya lo explica `ProgressPanel`; así no hay dos textos de vacío).
+- El overview no tiene ningún ejercicio con `days ≥ 3`, o todos los candidatos resultan de peso corporal (y el rango no dejó afuera a ninguno): **no se muestra la tarjeta** (el vacío ya lo explica `ProgressPanel`; así no hay dos textos de vacío).
 - Cargando curvas: `LoadingState rows={2}` "Cargando la progresión…".
-- Hay candidatos pero ninguno llega a 3 puntos en el rango: texto "En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo." y el select de rango.
+- Hay ejercicios con `days ≥ 3` pero ninguno llega a 3 puntos en el rango (o ninguno entrenó en él, y entonces no se pide ninguna curva): texto "En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo." y el select de rango.
 - Solo 1 o 2 llegan: se dibujan esos y los selects que sobran quedan en "Elegí un ejercicio".
 - Error en alguna curva: esa línea no se dibuja y aparece "No pudimos cargar Sentadilla." con Reintentar (`refetch` de esa curva); si fallan todas, `ErrorState` "No pudimos cargar la progresión." en la tarjeta.
 
@@ -66,11 +66,11 @@ Hoy la web dibuja **un** ejercicio por vez (`ExerciseCurveCard` dentro de `Progr
 ## Pruebas
 
 **Vitest**
-- `compareCandidates`: excluye `days < 3`; ordena por `days`; corta en 6.
+- `compareCandidates`: excluye `days < 3` y, con `from`, los que no entrenaron desde ahí antes de cortar; ordena por `days`; corta en 6.
 - `pickTop`: descarta peso corporal y los de menos de 3 puntos; los 3 con más puntos válidos en el rango; desempates.
 - `compareMetric`: `e1rm_kg` si hay alguno, si no `max_kg`.
 - `mergeSeries`: une por fecha con huecos en `null`.
-- `CompareCard`: 3 líneas con sus nombres; cambiar el select 2 pide la curva nueva y reemplaza la línea; rango "1 mes" vuelve a elegir; ninguno con 3 puntos muestra el texto; sin candidatos no renderiza nada; error de una curva con su Reintentar.
+- `CompareCard`: 3 líneas con sus nombres; cambiar el select 2 pide la curva nueva y reemplaza la línea; rango "1 mes" vuelve a elegir; ninguno con 3 puntos muestra el texto; los de menos de 3 entrenamientos en el rango deshabilitados y la elegida a mano con 1 o 2 puntos sin dibujar y con aviso; con nadie entrenado en "1 mes" no pide curvas y queda el select de rango; sin candidatos no renderiza nada; error de una curva con su Reintentar.
 - Páginas: la tarjeta aparece en "Mi progreso" y en la ficha, con el `student_id` correcto, y comparte caché con el panel (un solo GET por ejercicio y rango).
 
 **Navegador:** alumno de QA con banca, sentadilla, peso muerto y una dominada (peso corporal); capturas en `docs/superpowers/specs/assets/gw4/` (`01-mi-progreso-comparada.jpg`, `02-cambiar-linea.jpg`, `03-rango-corto-sin-datos.jpg`, `04-ficha-pt.jpg`, `05-angosto-375.jpg`).
