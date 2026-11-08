@@ -27,15 +27,19 @@ describe('AdherenceBar', () => {
     expect(fill()).toHaveClass(cls);
   });
 
-  it('el tooltip cuenta los días', () => {
+  it('el tooltip cuenta los días, y el lector de pantalla también lo recibe', () => {
     renderBar({ assigned: 3, done: 2, pct: 67 });
-    expect(screen.getByTitle('2 de 3 días asignados entrenados en los últimos 7 días')).toBeInTheDocument();
+    const days = '2 de 3 días asignados entrenados en los últimos 7 días';
+    expect(screen.getByTitle(days)).toBeInTheDocument();
+    expect(screen.getByRole('meter')).toHaveAttribute('aria-valuetext', `67%: ${days}`);
   });
 
-  it('pct mayor a 100 se acota', () => {
+  it('pct mayor a 100 se acota en la barra y en el texto', () => {
     renderBar({ assigned: 2, done: 3, pct: 120 });
     expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '100');
     expect(fill()).toHaveStyle({ width: '100%' });
+    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.queryByText('120%')).toBeNull();
   });
 
   it.each([[{ assigned: 0, done: 0, pct: null }], [undefined]])('sin plan muestra el texto sin barra (%o)', (adh) => {
