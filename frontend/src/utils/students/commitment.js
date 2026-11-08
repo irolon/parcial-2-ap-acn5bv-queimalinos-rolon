@@ -49,8 +49,12 @@ export function volumeWindow(weeks) {
 
 const dayString = (dayNumber) => new Date(dayNumber * DAY_MS).toISOString().slice(0, 10);
 
-/** Del lunes de hace 7 semanas a hoy, en hora argentina: 8 filas de `weekly_volume`. */
+/**
+ * Las 8 semanas completas anteriores a la en curso, en hora argentina: del lunes de hace 8 semanas al domingo pasado
+ * (8 filas de `weekly_volume`). La semana en curso queda afuera: a medias, un lunes daría una caída que no es tal.
+ */
 export function eightWeeksRange(now = new Date()) {
   const { dayNumber, weekday } = argentinaDate(now);
-  return { from: dayString(dayNumber - (weekday - 1) - 7 * 7), to: dayString(dayNumber) };
+  const lastSunday = dayNumber - weekday;
+  return { from: dayString(lastSunday + 1 - 8 * 7), to: dayString(lastSunday) };
 }

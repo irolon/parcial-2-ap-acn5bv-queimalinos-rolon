@@ -61,9 +61,9 @@ describe('volumeWindow', () => {
 });
 
 describe('eightWeeksRange', () => {
-  it('va del lunes de hace 7 semanas a hoy, en hora argentina', () => {
-    expect(eightWeeksRange(new Date('2026-11-08T15:00:00Z'))).toEqual({ from: '2026-09-14', to: '2026-11-08' });
-    expect(eightWeeksRange(new Date('2026-11-09T02:00:00Z'))).toEqual({ from: '2026-09-14', to: '2026-11-08' });
-    expect(eightWeeksRange(new Date('2026-11-09T12:00:00Z'))).toEqual({ from: '2026-09-21', to: '2026-11-09' });
+  it('va del lunes de hace 8 semanas al domingo pasado (sin la semana en curso), en hora argentina', () => {
+    expect(eightWeeksRange(new Date('2026-11-08T15:00:00Z'))).toEqual({ from: '2026-09-07', to: '2026-11-01' });
+    expect(eightWeeksRange(new Date('2026-11-09T02:00:00Z'))).toEqual({ from: '2026-09-07', to: '2026-11-01' });
+    expect(eightWeeksRange(new Date('2026-11-09T12:00:00Z'))).toEqual({ from: '2026-09-14', to: '2026-11-08' });
   });
 });
