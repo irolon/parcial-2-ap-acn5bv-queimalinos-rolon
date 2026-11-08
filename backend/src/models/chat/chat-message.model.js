@@ -10,6 +10,13 @@ export const CHAT_MESSAGE_COLUMNS = 'id, role, content, created_at';
 
 /** Mensajes del alumno (role = 'user') por día de Argentina. */
 export const CHAT_DAILY_LIMIT = 20;
+/**
+ * Intentos que llegan a n8n por alumno en una ventana deslizante de 1 h, salgan bien o mal. Las fallas no cuentan
+ * para el límite del día, pero cada una es una llamada a KIMI: esto cubre un cliente que reintenta en bucle.
+ */
+export const CHAT_ATTEMPT_LIMIT = 30;
+export const CHAT_ATTEMPT_WINDOW_MS = 60 * 60 * 1000;
+export const CHAT_ATTEMPTS_MESSAGE = 'Hiciste muchas consultas seguidas. Probá de nuevo más tarde.';
 /** Últimos mensajes del día que viajan a n8n como memoria. */
 export const HISTORY_SIZE = 6;
 /** Ejercicios de la biblioteca que se le ofrecen a la IA para sugerir. */

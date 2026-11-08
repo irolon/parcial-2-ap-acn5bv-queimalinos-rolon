@@ -1204,6 +1204,7 @@ Envía un mensaje al asistente IA.
 - `current_exercise_id`: si no es un ejercicio accesible para el alumno (global o de su PT), **se ignora sin error**.
 - **Límite:** 20 mensajes del alumno (`role = 'user'`) por día de Argentina (UTC-3, de 00:00 a 00:00). Las fallas no se guardan, así que no cuentan.
 - **Una consulta a la vez por alumno** (en memoria, por proceso): mientras una está en curso, otra del mismo alumno (otra pestaña, web y celular) es 429 `CHAT_IN_PROGRESS`. Sin esto, dos envíos a la vez con 19 pasarían los dos el límite.
+- **Tope de intentos por hora** (en memoria, por proceso): 30 consultas que llegan a n8n por alumno en una ventana deslizante de 1 h, salgan bien o mal. Las fallas no cuentan para el límite del día, pero cada una es una llamada a la IA: pasado el tope → 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n.
 
 **Llamada a n8n.** `POST ${N8N_STUDENT_AI_WEBHOOK_URL}` (workflow `student-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **9 s**, para que el alumno vea el aviso antes de los 10 s del RNF-04 contando el viaje de vuelta. **Sin datos personales** (RNF-26: nunca nombre, email, fecha de nacimiento, avatar ni ids del alumno o de la sesión). El payload tiene exactamente estas claves:
 
@@ -1255,6 +1256,7 @@ Envía un mensaje al asistente IA.
 | 404 `SESSION_NOT_FOUND` | La sesión existe y es de otro alumno. No se llama a n8n |
 | 429 `CHAT_LIMIT_REACHED` | 20 mensajes del alumno hoy (día de Argentina). "Llegaste al límite de consultas de hoy. Mañana podés seguir." Sin `Retry-After`. No se llama a n8n |
 | 429 `CHAT_IN_PROGRESS` | El alumno ya tiene una consulta en curso. "Esperá la respuesta anterior." Código propio (no `CHAT_LIMIT_REACHED`) para que el cliente no deje el contador en 0. No se llama a n8n |
+| 429 `RATE_LIMIT_EXCEEDED` | Pasó el tope de 30 intentos por hora (exitosos o fallidos). "Hiciste muchas consultas seguidas. Probá de nuevo más tarde." Con `Retry-After`. No se llama a n8n |
 | 500 `INTERNAL_ERROR` | La inserción del par no devolvió la respuesta guardada |
 | 502 `AI_INVALID_RESPONSE` | La respuesta de n8n no pasa la validación o no es JSON. No se guarda nada |
 | 503 `AI_UNAVAILABLE` | Falta `N8N_STUDENT_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 9 s, error de red o n8n responde no 2xx. "El asistente no está disponible ahora. Seguí con tu entrenamiento." No se guarda nada |

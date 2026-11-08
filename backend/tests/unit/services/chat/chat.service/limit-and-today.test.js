@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { Errors } from '../../../../../src/shared/utils/errors.js';
+import { CHAT_ATTEMPT_LIMIT } from '../../../../../src/models/chat/chat-message.model.js';
 import {
   chatService,
   mockStudentsRepo,
@@ -52,6 +53,15 @@ describe('chat · chat.service · límite de 20 por día de Argentina', () => {
     mockClient.postToN8n.mockRejectedValueOnce(Errors.aiUnavailable());
     await expect(send()).rejects.toMatchObject({ statusCode: 503 });
     await expect(send()).resolves.toMatchObject({ remaining_today: 16 });
+  });
+
+  it('las fallas sí cuentan para el tope de intentos por hora: pasado el tope → 429 sin llamar a n8n', async () => {
+    mockMessagesRepo.findDayMessages.mockResolvedValue(dayMessages(3));
+    mockClient.postToN8n.mockRejectedValue(Errors.aiUnavailable());
+    for (let i = 0; i < CHAT_ATTEMPT_LIMIT; i += 1) await expect(send()).rejects.toMatchObject({ statusCode: 503 });
+    mockClient.postToN8n.mockClear();
+    await expect(send()).rejects.toMatchObject({ statusCode: 429, code: 'RATE_LIMIT_EXCEEDED' });
+    expect(mockClient.postToN8n).not.toHaveBeenCalled();
   });
 
   it('borde de medianoche: 23:59 AR cuenta en el día que termina, 00:00 AR en el nuevo', async () => {

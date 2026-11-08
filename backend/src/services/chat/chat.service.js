@@ -4,6 +4,7 @@ import * as messagesRepository from '../../repositories/chat/chat-messages.repos
 import { postToN8n } from '../../shared/utils/n8n.client.js';
 import { resolveSessionId, findCurrentExercise, buildChatContext } from './context.service.js';
 import { validateChatResponse } from './response.js';
+import { chatAttempts } from './chat-attempts.js';
 import {
   CHAT_DAILY_LIMIT,
   HISTORY_SIZE,
@@ -49,10 +50,12 @@ async function answer(studentId, body, now) {
   const today = await findToday(studentId, now);
   const used = usedToday(today);
   if (used >= CHAT_DAILY_LIMIT) throw Errors.chatLimitReached();
+  chatAttempts.assertUnderLimit(studentId, now);
 
   const exercise = await findCurrentExercise(student, body.current_exercise_id);
   const context = await buildChatContext(student, exercise);
   const history = today.slice(-HISTORY_SIZE).map(({ role, content }) => ({ role, content }));
+  chatAttempts.record(studentId, now);
   const raw = await postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', { message: body.message, ...context, history }, N8N_OPTIONS);
   const reply = validateChatResponse(raw, context.alternatives);
 
@@ -72,7 +75,8 @@ async function answer(studentId, body, now) {
  * (si ya está en el servidor), aplica el límite de 20 por día, arma el contexto sin datos personales con los últimos
  * 6 mensajes del día, le pregunta a n8n (9 s) y valida la respuesta. Solo si sale bien guarda el par en una
  * inserción, con created_at = `now` (el día que se leyó, aunque n8n conteste pasada la medianoche): las fallas no
- * se guardan ni cuentan para el límite. La sesión no se toca nunca.
+ * se guardan ni cuentan para el límite del día, pero sí para el tope de intentos por hora (`chat-attempts.js`).
+ * La sesión no se toca nunca.
  */
 export async function sendMessage(studentId, body, now = new Date()) {
   if (inFlight.has(studentId)) throw Errors.chatInProgress();

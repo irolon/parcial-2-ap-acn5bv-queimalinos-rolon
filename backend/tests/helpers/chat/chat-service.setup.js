@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, beforeEach } from '@jest/globals';
 import { fileURLToPath } from 'node:url';
 
 // Mocks y datos compartidos por los tests de services/chat/.
@@ -25,6 +25,10 @@ jest.unstable_mockModule(src('shared/utils/n8n.client.js'), () => mockClient);
 
 export const contextService = await import(src('services/chat/context.service.js'));
 export const chatService = await import(src('services/chat/chat.service.js'));
+export const { chatAttempts } = await import(src('services/chat/chat-attempts.js'));
+
+// El tope de intentos por hora vive en memoria: cada test arranca sin intentos.
+beforeEach(() => chatAttempts.clear());
 
 export const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
 export const OTHER_STUDENT = '33333333-3333-4333-8333-333333333333';
