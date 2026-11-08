@@ -7,7 +7,7 @@ import { DEFAULT_FORM, formFromStudent, studentPrefill } from '@/utils/trainer-a
  * - `loading`: todavía no llegó la ficha;
  * - `ready`: precargado con la ficha (`student` = `{ id, name, prefill }`);
  * - `gone`: 404, el alumno no está activo o no existe (error en el campo, se sigue sin él);
- * - `failed`: otro error (red, 5xx): se sigue sin la precarga y `retry()` la vuelve a pedir (`retrying` mientras tanto).
+ * - `failed`: otro error (red, 5xx): se sigue sin la precarga; el formulario avisa y la vuelve a pedir (`useStudentPick`).
  */
 export function useEntryForm(studentId) {
   const query = useStudentQuery(studentId);
@@ -16,7 +16,7 @@ export function useEntryForm(studentId) {
   if (query.isError) {
     const empty = { form: DEFAULT_FORM, student: null };
     if (query.error?.status === 404) return { ...empty, status: 'gone', errors: { fields: { studentId: STUDENT_NOT_FOUND } } };
-    return { ...empty, status: 'failed', retrying: query.isFetching, retry: () => query.refetch() };
+    return { ...empty, status: 'failed' };
   }
   const { id, name } = query.data;
   return { status: 'ready', form: formFromStudent(query.data), student: { id, name, prefill: studentPrefill(query.data) } };

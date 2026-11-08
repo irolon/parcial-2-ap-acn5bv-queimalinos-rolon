@@ -4,7 +4,7 @@ import AiError from '@/components/trainer-ai/AiError';
 import AiProposal from '@/components/trainer-ai/AiProposal';
 import AiRoutineForm from '@/components/trainer-ai/AiRoutineForm';
 import AiWaiting from '@/components/trainer-ai/AiWaiting';
-import { PrefillFailed, UnfinishedProposal } from '@/components/trainer-ai/FormNotices';
+import { UnfinishedProposal } from '@/components/trainer-ai/FormNotices';
 import LoadingState from '@/components/shared/states/LoadingState';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useAiSession } from '@/hooks/trainer-ai/useAiSession';
@@ -82,11 +82,11 @@ export default function AiRoutinePage() {
   return (
     <div className="flex flex-col gap-4">
       {isEntry && session?.proposal && <UnfinishedProposal onShow={showProposal} />}
-      {!view.form && entry?.status === 'failed' && <PrefillFailed retrying={entry.retrying} onRetry={entry.retry} />}
       <AiRoutineForm
-        key={`${view.id}-${view.form ? '' : entry?.status}`}
+        key={view.id}
         initial={start.form}
         student={start.student}
+        pendingStudentId={!view.form && entry?.status === 'failed' ? entryId : null}
         errors={view.form ? view.errors : entry?.errors}
         onSubmit={run}
       />

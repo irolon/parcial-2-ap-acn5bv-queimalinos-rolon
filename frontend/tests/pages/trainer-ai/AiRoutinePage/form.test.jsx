@@ -33,7 +33,7 @@ describe('AiRoutinePage: formulario', () => {
     expect(screen.getByLabelText('Duración por sesión (min)')).toHaveValue(60);
     expect(chip('Barra')).toHaveAttribute('aria-checked', 'true');
     expect(chip('Mancuernas')).toHaveAttribute('aria-checked', 'false');
-    expect(screen.queryByText('Rack propio')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Preferencias')).toHaveValue('Equipamiento extra del gimnasio: Rack propio');
     expect(screen.getByLabelText('Lesiones')).toHaveValue('Lumbalgia');
   });
 

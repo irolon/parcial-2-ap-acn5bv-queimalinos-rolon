@@ -1,4 +1,4 @@
-import { EQUIPMENT } from '@/utils/exercises/exerciseOptions';
+import { extraEquipmentNote, normalizeEquipment } from '@/utils/exercises/equipment';
 import { ROUTINE_GOAL_OPTIONS } from '@/utils/routines/routineForm';
 import { LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 
@@ -32,31 +32,63 @@ const GOALS = ROUTINE_GOAL_OPTIONS.map((o) => o.value);
 const LEVELS = LEVEL_OPTIONS.filter((o) => o.value).map((o) => o.value);
 const known = (list, value) => (list.includes(value) ? value : '');
 
-/** Lo que la ficha del alumno (`GET /students/:id`) tiene para precargar: solo los campos con datos. */
+/**
+ * Lo que la ficha del alumno (`GET /students/:id`) tiene para precargar: solo los campos con datos. El equipamiento
+ * (texto libre) se lleva al catálogo como el backend y lo que no mapea va a `preferences`, como hace él: con alumno la
+ * web manda siempre `available_equipment`, así que el backend ya no normaliza la ficha.
+ */
 export function studentPrefill(student) {
   const prefill = {};
   const goal = known(GOALS, student.goal);
   const level = known(LEVELS, student.level);
-  const equipment = (student.gym_equipment ?? []).filter((item) => EQUIPMENT.includes(item));
+  const { codes, unmapped } = normalizeEquipment(student.gym_equipment);
+  const note = extraEquipmentNote(unmapped);
   if (goal) prefill.goal = goal;
   if (level) prefill.level = level;
-  if (equipment.length > 0) prefill.equipment = equipment;
+  if (codes.length > 0) prefill.equipment = codes;
   if (student.injuries?.trim()) prefill.injuries = student.injuries;
+  if (note) prefill.preferences = note;
   return prefill;
 }
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const NOTE_JOIN = '. ';
+
+const hasNote = (text, note) => text.trim() === note || text.trim().endsWith(`${NOTE_JOIN}${note}`);
+/** Preferencias con la nota del equipamiento extra: si el PT ya escribió algo, se suma al final (no lo pisa). */
+const withNote = (text, note) => {
+  if (hasNote(text, note)) return text;
+  return text.trim() ? `${text.trim()}${NOTE_JOIN}${note}` : note;
+};
+/** Preferencias sin la nota de un alumno anterior: sola o sumada al final de lo que escribió el PT. */
+const withoutNote = (text, note) => (text.endsWith(`${NOTE_JOIN}${note}`) ? text.slice(0, -(note.length + NOTE_JOIN.length)) : text);
+
+/**
+ * Formulario sin la precarga de un alumno (`previous`, de `studentPrefill`): lo que vino de él y el PT no tocó vuelve
+ * a vacío; la nota del equipamiento extra se saca aunque el PT haya escrito antes otras preferencias.
+ */
+export function clearPrefill(form, previous = {}) {
+  const next = { ...form };
+  for (const [field, value] of Object.entries(previous)) {
+    if (same(next[field], value)) next[field] = DEFAULT_FORM[field];
+    else if (field === 'preferences') next.preferences = withoutNote(next.preferences, value);
+  }
+  return next;
+}
 
 /**
  * Formulario con el alumno elegido: pisa solo lo que su ficha tiene; lo demás de `base` se conserva. `previous` es la
- * precarga del alumno anterior (`studentPrefill`): lo que vino de él y el PT no tocó vuelve a vacío.
+ * precarga del alumno anterior (se vacía, ver `clearPrefill`) y `touched`, los campos que el PT editó desde que eligió
+ * a este alumno: esos no se pisan (p. ej. lo escrito mientras la ficha no cargaba). Las preferencias nunca se pisan:
+ * la nota del equipamiento extra se suma a lo escrito.
  */
-export function formFromStudent(student, base = DEFAULT_FORM, previous = {}) {
-  const form = { ...base, studentId: student.id };
-  for (const [field, value] of Object.entries(previous)) {
-    if (same(form[field], value)) form[field] = DEFAULT_FORM[field];
+export function formFromStudent(student, base = DEFAULT_FORM, previous = {}, touched = []) {
+  const form = { ...clearPrefill(base, previous), studentId: student.id };
+  for (const [field, value] of Object.entries(studentPrefill(student))) {
+    if (field === 'preferences') form.preferences = withNote(form.preferences, value);
+    else if (!touched.includes(field)) form[field] = value;
   }
-  return { ...form, ...studentPrefill(student) };
+  return form;
 }
 
 const intBetween = (value, min, max) => {

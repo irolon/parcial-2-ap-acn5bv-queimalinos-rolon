@@ -14,7 +14,7 @@ const answer = (value, ...args) => (typeof value === 'function' ? value(...args)
 
 /**
  * Stub de la API del asistente y lo que usa alrededor (alumnos, plantillas, biblioteca y rutinas del editor).
- * - `detail`: ficha de `GET /students/:id` (objeto, función `id => ficha` o un status de error).
+ * - `detail`: ficha de `GET /students/:id` (objeto, función `id => ficha` o un status de error; puede ser una promesa).
  * - `students`: activos de `GET /students`; `templates`: `GET /routine-templates`; `exercises`: la biblioteca.
  * - `generate(init)`, `save(init)`, `create(init)`: POST de generar, guardar como plantillas y crear la rutina.
  */
@@ -27,7 +27,7 @@ export function stubAiApi({
     const path = url.replace(/^.*\/api/, '');
     const detailMatch = path.match(/^\/students\/([^/?]+)$/);
     if (method === 'GET' && detailMatch) {
-      const data = answer(detail, detailMatch[1]);
+      const data = await answer(detail, detailMatch[1]);
       return typeof data === 'number' ? errorResponse(data, 'STUDENT_NOT_FOUND') : jsonResponse(200, { data });
     }
     if (method === 'GET' && path.startsWith('/students')) return jsonResponse(200, { data: path.includes('active=false') ? [] : students });

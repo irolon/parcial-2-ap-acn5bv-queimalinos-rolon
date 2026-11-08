@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FORM, buildGenerateBody, formFromStudent, studentPrefill, validateAiForm } from '@/utils/trainer-ai/aiForm';
+import { DEFAULT_FORM, buildGenerateBody, clearPrefill, formFromStudent, studentPrefill, validateAiForm } from '@/utils/trainer-ai/aiForm';
 import { studentDetail } from '../../helpers/students/fixtures';
 
 const valid = { ...DEFAULT_FORM, goal: 'strength', level: 'beginner' };
@@ -15,6 +15,30 @@ describe('aiForm', () => {
     const student = studentDetail({ id: 'st-1', goal: 'strength', level: 'advanced', gym_equipment: ['barbell', 'Rack propio', 'band'], injuries: 'Hombro' });
     expect(formFromStudent(student)).toMatchObject({
       studentId: 'st-1', goal: 'strength', level: 'advanced', equipment: ['barbell', 'band'], injuries: 'Hombro', frequency: '3',
+      preferences: 'Equipamiento extra del gimnasio: Rack propio',
+    });
+  });
+
+  it('normaliza el equipamiento en texto libre de la ficha y lo que no mapea va a preferencias', () => {
+    const student = studentDetail({ id: 'st-1', gym_equipment: ['barra', 'Mancuernas', 'Banco plano'] });
+    expect(studentPrefill(student)).toMatchObject({ equipment: ['barbell', 'dumbbell'], preferences: 'Equipamiento extra del gimnasio: Banco plano' });
+    const form = formFromStudent(student, { ...valid, preferences: 'Poco tiempo' });
+    expect(form.preferences).toBe('Poco tiempo. Equipamiento extra del gimnasio: Banco plano');
+    expect(formFromStudent(student, form).preferences).toBe(form.preferences);
+    expect(buildGenerateBody(form)).toMatchObject({ available_equipment: ['barbell', 'dumbbell'], preferences: form.preferences });
+  });
+
+  it('al cambiar de alumno saca la nota del anterior de las preferencias y deja lo que escribió el PT', () => {
+    const previous = { preferences: 'Equipamiento extra del gimnasio: Banco plano' };
+    expect(clearPrefill({ ...valid, preferences: previous.preferences }, previous).preferences).toBe('');
+    expect(clearPrefill({ ...valid, preferences: `Poco tiempo. ${previous.preferences}` }, previous).preferences).toBe('Poco tiempo');
+  });
+
+  it('no pisa los campos que el PT editó desde que eligió al alumno (`touched`)', () => {
+    const student = studentDetail({ id: 'st-1', goal: 'strength', level: 'advanced', gym_equipment: ['barbell'], injuries: 'Hombro' });
+    const base = { ...DEFAULT_FORM, injuries: 'Rodilla', level: 'beginner' };
+    expect(formFromStudent(student, base, {}, ['injuries'])).toMatchObject({
+      studentId: 'st-1', goal: 'strength', level: 'advanced', equipment: ['barbell'], injuries: 'Rodilla',
     });
   });
 
