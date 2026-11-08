@@ -125,9 +125,27 @@ describe('RoutineEditorPage: bloque de la IA', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('un borrador a mano armado después de descartar el bloque no se toma por el bloque: pregunta', async () => {
+    const user = setupUser();
+    storeProposal();
+    (await renderEditor({ path: BLOCK_0 })).unmount();
+    expect(JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)).aiBlock).toEqual({ generationId: 'g-split', index: 0 });
+    const manual = await renderEditor();
+    await user.click(await screen.findByRole('button', { name: 'Descartar' }));
+    await user.click(screen.getByRole('button', { name: 'Sí, descartar' }));
+    await user.type(screen.getByLabelText('Nombre de la rutina'), 'A mano');
+    await user.click(screen.getByRole('button', { name: 'Agregar Sentadilla' }));
+    manual.unmount();
+    expect(JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)).aiBlock).toBeUndefined();
+    await renderEditor({ path: BLOCK_0, api: { students: [ANA] } });
+    const confirm = within(await screen.findByRole('dialog'));
+    expect(confirm.getByText('Si lo reemplazás, se pierde lo que armaste a mano. No se puede deshacer.')).toBeVisible();
+    expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('A mano');
+  });
+
   it('si el borrador es otro bloque de la propuesta, lo nombra al preguntar', async () => {
-    storeProposal({ editing: 0 });
-    storeDraft({ name: 'Empuje' });
+    storeProposal();
+    storeDraft({ name: 'Empuje', aiBlock: { generationId: 'g-split', index: 0 } });
     await renderEditor({ path: '/pt/rutinas/nueva?ia=g-split&bloque=1' });
     const confirm = within(await screen.findByRole('dialog'));
     expect(confirm.getByText('Si lo reemplazás, se pierde el bloque "Empuje" que estabas editando. No se puede deshacer.')).toBeVisible();

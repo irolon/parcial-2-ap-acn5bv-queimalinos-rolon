@@ -5,7 +5,7 @@ import { useAiSession } from '@/hooks/trainer-ai/useAiSession';
 import { AI_STORAGE_KEY, SPLIT } from '../../helpers/trainer-ai/fixtures';
 
 const session = (generationId) => ({
-  form: { goal: 'strength' }, student: null, generationId, proposal: SPLIT.routine_proposal, assigned: {}, saved: null, editing: null,
+  form: { goal: 'strength' }, student: null, generationId, proposal: SPLIT.routine_proposal, assigned: {}, saved: null,
 });
 const store = (trainerId, data) => sessionStorage.setItem(AI_STORAGE_KEY(trainerId), JSON.stringify(data));
 const params = (query) => new URLSearchParams(query);
@@ -57,9 +57,9 @@ describe('useAiBlock', () => {
     expect(result.current.source.block.name).toBe('Piernas');
   });
 
-  it('avisa qué otro bloque es el borrador que se perdería', () => {
-    store('t-1', { ...session('g-1'), editing: 0 });
+  it('trae la generación, el índice y los nombres de los bloques, para reconocer el borrador por su marca', () => {
+    store('t-1', session('g-1'));
     const { result } = renderHook(() => useAiBlock('t-1', params('ia=g-1&bloque=1')));
-    expect(result.current.source).toMatchObject({ draftIsBlock: false, draftBlockName: 'Empuje' });
+    expect(result.current.source).toMatchObject({ generationId: 'g-1', index: 1, names: ['Empuje', 'Piernas', 'Core'] });
   });
 });

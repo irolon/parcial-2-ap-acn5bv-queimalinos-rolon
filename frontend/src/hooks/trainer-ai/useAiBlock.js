@@ -8,23 +8,22 @@ function findSource(trainerId, generationId, index) {
   if (session?.generationId !== generationId) return null;
   const block = session.proposal.routines[index];
   if (!block) return null;
-  const editing = Number.isInteger(session.editing) ? session.editing : null;
   return {
     block,
     index,
+    generationId,
     goal: session.form.goal ?? '',
-    draftIsBlock: editing === index,
-    draftBlockName: editing !== null && editing !== index ? (session.proposal.routines[editing]?.name ?? null) : null,
+    names: session.proposal.routines.map((routine) => routine.name ?? null),
   };
 }
 
 /**
  * Bloque de la propuesta que el editor tiene que cargar (`?ia=<generationId>&bloque=<i>`), o `source: null` si no hay
  * o la propuesta guardada es otra. Se vuelve a buscar cuando cambian `ia`, `bloque` o el entrenador (`key`).
- * `source.draftIsBlock`: el borrador del editor es ese mismo bloque ya cargado (una recarga); `draftBlockName`: el
- * nombre de otro bloque de la propuesta que se estaba editando. `start(found, byId)` decide qué muestra el editor
- * (ver `planBlockStart`), `markLoaded()` lo anota, `markAssigned(student, { routineId, block })` lo marca "Asignado"
- * con lo que de verdad se asignó y `dismiss()` deja de tratarlo como bloque.
+ * `source.names`: los nombres de los bloques, para nombrar al que es el borrador. `start(found, byId)` decide qué
+ * muestra el editor según la marca de bloque que trae el borrador (ver `planBlockStart`),
+ * `markAssigned(student, { routineId, block })` lo marca "Asignado" con lo que de verdad se asignó y `dismiss()` deja
+ * de tratarlo como bloque.
  */
 export function useAiBlock(trainerId, params) {
   const generationId = params.get('ia');
@@ -40,13 +39,11 @@ export function useAiBlock(trainerId, params) {
   }, [trainerId, generationId]);
 
   const start = useCallback((draft, byId) => planBlockStart(source, draft, byId), [source]);
-  const markLoaded = useCallback(() => update((s) => ({ ...s, editing: index })), [update, index]);
   const markAssigned = useCallback((student, { routineId = null, block } = {}) => update((s) => ({
     ...s,
-    editing: null,
     assigned: { ...s.assigned, [index]: { studentId: student.id, studentName: student.name, routineId, block } },
   })), [update, index]);
   const dismiss = useCallback(() => setFound((f) => ({ ...f, source: null })), []);
 
-  return { key, source, start, markLoaded, markAssigned, dismiss };
+  return { key, source, start, markAssigned, dismiss };
 }

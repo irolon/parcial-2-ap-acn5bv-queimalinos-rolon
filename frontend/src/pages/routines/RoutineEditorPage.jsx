@@ -64,11 +64,8 @@ export default function RoutineEditorPage() {
     const found = currentDraft(draft.ready, state, trainerId, byId);
     const plan = ai.start(found, byId);
     if (plan.state && plan.state !== state) setState(plan.state);
-    if (plan.ask) setDialog({ type: 'aiReplace', next: plan.ask, draftBlockName: ai.source.draftBlockName });
-    if (plan.loaded) {
-      ai.markLoaded();
-      setNotice(plan.loaded.missing > 0 ? missingNotice(plan.loaded.missing) : null);
-    }
+    if (plan.ask) setDialog({ type: 'aiReplace', next: plan.ask, draftBlockName: plan.draftBlockName });
+    if (plan.loaded) setNotice(plan.loaded.missing > 0 ? missingNotice(plan.loaded.missing) : null);
     const restored = { restored: Boolean(found), missing: found?.missing ?? 0 };
     setDraft({ ...(draft.ready ? draft : restored), ready: true, aiKey: ai.key });
   }
@@ -98,7 +95,6 @@ export default function RoutineEditorPage() {
       replaceState(next.state);
       setDraft({ ...draft, restored: false, missing: 0 });
       setNotice(next.missing > 0 ? missingNotice(next.missing) : null);
-      ai.markLoaded();
       setDialog(null);
     },
     keepDraft: () => {

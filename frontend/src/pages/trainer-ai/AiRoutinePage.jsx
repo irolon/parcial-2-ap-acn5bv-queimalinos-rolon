@@ -52,7 +52,7 @@ export default function AiRoutinePage() {
       return;
     }
     setSession({
-      form, student, generationId: result.data.generation_id, proposal: result.data.routine_proposal, assigned: {}, saved: null, editing: null,
+      form, student, generationId: result.data.generation_id, proposal: result.data.routine_proposal, assigned: {}, saved: null,
     });
     showProposal();
   }

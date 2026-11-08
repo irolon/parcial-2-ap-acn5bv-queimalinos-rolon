@@ -26,15 +26,25 @@ export function blockIndexOf(raw) {
   return typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : null;
 }
 
+/** Nombre de otro bloque de la misma propuesta si el borrador salió de él (`null` si es el mismo o uno a mano). */
+function otherBlockName(source, mark) {
+  if (mark?.generationId !== source.generationId || mark.index === source.index) return null;
+  return source.names?.[mark.index] ?? null;
+}
+
 /**
  * Qué muestra el editor al arrancar con un bloque (`source` de `useAiBlock`, o `null`) y el borrador recuperado
  * (`found`, o `null`): `state` (o `null` = dejarlo como está), `ask` = el bloque convertido si hay que preguntar
- * antes de pisar el borrador, y `loaded` = el bloque convertido si se cargó directo. Si el borrador ya es ese bloque
- * (una recarga), se recupera sin preguntar.
+ * antes de pisar el borrador, `loaded` = el bloque convertido si se cargó directo y `draftBlockName` = el nombre del
+ * otro bloque de la propuesta que es el borrador (para la pregunta). El bloque convertido lleva su marca (`aiBlock`),
+ * que se guarda con el borrador: si el borrador ya es ese bloque (una recarga), se recupera sin preguntar.
  */
 export function planBlockStart(source, found, exercisesById) {
-  const block = source && !(found && source.draftIsBlock) ? fromBlock(source.block, source.goal, exercisesById) : null;
-  if (!block) return { state: found?.state ?? null, ask: null, loaded: null };
-  if (found) return { state: found.state, ask: block, loaded: null };
-  return { state: block.state, ask: null, loaded: block };
+  const mark = found?.state?.aiBlock ?? null;
+  const isBlock = Boolean(source && mark && mark.generationId === source.generationId && mark.index === source.index);
+  const block = source && !(found && isBlock) ? fromBlock(source.block, source.goal, exercisesById) : null;
+  if (!block) return { state: found?.state ?? null, ask: null, loaded: null, draftBlockName: null };
+  const marked = { ...block, state: { ...block.state, aiBlock: { generationId: source.generationId, index: source.index } } };
+  if (found) return { state: found.state, ask: marked, loaded: null, draftBlockName: otherBlockName(source, mark) };
+  return { state: marked.state, ask: null, loaded: marked, draftBlockName: null };
 }

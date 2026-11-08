@@ -60,7 +60,6 @@ export function storeProposal({ result = SPLIT, form = {}, student = { id: 'st-9
     proposal: result.routine_proposal,
     assigned: {},
     saved: null,
-    editing: null,
     ...rest,
   };
   sessionStorage.setItem(AI_STORAGE_KEY(TRAINER.id), JSON.stringify(data));

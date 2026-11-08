@@ -34,29 +34,41 @@ describe('blockIndexOf', () => {
 
 describe('planBlockStart', () => {
   const block = SPLIT.routine_proposal.routines[0];
-  const source = { block, goal: 'hypertrophy', draftIsBlock: false };
-  const draft = { state: { name: 'Fuerza A' }, missing: 0 };
+  const source = { block, index: 0, generationId: 'g-split', goal: 'hypertrophy', names: ['Empuje', 'Piernas', 'Core'] };
+  const draft = { state: { name: 'Fuerza A', aiBlock: null }, missing: 0 };
+  const blockDraft = (generationId, index) => ({ state: { name: 'Algo', aiBlock: { generationId, index } }, missing: 0 });
+  const NOTHING = { ask: null, loaded: null, draftBlockName: null };
 
   it('sin bloque muestra el borrador (o nada)', () => {
-    expect(planBlockStart(null, draft, byId)).toEqual({ state: draft.state, ask: null, loaded: null });
-    expect(planBlockStart(null, null, byId)).toEqual({ state: null, ask: null, loaded: null });
+    expect(planBlockStart(null, draft, byId)).toEqual({ ...NOTHING, state: draft.state });
+    expect(planBlockStart(null, null, byId)).toEqual({ ...NOTHING, state: null });
   });
 
-  it('sin borrador carga el bloque', () => {
+  it('sin borrador carga el bloque con su marca (generación e índice), que se guarda con el borrador', () => {
     const plan = planBlockStart(source, null, byId);
     expect(plan.state.name).toBe('Empuje');
+    expect(plan.state.aiBlock).toEqual({ generationId: 'g-split', index: 0 });
     expect(plan.loaded.state).toBe(plan.state);
     expect(plan.ask).toBeNull();
   });
 
-  it('con un borrador que no es el bloque muestra el borrador y pregunta', () => {
+  it('con un borrador a mano muestra el borrador y pregunta (con el bloque ya marcado)', () => {
     const plan = planBlockStart(source, draft, byId);
     expect(plan.state).toBe(draft.state);
-    expect(plan.ask.state.name).toBe('Empuje');
+    expect(plan.ask.state).toMatchObject({ name: 'Empuje', aiBlock: { generationId: 'g-split', index: 0 } });
     expect(plan.loaded).toBeNull();
+    expect(plan.draftBlockName).toBeNull();
   });
 
   it('si el borrador ya es ese bloque (una recarga) lo recupera sin preguntar', () => {
-    expect(planBlockStart({ ...source, draftIsBlock: true }, draft, byId)).toEqual({ state: draft.state, ask: null, loaded: null });
+    const found = blockDraft('g-split', 0);
+    expect(planBlockStart(source, found, byId)).toEqual({ ...NOTHING, state: found.state });
+  });
+
+  it('si el borrador es otro bloque de la propuesta pregunta y lo nombra; de otra generación cuenta como a mano', () => {
+    expect(planBlockStart(source, blockDraft('g-split', 2), byId)).toMatchObject({ loaded: null, draftBlockName: 'Core' });
+    const other = planBlockStart(source, blockDraft('otra', 0), byId);
+    expect(other.ask.state.name).toBe('Empuje');
+    expect(other.draftBlockName).toBeNull();
   });
 });
