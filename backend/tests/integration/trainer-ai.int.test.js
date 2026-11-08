@@ -128,7 +128,7 @@ describe('trainer-ai (integración)', () => {
   });
 
   it('dos save-as-template en paralelo: uno 201 y el otro 409 (la función SQL bloquea la fila)', async () => {
-    const gen = await api(ptA.token).post('/trainer-ai/generate-routine').send({ goal: 'strength', level: 'beginner', frequency_per_week: 2 });
+    const gen = await api(ptA.token).post('/trainer-ai/generate-routine').send({ goal: 'strength', level: 'beginner', frequency_per_week: 3 });
     expectStatus(gen, 200, 'generate para el guardado en paralelo');
     const save = (name) =>
       api(ptA.token).post('/trainer-ai/save-as-template').send({ generation_id: gen.body.data.generation_id, template_name: qaName(name) });
