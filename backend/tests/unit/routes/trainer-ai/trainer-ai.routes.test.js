@@ -48,8 +48,16 @@ describe('trainer-ai.routes', () => {
 
 describe('CORS del asistente', () => {
   it('expone Retry-After para que la web muestre la cuenta atrás del 429', async () => {
-    const { default: request } = await import('supertest');
-    const res = await request(createApp()).get('/health').set('Origin', 'http://localhost:5173');
-    expect(res.headers['access-control-expose-headers']).toMatch(/Retry-After/i);
+    // Servidor en un puerto libre + fetch (sin supertest, que no es dependencia del proyecto).
+    const server = createApp().listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.address().port}/health`, {
+        headers: { Origin: 'http://localhost:5173' },
+      });
+      expect(res.headers.get('access-control-expose-headers')).toMatch(/Retry-After/i);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 });
