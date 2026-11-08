@@ -4,6 +4,7 @@ import Avatar from '@/components/shared/ui/Avatar';
 import { profileHref } from '@/routes/routeTable';
 import { activityStatus, lastSessionLabel } from '@/utils/students/activity';
 import { goalLabel } from '@/utils/students/studentOptions';
+import AdherenceBar from './AdherenceBar';
 import StudentStatusPill from './StudentStatusPill';
 
 /** Tarjeta del alumno; el link a la ficha conserva la búsqueda (`search`, sin `?`) del panel. */
@@ -30,6 +31,7 @@ export default function StudentCard({ student, now, search }) {
           <span className="block font-mono text-[11px] text-ink6">
             <StreakLabel streak={student.streak} />
           </span>
+          <AdherenceBar student={student} />
         </span>
         <StudentStatusPill status={status} />
       </Link>
