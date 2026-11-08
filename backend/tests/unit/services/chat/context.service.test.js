@@ -129,6 +129,12 @@ describe('chat · context.service · buildChatContext', () => {
     expect(mockContextRepo.findAlternatives.mock.calls[0][1].equipment).toEqual(['dumbbell', 'bodyweight']);
   });
 
+  it('texto libre de la ficha ("barra", "Mancuernas") → códigos del catálogo para el alumno y las alternativas', async () => {
+    const context = await buildChatContext({ ...STUDENT, gym_equipment: ['barra', 'Mancuernas', 'Banco plano'] }, null);
+    expect(context.student.gym_equipment).toEqual(['barbell', 'dumbbell']);
+    expect(mockContextRepo.findAlternatives.mock.calls[0][1].equipment).toEqual(['barbell', 'dumbbell', 'bodyweight']);
+  });
+
   it('sin equipamiento cargado (null): solo bodyweight para las alternativas', async () => {
     const context = await buildChatContext({ ...STUDENT, gym_equipment: null }, null);
     expect(context.student.gym_equipment).toEqual([]);

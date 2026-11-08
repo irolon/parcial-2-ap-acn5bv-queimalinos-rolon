@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { EQUIPMENT } from '../../models/exercises/exercise.model.js';
+import { normalizeEquipment } from '../../models/exercises/equipment.model.js';
 import * as sessionsRepository from '../../repositories/sessions/sessions.repository.js';
 import * as exercisesRepository from '../../repositories/exercises/exercises.repository.js';
 import * as contextRepository from '../../repositories/chat/chat-context.repository.js';
@@ -29,8 +29,8 @@ export async function findCurrentExercise(student, exerciseId) {
   return accessible ? exercise : null;
 }
 
-/** Equipamiento de la ficha (lo carga el PT): solo valores válidos y sin repetir. */
-const gymEquipmentOf = (student) => [...new Set((student.gym_equipment ?? []).filter((e) => EQUIPMENT.includes(e)))];
+/** Equipamiento de la ficha (lo carga el PT, admite texto libre) normalizado a códigos del catálogo. */
+const gymEquipmentOf = (student) => normalizeEquipment(student.gym_equipment).codes;
 
 /**
  * Contexto para n8n, sin datos personales (RNF-26: ni nombre, email, nacimiento, avatar ni

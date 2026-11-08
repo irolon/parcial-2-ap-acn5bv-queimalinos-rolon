@@ -1218,7 +1218,7 @@ Envía un mensaje al asistente IA.
 ```
 
 - `exercise`: el ejercicio actual, o `null` si no vino o no es accesible.
-- `student.gym_equipment`: el de la ficha, solo valores válidos (`barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`) y sin repetir. `injuries` recortado (vacío → `null`).
+- `student.gym_equipment`: el de la ficha normalizado al catálogo (`barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`) y sin repetir: el texto libre se mapea igual que en el asistente del entrenador ("barra"→`barbell`, "Mancuernas"→`dumbbell`, etc.; `models/exercises/equipment.model.js`) y lo que no mapea no se manda. `injuries` recortado (vacío → `null`).
 - `alternatives`: hasta 30 ejercicios accesibles (globales y del PT del alumno) del mismo grupo muscular que `exercise` (de todos si es `null`), sin el ejercicio actual, cuyo equipamiento esté en `gym_equipment` o sea `bodyweight`; por nombre.
 - `history`: los últimos 6 mensajes del día del alumno (antes de este), en orden.
 
