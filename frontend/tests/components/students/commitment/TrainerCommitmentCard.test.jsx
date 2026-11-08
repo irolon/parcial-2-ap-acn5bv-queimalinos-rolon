@@ -4,7 +4,7 @@ import TrainerCommitmentCard from '@/components/students/commitment/TrainerCommi
 import { currentMonth, monthName } from '@/utils/students/commitment';
 import { renderWithQuery } from '../../../helpers/progress/progress';
 import { sessionItem, sessionsPage } from '../../../helpers/sessions/sessions';
-import { stubCommitment } from '../../../helpers/students/attendance';
+import { ATTENDANCE, stubCommitment } from '../../../helpers/students/attendance';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -48,7 +48,32 @@ describe('TrainerCommitmentCard', () => {
   it('con más de 20 sesiones en el mes aclara que el promedio es de las últimas 20', async () => {
     load({ sessions: withRpe(Array(20).fill(7), { totalPages: 2, total: 25 }) });
     expect(await screen.findByText('de 20 sesiones')).toBeVisible();
-    expect(screen.getByTitle('Promedio de las últimas 20 sesiones del mes')).toHaveTextContent('RPE promedio');
+    expect(kpi('RPE promedio').getByText('Promedio de las últimas 20 sesiones del mes')).toBeVisible();
+  });
+
+  it('sin días planificados no muestra "/0": deja las sesiones y aclara que no hay plan', async () => {
+    load({ attendance: { ...ATTENDANCE, sessions: 6, assigned_days: 0 } });
+    await screen.findByText('Sesiones del mes');
+    expect(kpi('Sesiones del mes').getByText('6')).toBeVisible();
+    expect(kpi('Sesiones del mes').getByText('Sin plan este mes')).toBeVisible();
+    expect(screen.queryByText(/\/0/)).toBeNull();
+    expect(screen.queryByText('sobre planificadas')).toBeNull();
+  });
+
+  it('mientras carga el historial el RPE dice "Cargando…", no una raya como si hubiera fallado', async () => {
+    stubCommitment();
+    const answered = globalThis.fetch;
+    vi.stubGlobal('fetch', (url, init) => (String(url).includes('/sessions?') ? new Promise(() => {}) : answered(url, init)));
+    renderWithQuery(<TrainerCommitmentCard studentId="st-1" />);
+    await screen.findByText('Sesiones del mes');
+    expect(kpi('RPE promedio').getByText('Cargando…')).toBeVisible();
+    expect(kpi('RPE promedio').queryByText('—')).toBeNull();
+  });
+
+  it('si falla el historial el RPE muestra una raya y "No disponible"', async () => {
+    load({ sessions: 500 });
+    expect(await screen.findByText('No disponible')).toBeVisible();
+    expect(kpi('RPE promedio').getByText('—')).toBeVisible();
   });
 
   it('si falla la racha muestra el error del bloque', async () => {

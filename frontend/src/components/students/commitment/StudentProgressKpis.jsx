@@ -1,8 +1,9 @@
 import CommitmentKpis, { CommitmentState } from '@/components/students/commitment/CommitmentKpis';
 import { useCommitment } from '@/hooks/students/useCommitment';
-import { durationLabel } from '@/utils/challenges/challengeFormat';
 import { formatVolume } from '@/utils/progress/format';
+import { plural, pluralNoun } from '@/utils/shared/plural';
 
+const days = (n) => plural(n, 'día', 'días');
 const deltaLabel = (pct) => `${pct >= 0 ? `+${pct}` : `−${-pct}`}% vs. las 4 semanas anteriores`;
 
 function items({ attendance, streak, volume }) {
@@ -15,18 +16,18 @@ function items({ attendance, streak, volume }) {
       value: attendance.sessions,
       unit: planned ? `/${attendance.assigned_days}` : null,
       accent: planned,
-      context: planned ? `de ${durationLabel(attendance.assigned_days)} planificados` : 'Sin plan este mes',
+      context: planned ? `de ${days(attendance.assigned_days)} planificados` : 'Sin plan este mes',
     },
     {
       label: 'Racha',
       value: current,
-      unit: current === 1 ? 'día' : 'días',
-      context: current === 0 ? 'Arrancá hoy' : `Tu mejor racha: ${durationLabel(streak.longest_streak_days)}`,
+      unit: pluralNoun(current, 'día', 'días'),
+      context: current === 0 ? 'Arrancá hoy' : `Tu mejor racha: ${days(streak.longest_streak_days)}`,
     },
     {
       label: 'Récords del mes',
       value: prs,
-      context: prs === 0 ? 'Todavía ninguno este mes' : `${prs === 1 ? 'sesión' : 'sesiones'} con récord`,
+      context: prs === 0 ? 'Todavía ninguno este mes' : `${pluralNoun(prs, 'sesión', 'sesiones')} con récord`,
     },
     {
       label: 'Volumen · 4 semanas',
