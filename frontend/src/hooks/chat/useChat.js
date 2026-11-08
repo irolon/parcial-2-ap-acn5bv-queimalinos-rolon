@@ -26,19 +26,35 @@ export function useChatToday(now) {
 }
 
 /**
+ * Pone el intercambio (o el contador en 0) en la conversación del día `key`. Antes corta el GET de ese día que esté en
+ * curso: si volviera después pisaría el intercambio (lo pidió antes de que se guardara). Si había uno en curso, pide
+ * el día de nuevo: el servidor ya tiene el par guardado y trae la conversación completa.
+ */
+async function putInDay(queryClient, key, update) {
+  const fetching = queryClient.isFetching({ queryKey: key, exact: true }) > 0;
+  await queryClient.cancelQueries({ queryKey: key, exact: true });
+  queryClient.setQueryData(key, update);
+  if (fetching) queryClient.invalidateQueries({ queryKey: key, exact: true });
+}
+
+/**
  * Manda una consulta (`mutate({ message, sessionId, exerciseId })`). Si sale bien suma el intercambio a la
  * conversación del día; con 429 deja el contador en 0. Lo hace aunque el panel ya se haya cerrado: los callbacks
  * de `useMutation` corren igual. El error queda en `error` para el aviso (ver `chatProblem`).
+ * El día se fija al mandar (`onMutate`), como hace el servidor: una respuesta que llega pasada la medianoche va a la
+ * conversación de ayer, no a la de hoy.
  */
-export function useSendChat(now) {
+export function useSendChat() {
   const studentId = useAuthStore((state) => state.user?.id);
   const queryClient = useQueryClient();
-  const key = chatTodayKey(studentId, now);
   return useMutation({
     mutationFn: sendChat,
-    onSuccess: (reply, { message }) => queryClient.setQueryData(key, (day) => appendExchange(day, message, reply)),
-    onError: (error) => {
-      if (error?.code === 'CHAT_LIMIT_REACHED') queryClient.setQueryData(key, withoutRemaining);
+    onMutate: () => ({ key: chatTodayKey(studentId) }),
+    onSuccess: (reply, { message }, { key }) =>
+      putInDay(queryClient, key, (day) => appendExchange(day, message, reply)),
+    onError: (error, _variables, sent) => {
+      if (error?.code === 'CHAT_LIMIT_REACHED' && sent) return putInDay(queryClient, sent.key, withoutRemaining);
+      return undefined;
     },
   });
 }

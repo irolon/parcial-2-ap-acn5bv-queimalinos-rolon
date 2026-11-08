@@ -22,6 +22,9 @@ describe('chatProblem', () => {
     expect(chatProblem(apiError(502, 'AI_INVALID_RESPONSE', ''))).toEqual({
       kind: 'invalid', text: 'El asistente respondió algo que no entendimos. Probá de nuevo.', retry: true,
     });
+    expect(chatProblem(apiError(429, 'RATE_LIMIT_EXCEEDED', ''))).toEqual({
+      kind: 'tooMany', text: 'Hiciste muchas consultas seguidas. Probá de nuevo más tarde.', retry: false,
+    });
   });
 
   it('503, 502 y 429 del asistente: el texto del servidor cuando viene; sin texto, el local', () => {

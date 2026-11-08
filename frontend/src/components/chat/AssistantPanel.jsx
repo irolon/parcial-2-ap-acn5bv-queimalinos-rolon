@@ -65,7 +65,7 @@ export default function AssistantPanel({ exercise, sessionId, onClose }) {
   const online = useOnline();
   const now = useToday();
   const day = useChatToday(now);
-  const send = useSendChat(now);
+  const send = useSendChat();
   const [text, setText] = useState('');
   const panelRef = useRef(null);
   useEffect(() => panelRef.current?.focus({ preventScroll: true }), []);

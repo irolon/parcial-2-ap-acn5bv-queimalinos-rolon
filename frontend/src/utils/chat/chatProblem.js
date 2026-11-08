@@ -7,12 +7,14 @@ export const OFFLINE_TEXT = 'El asistente necesita conexión';
 const UNAVAILABLE_TEXT = 'El asistente no está disponible ahora. Seguí con tu entrenamiento.';
 const INVALID_TEXT = 'El asistente respondió algo que no entendimos. Probá de nuevo.';
 const BUSY_TEXT = 'Esperá la respuesta anterior.';
+const TOO_MANY_TEXT = 'Hiciste muchas consultas seguidas. Probá de nuevo más tarde.';
 const SESSION_CODES = ['SESSION_FINISHED', 'SESSION_NOT_FOUND'];
 
-// Los errores del backend del chat (502, 503 y los dos 429) con su aviso; un 502/503 sin código (un proxy) no está.
+// Los errores del backend del chat (502, 503 y los tres 429) con su aviso; un 502/503 sin código (un proxy) no está.
 const ASSISTANT_ERRORS = {
   CHAT_LIMIT_REACHED: { kind: 'limit', text: LIMIT_TEXT, retry: false },
   CHAT_IN_PROGRESS: { kind: 'busy', text: BUSY_TEXT, retry: true },
+  RATE_LIMIT_EXCEEDED: { kind: 'tooMany', text: TOO_MANY_TEXT, retry: false },
   AI_INVALID_RESPONSE: { kind: 'invalid', text: INVALID_TEXT, retry: true },
   AI_UNAVAILABLE: { kind: 'unavailable', text: UNAVAILABLE_TEXT, retry: true },
 };
@@ -21,6 +23,7 @@ const ASSISTANT_ERRORS = {
  * Qué decirle al alumno cuando falla una consulta al asistente: `{ kind, text, retry }`, o null sin error.
  * - `limit` (429 `CHAT_LIMIT_REACHED`): no se reintenta hasta mañana.
  * - `busy` (429 `CHAT_IN_PROGRESS`): otra consulta del alumno (otra pestaña o el celular) sigue en curso.
+ * - `tooMany` (429 `RATE_LIMIT_EXCEEDED`): pasó el tope de intentos por hora; reintentar ya daría lo mismo.
  * - `offline` (sin red): "El asistente necesita conexión"; el panel ofrece Reintentar solo si el navegador está en línea.
  * - `invalid` (502) y `unavailable` (503, el tope de tiempo y cualquier otro error): con Reintentar.
  * - `session` (400 / 404 por la sesión): lo que dice el servidor; reintentar daría lo mismo.
