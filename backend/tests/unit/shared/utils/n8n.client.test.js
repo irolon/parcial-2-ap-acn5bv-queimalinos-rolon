@@ -9,7 +9,7 @@ const ORIGINAL = { url: env[VAR], secret: env.N8N_WEBHOOK_SECRET };
 const reply = (status, body) => ({
   ok: status >= 200 && status < 300,
   status,
-  json: async () => (typeof body === 'string' ? JSON.parse(body) : body),
+  text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
 });
 const post = (payload = { message: 'hola' }) => postToN8n(VAR, payload, OPTIONS);
 const expect503 = (promise) =>
@@ -77,5 +77,18 @@ describe('shared · n8n.client · postToN8n (la URL sale de la variable que se p
   it('un 2xx que no es JSON → 502 AI_INVALID_RESPONSE con el mensaje pedido', async () => {
     fetchMock.mockResolvedValue(reply(200, '<html>'));
     await expect(post()).rejects.toMatchObject({ statusCode: 502, code: 'AI_INVALID_RESPONSE', message: 'Respuesta rara.' });
+  });
+
+  it.each([
+    ['se corta la conexión', new TypeError('terminated')],
+    ['vence el timeout', new DOMException('The operation was aborted due to timeout', 'TimeoutError')],
+  ])('si al leer el body %s → 503 (no 502)', async (_label, err) => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, text: async () => Promise.reject(err) });
+    await expect503(post());
+  });
+
+  it('un 2xx con body vacío → 502 AI_INVALID_RESPONSE', async () => {
+    fetchMock.mockResolvedValue(reply(200, ''));
+    await expect(post()).rejects.toMatchObject({ statusCode: 502, code: 'AI_INVALID_RESPONSE' });
   });
 });

@@ -24,13 +24,13 @@ MIS 13 · equipo [HQlSV6vC](https://trello.com/c/HQlSV6vC). La rama sale de `fea
 **Contexto que se manda a n8n** (`N8N_STUDENT_AI_WEBHOOK_URL` con `x-webhook-secret`), **sin datos personales** (RNF-26):
 - `message`;
 - `exercise`: `{ name, muscle_group, equipment }` del ejercicio actual, o `null`;
-- `student`: `{ goal, level, gym_equipment, injuries }` (sin nombre, email ni fecha de nacimiento);
+- `student`: `{ goal, level, gym_equipment, injuries }` (sin nombre, email ni fecha de nacimiento); `gym_equipment` es el de la ficha normalizado al catálogo con `models/exercises/equipment.model.js` ("barra"→`barbell`, "Mancuernas"→`dumbbell`; lo que no mapea no se manda);
 - `alternatives`: hasta 30 ejercicios accesibles del mismo grupo muscular (o de todos, si no hay ejercicio actual), **sin el ejercicio actual**, cuyo equipamiento esté en el `gym_equipment` del alumno o sea `bodyweight`, como `{ id, name, muscle_group, equipment }`;
 - `history`: los últimos 6 mensajes del día, en orden, como `{ role, content }`.
 
-**Timeout de 9 s**, con `AbortSignal.timeout`, para que el aviso llegue antes de los 10 s del RNF-04 contando el viaje de vuelta (con 10 s se medía 10,6 s en el cliente). Si falta la URL o el secreto, si se corta o si n8n responde algo que no es 2xx → **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Seguí con tu entrenamiento."). La sesión no se toca nunca.
+**Timeout de 9 s**, con `AbortSignal.timeout`, para que el aviso llegue antes de los 10 s del RNF-04 contando el viaje de vuelta (con 10 s se medía 10,6 s en el cliente). Si falta la URL o el secreto, si se corta (también mientras se lee el body) o si n8n responde algo que no es 2xx → **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Seguí con tu entrenamiento."). La sesión no se toca nunca.
 
-**Respuesta esperada de n8n:** `{ "response": "texto (1-1500)", "suggestions": [ { "exercise_id": "uuid", "reason": "texto (1-200)" } ] }`. Se valida: `response` obligatorio; `suggestions` de 0 a 3 y solo con ids de `alternatives`; las que no cumplen **se descartan, sin rechazar la respuesta**; un `response` inválido o `{ "error": … }` → **502 `AI_INVALID_RESPONSE`**.
+**Respuesta esperada de n8n:** `{ "response": "texto (1-1500)", "suggestions": [ { "exercise_id": "uuid", "reason": "texto (1-200)" } ] }`. Se valida: `response` obligatorio; `suggestions` de 0 a 3 y solo con ids de `alternatives`; las que no cumplen **se descartan, sin rechazar la respuesta**; un body que no es JSON, un `response` inválido o `{ "error": … }` → **502 `AI_INVALID_RESPONSE`**.
 
 **Guardado:** solo cuando la respuesta es válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyeron el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche; a igual instante se ordena primero el del alumno). Las fallas no se guardan y **no cuentan** para el límite. **Las sugerencias no se guardan:** después de recargar, las respuestas anteriores se ven sin sus chips (solo la del momento los muestra).
 

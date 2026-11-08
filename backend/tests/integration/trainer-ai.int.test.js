@@ -127,6 +127,15 @@ describe('trainer-ai (integración)', () => {
     expect(res.body.error.code).toBe('GENERATION_ALREADY_SAVED');
   });
 
+  it('dos save-as-template en paralelo: uno 201 y el otro 409 (la función SQL bloquea la fila)', async () => {
+    const gen = await api(ptA.token).post('/trainer-ai/generate-routine').send({ goal: 'strength', level: 'beginner', frequency_per_week: 2 });
+    expectStatus(gen, 200, 'generate para el guardado en paralelo');
+    const save = (name) =>
+      api(ptA.token).post('/trainer-ai/save-as-template').send({ generation_id: gen.body.data.generation_id, template_name: qaName(name) });
+    const statuses = (await Promise.all([save('Paralelo 1'), save('Paralelo 2')])).map((r) => r.status);
+    expect(statuses.sort()).toEqual([201, 409]);
+  });
+
   describe('aislamiento: el PT B no ve ni usa nada del PT A', () => {
     const noForeignIds = (res) => {
       const text = JSON.stringify(res.body);

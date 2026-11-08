@@ -28,7 +28,8 @@ export function createApp() {
 
   // Seguridad y utilidades base.
   app.use(helmet());
-  app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+  // Retry-After se expone para que la web lea la espera de un 429 (asistente IA).
+  app.use(cors({ origin: env.FRONTEND_URL, credentials: true, exposedHeaders: ['Retry-After'] }));
   app.use(express.json());
   if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
