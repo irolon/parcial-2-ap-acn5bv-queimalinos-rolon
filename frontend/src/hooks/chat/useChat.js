@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getChatToday, sendChat } from '@/api/chat/chat.api';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { appendExchange, chatDayOf, withoutRemaining } from '@/utils/chat/chatDay';
+import { appendExchange, chatDayOf, keepSuggestions, withoutRemaining } from '@/utils/chat/chatDay';
 
 export const CHAT_KEY = ['chat'];
 // El día de Argentina va en la clave: con el panel abierto pasada la medianoche es otra consulta (la de ayer no sirve).
@@ -13,13 +13,16 @@ const STALE_MS = 5 * 60 * 1000;
 
 /**
  * La conversación del día del alumno con sesión iniciada (GET /chat/today). Se pide recién al abrir el panel. `now`
- * es el de `useToday` (cambia solo al pasar la medianoche): con el día nuevo se pide de nuevo.
+ * es el de `useToday` (cambia solo al pasar la medianoche): con el día nuevo se pide de nuevo. Cada pedido conserva
+ * las sugerencias que ya estaban en la caché (el GET no las trae): ver `keepSuggestions`.
  */
 export function useChatToday(now) {
   const studentId = useAuthStore((state) => state.user?.id);
+  const queryClient = useQueryClient();
+  const key = chatTodayKey(studentId, now);
   return useQuery({
-    queryKey: chatTodayKey(studentId, now),
-    queryFn: getChatToday,
+    queryKey: key,
+    queryFn: async () => keepSuggestions(await getChatToday(), queryClient.getQueryData(key)),
     enabled: Boolean(studentId),
     staleTime: STALE_MS,
   });

@@ -66,6 +66,27 @@ describe('useSendChat con el GET de /chat/today', () => {
     expect(result.current.day.data.remaining_today).toBe(19);
   });
 
+  it('el POST vuelve antes que el GET: al volver a pedir el día se conservan las sugerencias recién recibidas', async () => {
+    const chips = [{ exercise_id: 'e-7', name: 'Press con mancuernas', reason: 'Tenés mancuernas.' }];
+    const first = heldDay(chatDay([OLD], 20));
+    let gets = 0;
+    stubChat({
+      day: () => { gets += 1; return gets === 1 ? first.respond() : jsonResponse(200, { data: SAVED }); },
+      send: [chatReply({ suggestions: chips })],
+    });
+    const { result } = renderChat();
+    await waitFor(() => expect(gets).toBe(1));
+
+    await act(() => result.current.send.mutateAsync({ message: 'Hola' }));
+    first.release();
+    await waitFor(() => expect(gets).toBe(2));
+    await waitFor(() => expect(result.current.day.data.remaining_today).toBe(19));
+    const assistant = result.current.day.data.messages.filter((m) => m.id === 'a-9');
+    expect(assistant).toHaveLength(1);
+    expect(assistant[0].suggestions).toEqual(chips);
+    expect(result.current.day.data.messages).toHaveLength(3);
+  });
+
   it('un 429 del límite con el GET en curso deja el contador en 0', async () => {
     const first = heldDay(chatDay([OLD], 1));
     let gets = 0;

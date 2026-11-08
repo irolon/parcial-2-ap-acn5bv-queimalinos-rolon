@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendExchange, chatDayOf, withoutRemaining } from '@/utils/chat/chatDay';
+import { appendExchange, chatDayOf, keepSuggestions, withoutRemaining } from '@/utils/chat/chatDay';
 
 const NOW = new Date('2026-11-07T13:30:00.000Z');
 const reply = {
@@ -43,5 +43,26 @@ describe('chatDayOf', () => {
   it('el día de Argentina (UTC-3), no el de UTC ni el del navegador', () => {
     expect(chatDayOf(new Date('2026-11-08T02:59:59Z'))).toBe('2026-11-07');
     expect(chatDayOf(new Date('2026-11-08T03:00:00Z'))).toBe('2026-11-08');
+  });
+
+  describe('keepSuggestions', () => {
+    const chips = [{ exercise_id: 'e-7', name: 'Press con mancuernas', reason: 'Tenés mancuernas.' }];
+    const msg = (id, role, extra = {}) => ({ id, role, content: id, created_at: NOW.toISOString(), ...extra });
+    const fresh = { messages: [msg('u-1', 'user'), msg('a-1', 'assistant'), msg('a-2', 'assistant')], remaining_today: 18 };
+
+    it('el GET nuevo conserva las sugerencias de la caché por id del mensaje, y el resto viene del servidor', () => {
+      const cached = { messages: [msg('a-2', 'assistant', { suggestions: chips })], remaining_today: 19 };
+      const day = keepSuggestions(fresh, cached);
+      expect(day.remaining_today).toBe(18);
+      expect(day.messages.map((m) => m.id)).toEqual(['u-1', 'a-1', 'a-2']);
+      expect(day.messages[2].suggestions).toEqual(chips);
+      expect(day.messages[1].suggestions).toBeUndefined();
+    });
+
+    it('sin caché, o con mensajes que el GET no trae, no agrega ni duplica nada', () => {
+      expect(keepSuggestions(fresh, undefined)).toBe(fresh);
+      const cached = { messages: [msg('a-9', 'assistant', { suggestions: chips })] };
+      expect(keepSuggestions(fresh, cached).messages).toEqual(fresh.messages);
+    });
   });
 });

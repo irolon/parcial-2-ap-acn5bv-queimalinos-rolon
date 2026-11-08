@@ -28,3 +28,17 @@ export function appendExchange(day, message, reply, now = new Date()) {
 
 /** La conversación con el contador en 0 (el servidor dijo que se llegó al límite). */
 export const withoutRemaining = (day) => ({ messages: day?.messages ?? [], remaining_today: 0 });
+
+/**
+ * La conversación recién pedida (`fresh`) con las sugerencias que ya estaban en la caché (`cached`), por id del
+ * mensaje del asistente: GET /chat/today no las trae (no se guardan) y una recarga del día no tiene que borrar los
+ * chips que el alumno acaba de recibir. Las que no están en `fresh` no se agregan (no duplica).
+ */
+export function keepSuggestions(fresh, cached) {
+  const local = new Map(
+    (cached?.messages ?? []).filter((m) => m.suggestions?.length > 0).map((m) => [m.id, m.suggestions]),
+  );
+  if (local.size === 0) return fresh;
+  const messages = fresh.messages.map((m) => (local.has(m.id) && !m.suggestions?.length ? { ...m, suggestions: local.get(m.id) } : m));
+  return { ...fresh, messages };
+}
