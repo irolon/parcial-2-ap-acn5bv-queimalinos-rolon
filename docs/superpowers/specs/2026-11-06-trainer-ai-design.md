@@ -27,7 +27,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 | Campo | Regla |
 |---|---|
-| `student_id` | Opcional. Si viene, tiene que ser un alumno **activo del trainer** (si no, 404 `STUDENT_NOT_FOUND`). Lo que falte del body se completa con los datos del alumno: `goal`, `level`, `gym_equipment` → `available_equipment` e `injuries` Solo se completa un campo **ausente** del body: `injuries` vacío o `null` es "sin lesiones" y `available_equipment` `[]` o `null` es "solo bodyweight" (el PT los borró a propósito). |
+| `student_id` | Opcional. Si viene, tiene que ser un alumno **activo del trainer** (si no, 404 `STUDENT_NOT_FOUND`). Lo que falte del body se completa con los datos del alumno: `goal`, `level`, `gym_equipment` → `available_equipment` e `injuries` Solo se completa un campo **ausente** del body: `injuries` vacío o `null` es "sin lesiones" y `available_equipment` `[]` o `null` es "solo bodyweight" (el PT los borró a propósito). El `gym_equipment` de la ficha es texto libre: se normaliza al catálogo sin importar mayúsculas, acentos ni plural (mancuerna→`dumbbell`, barra→`barbell`, máquina→`machine`, polea→`cable`, pesa rusa/kettlebell→`kettlebell`, banda/elástico→`band`, peso corporal/sin equipamiento→`bodyweight`, más los códigos en inglés; `models/exercises/equipment.model.js`). Lo que no mapea (p. ej. "Banco plano") no entra en `available_equipment`: se suma al final de `preferences` como "Equipamiento extra del gimnasio: Banco plano". |
 | `goal` | `hypertrophy \| strength \| weight_loss \| tonify`. Obligatorio, salvo que lo complete el alumno. |
 | `level` | `beginner \| intermediate \| advanced`. Obligatorio, salvo que lo complete el alumno. |
 | `frequency_per_week` | Entero de 1 a 7. Obligatorio. |
@@ -44,7 +44,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 `injuries` (y `preferences`) es **texto libre que se manda a la IA** tal cual: la IA lo necesita para cuidar al alumno. Por eso la UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales (nombre, documento, contacto).
 
-**Webhook:** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **30 s** (`AbortSignal.timeout`). Las dos variables son opcionales en `env.js`, porque la app tiene que arrancar sin IA. Para que la IA funcione hacen falta **las dos**: si falta la URL o el secreto, el backend no llama a n8n, loguea cuál falta y responde 503. Si se corta por timeout o si n8n responde algo que no es 2xx, el backend responde **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.").
+**Webhook:** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **30 s** (`AbortSignal.timeout`). Las dos variables son opcionales en `env.js`, porque la app tiene que arrancar sin IA. Para que la IA funcione hacen falta **las dos**: si falta la URL o el secreto, el backend no llama a n8n, loguea cuál falta y responde 503. Si se corta por timeout o error de red (incluida la lectura del body: se lee con `res.text()` dentro del manejo de transporte) o si n8n responde algo que no es 2xx, el backend responde **503 `AI_UNAVAILABLE`** ("El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.").
 
 **Respuesta esperada de n8n** (lo que valida el backend):
 
@@ -62,6 +62,8 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
   "rationale": "Por qué se armó así (hasta 1000 caracteres)"
 }
 ```
+
+Un 2xx cuyo body no es JSON (`JSON.parse` falla) es **502 `AI_INVALID_RESPONSE`**.
 
 **Validación (cualquier falla → 502 `AI_INVALID_RESPONSE`, sin guardar nada; los detalles van al log, no al cliente):**
 - de 1 a 7 bloques; `name` de 1 a 60 caracteres;
@@ -93,7 +95,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 **Body:** `{ "generation_id": "uuid", "template_name": "string (1-120)" }`
 
-- Una generación inexistente o de otro trainer → **404 `GENERATION_NOT_FOUND`**. Una ya guardada → **409 `GENERATION_ALREADY_SAVED`**.
+- Una generación inexistente o de otro trainer → **404 `GENERATION_NOT_FOUND`**. Una ya guardada → **409 `GENERATION_ALREADY_SAVED`**, también si dos guardados llegan en paralelo (la función SQL toma la fila con `for update`: uno 201 y el otro 409).
 - Se crea **una plantilla por bloque**, con `generated_by_ai = true`, `goal` y `level` de la generación, y `structure` v1 (`days` y `exercises` con `order`). El nombre es `template_name` si hay un solo bloque, o `"<template_name> · <bloque>"` (cortado a 120) si hay varios.
 - Los ejercicios se revalidan como en `POST /routine-templates`: si uno dejó de existir o de ser accesible, responde **400 `TEMPLATE_EXERCISES_UNAVAILABLE`** y no crea nada.
 - **Todo o nada:** o se crean todas las plantillas y se marca la generación, o no queda ninguna. Se resuelve con una función SQL en una transacción.
@@ -117,7 +119,7 @@ MIS 15 · equipo [eGaFjC21](https://trello.com/c/eGaFjC21). La UI es la tarjeta 
 
 ## Pruebas
 
-- **Unitarias:** validación del body (cada regla); completar con el alumno; contexto sin PII (el payload no trae `name`, `email` ni `birth_date` del alumno ni el nombre de ninguna plantilla); filtro de la biblioteca por equipamiento; cliente del webhook (secreto en el header, timeout → 503, 5xx → 503, sin URL o sin secreto → 503 sin llamar a n8n); validación de la propuesta (cada regla, el ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días distinto de la frecuencia, campos de más descartados); límite → 429 (también por intentos fallidos y por una generación en curso); guardar (1 bloque y varios, nombres, 404, 409, ejercicio que ya no existe → 400 sin crear nada).
+- **Unitarias:** validación del body (cada regla); completar con el alumno; contexto sin PII (el payload no trae `name`, `email` ni `birth_date` del alumno ni el nombre de ninguna plantilla); filtro de la biblioteca por equipamiento; normalización del equipamiento de la ficha ("barra", "mancuernas", "Banco plano"); cliente del webhook (secreto en el header, timeout → 503, corte al leer el body → 503, body no JSON → 502, 5xx → 503, sin URL o sin secreto → 503 sin llamar a n8n); validación de la propuesta (cada regla, el ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días distinto de la frecuencia, campos de más descartados); límite → 429 (también por intentos fallidos y por una generación en curso); guardar (1 bloque y varios, nombres, 404, 409, ejercicio que ya no existe → 400 sin crear nada).
 - **Integración** contra Supabase dev, con el webhook simulado por un servidor HTTP local en el test: generar → guardar → las plantillas aparecen en `GET /routine-templates` con `generated_by_ai = true`; aislamiento: un trainer no puede guardar ni ver la generación de otro (404, sin ids ajenos en el body).
 - **Prueba real con n8n y KIMI:** pendiente de Igna. En la PR queda el paso a paso para correrla.
 

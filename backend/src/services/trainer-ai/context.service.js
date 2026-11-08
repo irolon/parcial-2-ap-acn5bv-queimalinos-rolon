@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { EQUIPMENT } from '../../models/exercises/exercise.model.js';
+import { normalizeEquipment } from '../../models/exercises/equipment.model.js';
 import { LIBRARY_LIMIT } from '../../models/trainer-ai/ai-generation.model.js';
 import { structureDays, structureExercises } from '../../models/routine-templates/routine-template.model.js';
 import * as studentsRepository from '../../repositories/students/students.repository.js';
@@ -16,12 +16,25 @@ async function getActiveStudent(trainerId, studentId) {
   return student;
 }
 
-/** Equipamiento válido sin repetidos; el del alumno solo si el body no lo trae; vacío → solo bodyweight. */
+/**
+ * Equipamiento: el del body tal cual; si no viene, el de la ficha normalizado al catálogo
+ * (texto libre incluido). Lo que no mapea no se descarta: va como texto en `extra`.
+ * Vacío → solo bodyweight.
+ */
 function resolveEquipment(fromBody, fromStudent) {
-  const list =
-    fromBody !== undefined ? fromBody : [...new Set((fromStudent ?? []).filter((e) => EQUIPMENT.includes(e)))];
-  return list.length > 0 ? list : [BODYWEIGHT];
+  const { codes, unmapped } =
+    fromBody !== undefined ? { codes: fromBody, unmapped: [] } : normalizeEquipment(fromStudent);
+  return { list: codes.length > 0 ? codes : [BODYWEIGHT], extra: unmapped };
 }
+
+/** Preferencias del PT más el equipamiento de la ficha que no está en el catálogo. */
+const withExtraEquipment = (preferences, extra) =>
+  [preferences, extra.length > 0 ? `Equipamiento extra del gimnasio: ${extra.join(', ')}` : null]
+    .filter(Boolean)
+    .join('. ') || null;
+
+const missingMessage = (field, student) =>
+  student ? `${field} es obligatorio: el alumno no lo tiene cargado` : `${field} es obligatorio`;
 
 /** Lesiones: las del alumno solo si el body no trae el campo (null explícito = sin lesiones). */
 const resolveInjuries = (fromBody, student) =>
@@ -30,22 +43,24 @@ const resolveInjuries = (fromBody, student) =>
 /**
  * Parámetros resueltos de la generación: el body validado y, si vino student_id, lo que
  * falte (campo ausente, no vacío) se completa con el alumno. No incluye nombre, email, nacimiento ni student_id;
- * `injuries` y `preferences` son texto libre del PT que sí viaja a la IA.
+ * `injuries` y `preferences` son texto libre del PT que sí viaja a la IA. El equipamiento de la ficha
+ * se normaliza al catálogo y lo que no mapea se suma a `preferences`.
  */
 export async function resolveParams(trainerId, body) {
   const student = body.student_id ? await getActiveStudent(trainerId, body.student_id) : null;
+  const equipment = resolveEquipment(body.available_equipment, student?.gym_equipment);
   const params = {
     goal: body.goal ?? student?.goal ?? null,
     level: body.level ?? student?.level ?? null,
     frequency_per_week: body.frequency_per_week,
     session_duration_min: body.session_duration_min,
-    available_equipment: resolveEquipment(body.available_equipment, student?.gym_equipment),
+    available_equipment: equipment.list,
     injuries: resolveInjuries(body.injuries, student),
-    preferences: body.preferences ?? null,
+    preferences: withExtraEquipment(body.preferences, equipment.extra),
   };
   const details = ['goal', 'level']
     .filter((field) => !params[field])
-    .map((field) => ({ field, message: `${field} es obligatorio: el alumno no lo tiene cargado` }));
+    .map((field) => ({ field, message: missingMessage(field, student) }));
   if (details.length > 0) throw Errors.validation('Error de validación', details);
   return params;
 }

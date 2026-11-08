@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { Errors } from '../../../../src/shared/utils/errors.js';
 import {
   saveService,
   mockGenerationsRepo,
@@ -67,6 +68,20 @@ describe('trainer-ai · save.service · saveAsTemplate', () => {
     mockGenerationsRepo.findGenerationById.mockResolvedValue({ ...GENERATION, was_used: true });
     await expect(saveService.saveAsTemplate(TRAINER_ID, BODY)).rejects.toMatchObject({ statusCode: 409, code: 'GENERATION_ALREADY_SAVED' });
     expect(mockGenerationsRepo.saveGenerationTemplates).not.toHaveBeenCalled();
+  });
+
+  it('dos guardados en paralelo: ambos pasan la lectura y la función SQL deja uno 201 y el otro 409', async () => {
+    let saves = 0;
+    mockGenerationsRepo.saveGenerationTemplates.mockImplementation(async (_g, _t, templates) => {
+      saves += 1;
+      if (saves > 1) throw Errors.generationAlreadySaved();
+      return saved(templates);
+    });
+    const results = await Promise.allSettled([saveService.saveAsTemplate(TRAINER_ID, BODY), saveService.saveAsTemplate(TRAINER_ID, BODY)]);
+    expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected']);
+    const rejected = results.find((r) => r.status === 'rejected');
+    expect(rejected.reason).toMatchObject({ statusCode: 409, code: 'GENERATION_ALREADY_SAVED' });
+    expect(mockGenerationsRepo.findGenerationById).toHaveBeenCalledTimes(2);
   });
 
   it('un ejercicio que ya no existe o no es accesible → 400 TEMPLATE_EXERCISES_UNAVAILABLE sin crear nada', async () => {

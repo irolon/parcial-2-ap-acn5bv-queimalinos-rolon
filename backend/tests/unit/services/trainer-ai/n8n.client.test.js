@@ -8,7 +8,7 @@ const ORIGINAL = { url: env.N8N_TRAINER_AI_WEBHOOK_URL, secret: env.N8N_WEBHOOK_
 const reply = (status, body) => ({
   ok: status >= 200 && status < 300,
   status,
-  json: async () => (typeof body === 'string' ? JSON.parse(body) : body),
+  text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
 });
 const expect503 = (promise) =>
   expect(promise).rejects.toMatchObject({ statusCode: 503, code: 'AI_UNAVAILABLE' });
@@ -73,6 +73,19 @@ describe('trainer-ai · n8n.client', () => {
       statusCode: 502,
       code: 'AI_INVALID_RESPONSE',
     });
+  });
+
+  it.each([
+    ['se corta la conexión', new TypeError('terminated')],
+    ['vence el timeout', new DOMException('The operation was aborted due to timeout', 'TimeoutError')],
+  ])('si al leer el body %s → 503 (no 502)', async (_label, err) => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, text: async () => Promise.reject(err) });
+    await expect503(requestRoutineProposal(PAYLOAD));
+  });
+
+  it('un 2xx con body vacío → 502 AI_INVALID_RESPONSE', async () => {
+    fetchMock.mockResolvedValue(reply(200, ''));
+    await expect(requestRoutineProposal(PAYLOAD)).rejects.toMatchObject({ statusCode: 502 });
   });
 
   it.each([undefined, ''])('sin secreto configurado (%p) responde 503 sin llamar a n8n y lo loguea', async (secret) => {
