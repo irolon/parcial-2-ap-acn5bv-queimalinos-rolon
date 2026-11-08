@@ -68,11 +68,11 @@ describe('useCommitment', () => {
     expect(paths(fetchMock).sort()).toEqual(['/students/s-1/attendance?month=2026-11', '/students/s-1/streak']);
   });
 
-  it('con withVolume pide 8 semanas de overview y suma las 4 últimas', async () => {
+  it('con withVolume pide las 8 semanas completas de overview (sin la en curso) y suma las 4 últimas', async () => {
     const fetchMock = stub();
     const { result } = renderCommitment({ withVolume: true });
     await waitFor(() => expect(result.current.volume).toEqual({ total: 4360, deltaPct: 9 }));
-    expect(paths(fetchMock)).toContain('/progress/overview?student_id=s-1&from=2026-09-14&to=2026-11-08');
+    expect(paths(fetchMock)).toContain('/progress/overview?student_id=s-1&from=2026-09-07&to=2026-11-01');
   });
 
   it('con withRpe promedia el RPE del mes desde la primera página del historial', async () => {
@@ -102,6 +102,25 @@ describe('useCommitment', () => {
     expect(paths(fetchMock).filter((p) => p.endsWith('/streak'))).toHaveLength(1);
   });
 
+  it('al pasar la medianoche dentro del mismo mes vuelve a pedir la asistencia y la racha', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(new Date('2026-11-11T02:59:00Z')); // 23:59 del 10/11 en Argentina
+    try {
+      const fetchMock = stub();
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const wrapper = ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+      const { result } = renderHook(() => useCommitment('s-1'), { wrapper });
+      await vi.waitFor(() => expect(result.current.isPending).toBe(false));
+      const count = (suffix) => paths(fetchMock).filter((p) => p.endsWith(suffix)).length;
+      expect([count('/attendance?month=2026-11'), count('/streak')]).toEqual([1, 1]);
+      act(() => vi.advanceTimersByTime(2 * 60_000));
+      expect(result.current.month).toBe('2026-11');
+      await vi.waitFor(() => expect([count('/attendance?month=2026-11'), count('/streak')]).toEqual([2, 2]));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('al pasar la medianoche del día 1 (hora argentina) con la pantalla abierta pide la asistencia del mes nuevo', async () => {
     vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(new Date('2026-12-01T02:59:00Z')); // 23:59 del 30/11 en Argentina
@@ -117,6 +136,8 @@ describe('useCommitment', () => {
       await vi.waitFor(() =>
         expect(paths(fetchMock)).toContain('/students/s-1/attendance?month=2026-12'),
       );
+      // Cambiar de día también invalida la asistencia, pero sin pedir dos veces la del mes nuevo.
+      expect(paths(fetchMock).filter((p) => p.endsWith('month=2026-12'))).toHaveLength(1);
     } finally {
       vi.useRealTimers();
     }
