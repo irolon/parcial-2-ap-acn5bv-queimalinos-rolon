@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareCandidates, compareMetric, mergeSeries, pickTop } from '@/utils/progress/compare';
+import { compareCandidates, compareMetric, mergeSeries, pickTop, timeTicks } from '@/utils/progress/compare';
 
 const ex = (id, days, name = id) => ({ id, name, days, muscle_group: 'x', last_date: '2026-10-27' });
 const pt = (day, kg, e1rm = kg + 10) => ({ date: `2026-10-${String(day).padStart(2, '0')}`, max_kg: kg, e1rm_kg: e1rm });
@@ -85,5 +85,29 @@ describe('mergeSeries', () => {
   it('acepta la métrica de cada curva y saltea los días sin valor', () => {
     const rows = mergeSeries([curve('a', [pt(1, 80), pt(2, 81, null)])], () => 'e1rm_kg');
     expect(rows).toEqual([{ date: '2026-10-01', time: Date.UTC(2026, 9, 1), a: 90 }]);
+  });
+});
+
+describe('timeTicks', () => {
+  const DAY = 86_400_000;
+  const row = (day) => ({ time: Date.UTC(2026, 9, day) });
+
+  it('reparte n marcas parejas entre la primera y la última fecha, ascendentes', () => {
+    expect(timeTicks([row(1), row(3), row(9)], 5)).toEqual([1, 3, 5, 7, 9].map((d) => Date.UTC(2026, 9, d)));
+  });
+
+  it('redondea al día y no repite marcas', () => {
+    const ticks = timeTicks([row(1), row(2), row(3)], 5);
+    expect(ticks).toEqual([1, 2, 3].map((d) => Date.UTC(2026, 9, d)));
+    for (const t of timeTicks([row(1), row(12)], 4)) expect(t % DAY).toBe(0);
+  });
+
+  it('con una sola fecha da una sola marca, y sin filas ninguna', () => {
+    expect(timeTicks([row(5), row(5)])).toEqual([Date.UTC(2026, 9, 5)]);
+    expect(timeTicks([])).toEqual([]);
+  });
+
+  it('por defecto son 5 marcas', () => {
+    expect(timeTicks([row(1), row(29)])).toHaveLength(5);
   });
 });

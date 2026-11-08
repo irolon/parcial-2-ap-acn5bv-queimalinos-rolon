@@ -4,8 +4,17 @@ import { MIN_POINTS, hasKg } from './metrics';
 /** Cuántas curvas se piden para elegir las líneas (las de más días). */
 export const MAX_CANDIDATES = 6;
 
-/** Cuántas líneas tiene el gráfico comparado, y el color de cada una. */
-export const SLOT_COLORS = ['var(--color-accent)', 'var(--color-cool)', 'var(--color-hot)'];
+/**
+ * Cuántas líneas tiene el gráfico comparado y cómo se ve cada una: además del color, el trazo (`dash`, vacío =
+ * continuo) y la forma del punto, para que no se distingan solo por color (accent y cool son dos azules).
+ */
+export const SLOT_STYLES = [
+  { color: 'var(--color-accent)', dash: '', shape: 'circle' },
+  { color: 'var(--color-cool)', dash: '7 4', shape: 'square' },
+  { color: 'var(--color-hot)', dash: '2 3', shape: 'diamond' },
+];
+
+const DAY = 86_400_000;
 
 const hasValue = (v) => v !== null && v !== undefined;
 
@@ -31,7 +40,7 @@ export const isBodyweight = (points) => points.length > 0 && !hasKg(points);
  * Las `n` curvas (`{ id, name, days, points }`) con más puntos válidos en el rango, sin las de peso corporal
  * ni las de menos de MIN_POINTS puntos. Desempata por días y después por nombre.
  */
-export function pickTop(curves, n = SLOT_COLORS.length) {
+export function pickTop(curves, n = SLOT_STYLES.length) {
   return curves
     .filter((c) => hasKg(c.points))
     .map((c) => ({ curve: c, count: validCount(c.points) }))
@@ -59,4 +68,17 @@ export function mergeSeries(curves, metric = (c) => compareMetric(c.points)) {
   const sorted = [...rows.values()].sort((a, b) => a.time - b.time);
   for (const row of sorted) for (const curve of curves) row[curve.id] ??= null;
   return sorted;
+}
+
+/**
+ * Hasta `n` marcas del eje X repartidas parejo entre la primera y la última fila (`{ time }`, ascendentes),
+ * redondeadas al día y sin repetir; una sola si todas son del mismo día. Sin esto recharts pone una por fila.
+ */
+export function timeTicks(rows, n = 5) {
+  if (rows.length === 0) return [];
+  const first = rows[0].time;
+  const last = rows.at(-1).time;
+  if (first === last || n < 2) return [first];
+  const ticks = Array.from({ length: n }, (_, i) => Math.round((first + ((last - first) * i) / (n - 1)) / DAY) * DAY);
+  return [...new Set(ticks)];
 }

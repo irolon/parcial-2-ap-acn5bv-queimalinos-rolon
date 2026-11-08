@@ -1,7 +1,8 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { mergeSeries } from '@/utils/progress/compare';
+import { mergeSeries, timeTicks } from '@/utils/progress/compare';
 import { formatKg, formatLongDate, formatShortDate, timeToDate } from '@/utils/progress/format';
 import { AXIS, GRID, TooltipBox } from '../chartStyle';
+import SlotMark, { SlotDot } from './SlotMark';
 
 /** `A`, `A y B`, `A, B y C`. */
 const joinNames = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} y ${names.at(-1)}`);
@@ -18,7 +19,7 @@ function Legend({ lines }) {
     <ul className="mb-2 flex flex-wrap justify-end gap-x-4 gap-y-1 font-mono text-[11px] text-bone2">
       {lines.map((l) => (
         <li key={l.id} className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="inline-block h-0.5 w-3.5 rounded" style={{ background: l.color }} />
+          <SlotMark color={l.color} dash={l.dash} shape={l.shape} />
           {l.name}
         </li>
       ))}
@@ -26,13 +27,20 @@ function Legend({ lines }) {
   );
 }
 
+/** `1RM estimado · kg`, `Peso máximo · kg` si todas van con peso máximo, o la excepción entre paréntesis. */
+function metricNote(lines) {
+  const maxNames = lines.filter((l) => l.metric === 'max_kg').map((l) => l.name);
+  if (maxNames.length === lines.length) return 'Peso máximo · kg';
+  return maxNames.length ? `1RM estimado · kg (${joinNames(maxNames)}: peso máximo)` : '1RM estimado · kg';
+}
+
 /**
- * Hasta 3 ejercicios superpuestos (`lines`: `{ id, name, color, metric, points }`), con el eje X de tiempo real.
+ * Hasta 3 ejercicios superpuestos (`lines`: `{ id, name, color, dash, shape, metric, points }`), con el eje X de
+ * tiempo real y pocas marcas parejas (`timeTicks`) para que las fechas no se encimen.
  * Cada línea usa su métrica: el 1RM estimado o, si el ejercicio no tiene ninguno, el peso máximo.
  */
 export default function CompareChart({ lines }) {
   const rows = mergeSeries(lines, (l) => l.metric);
-  const allMax = lines.every((l) => l.metric === 'max_kg');
   return (
     <div>
       <Legend lines={lines} />
@@ -45,6 +53,9 @@ export default function CompareChart({ lines }) {
               type="number"
               scale="time"
               domain={['dataMin', 'dataMax']}
+              ticks={timeTicks(rows)}
+              interval="preserveStartEnd"
+              minTickGap={28}
               tickFormatter={(t) => formatShortDate(timeToDate(t))}
               {...AXIS}
             />
@@ -58,8 +69,9 @@ export default function CompareChart({ lines }) {
                 name={l.name}
                 stroke={l.color}
                 strokeWidth={2.5}
+                strokeDasharray={l.dash || undefined}
                 connectNulls
-                dot={{ r: 3.5, fill: l.color, stroke: 'var(--color-ink1)', strokeWidth: 1.5 }}
+                dot={(p) => <SlotDot key={p.key} cx={p.cx} cy={p.cy} shape={l.shape} color={l.color} />}
                 activeDot={{ r: 6 }}
               />
             ))}
@@ -67,7 +79,7 @@ export default function CompareChart({ lines }) {
         </ResponsiveContainer>
       </div>
       <p className="mt-2 font-mono text-[10px] uppercase tracking-[1px] text-ink6">
-        {allMax ? 'PESO MÁXIMO · KG' : '1RM ESTIMADO · KG'}
+        {metricNote(lines)}
       </p>
     </div>
   );

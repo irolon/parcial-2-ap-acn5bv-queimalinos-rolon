@@ -1,5 +1,6 @@
 import Select from '@/components/shared/ui/Select';
-import { SLOT_COLORS } from '@/utils/progress/compare';
+import { SLOT_STYLES } from '@/utils/progress/compare';
+import SlotMark from './SlotMark';
 
 const EMPTY = { value: '', label: 'Elegí un ejercicio' };
 
@@ -11,9 +12,10 @@ function optionLabel(exercise, { bodyweight, maxOnly }) {
 
 /**
  * Un selector por línea, con el punto de su color. Ofrece los ejercicios candidatos sin los elegidos en los otros;
- * los de peso corporal ya detectados van deshabilitados. `maxOnly`: los que se grafican con el peso máximo.
+ * los de peso corporal ya detectados van deshabilitados. `maxOnly`: los que se grafican con el peso máximo;
+ * `loading[i]`: la curva del selector `i` todavía se está pidiendo (lo avisa debajo).
  */
-export default function CompareSlots({ slots, options, bodyweight, maxOnly, onChange }) {
+export default function CompareSlots({ slots, options, bodyweight, maxOnly, loading, onChange }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {slots.map((id, i) => {
@@ -23,17 +25,18 @@ export default function CompareSlots({ slots, options, bodyweight, maxOnly, onCh
           .map((e) => ({ value: e.id, label: optionLabel(e, { bodyweight, maxOnly }), disabled: bodyweight.has(e.id) }));
         const label = (
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden="true" className="inline-block size-2 rounded-full" style={{ background: SLOT_COLORS[i] }} />
+            <SlotMark {...SLOT_STYLES[i]} />
             Ejercicio {i + 1}
           </span>
         );
         return (
           <Select
-            key={SLOT_COLORS[i]}
+            key={SLOT_STYLES[i].color}
             label={label}
             options={[EMPTY, ...choices]}
             value={id ?? ''}
             onChange={(e) => onChange(i, e.target.value)}
+            hint={loading?.[i] ? 'Cargando…' : undefined}
           />
         );
       })}

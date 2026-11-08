@@ -53,6 +53,7 @@ describe('useCompareCurves', () => {
     expect(result.current.slots).toEqual(['ex-1', 'ex-2', 'ex-3']);
     expect(result.current.lines.map((l) => l.name)).toEqual(['Press banca', 'Sentadilla', 'Peso muerto']);
     expect(result.current.lines.map((l) => l.color)).toEqual(['var(--color-accent)', 'var(--color-cool)', 'var(--color-hot)']);
+    expect(new Set(result.current.lines.map((l) => `${l.dash}|${l.shape}`)).size).toBe(3);
     expect(result.current.bodyweight).toEqual(new Set(['ex-4']));
     expect(result.current.options.map((o) => o.id)).toEqual(['ex-4', 'ex-1', 'ex-2', 'ex-3', 'ex-5', 'ex-6', 'ex-7']);
     expect(result.current.hidden).toBe(false);
@@ -62,9 +63,12 @@ describe('useCompareCurves', () => {
     const fetchMock = stub();
     const { result } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.slotLoading).toEqual([false, false, false]);
     act(() => result.current.setSlot(1, 'ex-7'));
     expect(result.current.slots).toEqual(['ex-1', 'ex-7', 'ex-3']);
+    expect(result.current.slotLoading).toEqual([false, true, false]);
     await waitFor(() => expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-7', 'ex-3']));
+    expect(result.current.slotLoading).toEqual([false, false, false]);
     expect(ids(fetchMock).filter((id) => id === 'ex-7')).toHaveLength(1);
     act(() => result.current.setSlot(2, ''));
     expect(result.current.slots).toEqual(['ex-1', 'ex-7', null]);

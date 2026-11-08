@@ -68,7 +68,10 @@ describe('CompareCard', () => {
     const { fetchMock } = load();
     await chart('Press banca, Sentadilla y Peso muerto');
     fireEvent.change(screen.getByLabelText('Ejercicio 2'), { target: { value: 'ex-7' } });
+    expect(screen.getByText('Cargando…')).toBeInTheDocument();
+    expect(screen.queryByText('Cargando la progresión…')).not.toBeInTheDocument();
     expect(await chart('Press banca, Militar y Peso muerto')).toBeInTheDocument();
+    expect(screen.queryByText('Cargando…')).not.toBeInTheDocument();
     expect(progressUrls(fetchMock, 'exercise').filter((p) => p.startsWith('/progress/exercise/ex-7'))).toHaveLength(1);
   });
 

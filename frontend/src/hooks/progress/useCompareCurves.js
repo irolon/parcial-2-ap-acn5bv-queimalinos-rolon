@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { exerciseProgressOptions } from '@/hooks/progress/useProgress';
-import { MAX_CANDIDATES, SLOT_COLORS, compareCandidates, compareMetric, isBodyweight, pickTop } from '@/utils/progress/compare';
+import { MAX_CANDIDATES, SLOT_STYLES, compareCandidates, compareMetric, isBodyweight, pickTop } from '@/utils/progress/compare';
 import { hasKg } from '@/utils/progress/metrics';
 
 /**
  * Curvas de la progresión comparada en `range` (`{ from, to }`): pide la de los candidatos (los de más días) y la
  * de los elegidos a mano, en paralelo y con la misma caché que la curva del panel. Las 3 líneas salen solas
- * (`pickTop`) hasta que se cambia una; al cambiar el rango vuelven a salir solas.
+ * (`pickTop`) hasta que se cambia una; al cambiar el rango vuelven a salir solas. Cada línea lleva el estilo de
+ * su lugar (`SLOT_STYLES`); `slotLoading[i]`: la curva del lugar `i` todavía se está pidiendo.
  */
 export function useCompareCurves(studentId, exercises, range) {
   const rangeKey = `${range?.from ?? ''}|${range?.to ?? ''}`;
@@ -28,21 +29,24 @@ export function useCompareCurves(studentId, exercises, range) {
         return [exercise.id, { ...exercise, points, metric: compareMetric(points) }];
       }),
   );
-  const candidateEntries = entries.slice(0, candidates.length);
-  const loading = candidateEntries.some(({ query }) => query.isPending);
+  const loading = entries.slice(0, candidates.length).some(({ query }) => query.isPending);
+  const pending = (id) => Boolean(id) && entries.some(({ exercise, query }) => exercise?.id === id && query.isPending);
   const failed = entries
     .filter(({ exercise, query }) => exercise && query.isError)
     .map(({ exercise, query }) => ({ id: exercise.id, name: exercise.name, retry: () => query.refetch() }));
   const bodyweight = new Set([...curves.values()].filter((c) => isBodyweight(c.points)).map((c) => c.id));
 
   const auto = pickTop(candidates.map((e) => curves.get(e.id)).filter(Boolean)).map((c) => c.id);
-  const slots = chosen ?? SLOT_COLORS.map((_, i) => auto[i] ?? null);
+  const slots = chosen ?? SLOT_STYLES.map((_, i) => auto[i] ?? null);
   const setSlot = (index, id) => setChoice({ rangeKey, slots: slots.map((s, i) => (i === index ? id || null : s)) });
 
+  // Una línea elegida a mano que todavía no llegó: solo su selector muestra que carga, no toda la tarjeta.
+  const slotLoading = slots.map(pending);
+
   const lines = slots
-    .map((id, i) => ({ curve: curves.get(id), color: SLOT_COLORS[i] }))
+    .map((id, i) => ({ curve: curves.get(id), style: SLOT_STYLES[i] }))
     .filter(({ curve }) => curve && hasKg(curve.points))
-    .map(({ curve, color }) => ({ ...curve, color }));
+    .map(({ curve, style }) => ({ ...curve, ...style }));
 
   const allFailed = requested.length > 0 && entries.every(({ query }) => query.isError);
   const allBodyweight = !loading && failed.length === 0 && candidates.every((e) => bodyweight.has(e.id));
@@ -52,6 +56,7 @@ export function useCompareCurves(studentId, exercises, range) {
     setSlot,
     lines,
     loading,
+    slotLoading,
     failed,
     allFailed,
     bodyweight,

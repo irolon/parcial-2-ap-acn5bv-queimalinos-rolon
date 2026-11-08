@@ -39,7 +39,7 @@ function FailedCurve({ name, retry }) {
   );
 }
 
-function Body({ compare, onSlot }) {
+function Body({ compare }) {
   const { lines, loading, failed, allFailed } = compare;
   if (allFailed) return <ErrorState message="No pudimos cargar la progresión." onRetry={() => failed.forEach((f) => f.retry())} />;
   if (loading) return <LoadingState rows={2} label="Cargando la progresión…" />;
@@ -47,7 +47,14 @@ function Body({ compare, onSlot }) {
   const maxOnly = new Set(mixed ? lines.filter((l) => l.metric === 'max_kg').map((l) => l.id) : []);
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <CompareSlots slots={compare.slots} options={compare.options} bodyweight={compare.bodyweight} maxOnly={maxOnly} onChange={onSlot} />
+      <CompareSlots
+        slots={compare.slots}
+        options={compare.options}
+        bodyweight={compare.bodyweight}
+        maxOnly={maxOnly}
+        loading={compare.slotLoading}
+        onChange={compare.setSlot}
+      />
       {failed.map((f) => (
         <FailedCurve key={f.id} name={f.name} retry={f.retry} />
       ))}
@@ -70,7 +77,7 @@ export default function CompareCard({ studentId }) {
   if (!overview.isSuccess || compare.hidden) return null;
   return (
     <Card title="Progresión comparada" extra={<RangeSelect value={range} onChange={setRange} />} className="min-w-0">
-      <Body compare={compare} onSlot={compare.setSlot} />
+      <Body compare={compare} />
     </Card>
   );
 }
