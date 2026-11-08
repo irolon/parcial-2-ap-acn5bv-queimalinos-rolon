@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStudentStreakQuery } from '@/hooks/achievements/useStudentGamification';
 import { useProgressOverview } from '@/hooks/progress/useProgress';
+import { useToday } from '@/hooks/shared/useToday';
 import { useSessionsInfinite } from '@/hooks/sessions/useSessions';
 import { useAttendanceQuery } from '@/hooks/students/useAttendance';
 import { currentMonth, eightWeeksRange, rpeAverage, startedIn, volumeWindow } from '@/utils/students/commitment';
@@ -8,10 +9,12 @@ import { currentMonth, eightWeeksRange, rpeAverage, startedIn, volumeWindow } fr
 /**
  * Indicadores de compromiso del mes en curso: asistencia y racha (comunes, de ellas depende el bloque) y,
  * opcionales, el RPE promedio (primera página del historial, la misma caché que `SessionsHistory`) y el volumen
- * de 4 semanas (overview de 8). Si fallan esos dos, solo se marcan (`rpeFailed`, `volumeFailed`).
+ * de 4 semanas (overview de 8). Si fallan esos dos, solo se marcan (`rpeFailed`, `volumeFailed`). El mes sale de
+ * `useToday`: si la pantalla queda abierta de un mes al otro (hora argentina), pasa solo al mes nuevo.
  */
 export function useCommitment(studentId, { withRpe = false, withVolume = false, now: nowParam } = {}) {
-  const now = useMemo(() => nowParam ?? new Date(), [nowParam]);
+  const today = useToday();
+  const now = nowParam ?? today;
   const month = currentMonth(now);
   const range = useMemo(() => eightWeeksRange(now), [now]);
   const attendance = useAttendanceQuery(studentId, month);

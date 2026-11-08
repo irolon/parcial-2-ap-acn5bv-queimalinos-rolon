@@ -101,4 +101,24 @@ describe('useCommitment', () => {
     expect(paths(fetchMock).filter((p) => p.includes('/attendance'))).toHaveLength(2);
     expect(paths(fetchMock).filter((p) => p.endsWith('/streak'))).toHaveLength(1);
   });
+
+  it('al pasar la medianoche del día 1 (hora argentina) con la pantalla abierta pide la asistencia del mes nuevo', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(new Date('2026-12-01T02:59:00Z')); // 23:59 del 30/11 en Argentina
+    try {
+      const fetchMock = stub();
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const wrapper = ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+      const { result } = renderHook(() => useCommitment('s-1'), { wrapper });
+      await vi.waitFor(() => expect(result.current.isPending).toBe(false));
+      expect(result.current.month).toBe('2026-11');
+      act(() => vi.advanceTimersByTime(2 * 60_000));
+      expect(result.current.month).toBe('2026-12');
+      await vi.waitFor(() =>
+        expect(paths(fetchMock)).toContain('/students/s-1/attendance?month=2026-12'),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
