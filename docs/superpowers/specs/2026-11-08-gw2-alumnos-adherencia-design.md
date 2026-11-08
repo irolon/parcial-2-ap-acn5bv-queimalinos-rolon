@@ -18,7 +18,7 @@ Referencia visual: `PTPanelAlumnos` en `src/alumno-web-2.jsx` (barra fina bajo l
 |---|---|
 | 1 | Un ticket por pantalla: 5 tickets = 5 PRs. Esta es la de E2. |
 | 2 | La barra sale de `adherence_7d` de `GET /students` (ya viene en cada alumno). Sin cambios de backend. |
-| 3 | Colores = umbrales del celular (`adherenceColor`): **≥ 70 % verde** (`good`), **≥ 50 % azul** (`accent`), **< 50 % coral** (`hot`). `pct null` → texto "Sin plan" (el `NO_PLAN` del celular), sin barra. |
+| 3 | Colores = umbrales del celular (`adherenceColor`): **≥ 70 % verde** (`good`), **≥ 50 % azul** (`accent`), **< 50 % coral** (`hot`). `pct null` → texto sin barra: "Sin plan" (el `NO_PLAN` del celular) si no tiene días asignados, o "Sin días todavía" si tiene rutina pero ninguno de sus días pasó todavía (`days_per_week > 0`; acordado con Igna en la #86, que lo cambia también en el celular). |
 | 4 | Orden nuevo **"Adherencia"** en el select de Orden que ya existe: de menor a mayor (lo que hay que mirar primero), "Sin plan" al final, desempate por nombre. Se guarda en la URL como los demás (`?orden=adherencia`). |
 | 5 | "En riesgo" = 7 días o más sin entrenar (desde la última sesión o el alta), la regla de `activity.js`, del `at_risk` del overview y del celular. Una adherencia baja **no** marca en riesgo (tampoco en el celular): solo pinta la barra de coral. |
 | 6 | Sin filtro nuevo por adherencia: la Guía pide filtro por objetivo, estado y última sesión, que ya están. |
@@ -27,7 +27,7 @@ Referencia visual: `PTPanelAlumnos` en `src/alumno-web-2.jsx` (barra fina bajo l
 
 **Tarjeta** (`StudentCard`): debajo de "Última sesión" y de la racha, una fila con la barra (96 × 4 px, fondo `ink3`, relleno con el color del umbral y ancho = `pct` acotado a 0–100) y el texto mono "67%". Para lectores de pantalla la barra es `role="meter"` con `aria-valuenow`, `aria-valuemin=0`, `aria-valuemax=100` y `aria-label="Adherencia de los últimos 7 días"`; el texto visible queda `aria-hidden`.
 
-- `pct null`: en lugar de la barra, "Sin plan" en `text-ink6`.
+- `pct null`: en lugar de la barra, "Sin plan" (o "Sin días todavía" con `days_per_week > 0`) en `text-ink6`.
 - `adherence_7d` ausente (un backend viejo): igual que `null`.
 - Dado de baja (`estado=baja`): se muestra igual, como dato histórico.
 
@@ -58,7 +58,7 @@ Tooltip nativo (`title`) sobre la fila: "2 de 3 días asignados entrenados en lo
 **Vitest**
 - `adherenceTone`: 70 → `good`, 69 → `accent`, 50 → `accent`, 49 → `hot`, 0 → `hot` (los bordes del celular).
 - `adherencePct`: `null` sin `adherence_7d` o con `pct null`.
-- `AdherenceBar`: el ancho y la clase de color por umbral; `meter` con `aria-valuenow`; "Sin plan" sin barra; `pct` 120 se acota a 100.
+- `AdherenceBar`: el ancho y la clase de color por umbral; `meter` con `aria-valuenow`; "Sin plan" y "Sin días todavía" sin barra; `pct` 120 se acota a 100.
 - `sortStudents(…, 'adherencia')`: menor primero, `null` al final, empate por nombre; `parseStudentFilters` acepta `adherencia` y descarta lo inválido.
 - `StudentsPage/adherence.test.jsx`: tres alumnos (85 %, 40 %, sin plan) muestran sus barras; al elegir Orden "Adherencia" quedan 40 %, 85 %, sin plan, y la URL tiene `orden=adherencia`; un inactivo sigue con borde coral aunque tenga 100 %.
 

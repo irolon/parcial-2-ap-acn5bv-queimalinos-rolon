@@ -1,11 +1,11 @@
-import { adherencePct, adherenceTitle, adherenceTone } from '@/utils/students/adherence';
+import { adherencePct, adherenceTitle, adherenceTone, noAdherenceText } from '@/utils/students/adherence';
 
 const FILL = { good: 'bg-good', accent: 'bg-accent', hot: 'bg-hot' };
 
-/** Barra de adherencia de 7 días de la tarjeta del alumno, o "Sin plan" (como la fila del celular). */
+/** Barra de adherencia de 7 días de la tarjeta del alumno, o "Sin plan" / "Sin días todavía" (como la fila del celular). */
 export default function AdherenceBar({ student }) {
   const pct = adherencePct(student);
-  if (pct === null) return <span className="mt-1 block font-mono text-[11px] text-ink6">Sin plan</span>;
+  if (pct === null) return <span className="mt-1 block font-mono text-[11px] text-ink6">{noAdherenceText(student)}</span>;
   const value = Math.min(100, Math.max(0, pct));
   const days = adherenceTitle(student);
   return (

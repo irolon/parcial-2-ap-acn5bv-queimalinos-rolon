@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import AdherenceBar from '@/components/students/AdherenceBar';
 import { student } from '../../helpers/students/fixtures';
 
-const renderBar = (adherence_7d) => render(<AdherenceBar student={student({ adherence_7d })} />);
+const renderBar = (adherence_7d, patch = {}) =>
+  render(<AdherenceBar student={student({ adherence_7d, days_per_week: 0, ...patch })} />);
 const fill = () => screen.getByRole('meter', { name: 'Adherencia de los últimos 7 días' }).firstElementChild;
 
 describe('AdherenceBar', () => {
@@ -45,6 +46,13 @@ describe('AdherenceBar', () => {
   it.each([[{ assigned: 0, done: 0, pct: null }], [undefined]])('sin plan muestra el texto sin barra (%o)', (adh) => {
     renderBar(adh);
     expect(screen.getByText('Sin plan')).toBeInTheDocument();
+    expect(screen.queryByRole('meter')).toBeNull();
+  });
+
+  it('con rutina recién asignada (ninguno de sus días pasó todavía) dice "Sin días todavía", sin barra', () => {
+    renderBar({ assigned: 0, done: 0, pct: null }, { days_per_week: 3 });
+    expect(screen.getByText('Sin días todavía')).toBeInTheDocument();
+    expect(screen.queryByText('Sin plan')).toBeNull();
     expect(screen.queryByRole('meter')).toBeNull();
   });
 });
