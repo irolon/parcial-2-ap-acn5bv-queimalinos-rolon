@@ -66,10 +66,24 @@ describe('trainer-ai · context.service · resolveParams', () => {
     expect(params).toMatchObject({ injuries: null, available_equipment: ['bodyweight'], goal: 'strength' });
   });
 
-  it('descarta equipamiento del alumno que no es de la lista', async () => {
-    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, gym_equipment: ['rack', 'band'] });
+  it('normaliza el texto libre de la ficha al catálogo y manda lo que no mapea en las preferencias', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, gym_equipment: ['barra', 'Mancuernas', 'Banco plano'] });
     const params = await contextService.resolveParams(TRAINER_ID, { student_id: STUDENT_ID, frequency_per_week: 2 });
-    expect(params.available_equipment).toEqual(['band']);
+    expect(params.available_equipment).toEqual(['barbell', 'dumbbell']);
+    expect(params.preferences).toBe('Equipamiento extra del gimnasio: Banco plano');
+  });
+
+  it('lo que no mapea se suma a las preferencias del PT; si nada mapea queda bodyweight', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, gym_equipment: ['Rack', 'Banco plano'] });
+    const params = await contextService.resolveParams(TRAINER_ID, { student_id: STUDENT_ID, frequency_per_week: 2, preferences: 'Le gusta el circuito' });
+    expect(params.available_equipment).toEqual(['bodyweight']);
+    expect(params.preferences).toBe('Le gusta el circuito. Equipamiento extra del gimnasio: Rack, Banco plano');
+  });
+
+  it('con available_equipment en el body no se mira la ficha ni se tocan las preferencias', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue({ ...STUDENT, gym_equipment: ['Banco plano'] });
+    const params = await contextService.resolveParams(TRAINER_ID, { student_id: STUDENT_ID, frequency_per_week: 2, available_equipment: ['cable'] });
+    expect(params).toMatchObject({ available_equipment: ['cable'], preferences: null });
   });
 
   it.each([
@@ -80,6 +94,11 @@ describe('trainer-ai · context.service · resolveParams', () => {
     mockStudentsRepo.findStudentById.mockResolvedValue(row);
     await expect(contextService.resolveParams(TRAINER_ID, { student_id: STUDENT_ID, frequency_per_week: 2 }))
       .rejects.toMatchObject({ statusCode: 404, code: 'STUDENT_NOT_FOUND' });
+  });
+
+  it('sin student_id y sin goal: mensaje de campo obligatorio, sin mencionar al alumno', async () => {
+    const err = await contextService.resolveParams(TRAINER_ID, { ...BODY, goal: null }).catch((e) => e);
+    expect(err).toMatchObject({ statusCode: 400, details: [{ field: 'goal', message: 'goal es obligatorio' }] });
   });
 
   it('400 si ni el body ni el alumno tienen goal o level', async () => {
