@@ -3,6 +3,7 @@ import QueryState from '@/components/shared/states/QueryState';
 import SessionComment from '@/components/sessions/SessionComment';
 import { useSessionDetail } from '@/hooks/sessions/useSessions';
 import { restVsPlan } from '@/utils/sessions/format';
+import { kgText } from '@/utils/sessions/workoutFormat';
 
 const TH = 'px-2 py-1.5 text-left font-mono text-[10px] font-normal uppercase tracking-[0.8px] text-ink6';
 const TD = 'px-2 py-1.5 font-mono text-xs text-bone0';
@@ -14,11 +15,11 @@ function vsPlan(actual, target) {
   return actual < target ? 'text-hot' : 'text-bone0';
 }
 
-function Planned({ value, unit = '' }) {
+function Planned({ value, unit = '', format = String }) {
   return value == null ? null : (
     <span className="text-ink6">
       {' / '}
-      {value}
+      {format(value)}
       {unit}
     </span>
   );
@@ -59,8 +60,8 @@ function SetRow({ set, planned, showRest }) {
           '—'
         ) : (
           <>
-            <span className={vsPlan(set.actual_kg, planned?.suggested_kg)}>{set.actual_kg} kg</span>
-            <Planned value={planned?.suggested_kg} unit=" kg" />
+            <span className={vsPlan(set.actual_kg, planned?.suggested_kg)}>{kgText(set.actual_kg)} kg</span>
+            <Planned value={planned?.suggested_kg} unit=" kg" format={kgText} />
           </>
         )}
       </td>

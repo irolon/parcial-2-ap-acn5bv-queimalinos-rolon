@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import {
   PAGE_PATH,
@@ -141,7 +141,7 @@ describe('NewStudentPage: formulario', () => {
   it('el CTA "Generar QR" del sidebar lleva a la página', async () => {
     const { pathname } = renderRoute('/pt/dashboard');
     const sidebar = await screen.findByTestId('sidebar-fixed');
-    await userEvent.setup().click(within(sidebar).getByRole('button', { name: 'Generar QR' }));
+    await setupUser().click(within(sidebar).getByRole('button', { name: 'Generar QR' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Invitar alumno' })).toBeVisible();
     expect(pathname()).toBe(PAGE_PATH);
   });

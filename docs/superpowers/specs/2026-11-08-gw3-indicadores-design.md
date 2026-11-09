@@ -23,9 +23,9 @@ Hoy la web no consume `attendance`. `ProgressKpis` (dentro de `ProgressPanel`) m
 | 4 | **Una sola API y un solo hook de asistencia** (`getAttendance` / `useAttendanceQuery`), compartidos por las dos pantallas. |
 | 5 | "Sesiones del mes" = `sessions / assigned_days`, el `sessionsLabel` del celular ("6/9"). `assigned_days` cuenta hasta hoy inclusive. |
 | 6 | "Récords" = `attendance.prs` (sesiones del mes con al menos un récord), como PRS del celular. |
-| 7 | **Volumen** (alumno): suma de las últimas 4 semanas completas o en curso de `weekly_volume`, con la variación contra las 4 anteriores ("+9% vs. las 4 semanas anteriores"). No "del mes": el overview agrupa por semana y un mes no cae en semanas enteras. |
-| 8 | **RPE promedio** (PT): promedio de `rpe` no nulo de las sesiones terminadas del mes en curso, de la primera página del historial (`useSessionsInfinite`, la misma caché que `SessionsHistory`), a 1 decimal. Con más de 20 sesiones en el mes, el promedio es de las últimas 20 (se aclara en el `title`). |
-| 9 | Mes = mes actual en hora argentina; sin navegación de meses (el calendario de asistencia queda fuera). |
+| 7 | **Volumen** (alumno): suma de las últimas 4 semanas completas de `weekly_volume`, con la variación contra las 4 anteriores ("+9% vs. las 4 semanas anteriores"). La semana en curso queda afuera: a medias contra 4 completas, un lunes un alumno normal vería "−25 %". No "del mes": el overview agrupa por semana y un mes no cae en semanas enteras. |
+| 8 | **RPE promedio** (PT): promedio de `rpe` no nulo de las sesiones terminadas del mes en curso, de la primera página del historial (`useSessionsInfinite`, la misma caché que `SessionsHistory`), a 1 decimal. Con más de 20 sesiones en el mes, el promedio es de las últimas 20 (se aclara en el `title`); la aclaración sale de la `meta` de la primera página, así que sigue aunque el historial cargue más páginas, y un "Cargar más" fallido no borra el promedio. |
+| 9 | Mes = mes actual en hora argentina; sin navegación de meses (el calendario de asistencia queda fuera). Con la pantalla abierta, al cambiar el día (`useToday`) se vuelven a pedir la asistencia y la racha: `assigned_days` cuenta hasta hoy y la racha puede cortarse aunque la clave del mes no cambie. |
 
 ## Diseño
 
@@ -58,7 +58,7 @@ Componente común `CommitmentKpis` (grilla `grid-cols-2 lg:grid-cols-4`, cada í
 
 - `GET /students/:id/attendance?month=YYYY-MM` → `{ month, sessions, assigned_days, prs, days }` (se ignora `days`).
 - `GET /students/:id/streak` → `current_streak_days`, `longest_streak_days` (`useStudentStreakQuery`, ya existe).
-- `GET /progress/overview?student_id&from&to` con `from` = lunes de hace 7 semanas, `to` = hoy (8 filas de `weekly_volume`).
+- `GET /progress/overview?student_id&from&to` con `from` = lunes de hace 8 semanas, `to` = el domingo pasado (8 semanas completas de `weekly_volume`, sin la en curso).
 - `GET /students/:id/sessions` (primera página, ya cacheada por la ficha) → `rpe`, `finished_at`.
 - Query key de asistencia: `['students', id, 'attendance', month]`. Sin cambios de backend ni de contrato.
 
@@ -79,7 +79,8 @@ Componente común `CommitmentKpis` (grilla `grid-cols-2 lg:grid-cols-4`, cada í
 **Vitest**
 - `currentMonth` en hora argentina (el 1/12 a las 01:00 UTC todavía es noviembre).
 - `rpeAverage`: solo sesiones del mes con `rpe` y `finished_at`; redondeo a 1 decimal; `null` sin datos.
-- `volumeWindow`: 8 semanas → total de las 4 últimas y variación; sin las 4 previas, `deltaPct null`.
+- `volumeWindow`: 8 semanas → total de las 4 últimas y variación; sin las 4 previas, `deltaPct null`. `eightWeeksRange` termina en el domingo pasado.
+- `useCommitment`: a la medianoche dentro del mismo mes vuelve a pedir asistencia y racha; con todas las páginas del historial cargadas sigue la aclaración de las últimas 20; si falla solo la segunda página, el RPE se conserva.
 - `StudentProgressKpis`: los 4 valores y contextos; sin plan; racha 0; error de asistencia con Reintentar; error solo del overview deja "—" en volumen.
 - `TrainerCommitmentCard`: "6/9", RPE "7,4" con "de 5 sesiones", sin RPE.
 - Páginas: `MyProgressPage` pide `attendance` del propio alumno con `month`; la ficha pide la del alumno de la URL y comparte la caché del historial (un solo GET a `/sessions`).

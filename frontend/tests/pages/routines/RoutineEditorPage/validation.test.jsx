@@ -1,9 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { renderEditor } from '../../../helpers/routines/editor';
+import { renderEditor, warmUpEditor } from '../../../helpers/routines/editor';
 import { calls } from '../../../helpers/shared/fetchMock';
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();
@@ -15,7 +17,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const assign = () => userEvent.click(screen.getByRole('button', { name: 'Asignar a alumno' }));
+const assign = () => user.click(screen.getByRole('button', { name: 'Asignar a alumno' }));
 
 describe('RoutineEditorPage: validación', () => {
   it('vacía, marca cabecera y ejercicios con un resumen', async () => {
@@ -35,19 +37,19 @@ describe('RoutineEditorPage: validación', () => {
 
   it('marca la celda con error y deja de marcarla al corregirla', async () => {
     await renderEditor();
-    await userEvent.type(screen.getByLabelText('Nombre de la rutina'), 'Fuerza A');
-    await userEvent.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Lunes' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar Sentadilla' }));
+    await user.type(screen.getByLabelText('Nombre de la rutina'), 'Fuerza A');
+    await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+    await user.click(screen.getByRole('checkbox', { name: 'Lunes' }));
+    await user.click(screen.getByRole('button', { name: 'Agregar Sentadilla' }));
     const reps = screen.getByLabelText('Reps de Sentadilla');
-    await userEvent.clear(reps);
-    await userEvent.type(reps, '0');
+    await user.clear(reps);
+    await user.type(reps, '0');
     await assign();
     expect(screen.getByText('Revisá 1 campo')).toBeVisible();
     expect(reps).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Tiene que ser un entero mayor que 0')).toBeVisible();
-    await userEvent.clear(reps);
-    await userEvent.type(reps, '8');
+    await user.clear(reps);
+    await user.type(reps, '8');
     expect(reps).not.toHaveAttribute('aria-invalid');
     expect(screen.queryByText(/^Revisá/)).not.toBeInTheDocument();
   });
