@@ -118,7 +118,7 @@ Las rutinas existentes quedan con `level null` (sin definir). `checks/schema-che
 
 - Editar el nivel de una rutina ya asignada desde la web (la web no edita rutinas; `PATCH /routines/:id` lo acepta para el celular).
 - Filtrar o agrupar rutinas por nivel; que el nivel cambie qué ve el alumno (más allá de mostrarlo).
-- Mostrar la plantilla en `GET /invitations/:token` o en la pantalla de registro; avisar al PT si la rutina inicial no se creó.
+- Mostrar la plantilla en `GET /invitations/:token` o en la pantalla de registro. (El aviso al PT si la rutina inicial no se crea sí entra: decisión 6.)
 - "12 SEMANAS" (vigencia de la plantilla) del prototipo: no existe en el modelo.
 
 ## Tarjetas para el celular (Igna)
