@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADHERENCE_GOOD,
+  adherenceBucket,
   ADHERENCE_OK,
   adherencePct,
   adherenceTitle,
@@ -42,5 +43,18 @@ describe('adherenceTitle', () => {
   it('sin plan no hay tooltip', () => {
     expect(adherenceTitle(student())).toBeUndefined();
     expect(adherenceTitle(student({ adherence_7d: { assigned: 0, done: 0, pct: null } }))).toBeUndefined();
+  });
+});
+
+describe('adherenceBucket', () => {
+  const at = (pct) => student({ adherence_7d: { assigned: 4, done: 2, pct } });
+
+  it('usa los umbrales de la barra: alta desde 70, media desde 50, baja por debajo', () => {
+    expect([100, 70, 69, 50, 49, 0].map((pct) => adherenceBucket(at(pct)))).toEqual(['alta', 'alta', 'media', 'media', 'baja', 'baja']);
+  });
+
+  it('sin porcentaje es "sin-plan" (también "Sin días todavía")', () => {
+    expect(adherenceBucket(student())).toBe('sin-plan');
+    expect(adherenceBucket(student({ days_per_week: 3, adherence_7d: { assigned: 0, done: 0, pct: null } }))).toBe('sin-plan');
   });
 });

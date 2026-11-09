@@ -13,6 +13,17 @@ export function adherenceTone(pct) {
 export const adherencePct = (student) => student?.adherence_7d?.pct ?? null;
 
 /**
+ * Rango del filtro de Alumnos, con los mismos umbrales que la barra: `'alta'` (70 % o más), `'media'` (50 a 69 %),
+ * `'baja'` o `'sin-plan'` (sin porcentaje, también "Sin días todavía").
+ */
+export function adherenceBucket(student) {
+  const pct = adherencePct(student);
+  if (pct === null) return 'sin-plan';
+  if (pct >= ADHERENCE_GOOD) return 'alta';
+  return pct >= ADHERENCE_OK ? 'media' : 'baja';
+}
+
+/**
  * Texto en lugar de la barra cuando no hay porcentaje: "Sin días todavía" si tiene rutina pero ninguno de sus días
  * pasó todavía (recién asignada); "Sin plan" si no tiene días asignados.
  */
