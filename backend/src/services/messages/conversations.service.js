@@ -1,6 +1,7 @@
 import * as studentsRepo from '../../repositories/students/students.repository.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
 import { SENDER_ROLES, toLastMessage, toPublicPerson } from '../../models/messages/message.model.js';
+import { signAvatars } from '../students/avatar-urls.service.js';
 
 /**
  * Conversaciones del PT (solo alumnos activos): primero las que tienen mensajes, por
@@ -9,14 +10,16 @@ import { SENDER_ROLES, toLastMessage, toPublicPerson } from '../../models/messag
 export async function listConversations(trainerId) {
   const students = await studentsRepo.findActiveStudentsByTrainer(trainerId);
   const ids = students.map((s) => s.id);
-  const [lasts, unread] = await Promise.all([
+  // GX2: las fotos de toda la lista se firman en una llamada.
+  const [lasts, unread, people] = await Promise.all([
     messagesRepo.findLastByStudents(ids),
     messagesRepo.countUnreadByStudents(ids, SENDER_ROLES.STUDENT),
+    signAvatars(students.map(toPublicPerson)),
   ]);
-  const items = students.map((s) => {
+  const items = students.map((s, i) => {
     const last = lasts.get(s.id);
     return {
-      student: toPublicPerson(s),
+      student: people[i],
       last_message: last ? toLastMessage(last) : null,
       unread_count: unread.get(s.id) ?? 0,
     };

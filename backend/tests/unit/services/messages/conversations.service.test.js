@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { mockMessagesRepo, mockStudentsRepo, TRAINER, messageRow } from '../../../helpers/messages/messages.setup.js';
+import { mockMessagesRepo, mockStudentsRepo, mockAvatarsRepo, TRAINER, messageRow } from '../../../helpers/messages/messages.setup.js';
 
 const { listConversations } = await import('../../../../src/services/messages/conversations.service.js');
 
@@ -52,5 +52,24 @@ describe('listConversations', () => {
     mockMessagesRepo.countUnreadByStudents.mockResolvedValue(new Map());
     await expect(listConversations(TRAINER.id)).resolves.toEqual([]);
     expect(mockStudentsRepo.findActiveStudentsByTrainer).toHaveBeenCalledWith(TRAINER.id);
+  });
+
+  it('firma los avatares de toda la lista en una llamada (GX2)', async () => {
+    mockStudentsRepo.findActiveStudentsByTrainer.mockResolvedValue(
+      ['a', 'b', 'c'].map((id) => ({ id, name: id, avatar_url: `students/${id}/f.jpg` }))
+    );
+    mockMessagesRepo.findLastByStudents.mockResolvedValue(new Map());
+    mockMessagesRepo.countUnreadByStudents.mockResolvedValue(new Map());
+    mockAvatarsRepo.signPaths.mockImplementation(async (paths) => new Map(paths.map((p) => [p, `https://s/${p}`])));
+
+    const res = await listConversations(TRAINER.id);
+
+    expect(mockAvatarsRepo.signPaths).toHaveBeenCalledTimes(1);
+    expect(mockAvatarsRepo.signPaths).toHaveBeenCalledWith(['students/a/f.jpg', 'students/b/f.jpg', 'students/c/f.jpg']);
+    expect(res.map((c) => c.student.avatar_url)).toEqual([
+      'https://s/students/a/f.jpg',
+      'https://s/students/b/f.jpg',
+      'https://s/students/c/f.jpg',
+    ]);
   });
 });

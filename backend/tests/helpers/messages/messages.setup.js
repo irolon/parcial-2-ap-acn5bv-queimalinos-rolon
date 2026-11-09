@@ -32,6 +32,12 @@ jest.unstable_mockModule(src('repositories/messages/message-images.repository.js
 jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
 jest.unstable_mockModule(src('repositories/auth/auth.repository.js'), () => mockAuthRepo);
 jest.unstable_mockModule(src('services/notifications/message-triggers.service.js'), () => mockMessageTriggers);
+// GX2: avatares firmados por lote. El wrapper sobrevive a jest.resetAllMocks(): sin
+// implementación, signPaths devuelve undefined y acá se toma como "nada firmado".
+export const mockAvatarsRepo = { signPaths: jest.fn() };
+jest.unstable_mockModule(src('repositories/students/avatars.repository.js'), () => ({
+  signPaths: async (paths) => (await mockAvatarsRepo.signPaths(paths)) ?? new Map(),
+}));
 
 export const TRAINER = { id: '11111111-1111-4111-8111-111111111111', role: 'trainer' };
 export const OTHER_TRAINER_ID = '99999999-9999-4999-8999-999999999999';
