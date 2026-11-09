@@ -133,7 +133,7 @@ Comandos (desde `C:\ft-gx6x\frontend`):
 **Files:**
 - Create: `frontend/src/components/agenda/student/FreeSlotsCard.jsx`, `frontend/src/components/agenda/student/RequestAppointmentDialog.jsx`
 - Modify: `frontend/src/pages/student/MyAppointmentsPage.jsx`, `frontend/src/hooks/agenda/useAgenda.js` (JSDoc), `frontend/src/api/agenda/agenda.api.js` (JSDoc)
-- Test: `frontend/tests/pages/student/MyAppointmentsPage/request.test.jsx` (diálogo y POST) y `frontend/tests/pages/student/MyAppointmentsPage/slots.test.jsx` (libres, estados y tope; al implementar, un solo archivo pasaba de 200 líneas)
+- Test: `frontend/tests/pages/student/MyAppointmentsPage/request.test.jsx` (diálogo y POST) y `frontend/tests/pages/student/MyAppointmentsPage/slots.test.jsx` (libres, estados y tope), separados por tema
 
 **Interfaces:**
 - Consumes: `useFreeSlots`, `useCreateAppointment`, `useSubmitLock`, Task 1.

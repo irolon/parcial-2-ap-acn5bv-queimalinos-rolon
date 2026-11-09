@@ -55,10 +55,13 @@ describe('MyAppointmentsPage: cancelar', () => {
     await waitFor(() => expect(requests(fetchMock, 'GET', '/appointments?').length).toBeGreaterThan(before));
   });
 
-  it('un doble click rápido manda un solo PATCH', async () => {
+  it('un doble click rápido manda un solo PATCH y, mientras va, el diálogo no se cierra', async () => {
     const { dialog, fetchMock } = await openDialog({ cancel: () => new Promise(() => {}) });
     const user = userEvent.setup({ delay: null });
     await user.dblClick(within(dialog).getByRole('button', { name: 'Sí, cancelar' }));
     expect(requests(fetchMock, 'PATCH', '/appointments/')).toHaveLength(1);
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Sí, cancelar' })).toHaveAttribute('aria-busy'));
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Cancelar turno' })).toBeInTheDocument();
   });
 });

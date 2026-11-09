@@ -97,9 +97,13 @@ describe('MyAppointmentsPage: pedir turno', () => {
     );
   });
 
-  it('un doble click rápido manda un solo POST', async () => {
+  it('un doble click rápido manda un solo POST y, mientras va, el diálogo no se cierra', async () => {
     const { dialog, fetchMock } = await openDialog({ create: () => new Promise(() => {}) });
-    await userEvent.setup({ delay: null }).dblClick(within(dialog).getByRole('button', { name: 'Pedir turno' }));
+    const user = userEvent.setup({ delay: null });
+    await user.dblClick(within(dialog).getByRole('button', { name: 'Pedir turno' }));
     expect(posts(fetchMock)).toHaveLength(1);
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Pedir turno' })).toHaveAttribute('aria-busy'));
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Pedir turno' })).toBeInTheDocument();
   });
 });
