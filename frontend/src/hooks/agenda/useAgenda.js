@@ -56,7 +56,10 @@ function useRefreshAppointments() {
     ]);
 }
 
-/** Agenda un turno a mano (`mutate({ student_id, scheduled_at, notes? })`); refresca turnos y horarios libres. */
+/**
+ * Crea un turno: el entrenador lo agenda a mano (`{ student_id, scheduled_at, notes? }`, nace `confirmed`) y el alumno
+ * lo pide en un horario libre (`{ scheduled_at, notes? }`, nace `pending`). Refresca turnos y horarios libres.
+ */
 export function useCreateAppointment() {
   const refresh = useRefreshAppointments();
   return useMutation({ mutationFn: createAppointment, onSuccess: refresh });
