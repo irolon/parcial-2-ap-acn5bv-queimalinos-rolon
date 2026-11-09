@@ -29,6 +29,18 @@ describe('whatsappHref', () => {
     expect(whatsappHref('+54 9 11 2233-4455')).toBe('https://wa.me/5491122334455');
   });
 
+  it('normaliza números argentinos al formato internacional (549 + área + número)', () => {
+    expect(whatsappHref('11 2345-6789')).toBe('https://wa.me/5491123456789');
+    expect(whatsappHref('011 2345 6789')).toBe('https://wa.me/5491123456789');
+    expect(whatsappHref('+54 9 11 2345 6789')).toBe('https://wa.me/5491123456789');
+    expect(whatsappHref('5411 2345 6789')).toBe('https://wa.me/5491123456789');
+  });
+
+  it('si no reconoce el formato deja los dígitos como están', () => {
+    expect(whatsappHref('2345678')).toBe('https://wa.me/2345678');
+    expect(whatsappHref('+1 (415) 555-26710')).toBe('https://wa.me/141555526710');
+  });
+
   it('sin dígitos suficientes o vacío → null', () => {
     expect(whatsappHref('(--)')).toBeNull();
     expect(whatsappHref('12 34')).toBeNull();
