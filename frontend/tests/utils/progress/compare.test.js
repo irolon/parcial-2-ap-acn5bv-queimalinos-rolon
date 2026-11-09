@@ -28,9 +28,18 @@ describe('compareCandidates', () => {
   it('con `from` descarta los que no entrenó desde esa fecha antes de cortar en 6', () => {
     const old = [10, 11, 12, 13, 14, 15].map((d) => ex(`old${d}`, d, `old${d}`, '2026-09-20'));
     const fresh = [ex('n1', 4, 'n1', '2026-11-02'), ex('n2', 5, 'n2', '2026-10-05')];
-    expect(compareCandidates([...old, ...fresh], { from: '2026-10-05' }).map((e) => e.id)).toEqual(['n2', 'n1']);
+    expect(compareCandidates([...old, ...fresh], { from: '2026-10-05' }).map((e) => e.id)).toEqual(['n1', 'n2']);
     expect(compareCandidates([...old, ...fresh])).toHaveLength(6);
     expect(compareCandidates([...old, ...fresh], { from: null })[0].id).toBe('old15');
+  });
+
+  it('con `from` ordena por último entrenamiento antes que por días: la rutina nueva no queda tapada por la vieja', () => {
+    const old = [10, 11, 12, 13, 14, 15].map((d) => ex(`old${d}`, d, `old${d}`, '2026-10-12'));
+    const fresh = ex('nuevo', 4, 'nuevo', '2026-11-05');
+    const result = compareCandidates([...old, fresh], { from: '2026-10-08' }).map((e) => e.id);
+    expect(result).toHaveLength(6);
+    expect(result[0]).toBe('nuevo');
+    expect(compareCandidates([...old, fresh]).map((e) => e.id)).not.toContain('nuevo');
   });
 });
 

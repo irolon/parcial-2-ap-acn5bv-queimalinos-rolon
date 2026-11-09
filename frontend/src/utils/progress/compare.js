@@ -1,7 +1,7 @@
 import { dateToTime } from './format';
 import { MIN_POINTS, hasKg } from './metrics';
 
-/** Cuántas curvas se piden para elegir las líneas (las de más días). */
+/** Cuántas curvas se piden para elegir las líneas (las entrenadas más recientemente en el rango). */
 export const MAX_CANDIDATES = 6;
 
 /**
@@ -23,15 +23,20 @@ const byDaysThenName = (a, b) => b.days - a.days || a.name.localeCompare(b.name,
 /** Entrenó desde `from` (`YYYY-MM-DD`, o nada para todo el historial), según su `last_date` del overview. */
 export const trainedSince = (exercise, from) => !from || !exercise.last_date || exercise.last_date >= from;
 
+/** Último entrenamiento más reciente primero (`YYYY-MM-DD` se ordena como texto); sin `last_date`, al final. */
+const byLastDate = (a, b) => (b.last_date ?? '').localeCompare(a.last_date ?? '');
+
 /**
- * Ejercicios con al menos MIN_POINTS días (de todo el historial) y, con `from`, entrenados desde esa fecha, de más
- * a menos días; hasta `max`. Se filtra por `from` antes de cortar: si la rutina cambió, los de la vieja tienen más
- * días pero ningún punto en el rango, y taparían a los nuevos.
+ * Ejercicios con al menos MIN_POINTS días (de todo el historial), hasta `max`. Con `from`, solo los entrenados
+ * desde esa fecha y del último entrenamiento más reciente al más viejo (después por días): `days` es de todo el
+ * historial, así que si la rutina cambió hace poco los de la vieja (con más días y 1 punto en el rango) taparían
+ * a los nuevos. Sin `from`, de más a menos días.
  */
 export function compareCandidates(exercises, { from, max = MAX_CANDIDATES } = {}) {
+  const order = from ? (a, b) => byLastDate(a, b) || byDaysThenName(a, b) : byDaysThenName;
   return exercises
     .filter((e) => e.days >= MIN_POINTS && trainedSince(e, from))
-    .sort(byDaysThenName)
+    .sort(order)
     .slice(0, max);
 }
 
