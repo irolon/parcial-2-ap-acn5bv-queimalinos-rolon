@@ -24,7 +24,7 @@ describe('triggers · onAppointmentChanged', () => {
   ])('%s avisa a %s (%s), push=%s', async (event, userId, userRole, push, title) => {
     await triggers.onAppointmentChanged(event, appointment());
     expect(mockNotify.notify).toHaveBeenCalledWith({
-      userId, userRole, type: 'appointment', title, body: null, data: { appointment_id: 'ap-1' }, push,
+      userId, userRole, type: 'appointment', title, body: null, data: { appointment_id: 'ap-1', scheduled_at: '2026-11-06T21:00:00.000Z' }, push,
     });
   });
 

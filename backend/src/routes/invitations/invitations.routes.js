@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { limitRate } from '../../shared/middlewares/rate-limit.middleware.js';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import { authenticate } from '../../shared/middlewares/auth.middleware.js';
 import { requireRole } from '../../shared/middlewares/role.middleware.js';
@@ -20,6 +21,6 @@ router.post(
 );
 
 // Valida token y devuelve datos precargados — público (lo abre el alumno).
-router.get('/:token', validate(validateTokenParam, 'params'), invitationsController.getByToken);
+router.get('/:token', limitRate('invitation'), validate(validateTokenParam, 'params'), invitationsController.getByToken);
 
 export default router;

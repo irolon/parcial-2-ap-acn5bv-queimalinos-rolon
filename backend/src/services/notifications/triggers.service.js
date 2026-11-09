@@ -172,7 +172,8 @@ export function onAppointmentChanged(event, appointment) {
       type: 'appointment',
       title,
       body,
-      data: { appointment_id: appointment.id },
+      // scheduled_at: el cliente abre la agenda en la semana del turno sin otro pedido.
+      data: { appointment_id: appointment.id, scheduled_at: appointment.scheduled_at },
       push: shouldPush('appointment', to),
     });
   });
