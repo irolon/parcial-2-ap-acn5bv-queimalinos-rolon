@@ -137,11 +137,12 @@ scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en
 load/                     (scripts de carga de k6, no corren con jest; ver load/README.md)
 ```
 
-Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación); `agenda` (agrupa `/availability` y `/appointments`: la disponibilidad define qué turnos se pueden pedir).
+Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación); `agenda` (agrupa `/availability` y `/appointments`: la disponibilidad define qué turnos se pueden pedir); `export` (GX1: el CSV de sesiones de `/students/export` y `/students/:id/export`; arma filas de `sessions`, `session_sets`, `routines` y `exercises`, que no es ninguno de esos recursos).
 
 Excepciones de nombre en la web (`frontend/`):
 - `student`: portal del alumno (`pages/student`, `components/student` y sus tests/helpers); agrupa pantallas del rol alumno que combinan varios recursos.
 - `workout`: la sesión activa del alumno en la web (`hooks/workout`, `utils/workout`, `components/workout`); mismo nombre que la excepción de mobile (recurso `sessions`).
+- `account`: la cuenta del usuario logueado (GX1: `api/account`, `hooks/account`, `utils/account`, `components/account`, `pages/account`); junta el cambio de clave (`/auth/password`), el blanqueo (`/students/:id/password-reset`) y la exportación CSV.
 
 #### Web (`frontend/`)
 

@@ -26,6 +26,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | name | varchar | |
 | specialty | varchar | |
 | avatar_url | text | |
+| password_changed_at | timestamptz | último cambio de clave (GX1); null = nunca desde el alta |
 | created_at | timestamptz | |
 
 **students**
@@ -43,6 +44,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | gym_equipment | text[] | equipamiento disponible — usado por la IA del alumno |
 | injuries | text | lesiones / restricciones a tener en cuenta |
 | level | enum | beginner / intermediate / advanced |
+| must_change_password | boolean | not null, default false. El PT blanqueó la clave: hasta elegir una nueva, la API responde `403 PASSWORD_CHANGE_REQUIRED` (GX1) |
+| password_changed_at | timestamptz | último cambio o blanqueo de la clave (GX1); null = nunca desde el alta |
 | created_at | timestamptz | |
 
 **body_metrics**

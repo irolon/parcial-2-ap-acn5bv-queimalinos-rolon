@@ -29,6 +29,8 @@ Si no se incluye el token o es inválido → `401 Unauthorized`
 
 Si el rol no tiene permiso → `403 Forbidden`
 
+**Clave blanqueada (GX1).** Si el PT blanqueó la clave del alumno (`POST /students/:id/password-reset`), el access token que recibe al entrar con la temporal lleva el claim `must_change_password: true`. Con ese claim, **todo** endpoint autenticado responde `403 PASSWORD_CHANGE_REQUIRED` ("Tenés que elegir una contraseña nueva para seguir", `details: []`), salvo `PUT /auth/password` (donde elige la nueva) y `POST /auth/logout` (no usa access token). El bloqueo vive en el backend: ningún cliente lo saltea. Login y refresh también informan el flag en el cuerpo (`must_change_password`).
+
 **Convención de errores**
 
 Todos los errores siguen el mismo formato:
@@ -61,6 +63,10 @@ Contadores en memoria por endpoint, en ventanas de 15 minutos (configurables por
 | `POST /auth/login` (además) | 50 | IP (frena probar muchos emails desde la misma IP) |
 | `POST /auth/register`, `POST /auth/refresh` | 30 cada uno | IP |
 | `GET /invitations/:token`, `POST /students` | 30 cada uno | IP |
+| `PUT /auth/password`, `POST /students/:id/password-reset` | 30 cada uno | IP |
+| `GET /students/export` y `GET /students/:id/export` | 30 (un cupo compartido por los dos) | IP |
+
+Los de la cuenta (GX1) usan el cupo de `register` y `refresh` (`RATE_LIMIT_AUTH_MAX`) y corren **antes** de autenticar: frenan la fuerza bruta a la clave actual y el armado repetido del CSV.
 
 Las IPv6 cuentan por subred /56. Se cuentan todos los intentos, no solo los fallidos. Al pasarse → `429 RATE_LIMIT_EXCEEDED` ("Demasiados intentos. Probá de nuevo en unos minutos.", `details: []`) con el header `Retry-After` (segundos). Todas las respuestas de esos endpoints traen además `RateLimit` y `RateLimit-Policy`.
 
@@ -97,6 +103,10 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 **200 OK** — `{ user, token, refresh_token, expires_in }`
 
+- `user` es la ficha pública del trainer o del alumno (nunca `password_hash`) más `role` y, desde la GX1:
+  - `must_change_password` (booleano; siempre `false` para el trainer): `true` si el PT blanqueó la clave del alumno. El `token` lleva entonces el claim y todo lo demás responde `403 PASSWORD_CHANGE_REQUIRED` hasta llamar a `PUT /auth/password`.
+  - `password_changed_at` (timestamp, o `null` si nunca la cambió desde el alta): para "Modificada hace…".
+
 **Errores:** `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `401 ACCOUNT_DISABLED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /auth/refresh
@@ -107,9 +117,11 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 { "refresh_token": "string" }
 ```
 
-**200 OK** — `{ token, expires_in }`
+**200 OK** — `{ token, expires_in, must_change_password }`
 
-**Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del token).
+- `must_change_password` (GX1): `true` si el alumno tiene la clave blanqueada; el `token` nuevo lleva el claim (ver "Clave blanqueada"). Siempre `false` para el trainer. La web lo lee al recargar la página para mandarlo a elegir la clave.
+
+**Errores:** `401 UNAUTHORIZED` (refresh inexistente, revocado o vencido), `401 ACCOUNT_DISABLED` (alumno dado de baja), `429 RATE_LIMIT_EXCEEDED`.
 
 ### POST /auth/logout
 
@@ -120,6 +132,42 @@ Revoca el refresh token. **No requiere** access token: alcanza con el `refresh_t
 - `push_token` (opcional, 1–4096 caracteres): el token de FCM del dispositivo. Si viene, el servidor lo borra de `push_tokens` **solo si es del dueño del refresh token** (`user_id` + `user_role`). El dueño se busca aunque el refresh ya esté revocado, así el celular puede **reintentar** el logout más tarde (por ejemplo, si cerró sesión sin red) aunque el access haya vencido. Si el refresh no existe no se borra nada. Un error al borrar el push token no hace fallar el logout: responde **204** igual.
 - `push_token` vacío, de más de 4096 caracteres o que no sea texto → **400 VALIDATION_ERROR** (`field: "push_token"`).
 - `DELETE /notifications/tokens/:token` sigue existiendo para dar de baja el token con la sesión abierta.
+
+### PUT /auth/password
+
+Cambia la clave del usuario autenticado (alumno o trainer) con la actual (GX1). Es el **único** endpoint que acepta un access token con `must_change_password`: el alumno blanqueado elige acá la nueva, con la temporal como `current_password`.
+
+**Body**
+
+```json
+{
+  "current_password": "string (requerido)",
+  "new_password": "string (requerido, mínimo 8 chars, 1 mayúscula, 1 número, distinta de la actual)",
+  "refresh_token": "string (requerido: la sesión de este dispositivo, la única que se conserva)",
+  "push_token": "string (opcional, 1–4096 chars: el push de este dispositivo, el único que se conserva)"
+}
+```
+
+**200 OK**
+
+```json
+{ "token": "<access nuevo, sin el claim>", "expires_in": "1h", "password_changed_at": "2026-11-09T15:00:00.000Z" }
+```
+
+- Guarda el hash nuevo (bcrypt), `password_changed_at = now` y, en el alumno, `must_change_password = false`.
+- Revoca **los otros** refresh tokens del usuario (el `refresh_token` del body sigue valiendo) y borra sus push tokens salvo `push_token` (sin `push_token` los borra todos: la web no tiene push). Las otras sesiones siguen andando hasta que vence su access (`JWT_EXPIRES_IN`, 1 h) y después no pueden renovar.
+- El cliente reemplaza su access por el `token` devuelto.
+
+**Errores**
+
+| Código | Cuándo |
+|---|---|
+| `400 VALIDATION_ERROR`, `field: "current_password"` | vacía ("La contraseña actual es requerida") o **incorrecta** ("La contraseña actual es incorrecta"). Es 400 y no 401: ante un 401 el cliente renovaría la sesión |
+| `400 VALIDATION_ERROR`, `field: "new_password"` | no cumple las reglas (mismos mensajes que el registro) o es igual a la actual ("La nueva contraseña tiene que ser distinta de la actual") |
+| `400 VALIDATION_ERROR`, `field: "refresh_token"` | falta ("refresh_token es requerido") o no es una sesión vigente **de este usuario** (inexistente, revocada, vencida o de otro usuario: "La sesión de este dispositivo no es válida"); no se cambia nada |
+| `400 VALIDATION_ERROR`, `field: "push_token"` | vacío, de más de 4096 caracteres o no es texto |
+| `401 UNAUTHORIZED` | sin access token o inválido |
+| `429 RATE_LIMIT_EXCEEDED` | más de 30 pedidos por IP en 15 min |
 
 ---
 
@@ -287,7 +335,7 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "id": "uuid", "trainer_id": "uuid", "name": "Tomás Rivera", "email": "t@mail.com",
     "goal": "strength", "level": "beginner", "birth_date": "1999-05-01", "avatar_url": null,
     "active": true, "gym_equipment": ["Mancuernas", "Banco"], "injuries": "Lumbalgia",
-    "created_at": "2026-10-17T12:00:00Z",
+    "created_at": "2026-10-17T12:00:00Z", "must_change_password": false, "password_changed_at": null,
     "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
@@ -298,6 +346,8 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
 ```
 
 > `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
+>
+> GX1: `must_change_password` (`true` mientras el alumno no elija una clave nueva después de un blanqueo) y `password_changed_at` (último cambio o blanqueo; `null` si nunca). Son de solo lectura: `PATCH` los ignora (los cambian `PUT /auth/password` y `POST /students/:id/password-reset`).
 
 **Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `403 FORBIDDEN` (alumno de otro trainer o inexistente: no se distingue).
 
@@ -335,9 +385,54 @@ Actualiza un alumno. Solo el trainer dueño. Hay que mandar al menos un campo.
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
 
-**200 OK** — la ficha completa en `{ data }`, con la misma forma que el GET.
+**200 OK** — la ficha completa en `{ data }`, con la misma forma que el GET (incluye `must_change_password` y `password_changed_at`).
 
 **Errores:** `400 VALIDATION_ERROR`, `403 FORBIDDEN`.
+
+### POST /students/:id/password-reset
+
+Blanqueo de la clave sin mail (GX1). Solo el **trainer dueño**. Sin body: la clave temporal la genera el servidor.
+
+**200 OK**
+
+```json
+{ "temporary_password": "Kq7mZp3xRt" }
+```
+
+- La temporal tiene 10 caracteres de un alfabeto sin ambiguos (sin `0 O 1 l I`), con al menos una mayúscula y un número (`crypto.randomInt`). Se devuelve **una sola vez**: solo se guarda su hash (bcrypt).
+- Revoca **todos** los refresh tokens del alumno (antes de guardar la clave, como la baja), guarda el hash con `password_changed_at = now` y `must_change_password = true`, y borra todos sus push tokens. Al entrar con la temporal, todo responde `403 PASSWORD_CHANGE_REQUIRED` hasta que elija una nueva con `PUT /auth/password`.
+- Como la baja, no es inmediato: un access del alumno emitido antes sigue andando hasta que vence (1 h).
+
+**Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `401 UNAUTHORIZED`, `403 FORBIDDEN` (alumno de otro trainer o inexistente: no se distingue; también si llama un alumno), `409 STUDENT_INACTIVE` (dado de baja: no se toca nada), `429 RATE_LIMIT_EXCEEDED`.
+
+### GET /students/export
+
+CSV con **todas** las sesiones de **todos** los alumnos del trainer, también los dados de baja (GX1). Solo trainer. Va antes de `/:id`.
+
+**200 OK** — `Content-Type: text/csv; charset=utf-8` y `Content-Disposition: attachment; filename="fittrainer-alumnos-AAAA-MM-DD.csv"` (fecha de hoy en Argentina). Columnas `Alumno;Email;Activo;` + las del alumno (formato abajo), ordenadas por nombre del alumno y, dentro, por inicio de la sesión. Sin alumnos o sin sesiones: solo el encabezado.
+
+**Errores:** `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `429 RATE_LIMIT_EXCEEDED`.
+
+### GET /students/:id/export
+
+CSV con las sesiones de un alumno (GX1). El **propio alumno** o el **trainer dueño**.
+
+**200 OK** — `Content-Type: text/csv; charset=utf-8` y `Content-Disposition: attachment; filename="…"`:
+
+| Quién | Archivo | Columnas |
+|---|---|---|
+| El alumno | `fittrainer-mis-sesiones-AAAA-MM-DD.csv` | las del alumno |
+| El trainer dueño | `fittrainer-<nombre>-AAAA-MM-DD.csv` (en ASCII: minúsculas, sin acentos, lo demás pasa a `-`; vacío → `alumno`. `Martín Pérez` → `martin-perez`) | `Alumno;Email;Activo;` + las del alumno |
+
+**Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `401 UNAUTHORIZED`, `403 FORBIDDEN` (alumno ajeno o inexistente, u otro alumno: no se distingue), `429 RATE_LIMIT_EXCEEDED`.
+
+**Formato del CSV** (abre con doble clic en Excel en español):
+
+- UTF-8 con **BOM**, separador **`;`**, fin de línea **CRLF** (también después de la última fila), decimales con **coma** (`72,5`).
+- Columnas del alumno: `Fecha;Hora;Duración (min);Rutina;Ejercicio;Ejercicio planificado;Serie;Reps;Kg;Completada;Descanso (s);RPE;Notas;Comentario del PT`.
+- **Una fila por serie** (orden `executed_at`, `set_number`); una sesión sin series sale en una fila con las 7 columnas de serie vacías.
+- Fecha `DD/MM/AAAA` y hora `HH:MM` del inicio, en hora argentina. Duración en minutos redondeados; vacía si la sesión no terminó. "Ejercicio planificado" solo si el alumno sustituyó el ejercicio. `Completada` y `Activo`: `Sí` / `No`.
+- Celdas con `;`, `"` o saltos de línea van entre comillas (con `""` adentro). **Inyección de fórmulas:** el texto que empieza con `=`, `+`, `-`, `@` o tab lleva un `'` adelante.
 
 ## Módulo: Medidas corporales
 
