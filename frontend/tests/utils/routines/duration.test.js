@@ -11,7 +11,7 @@ describe('estimateMinutes', () => {
     expect(estimateMinutes([row('4', '10', '90'), row('3', '12', '60')])).toBe(14); // 540 s + 315 s = 14,25 min
   });
 
-  it('da lo mismo que la rutina del día (Hoy y el celular) para la misma rutina', () => {
+  it('da lo mismo que la rutina del día (Hoy) para la misma rutina', () => {
     const saved = [{ sets: 4, reps: 8, rest_seconds: 120 }, { sets: 3, reps: 12, rest_seconds: 60 }];
     const inEditor = saved.map((e) => row(String(e.sets), String(e.reps), String(e.rest_seconds)));
     expect(estimateMinutes(inEditor)).toBe(estimatedMinutes(saved));
@@ -27,6 +27,11 @@ describe('estimateMinutes', () => {
     expect(estimateMinutes([row('4', '10', '')])).toBe(estimatedMinutes([{ sets: 4, reps: 10, rest_seconds: null }]));
     expect(estimateMinutes([row('4', '10', '  ')])).toBe(9); // 4 × (45 + 90) = 540 s
     expect(estimateMinutes([row('3', '10', ''), row('3', '10', ''), row('3', '10', ''), row('3', '10', '')])).toBe(27);
+  });
+
+  it('lee la coma decimal como al guardar: "90,0" es 90 s', () => {
+    expect(estimateMinutes([row('4', '10', '90,0')])).toBe(estimateMinutes([row('4', '10', '90')])); // 9 min
+    expect(estimateMinutes([row('4,0', '10', ' 90 ')])).toBe(9);
   });
 
   it('las series vacías y el descanso inválido o negativo cuentan 0', () => {
