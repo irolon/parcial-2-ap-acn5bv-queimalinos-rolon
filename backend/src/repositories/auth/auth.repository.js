@@ -87,6 +87,21 @@ export async function revokeAllForUser(userId, role) {
   if (error) throw Errors.internal(error.message);
 }
 
+/**
+ * Revoca los refresh tokens vigentes del usuario salvo el de este dispositivo
+ * (GX1: cambio de contraseña). Los otros dispositivos no renuevan más.
+ */
+export async function revokeAllForUserExcept(userId, role, keepTokenHash) {
+  const { error } = await supabase
+    .from(REFRESH_TOKENS_TABLE)
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('role', role)
+    .is('revoked_at', null)
+    .neq('token_hash', keepTokenHash);
+  if (error) throw Errors.internal(error.message);
+}
+
 /** Busca un trainer por id (campos públicos, sin el hash). null si no existe. */
 export async function findTrainerById(id) {
   const { data, error } = await supabase

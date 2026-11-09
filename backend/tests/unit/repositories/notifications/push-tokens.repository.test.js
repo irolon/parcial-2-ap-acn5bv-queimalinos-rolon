@@ -5,7 +5,7 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 
 const result = { current: { data: [], error: null } };
 const q = {};
-for (const m of ['select', 'eq', 'in', 'limit', 'delete', 'upsert']) q[m] = jest.fn(() => q);
+for (const m of ['select', 'eq', 'neq', 'in', 'limit', 'delete', 'upsert']) q[m] = jest.fn(() => q);
 q.then = (resolve) => resolve(result.current);
 const supabase = { from: jest.fn(() => q) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
@@ -53,5 +53,27 @@ describe('push-tokens.repository', () => {
     expect(q.eq).toHaveBeenCalledWith('token', 't');
     expect(q.eq).toHaveBeenCalledWith('user_id', 'u-1');
     expect(q.eq).toHaveBeenCalledWith('user_role', 'student');
+  });
+
+  describe('deleteAllForUserExcept (GX1: cambio y blanqueo de la clave)', () => {
+    it('sin keepToken borra todos los del usuario y no llama neq', async () => {
+      await tokens.deleteAllForUserExcept(USER);
+      expect(q.delete).toHaveBeenCalled();
+      expect(q.eq).toHaveBeenCalledWith('user_id', 'u-1');
+      expect(q.eq).toHaveBeenCalledWith('user_role', 'student');
+      expect(q.neq).not.toHaveBeenCalled();
+    });
+
+    it('con keepToken conserva el de este dispositivo', async () => {
+      await tokens.deleteAllForUserExcept(USER, 'fcm:propio');
+      expect(q.neq).toHaveBeenCalledWith('token', 'fcm:propio');
+    });
+
+    it('error de Supabase → INTERNAL_ERROR', async () => {
+      result.current = { data: null, error: { message: 'boom' } };
+      await expect(tokens.deleteAllForUserExcept(USER)).rejects.toMatchObject({
+        code: 'INTERNAL_ERROR',
+      });
+    });
   });
 });
