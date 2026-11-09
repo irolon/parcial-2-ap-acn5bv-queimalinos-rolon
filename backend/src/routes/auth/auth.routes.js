@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { limitRate } from '../../shared/middlewares/rate-limit.middleware.js';
-import { authenticateForPasswordChange } from '../../shared/middlewares/auth.middleware.js';
+import { authenticate, authenticateForPasswordChange } from '../../shared/middlewares/auth.middleware.js';
+import { requireRole } from '../../shared/middlewares/role.middleware.js';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import {
   validateRegister,
@@ -9,7 +10,9 @@ import {
   validateLogout,
 } from '../../validations/auth/auth.validation.js';
 import { validateChangePassword } from '../../validations/auth/password.validation.js';
+import { validateUpdateMe } from '../../validations/auth/profile.validation.js';
 import * as authController from '../../controllers/auth/auth.controller.js';
+import * as profileController from '../../controllers/auth/profile.controller.js';
 
 const router = Router();
 
@@ -30,5 +33,9 @@ router.put(
   validate(validateChangePassword),
   authController.changePassword
 );
+
+// GX2: perfil del PT (nombre y título profesional, que ven sus alumnos). Solo trainer.
+router.get('/me', authenticate, requireRole('trainer'), profileController.getMe);
+router.patch('/me', authenticate, requireRole('trainer'), validate(validateUpdateMe), profileController.updateMe);
 
 export default router;

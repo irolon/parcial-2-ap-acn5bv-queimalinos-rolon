@@ -5,6 +5,7 @@ import {
   authenticateForPasswordChange,
 } from '../../../../src/shared/middlewares/auth.middleware.js';
 import * as authController from '../../../../src/controllers/auth/auth.controller.js';
+import * as profileController from '../../../../src/controllers/auth/profile.controller.js';
 
 const layerOf = (path, method = 'post') =>
   router.stack.find((layer) => layer.route?.path === path && layer.route.methods[method]);
@@ -28,5 +29,32 @@ describe('auth.routes', () => {
     expect(handlers).not.toContain(authenticate);
     expect(handlers[2].validates).toBe('body');
     expect(handlers.at(-1)).toBe(authController.changePassword);
+  });
+});
+
+describe('auth.routes — /me (GX2)', () => {
+  const res = { status: () => res, json: () => res };
+  const roleRejects = (role, r) => {
+    let err = 'sin llamar';
+    role({ user: { role: r } }, res, (e) => {
+      err = e;
+    });
+    return err;
+  };
+
+  it('GET /me: authenticate, solo trainer y getMe', () => {
+    const [auth, role, handler] = handlersOf('/me', 'get');
+    expect(auth).toBe(authenticate);
+    expect(roleRejects(role, 'student')).toMatchObject({ statusCode: 403 });
+    expect(roleRejects(role, 'trainer')).toBeUndefined();
+    expect(handler).toBe(profileController.getMe);
+  });
+
+  it('PATCH /me: authenticate, solo trainer, valida el body y updateMe', () => {
+    const [auth, role, body, handler] = handlersOf('/me', 'patch');
+    expect(auth).toBe(authenticate);
+    expect(roleRejects(role, 'student')).toMatchObject({ statusCode: 403 });
+    expect(body.validates).toBe('body');
+    expect(handler).toBe(profileController.updateMe);
   });
 });
