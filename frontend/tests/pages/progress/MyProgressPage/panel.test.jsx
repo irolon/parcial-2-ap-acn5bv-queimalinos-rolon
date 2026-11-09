@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import {
   achievement, assignment, gamificationResponse, progressOf, stubGamification, unlocked,
-} from '../../helpers/achievements/gamification';
-import { resetAuthStore } from '../../helpers/auth/authStore';
-import { BODY, EMPTY_BODY, progressUrls, stubProgress } from '../../helpers/progress/progress';
-import { STUDENT, renderRoute, setSession } from '../../helpers/routes/renderRoute';
-import { calls, errorResponse } from '../../helpers/shared/fetchMock';
-import { allowSlowScreens } from '../../helpers/shared/patience';
+} from '../../../helpers/achievements/gamification';
+import { resetAuthStore } from '../../../helpers/auth/authStore';
+import { BODY, EMPTY_BODY, progressUrls, stubProgress } from '../../../helpers/progress/progress';
+import { STUDENT, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+import { calls, errorResponse } from '../../../helpers/shared/fetchMock';
+import { allowSlowScreens } from '../../../helpers/shared/patience';
 
 vi.mock('recharts', async (importOriginal) => {
   const { cloneElement } = await import('react');
@@ -130,6 +130,7 @@ describe('MyProgressPage: Racha y logros', () => {
     expect(await screen.findByRole('img', { name: 'Progresión de Press banca' })).toBeInTheDocument();
     const section = within(screen.getByRole('region', { name: 'Racha y logros' }));
     await waitFor(() => expect(section.getAllByRole('alert')).toHaveLength(3));
-    expect(screen.getAllByRole('alert')).toHaveLength(3);
+    // La cuarta es la de los indicadores de arriba, que también usan la racha; el panel no muestra ninguna.
+    await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(4));
   });
 });

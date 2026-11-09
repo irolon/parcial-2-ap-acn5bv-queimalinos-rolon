@@ -1,8 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { renderEditor, rowNames } from '../../../helpers/routines/editor';
+import { renderEditor, rowNames, warmUpEditor } from '../../../helpers/routines/editor';
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();
@@ -14,13 +16,13 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const add = (name) => userEvent.click(screen.getByRole('button', { name: `Agregar ${name}` }));
+const add = (name) => user.click(screen.getByRole('button', { name: `Agregar ${name}` }));
 
 describe('RoutineEditorPage: armado', () => {
   it('con la biblioteca a la izquierda agrega ejercicios filtrando por músculo', async () => {
     await renderEditor();
     expect(screen.getByText('Agregá ejercicios desde la biblioteca')).toBeVisible();
-    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Grupo muscular' })).getByRole('radio', { name: 'Pecho' }));
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Grupo muscular' })).getByRole('radio', { name: 'Pecho' }));
     expect(screen.queryByRole('button', { name: 'Agregar Sentadilla' })).not.toBeInTheDocument();
     await add('Press banca plano');
     await add('Press inclinado con mancuernas');
@@ -36,8 +38,8 @@ describe('RoutineEditorPage: armado', () => {
     await add('Sentadilla');
     for (const [label, value] of [['Series', '5'], ['Reps', '12'], ['Peso (kg)', '42.5']]) {
       const input = screen.getByLabelText(`${label} de Sentadilla`);
-      await userEvent.clear(input);
-      await userEvent.type(input, value);
+      await user.clear(input);
+      await user.type(input, value);
       expect(input).toHaveValue(value);
     }
   });
@@ -45,16 +47,16 @@ describe('RoutineEditorPage: armado', () => {
   it('el menú de la fila sube, baja y quita, con los bordes deshabilitados', async () => {
     await renderEditor();
     for (const name of ['Sentadilla', 'Plancha', 'Press banca plano']) await add(name);
-    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Sentadilla' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de Sentadilla' }));
     expect(screen.getByRole('menuitem', { name: 'Subir' })).toBeDisabled();
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Bajar' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Bajar' }));
     expect(rowNames()).toEqual(['Plancha', 'Sentadilla', 'Press banca plano']);
-    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Press banca plano' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de Press banca plano' }));
     expect(screen.getByRole('menuitem', { name: 'Bajar' })).toBeDisabled();
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Subir' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Subir' }));
     expect(rowNames()).toEqual(['Plancha', 'Press banca plano', 'Sentadilla']);
-    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Plancha' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Quitar' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de Plancha' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Quitar' }));
     expect(rowNames()).toEqual(['Press banca plano', 'Sentadilla']);
   });
 
@@ -62,15 +64,15 @@ describe('RoutineEditorPage: armado', () => {
     await renderEditor();
     await add('Sentadilla');
     await add('Plancha');
-    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Sentadilla' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de Sentadilla' }));
     expect(screen.getAllByRole('menu')).toHaveLength(1);
-    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Plancha' }));
+    await user.click(screen.getByRole('button', { name: 'Opciones de Plancha' }));
     expect(screen.getAllByRole('menu')).toHaveLength(1);
-    await userEvent.click(screen.getByLabelText('Nombre de la rutina'));
+    await user.click(screen.getByLabelText('Nombre de la rutina'));
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     const trigger = screen.getByRole('button', { name: 'Opciones de Plancha' });
-    await userEvent.click(trigger);
-    await userEvent.keyboard('{Escape}');
+    await user.click(trigger);
+    await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
@@ -79,21 +81,21 @@ describe('RoutineEditorPage: armado', () => {
     await renderEditor();
     for (const name of ['Sentadilla', 'Plancha']) await add(name);
     screen.getByRole('button', { name: 'Opciones de Plancha' }).focus();
-    await userEvent.keyboard('{Enter}');
+    await user.keyboard('{Enter}');
     expect(screen.getByRole('menuitem', { name: 'Subir' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowDown}');
+    await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('menuitem', { name: 'Bajar' })).toBeDisabled();
     expect(screen.getByRole('menuitem', { name: 'Quitar' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowDown}');
+    await user.keyboard('{ArrowDown}');
     expect(screen.getByRole('menuitem', { name: 'Subir' })).toHaveFocus();
-    await userEvent.keyboard('{Tab}');
+    await user.keyboard('{Tab}');
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Opciones de Plancha' })).toHaveFocus();
-    await userEvent.keyboard('{Enter}{Enter}');
+    await user.keyboard('{Enter}{Enter}');
     expect(rowNames()).toEqual(['Plancha', 'Sentadilla']);
     expect(screen.getByRole('button', { name: 'Opciones de Plancha' })).toHaveFocus();
-    await userEvent.keyboard('{Enter}');
-    await userEvent.keyboard('{ArrowDown}{Enter}');
+    await user.keyboard('{Enter}');
+    await user.keyboard('{ArrowDown}{Enter}');
     expect(rowNames()).toEqual(['Sentadilla']);
     expect(screen.getByRole('button', { name: 'Opciones de Sentadilla' })).toHaveFocus();
   });
@@ -102,28 +104,28 @@ describe('RoutineEditorPage: armado', () => {
     await renderEditor();
     for (const name of ['Sentadilla', 'Plancha']) await add(name);
     screen.getByRole('button', { name: 'Opciones de Sentadilla' }).focus();
-    await userEvent.keyboard('{Enter}');
+    await user.keyboard('{Enter}');
     screen.getByRole('button', { name: 'Opciones de Plancha' }).focus();
-    await userEvent.keyboard('{Enter}');
+    await user.keyboard('{Enter}');
     expect(screen.getAllByRole('menu')).toHaveLength(1);
   });
 
   it('la topbar muestra el nombre de la rutina', async () => {
     await renderEditor();
     expect(await screen.findByRole('heading', { level: 1, name: 'Nueva rutina' })).toBeVisible();
-    await userEvent.type(screen.getByLabelText('Nombre de la rutina'), 'Fuerza A');
+    await user.type(screen.getByLabelText('Nombre de la rutina'), 'Fuerza A');
     expect(screen.getByRole('heading', { level: 1, name: 'Nueva rutina — Fuerza A' })).toBeVisible();
   });
 
   it('elige objetivo y días en la cabecera', async () => {
     await renderEditor();
-    await userEvent.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+    await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
     expect(screen.getByLabelText('Objetivo')).toHaveValue('strength');
     expect(screen.queryByRole('option', { name: 'Sin definir' })).not.toBeInTheDocument();
     const monday = screen.getByRole('checkbox', { name: 'Lunes' });
-    await userEvent.click(monday);
+    await user.click(monday);
     expect(monday).toBeChecked();
-    await userEvent.click(monday);
+    await user.click(monday);
     expect(monday).not.toBeChecked();
   });
 
@@ -131,7 +133,7 @@ describe('RoutineEditorPage: armado', () => {
     await renderEditor();
     const toggle = screen.getByRole('button', { name: 'Agregar ejercicio' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await userEvent.click(toggle);
+    await user.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
 });

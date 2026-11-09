@@ -21,6 +21,13 @@ export class AppError extends Error {
 export const Errors = {
   validation: (message = 'Datos inválidos', details = []) =>
     new AppError(400, 'VALIDATION_ERROR', message, details),
+  invalidJson: () => new AppError(400, 'VALIDATION_ERROR', 'El cuerpo no es JSON válido'),
+  payloadTooLarge: () =>
+    new AppError(413, 'PAYLOAD_TOO_LARGE', 'El cuerpo es demasiado grande'),
+  unsupportedBodyEncoding: () =>
+    new AppError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Codificación del cuerpo no soportada'),
+  invalidBody: () =>
+    new AppError(400, 'VALIDATION_ERROR', 'El cuerpo de la solicitud es inválido'),
   invalidCredentials: () =>
     new AppError(401, 'INVALID_CREDENTIALS', 'Email o contraseña incorrectos'),
   unauthorized: (message = 'No autenticado') => new AppError(401, 'UNAUTHORIZED', message),

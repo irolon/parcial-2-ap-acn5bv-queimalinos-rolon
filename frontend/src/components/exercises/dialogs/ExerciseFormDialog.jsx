@@ -5,6 +5,7 @@ import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import Textarea from '@/components/shared/ui/Textarea';
 import { useCreateExercise, useUpdateExercise } from '@/hooks/exercises/useExercises';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import { MUSCLE_OPTIONS } from '@/utils/exercises/exerciseOptions';
 import {
@@ -30,13 +31,18 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
   const update = useUpdateExercise();
   const editing = Boolean(exercise);
   const saving = create.isPending || update.isPending;
+  const lock = useSubmitLock();
   const defaults = formDefaults(exercise);
   const { fields } = errors;
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault();
-    if (saving) return;
-    const built = buildExerciseBody(new FormData(event.currentTarget));
+    const data = new FormData(event.currentTarget);
+    lock(() => save(data));
+  }
+
+  async function save(data) {
+    const built = buildExerciseBody(data);
     // Editar manda solo lo que cambió: un dato viejo sin tocar no bloquea ni se reescribe.
     const body = editing ? changedFields(built, initialBody(exercise)) : built;
     if (editing && Object.keys(body).length === 0) {

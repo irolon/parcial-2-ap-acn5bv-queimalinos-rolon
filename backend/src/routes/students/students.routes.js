@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { limitRate } from '../../shared/middlewares/rate-limit.middleware.js';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import { authenticate } from '../../shared/middlewares/auth.middleware.js';
 import { requireRole } from '../../shared/middlewares/role.middleware.js';
@@ -23,7 +24,7 @@ router.get('/', authenticate, requireRole('trainer'), validate(validateListQuery
 router.get('/overview', authenticate, requireRole('trainer'), studentsController.overview);
 
 // Alta del alumno desde invitación — público (lo ejecuta el alumno con su token).
-router.post('/', validate(validateRegisterFromInvitation), studentsController.registerFromInvitation);
+router.post('/', limitRate('studentSignup'), validate(validateRegisterFromInvitation), studentsController.registerFromInvitation);
 
 // Ficha: trainer dueño o el propio alumno (el ownership se valida en el service).
 router.get(
