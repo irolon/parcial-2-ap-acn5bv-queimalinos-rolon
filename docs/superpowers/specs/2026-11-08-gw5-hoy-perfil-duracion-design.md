@@ -22,7 +22,7 @@ Hoy la columna derecha de Hoy tiene solo "Esta semana" (`WeekSection`); Mi perfi
 | 2 | **Hoy**: la columna de contexto suma "Nota de tu PT" (el `trainer_comment` más reciente) y "Próximo turno" (próximos 14 días, `GET /appointments`), debajo de "Esta semana". **El CTA principal no se mueve**: la columna sigue a la derecha en `lg` y debajo de la rutina en angosto. |
 | 3 | **Mi perfil**: tarjeta "Tu entrenador/a" con avatar, nombre y botón "Mensaje" que lleva a Mensajes. |
 | 4 | Nombre del entrenador: `counterpart` de `GET /messages/:studentId?limit=1` (para el alumno es su PT, sin email). Es el único endpoint que hoy lo da; sin polling (`staleTime` 5 min). La misma consulta da el nombre en "Nota de Laura". |
-| 5 | **Editor de rutinas**: "Duración estimada ~N min" calculada en el cliente con **series × (reps × ~3 s + descanso)**, dentro de un subcomponente del editor (`RoutineHeader`), **no en `RoutineEditorPage.jsx`**. |
+| 5 | **Editor de rutinas**: "Duración estimada ~N min" calculada en el cliente con **series × (45 s de trabajo + descanso)**, la misma cuenta que la rutina del día de Hoy (`estimatedMinutes` de `todayPlan.js`) y el celular (`RoutineTexts.kt`), así el PT y el alumno ven los mismos minutos (`WORK_SECONDS_PER_SET` en `utils/routines/defaults.js`). Va dentro de un subcomponente del editor (`RoutineHeader`), **no en `RoutineEditorPage.jsx`**. |
 | 6 | La nota sale de la primera página del historial (`useSessionsInfinite`, la caché que ya usa "Esta semana"): sin pedido nuevo. Si el último comentario es más viejo que las últimas 20 sesiones, no se muestra. |
 | 7 | Próximo turno: el primero `pending` o `confirmed` con `scheduled_at` posterior a ahora, de hoy a hoy + 13. No hay pantalla de turnos del alumno en la web: la tarjeta no tiene botón. |
 
@@ -35,7 +35,7 @@ Hoy la columna derecha de Hoy tiene solo "Esta semana" (`WeekSection`); Mi perfi
 
 **Mi perfil** (`TrainerCard`, en la columna izquierda debajo de la rutina): `Card` "Tu entrenador/a" con `Avatar` de 40 px, el nombre y un link con aspecto de botón ghost "Mensaje" (ícono `MessageSquare`) a `/alumno/mensajes` (armado con `STUDENT_NAV.base`, sin tocar `routeTable.js`). Cargando: `LoadingState rows={1}` "Cargando a tu entrenador/a…". Error: `ErrorState` "No pudimos cargar los datos de tu entrenador/a." con Reintentar; el link a Mensajes se muestra igual (no depende del nombre).
 
-**Editor** (`EstimatedDuration`, dentro de `RoutineHeader`, debajo de `DayPicker`): texto mono "DURACIÓN ESTIMADA ~45 MIN" con `title` "Series × (repeticiones × 3 s + descanso)". Por ejercicio: `sets × (reps × 3 + rest_seconds)` segundos; un campo vacío o inválido cuenta 0. Total redondeado al minuto; entre 1 s y 59 s muestra "~1 min". Sin ejercicios: no se muestra. Se recalcula en cada cambio de la tabla (el `state` ya llega a `RoutineHeader`).
+**Editor** (`EstimatedDuration`, dentro de `RoutineHeader`, debajo de `DayPicker`): texto mono "DURACIÓN ESTIMADA ~45 MIN" con `title` "Series × (45 s de trabajo + descanso)". Por ejercicio: `sets × (45 + rest_seconds)` segundos; un campo vacío, inválido o negativo cuenta 0. Total redondeado al minuto; entre 1 s y 59 s muestra "~1 min". Sin ejercicios (o con 0 min) no se muestra. Se recalcula en cada cambio de la tabla (el `state` ya llega a `RoutineHeader`).
 
 ## Datos
 
@@ -47,8 +47,8 @@ Hoy la columna derecha de Hoy tiene solo "Esta semana" (`WeekSection`); Mi perfi
 
 ## Archivos que toca
 
-- Modifica `frontend/src/api/messages/messages.api.js` (suma `getCounterpart(studentId)`); crea `frontend/src/hooks/messages/useCounterpart.js` (key `['messages', 'counterpart', id]`).
-- Crea `frontend/src/utils/sessions/trainerNote.js` (`latestTrainerNote(sessions)`), `frontend/src/utils/agenda/nextAppointment.js` (`nextAppointment(list, now)`, `nextDaysRange(now, 14)`), `frontend/src/utils/routines/duration.js` (`estimateMinutes(exercises)`, `SECONDS_PER_REP = 3`).
+- Modifica `frontend/src/api/messages/messages.api.js` (suma `getCounterpart(studentId)`); suma `useCounterpart` a `frontend/src/hooks/messages/useConversations.js` (key `['messages', 'counterpart', id]`; en un archivo propio `hooks/messages/` pasaría de 10 archivos).
+- Crea `frontend/src/utils/sessions/trainerNote.js` (`latestTrainerNote(sessions)`), `frontend/src/utils/agenda/nextAppointment.js` (`nextAppointment(list, now)`, `nextDaysRange(now, 14)`), `frontend/src/utils/routines/duration.js` (`estimateMinutes(exercises)`, con `WORK_SECONDS_PER_SET` de `defaults.js`, que también usa `todayPlan.js`).
 - Crea `frontend/src/components/student/today/TodayContext.jsx`, `TrainerNoteCard.jsx`, `NextAppointmentCard.jsx`; `frontend/src/components/student/profile/TrainerCard.jsx`; `frontend/src/components/routines/editor/EstimatedDuration.jsx`.
 - Modifica `frontend/src/pages/student/TodayPage.jsx` (74 líneas, cambia un import y una línea), `frontend/src/pages/student/MyProfilePage.jsx` (51, +1) y `frontend/src/components/routines/editor/RoutineHeader.jsx` (47, +1).
 - Tests (crea): `frontend/tests/utils/sessions/trainerNote.test.js`, `frontend/tests/utils/agenda/nextAppointment.test.js`, `frontend/tests/utils/routines/duration.test.js`, `frontend/tests/api/messages/counterpart.test.js`, `frontend/tests/pages/student/TodayPage/context.test.jsx`, `frontend/tests/pages/student/MyProfilePage/trainer.test.jsx`, `frontend/tests/components/routines/editor/RoutineHeader.test.jsx`.
@@ -61,7 +61,7 @@ Hoy la columna derecha de Hoy tiene solo "Esta semana" (`WeekSection`); Mi perfi
 **Vitest**
 - `latestTrainerNote`: la sesión más nueva con comentario no vacío; `null` sin ninguno.
 - `nextAppointment`: ignora cancelados y pasados; el más cercano; `null` sin turnos. `nextDaysRange` da hoy y hoy + 13 en fecha argentina.
-- `estimateMinutes`: 4 × (10 × 3 + 90) = 480 s → 8 min; campos vacíos cuentan 0; 30 s → 1; lista vacía → 0.
+- `estimateMinutes`: 4 × (45 + 90) = 540 s → 9 min; da lo mismo que `estimatedMinutes` de la rutina del día; campos vacíos cuentan 0; 45 s → 1; lista vacía → 0.
 - `TodayPage/context.test.jsx`: "Nota de Laura" con el comentario y la fecha; sin comentarios, el texto vacío; turno confirmado con día, hora y "Confirmado"; sin turnos, el vacío; error de turnos con Reintentar y la rutina del día sigue; el botón principal de la rutina sigue siendo el primero en el orden del documento.
 - `MyProfilePage/trainer.test.jsx`: nombre y link "Mensaje" a `/alumno/mensajes`; error con Reintentar y el link presente.
 - `RoutineHeader.test.jsx`: con dos ejercicios muestra "~N min"; cambia al cambiar las series; sin ejercicios no aparece.

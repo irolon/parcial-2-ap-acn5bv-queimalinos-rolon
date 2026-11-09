@@ -7,7 +7,7 @@ const DURATION = /^Duración estimada/;
 const handlers = { onChange: vi.fn(), onToggleDay: vi.fn(), onClearTemplate: vi.fn() };
 const show = (state) => render(<RoutineHeader state={state} {...handlers} />);
 
-// 4 × (10 × 3 + 90) = 480 s y 3 × (12 × 3 + 60) = 288 s: 12,8 min.
+// 4 × (45 + 90) = 540 s y 3 × (45 + 60) = 315 s: 14,25 min.
 const withTwo = () => ({
   ...EMPTY_ROUTINE,
   exercises: [
@@ -20,8 +20,8 @@ describe('RoutineHeader: duración estimada', () => {
   it('con dos ejercicios muestra la duración y cómo se calcula', () => {
     show(withTwo());
     const duration = screen.getByText(DURATION);
-    expect(duration).toHaveTextContent('Duración estimada ~13 min');
-    expect(duration).toHaveAttribute('title', 'Series × (repeticiones × 3 s + descanso)');
+    expect(duration).toHaveTextContent('Duración estimada ~14 min');
+    expect(duration).toHaveAttribute('title', 'Series × (45 s de trabajo + descanso)');
   });
 
   it('se recalcula al cambiar las series', () => {
@@ -29,7 +29,7 @@ describe('RoutineHeader: duración estimada', () => {
     const { rerender } = show(state);
     const fewer = updateExercise(state, state.exercises[0].key, 'sets', '1');
     rerender(<RoutineHeader state={fewer} {...handlers} />);
-    expect(screen.getByText(DURATION)).toHaveTextContent('~7 min'); // 120 s + 288 s = 6,8 min
+    expect(screen.getByText(DURATION)).toHaveTextContent('~8 min'); // 135 s + 315 s = 7,5 min
   });
 
   it('sin ejercicios no aparece', () => {

@@ -6,7 +6,7 @@ export default function EstimatedDuration({ exercises }) {
   if (minutes === 0) return null;
   return (
     <p
-      title="Series × (repeticiones × 3 s + descanso)"
+      title="Series × (45 s de trabajo + descanso)"
       className="font-mono text-[11px] uppercase tracking-[1px] text-ink6"
     >
       Duración estimada ~{minutes} min

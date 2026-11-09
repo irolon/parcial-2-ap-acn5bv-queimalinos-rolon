@@ -1,10 +1,7 @@
 import { formatKg } from '@/utils/progress/format';
-import { DEFAULT_REPS, DEFAULT_REST_SECONDS, DEFAULT_SETS } from '@/utils/routines/defaults';
+import { DEFAULT_REPS, DEFAULT_REST_SECONDS, DEFAULT_SETS, WORK_SECONDS_PER_SET } from '@/utils/routines/defaults';
 import { suggestedKg } from '@/utils/routines/suggestedKg';
 import { plural } from '@/utils/shared/plural';
-
-// Lo que tarda una serie sin contar el descanso (el backend no lo informa).
-const WORK_SECONDS_PER_SET = 45;
 
 const setsOf = (exercise) => exercise.sets ?? DEFAULT_SETS;
 
