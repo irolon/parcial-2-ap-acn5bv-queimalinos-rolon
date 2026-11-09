@@ -12,6 +12,7 @@ import { assertCanAccessStudent } from './student-access.service.js';
 import * as appointments from '../agenda/appointments.service.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
+import { STUDENT_SELF_EDITABLE } from '../../models/students/student.model.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
@@ -84,7 +85,8 @@ export async function getById(user, studentId) {
 }
 
 /**
- * PATCH /students/:id — solo el trainer dueño. Con active = false se revocan
+ * PATCH /students/:id — el trainer dueño (todo) o el propio alumno (GX2: solo
+ * STUDENT_SELF_EDITABLE; cualquier otro campo → 403 antes de tocar nada). Con active = false se revocan
  * sus refresh tokens: no puede renovar la sesión. El access token que tenga en
  * la mano vive hasta JWT_EXPIRES_IN (1 h).
  *
@@ -100,8 +102,10 @@ export async function getById(user, studentId) {
  * además bloquea la fila del alumno hasta que el alta termine).
  */
 export async function update(user, studentId, fields) {
-  if (user.role !== 'trainer') throw Errors.forbidden();
   await assertCanAccessStudent(user, studentId);
+  if (user.role === 'student' && Object.keys(fields).some((f) => !STUDENT_SELF_EDITABLE.includes(f))) {
+    throw Errors.forbidden('Solo podés cambiar tu nombre, teléfono y foto');
+  }
 
   if (fields.active === false) await authRepo.revokeAllForUser(studentId, 'student');
   const updated = await studentsRepo.updateStudent(studentId, fields);

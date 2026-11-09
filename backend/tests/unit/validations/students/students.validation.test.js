@@ -75,3 +75,38 @@ describe('students.validation — validateUpdateStudent', () => {
     invalid({ gym_equipment: Array.from({ length: 31 }, (_, i) => `e${i}`) }));
   it('rechaza injuries de más de 1000 caracteres', () => invalid({ injuries: 'x'.repeat(1001) }));
 });
+
+describe('students.validation — validateUpdateStudent · phone (GX2)', () => {
+  const phoneError = (phone) => {
+    try {
+      validateUpdateStudent({ phone });
+    } catch (err) {
+      return err.details.find((d) => d.field === 'phone')?.message;
+    }
+    return undefined;
+  };
+  const MSG = 'phone debe tener entre 6 y 30 caracteres: números, espacios y + - ( )';
+
+  it('acepta el formato y lo recorta', () => {
+    expect(validateUpdateStudent({ phone: ' +54 9 11 2233-4455 ' })).toEqual({ phone: '+54 9 11 2233-4455' });
+  });
+  it('vacío o solo espacios → null', () => {
+    expect(validateUpdateStudent({ phone: '' })).toEqual({ phone: null });
+    expect(validateUpdateStudent({ phone: '  ' })).toEqual({ phone: null });
+  });
+  it('null → null (borrar)', () => {
+    expect(validateUpdateStudent({ phone: null })).toEqual({ phone: null });
+  });
+  it('rechaza 5 caracteres', () => expect(phoneError('12345')).toBe(MSG));
+  it('rechaza letras', () => expect(phoneError('abc123456')).toBe(MSG));
+  it('rechaza 31 caracteres', () => expect(phoneError('1'.repeat(31))).toBe(MSG));
+  it('rechaza un número (no string)', () => expect(phoneError(1122334455)).toBe(MSG));
+  it('el mensaje de "al menos un campo" nombra phone', () => {
+    try {
+      validateUpdateStudent({});
+    } catch (err) {
+      expect(err.details[0].message).toContain('phone');
+    }
+    expect.assertions(1);
+  });
+});

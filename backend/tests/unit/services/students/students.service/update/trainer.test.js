@@ -7,9 +7,9 @@ import {
   service,
   TRAINER,
   STUDENT_ROW,
-} from '../../../../helpers/students/students-service.setup.js';
+} from '../../../../../helpers/students/students-service.setup.js';
 
-describe('students.service — update', () => {
+describe('students.service — update (trainer)', () => {
   beforeEach(() => {
     mockBodyMetricsService.latestForStudent.mockResolvedValue(null);
     mockRoutinesRepo.findActiveRoutineSummary.mockResolvedValue(null);
@@ -104,11 +104,14 @@ describe('students.service — update', () => {
     expect(mockAppointmentsService.cancelFutureForStudent).not.toHaveBeenCalled();
   });
 
-  it('el propio alumno no puede editarse → 403 y no toca la base', async () => {
-    await expect(
-      service.update({ id: 'student-1', role: 'student' }, 'student-1', { level: 'advanced' })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-    expect(mockStudentsRepo.updateStudent).not.toHaveBeenCalled();
+  it('el PT carga el teléfono del alumno (GX2)', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT_ROW);
+    mockStudentsRepo.updateStudent.mockResolvedValue({ ...STUDENT_ROW, phone: '1122334455' });
+
+    const detail = await service.update(TRAINER, 'student-1', { phone: '1122334455' });
+
+    expect(mockStudentsRepo.updateStudent).toHaveBeenCalledWith('student-1', { phone: '1122334455' });
+    expect(detail.phone).toBe('1122334455');
   });
 
   it('otro trainer → 403 y no toca la base', async () => {

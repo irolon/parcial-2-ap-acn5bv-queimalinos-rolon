@@ -96,3 +96,21 @@ describe('students.routes — exportación CSV (GX1)', () => {
     expect(handler).toBe(exportController.exportStudent);
   });
 });
+
+describe('students.routes — PATCH /students/:id (GX2)', () => {
+  it('deja pasar trainer y student en el requireRole, valida id y body, y termina en update', () => {
+    const route = studentsRouter.stack.find((l) => l.route?.path === '/:id' && l.route.methods.patch).route;
+    const [auth, role, params, body, handler] = route.stack.map((l) => l.handle);
+    expect(auth).toBe(authenticate);
+    for (const r of ['trainer', 'student']) {
+      let err = 'sin llamar';
+      role({ user: { role: r } }, res, (e) => {
+        err = e;
+      });
+      expect(err).toBeUndefined();
+    }
+    expect(params.validates).toBe('params');
+    expect(body.validates).not.toBe('params');
+    expect(handler).toBe(studentsController.update);
+  });
+});

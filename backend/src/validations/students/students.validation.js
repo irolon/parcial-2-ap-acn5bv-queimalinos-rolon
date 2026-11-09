@@ -6,6 +6,8 @@ const isString = (v) => typeof v === 'string';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** GX2: 6 a 30 caracteres entre dígitos, espacios y + - ( ) (sobre el valor recortado). */
+const PHONE_RE = /^[0-9 +()-]{6,30}$/;
 
 /**
  * Valida el body de POST /students (alta desde invitación).
@@ -90,12 +92,20 @@ export function validateUpdateStudent(body) {
       details.push({ field: 'birth_date', message: 'birth_date debe ser una fecha YYYY-MM-DD no futura' });
     } else out.birth_date = body.birth_date;
   }
+  if (body.phone !== undefined) {
+    // Vacío = borrar (el formulario puede vaciar el campo).
+    const phone = isString(body.phone) ? body.phone.trim() : body.phone;
+    if (phone === null || phone === '') out.phone = null;
+    else if (!isString(phone) || !PHONE_RE.test(phone)) {
+      details.push({ field: 'phone', message: 'phone debe tener entre 6 y 30 caracteres: números, espacios y + - ( )' });
+    } else out.phone = phone;
+  }
   Object.assign(out, parseStudentContext(body, details));
 
   if (details.length > 0) throw Errors.validation('Error de validación', details);
   if (Object.keys(out).length === 0) {
     throw Errors.validation('Mandá al menos un campo para actualizar', [
-      { field: 'body', message: 'Campos editables: name, goal, level, active, birth_date, gym_equipment, injuries' },
+      { field: 'body', message: 'Campos editables: name, phone, goal, level, active, birth_date, gym_equipment, injuries' },
     ]);
   }
   return out;

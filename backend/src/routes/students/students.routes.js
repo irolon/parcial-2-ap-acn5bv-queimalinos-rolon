@@ -60,11 +60,11 @@ router.get(
   exportController.exportStudent
 );
 
-// Edición y baja: solo trainer (dueño, verificado en el service).
+// Edición: trainer dueño (todo) o el propio alumno (nombre y teléfono); ownership y campos en el service.
 router.patch(
   '/:id',
   authenticate,
-  requireRole('trainer'),
+  requireRole('trainer', 'student'),
   validate(validateStudentIdParam, 'params'),
   validate(validateUpdateStudent),
   studentsController.update
