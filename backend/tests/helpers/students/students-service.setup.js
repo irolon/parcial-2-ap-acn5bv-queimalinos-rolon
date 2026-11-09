@@ -11,8 +11,8 @@ export const mockInvitationsRepo = {
   claimInvitation: jest.fn(),
   releaseInvitation: jest.fn(),
 };
+export const mockStudentCreateRepo = { createStudent: jest.fn() };
 export const mockStudentsRepo = {
-  createStudent: jest.fn(),
   findStudentsByTrainer: jest.fn(),
   findLastSessionDates: jest.fn(),
   findStreaks: jest.fn(),
@@ -31,6 +31,10 @@ jest.unstable_mockModule(
 jest.unstable_mockModule(
   src('repositories/students/students.repository.js'),
   () => mockStudentsRepo
+);
+jest.unstable_mockModule(
+  src('repositories/students/student-create.repository.js'),
+  () => mockStudentCreateRepo
 );
 jest.unstable_mockModule(src('services/auth/auth.service.js'), () => ({
   issueTokens: mockIssueTokens,

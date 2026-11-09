@@ -3,6 +3,7 @@ import { Errors } from '../../shared/utils/errors.js';
 import { issueTokens } from '../auth/auth.service.js';
 import * as invitationsRepo from '../../repositories/invitations/invitations.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentCreateRepo from '../../repositories/students/student-create.repository.js';
 import { isUsed, isExpired } from '../../models/invitations/invitation.model.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
@@ -108,6 +109,9 @@ export async function update(user, studentId, fields) {
   return buildDetail(updated);
 }
 
+/** GX2: la invitación guarda solo dígitos; se copia si entra en students.phone (6 a 30). */
+const phoneFromInvitation = (phone) => (phone && phone.length >= 6 && phone.length <= 30 ? phone : null);
+
 /**
  * CU-02 — Crea la cuenta del alumno a partir del token de invitación, marca la
  * invitación como usada y devuelve al alumno autenticado (con tokens de sesión).
@@ -129,7 +133,7 @@ export async function registerFromInvitation({ token, password }) {
 
   let student;
   try {
-    student = await studentsRepo.createStudent({
+    student = await studentCreateRepo.createStudent({
       trainerId: invitation.trainer.id,
       name: invitation.student_name,
       email: invitation.student_email,
@@ -137,6 +141,7 @@ export async function registerFromInvitation({ token, password }) {
       gymEquipment: invitation.student_gym_equipment ?? null,
       injuries: invitation.student_injuries ?? null,
       level: invitation.student_level ?? null,
+      phone: phoneFromInvitation(invitation.student_phone),
       passwordHash,
     });
   } catch (err) {

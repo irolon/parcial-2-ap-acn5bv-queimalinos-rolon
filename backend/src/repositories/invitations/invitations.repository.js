@@ -7,7 +7,7 @@ import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 // El contexto para la IA se lee para copiarlo al alumno en el alta; la
 // proyección pública (toPublicInvitation) no lo expone.
 const INVITATION_WITH_TRAINER =
-  'id, token, student_name, student_email, student_goal, expires_at, used_at, ' +
+  'id, token, student_name, student_email, student_phone, student_goal, expires_at, used_at, ' +
   'student_gym_equipment, student_injuries, student_level, ' +
   'trainer:trainer_id (id, name, specialty, avatar_url)';
 

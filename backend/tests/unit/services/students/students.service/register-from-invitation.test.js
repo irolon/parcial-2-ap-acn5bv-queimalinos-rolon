@@ -1,6 +1,6 @@
 import {
   mockInvitationsRepo,
-  mockStudentsRepo,
+  mockStudentCreateRepo,
   mockIssueTokens,
   service,
   VALID_INVITATION,
@@ -11,7 +11,7 @@ describe('students.service — registerFromInvitation', () => {
   it('crea el alumno, reclama la invitación y devuelve tokens', async () => {
     mockInvitationsRepo.findInvitationByToken.mockResolvedValue(VALID_INVITATION);
     mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
-    mockStudentsRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
+    mockStudentCreateRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
     mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
 
     const result = await service.registerFromInvitation({ token: 'tok', password: 'Password1' });
@@ -23,7 +23,7 @@ describe('students.service — registerFromInvitation', () => {
     });
 
     // El alumno se crea con los datos de la invitación + el trainer dueño.
-    const createArg = mockStudentsRepo.createStudent.mock.calls[0][0];
+    const createArg = mockStudentCreateRepo.createStudent.mock.calls[0][0];
     expect(createArg.trainerId).toBe('trainer-1');
     expect(createArg.email).toBe('pedro@mail.com');
     expect(createArg.passwordHash).toBeDefined();
@@ -44,12 +44,12 @@ describe('students.service — registerFromInvitation', () => {
       student_level: 'intermediate',
     });
     mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
-    mockStudentsRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
+    mockStudentCreateRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
     mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
 
     await service.registerFromInvitation({ token: 'tok', password: 'Password1' });
 
-    expect(mockStudentsRepo.createStudent.mock.calls[0][0]).toMatchObject({
+    expect(mockStudentCreateRepo.createStudent.mock.calls[0][0]).toMatchObject({
       gymEquipment: ['barbell', 'cable'],
       injuries: 'rodilla derecha',
       level: 'intermediate',
@@ -61,7 +61,7 @@ describe('students.service — registerFromInvitation', () => {
     await expect(
       service.registerFromInvitation({ token: 'x', password: 'Password1' })
     ).rejects.toMatchObject({ code: 'INVITATION_NOT_FOUND', statusCode: 404 });
-    expect(mockStudentsRepo.createStudent).not.toHaveBeenCalled();
+    expect(mockStudentCreateRepo.createStudent).not.toHaveBeenCalled();
   });
 
   it('lanza INVITATION_ALREADY_USED si ya fue usada', async () => {
@@ -72,7 +72,7 @@ describe('students.service — registerFromInvitation', () => {
     await expect(
       service.registerFromInvitation({ token: 'x', password: 'Password1' })
     ).rejects.toMatchObject({ code: 'INVITATION_ALREADY_USED', statusCode: 410 });
-    expect(mockStudentsRepo.createStudent).not.toHaveBeenCalled();
+    expect(mockStudentCreateRepo.createStudent).not.toHaveBeenCalled();
   });
 
   it('lanza INVITATION_EXPIRED si venció', async () => {
@@ -98,7 +98,7 @@ it('con dos registros simultáneos del mismo token crea un solo alumno', async (
       return true;
     });
 
-    mockStudentsRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
+    mockStudentCreateRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
     mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
 
     const resultados = await Promise.allSettled([
@@ -114,7 +114,7 @@ it('con dos registros simultáneos del mismo token crea un solo alumno', async (
     expect(rechazadas[0].reason).toMatchObject({ code: 'INVITATION_ALREADY_USED' });
 
     // Lo que importa: un solo alumno en la base.
-    expect(mockStudentsRepo.createStudent).toHaveBeenCalledTimes(1);
+    expect(mockStudentCreateRepo.createStudent).toHaveBeenCalledTimes(1);
   });
 
   it('libera la invitación si falla la creación del alumno', async () => {
@@ -123,12 +123,35 @@ it('con dos registros simultáneos del mismo token crea un solo alumno', async (
     // registrarse nunca más y el PT tendría que emitir otra.
     mockInvitationsRepo.findInvitationByToken.mockResolvedValue(VALID_INVITATION);
     mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
-    mockStudentsRepo.createStudent.mockRejectedValue(new Error('la base se cayó'));
+    mockStudentCreateRepo.createStudent.mockRejectedValue(new Error('la base se cayó'));
 
     await expect(
       service.registerFromInvitation({ token: 'tok', password: 'Password1' })
     ).rejects.toThrow('la base se cayó');
 
     expect(mockInvitationsRepo.releaseInvitation).toHaveBeenCalledWith('inv-1');
+  });
+
+  describe('teléfono de la invitación (GX2)', () => {
+    const registerWith = async (studentPhone) => {
+      mockInvitationsRepo.findInvitationByToken.mockResolvedValue({ ...VALID_INVITATION, student_phone: studentPhone });
+      mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
+      mockStudentCreateRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
+      mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
+      await service.registerFromInvitation({ token: 'tok', password: 'Password1' });
+      return mockStudentCreateRepo.createStudent.mock.calls[0][0].phone;
+    };
+
+    it('lo copia al alumno', async () => {
+      expect(await registerWith('5491122334455')).toBe('5491122334455');
+    });
+
+    it('sin teléfono → null', async () => {
+      expect(await registerWith(undefined)).toBeNull();
+    });
+
+    it('con menos de 6 caracteres → null', async () => {
+      expect(await registerWith('123')).toBeNull();
+    });
   });
 });
