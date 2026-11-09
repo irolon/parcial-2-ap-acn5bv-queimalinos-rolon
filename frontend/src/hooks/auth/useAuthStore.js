@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import * as authApi from '@/api/auth/auth.api';
 import * as studentsApi from '@/api/students/students.api';
+import * as accountApi from '@/api/account/account.api';
 import { configureClient } from '@/api/shared/client';
 
 export const SESSION_STORAGE_KEY = 'fittrainer.session';
@@ -18,6 +19,12 @@ const isTransientError = (err) => isNetworkError(err) || isRateLimited(err);
 // quedan guardados para reintentar en la próxima carga.
 function keepSessionOffline(set) {
   set({ token: null, status: 'anonymous' });
+}
+
+// El refresh informa si la clave está blanqueada (GX1): se copia al user solo si viene.
+function withPasswordFlag(user, data) {
+  if (!user || typeof data?.must_change_password !== 'boolean') return user;
+  return { ...user, must_change_password: data.must_change_password };
 }
 
 function saveSession(set, user, token, refreshToken) {
@@ -67,6 +74,17 @@ export const useAuthStore = create(
         }
       },
 
+      // PUT /auth/password: el refresh de este dispositivo se conserva; el access nuevo ya no trae el flag.
+      async changePassword({ current_password, new_password }) {
+        const { refreshToken } = get();
+        const data = await accountApi.changePassword({ current_password, new_password, refresh_token: refreshToken });
+        const { user } = get();
+        set({
+          token: data.token,
+          user: { ...user, must_change_password: false, password_changed_at: data.password_changed_at },
+        });
+      },
+
       async restore() {
         const { user, refreshToken } = get();
         if (!user || !refreshToken) {
@@ -75,8 +93,8 @@ export const useAuthStore = create(
         }
         set({ status: 'loading' });
         try {
-          const { token } = await authApi.refresh(refreshToken);
-          set({ token, status: 'authenticated' });
+          const data = await authApi.refresh(refreshToken);
+          set({ token: data.token, user: withPasswordFlag(get().user, data), status: 'authenticated' });
         } catch (err) {
           if (isTransientError(err)) keepSessionOffline(set);
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
@@ -95,10 +113,13 @@ export const useAuthStore = create(
 async function renewAccessToken() {
   const { refreshToken } = useAuthStore.getState();
   if (!refreshToken) throw new Error('Sin refresh token');
-  const { token } = await authApi.refresh(refreshToken);
+  const data = await authApi.refresh(refreshToken);
   // Si mientras tanto cerró sesión o entró otra cuenta, el access nuevo es de la anterior: no pisa el de la actual.
-  if (useAuthStore.getState().refreshToken === refreshToken) useAuthStore.setState({ token });
-  return token;
+  const current = useAuthStore.getState();
+  if (current.refreshToken === refreshToken) {
+    useAuthStore.setState({ token: data.token, user: withPasswordFlag(current.user, data) });
+  }
+  return data.token;
 }
 
 configureClient({
