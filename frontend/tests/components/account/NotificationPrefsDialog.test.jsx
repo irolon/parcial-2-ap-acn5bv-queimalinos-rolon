@@ -71,6 +71,19 @@ describe('NotificationPrefsDialog', () => {
     expect(bodyOf(init)).toEqual({ message: true, comment: false, appointment: false, pr: true, achievement: true });
   });
 
+  it('mientras guarda, "Guardar" está ocupado y no se puede cancelar ni tocar los interruptores', async () => {
+    stubFetch(() => new Promise(() => {}));
+    const user = setupUser();
+    renderDialog();
+    await user.click(toggle('Comentarios'));
+    await user.click(saveButton());
+    expect(saveButton()).toHaveAttribute('aria-busy', 'true');
+    expect(saveButton()).toBeDisabled();
+    expect(within(dialog()).getByRole('button', { name: 'Cancelar' })).toBeDisabled();
+    expect(toggle('Mensajes')).toBeDisabled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('si guardar falla, avisa adentro del diálogo, no cierra y conserva el cambio', async () => {
     stubFetch(async () => errorResponse(500, 'INTERNAL'));
     const user = setupUser();
