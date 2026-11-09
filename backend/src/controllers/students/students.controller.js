@@ -2,6 +2,7 @@ import { asyncHandler } from '../../shared/utils/async/asyncHandler.js';
 import * as studentsService from '../../services/students/students.service.js';
 import * as attendanceService from '../../services/students/attendance.service.js';
 import * as overviewService from '../../services/students/overview.service.js';
+import * as passwordService from '../../services/auth/password.service.js';
 
 /** GET /students — lista los alumnos del trainer. 200 → { data, meta } */
 export const list = asyncHandler(async (req, res) => {
@@ -40,4 +41,13 @@ export const attendance = asyncHandler(async (req, res) => {
 export const overview = asyncHandler(async (req, res) => {
   const data = await overviewService.overview(req.user.id);
   res.json({ data });
+});
+
+/**
+ * POST /students/:id/password-reset — el PT dueño blanquea la clave del alumno.
+ * 200 → { temporary_password } (se muestra una sola vez; solo se guarda el hash).
+ */
+export const resetPassword = asyncHandler(async (req, res) => {
+  const result = await passwordService.resetStudentPassword(req.user, req.params.id);
+  res.json(result);
 });

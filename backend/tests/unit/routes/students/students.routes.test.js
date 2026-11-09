@@ -37,3 +37,19 @@ describe('students.routes — GET /students/:id/attendance', () => {
     expect(handlers[4]).toBe(studentsController.attendance);
   });
 });
+
+describe('students.routes — POST /students/:id/password-reset (GX1)', () => {
+  it('limitador primero, authenticate, solo trainer, valida el id y termina en su controller', () => {
+    const route = studentsRouter.stack.find(
+      (l) => l.route?.path === '/:id/password-reset' && l.route.methods.post
+    ).route;
+    const [limiter, auth, role, params, handler] = route.stack.map((l) => l.handle);
+    expect(limiter.rateLimit).toBe('passwordReset');
+    expect(auth).toBe(authenticate);
+    let err;
+    role({ user: { role: 'student' } }, res, (e) => { err = e; });
+    expect(err).toMatchObject({ statusCode: 403 });
+    expect(params.validates).toBe('params');
+    expect(handler).toBe(studentsController.resetPassword);
+  });
+});

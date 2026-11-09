@@ -55,6 +55,17 @@ router.patch(
   studentsController.update
 );
 
+// Blanqueo de la clave (GX1): solo el trainer dueño (verificado en el service).
+// Limitador primero; sin body: la clave temporal la genera el servidor.
+router.post(
+  '/:id/password-reset',
+  limitRate('passwordReset'),
+  authenticate,
+  requireRole('trainer'),
+  validate(validateStudentIdParam, 'params'),
+  studentsController.resetPassword
+);
+
 // Medidas corporales del alumno: /students/:id/metrics.
 router.use('/:id/metrics', bodyMetricsRoutes);
 

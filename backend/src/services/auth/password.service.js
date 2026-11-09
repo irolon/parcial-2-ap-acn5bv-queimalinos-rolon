@@ -1,4 +1,8 @@
-import { hashPassword, verifyPassword } from '../../shared/utils/password.js';
+import {
+  hashPassword,
+  verifyPassword,
+  generateTemporaryPassword,
+} from '../../shared/utils/password.js';
 import { signAccessToken, hashToken } from '../../shared/utils/jwt.js';
 import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
@@ -6,6 +10,7 @@ import { isActive } from '../../models/auth/refresh-token.model.js';
 import * as credentialsRepo from '../../repositories/auth/credentials.repository.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
+import { assertCanAccessStudent } from '../students/student-access.service.js';
 
 /** VALIDATION_ERROR con un solo detalle, como los de las validations. */
 const fieldError = (field, message) =>
@@ -48,4 +53,26 @@ export async function changePassword(
 
   const token = signAccessToken({ sub: user.id, role: user.role, email: user.email });
   return { token, expires_in: env.JWT_EXPIRES_IN, password_changed_at };
+}
+
+/**
+ * POST /students/:id/password-reset (GX1): blanqueo sin mail. El PT dueño
+ * genera una clave temporal que ve una sola vez; solo se guarda el hash.
+ * Revoca las sesiones ANTES de guardar la clave (mismo criterio que la baja,
+ * que revoca antes de marcarlo inactivo: si falla, el PT reintenta y nada
+ * quedó a medias con sesiones vivas) y prende must_change_password, que
+ * obliga a elegir una nueva.
+ * Ajeno o inexistente → 403 de assertCanAccessStudent (no revela qué ids existen).
+ */
+export async function resetStudentPassword(trainer, studentId) {
+  if (trainer.role !== 'trainer') throw Errors.forbidden();
+  const student = await assertCanAccessStudent(trainer, studentId);
+  if (!student.active) throw Errors.studentInactive();
+
+  const temporary = generateTemporaryPassword();
+  const hash = await hashPassword(temporary);
+  await authRepo.revokeAllForUser(studentId, 'student');
+  await credentialsRepo.setPassword(studentId, 'student', { hash, mustChange: true });
+  await pushTokensRepo.deleteAllForUserExcept({ id: studentId, role: 'student' });
+  return { temporary_password: temporary };
 }

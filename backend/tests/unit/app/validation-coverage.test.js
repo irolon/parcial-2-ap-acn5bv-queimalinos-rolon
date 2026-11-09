@@ -8,6 +8,7 @@ const WITHOUT_BODY = {
   'PATCH /api/notifications/read-all': 'marca todas como leídas; no lee el body',
   'PATCH /api/notifications/:id/read': 'marca una como leída; solo valida el :id',
   'POST /api/messages/:studentId/read': 'marca la conversación como leída; solo valida el :studentId',
+  'POST /api/students/:id/password-reset': 'genera la clave en el servidor; solo valida el :id',
 };
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];
@@ -46,6 +47,7 @@ describe('validación de entrada en todas las rutas con body', () => {
       ['PUT /api/auth/password', 'passwordChange'],
       ['GET /api/invitations/:token', 'invitation'],
       ['POST /api/students', 'studentSignup'],
+      ['POST /api/students/:id/password-reset', 'passwordReset'],
     ]);
   });
 });
