@@ -23,7 +23,7 @@ const todayAR = () => utcToArgentina(new Date()).date;
 export function slugify(name) {
   const slug = String(name ?? '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '') // los acentos que separó NFD
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');

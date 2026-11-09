@@ -6,7 +6,6 @@ import Select from '@/components/shared/ui/Select';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
 import { todayString } from '@/utils/dates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
-import ResetPasswordSection from './ResetPasswordSection';
 import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 import {
   buildStudentBody,
@@ -14,6 +13,7 @@ import {
   toStudentErrors,
   validateStudentBody,
 } from '@/utils/students/studentForm';
+import ResetPasswordSection from './ResetPasswordSection';
 
 const FORM_ID = 'edit-student-form';
 

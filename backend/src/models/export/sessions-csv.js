@@ -28,7 +28,7 @@ export const STUDENT_HEADERS = [
 /** El PT exporta todos sus alumnos (también los dados de baja): suma quién es cada fila. */
 export const TRAINER_HEADERS = ['Alumno', 'Email', 'Activo', ...STUDENT_HEADERS];
 
-const BOM = '﻿';
+const BOM = '\uFEFF';
 const EOL = '\r\n';
 const SEPARATOR = ';';
 
