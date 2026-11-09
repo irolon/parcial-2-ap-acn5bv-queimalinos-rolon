@@ -1,11 +1,12 @@
 import { ApiError, request } from '@/api/shared/client';
 
 /**
- * Tope del lado del cliente: el backend corta a n8n a los 9 s y contesta 503, así que esto solo salta si ese 503
- * tampoco llega (servidor colgado). Se trata igual que el 503: el asistente no está disponible. Sin `message`: el
- * texto lo pone `chatProblem` (el mismo que el del 503 del servidor).
+ * Tope del lado del cliente: el backend corta a n8n a los 16 s (n8n a los 15 s) y contesta 503, así que esto solo
+ * salta si ese 503 tampoco llega (servidor colgado). Tiene que quedar por encima del corte del backend: si no, una
+ * respuesta tardía se guarda y cuenta para el límite sin que el alumno la vea. Se trata igual que el 503: el
+ * asistente no está disponible. Sin `message`: el texto lo pone `chatProblem` (el mismo que el del 503 del servidor).
  */
-export const CHAT_TIMEOUT_MS = 12_000;
+export const CHAT_TIMEOUT_MS = 18_000;
 
 const UNAVAILABLE = { status: 503, code: 'AI_UNAVAILABLE', message: '' };
 

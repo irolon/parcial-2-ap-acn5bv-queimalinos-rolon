@@ -60,7 +60,7 @@ El README de `n8n/` suma este workflow.
 - **Contexto visible:** "Preguntando sobre: Press banca plano" (el ejercicio actual de la sesión).
 - **Atajos** que cargan el texto en la caja: "¿Con qué lo reemplazo?", "¿Cómo es la técnica?", "Está ocupada la máquina".
 - **Contador:** "Te quedan 17 consultas hoy". En 0, la caja se deshabilita con el mensaje del límite.
-- **Espera:** "Pensando…", con un tope visual de 10 s.
+- **Espera:** "Pensando…", con un tope visual de 16 s. La web corta el pedido a los 18 s, por encima del corte del backend. *(09/11: la #90 sube el corte del backend a 16 s y el de n8n a 15 s porque KIMI a veces tarda más de 8 s; antes eran 10 s de barra y 12 s de corte en la web.)*
 - **Error 503:** "El asistente no está disponible ahora. Seguí con tu entrenamiento." con Reintentar. El mensaje del alumno queda en la caja, no se pierde.
 - **Sin conexión** (`navigator.onLine` falso o error de red): "El asistente necesita conexión" y la caja deshabilitada (AL-10), sin Reintentar mientras el navegador siga sin conexión. Sigue a la conexión en vivo: al volver, el aviso se va y la caja se habilita con el texto que quedó.
 - **Otra consulta en curso** (429 `CHAT_IN_PROGRESS`): "Esperá la respuesta anterior." con Reintentar; el contador no cambia. En los 503, 502 y 429 el aviso usa el texto del servidor; los locales quedan de respaldo. El resto de la sesión sigue funcionando offline como siempre.
