@@ -37,12 +37,13 @@ describe('validación de entrada en todas las rutas con body', () => {
     }
   });
 
-  it('los endpoints públicos sensibles arrancan su cadena con su limitador (y ninguno más lo tiene)', () => {
+  it('los endpoints sensibles arrancan su cadena con su limitador (y ninguno más lo tiene)', () => {
     const limited = routes.filter((r) => r.handlers.some((h) => h.rateLimit));
     expect(limited.map((r) => [key(r), r.handlers[0].rateLimit])).toEqual([
       ['POST /api/auth/register', 'register'],
       ['POST /api/auth/login', 'login'],
       ['POST /api/auth/refresh', 'refresh'],
+      ['PUT /api/auth/password', 'passwordChange'],
       ['GET /api/invitations/:token', 'invitation'],
       ['POST /api/students', 'studentSignup'],
     ]);
