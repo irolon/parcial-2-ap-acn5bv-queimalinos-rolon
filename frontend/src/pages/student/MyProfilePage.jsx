@@ -1,3 +1,4 @@
+import AccountCard from '@/components/account/AccountCard';
 import StudentMetrics from '@/components/body-metrics/StudentMetrics';
 import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
@@ -7,6 +8,7 @@ import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
 import MyProfileCard from '@/components/students/profile/MyProfileCard';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useStudentQuery } from '@/hooks/students/useStudents';
+import { todayString } from '@/utils/dates';
 
 // Los datos y la rutina activa salen de la misma ficha (`GET /students/:id`): un solo bloque con su carga y su error.
 // La ficha trae solo la rutina activa más reciente; con varias, todas están en Mis rutinas.
@@ -34,8 +36,8 @@ function ProfileBlock({ query }) {
 }
 
 /**
- * Mi perfil: los datos del alumno de solo lectura (los cambia su entrenador), su rutina activa y sus medidas, que sí
- * puede cargar. Los dos bloques, la ficha y las medidas, cargan y fallan cada uno por su cuenta.
+ * Mi perfil: los datos del alumno de solo lectura (los cambia su entrenador), su rutina activa, sus medidas, que sí
+ * puede cargar, y la tarjeta Cuenta (contraseña y CSV). Los dos bloques, la ficha y las medidas, cargan y fallan cada uno por su cuenta.
  */
 export default function MyProfilePage() {
   const studentId = useAuthStore((state) => state.user?.id);
@@ -47,7 +49,15 @@ export default function MyProfilePage() {
         <ProfileBlock query={profile} />
         <TrainerCard studentId={studentId} />
       </div>
-      <StudentMetrics studentId={studentId} />
+      <div className="flex min-w-0 flex-col gap-5">
+        <StudentMetrics studentId={studentId} />
+        <AccountCard
+          exportLabel="Exportar mis datos"
+          exportSubtitle="Historial completo en formato CSV"
+          exportStudentId={studentId}
+          exportFilename={`fittrainer-mis-sesiones-${todayString()}.csv`}
+        />
+      </div>
     </div>
   );
 }
