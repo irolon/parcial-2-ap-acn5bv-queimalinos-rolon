@@ -411,7 +411,7 @@ Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la 
 
 ### PATCH /students/:id
 
-Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alumno** (GX2: solo `name` y `phone`). Hay que mandar al menos un campo; los que no están en la tabla se ignoran.
+Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alumno** (GX2: solo `name` y `phone`). Hay que mandar al menos un campo; al trainer, los que no están en la tabla se le ignoran.
 
 | Campo | Regla |
 |---|---|
@@ -426,7 +426,7 @@ Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alum
 
 **200 OK** — la ficha completa en `{ data }`, con la misma forma que el GET (incluye `must_change_password`, `password_changed_at` y `phone`).
 
-- **El alumno** sobre sí mismo: con cualquier campo que no sea `name` o `phone` (por ejemplo `goal` o `active`) responde `403 FORBIDDEN` con el mensaje "Solo podés cambiar tu nombre, teléfono y foto" **antes de tocar nada** (no guarda, no revoca sesiones ni cancela turnos). Sobre otro alumno → `403 FORBIDDEN`.
+- **El alumno** sobre sí mismo: con cualquier campo que no sea `name` o `phone` (por ejemplo `goal`, `active` o uno desconocido como `email`) responde `403 FORBIDDEN` con el mensaje "Solo podés cambiar tu nombre, teléfono y foto" **antes de tocar nada** (no guarda, no revoca sesiones ni cancela turnos). Sobre otro alumno → `403 FORBIDDEN`.
 
 **Errores:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN` (alumno de otro trainer o inexistente; otro alumno; el alumno con un campo que no puede cambiar).
 

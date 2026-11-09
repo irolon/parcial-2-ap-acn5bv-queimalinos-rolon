@@ -13,7 +13,7 @@ import { signAvatars } from './avatar-urls.service.js';
 import * as appointments from '../agenda/appointments.service.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
-import { STUDENT_SELF_EDITABLE } from '../../models/students/student.model.js';
+import { STUDENT_SELF_EDITABLE, STUDENT_SELF_EDIT_FORBIDDEN } from '../../models/students/student.model.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
@@ -107,7 +107,7 @@ export async function getById(user, studentId) {
 export async function update(user, studentId, fields) {
   await assertCanAccessStudent(user, studentId);
   if (user.role === 'student' && Object.keys(fields).some((f) => !STUDENT_SELF_EDITABLE.includes(f))) {
-    throw Errors.forbidden('Solo podés cambiar tu nombre, teléfono y foto');
+    throw Errors.forbidden(STUDENT_SELF_EDIT_FORBIDDEN);
   }
 
   if (fields.active === false) await authRepo.revokeAllForUser(studentId, 'student');

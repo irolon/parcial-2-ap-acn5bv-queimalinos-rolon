@@ -31,6 +31,7 @@ export const STUDENT_DETAIL_COLUMNS =
 
 /** Lo único que el alumno puede cambiar de sí mismo por PATCH /students/:id (GX2). */
 export const STUDENT_SELF_EDITABLE = ['name', 'phone'];
+export const STUDENT_SELF_EDIT_FORBIDDEN = 'Solo podés cambiar tu nombre, teléfono y foto';
 
 /** Mapea una fila cruda a la entidad pública Student, descartando el hash. */
 export function toStudent(row) {

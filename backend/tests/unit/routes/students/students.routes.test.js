@@ -100,20 +100,34 @@ describe('students.routes — exportación CSV (GX1)', () => {
 });
 
 describe('students.routes — PATCH /students/:id (GX2)', () => {
+  const chain = () =>
+    studentsRouter.stack.find((l) => l.route?.path === '/:id' && l.route.methods.patch).route.stack.map((l) => l.handle);
+  const nextOf = (mw, req) => {
+    let err = 'sin llamar';
+    mw(req, res, (e) => {
+      err = e;
+    });
+    return err;
+  };
+
   it('deja pasar trainer y student en el requireRole, valida id y body, y termina en update', () => {
-    const route = studentsRouter.stack.find((l) => l.route?.path === '/:id' && l.route.methods.patch).route;
-    const [auth, role, params, body, handler] = route.stack.map((l) => l.handle);
+    const [auth, role, params, , body, handler] = chain();
     expect(auth).toBe(authenticate);
-    for (const r of ['trainer', 'student']) {
-      let err = 'sin llamar';
-      role({ user: { role: r } }, res, (e) => {
-        err = e;
-      });
-      expect(err).toBeUndefined();
-    }
+    for (const r of ['trainer', 'student']) expect(nextOf(role, { user: { role: r } })).toBeUndefined();
     expect(params.validates).toBe('params');
-    expect(body.validates).not.toBe('params');
+    expect(body.validates).toBe('body');
     expect(handler).toBe(studentsController.update);
+  });
+
+  it('antes del validador (que ignora lo desconocido), el alumno con un campo ajeno → 403', () => {
+    const [, , , fields] = chain();
+    const student = { id: 's1', role: 'student' };
+    expect(nextOf(fields, { user: student, body: { name: 'Ana', email: 'x@mail.com' } })).toMatchObject({
+      statusCode: 403,
+      message: 'Solo podés cambiar tu nombre, teléfono y foto',
+    });
+    expect(nextOf(fields, { user: student, body: { name: 'Ana', phone: null } })).toBeUndefined();
+    expect(nextOf(fields, { user: { id: 't1', role: 'trainer' }, body: { goal: 'strength' } })).toBeUndefined();
   });
 });
 
