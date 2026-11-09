@@ -4,6 +4,7 @@ import {
   validateListQuery,
   validateRegisterToken,
   validateTokenParam,
+  validatePreferences,
 } from '../../../../src/validations/notifications/notifications.validation.js';
 
 const UUID = '3F2504E0-4F89-41D3-9A0C-0305E82C3301';
@@ -56,5 +57,33 @@ describe('validateTokenParam', () => {
   });
   it.each([[{}], [{ token: '' }], [{ token: 'x'.repeat(4097) }], [{ token: 5 }]])('rechaza %j', (params) => {
     expect(() => validateTokenParam(params)).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }));
+  });
+});
+
+const PREFS = { message: true, comment: false, appointment: true, pr: true, achievement: true };
+const fieldsOf = (body) => {
+  try {
+    validatePreferences(body);
+  } catch (err) {
+    return err.details.map((d) => d.field);
+  }
+  return [];
+};
+
+describe('validatePreferences', () => {
+  it('acepta los cinco booleanos y devuelve solo esos', () => {
+    expect(validatePreferences({ ...PREFS, student_id: 'otro', extra: 1 })).toEqual(PREFS);
+  });
+  it('falta uno → detalle en ese campo', () => {
+    const { pr: _pr, ...rest } = PREFS;
+    expect(fieldsOf(rest)).toEqual(['pr']);
+  });
+  it('un string "false" no es booleano', () => {
+    expect(fieldsOf({ ...PREFS, message: 'false' })).toEqual(['message']);
+    expect(() => validatePreferences({ ...PREFS, message: 'false' }))
+      .toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }));
+  });
+  it.each([[{}], [null], [undefined]])('%j → los cinco detalles', (body) => {
+    expect(fieldsOf(body)).toEqual(['message', 'comment', 'appointment', 'pr', 'achievement']);
   });
 });
