@@ -32,7 +32,7 @@ describe('auth.middleware · cambio obligatorio de contraseña (GX1)', () => {
   it('authenticateForPasswordChange deja pasar con el claim y arma req.user como siempre', () => {
     const { error, req } = run(
       authenticateForPasswordChange,
-      bearer({ ...USER, must_change_password: true }),
+      bearer({ ...USER, must_change_password: true })
     );
     expect(error).toBeUndefined();
     expect(req.user).toEqual({ id: 'stu-1', role: 'student', email: 'ana@fittrainer.app' });

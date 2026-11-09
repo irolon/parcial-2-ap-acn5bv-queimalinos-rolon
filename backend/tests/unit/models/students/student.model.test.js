@@ -8,7 +8,7 @@ const columns = (list) => list.split(',').map((c) => c.trim());
 describe('student.model · columnas', () => {
   it('la ficha trae must_change_password y password_changed_at (GX1: login y refresh las leen)', () => {
     expect(columns(STUDENT_DETAIL_COLUMNS)).toEqual(
-      expect.arrayContaining(['must_change_password', 'password_changed_at']),
+      expect.arrayContaining(['must_change_password', 'password_changed_at'])
     );
   });
 
