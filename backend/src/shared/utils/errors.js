@@ -65,6 +65,8 @@ export const Errors = {
     new AppError(410, 'INVITATION_ALREADY_USED', 'Esta invitación ya fue utilizada'),
   accountDisabled: () =>
     new AppError(401, 'ACCOUNT_DISABLED', 'Tu entrenador dio de baja tu cuenta'),
+  passwordChangeRequired: () =>
+    new AppError(403, 'PASSWORD_CHANGE_REQUIRED', 'Tenés que elegir una contraseña nueva para seguir'),
   metricNotFound: () => new AppError(404, 'METRIC_NOT_FOUND', 'La medida no existe'),
   metricIdConflict: () =>
     new AppError(409, 'METRIC_ID_CONFLICT', 'Ya existe una medida con ese id'),

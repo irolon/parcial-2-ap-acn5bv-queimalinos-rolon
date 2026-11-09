@@ -3,6 +3,13 @@ import crypto from 'node:crypto';
 import { env } from '../../config/env.js';
 
 /**
+ * Claim que lleva el access token del alumno con la clave blanqueada (GX1):
+ * authenticate lo rechaza con 403 salvo en PUT /auth/password. Viaja en el
+ * token para no consultar la base en cada pedido.
+ */
+export const MUST_CHANGE_CLAIM = 'must_change_password';
+
+/**
  * Firma un access token (JWT) de corta duración.
  * payload típico: { sub: <userId>, role: 'trainer' | 'student', email }
  */
