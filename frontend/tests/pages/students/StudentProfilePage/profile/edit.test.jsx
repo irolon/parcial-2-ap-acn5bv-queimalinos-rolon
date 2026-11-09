@@ -18,6 +18,19 @@ const open = async (user, stub = {}) => {
 };
 
 describe('StudentProfilePage: editar alumno', () => {
+  it('con el alumno activo trae la sección para blanquear la clave', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await open(user);
+    expect(within(dialog).getByRole('region', { name: 'Acceso a la app' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Blanquear clave' })).toBeEnabled();
+  });
+
+  it('dado de baja no ofrece blanquear la clave', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await open(user, { detail: studentDetail({ active: false }) });
+    expect(within(dialog).queryByRole('region', { name: 'Acceso a la app' })).toBeNull();
+  });
+
   it('precarga los datos y manda solo el nombre cambiado', async () => {
     const user = userEvent.setup();
     const update = vi.fn(async () => jsonResponse(200, { data: studentDetail({ name: 'Ana Gómez' }) }));

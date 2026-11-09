@@ -6,6 +6,7 @@ import Select from '@/components/shared/ui/Select';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
 import { todayString } from '@/utils/dates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
+import ResetPasswordSection from './ResetPasswordSection';
 import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 import {
   buildStudentBody,
@@ -99,6 +100,7 @@ export default function EditStudentDialog({ student, onClose }) {
           error={fields.birth_date}
         />
       </form>
+      {student.active && <ResetPasswordSection student={student} />}
     </Dialog>
   );
 }
