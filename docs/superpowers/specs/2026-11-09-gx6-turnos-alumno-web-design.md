@@ -25,7 +25,7 @@ En la web ya están los hooks (`hooks/agenda/useAgenda.js`: `useAppointments`, `
 | # | Decisión |
 |---|---|
 | 1 | Igual que en el celular: el alumno ve sus próximos turnos, pide uno en un horario libre de la disponibilidad de su PT y cancela los suyos. |
-| 2 | Página `/alumno/turnos`, **fuera del menú** (como `WORKOUT_PATH`): el `AlSidebar` del prototipo no tiene ítem de turnos. Se entra con **"Ver agenda"** de la tarjeta "Próximo turno" de Hoy, que se ve en todos sus estados (con turno, vacía, error). |
+| 2 | Página `/alumno/turnos` con **ítem "Turnos" en el menú del alumno** (Pablo, 09/11: aunque el `AlSidebar` del prototipo no lo tenga, si no la única entrada sería desde Hoy). También se entra con **"Ver agenda"** de la tarjeta "Próximo turno" de Hoy, que se ve en todos sus estados (con turno, vacía, error). |
 | 3 | **Solo horarios del servidor** (`GET /availability/free`), nunca calculados en el cliente. Si el POST se rechaza (`SLOT_TAKEN`, `SLOT_UNAVAILABLE`, `APPOINTMENT_LIMIT`, 403), el diálogo muestra el texto del backend y se vuelven a pedir los libres. |
 | 4 | Rangos: turnos de **hoy a hoy + 59** (el `GET` acepta 62); libres de **hoy a hoy + 27** (el backend corta en 28 para el alumno). Fechas y horas en hora argentina. |
 | 5 | Con 3 pendientes a futuro (contados en la lista), los chips se deshabilitan con el motivo, igual que el 409 `APPOINTMENT_LIMIT`. El backend sigue siendo quien decide. |
@@ -165,7 +165,7 @@ Capturas en `docs/superpowers/specs/assets/gx6/`: `01-mis-turnos.jpg`, `02-pedir
 
 ## Fuera de alcance
 
-- Ítem "Turnos" en el menú del alumno, o link desde Mi perfil (el celular entra por Perfil).
+- Link desde Mi perfil (el celular entra por Perfil).
 - Reprogramar un turno: se cancela y se pide otro, como en el celular.
 - Modalidad del turno ("VIDEOLLAMADA CON LAURA" del prototipo): el backend no la tiene.
 - Avisos en la web cuando el PT confirma o cancela (el push es del celular).

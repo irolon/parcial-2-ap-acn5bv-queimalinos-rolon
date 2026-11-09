@@ -103,6 +103,8 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 
 ## Tarjetas para el celular (Igna)
 
+> Pablo (09/11): GX1 sale igual aunque el celular todavía no soporte el cambio obligatorio; el alumno blanqueado cambia la clave desde la web. La tarjeta 1 va marcada como prioritaria.
+
 1. **Cambio obligatorio de clave (prioridad: sin esto un alumno blanqueado queda trabado en el celular).** Leer `user.must_change_password` del login y `must_change_password` del refresh; ante `403 PASSWORD_CHANGE_REQUIRED` en cualquier llamada, ir a una pantalla "Elegí una contraseña nueva" que llama `PUT /auth/password` con la temporal como `current_password`, su `refresh_token` y su `push_token`; guardar el `token` nuevo.
 2. **Cambiar contraseña** (alumno y PT) desde ajustes: `PUT /auth/password` con `push_token` del dispositivo, para no perder el push propio.
 3. **Blanquear clave** en la ficha del alumno (PT): `POST /students/:id/password-reset`, mostrar la temporal una vez con copiar y compartir.

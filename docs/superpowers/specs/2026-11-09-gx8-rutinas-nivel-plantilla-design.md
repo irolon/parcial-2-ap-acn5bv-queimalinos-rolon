@@ -20,7 +20,7 @@ Hoy `routines` no tiene nivel (`03-routines.sql`: `name, goal, days, active`), `
 | 3 | **Plantilla inicial al invitar** (tomada por Pablo): el PT elige una plantilla propia (opcional) y los días; se guardan en la invitación. Al darse de alta el alumno (`POST /students` con el token) se le crea sola la rutina con `instantiate`. Migración en `invitations`. |
 | 4 | Días de la plantilla inicial: precargados con los de la plantilla (`structure.days`) y editables con el mismo `DayPicker` del editor; al menos uno. Si se manda `template_id` sin días, se usan los de la plantilla al momento del alta. |
 | 5 | La plantilla se valida al **invitar** (propia y existente → si no, 404 `TEMPLATE_NOT_FOUND`) y se copia al **alta** (la plantilla puede cambiar en esas 48 h: vale la versión del alta, coherente con ADR 0003 "las plantillas se copian"). |
-| 6 | **El alta nunca falla por la rutina inicial.** Si al alta la plantilla ya no existe (FK `on delete set null`), tiene ejercicios borrados (409 de `instantiate`) o falla el insert, el alumno se crea igual, sin rutina, y se registra un `console.warn`. El PT lo ve en la ficha ("Sin rutina asignada") y asigna a mano. |
+| 6 | **El alta nunca falla por la rutina inicial.** Si al alta la plantilla ya no existe (FK `on delete set null`), tiene ejercicios borrados (409 de `instantiate`) o falla el insert, el alumno se crea igual, sin rutina, se registra un `console.warn` y **se le avisa al PT** (Pablo, 09/11): notificación in-app y push "No pudimos asignarle la rutina inicial a {nombre}" con link a la ficha (tipo nuevo `initial_routine_failed` en el módulo de notificaciones, best-effort: si el aviso falla, el alta sigue). En la ficha ve "Sin rutina asignada" y la asigna a mano. |
 | 7 | `GET /invitations/:token` (pública) **no** expone la plantilla: el alumno la ve al entrar, en Hoy. |
 | 8 | Una sola migración para las dos columnas nuevas de este ticket. |
 
@@ -92,7 +92,7 @@ Las rutinas existentes quedan con `level null` (sin definir). `checks/schema-che
 - `instantiate`: la rutina sale con el `level` de la plantilla (y `null` si la plantilla no tiene). `createFromRoutine`: sin `level` en el body usa el de la rutina; con `level` lo pisa.
 - Invitaciones: `template_id` sin días guarda `routine_days null`; días sin plantilla → 400; día repetido o inválido → 400; plantilla ajena → 404 `TEMPLATE_NOT_FOUND`; el insert lleva las dos columnas.
 - `assignInitialRoutine`: sin plantilla no llama a `instantiate`; con plantilla lo llama con el trainer, el alumno y los días; si `instantiate` tira, devuelve `null` y avisa.
-- Alta: con plantilla crea la rutina; con `instantiate` fallando el alta responde 201 igual y la invitación queda usada.
+- Alta: con plantilla crea la rutina; con `instantiate` fallando el alta responde 201 igual, la invitación queda usada y al PT le llega la notificación `initial_routine_failed`.
 
 **Vitest**
 - Editor: elegir "Intermedio" lo manda en `POST /routines`; "Usar plantilla" precarga el nivel; el borrador lo restaura; "Guardar como plantilla" arranca con el nivel de la rutina.
@@ -112,7 +112,7 @@ Las rutinas existentes quedan con `level null` (sin definir). `checks/schema-che
 
 ## Estimación
 
-**16 h**: migración, schema y checks 1 h; nivel en backend (validación, modelo, plantillas) 2 h; plantilla inicial en backend (validación, invitación, alta) 3 h; nivel en la web (editor, ficha, alumno) 2 h; campo de plantilla al invitar 2,5 h; tests backend y web 3 h; docs 1 h; navegador y capturas 1,5 h.
+**17 h**: migración, schema y checks 1 h; nivel en backend (validación, modelo, plantillas) 2 h; plantilla inicial en backend (validación, invitación, alta) 3 h; aviso al PT si falla 1 h; nivel en la web (editor, ficha, alumno) 2 h; campo de plantilla al invitar 2,5 h; tests backend y web 3 h; docs 1 h; navegador y capturas 1,5 h.
 
 ## Fuera de alcance
 

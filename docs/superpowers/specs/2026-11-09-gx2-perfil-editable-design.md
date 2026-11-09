@@ -16,7 +16,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 | 2 | Se **amplía** `PATCH /students/:id` con permisos por rol (no un endpoint aparte): el alumno, sobre sí mismo, solo `name` y `phone`; cualquier otro campo → `403 FORBIDDEN` ("Solo podés cambiar tu nombre, teléfono y foto"). El PT sigue con todo y suma `phone`. |
 | 3 | Teléfono: columna nueva `students.phone varchar(30)`, opcional; 6 a 30 caracteres entre dígitos, espacios, `+ - ( )`. Se copia de la invitación al alta y se rellena para los alumnos existentes desde su invitación usada. |
 | 4 | Foto: endpoint propio `PUT /students/:id/avatar` (multipart, `image`) y `DELETE /students/:id/avatar`, solo el propio alumno. |
-| 5 | Bucket **público** `avatars` (no firmado como el chat): `avatar_url` se usa en listas, contraparte y sidebar, y firmar en cada lectura es caro; la ruta lleva un uuid (`students/<id>/<uuid>.<ext>`), no se adivina. Se guarda la URL pública en `avatar_url`; la foto anterior se borra en best-effort. |
+| 5 | Bucket **privado** `avatars` con **URLs firmadas por lote**, como las fotos del chat (`createSignedUrls` en `message-images.repository.js`): Pablo pidió que no cualquiera con el link vea las fotos (09/11). En `avatar_url` se guarda la **ruta** (`students/<id>/<uuid>.<ext>`), no una URL. Cada respuesta que devuelve avatares (lista de alumnos, ficha, contraparte, `/auth/me`) los firma **en una sola llamada por respuesta** (`signAvatars(rows)`), con vencimiento de 24 h y una caché en memoria por ruta de 23 h (no se vuelve a firmar en cada pedido). Sin sesión no se ven; un link filtrado deja de andar al día siguiente. La foto anterior se borra en best-effort. |
 | 6 | La web achica la foto antes de subirla: lado mayor 512 px, JPEG 0,85 (canvas). El backend igual valida firma y 5 MB. |
 | 7 | Título profesional: columna nueva `trainers.professional_title varchar(80)`, opcional, **no** en el registro. No se reusa `specialty` (es el foco de trabajo, no el título). |
 | 8 | El PT lo edita en su Configuración de cuenta (`/pt/cuenta`, de GX1), junto con su nombre, con `GET /auth/me` y `PATCH /auth/me` (solo trainer). |
@@ -41,7 +41,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 - `validateUpdateStudent` acepta `phone` (`null` o el formato de la decisión 3).
 - `students.service.update(user, id, fields)`: hoy corta a todo lo que no sea trainer; pasa a: trainer como hoy; alumno → `assertCanAccessStudent` (solo sí mismo) y `STUDENT_SELF_EDITABLE = ['name', 'phone']`. La ruta pasa a `requireRole('trainer', 'student')`.
 - `services/students/avatar.service.js`: `setAvatar(user, id, file)` (solo el propio alumno; sin archivo → 400; `detectImageType` o `IMAGE_TYPE_INVALID`; sube, guarda `avatar_url`, borra la anterior si es del bucket; si guardar falla, borra la subida) y `removeAvatar(user, id)`.
-- `repositories/students/avatars.repository.js` (`upload`, `remove`, `publicUrl`) con `AVATARS_BUCKET` en `models/students/avatar.model.js` (`pathFromUrl` puro).
+- `repositories/students/avatars.repository.js` (`upload`, `remove`, `signPaths(paths)` con `createSignedUrls`) con `AVATARS_BUCKET`, `AVATAR_URL_SECONDS = 86400` y la caché (`models/students/avatar.model.js`, puro: qué rutas faltan firmar y cuáles vencen). `services/students/avatar-urls.service.js`: `signAvatars(rows, key = 'avatar_url')` reemplaza la ruta por la URL firmada (o `null`) en todas las filas con una sola llamada.
 - `students.repository.js` está en **200 líneas**: `createStudent` se muda a `repositories/students/student-create.repository.js` y suma `phone`; `registerFromInvitation` pasa `invitation.student_phone`.
 - `services/auth/profile.service.js` (`getMe`, `updateMe`), `controllers/auth/profile.controller.js`, `validations/auth/profile.validation.js` (`name` 2–100, `professional_title` `null` o 2–80, recortado; al menos uno), `auth.repository.updateTrainer(id, fields)`.
 - `messages.service.counterpartOf`: para el alumno, `toTrainerPerson(trainer)` (= `toPublicPerson` + `professional_title`).
@@ -53,7 +53,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 - `DELETE /students/:id/avatar` → 204 (idempotente).
 - `GET /auth/me` y `PATCH /auth/me` (trainer) → `{ data: { id, name, email, specialty, professional_title, avatar_url, password_changed_at, created_at } }`.
 - `GET /students/:id` y el login del alumno suman `phone`; los del PT, `professional_title`. `GET /messages/:studentId` (rol alumno): `counterpart.professional_title`.
-- Migración `2026-11-09-profile-editable.sql`: `students.phone`, backfill (`update students s set phone = i.student_phone from invitations i where i.student_email = s.email and i.used_at is not null and s.phone is null`, la invitación usada más reciente), `trainers.professional_title`, bucket `avatars` (`public = true`, 5 MB, JPEG/PNG/WebP, `on conflict do nothing`). Igual en `schema/01-auth.sql`, `02-students.sql` y `06b-messages.sql` (donde ya vive el otro bucket).
+- Migración `2026-11-09-profile-editable.sql`: `students.phone`, backfill (`update students s set phone = i.student_phone from invitations i where i.student_email = s.email and i.used_at is not null and s.phone is null`, la invitación usada más reciente), `trainers.professional_title`, bucket `avatars` (`public = false`, 5 MB, JPEG/PNG/WebP, `on conflict do nothing`). Igual en `schema/01-auth.sql`, `02-students.sql` y `06b-messages.sql` (donde ya vive el otro bucket).
 - Contrato y modelo de datos actualizados.
 
 ## Archivos que toca
@@ -95,7 +95,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 
 ## Estimación
 
-**21 h**: migración, bucket y backfill 1 h; PATCH por rol y teléfono 1,5 h; split del repo y teléfono al alta 1 h; foto (service, repo, rutas) 2,5 h; `/auth/me` 1,5 h; contraparte 0,5 h; tests backend 3,5 h; `Avatar` con foto y resize 1,5 h; Mi perfil editable 2,5 h; perfil del PT y `TrainerCard` 1,5 h; ficha (teléfono) 0,5 h; tests web 2,5 h; docs 0,5 h; navegador y capturas 1 h.
+**22,5 h**: migración, bucket y backfill 1 h; PATCH por rol y teléfono 1,5 h; split del repo y teléfono al alta 1 h; foto (service, repo, rutas) 2,5 h; firma por lote y caché 1,5 h; `/auth/me` 1,5 h; contraparte 0,5 h; tests backend 3,5 h; `Avatar` con foto y resize 1,5 h; Mi perfil editable 2,5 h; perfil del PT y `TrainerCard` 1,5 h; ficha (teléfono) 0,5 h; tests web 2,5 h; docs 0,5 h; navegador y capturas 1 h.
 
 ## Fuera de alcance
 
@@ -107,7 +107,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 ## Tarjetas para el celular (Igna)
 
 1. **Mi perfil editable (alumno):** `PATCH /students/:id` con `{ name, phone }` (403 si manda otro campo); `PUT /students/:id/avatar` multipart `image` (cámara o galería, achicada a 512 px) y `DELETE /students/:id/avatar`.
-2. **Mostrar fotos:** `avatar_url` es una URL pública (sin token): cargarla con Coil donde hoy hay iniciales, empezando por el perfil y la cabecera.
+2. **Mostrar fotos:** `avatar_url` llega ya firmada (vence a las 24 h): cargarla con Coil donde hoy hay iniciales, empezando por el perfil y la cabecera. No guardarla en Room más que la sesión: al volver a pedir la lista llega firmada de nuevo.
 3. **Título del entrenador:** mostrar `counterpart.professional_title` de `GET /messages/:studentId` en la tarjeta del entrenador del alumno.
 4. **Configuración del PT:** `GET /auth/me` y `PATCH /auth/me` con `{ name, professional_title }`.
 5. **Ficha del PT:** mostrar `phone` del alumno con acción "Abrir WhatsApp".
