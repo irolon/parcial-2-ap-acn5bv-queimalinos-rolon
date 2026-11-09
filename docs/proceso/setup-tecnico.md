@@ -270,6 +270,23 @@ docker compose up --build
 
 La API queda en `http://localhost:3001`. Si el puerto está ocupado: `API_PORT=3002 docker compose up --build`. Los archivos son `docker-compose.yml` (desarrollo) y `docker-compose.prod.yml` (VPS).
 
+### n8n (asistentes IA)
+
+Los asistentes de IA (entrenador y alumno) pasan por n8n, que corre como otro servicio del mismo `docker-compose.yml` (imagen `n8nio/n8n:2.45.3`, editor en `http://localhost:5678`).
+
+```bash
+# Una sola vez: crear la configuración (los valores del ejemplo sirven; N8N_ENCRYPTION_KEY es opcional, ver n8n/README.md)
+cp n8n/.env.example n8n/.env
+
+docker compose up -d n8n
+curl -s -o /dev/null -w "%{http_code}" http://localhost:5678/healthz   # 200
+
+# Una sola vez: importar los dos workflows (en Git Bash anteponé MSYS_NO_PATHCONV=1)
+docker compose exec n8n n8n import:workflow --separate --input=/workflows
+```
+
+Las credenciales (`FitTrainer webhook` y `LLM`, con la key del proveedor del modelo: KIMI por defecto) **se crean a mano** en el editor: no viajan en los workflows. El paso a paso, el puerto (`N8N_PORT`) y cómo actualizar la versión están en `n8n/README.md`. Con la API dentro de Docker, `backend/.env` apunta a `http://n8n:5678/webhook/trainer-ia` y `http://n8n:5678/webhook/student-ia`; con la API nativa, a `http://localhost:5678/webhook/...`.
+
 ---
 
 ## 11. Scripts del backend

@@ -21,6 +21,10 @@ export const MAX_TEMPLATE_NAME = 120;
 /** Ejercicios de la biblioteca que viajan a n8n y plantillas previas de contexto. */
 export const LIBRARY_LIMIT = 200;
 export const PREVIOUS_TEMPLATES = 3;
+/** Historial del alumno que viaja a n8n: ventana en días, ejercicios del resumen y rutinas previas. */
+export const HISTORY_DAYS = 28;
+export const HISTORY_EXERCISES = 15;
+export const PREVIOUS_ROUTINES = 3;
 
 /** Segundos hasta que la generación más vieja de la ventana salga de ella (mínimo 1). */
 export function retryAfterSeconds(oldestCreatedAt, now = new Date()) {

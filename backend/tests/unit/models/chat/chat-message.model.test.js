@@ -10,9 +10,9 @@ import {
 } from '../../../../src/models/chat/chat-message.model.js';
 
 describe('chat-message.model', () => {
-  it('límites del spec: 20 por día, historial de 6, 30 alternativas, 3 sugerencias, 9 s', () => {
+  it('límites del spec: 20 por día, historial de 6, 30 alternativas, 3 sugerencias; corte a n8n de 16 s', () => {
     expect([CHAT_DAILY_LIMIT, HISTORY_SIZE, ALTERNATIVES_LIMIT, MAX_SUGGESTIONS]).toEqual([20, 6, 30, 3]);
-    expect(CHAT_WEBHOOK_TIMEOUT_MS).toBe(9000);
+    expect(CHAT_WEBHOOK_TIMEOUT_MS).toBe(16000);
   });
 
   describe('chatDayBounds: el día de Argentina (UTC-3) en UTC, fin exclusivo', () => {

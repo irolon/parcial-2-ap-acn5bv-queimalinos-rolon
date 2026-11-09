@@ -3,6 +3,9 @@ import { normalizeEquipment } from '../../models/exercises/equipment.model.js';
 import * as sessionsRepository from '../../repositories/sessions/sessions.repository.js';
 import * as exercisesRepository from '../../repositories/exercises/exercises.repository.js';
 import * as contextRepository from '../../repositories/chat/chat-context.repository.js';
+import * as routinesRepository from '../../repositories/routines/routines.repository.js';
+import { dayName } from '../../models/routines/routine.model.js';
+import { pickWorkingRoutine, toTodaysRoutine, routineExerciseIds } from '../../models/chat/todays-routine.model.js';
 
 const BODYWEIGHT = 'bodyweight';
 
@@ -33,16 +36,31 @@ export async function findCurrentExercise(student, exerciseId) {
 const gymEquipmentOf = (student) => normalizeEquipment(student.gym_equipment).codes;
 
 /**
+ * La rutina que está haciendo el alumno: la de hoy (día de Argentina) si tiene el ejercicio actual;
+ * si no, la activa que lo tenga. Las demás rutinas solo se leen cuando hace falta buscarlas.
+ */
+async function findWorkingRoutine(studentId, currentExerciseId, now) {
+  const today = await routinesRepository.findActiveRoutineForStudentToday(studentId, dayName(now));
+  const todayHasIt = today && routineExerciseIds(today).includes(currentExerciseId);
+  const active = currentExerciseId && !todayHasIt ? await routinesRepository.findActiveRoutinesForStudent(studentId) : [];
+  return pickWorkingRoutine({ today, active, currentExerciseId });
+}
+
+/**
  * Contexto para n8n, sin datos personales (RNF-26: ni nombre, email, nacimiento, avatar ni
  * ids del alumno). `alternatives`: hasta 30 ejercicios accesibles del grupo del ejercicio
- * actual (de todos si no hay), con equipamiento del gimnasio del alumno o bodyweight.
+ * actual (de todos si no hay), con equipamiento del gimnasio del alumno o bodyweight, sin el
+ * ejercicio actual ni los de su rutina. `todays_routine`: los ejercicios de esa rutina (sin su
+ * nombre ni notas) con el actual marcado, o null si no tiene.
  */
-export async function buildChatContext(student, exercise) {
+export async function buildChatContext(student, exercise, now = new Date()) {
   const gymEquipment = gymEquipmentOf(student);
+  const routine = await findWorkingRoutine(student.id, exercise?.id ?? null, now);
+  const excludeIds = [...new Set([...(exercise ? [exercise.id] : []), ...routineExerciseIds(routine)])];
   const alternatives = await contextRepository.findAlternatives(student.trainer_id ?? null, {
     equipment: [...new Set([...gymEquipment, BODYWEIGHT])],
     muscleGroup: exercise?.muscle_group ?? null,
-    excludeId: exercise?.id ?? null,
+    excludeIds,
   });
   return {
     exercise: exercise
@@ -55,5 +73,6 @@ export async function buildChatContext(student, exercise) {
       injuries: student.injuries?.trim() || null,
     },
     alternatives,
+    todays_routine: toTodaysRoutine(routine, exercise?.id ?? null),
   };
 }

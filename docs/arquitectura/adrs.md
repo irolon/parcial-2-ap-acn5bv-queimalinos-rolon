@@ -336,6 +336,63 @@ Originalmente la gamificación (logros, rachas, badges) estaba planeada como fun
 
 ---
 
+## ADR-008 — Contexto de la IA desde la base (sin vectores) y modelo configurable
+
+**Estado:** 🟢 Aceptado
+
+**Fecha:** 08/11/2026
+
+**Decidido por:** Ignacio Rolon
+
+Complementa el ADR-004, más arriba (n8n como middleware con dos workflows); no lo reemplaza. Spec: `docs/superpowers/specs/2026-11-08-ia-n8n-nvidia-contexto-design.md`.
+
+### Contexto
+
+Los dos workflows de IA (`trainer-ia` y `student-ia`) ya existían, con KIMI (Moonshot) como modelo, pero faltaban tres cosas:
+
+1. n8n no tenía dónde correr en el entorno de desarrollo.
+2. KIMI es pago y en esta etapa se quería usar una API gratuita (ver la actualización del 09/11 en la decisión).
+3. La IA sabía poco del alumno: el profe recibía una rutina armada con el perfil, la biblioteca y las plantillas recientes, pero la IA no sabía qué venía entrenando el alumno ni qué rutina tiene ahora, y el chat no sabía qué rutina le toca hoy.
+
+Se pidió "RAG" para darle más contexto. Hay que decidir cómo llega ese contexto a la IA.
+
+### Opciones evaluadas
+
+| Opción | Pros | Contras |
+|---|---|---|
+| RAG con vectores (pgvector o embeddings) | Escala a texto libre y a mucho volumen | Infraestructura y complejidad de más para datos que ya son ordenados y entran en el prompt |
+| n8n lee Supabase con la `service_role` | El backend no cambia | n8n necesita credenciales de la base, el ownership se saltea (la `service_role` ignora el RLS) y las consultas se duplican fuera del código con tests |
+| **El backend arma el contexto desde la base y se lo manda a n8n** | n8n sin credenciales de la base, selección de datos en JS con tests y lint, ownership en los services, sin consultas duplicadas | El pedido a n8n crece |
+
+### Decisión
+
+**El "RAG" es contexto leído de la base, sin vectores.** El backend verifica el ownership, lee el perfil, el historial, la rutina y la biblioteca, y se los manda a n8n en el pedido. n8n arma el prompt, llama al modelo y parsea el JSON.
+
+**Modelo configurable.** El modelo es cualquiera con API compatible con OpenAI. La URL, el modelo y los campos extra del pedido van por variables de n8n (`LLM_BASE_URL`, `LLM_TRAINER_MODEL`, `LLM_STUDENT_MODEL`, `LLM_EXTRA_BODY`) y la key en la credencial `LLM`. Se decidió NVIDIA (build.nvidia.com, gratis) por defecto; la prueba real lo cambió a KIMI (ver la actualización de abajo).
+
+**Actualización 09/11/2026.** En la prueba real (Tarea 7b), la capa gratis de NVIDIA no sirvió: los modelos elegidos estaban saturados (no contestaban ni un "hola" en 150 s) y el único rápido (`nemotron-3.5-lightning`) armaba mal 7 de cada 10 rutinas. Igna decidió volver a **KIMI** (Moonshot, prepago) como proveedor por defecto, con `kimi-k3.1-pro` y el razonamiento apagado (`LLM_EXTRA_BODY`), porque pensando gasta más tokens y no llega a los tiempos del backend. NVIDIA queda como alternativa gratis, configurable sin tocar código.
+
+### Justificación
+
+- Los datos son ordenados (tablas de Supabase) y entran en el prompt, así que los vectores no aportan.
+- n8n no necesita credenciales de la base.
+- La selección de datos queda en JS, con tests y lint.
+- El ownership queda en los services, como en el resto del backend.
+- No se duplican consultas: el backend ya lee esos datos para el resto de la API.
+- Cambiar de proveedor o de modelo es cambiar variables en `n8n/.env` y la credencial `LLM`, sin tocar código.
+
+### Consecuencias
+
+- ➕ n8n sin acceso a la base; el perfil y el historial salen solo por el pedido del backend.
+- ➕ El prompt y el modelo se siguen cambiando sin redeploy del backend.
+- ➖ El pedido a n8n crece (historial, rutina actual y rutinas recientes del profe para otros alumnos (`previous_routines`) en `trainer-ia`; rutina de hoy en `student-ia`).
+- ➖ Cambiar qué datos se mandan requiere tocar el backend (con su redeploy), aunque el prompt y el modelo no.
+- ➖ El perfil y las lesiones del alumno viajan al proveedor del modelo: antes de usar datos reales hay que revisar los términos de uso de la API elegida.
+- ➖ KIMI es pago: cada rutina y cada mensaje del chat consumen saldo, y una cuenta nueva de Moonshot arranca con un tope de 3 pedidos por minuto (sube con el saldo cargado).
+- ➕ Si más adelante aparece texto libre (PDFs, notas largas), se puede sumar pgvector sin rehacer nada de esto.
+
+---
+
 ## ADR del repo
 
 Decisiones registradas como archivos en `docs/adr/` (numeración propia, distinta de la de arriba):

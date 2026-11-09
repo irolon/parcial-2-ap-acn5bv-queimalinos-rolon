@@ -2,7 +2,8 @@ import { supabase } from '../../config/supabase.js';
 import { unwrap } from '../../shared/utils/supabase-query.js';
 import { EXERCISES_TABLE } from '../../models/exercises/exercise.model.js';
 import { ROUTINE_TEMPLATES_TABLE } from '../../models/routine-templates/routine-template.model.js';
-import { LIBRARY_LIMIT, PREVIOUS_TEMPLATES } from '../../models/trainer-ai/ai-generation.model.js';
+import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
+import { LIBRARY_LIMIT, PREVIOUS_TEMPLATES, PREVIOUS_ROUTINES } from '../../models/trainer-ai/ai-generation.model.js';
 
 /**
  * Biblioteca que viaja a n8n: ejercicios globales y propios del trainer cuyo
@@ -42,4 +43,18 @@ export async function findRecentTemplates(trainerId) {
       .order('created_at', { ascending: false })
       .limit(PREVIOUS_TEMPLATES)
   );
+}
+
+/**
+ * Las rutinas más recientes del trainer con ese objetivo (activas o no), sin el nombre ni el alumno:
+ * solo goal, días y nombres de ejercicio. `excludeStudentId` deja afuera las del alumno en curso.
+ */
+export async function findRecentRoutines(trainerId, { goal, excludeStudentId = null }) {
+  let query = supabase
+    .from(ROUTINES_TABLE)
+    .select('goal, days, routine_exercises ( order_index, exercise:exercise_id ( name ) )')
+    .eq('trainer_id', trainerId)
+    .eq('goal', goal);
+  if (excludeStudentId) query = query.neq('student_id', excludeStudentId);
+  return unwrap(await query.order('created_at', { ascending: false }).limit(PREVIOUS_ROUTINES));
 }

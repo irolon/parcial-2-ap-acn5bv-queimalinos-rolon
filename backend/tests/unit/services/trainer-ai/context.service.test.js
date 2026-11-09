@@ -141,8 +141,16 @@ describe('trainer-ai · context.service · buildContext', () => {
       goal: 'strength',
       level: null,
       days: ['friday'],
-      exercises: [{ exercise_id: EX2, exercise_name: 'Flexiones', sets: 3, reps: 12, rest_seconds: 60, suggested_kg: null, notes: null }],
+      exercises: [{ exercise_id: EX2, exercise_name: 'Flexiones', sets: 3, reps: 12, rest_seconds: 60, suggested_kg: null }],
     });
+  });
+
+  it('base_template sin las notas de los ejercicios (texto libre del PT; RNF-26)', async () => {
+    const exercises = [{ exercise_id: EX2, sets: 3, reps: 12, notes: 'Juan Pérez: cuidar la rodilla izquierda' }];
+    mockTemplatesService.getOwnedTemplate.mockResolvedValue({ id: TEMPLATE_ID, ...TEMPLATE, structure: { days: ['friday'], exercises } });
+    const context = await contextService.buildContext(TRAINER_ID, PARAMS, TEMPLATE_ID);
+    expect(context.base_template.exercises[0]).not.toHaveProperty('notes');
+    expect(JSON.stringify(context.base_template)).not.toContain('Juan');
   });
 
   describe('la biblioteca incluye los ejercicios de la plantilla base', () => {
