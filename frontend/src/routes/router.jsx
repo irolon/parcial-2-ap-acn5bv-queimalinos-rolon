@@ -2,6 +2,7 @@ import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import TrainerAccountPage from '@/pages/account/TrainerAccountPage';
 import AgendaPage from '@/pages/agenda/AgendaPage';
 import ChallengesPage from '@/pages/challenges/ChallengesPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
@@ -31,6 +32,7 @@ import {
   STUDENT_NAV,
   STUDENT_PROFILE,
   STUDENT_ROUTINE,
+  TRAINER_ACCOUNT,
   TRAINER_NAV,
   WORKOUT_PATH,
 } from './routeTable';
@@ -79,6 +81,11 @@ export const routes = [
     },
     { path: STUDENT_PROFILE.path, element: <StudentProfilePage /> },
     { path: NEW_ROUTINE.path, element: <RoutineEditorPage /> },
+    {
+      path: TRAINER_ACCOUNT.path,
+      handle: { title: TRAINER_ACCOUNT.title, subtitle: TRAINER_ACCOUNT.subtitle },
+      element: <TrainerAccountPage />,
+    },
   ], {
     dashboard: <DashboardPage />,
     agenda: <AgendaPage />,

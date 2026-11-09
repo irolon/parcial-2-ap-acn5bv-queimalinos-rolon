@@ -9,6 +9,7 @@ import {
   STUDENT_NAV,
   STUDENT_PROFILE,
   STUDENT_ROUTINE,
+  TRAINER_ACCOUNT,
   TRAINER_NAV,
   WORKOUT_PATH,
   homeFor,
@@ -56,6 +57,11 @@ describe('tabla de rutas', () => {
     expect(NEW_ROUTINE.path).toBe('/pt/rutinas/nueva');
     expect(newRoutineHref()).toBe('/pt/rutinas/nueva');
     expect(newRoutineHref('st-1')).toBe('/pt/rutinas/nueva?alumno=st-1');
+  });
+
+  it('la cuenta del PT queda fuera de su menú', () => {
+    expect(TRAINER_ACCOUNT).toEqual({ path: '/pt/cuenta', title: 'Tu cuenta', subtitle: 'CONTRASEÑA Y DATOS' });
+    expect(TRAINER_NAV.items.map((i) => i.path)).not.toContain('cuenta');
   });
 
   it('da la home de cada rol', () => {

@@ -63,6 +63,9 @@ export const NEW_STUDENT = {
   subtitle: 'ALUMNOS › NUEVO · GENERÁ QR Y COMPARTILO POR WHATSAPP',
 };
 
+/** Cuenta del PT (contraseña y exportación): fuera del menú, se entra con "Configuración" del sidebar. */
+export const TRAINER_ACCOUNT = { path: `${TRAINER_NAV.base}/cuenta`, title: 'Tu cuenta', subtitle: 'CONTRASEÑA Y DATOS' };
+
 /** Listado de rutinas (el ítem `rutinas` del menú del entrenador). */
 export const ROUTINES_PATH = `${TRAINER_NAV.base}/rutinas`;
 
