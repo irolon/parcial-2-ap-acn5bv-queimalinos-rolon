@@ -588,13 +588,24 @@ Los campos de más se descartan.
   },
   "library": [ { "id": "uuid", "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" } ],
   "previous_templates": [ { "goal": "…", "level": "… | null", "days": ["monday"], "exercise_names": ["…"] } ],
-  "base_template": null
+  "base_template": null,
+  "previous_routines": [ { "goal": "hypertrophy", "days": ["monday"], "exercise_names": ["…"] } ],
+  "student_history": {
+    "sessions_per_week": 2.5, "days_since_last_session": 3, "avg_rpe": 7.5,
+    "exercises": [ { "exercise_id": "uuid", "exercise_name": "Press banca plano", "muscle_group": "chest",
+      "sessions": 4, "best_set": { "kg": 40, "reps": 8 }, "last_kg": 40 } ]
+  },
+  "current_routine": [ { "goal": "hypertrophy", "days": ["monday", "thursday"],
+    "exercises": [ { "exercise_name": "Press banca plano", "muscle_group": "chest", "sets": 4, "reps": 8, "suggested_kg": 40 } ] } ]
 }
 ```
 
 - `library`: ejercicios accesibles (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, hasta 200. Con `base_template_id` van además, primero y dentro de los 200, los ejercicios de la plantilla base que siguen accesibles (aunque su equipamiento no esté en la lista).
 - `previous_templates`: las 3 plantillas más recientes del trainer, sin su nombre (los PT suelen ponerle el del alumno).
 - `base_template`: `null`, o (sin el nombre de la plantilla ni las notas de sus ejercicios, que son texto libre del PT y pueden traer datos del alumno: RNF-26) `{ goal, level, days, exercises: [{ exercise_id, exercise_name, sets, reps, rest_seconds, suggested_kg }] }` si vino `base_template_id`.
+- `previous_routines`: las 3 rutinas más recientes del trainer con el mismo `goal`, de **otros** alumnos (sin la del alumno de la generación), sin nombre ni notas: `goal`, `days` y los nombres de los ejercicios en orden.
+- `student_history`: `null` sin `student_id`. Con alumno, el resumen de sus sesiones terminadas de los últimos 28 días: `sessions_per_week` (desde la primera sesión de la ventana, mínimo 1 semana), `days_since_last_session` (días de Argentina; `null` sin sesiones), `avg_rpe` (`null` sin RPE) y hasta 15 ejercicios, de más a menos sesiones, con `best_set` (la serie de más kilos; sin kilos, la de más reps) y `last_kg` (la carga de la última sesión). Sin sesiones: `{ "sessions_per_week": 0, "days_since_last_session": null, "avg_rpe": null, "exercises": [] }`. De acá sale el `suggested_kg`, con una progresión prudente.
+- `current_routine`: `null` sin `student_id`. Con alumno, sus rutinas activas (`[]` si no tiene), sin nombre ni notas: `goal`, `days` y los ejercicios en orden con `sets`, `reps` y `suggested_kg`.
 - `params.injuries` y `params.preferences` son **texto libre que se manda a la IA** tal cual (la IA necesita las lesiones). La UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales.
 
 **Respuesta esperada de n8n** (el backend la valida):
@@ -1214,13 +1225,15 @@ Envía un mensaje al asistente IA.
   "exercise": { "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" },
   "student": { "goal": "hypertrophy | null", "level": "beginner | null", "gym_equipment": ["dumbbell"], "injuries": "string | null" },
   "alternatives": [ { "id": "uuid", "name": "Press con mancuernas", "muscle_group": "chest", "equipment": "dumbbell" } ],
+  "todays_routine": [ { "exercise_name": "Press banca plano", "muscle_group": "chest", "sets": 4, "reps": 8, "suggested_kg": 40, "is_current": true } ],
   "history": [ { "role": "user", "content": "…" }, { "role": "assistant", "content": "…" } ]
 }
 ```
 
 - `exercise`: el ejercicio actual, o `null` si no vino o no es accesible.
 - `student.gym_equipment`: el de la ficha normalizado al catálogo (`barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`) y sin repetir: el texto libre se mapea igual que en el asistente del entrenador ("barra"→`barbell`, "Mancuernas"→`dumbbell`, etc.; `models/exercises/equipment.model.js`) y lo que no mapea no se manda. `injuries` recortado (vacío → `null`).
-- `alternatives`: hasta 30 ejercicios accesibles (globales y del PT del alumno) del mismo grupo muscular que `exercise` (de todos si es `null`), sin el ejercicio actual, cuyo equipamiento esté en `gym_equipment` o sea `bodyweight`; por nombre.
+- `alternatives`: hasta 30 ejercicios accesibles (globales y del PT del alumno) del mismo grupo muscular que `exercise` (de todos si es `null`), sin el ejercicio actual **ni los de `todays_routine`**, cuyo equipamiento esté en `gym_equipment` o sea `bodyweight`; por nombre.
+- `todays_routine`: los ejercicios de la rutina que el alumno está haciendo, en orden, sin el nombre de la rutina ni las notas (RNF-26), con `is_current` en el ejercicio actual; `null` si no tiene. La sesión llega al servidor recién al terminar, así que la rutina se deduce: la de hoy (día de Argentina) si tiene el ejercicio actual; si no, la activa más nueva que lo tenga; si ninguna, la de hoy.
 - `history`: los últimos 6 mensajes del día del alumno (antes de este), en orden.
 
 **Respuesta esperada de n8n** (el backend la valida):

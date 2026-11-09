@@ -274,6 +274,8 @@ La API queda en `http://localhost:3001`. Si el puerto está ocupado: `API_PORT=3
 
 Los asistentes de IA (entrenador y alumno) pasan por n8n, que corre como otro servicio del mismo `docker-compose.yml` (imagen `n8nio/n8n:2.45.3`, editor en `http://localhost:5678`).
 
+> **Hace falta Docker Compose 2.24 o más** (`docker compose version`). El servicio usa `env_file` con `path` y `required: false` para arrancar aunque no exista `n8n/.env`; con un Compose más viejo falla **todo** el `docker compose up`, también `api`. Docker Desktop actual ya lo trae.
+
 ```bash
 # Una sola vez: crear la configuración (los valores del ejemplo sirven; N8N_ENCRYPTION_KEY es opcional, ver n8n/README.md)
 cp n8n/.env.example n8n/.env

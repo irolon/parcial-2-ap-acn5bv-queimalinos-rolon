@@ -31,9 +31,26 @@ describe('summarizeHistory', () => {
       session(`s${i}`, i === 0 ? '2026-11-06T15:00:00Z' : `2026-10-${20 + i}T15:00:00Z`, rpe)
     );
     const out = run({ sessions });
-    expect(out.sessions_per_week).toBe(1.5);
+    expect(out.sessions_per_week).toBe(2.3); // 6 sesiones en los 18 días desde la primera (21/10)
     expect(out.days_since_last_session).toBe(2);
     expect(out.avg_rpe).toBe(7.5);
+  });
+
+  it('sesiones por semana: desde la primera de la ventana, con mínimo 1 semana y máximo 4', () => {
+    const recent = ['2026-11-03T15:00:00Z', '2026-11-05T15:00:00Z', '2026-11-07T15:00:00Z'];
+    expect(run({ sessions: recent.map((at, i) => session(`s${i}`, at)) }).sessions_per_week).toBe(3);
+    expect(run({ sessions: [session('s1', '2026-11-07T15:00:00Z')] }).sessions_per_week).toBe(1);
+    // La primera hace 34 días (no debería pasar, la consulta trae 28): se divide por las 4 semanas de la ventana.
+    const spread = Array.from({ length: 8 }, (_, i) => session(`s${i}`, new Date(NOW.getTime() - (34 - i * 3) * 86_400_000).toISOString()));
+    expect(run({ sessions: spread }).sessions_per_week).toBe(2);
+  });
+
+  it('días desde la última sesión en días de Argentina, no en tramos de 24 h', () => {
+    // Lunes 02/11 23:00 en Argentina (03/11 02:00 UTC) y la generación el martes 03/11 08:00 en Argentina.
+    const out = run({ sessions: [session('s1', '2026-11-03T02:00:00Z')], now: new Date('2026-11-03T11:00:00Z') });
+    expect(out.days_since_last_session).toBe(1);
+    const sameDay = run({ sessions: [session('s1', '2026-11-03T12:00:00Z')], now: new Date('2026-11-03T22:00:00Z') });
+    expect(sameDay.days_since_last_session).toBe(0);
   });
 
   it('el RPE y los kilos que vienen como string (numeric de Postgres) salen como número', () => {

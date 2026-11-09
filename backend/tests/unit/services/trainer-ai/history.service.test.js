@@ -60,7 +60,7 @@ describe('trainer-ai · history.service · buildStudentHistory', () => {
     expect(mockTemplatesRepo.findExercisesByIds).toHaveBeenCalledWith([EX1, EX2]);
     expect(mockProgressRepo.fetchLastSessionKg).toHaveBeenCalledWith(STUDENT_ID, [EX1, EX2]);
     expect(out).toEqual({
-      sessions_per_week: 0.5,
+      sessions_per_week: 2, // 2 sesiones desde el 02/11: menos de una semana, cuenta 1
       days_since_last_session: 2,
       avg_rpe: 7,
       exercises: [
@@ -90,7 +90,7 @@ describe('trainer-ai · history.service · buildStudentHistory', () => {
     ]);
     mockSessionHistoryRepo.findSetsForSessions.mockResolvedValue([set('ss-1', EX1, 50, 8, false)]);
     const out = await historyService.buildStudentHistory(STUDENT_ID, NOW);
-    expect(out).toEqual({ ...EMPTY, sessions_per_week: 0.3, days_since_last_session: 2 });
+    expect(out).toEqual({ ...EMPTY, sessions_per_week: 1, days_since_last_session: 2 });
     expect(mockTemplatesRepo.findExercisesByIds).not.toHaveBeenCalled();
     expect(mockProgressRepo.fetchLastSessionKg).not.toHaveBeenCalled();
   });
