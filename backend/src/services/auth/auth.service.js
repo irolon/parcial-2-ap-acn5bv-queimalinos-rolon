@@ -14,6 +14,7 @@ import * as pushTokensRepo from '../../repositories/notifications/push-tokens.re
 import { toTrainer } from '../../models/auth/trainer.model.js';
 import { toStudent } from '../../models/students/student.model.js';
 import { isActive } from '../../models/auth/refresh-token.model.js';
+import { signAvatars } from '../students/avatar-urls.service.js';
 
 /**
  * Emite un par de tokens (access + refresh) y persiste el refresh.
@@ -80,7 +81,8 @@ async function authenticateUser(password, row, toPublic, role) {
   // INVALID_CREDENTIALS, así no se revela que la cuenta existe y está de baja.
   if (role === 'student' && row.active === false) throw Errors.accountDisabled();
 
-  const user = toPublic(row); // descarta password_hash vía el modelo
+  // descarta password_hash vía el modelo; GX2: avatar_url sale firmada (o null).
+  const [user] = await signAvatars([toPublic(row)]);
   const tokens = await issueTokens(user, role);
   const account = {
     must_change_password: user.must_change_password === true,

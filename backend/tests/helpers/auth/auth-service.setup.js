@@ -34,6 +34,13 @@ jest.unstable_mockModule(
   () => mockPushTokensRepo
 );
 
+// GX2: el login firma la foto; por defecto no firma nada (avatar_url → null).
+export const mockAvatarsRepo = { signPaths: jest.fn(async () => new Map()) };
+jest.unstable_mockModule(
+  src('repositories/students/avatars.repository.js'),
+  () => mockAvatarsRepo
+);
+
 export const authService = await import(src('services/auth/auth.service.js'));
 export const { hashPassword } = await import(src('shared/utils/password.js'));
 export const { verifyAccessToken, hashToken } = await import(src('shared/utils/jwt.js'));

@@ -62,6 +62,13 @@ jest.unstable_mockModule(
   () => mockAppointmentsService
 );
 
+// GX2: las fotos se firman por lote; por defecto no firma nada (avatar_url → null).
+export const mockAvatarsRepo = { signPaths: jest.fn(async () => new Map()) };
+jest.unstable_mockModule(
+  src('repositories/students/avatars.repository.js'),
+  () => mockAvatarsRepo
+);
+
 export const service = await import(src('services/students/students.service.js'));
 
 export const VALID_INVITATION = {
@@ -87,6 +94,7 @@ export const STUDENT_ROW = {
   id: 'student-1',
   trainer_id: 'trainer-1',
   name: 'Ana',
+  avatar_url: null,
   active: true,
   gym_equipment: ['barbell'],
   injuries: null,

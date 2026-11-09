@@ -9,6 +9,7 @@ import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
+import { signAvatars } from './avatar-urls.service.js';
 import * as appointments from '../agenda/appointments.service.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
@@ -60,15 +61,17 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
       adherence_7d: adherence7d({ assignedDays, finishedDates: finishedDates.get(s.id), today, since, daySince }),
     };
   });
-  return { data, meta };
+  // GX2: avatar_url guarda la ruta; se firma toda la página en una llamada.
+  return { data: await signAvatars(data), meta };
 }
 
 /** Arma la ficha: fila del alumno + última medida (con IMC) + rutina activa + última sesión. */
-async function buildDetail(student) {
-  const [latestMetrics, activeRoutine, lastSessions] = await Promise.all([
-    latestForStudent(student.id),
-    routinesRepo.findActiveRoutineSummary(student.id),
-    studentsRepo.findLastSessionDates([student.id]),
+async function buildDetail(row) {
+  const [[student], latestMetrics, activeRoutine, lastSessions] = await Promise.all([
+    signAvatars([row]),
+    latestForStudent(row.id),
+    routinesRepo.findActiveRoutineSummary(row.id),
+    studentsRepo.findLastSessionDates([row.id]),
   ]);
   return {
     ...student,
