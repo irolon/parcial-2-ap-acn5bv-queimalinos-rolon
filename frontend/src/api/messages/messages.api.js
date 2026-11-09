@@ -23,6 +23,16 @@ export function getMessages(studentId, { before } = {}) {
   return request(`${base(studentId)}${query}`);
 }
 
+/**
+ * Con quién habla el que pide en la conversación de `studentId`: `{ id, name, avatar_url }` (para el alumno, su
+ * entrenador/a, sin email). Sale de GET /messages/:studentId?limit=1, el único endpoint que hoy lo da; es un GET,
+ * así que no marca nada como leído. `null` si el backend no lo manda.
+ */
+export async function getCounterpart(studentId) {
+  const res = await request(`${base(studentId)}?limit=1`);
+  return res.counterpart ?? null;
+}
+
 /** POST /messages/:studentId (multipart) → mensaje creado. Hace falta `body` o `file`. */
 export async function sendMessage(studentId, { body, file } = {}) {
   const form = new FormData();
