@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jsonResponse } from '../../../../helpers/shared/fetchMock';
+import { setupUser } from '../../../../helpers/shared/user';
 import { metric, studentDetail } from '../../../../helpers/students/fixtures';
 import { callsWith, loadProfile } from '../../../../helpers/students/profile';
 
@@ -48,5 +49,15 @@ describe('StudentProfilePage: borrar medida', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(callsWith(fetchMock, 'DELETE')).toHaveLength(0);
+  });
+
+  it('un doble click en Borrar manda un solo DELETE', async () => {
+    const user = setupUser();
+    const deleteMetric = vi.fn(async () => jsonResponse(204));
+    const { fetchMock } = await loadProfile({ detail: studentDetail(), metrics: [metric({ id: 'm-a' })], handlers: { deleteMetric } });
+    await user.click(await screen.findByRole('button', { name: /Borrar medida del/ }));
+    await user.dblClick(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Borrar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(callsWith(fetchMock, 'DELETE')).toHaveLength(1);
   });
 });

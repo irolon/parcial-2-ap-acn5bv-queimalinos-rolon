@@ -14,7 +14,7 @@ import WeeklyVolumeCard from './WeeklyVolumeCard';
 const EMPTY = {
   icon: TrendingUp,
   title: 'Todavía no hay entrenamientos registrados',
-  text: 'Después de 3 entrenamientos vas a ver tu progresión acá.',
+  text: 'Después de 3 entrenamientos aparece la progresión acá.',
 };
 
 /** El más reciente con datos suficientes para la curva; si ninguno llega, el más reciente. */

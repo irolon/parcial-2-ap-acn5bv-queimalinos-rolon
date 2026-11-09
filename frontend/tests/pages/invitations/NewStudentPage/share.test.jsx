@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import {
   PAGE_PATH,
@@ -56,7 +56,7 @@ describe('NewStudentPage: compartir', () => {
 
   it('Copiar link escribe el link en el portapapeles y muestra "¡Copiado!" por 2 s', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const user = setupUser({ advanceTimers: vi.advanceTimersByTime });
     const writeText = vi.spyOn(navigator.clipboard, 'writeText');
     await generate(user);
     await user.click(page().getByRole('button', { name: 'Copiar link' }));
@@ -68,7 +68,7 @@ describe('NewStudentPage: compartir', () => {
 
   it('si no se puede copiar, avisa "No se pudo copiar, copialo a mano" por 2 s', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const user = setupUser({ advanceTimers: vi.advanceTimersByTime });
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
     await generate(user);
     await user.click(page().getByRole('button', { name: 'Copiar link' }));
@@ -80,7 +80,7 @@ describe('NewStudentPage: compartir', () => {
   it('WhatsApp abre whatsapp_share_url en una pestaña nueva sin opener', async () => {
     const open = vi.fn();
     vi.stubGlobal('open', open);
-    const user = userEvent.setup();
+    const user = setupUser();
     await generate(user);
     await user.click(page().getByRole('button', { name: 'WhatsApp' }));
     expect(open).toHaveBeenCalledWith(INVITATION.whatsapp_share_url, '_blank', 'noopener,noreferrer');
@@ -99,7 +99,7 @@ describe('NewStudentPage: compartir', () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function click() {
       clicks.push({ href: this.href, download: this.download });
     });
-    const user = userEvent.setup();
+    const user = setupUser();
     await generate(user);
     await user.click(page().getByRole('button', { name: 'Descargar' }));
     expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
@@ -110,7 +110,7 @@ describe('NewStudentPage: compartir', () => {
     let release;
     HTMLImageElement.prototype.decode = () => new Promise((resolve) => { release = resolve; });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    const user = userEvent.setup();
+    const user = setupUser();
     await generate(user);
     await user.click(page().getByRole('button', { name: 'Descargar' }));
     expect(HTMLCanvasElement.prototype.toDataURL).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe('NewStudentPage: compartir', () => {
   });
 
   it('Generar otro limpia el formulario y vuelve al estado vacío', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     await generate(user);
     await user.click(page().getByRole('button', { name: 'Generar otro' }));
     expect(page().getByText('Completá los datos y generá el QR')).toBeInTheDocument();

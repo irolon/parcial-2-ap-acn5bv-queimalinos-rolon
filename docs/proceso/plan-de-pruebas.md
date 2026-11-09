@@ -102,7 +102,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 
 ### 3.3 Pruebas End-to-End (E2E)
 
-**Herramientas:** Playwright (web), pruebas manuales guiadas y Espresso (Android)
+**Herramientas:** pruebas manuales guiadas en el navegador (web; Playwright quedó descartado, ver la spec de la tarjeta 53) y Espresso (Android). Resultado de la web, con los flujos críticos, las condiciones feas y los bugs: [`pruebas-web.md`](pruebas-web.md).
 
 | ID | Flujo | Plataforma | Resultado esperado |
 |---|---|---|---|

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import { useDeleteMetric } from '@/hooks/body-metrics/useBodyMetrics';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { formatMetricDate } from '@/utils/body-metrics/metrics';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
@@ -13,6 +14,7 @@ export default function DeleteMetricDialog({ studentId, metric, onClose, focusAf
   const [error, setError] = useState(null);
   const remove = useDeleteMetric(studentId);
   const deleted = useRef(false);
+  const lock = useSubmitLock();
   const afterClose = (event) => {
     if (!deleted.current || !focusAfterDelete?.current) return;
     event.preventDefault();
@@ -20,7 +22,6 @@ export default function DeleteMetricDialog({ studentId, metric, onClose, focusAf
   };
 
   async function handleDelete() {
-    if (remove.isPending) return;
     setError(null);
     try {
       await remove.mutateAsync(metric.id);
@@ -43,7 +44,7 @@ export default function DeleteMetricDialog({ studentId, metric, onClose, focusAf
           <Button variant="ghost" onClick={onClose} disabled={remove.isPending}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={handleDelete} loading={remove.isPending}>
+          <Button variant="danger" onClick={() => lock(handleDelete)} loading={remove.isPending}>
             Borrar
           </Button>
         </>

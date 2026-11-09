@@ -3,7 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DeleteChallengeDialog from '@/components/challenges/dialogs/DeleteChallengeDialog';
-import { errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
+import { calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
+import { user } from '../../../helpers/shared/user';
 import { challenge, stubChallengesApi } from '../../../helpers/challenges/challenges';
 
 afterEach(() => {
@@ -12,7 +13,7 @@ afterEach(() => {
 });
 
 function setup(remove) {
-  stubChallengesApi({ remove });
+  const fetchMock = stubChallengesApi({ remove });
   const queryClient = new QueryClient();
   const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
   const onClose = vi.fn();
@@ -21,7 +22,7 @@ function setup(remove) {
       <DeleteChallengeDialog challenge={challenge()} onClose={onClose} />
     </QueryClientProvider>,
   );
-  return { invalidate, onClose };
+  return { fetchMock, invalidate, onClose };
 }
 
 const confirm = () => userEvent.click(screen.getByRole('button', { name: 'Borrar' }));
@@ -48,5 +49,12 @@ describe('DeleteChallengeDialog', () => {
     await confirm();
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos borrar el desafío');
     expect(invalidatedKeys(invalidate)).toEqual([]);
+  });
+
+  it('un doble click en Borrar manda un solo DELETE', async () => {
+    const { fetchMock, onClose } = setup(async () => jsonResponse(204));
+    await user.dblClick(screen.getByRole('button', { name: 'Borrar' }));
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(calls(fetchMock).filter(([, init]) => init?.method === 'DELETE')).toHaveLength(1);
   });
 });

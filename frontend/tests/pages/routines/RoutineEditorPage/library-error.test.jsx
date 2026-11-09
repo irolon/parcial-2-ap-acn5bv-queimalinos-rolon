@@ -1,12 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { EXERCISES_KEY } from '@/hooks/exercises/useExercises';
 import { LIBRARY } from '../../../helpers/exercises/fixtures';
-import { DRAFT_STORAGE_KEY, rowNames, storeDraft } from '../../../helpers/routines/editor';
+import { DRAFT_STORAGE_KEY, rowNames, storeDraft, warmUpEditor } from '../../../helpers/routines/editor';
 import { stubRoutinesApi } from '../../../helpers/routines/routines';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();
@@ -45,7 +47,7 @@ describe('RoutineEditorPage: biblioteca caída', () => {
   it('al reintentar con éxito el editor queda usable y restaura el borrador', async () => {
     storeDraft();
     renderWithFailingLibrary(1);
-    await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
+    await user.click(await screen.findByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByText('Recuperamos tu borrador')).toBeVisible();
     expect(rowNames()).toEqual(['Sentadilla']);
     expect(screen.getByLabelText('Buscar ejercicio')).toBeVisible();
@@ -70,7 +72,7 @@ describe('RoutineEditorPage: editor deshabilitado hasta cargar la biblioteca', (
   it('al reintentar con éxito se habilita todo y se restaura el borrador', async () => {
     storeDraft();
     renderWithFailingLibrary(1);
-    await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
+    await user.click(await screen.findByRole('button', { name: 'Reintentar' }));
     await screen.findByText('Recuperamos tu borrador');
     expect(screen.getByLabelText('Nombre de la rutina')).toBeEnabled();
     expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('Fuerza A');

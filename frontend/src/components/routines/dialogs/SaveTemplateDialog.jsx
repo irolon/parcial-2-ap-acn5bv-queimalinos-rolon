@@ -4,6 +4,7 @@ import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import { useCreateTemplate } from '@/hooks/routine-templates/useRoutineTemplates';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import {
   MAX_EXERCISES, NAME_ERROR, ROUTINE_GOAL_OPTIONS, buildTemplateBody, isValidName, validateRoutine,
@@ -37,11 +38,15 @@ export default function SaveTemplateDialog({ state, onSaved, onInvalid, onServer
   const [form, setForm] = useState({ name: state.name, goal: state.goal, level: '' });
   const [errors, setErrors] = useState({});
   const create = useCreateTemplate();
+  const lock = useSubmitLock();
   const set = (field) => (event) => setForm((f) => ({ ...f, [field]: event.target.value }));
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault();
-    if (create.isPending) return;
+    lock(save);
+  }
+
+  async function save() {
     const { rows, ...found } = validate(form, state);
     setErrors(found);
     if (rows) onInvalid?.();
