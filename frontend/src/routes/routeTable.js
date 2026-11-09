@@ -84,6 +84,9 @@ export const messagesHref = (studentId) => `${TRAINER_NAV.base}/mensajes?alumno=
 /** Link a la ficha; `search` (sin `?`) conserva los filtros del panel. */
 export const profileHref = (id, search = '') => `${STUDENTS_PATH}/${id}${search ? `?${search}` : ''}`;
 
+/** Con la clave blanqueada por su PT, el alumno elige una nueva acá antes de cualquier otra pantalla (sin shell). */
+export const CHANGE_PASSWORD_PATH = '/cambiar-clave';
+
 const NAV_BY_ROLE = { [ROLES.TRAINER]: TRAINER_NAV, [ROLES.STUDENT]: STUDENT_NAV };
 
 /** Home de cada rol (`null` si el rol no es conocido). */
