@@ -43,11 +43,13 @@ describe('TrainerAccountPage (/pt/cuenta)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('Descargar pide GET /students/export y baja fittrainer-alumnos-<fecha>.csv', async () => {
+  it('Descargar pide GET /students/export y baja fittrainer-alumnos-<fecha de la descarga>.csv', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(2026, 10, 9, 12, 0));
+    vi.setSystemTime(new Date(2026, 10, 8, 23, 59));
     renderRoute('/pt/cuenta');
-    await setupUser().click(await screen.findByRole('button', { name: 'Descargar' }));
+    const button = await screen.findByRole('button', { name: 'Descargar' });
+    vi.setSystemTime(new Date(2026, 10, 9, 0, 1));
+    await setupUser().click(button);
     await vi.waitFor(() =>
       expect(downloadText).toHaveBeenCalledWith(CSV, 'fittrainer-alumnos-2026-11-09.csv', 'text/csv'),
     );

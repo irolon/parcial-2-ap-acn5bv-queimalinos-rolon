@@ -8,13 +8,14 @@ import ChangePasswordDialog from './ChangePasswordDialog';
 
 /**
  * Tarjeta "Cuenta" (alumno en Mi perfil, PT en Tu cuenta): cambiar la contraseña y bajar las sesiones en CSV.
- * `exportStudentId` baja las de un alumno; sin él, las de todos los alumnos del PT.
+ * `exportStudentId` baja las de un alumno; sin él, las de todos los alumnos del PT. `exportFilenamePrefix` lleva la
+ * fecha de la descarga detrás.
  */
-export default function AccountCard({ exportLabel, exportSubtitle, exportStudentId, exportFilename }) {
+export default function AccountCard({ exportLabel, exportSubtitle, exportStudentId, exportFilenamePrefix }) {
   const changedAt = useAuthStore((state) => state.user?.password_changed_at ?? null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [changed, setChanged] = useState(false);
-  const csv = useExportCsv({ studentId: exportStudentId, filename: exportFilename });
+  const csv = useExportCsv({ studentId: exportStudentId, filenamePrefix: exportFilenamePrefix });
 
   function openDialog() {
     setChanged(false);

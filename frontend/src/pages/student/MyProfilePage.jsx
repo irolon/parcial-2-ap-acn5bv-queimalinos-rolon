@@ -8,7 +8,6 @@ import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
 import MyProfileCard from '@/components/students/profile/MyProfileCard';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useStudentQuery } from '@/hooks/students/useStudents';
-import { todayString } from '@/utils/dates';
 
 // Los datos y la rutina activa salen de la misma ficha (`GET /students/:id`): un solo bloque con su carga y su error.
 // La ficha trae solo la rutina activa más reciente; con varias, todas están en Mis rutinas.
@@ -55,7 +54,7 @@ export default function MyProfilePage() {
           exportLabel="Exportar mis datos"
           exportSubtitle="Historial completo en formato CSV"
           exportStudentId={studentId}
-          exportFilename={`fittrainer-mis-sesiones-${todayString()}.csv`}
+          exportFilenamePrefix="fittrainer-mis-sesiones"
         />
       </div>
     </div>
