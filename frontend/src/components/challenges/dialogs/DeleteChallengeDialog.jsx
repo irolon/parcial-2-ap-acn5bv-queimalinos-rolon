@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import { useDeleteChallenge } from '@/hooks/challenges/useChallenges';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 
 const CONFLICT = 'Ya está asignado a alumnos: no se puede borrar';
 const FALLBACK = 'No pudimos borrar el desafío';
@@ -10,9 +11,9 @@ const FALLBACK = 'No pudimos borrar el desafío';
 export default function DeleteChallengeDialog({ challenge, onClose }) {
   const [error, setError] = useState(null);
   const remove = useDeleteChallenge();
+  const lock = useSubmitLock();
 
   async function handleConfirm() {
-    if (remove.isPending) return;
     setError(null);
     try {
       await remove.mutateAsync(challenge.id);
@@ -33,7 +34,7 @@ export default function DeleteChallengeDialog({ challenge, onClose }) {
           <Button variant="ghost" onClick={onClose} disabled={remove.isPending}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={handleConfirm} loading={remove.isPending}>
+          <Button variant="danger" onClick={() => lock(handleConfirm)} loading={remove.isPending}>
             Borrar
           </Button>
         </>

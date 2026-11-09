@@ -31,10 +31,14 @@ export function renderActiveWorkout(studentId = STUDENT) {
   return { client, ...view };
 }
 
-/** Empieza la rutina de /today y registra dos series de Press banca: 62,5 kg × 10 y peso corporal × 12. */
-export function train(view) {
+/**
+ * Empieza la rutina de /today y registra dos series de Press banca: 62,5 kg × 10 y peso corporal × 12.
+ * `betweenSets` corre entre una serie y la otra (por ejemplo, para adelantar el reloj falso).
+ */
+export function train(view, { betweenSets } = {}) {
   act(() => { view.result.current.start(todayRoutine()); });
   act(() => { view.result.current.register(62.5, 10); });
+  betweenSets?.();
   act(() => { view.result.current.register(null, 12); });
 }
 

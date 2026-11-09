@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 import { stubStudentHome } from '../../helpers/student/home';
+import { user } from '../../helpers/shared/user';
 
 const TOKEN = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b';
 const INVITATION = {
@@ -31,7 +31,6 @@ afterEach(() => {
 });
 
 async function fill(password, confirm = password) {
-  const user = userEvent.setup();
   await user.type(await screen.findByLabelText('Contraseña'), password);
   await user.type(screen.getByLabelText('Repetí la contraseña'), confirm);
   await user.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
@@ -78,7 +77,6 @@ describe('JoinPage', () => {
     renderRoute(`/join?token=${TOKEN}`);
     await fill('Secreta123', 'Otra12345');
     expect(await screen.findByText('Las contraseñas no coinciden')).toBeInTheDocument();
-    const user = userEvent.setup();
     await user.clear(screen.getByLabelText('Contraseña'));
     await user.type(screen.getByLabelText('Contraseña'), 'corta');
     await user.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
@@ -128,17 +126,31 @@ describe('JoinPage', () => {
     renderRoute(`/join?token=${TOKEN}`);
     const retry = await screen.findByRole('button', { name: 'Reintentar' });
     fail = false;
-    await userEvent.setup().click(retry);
+    await user.click(retry);
     expect(await screen.findByText('Laura Pereyra')).toBeInTheDocument();
   });
 
-  it('con sesión iniciada redirige a la home del rol', async () => {
-    const fetchMock = stubFetch(async () => jsonResponse(200, INVITATION));
+  it('con sesión iniciada no pierde el link: avisa y deja cerrar sesión para aceptar (B2)', async () => {
+    stubFetch(async (url) => (String(url).includes('/auth/logout') ? jsonResponse(204, null) : jsonResponse(200, INVITATION)));
     setSession(TRAINER);
     const { pathname } = renderRoute(`/join?token=${TOKEN}`);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
-    expect(pathname()).toBe('/pt/dashboard');
-    // El dashboard pide sus alumnos, pero no se consulta la invitación.
-    expect(calls(fetchMock).filter(([path]) => path.includes('invitation'))).toEqual([]);
+    expect(await screen.findByText(/Tenés una sesión abierta como Laura Pereyra/)).toBeInTheDocument();
+    expect(pathname()).toBe('/join');
+    expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar sesión y aceptar la invitación' }));
+    expect(await screen.findByLabelText('Contraseña')).toBeInTheDocument();
+    expect(screen.getByText('Tomás Ruiz')).toBeInTheDocument();
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(pathname()).toBe('/join');
+  });
+
+  it('con sesión iniciada ofrece volver a la cuenta sin tocar la sesión ni pedir la invitación', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(200, INVITATION));
+    setSession(TRAINER);
+    renderRoute(`/join?token=${TOKEN}`);
+    expect(await screen.findByRole('link', { name: 'Volver a mi cuenta' })).toHaveAttribute('href', '/pt/dashboard');
+    // No gasta el cupo del limitador de `GET /invitations/:token` (#80) hasta que la sesión se cierre.
+    expect(calls(fetchMock).some(([url]) => String(url).includes('/invitations/'))).toBe(false);
   });
 });

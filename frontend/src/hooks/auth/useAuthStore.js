@@ -8,9 +8,13 @@ export const SESSION_STORAGE_KEY = 'fittrainer.session';
 
 const EMPTY_SESSION = { user: null, token: null, refreshToken: null };
 
-// Sin conexión con el servidor no se sabe si la sesión sigue válida: se pasa a
-// `anonymous` y se descarta el access, pero `user` y `refreshToken` quedan guardados
-// para reintentar en la próxima carga.
+// 429 del refresh: el cupo por IP se agotó (recargas seguidas, varios PT en la misma red). Es temporal.
+const isRateLimited = (err) => err?.status === 429 || err?.code === 'RATE_LIMIT_EXCEEDED';
+const isTransientError = (err) => isNetworkError(err) || isRateLimited(err);
+
+// Sin conexión con el servidor (o con el refresh limitado) no se sabe si la sesión sigue
+// válida: se pasa a `anonymous` y se descarta el access, pero `user` y `refreshToken`
+// quedan guardados para reintentar en la próxima carga.
 function keepSessionOffline(set) {
   set({ token: null, status: 'anonymous' });
 }
@@ -73,7 +77,7 @@ export const useAuthStore = create(
           const { token } = await authApi.refresh(refreshToken);
           set({ token, status: 'authenticated' });
         } catch (err) {
-          if (isNetworkError(err)) keepSessionOffline(set);
+          if (isTransientError(err)) keepSessionOffline(set);
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
         }
       },
@@ -101,7 +105,7 @@ configureClient({
   refreshSession: renewAccessToken,
   // Si la renovación falla, el status pasa a `anonymous` y el router manda a /login.
   onAuthFailure: (err) => {
-    if (isNetworkError(err)) keepSessionOffline(useAuthStore.setState);
+    if (isTransientError(err)) keepSessionOffline(useAuthStore.setState);
     else useAuthStore.getState().logout();
   },
 });

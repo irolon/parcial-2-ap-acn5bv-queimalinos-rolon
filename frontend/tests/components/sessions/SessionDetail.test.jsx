@@ -82,6 +82,24 @@ describe('SessionDetail', () => {
     expect(within(first).getByText('/ 10', { exact: false })).toBeVisible();
   });
 
+  it('muestra los kilos con coma decimal, el real y el del plan (B5)', async () => {
+    await expand(
+      sessionDetailItem({
+        exercises: [
+          exerciseItem({
+            planned: { sets: 3, reps: 10, suggested_kg: 22.5, rest_seconds: null },
+            sets: [setItem({ id: 'a', set_number: 1, actual_reps: 10, actual_kg: 27.5 })],
+          }),
+        ],
+      }),
+    );
+    const table = await screen.findByRole('table', { name: 'Series de Press de banca' });
+    const [, row] = within(table).getAllByRole('row');
+    expect(within(row).getByText('27,5 kg')).toBeVisible();
+    expect(row).toHaveTextContent('/ 22,5 kg');
+    expect(row).not.toHaveTextContent(/\d\.\d kg/);
+  });
+
   it('marca sustitución, PR, serie sin plan y serie no hecha', async () => {
     await expand(
       sessionDetailItem({

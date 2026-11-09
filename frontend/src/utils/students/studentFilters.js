@@ -1,8 +1,9 @@
 import { activityStatus, daysWithoutTraining } from './activity';
+import { adherencePct } from './adherence';
 
 export const DEFAULT_FILTERS = { estado: 'todos', objetivo: '', orden: 'ultima-sesion', q: '' };
 export const ESTADOS = ['todos', 'inactivos', 'al-dia', 'nuevos', 'baja'];
-export const ORDENES = ['ultima-sesion', 'nombre', 'alta', 'racha'];
+export const ORDENES = ['ultima-sesion', 'nombre', 'alta', 'racha', 'adherencia'];
 
 const STATUS_BY_ESTADO = { inactivos: 'inactive', 'al-dia': 'active', nuevos: 'new', baja: 'disabled' };
 
@@ -56,11 +57,19 @@ const byStreak = (a, b) => {
   return bCurrent - aCurrent || bLongest - aLongest || byName(a, b);
 };
 
+/** Menor adherencia primero (lo que hay que mirar), sin plan al final, empate por nombre. */
+const byAdherence = (a, b) => {
+  const [aPct, bPct] = [adherencePct(a), adherencePct(b)];
+  if (aPct === null || bPct === null) return (aPct === null) - (bPct === null) || byName(a, b);
+  return aPct - bPct || byName(a, b);
+};
+
 const comparators = (now) => ({
   'ultima-sesion': (a, b) => daysWithoutTraining(b, now) - daysWithoutTraining(a, now) || byName(a, b),
   nombre: byName,
   alta: (a, b) => byCreated(b, a),
   racha: byStreak,
+  adherencia: byAdherence,
 });
 
 /** Copia ordenada; "ultima-sesion" pone primero a quienes llevan más días sin entrenar. */

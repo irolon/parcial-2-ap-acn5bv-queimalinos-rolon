@@ -43,6 +43,27 @@ Todos los errores siguen el mismo formato:
 }
 ```
 
+**Errores comunes a todos los endpoints con body**
+
+- JSON mal formado → `400 VALIDATION_ERROR` ("El cuerpo no es JSON válido", `details: []`).
+- Body de más de 100 kB → `413 PAYLOAD_TOO_LARGE` ("El cuerpo es demasiado grande", `details: []`).
+- `Content-Encoding` no soportado (por ejemplo `br`) o charset que no es UTF → `415 UNSUPPORTED_MEDIA_TYPE` ("Codificación del cuerpo no soportada", `details: []`).
+- Cualquier otro error del cliente al leer el body (por ejemplo, la conexión se corta a mitad) → `400 VALIDATION_ERROR` ("El cuerpo de la solicitud es inválido", `details: []`).
+- Error no controlado → `500 INTERNAL_ERROR` ("Error interno del servidor"). Fuera de `development`, `details` va vacío y nunca se manda el stack.
+
+**Rate limiting**
+
+Contadores en memoria por endpoint, en ventanas de 15 minutos (configurables por env):
+
+| Endpoint | Límite | Clave |
+|---|---|---|
+| `POST /auth/login` | 10 | IP + email (en minúsculas) |
+| `POST /auth/login` (además) | 50 | IP (frena probar muchos emails desde la misma IP) |
+| `POST /auth/register`, `POST /auth/refresh` | 30 cada uno | IP |
+| `GET /invitations/:token`, `POST /students` | 30 cada uno | IP |
+
+Las IPv6 cuentan por subred /56. Se cuentan todos los intentos, no solo los fallidos. Al pasarse → `429 RATE_LIMIT_EXCEEDED` ("Demasiados intentos. Probá de nuevo en unos minutos.", `details: []`) con el header `Retry-After` (segundos). Todas las respuestas de esos endpoints traen además `RateLimit` y `RateLimit-Policy`.
+
 ---
 
 ## Módulo: Auth
@@ -64,7 +85,7 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 **201 Created** — `{ trainer, token, refresh_token }`
 
-**Errores:** `400 VALIDATION_ERROR`, `409 EMAIL_ALREADY_EXISTS`, `500 INTERNAL_ERROR`
+**Errores:** `400 VALIDATION_ERROR`, `409 EMAIL_ALREADY_EXISTS`, `429 RATE_LIMIT_EXCEEDED`, `500 INTERNAL_ERROR`
 
 ### POST /auth/login
 
@@ -76,7 +97,7 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 
 **200 OK** — `{ user, token, refresh_token, expires_in }`
 
-**Errores:** `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `401 ACCOUNT_DISABLED`
+**Errores:** `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `401 ACCOUNT_DISABLED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /auth/refresh
 
@@ -87,6 +108,8 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 ```
 
 **200 OK** — `{ token, expires_in }`
+
+**Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del token).
 
 ### POST /auth/logout
 
@@ -153,7 +176,7 @@ Valida un token y retorna los datos precargados. Público.
 
 `goal` puede ser `null` si el PT no lo cargó al invitar.
 
-**Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`
+**Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /students (desde invitación)
 
@@ -169,6 +192,8 @@ Crea el alumno desde el token de invitación. Público.
 ```
 
 **201 Created** — `{ student, token, refresh_token }`
+
+**Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del alta).
 
 ---
 
@@ -1478,9 +1503,9 @@ Lista las notificaciones propias, las más nuevas primero (`created_at` desc).
 | `pr` | Se cierra una sesión con récords; una por sesión | Alumno y PT del alumno | Alumno (el PT solo la ve en la lista) | `student_id`, `session_id`, `exercise_ids` |
 | `achievement` | Se desbloquea un logro al cerrar una sesión; una por logro, para el alumno y para el PT. Los que desbloquea el job nocturno quedan solo en la base | Alumno y PT del alumno | Alumno (con varios logros en la sesión, un único push resumen); el PT solo la ve en la lista | `student_id`, `achievement_code` |
 | `comment` | El PT guarda un comentario de sesión no vacío y distinto del anterior (`PATCH /sessions/:id/comment`) | Alumno | Alumno | `session_id` |
-| `appointment` | Cambios en un turno (ver Módulo: Turnos). El PT confirma, cancela o agenda a mano: `Tu turno del vie 06/11 a las 18:00 quedó confirmado` / `… fue cancelado` / `Tu entrenador te agendó un turno el vie 06/11 a las 18:00`. El alumno pide o cancela: `Lucía pidió un turno para el vie 06/11 a las 18:00` / `Lucía canceló su turno del vie 06/11 a las 18:00` | Alumno (acciones del PT) o PT (acciones del alumno) | Alumno; el PT solo la ve en la lista | `appointment_id` |
+| `appointment` | Cambios en un turno (ver Módulo: Turnos). El PT confirma, cancela o agenda a mano: `Tu turno del vie 06/11 a las 18:00 quedó confirmado` / `… fue cancelado` / `Tu entrenador te agendó un turno el vie 06/11 a las 18:00`. El alumno pide o cancela: `Lucía pidió un turno para el vie 06/11 a las 18:00` / `Lucía canceló su turno del vie 06/11 a las 18:00` | Alumno (acciones del PT) o PT (acciones del alumno) | Alumno; el PT solo la ve en la lista | `appointment_id`, `scheduled_at` (ISO UTC: el cliente abre la agenda en la semana del turno) |
 
-El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el turno (`appointment_id`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
+El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el turno (`appointment_id` y su `scheduled_at`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 
 
 **Payload del push.** El mensaje FCM lleva `notification` (`title`, `body`) y un `data` con el de la fila más dos campos: `type` (el tipo de la notificación, para elegir la pantalla) y `notification_id` (el id de la fila, para llamar a `PATCH /notifications/:id/read` al tocarla). Todos los valores viajan como texto, como exige FCM: los arrays y objetos van serializados en JSON (por ejemplo, `exercise_ids` llega como `"[\"uuid-1\",\"uuid-2\"]"` y hay que parsearlo en la app). El push resumen de varios logros no tiene fila: lleva `type: "achievement"` y `student_id`, sin `notification_id`. La fila guardada no cambia: `type` ya es una columna y el id es el de la fila.
 
