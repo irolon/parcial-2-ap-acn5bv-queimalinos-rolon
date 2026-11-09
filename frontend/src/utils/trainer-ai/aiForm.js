@@ -112,8 +112,10 @@ export function validateAiForm(form) {
 /**
  * Body de `POST /trainer-ai/generate-routine`; los textos vacíos no se mandan. Con alumno, `injuries` va siempre
  * (`null` si está vacío): el backend completa con el alumno solo lo ausente y así respeta lo que el PT borró.
+ * `unloaded`: campos que no se pudieron precargar (la ficha falló) y el PT no tocó; vacíos no se mandan, así el
+ * backend los completa con la ficha.
  */
-export function buildGenerateBody(form) {
+export function buildGenerateBody(form, { unloaded = [] } = {}) {
   const body = {};
   if (form.studentId) body.student_id = form.studentId;
   if (form.baseTemplateId) body.base_template_id = form.baseTemplateId;
@@ -127,6 +129,7 @@ export function buildGenerateBody(form) {
   for (const field of ['injuries', 'preferences']) {
     if (form[field].trim()) body[field] = form[field].trim();
   }
-  if (form.studentId && !body.injuries) body.injuries = null;
+  if (form.studentId && !body.injuries && !unloaded.includes('injuries')) body.injuries = null;
+  if (unloaded.includes('equipment') && form.equipment.length === 0) delete body.available_equipment;
   return body;
 }

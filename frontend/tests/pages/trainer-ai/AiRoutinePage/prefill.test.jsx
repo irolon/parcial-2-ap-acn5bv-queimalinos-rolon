@@ -67,6 +67,28 @@ describe('AiRoutinePage: precarga desde la ficha', () => {
     expect(screen.queryByText(FAILED)).not.toBeInTheDocument();
   });
 
+  it('si el reintento tarda, el formulario sigue montado con lo escrito (sin poder generar) y al llegar la ficha lo conserva', async () => {
+    const user = setupUser();
+    let respond = () => 500;
+    let arrive;
+    renderAi('/pt/rutinas/ia?alumno=st-1', { detail: () => respond() });
+    await findGenerateButton();
+    expect(screen.getByText(FAILED)).toBeVisible();
+    await user.type(screen.getByLabelText('Lesiones'), 'Rodilla');
+    await user.type(screen.getByLabelText('Preferencias'), 'Poco tiempo');
+    respond = () => new Promise((resolve) => { arrive = resolve; });
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await vi.waitFor(() => expect(arrive).toBeTypeOf('function'));
+    expect(screen.getByLabelText('Lesiones')).toHaveValue('Rodilla');
+    expect(screen.getByLabelText('Preferencias')).toHaveValue('Poco tiempo');
+    expect(screen.getByRole('button', { name: 'Generar propuesta' })).toBeDisabled();
+    arrive(ANA);
+    await vi.waitFor(() => expect(screen.getByLabelText('Objetivo')).toHaveValue('strength'));
+    expect(screen.getByLabelText('Lesiones')).toHaveValue('Rodilla');
+    expect(screen.getByLabelText('Preferencias')).toHaveValue(`Poco tiempo. ${NOTE}`);
+    expect(screen.getByRole('button', { name: 'Generar propuesta' })).toBeEnabled();
+  });
+
   it('al cambiar de alumno vacía en el acto lo de Ana y no deja generar hasta que llega la ficha de Luis', async () => {
     let arrive;
     await switchToLuis(() => new Promise((resolve) => { arrive = resolve; }));
@@ -95,5 +117,31 @@ describe('AiRoutinePage: precarga desde la ficha', () => {
     await user.click(screen.getByRole('button', { name: 'Reintentar' }));
     await vi.waitFor(() => expect(screen.getByLabelText('Objetivo')).toHaveValue('weight_loss'));
     expect(screen.queryByText(FAILED)).not.toBeInTheDocument();
+  });
+
+  it('con la ficha fallida no manda lesiones ni equipamiento vacíos (los completa el backend), salvo que el PT los toque', async () => {
+    const { user, fetchMock } = await switchToLuis(() => 500);
+    await screen.findByText(FAILED);
+    await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+    await user.selectOptions(screen.getByLabelText('Nivel'), 'beginner');
+    await user.click(screen.getByRole('button', { name: 'Generar propuesta' }));
+    await vi.waitFor(() => expect(postsTo(fetchMock, '/trainer-ai/generate-routine')).toHaveLength(1));
+    const body = bodyOf(postsTo(fetchMock, '/trainer-ai/generate-routine')[0][1]);
+    expect(body).toMatchObject({ student_id: 'st-2', goal: 'strength', level: 'beginner' });
+    expect(body).not.toHaveProperty('injuries');
+    expect(body).not.toHaveProperty('available_equipment');
+  });
+
+  it('con la ficha fallida manda lo que el PT tocó: el equipamiento elegido y las lesiones borradas (null)', async () => {
+    const { user, fetchMock } = await switchToLuis(() => 500);
+    await screen.findByText(FAILED);
+    await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+    await user.selectOptions(screen.getByLabelText('Nivel'), 'beginner');
+    await user.click(chip('Barra'));
+    await user.type(screen.getByLabelText('Lesiones'), 'x');
+    await user.clear(screen.getByLabelText('Lesiones'));
+    await user.click(screen.getByRole('button', { name: 'Generar propuesta' }));
+    await vi.waitFor(() => expect(postsTo(fetchMock, '/trainer-ai/generate-routine')).toHaveLength(1));
+    expect(bodyOf(postsTo(fetchMock, '/trainer-ai/generate-routine')[0][1])).toMatchObject({ available_equipment: ['barbell'], injuries: null });
   });
 });

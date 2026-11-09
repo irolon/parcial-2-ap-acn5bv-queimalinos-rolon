@@ -11,6 +11,7 @@ import { clearPrefill, formFromStudent, studentPrefill } from '@/utils/trainer-a
  * mientras tanto `status` es `loading` (no se genera con datos de otro alumno); si falla, `failed`, y `retry()` la pide
  * de nuevo (`retrying`). Cuando llega se completa el formulario actual sin pisar lo que el PT editó desde que eligió
  * (`touch(field)`), así que reintentar no borra lo escrito. `arrivals` cambia cuando llega el alumno de la entrada.
+ * `unloaded()`: con la ficha fallida, lo que el backend completa con ella y el PT no tocó (ver `buildGenerateBody`).
  */
 export function useStudentPick({ initialStudent, pendingId, setForm }) {
   const [student, setStudent] = useState(initialStudent);
@@ -58,6 +59,7 @@ export function useStudentPick({ initialStudent, pendingId, setForm }) {
     pick,
     retry: () => picked.current && load(picked.current, true),
     touch: (field) => touched.current.add(field),
+    unloaded: () => (status === 'failed' ? ['injuries', 'equipment'].filter((field) => !touched.current.has(field)) : []),
     prefill: () => prefilled.current,
   };
 }

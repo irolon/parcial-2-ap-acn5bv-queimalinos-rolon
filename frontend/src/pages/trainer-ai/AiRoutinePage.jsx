@@ -26,7 +26,12 @@ export default function AiRoutinePage() {
   const navigate = useNavigate();
   const entryId = params.get('alumno');
   const isEntry = Boolean(entryId) || params.get('nueva') === '1';
-  const entry = useEntryForm(entryId);
+  const fetched = useEntryForm(entryId);
+  // La entrada se fija la primera vez que la ficha responde: el "Reintentar" del formulario vuelve a pedir la misma
+  // query (que pasa a `loading`) y la página no debe desmontar el formulario con lo que el PT ya escribió.
+  const [settled, setSettled] = useState(null);
+  if (fetched && fetched.status !== 'loading' && settled?.id !== entryId) setSettled({ id: entryId, entry: fetched });
+  const entry = settled?.id === entryId ? settled.entry : fetched;
   const [session, setSession] = useAiSession(trainerId);
   const seq = useRef(0);
   const busy = useRef(false);
@@ -39,16 +44,16 @@ export default function AiRoutinePage() {
     if (isEntry) navigate(AI_ROUTINE.path, { replace: true });
   };
 
-  async function run(form, student) {
+  async function run(form, student, options) {
     if (busy.current) return;
     busy.current = true;
-    show({ phase: 'waiting', startedAt: new Date(), form, student });
-    const result = await generate(buildGenerateBody(form));
+    show({ phase: 'waiting', startedAt: new Date(), form, student, options });
+    const result = await generate(buildGenerateBody(form, options));
     busy.current = false;
     if (result.aborted) return;
     if (result.error) {
       const error = aiErrorOf(result.error);
-      show(error.kind === 'fields' ? { phase: 'form', form, student, errors: error } : { phase: 'error', form, student, error });
+      show(error.kind === 'fields' ? { phase: 'form', form, student, errors: error } : { phase: 'error', form, student, options, error });
       return;
     }
     setSession({
@@ -64,7 +69,7 @@ export default function AiRoutinePage() {
 
   if (view.phase === 'waiting') return <AiWaiting startedAt={view.startedAt} hasStudent={Boolean(view.student)} onCancel={handleCancel} />;
   if (view.phase === 'error') {
-    return <AiError key={view.id} error={view.error} manualHref={newRoutineHref(view.student?.id)} onRetry={() => run(view.form, view.student)} />;
+    return <AiError key={view.id} error={view.error} manualHref={newRoutineHref(view.student?.id)} onRetry={() => run(view.form, view.student, view.options)} />;
   }
   if (view.phase === 'proposal' && session?.proposal) {
     return (

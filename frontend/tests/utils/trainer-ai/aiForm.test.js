@@ -94,4 +94,13 @@ describe('aiForm', () => {
       student_id: 'st-1', goal: 'strength', level: 'beginner', frequency_per_week: 3, session_duration_min: 60, available_equipment: [], injuries: null,
     });
   });
+
+  it('con campos sin precargar (la ficha falló) no manda las lesiones ni el equipamiento vacíos; con datos, sí', () => {
+    const form = { ...valid, studentId: 'st-1', injuries: '', equipment: [] };
+    const body = buildGenerateBody(form, { unloaded: ['injuries', 'equipment'] });
+    expect(body).not.toHaveProperty('injuries');
+    expect(body).not.toHaveProperty('available_equipment');
+    const written = buildGenerateBody({ ...form, injuries: 'Rodilla', equipment: ['band'] }, { unloaded: ['injuries', 'equipment'] });
+    expect(written).toMatchObject({ injuries: 'Rodilla', available_equipment: ['band'] });
+  });
 });

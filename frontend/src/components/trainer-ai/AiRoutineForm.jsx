@@ -29,7 +29,8 @@ function TemplateSelect({ value, error, onChange }) {
  * (`{ id, name, prefill }`, `prefill` = lo que se precargó de su ficha, para vaciarlo si se cambia de alumno).
  * `pendingStudentId`: alumno de la entrada cuya ficha no cargó (aviso con "Reintentar", ver `useStudentPick`).
  * `errors` trae los del servidor (`fields`, `form`); los del cliente se calculan al enviar.
- * `onSubmit(form, student)` recibe el formulario ya validado; mientras carga la ficha del alumno no se puede generar.
+ * `onSubmit(form, student, { unloaded })` recibe el formulario ya validado y lo que no se pudo precargar (ver
+ * `buildGenerateBody`); mientras carga la ficha del alumno no se puede generar.
  */
 export default function AiRoutineForm({ initial, student: initialStudent, pendingStudentId = null, errors: serverErrors, onSubmit }) {
   const [form, setForm] = useState(initial);
@@ -53,7 +54,7 @@ export default function AiRoutineForm({ initial, student: initialStudent, pendin
     if (pick.loading) return;
     const found = validateAiForm(form);
     setErrors(found);
-    if (Object.keys(found).length === 0) onSubmit(form, student && { ...student, prefill: pick.prefill() });
+    if (Object.keys(found).length === 0) onSubmit(form, student && { ...student, prefill: pick.prefill() }, { unloaded: pick.unloaded() });
   }
 
   return (
