@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import AccountCard from '@/components/account/AccountCard';
 import StudentMetrics from '@/components/body-metrics/StudentMetrics';
 import ErrorState from '@/components/shared/states/ErrorState';
@@ -35,12 +36,28 @@ function ProfileBlock({ query }) {
 }
 
 /**
- * Mi perfil: los datos del alumno de solo lectura (los cambia su entrenador), su rutina activa, sus medidas, que sí
+ * El `user` del store (sidebar y topbar) se guarda en localStorage y su foto firmada vence en una hora: cada vez que
+ * llega la ficha, se copian el nombre y la foto vigentes.
+ */
+function useSyncUser(student) {
+  const user = useAuthStore((state) => state.user);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const name = student?.name;
+  const avatarUrl = student?.avatar_url ?? null;
+  const stale = Boolean(student) && (user?.name !== name || (user?.avatar_url ?? null) !== avatarUrl);
+  useEffect(() => {
+    if (stale) updateUser({ name, avatar_url: avatarUrl });
+  }, [stale, name, avatarUrl, updateUser]);
+}
+
+/**
+ * Mi perfil: los datos del alumno (cambia su foto, nombre y teléfono; el resto, su entrenador), su rutina activa, sus medidas, que sí
  * puede cargar, y la tarjeta Cuenta (contraseña y CSV). Los dos bloques, la ficha y las medidas, cargan y fallan cada uno por su cuenta.
  */
 export default function MyProfilePage() {
   const studentId = useAuthStore((state) => state.user?.id);
   const profile = useStudentQuery(studentId);
+  useSyncUser(profile.data);
 
   return (
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
