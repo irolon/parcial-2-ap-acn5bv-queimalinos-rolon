@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { studentDetail } from '../../../helpers/students/fixtures';
-import { findGenerateButton, renderAi, setupUser, storeProposal } from '../../../helpers/trainer-ai/aiPage';
+import { setupUser } from '../../../helpers/shared/user';
+import { findGenerateButton, renderAi, storeProposal } from '../../../helpers/trainer-ai/aiPage';
 
 const ANA = studentDetail({ id: 'st-1', name: 'Ana Paz', goal: 'strength', level: 'intermediate', gym_equipment: ['barbell'], injuries: 'Lumbalgia' });
 const RATIONALE = 'Split de empuje, piernas y core para 3 días.';

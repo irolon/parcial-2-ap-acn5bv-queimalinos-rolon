@@ -7,6 +7,7 @@ import AiWaiting from '@/components/trainer-ai/AiWaiting';
 import { UnfinishedProposal } from '@/components/trainer-ai/FormNotices';
 import LoadingState from '@/components/shared/states/LoadingState';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { useAiSession } from '@/hooks/trainer-ai/useAiSession';
 import { useEntryForm } from '@/hooks/trainer-ai/useEntryForm';
 import { useGenerateRoutine } from '@/hooks/trainer-ai/useGenerateRoutine';
@@ -34,7 +35,7 @@ export default function AiRoutinePage() {
   const entry = settled?.id === entryId ? settled.entry : fetched;
   const [session, setSession] = useAiSession(trainerId);
   const seq = useRef(0);
-  const busy = useRef(false);
+  const lock = useSubmitLock();
   const { generate, cancel } = useGenerateRoutine();
   const [view, setView] = useState(() => ({ phase: !isEntry && session?.proposal ? 'proposal' : 'form', id: 0 }));
   const show = (next) => setView({ ...next, id: ++seq.current });
@@ -44,12 +45,10 @@ export default function AiRoutinePage() {
     if (isEntry) navigate(AI_ROUTINE.path, { replace: true });
   };
 
-  async function run(form, student, options) {
-    if (busy.current) return;
-    busy.current = true;
+  // Un solo pedido aunque se haga doble clic; se libera al terminar (bien, mal o cancelado).
+  const run = (form, student, options) => lock(async () => {
     show({ phase: 'waiting', startedAt: new Date(), form, student, options });
     const result = await generate(buildGenerateBody(form, options));
-    busy.current = false;
     if (result.aborted) return;
     if (result.error) {
       const error = aiErrorOf(result.error);
@@ -60,7 +59,7 @@ export default function AiRoutinePage() {
       form, student, generationId: result.data.generation_id, proposal: result.data.routine_proposal, assigned: {}, saved: null,
     });
     showProposal();
-  }
+  });
 
   const handleCancel = () => {
     cancel();

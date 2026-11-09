@@ -3,7 +3,8 @@ import { act, fireEvent, screen, within } from '@testing-library/react';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { bodyOf } from '../../../helpers/shared/fetchMock';
 import { studentDetail } from '../../../helpers/students/fixtures';
-import { findGenerateButton, hangingGenerate, postsTo, renderAi, setupUser } from '../../../helpers/trainer-ai/aiPage';
+import { setupUser } from '../../../helpers/shared/user';
+import { findGenerateButton, hangingGenerate, postsTo, renderAi } from '../../../helpers/trainer-ai/aiPage';
 
 const ANA = studentDetail({ id: 'st-1', name: 'Ana Paz', goal: 'strength', level: 'intermediate', gym_equipment: ['barbell'], injuries: 'Lumbalgia' });
 const block = (name) => screen.getByRole('region', { name });

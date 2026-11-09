@@ -3,7 +3,8 @@ import { screen, within } from '@testing-library/react';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { bodyOf } from '../../../helpers/shared/fetchMock';
 import { student, studentDetail } from '../../../helpers/students/fixtures';
-import { findGenerateButton, postsTo, renderAi, setupUser } from '../../../helpers/trainer-ai/aiPage';
+import { setupUser } from '../../../helpers/shared/user';
+import { findGenerateButton, postsTo, renderAi } from '../../../helpers/trainer-ai/aiPage';
 
 const ANA = studentDetail({ id: 'st-1', name: 'Ana Paz', goal: 'strength', level: 'intermediate', gym_equipment: ['barra', 'Mancuernas', 'Banco plano'], injuries: 'Lumbalgia' });
 const LUIS = studentDetail({ id: 'st-2', name: 'Luis Gil', goal: 'weight_loss', level: 'beginner', gym_equipment: ['band'], injuries: null });

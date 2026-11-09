@@ -4,7 +4,8 @@ import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { studentDetail } from '../../../helpers/students/fixtures';
 import { SPLIT } from '../../../helpers/trainer-ai/fixtures';
-import { findGenerateButton, postsTo, renderAi, setupUser } from '../../../helpers/trainer-ai/aiPage';
+import { setupUser } from '../../../helpers/shared/user';
+import { findGenerateButton, postsTo, renderAi } from '../../../helpers/trainer-ai/aiPage';
 
 const ANA = studentDetail({ id: 'st-1', name: 'Ana Paz', goal: 'strength', level: 'beginner' });
 const ok = () => jsonResponse(200, { data: SPLIT });

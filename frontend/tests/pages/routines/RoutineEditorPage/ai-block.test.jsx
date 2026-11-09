@@ -5,7 +5,8 @@ import { DRAFT_STORAGE_KEY, renderEditor, rowNames, storeDraft } from '../../../
 import { bodyOf, calls, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { student } from '../../../helpers/students/fixtures';
 import { SINGLE } from '../../../helpers/trainer-ai/fixtures';
-import { setupUser, storeProposal, storedProposal } from '../../../helpers/trainer-ai/aiPage';
+import { setupUser } from '../../../helpers/shared/user';
+import { storeProposal, storedProposal } from '../../../helpers/trainer-ai/aiPage';
 
 const ANA = student({ id: 'st-9', name: 'Ana Paz' });
 const BLOCK_0 = '/pt/rutinas/nueva?alumno=st-9&ia=g-split&bloque=0';

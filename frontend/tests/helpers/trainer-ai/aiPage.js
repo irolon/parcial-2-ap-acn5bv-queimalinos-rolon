@@ -1,14 +1,10 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { LIBRARY } from '../exercises/fixtures';
 import { TRAINER, renderRoute, setSession } from '../routes/renderRoute';
 import { calls, errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
 import { AI_STORAGE_KEY, SPLIT } from './fixtures';
 
 const NOT_HANDLED = () => errorResponse(500, 'INTERNAL', 'Sin handler');
-
-/** `userEvent` sin la pausa entre acciones (en Windows cada `setTimeout(0)` cuesta ~16 ms). */
-export const setupUser = (options = {}) => userEvent.setup({ delay: null, ...options });
 
 const answer = (value, ...args) => (typeof value === 'function' ? value(...args) : value);
 

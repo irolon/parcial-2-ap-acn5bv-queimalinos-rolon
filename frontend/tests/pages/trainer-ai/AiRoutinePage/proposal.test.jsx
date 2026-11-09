@@ -5,7 +5,8 @@ import { renderRoute } from '../../../helpers/routes/renderRoute';
 import { bodyOf, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { studentDetail } from '../../../helpers/students/fixtures';
 import { SINGLE, SPLIT } from '../../../helpers/trainer-ai/fixtures';
-import { findGenerateButton, postsTo, renderAi, setupUser, storeProposal, storedProposal } from '../../../helpers/trainer-ai/aiPage';
+import { setupUser } from '../../../helpers/shared/user';
+import { findGenerateButton, postsTo, renderAi, storeProposal, storedProposal } from '../../../helpers/trainer-ai/aiPage';
 
 const SAVE = '/trainer-ai/save-as-template';
 const saved = (templates) => () => jsonResponse(201, { data: { generation_id: 'g', templates } });
