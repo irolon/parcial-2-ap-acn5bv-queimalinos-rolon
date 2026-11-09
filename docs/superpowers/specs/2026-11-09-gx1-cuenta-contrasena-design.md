@@ -80,7 +80,7 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 - `pages/student/MyProfilePage/account.test.jsx` (filas, descarga) y `pages/account/TrainerAccountPage.test.jsx`.
 - `components/students/dialogs/ResetPasswordSection.test.jsx`: confirmar, ver la clave una vez, copiar, error.
 
-**Navegador:** PT y alumno de QA. Capturas en `docs/superpowers/specs/assets/gx1/` (`01-perfil-cuenta.jpg`, `02-cambiar-clave.jpg`, `03-pt-cuenta.jpg`, `04-blanquear-clave.jpg`, `05-clave-temporal.jpg`, `06-cambio-obligatorio.jpg`, `07-csv-en-excel.jpg`, `08-angosto-375.jpg`). Comprobar en dos navegadores que el cambio cierra la sesión del otro al vencer su access.
+**Navegador:** PT y alumno de QA. Capturas en `docs/superpowers/specs/assets/gx1/` (`01-perfil-cuenta.jpg`, `02-cambiar-clave.jpg`, `03-pt-cuenta.jpg`, `04-blanquear-clave.jpg`, `05-clave-temporal.jpg`, `06-cambio-obligatorio.jpg`, `07-csv.jpg` (el CSV descargado, en tabla: Excel no se puede abrir en la prueba automática), `08-angosto-375.jpg`). Comprobar en dos navegadores que el cambio cierra la sesión del otro al vencer su access.
 
 ## Criterio de aceptación
 
