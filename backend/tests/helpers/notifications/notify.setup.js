@@ -9,6 +9,9 @@ export const mockFcm = { isFcmEnabled: jest.fn(), sendToToken: jest.fn() };
 jest.unstable_mockModule(src('repositories/notifications/notifications.repository.js'), () => mockNotifications);
 jest.unstable_mockModule(src('repositories/notifications/push-tokens.repository.js'), () => mockTokens);
 jest.unstable_mockModule(src('services/notifications/fcm.client.js'), () => mockFcm);
+// Preferencias del alumno (GX3): se mockea el repo para que corra el isPushAllowed real.
+export const mockPrefs = { findByStudent: jest.fn(), upsert: jest.fn() };
+jest.unstable_mockModule(src('repositories/notifications/preferences.repository.js'), () => mockPrefs);
 
 export const { notify, pushOnly } = await import(src('services/notifications/notify.service.js'));
 

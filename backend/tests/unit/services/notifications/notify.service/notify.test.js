@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { INPUT, mockFcm, mockNotifications, mockTokens, notify, pushOnly, row } from '../../../helpers/notifications/notify.setup.js';
+import { INPUT, mockFcm, mockNotifications, mockTokens, notify, pushOnly, row } from '../../../../helpers/notifications/notify.setup.js';
 
 beforeEach(() => {
   jest.resetAllMocks();
