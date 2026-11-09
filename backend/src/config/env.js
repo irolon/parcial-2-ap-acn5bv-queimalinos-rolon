@@ -41,6 +41,37 @@ if (required.JWT_SECRET && required.JWT_SECRET.length < 32) {
   errors.push('JWT_SECRET debe tener al menos 32 caracteres');
 }
 
+// Rate limiting (en memoria, una sola instancia). En test los límites por defecto son 100 veces
+// mayores, así la suite de integración (muchos registros desde la misma IP) no los toca.
+const limitScale = isTest ? 100 : 1;
+// Cada variable se parsea una vez directo a la forma que usa la app ({ windowMs, login, ... }).
+const RATE_LIMIT_VARS = [
+  ['windowMs', 'RATE_LIMIT_WINDOW_MS', 15 * 60 * 1000],
+  ['login', 'RATE_LIMIT_LOGIN_MAX', 10 * limitScale], // por IP + email
+  ['loginIp', 'RATE_LIMIT_LOGIN_IP_MAX', 50 * limitScale], // por IP (password spraying)
+  ['auth', 'RATE_LIMIT_AUTH_MAX', 30 * limitScale],
+  ['public', 'RATE_LIMIT_PUBLIC_MAX', 30 * limitScale],
+];
+const rateLimits = {};
+for (const [field, key, fallback] of RATE_LIMIT_VARS) {
+  const raw = process.env[key];
+  const value = raw === undefined || raw.trim() === '' ? fallback : Number(raw);
+  if (!Number.isInteger(value) || value <= 0) errors.push(`${key} debe ser un entero positivo`);
+  rateLimits[field] = value;
+}
+
+// trust proxy: cantidad de saltos de proxy (en el VPS detrás de nginx, 1). Sin definir, apagado.
+// En producción es obligatoria: sin ella, detrás de nginx todos los clientes comparten la IP del
+// proxy y el rate limiting los cuenta juntos. "0" explícito = sin proxy.
+const rawTrustProxy = process.env.TRUST_PROXY?.trim();
+const trustProxy = rawTrustProxy ? Number(rawTrustProxy) : undefined;
+if (trustProxy !== undefined && (!Number.isInteger(trustProxy) || trustProxy < 0)) {
+  errors.push('TRUST_PROXY debe ser un entero mayor o igual a 0 (cantidad de saltos de proxy)');
+}
+if (trustProxy === undefined && defaults.NODE_ENV === 'production') {
+  errors.push('Falta la variable de entorno TRUST_PROXY (obligatoria en producción; 0 si no hay proxy)');
+}
+
 const port = Number.parseInt(defaults.PORT, 10);
 if (Number.isNaN(port) || port <= 0) errors.push('PORT debe ser un número positivo');
 
@@ -61,6 +92,8 @@ export const env = {
   JWT_REFRESH_EXPIRES_IN: defaults.JWT_REFRESH_EXPIRES_IN,
   FRONTEND_URL: defaults.FRONTEND_URL,
   CRON_ENABLED: defaults.CRON_ENABLED,
+  TRUST_PROXY: trustProxy,
+  RATE_LIMITS: rateLimits,
   // Push (FCM HTTP v1): opcionales; sin credenciales el push es no-op. En test se ignoran.
   FCM_SERVICE_ACCOUNT_PATH: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_PATH,
   FCM_SERVICE_ACCOUNT_JSON: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_JSON,
