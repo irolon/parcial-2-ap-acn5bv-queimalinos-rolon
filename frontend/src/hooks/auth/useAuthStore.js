@@ -85,6 +85,12 @@ export const useAuthStore = create(
         });
       },
 
+      // Mi perfil y Tu cuenta (GX2): nombre o foto nuevos sin recargar. Sin sesión no hace nada.
+      updateUser(fields) {
+        const { user } = get();
+        if (user) set({ user: { ...user, ...fields } });
+      },
+
       async restore() {
         const { user, refreshToken } = get();
         if (!user || !refreshToken) {
