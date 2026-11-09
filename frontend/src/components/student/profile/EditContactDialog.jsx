@@ -5,7 +5,6 @@ import Input from '@/components/shared/ui/Input';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
 import { NO_FIELD_ERRORS, fieldErrorsFrom } from '@/utils/fieldErrors';
-import { validatePhone } from '@/utils/students/phone';
 import { validateStudentBody } from '@/utils/students/studentForm';
 
 const FORM_ID = 'edit-contact-form';
@@ -17,13 +16,6 @@ function contactBody(formData, student) {
   if (text('name') !== (student.name ?? '')) body.name = text('name');
   if (text('phone') !== (student.phone ?? '')) body.phone = text('phone') || null;
   return body;
-}
-
-function validateContact(body) {
-  const errors = { ...validateStudentBody('name' in body ? { name: body.name } : {}) };
-  const phoneError = body.phone ? validatePhone(body.phone) : null;
-  if (phoneError) errors.phone = phoneError;
-  return errors;
 }
 
 /** El alumno edita su nombre y su teléfono (GX2); objetivo y nivel siguen siendo del entrenador/a. */
@@ -42,7 +34,7 @@ export default function EditContactDialog({ student, onClose }) {
       onClose();
       return;
     }
-    const clientErrors = validateContact(body);
+    const clientErrors = validateStudentBody(body);
     if (Object.keys(clientErrors).length > 0) {
       setErrors({ form: null, fields: clientErrors });
       return;
