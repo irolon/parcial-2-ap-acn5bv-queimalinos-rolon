@@ -7,8 +7,8 @@ import ActiveWorkoutCard from '@/components/student/today/ActiveWorkoutCard';
 import NoRoutineCard from '@/components/student/today/NoRoutineCard';
 import PlanTable from '@/components/student/today/PlanTable';
 import RoutineHero from '@/components/student/today/RoutineHero';
+import TodayContext from '@/components/student/today/TodayContext';
 import TodayHeader from '@/components/student/today/TodayHeader';
-import WeekSection from '@/components/student/today/WeekSection';
 import { STUDENT_STREAK_KEY, useStudentStreakQuery } from '@/hooks/achievements/useStudentGamification';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useMyRoutines, useTodayRoutine } from '@/hooks/routines/useStudentRoutines';
@@ -51,7 +51,7 @@ function useRefreshStreakOnNewDay(now, studentId) {
   }, [now, studentId, queryClient]);
 }
 
-/** Hoy: el saludo con la racha, la rutina del día (o por qué no hay) con su plan, y la semana. */
+/** Hoy: el saludo con la racha, la rutina del día (o por qué no hay) con su plan, y la columna de contexto. */
 export default function TodayPage() {
   const user = useAuthStore((state) => state.user);
   const now = useToday();
@@ -67,7 +67,7 @@ export default function TodayPage() {
         <div className="flex min-w-0 flex-col gap-3.5">
           <RoutineSection today={today} routines={routines} now={now} />
         </div>
-        <WeekSection now={now} />
+        <TodayContext now={now} />
       </div>
     </div>
   );

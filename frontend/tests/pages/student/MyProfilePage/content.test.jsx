@@ -67,19 +67,19 @@ describe('MyProfilePage: lo que se ve', () => {
 });
 
 describe('MyProfilePage: sin acciones del entrenador', () => {
-  it('las únicas acciones son Registrar medición y borrar las medidas que cargó el alumno', async () => {
+  it('las únicas acciones son Registrar medición, borrar las medidas que cargó el alumno e ir a Mensajes', async () => {
     show();
     await screen.findByRole('table', { name: 'Historial de medidas' });
     const names = screen.getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent);
     expect(names.sort()).toEqual(['Borrar medida del 05/10/2026', 'Registrar medición']);
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Mensaje']);
   });
 
   it('solo pide datos del propio alumno y no manda nada que cambie su ficha', async () => {
     const fetchMock = show();
     await screen.findByRole('table', { name: 'Historial de medidas' });
     expect(calls(fetchMock).every(([, init]) => init.method === 'GET')).toBe(true);
-    expect(calls(fetchMock).map(([path]) => path).sort()).toEqual(['/students/s-1', '/students/s-1/metrics']);
+    expect(calls(fetchMock).map(([path]) => path).sort()).toEqual(['/messages/s-1?limit=1', '/students/s-1', '/students/s-1/metrics']);
   });
 });
