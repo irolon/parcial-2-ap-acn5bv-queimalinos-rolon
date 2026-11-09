@@ -21,7 +21,9 @@ create table if not exists trainers (
   password_hash varchar(255) not null,
   specialty     varchar(255),
   avatar_url    text,
-  created_at    timestamptz not null default now()
+  created_at    timestamptz not null default now(),
+  -- GX1: blanqueo y 'Modificada hace…' (lo setea el cambio de contraseña).
+  password_changed_at timestamptz
 );
 
 create index if not exists idx_trainers_email on trainers (email);

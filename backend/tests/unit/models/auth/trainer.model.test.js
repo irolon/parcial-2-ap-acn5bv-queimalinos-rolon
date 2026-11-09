@@ -21,4 +21,9 @@ describe('trainer.model', () => {
   it('las columnas públicas no exponen password_hash', () => {
     expect(TRAINER_PUBLIC_COLUMNS).not.toContain('password_hash');
   });
+
+  it('las columnas públicas traen password_changed_at ("Modificada hace…")', () => {
+    const columns = TRAINER_PUBLIC_COLUMNS.split(',').map((c) => c.trim());
+    expect(columns).toContain('password_changed_at');
+  });
 });

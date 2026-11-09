@@ -20,7 +20,10 @@ create table if not exists students (
   gym_equipment text[],
   injuries      text,
   level         varchar(20) check (level in ('beginner', 'intermediate', 'advanced')),
-  created_at    timestamptz not null default now()
+  created_at    timestamptz not null default now(),
+  -- GX1: blanqueo y 'Modificada hace…' (el blanqueo prende el flag; el cambio lo apaga).
+  must_change_password boolean not null default false,
+  password_changed_at  timestamptz
 );
 
 create index if not exists idx_students_trainer on students (trainer_id);
