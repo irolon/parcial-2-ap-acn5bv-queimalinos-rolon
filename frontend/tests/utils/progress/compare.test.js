@@ -13,10 +13,15 @@ describe('compareCandidates', () => {
     expect(result.map((e) => e.id)).toEqual(['c', 'd', 'a']);
   });
 
-  it('corta en 6 por defecto o en el máximo pedido', () => {
+  it('sin rango corta en 6 por defecto o en el máximo pedido', () => {
     const many = [3, 4, 5, 6, 7, 8, 9, 10].map((d) => ex(`e${d}`, d));
     expect(compareCandidates(many).map((e) => e.id)).toEqual(['e10', 'e9', 'e8', 'e7', 'e6', 'e5']);
     expect(compareCandidates(many, { max: 2 })).toHaveLength(2);
+  });
+
+  it('con rango no corta: da todos los que entrenaron en el rango', () => {
+    const many = [3, 4, 5, 6, 7, 8, 9, 10].map((d) => ex(`e${d}`, d));
+    expect(compareCandidates(many, { from: '2026-10-01' })).toHaveLength(8);
   });
 
   it('a igual cantidad de días desempata por nombre y no muta la lista', () => {
@@ -25,20 +30,21 @@ describe('compareCandidates', () => {
     expect(list[0].id).toBe('a');
   });
 
-  it('con `from` descarta los que no entrenó desde esa fecha antes de cortar en 6', () => {
+  it('con `from` descarta los que no entrenó desde esa fecha', () => {
     const old = [10, 11, 12, 13, 14, 15].map((d) => ex(`old${d}`, d, `old${d}`, '2026-09-20'));
     const fresh = [ex('n1', 4, 'n1', '2026-11-02'), ex('n2', 5, 'n2', '2026-10-05')];
-    expect(compareCandidates([...old, ...fresh], { from: '2026-10-05' }).map((e) => e.id)).toEqual(['n1', 'n2']);
+    expect(compareCandidates([...old, ...fresh], { from: '2026-10-05' }).map((e) => e.id)).toEqual(['n2', 'n1']);
     expect(compareCandidates([...old, ...fresh])).toHaveLength(6);
     expect(compareCandidates([...old, ...fresh], { from: null })[0].id).toBe('old15');
   });
 
-  it('con `from` ordena por último entrenamiento antes que por días: la rutina nueva no queda tapada por la vieja', () => {
+  it('con `from` ni la rutina vieja tapa a la nueva ni la nueva a la vieja: entran todos los del rango', () => {
     const old = [10, 11, 12, 13, 14, 15].map((d) => ex(`old${d}`, d, `old${d}`, '2026-10-12'));
     const fresh = ex('nuevo', 4, 'nuevo', '2026-11-05');
-    const result = compareCandidates([...old, fresh], { from: '2026-10-08' }).map((e) => e.id);
-    expect(result).toHaveLength(6);
-    expect(result[0]).toBe('nuevo');
+    expect(compareCandidates([...old, fresh], { from: '2026-10-08' }).map((e) => e.id)).toContain('nuevo');
+    const brandNew = [1, 2, 3, 4, 5, 6].map((i) => ex(`n${i}`, 3, `n${i}`, '2026-11-08'));
+    const banca = ex('banca', 4, 'banca', '2026-11-01');
+    expect(compareCandidates([...brandNew, banca], { from: '2026-10-08' }).map((e) => e.id)).toContain('banca');
     expect(compareCandidates([...old, fresh]).map((e) => e.id)).not.toContain('nuevo');
   });
 });

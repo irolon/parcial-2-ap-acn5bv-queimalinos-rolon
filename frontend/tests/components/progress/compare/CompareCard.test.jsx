@@ -51,7 +51,7 @@ describe('CompareCard', () => {
     expect(screen.getByLabelText('Ejercicio 2')).toHaveValue('ex-2');
     expect(screen.getByLabelText('Ejercicio 3')).toHaveValue('ex-3');
     expect(screen.getByLabelText('Rango de la comparación')).toHaveValue('3m');
-    expect(progressUrls(fetchMock, 'exercise')).toHaveLength(6);
+    expect(progressUrls(fetchMock, 'exercise')).toHaveLength(7);
     expect(progressUrls(fetchMock, 'exercise')[0]).toMatch(/^\/progress\/exercise\/ex-4\?student_id=s-1&from=/);
   });
 
@@ -77,15 +77,19 @@ describe('CompareCard', () => {
     expect(few('Militar')).toBeDisabled();
   });
 
-  it('cambiar el select 2 pide la curva nueva y reemplaza esa línea', async () => {
+  // Con rango ya se pidieron todos los que entrenaron en él; con "Todo" solo los 6 de más días (Militar no).
+  it('con "Todo", cambiar el select 2 pide la curva nueva y reemplaza esa línea', async () => {
     const { fetchMock } = load();
+    await chart('Press banca, Sentadilla y Peso muerto');
+    fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: 'all' } });
+    await waitFor(() => expect(screen.queryByText('Cargando la progresión…')).not.toBeInTheDocument());
     await chart('Press banca, Sentadilla y Peso muerto');
     fireEvent.change(screen.getByLabelText('Ejercicio 2'), { target: { value: 'ex-7' } });
     expect(screen.getByText('Cargando…')).toBeInTheDocument();
     expect(screen.queryByText('Cargando la progresión…')).not.toBeInTheDocument();
     expect(await chart('Press banca, Militar y Peso muerto')).toBeInTheDocument();
     expect(screen.queryByText('Cargando…')).not.toBeInTheDocument();
-    expect(progressUrls(fetchMock, 'exercise').filter((p) => p.startsWith('/progress/exercise/ex-7'))).toHaveLength(1);
+    expect(progressUrls(fetchMock, 'exercise').filter((p) => p.startsWith('/progress/exercise/ex-7') && !p.includes('from='))).toHaveLength(1);
   });
 
   it('con el rango de 1 mes vuelve a elegir con las curvas de ese rango', async () => {

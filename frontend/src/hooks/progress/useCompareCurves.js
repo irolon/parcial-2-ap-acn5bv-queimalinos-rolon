@@ -5,8 +5,8 @@ import { SLOT_STYLES, compareCandidates, compareMetric, isBodyweight, pickTop, t
 import { hasKg } from '@/utils/progress/metrics';
 
 /**
- * Curvas de la progresión comparada en `range` (`{ from, to }`): pide la de los candidatos (los de más días entre
- * los que entrenaron en el rango) y la de los elegidos a mano, en paralelo y con la misma caché que la curva del
+ * Curvas de la progresión comparada en `range` (`{ from, to }`): pide la de los candidatos (todos los que entrenaron
+ * en el rango; sin rango, los de más días) y la de los elegidos a mano, en paralelo y con la misma caché que la curva del
  * panel. Las 3 líneas salen solas (`pickTop`) hasta que se cambia una; al cambiar el rango la elección a mano se
  * borra y vuelven a salir solas. Cada línea lleva el estilo de su lugar (`SLOT_STYLES`); `slotLoading[i]`: la curva
  * del lugar `i` todavía se está pidiendo. `few`: los que no llegan a MIN_POINTS puntos en el rango (no se dibujan).

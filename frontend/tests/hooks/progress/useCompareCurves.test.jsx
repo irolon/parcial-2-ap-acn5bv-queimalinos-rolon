@@ -19,6 +19,7 @@ const EXERCISES = [
 const COUNTS = { 'ex-1': 5, 'ex-2': 4, 'ex-3': 4, 'ex-5': 3, 'ex-6': 1, 'ex-7': 3 };
 const RANGE = { from: '2026-08-03', to: '2026-11-08' };
 const SHORT = { from: '2026-10-05', to: '2026-11-08' };
+const ALL = { from: null, to: null };
 
 const points = (n, kg) => Array.from({ length: n }, (_, i) => ({
   date: `2026-10-${String(i * 3 + 1).padStart(2, '0')}`, max_kg: kg, e1rm_kg: kg === null ? null : kg + i, sets: 3, reps: 24,
@@ -44,11 +45,11 @@ function mount(hook, initialProps = { range: RANGE }) {
 const ids = (fetchMock) => progressUrls(fetchMock, 'exercise').map((p) => /exercise\/([^?]+)/.exec(p)[1]);
 
 describe('useCompareCurves', () => {
-  it('pide la curva de los 6 candidatos por días y elige los 3 con más puntos con kg', async () => {
+  it('pide la curva de todos los que entrenaron en el rango y elige los 3 con más puntos con kg', async () => {
     const fetchMock = stub();
     const { result } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(ids(fetchMock)).toEqual(['ex-4', 'ex-1', 'ex-2', 'ex-3', 'ex-5', 'ex-6']);
+    expect(ids(fetchMock)).toEqual(['ex-4', 'ex-1', 'ex-2', 'ex-3', 'ex-5', 'ex-6', 'ex-7']);
     expect(progressUrls(fetchMock, 'exercise')[0]).toBe(`/progress/exercise/ex-4?student_id=s-1&from=${RANGE.from}&to=${RANGE.to}`);
     expect(result.current.slots).toEqual(['ex-1', 'ex-2', 'ex-3']);
     expect(result.current.lines.map((l) => l.name)).toEqual(['Press banca', 'Sentadilla', 'Peso muerto']);
@@ -59,9 +60,10 @@ describe('useCompareCurves', () => {
     expect(result.current.hidden).toBe(false);
   });
 
-  it('cambiar una línea pide la curva nueva si no estaba y reemplaza solo esa', async () => {
+  // Con rango se piden todos los que entrenaron en él; sin rango, los 6 de más días: Militar (ex-7) queda afuera.
+  it('sin rango, cambiar una línea pide la curva nueva si no estaba y reemplaza solo esa', async () => {
     const fetchMock = stub();
-    const { result } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range));
+    const { result } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range), { range: ALL });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.slotLoading).toEqual([false, false, false]);
     act(() => result.current.setSlot(1, 'ex-7'));
@@ -103,7 +105,7 @@ describe('useCompareCurves', () => {
     act(() => result.current.setSlot(1, 'ex-6'));
     expect(result.current.slots).toEqual(['ex-1', 'ex-6', 'ex-3']);
     expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-3']);
-    expect(result.current.few).toEqual(new Set(['ex-6']));
+    expect(result.current.few).toEqual(new Set(['ex-6', 'ex-7']));
     act(() => result.current.setSlot(1, 'ex-7'));
     await waitFor(() => expect(result.current.slotLoading).toEqual([false, false, false]));
     expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-3']);
@@ -124,7 +126,7 @@ describe('useCompareCurves', () => {
     });
     const { result } = mount(({ range }) => useCompareCurves('s-1', exercises, range), { range: SHORT });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(ids(fetchMock)).toEqual(['n-1', 'n-2', 'n-3']);
+    expect(ids(fetchMock)).toEqual(['n-1', 'n-3', 'n-2']);
     expect(result.current.slots).toEqual(['n-1', 'n-3', 'n-2']);
     expect(result.current.few).toEqual(new Set(['ex-1', 'ex-2', 'ex-3', 'ex-5', 'ex-6', 'ex-7']));
   });
@@ -142,8 +144,23 @@ describe('useCompareCurves', () => {
     });
     const { result } = mount(({ range }) => useCompareCurves('s-1', exercises, range), { range: SHORT });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(ids(fetchMock)[0]).toBe('n-1');
+    expect(ids(fetchMock)).toHaveLength(7);
     expect(result.current.slots).toEqual(['n-1', null, null]);
+  });
+
+  it('si la rutina cambió ayer, el de la anterior con más puntos en el rango igual se dibuja', async () => {
+    const exercises = [
+      ...[1, 2, 3, 4, 5, 6].map((i) => ex(`n-${i}`, `Nuevo ${i}`, 3, '2026-11-07')),
+      ex('ex-1', 'Press banca', 12, '2026-10-31'),
+    ];
+    const fetchMock = stubFetch(async (url) => {
+      const id = /\/progress\/exercise\/([^/?]+)/.exec(url)[1];
+      return jsonResponse(200, { data: { exercise: { id }, points: points(id === 'ex-1' ? 4 : 1, 80), pr: {}, default_metric: 'e1rm_kg' } });
+    });
+    const { result } = mount(({ range }) => useCompareCurves('s-1', exercises, range), { range: SHORT });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(ids(fetchMock)).toContain('ex-1');
+    expect(result.current.lines.map((l) => l.name)).toEqual(['Press banca']);
   });
 
   it('si nadie entrenó en el rango no pide curvas pero tampoco se oculta (queda el selector de rango)', async () => {

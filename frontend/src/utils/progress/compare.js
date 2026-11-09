@@ -1,7 +1,7 @@
 import { dateToTime } from './format';
 import { MIN_POINTS, hasKg } from './metrics';
 
-/** Cuántas curvas se piden para elegir las líneas (las entrenadas más recientemente en el rango). */
+/** Sin rango (todo el historial), cuántas curvas se piden para elegir las líneas: las de más días. */
 export const MAX_CANDIDATES = 6;
 
 /**
@@ -23,20 +23,16 @@ const byDaysThenName = (a, b) => b.days - a.days || a.name.localeCompare(b.name,
 /** Entrenó desde `from` (`YYYY-MM-DD`, o nada para todo el historial), según su `last_date` del overview. */
 export const trainedSince = (exercise, from) => !from || !exercise.last_date || exercise.last_date >= from;
 
-/** Último entrenamiento más reciente primero (`YYYY-MM-DD` se ordena como texto); sin `last_date`, al final. */
-const byLastDate = (a, b) => (b.last_date ?? '').localeCompare(a.last_date ?? '');
-
 /**
- * Ejercicios con al menos MIN_POINTS días (de todo el historial), hasta `max`. Con `from`, solo los entrenados
- * desde esa fecha y del último entrenamiento más reciente al más viejo (después por días): `days` es de todo el
- * historial, así que si la rutina cambió hace poco los de la vieja (con más días y 1 punto en el rango) taparían
- * a los nuevos. Sin `from`, de más a menos días.
+ * Ejercicios con al menos MIN_POINTS días (de todo el historial), de más a menos días. Con `from`, todos los que
+ * entrenaron desde esa fecha, sin tope: `days` es de todo el historial y los puntos del rango solo se saben con la
+ * curva, así que cualquier corte podría dejar afuera al que más puntos tiene en el rango (suelen ser pocos: la
+ * rutina actual y lo que quedó de la anterior). Sin `from`, `days` sí es del rango y se corta en `max`.
  */
-export function compareCandidates(exercises, { from, max = MAX_CANDIDATES } = {}) {
-  const order = from ? (a, b) => byLastDate(a, b) || byDaysThenName(a, b) : byDaysThenName;
+export function compareCandidates(exercises, { from, max = from ? Infinity : MAX_CANDIDATES } = {}) {
   return exercises
     .filter((e) => e.days >= MIN_POINTS && trainedSince(e, from))
-    .sort(order)
+    .sort(byDaysThenName)
     .slice(0, max);
 }
 
