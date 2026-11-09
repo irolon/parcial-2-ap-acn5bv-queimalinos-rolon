@@ -25,7 +25,12 @@ export const STUDENT_LIST_COLUMNS = 'id, name, email, goal, active, avatar_url, 
 export const STUDENT_DETAIL_COLUMNS =
   'id, trainer_id, name, email, goal, birth_date, avatar_url, active, gym_equipment, injuries, level, created_at, ' +
   // GX1: el login y el refresh del alumno leen la ficha para el cambio obligatorio.
-  'must_change_password, password_changed_at';
+  'must_change_password, password_changed_at, ' +
+  // GX2: lo edita el alumno o su PT.
+  'phone';
+
+/** Lo único que el alumno puede cambiar de sí mismo por PATCH /students/:id (GX2). */
+export const STUDENT_SELF_EDITABLE = ['name', 'phone'];
 
 /** Mapea una fila cruda a la entidad pública Student, descartando el hash. */
 export function toStudent(row) {

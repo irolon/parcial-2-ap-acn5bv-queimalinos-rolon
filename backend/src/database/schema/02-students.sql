@@ -23,7 +23,9 @@ create table if not exists students (
   created_at    timestamptz not null default now(),
   -- GX1: blanqueo y 'Modificada hace…' (el blanqueo prende el flag; el cambio lo apaga).
   must_change_password boolean not null default false,
-  password_changed_at  timestamptz
+  password_changed_at  timestamptz,
+  -- GX2: lo edita el alumno o su PT; se copia de la invitación.
+  phone                varchar(30)
 );
 
 create index if not exists idx_students_trainer on students (trainer_id);

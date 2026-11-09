@@ -8,7 +8,7 @@
 export const TRAINERS_TABLE = 'trainers';
 
 /** Columnas públicas del trainer (nunca incluye password_hash). */
-export const TRAINER_PUBLIC_COLUMNS = 'id, name, email, specialty, avatar_url, created_at, password_changed_at';
+export const TRAINER_PUBLIC_COLUMNS = 'id, name, email, specialty, avatar_url, created_at, password_changed_at, professional_title';
 
 /**
  * Mapea una fila cruda de la DB a la entidad pública Trainer,

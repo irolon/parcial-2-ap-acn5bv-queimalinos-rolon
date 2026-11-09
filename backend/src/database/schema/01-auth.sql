@@ -23,7 +23,9 @@ create table if not exists trainers (
   avatar_url    text,
   created_at    timestamptz not null default now(),
   -- GX1: blanqueo y 'Modificada hace…' (lo setea el cambio de contraseña).
-  password_changed_at timestamptz
+  password_changed_at timestamptz,
+  -- GX2: lo ven sus alumnos.
+  professional_title varchar(80)
 );
 
 create index if not exists idx_trainers_email on trainers (email);

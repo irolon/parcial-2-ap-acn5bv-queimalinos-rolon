@@ -26,4 +26,9 @@ describe('trainer.model', () => {
     const columns = TRAINER_PUBLIC_COLUMNS.split(',').map((c) => c.trim());
     expect(columns).toContain('password_changed_at');
   });
+
+  it('las columnas públicas traen professional_title (GX2)', () => {
+    const columns = TRAINER_PUBLIC_COLUMNS.split(',').map((c) => c.trim());
+    expect(columns).toContain('professional_title');
+  });
 });
