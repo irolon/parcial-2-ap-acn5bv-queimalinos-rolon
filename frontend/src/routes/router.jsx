@@ -16,6 +16,7 @@ import StudentMessagesPage from '@/pages/messages/StudentMessagesPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
 import HistoryPage from '@/pages/student/HistoryPage';
+import MyAppointmentsPage from '@/pages/student/MyAppointmentsPage';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import MyRoutinesPage from '@/pages/student/MyRoutinesPage';
 import RoutineDetailPage from '@/pages/student/RoutineDetailPage';
@@ -49,7 +50,7 @@ function roleSection(role, nav, pages = [], elements = {}) {
           { index: true, element: <Navigate to={nav.items[0].path} replace /> },
           ...nav.items.map((item) => ({
             path: item.path,
-            handle: { title: item.label, subtitle: item.subtitle },
+            handle: { title: item.title ?? item.label, subtitle: item.subtitle },
             element: elements[item.path] ?? <PlaceholderPage title={item.label} />,
           })),
           ...pages,
@@ -105,6 +106,7 @@ export const routes = [
     progreso: <MyProgressPage />,
     rutinas: <MyRoutinesPage />,
     historial: <HistoryPage />,
+    turnos: <MyAppointmentsPage />,
     mensajes: <StudentMessagesPage />,
     perfil: <MyProfilePage />,
   }),
