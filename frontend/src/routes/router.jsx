@@ -69,9 +69,10 @@ export const routes = [
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/registro', element: <RegisterPage /> },
-      { path: '/join', element: <JoinPage /> },
     ],
   },
+  // Fuera de GuestOnly: con una sesión abierta la página lo avisa en vez de perder el link.
+  { path: '/join', element: <JoinPage /> },
   roleSection(ROLES.TRAINER, TRAINER_NAV, [
     {
       path: NEW_STUDENT.path,

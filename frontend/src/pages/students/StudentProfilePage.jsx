@@ -11,6 +11,7 @@ import ProgressPanel from '@/components/progress/ProgressPanel';
 import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
 import Button from '@/components/shared/ui/Button';
+import TrainerCommitmentCard from '@/components/students/commitment/TrainerCommitmentCard';
 import StudentDialogs from '@/components/students/dialogs/StudentDialogs';
 import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
 import AiContextCard from '@/components/students/profile/AiContextCard';
@@ -97,6 +98,7 @@ export default function StudentProfilePage() {
               />
             </div>
             <div className="flex min-w-0 flex-col gap-5">
+              <TrainerCommitmentCard studentId={id} />
               {metricsQuery.isError ? (
                 <ErrorState message={metricsQuery.error?.message} onRetry={() => metricsQuery.refetch()} />
               ) : (

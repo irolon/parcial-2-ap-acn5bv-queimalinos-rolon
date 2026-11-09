@@ -1,5 +1,9 @@
+import { screen } from '@testing-library/react';
+import { TRAINER, renderRoute, setSession } from '../routes/renderRoute';
 import { errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
+import { warmUp } from '../shared/warmUp';
 import { sessionsRoute } from '../sessions/sessions';
+import { student } from './fixtures';
 
 const NOT_HANDLED = () => errorResponse(500, 'INTERNAL', 'Sin handler');
 
@@ -63,3 +67,10 @@ export function stubStudents({
     return (byMethod[method] ?? NOT_HANDLED)(init, url);
   });
 }
+
+/** Para `beforeAll`: el primer render del panel de alumnos en el worker, fuera de los tests (ver `warmUp`). */
+export const warmUpStudents = () => warmUp(() => {
+  setSession(TRAINER);
+  stubStudents({ list: [student({ name: 'Ana Paz' })] });
+  renderRoute('/pt/alumnos');
+}, () => screen.getByRole('link', { name: /Ana Paz/ }));

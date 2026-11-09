@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NewAppointmentDialog from '@/components/agenda/dialogs/NewAppointmentDialog';
 import { appt, freezeNow } from '../../../helpers/agenda/fixtures';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
+import { setupUser } from '../../../helpers/shared/user';
 
 beforeEach(freezeNow);
 afterEach(() => {
@@ -118,8 +119,8 @@ describe('NewAppointmentDialog', () => {
     expect(calls(fetchMock).some(([, init]) => init?.method === 'POST')).toBe(false);
   });
 
-  it('doble click en Agendar manda un solo POST', async () => {
-    const u = user();
+  it('un doble click en Agendar turno manda un solo POST', async () => {
+    const u = setupUser();
     const { fetchMock } = setup({ post: async () => new Promise((resolve) => setTimeout(() => resolve(jsonResponse(201, { data: BUSY })), 50)) });
     await fill(u, '13');
     await u.dblClick(screen.getByRole('button', { name: 'Agendar turno' }));

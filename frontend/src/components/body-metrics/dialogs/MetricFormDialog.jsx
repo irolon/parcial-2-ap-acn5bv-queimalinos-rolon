@@ -3,6 +3,7 @@ import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
 import { useCreateMetric } from '@/hooks/body-metrics/useBodyMetrics';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { METRIC_FIELDS, buildMetricBody, latestByField, validateMetricBody } from '@/utils/body-metrics/metrics';
 import { localInputValue } from '@/utils/dates';
 import { NO_FIELD_ERRORS, fieldErrorsFrom } from '@/utils/fieldErrors';
@@ -30,14 +31,18 @@ export default function MetricFormDialog({ studentId, metrics = [], title = 'Car
   const [openedAt] = useState(() => localInputValue());
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const create = useCreateMetric(studentId);
+  const lock = useSubmitLock();
   const saving = create.isPending;
   const { fields } = errors;
   const lastHeight = latestByField(metrics, 'height_cm').value;
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault();
-    if (create.isPending) return;
     const data = new FormData(event.currentTarget);
+    lock(() => save(data));
+  }
+
+  async function save(data) {
     const now = localInputValue();
     const recordedAt = String(data.get('recorded_at') || '') || now;
     const body = buildMetricBody(Object.fromEntries(data), { id, recordedAt });

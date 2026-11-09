@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { LIBRARY, exercise } from '../../../helpers/exercises/fixtures';
 import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
@@ -15,7 +15,7 @@ async function openPage(options) {
   const fetchMock = stubLibrary(options);
   renderRoute(PAGE_PATH);
   await screen.findByText(/^\d+ EJERCICIOS$/);
-  return { fetchMock, user: userEvent.setup() };
+  return { fetchMock, user: setupUser() };
 }
 
 beforeEach(() => {
@@ -96,7 +96,7 @@ describe('ExerciseLibraryPage: borrar ejercicio', () => {
     });
     renderRoute(PAGE_PATH);
     await screen.findByText(/^\d+ EJERCICIOS$/);
-    const user = userEvent.setup();
+    const user = setupUser();
     const group = () => within(page().getByRole('radiogroup', { name: 'Grupo muscular' }));
     await user.click(group().getByRole('radio', { name: 'Gemelos' }));
     await user.click(page().getByRole('button', { name: 'Borrar Elevación de talones' }));
@@ -168,7 +168,7 @@ describe('ExerciseLibraryPage: borrar ejercicio', () => {
     });
     renderRoute(PAGE_PATH);
     await screen.findByText(/^\d+ EJERCICIOS$/);
-    const user = userEvent.setup();
+    const user = setupUser();
     await user.click(page().getByRole('radio', { name: 'Propios' }));
     await user.click(page().getByRole('radio', { name: 'Gemelos' }));
     await user.click(page().getByRole('button', { name: 'Borrar Elevación de talones' }));

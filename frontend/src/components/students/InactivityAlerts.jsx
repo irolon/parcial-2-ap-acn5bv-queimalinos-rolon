@@ -18,7 +18,7 @@ export default function InactivityAlerts({ students, now }) {
       }
     >
       {alerts.length === 0 ? (
-        <p className="font-body text-sm text-ink6">Todos tus alumnos entrenaron en la última semana</p>
+        <p className="font-body text-sm text-ink6">Nadie lleva más de 7 días sin entrenar</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {alerts.map((s) => (
