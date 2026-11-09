@@ -46,7 +46,9 @@ describe('validación de entrada en todas las rutas con body', () => {
       ['POST /api/auth/refresh', 'refresh'],
       ['PUT /api/auth/password', 'passwordChange'],
       ['GET /api/invitations/:token', 'invitation'],
+      ['GET /api/students/export', 'export'],
       ['POST /api/students', 'studentSignup'],
+      ['GET /api/students/:id/export', 'export'],
       ['POST /api/students/:id/password-reset', 'passwordReset'],
     ]);
   });
