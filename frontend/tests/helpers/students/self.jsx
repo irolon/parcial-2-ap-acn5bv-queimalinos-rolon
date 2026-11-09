@@ -20,6 +20,11 @@ export function signInSelf() {
   useAuthStore.setState({ user: SELF, token: 'access-1', refreshToken: 'refresh-1', status: 'authenticated' });
 }
 
+/** Sus preferencias de push sin fila guardada, como las devuelve `GET /notifications/preferences` (GX3). */
+export const selfPreferences = (overrides = {}) => ({
+  message: true, comment: true, appointment: true, pr: true, achievement: true, updated_at: null, ...overrides,
+});
+
 /** Su entrenador/a, como viene en el `counterpart` de `GET /messages/s-1?limit=1`. */
 export const TRAINER = { id: 't-1', name: 'Laura Gómez', avatar_url: null };
 
@@ -33,6 +38,8 @@ export function renderOwn(ui) {
   );
   return { ...utils, queryClient };
 }
+
+const PREFERENCES = '/notifications/preferences';
 
 // La respuesta de `GET /messages/:id?limit=1`: el `counterpart` va al lado de `data`, no adentro.
 async function replyCounterpart(answer) {
@@ -48,6 +55,7 @@ async function replyCounterpart(answer) {
  *   nunca resuelve deja la carga a medias.
  * - `createMetric(init)` y `deleteMetric(init, path)`: los handlers de POST y DELETE de medidas.
  * - `updateProfile(init)`, `uploadAvatar(init)` y `removeAvatar(init)`: PATCH de la ficha, PUT y DELETE de la foto (GX2).
+ * - `preferences` (todo prendido por defecto) y `savePreferences(init)`: GET y PUT de `/notifications/preferences` (GX3).
  */
 export function stubSelf({
   profile,
@@ -59,6 +67,8 @@ export function stubSelf({
   updateProfile,
   uploadAvatar,
   removeAvatar,
+  preferences = selfPreferences(),
+  savePreferences,
 } = {}) {
   const base = `/students/${SELF.id}`;
   return stubFetch(async (url, init = {}) => {
@@ -73,6 +83,8 @@ export function stubSelf({
     if (method === 'PATCH' && path === base && updateProfile) return updateProfile(init);
     if (method === 'PUT' && path === `${base}/avatar` && uploadAvatar) return uploadAvatar(init);
     if (method === 'DELETE' && path === `${base}/avatar` && removeAvatar) return removeAvatar(init);
+    if (method === 'GET' && path === PREFERENCES) return reply(preferences);
+    if (method === 'PUT' && path === PREFERENCES && savePreferences) return savePreferences(init);
     return errorResponse(500, 'INTERNAL', `Sin handler: ${method} ${path}`);
   });
 }

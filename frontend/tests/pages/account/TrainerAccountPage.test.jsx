@@ -43,6 +43,7 @@ describe('TrainerAccountPage (/pt/cuenta)', () => {
     expect(within(card).getByText('Nunca la cambiaste')).toBeInTheDocument();
     expect(within(card).getByText('Exportar los datos de tus alumnos')).toBeInTheDocument();
     expect(within(card).getByText('Todas sus sesiones en CSV')).toBeInTheDocument();
+    expect(within(card).queryByText('Notificaciones')).toBeNull();
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/me']);
   });
 

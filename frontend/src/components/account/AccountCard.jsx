@@ -5,14 +5,17 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { passwordAgeLabel } from '@/utils/account/passwordAge';
 import AccountRow from './AccountRow';
 import ChangePasswordDialog from './ChangePasswordDialog';
+import NotificationsRow from './NotificationsRow';
 
 /**
- * Tarjeta "Cuenta" (alumno en Mi perfil, PT en Tu cuenta): cambiar la contraseña y bajar las sesiones en CSV.
+ * Tarjeta "Cuenta" (alumno en Mi perfil, PT en Tu cuenta): cambiar la contraseña y bajar las sesiones en CSV. Solo el
+ * alumno ve además "Notificaciones" (sus preferencias de push; el PT no tiene y el GET le daría 403).
  * `exportStudentId` baja las de un alumno; sin él, las de todos los alumnos del PT. `exportFilenamePrefix` lleva la
  * fecha de la descarga detrás.
  */
 export default function AccountCard({ exportLabel, exportSubtitle, exportStudentId, exportFilenamePrefix }) {
   const changedAt = useAuthStore((state) => state.user?.password_changed_at ?? null);
+  const isStudent = useAuthStore((state) => state.user?.role === 'student');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [changed, setChanged] = useState(false);
   const csv = useExportCsv({ studentId: exportStudentId, filenamePrefix: exportFilenamePrefix });
@@ -37,6 +40,7 @@ export default function AccountCard({ exportLabel, exportSubtitle, exportStudent
             </p>
           )}
         </AccountRow>
+        {isStudent && <NotificationsRow />}
         <AccountRow
           title={exportLabel}
           subtitle={exportSubtitle}
