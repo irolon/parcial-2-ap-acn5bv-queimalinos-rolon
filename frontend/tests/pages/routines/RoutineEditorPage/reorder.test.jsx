@@ -1,13 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { DRAFT_STORAGE_KEY, renderEditor, rowNames } from '../../../helpers/routines/editor';
+import { DRAFT_STORAGE_KEY, renderEditor, rowNames, warmUpEditor } from '../../../helpers/routines/editor';
 import { moveExercise } from '@/utils/routines/editorState';
 import { buildRoutineBody } from '@/utils/routines/routineForm';
 
 const ROW_HEIGHT = 50;
 const realRect = Element.prototype.getBoundingClientRect;
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();

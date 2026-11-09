@@ -32,8 +32,9 @@ class TokenSessionRepository @Inject constructor(
      * el caché tiene dueño y otro usuario no lo ve. Si algún borrado falla, los demás igual se hacen.
      */
     override suspend fun signOut(): LogoutResult {
-        // La baja del token de push necesita el JWT: va antes de logout(). No lanza (timeout de 5 s).
-        pushTokens.unregister()
+        // La baja del token de push necesita el JWT: va antes de logout(). No lanza (timeout de 5 s). El token
+        // también viaja en el logout, que se reintenta si no hay red (#72).
+        val pushToken = pushTokens.unregister()
         // Sin sesión legible el dueño es desconocido: se borra todo.
         val ownerId = try {
             tokenStore.current()?.user?.id
@@ -52,6 +53,6 @@ class TokenSessionRepository @Inject constructor(
                 // Sin acción: ver el comentario de la función.
             }
         }
-        return authRepository.logout()
+        return authRepository.logout(pushToken)
     }
 }

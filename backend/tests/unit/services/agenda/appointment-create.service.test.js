@@ -36,7 +36,7 @@ describe('createForStudent', () => {
     expect(mockNotify.notify).toHaveBeenCalledWith({
       userId: TRAINER.id, userRole: 'trainer', type: 'appointment',
       title: 'Lucía pidió un turno para el vie 06/11 a las 18:00', body: null,
-      data: { appointment_id: result.id }, push: false,
+      data: { appointment_id: result.id, scheduled_at: result.scheduled_at }, push: false,
     });
   });
 
@@ -131,7 +131,7 @@ describe('createForTrainer', () => {
     expect(mockNotify.notify).toHaveBeenCalledWith({
       userId: STUDENT.id, userRole: 'student', type: 'appointment',
       title: 'Tu entrenador te agendó un turno el vie 06/11 a las 18:00', body: null,
-      data: { appointment_id: result.id }, push: true,
+      data: { appointment_id: result.id, scheduled_at: result.scheduled_at }, push: true,
     });
   });
 

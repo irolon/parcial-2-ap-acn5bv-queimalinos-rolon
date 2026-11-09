@@ -98,6 +98,15 @@ class LoginViewModelTest {
         assertEquals("Sin conexión con el servidor", vm.uiState.value.error)
     }
 
+    // Rate limit del backend (#80): es pasajero, no son credenciales malas.
+    @Test fun `429 muestra demasiados intentos`() = runTest {
+        api.loginError = httpError(429)
+        fill()
+        vm.submit()
+        assertEquals("Demasiados intentos. Probá de nuevo en unos minutos.", vm.uiState.value.error)
+        assertFalse(vm.uiState.value.isLoading)
+    }
+
     // Review Focus 5: 400/500 → mensaje genérico, sin texto técnico.
     @Test fun `400 y 500 muestran el mensaje generico`() = runTest {
         fill()

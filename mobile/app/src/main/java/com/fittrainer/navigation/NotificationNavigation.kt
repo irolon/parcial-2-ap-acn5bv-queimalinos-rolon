@@ -6,10 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fittrainer.navigation.student.STUDENT_APPOINTMENTS_ROUTE
+import com.fittrainer.navigation.trainer.AGENDA_SHOW_WEEK_KEY
+import com.fittrainer.navigation.trainer.TRAINER_AGENDA_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_CHAT_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_STUDENT_CHAT_ROUTE
 import com.fittrainer.navigation.trainer.TRAINER_NOTIFICATIONS_ROUTE
+import com.fittrainer.navigation.trainer.trainerAgendaRoute
 import com.fittrainer.navigation.trainer.trainerChatRoute
 import com.fittrainer.ui.messages.trainer.chat.CHAT_STUDENT_ARG
 import com.fittrainer.ui.notifications.launch.NavTarget
@@ -19,11 +23,13 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Un paso de navegación: ir a la raíz de una pestaña o apilar una ruta encima. [Tab.restore]: volver a la pestaña
- * como la dejó (el chat del alumno, con su borrador) en vez de abrirla de cero.
+ * como la dejó (el chat del alumno, con su borrador) en vez de abrirla de cero. [Deliver]: sin navegar, le deja un dato a
+ * la pantalla abierta en su entrada (la agenda ya abierta pasa a la semana del turno).
  */
 sealed interface NavStep {
     data class Tab(val route: String, val restore: Boolean = false) : NavStep
     data class Push(val route: String) : NavStep
+    data class Deliver(val key: String, val value: String) : NavStep
 }
 
 /**
@@ -61,6 +67,20 @@ fun navSteps(nav: PendingNav, currentRoute: String?, currentStudentId: String? =
     is NavTarget.TrainerChat ->
         if (currentRoute in TRAINER_CHAT_ROUTES && currentStudentId == target.studentId) emptyList()
         else listOf(NavStep.Tab(TRAINER_MESSAGES_ROUTE), NavStep.Push(trainerChatRoute(target.studentId)))
+    // Desde un push: Más → Agenda, así atrás vuelve a Más. En la semana del turno (#78) si el aviso la trae; ya abierta,
+    // pasa a esa semana sin recrearse (o se queda en la que se está mirando si no hay fecha).
+    is NavTarget.TrainerAgenda -> when {
+        currentRoute == TRAINER_AGENDA_ROUTE ->
+            listOfNotNull(target.weekStart?.let { NavStep.Deliver(AGENDA_SHOW_WEEK_KEY, it.toString()) })
+        nav.fromList -> listOf(NavStep.Push(trainerAgendaRoute(target.weekStart)))
+        else -> listOf(NavStep.Tab(TRAINER_MORE_ROUTE), NavStep.Push(trainerAgendaRoute(target.weekStart)))
+    }
+    // Tarjeta 16, igual que la agenda del PT: desde un push Perfil → Mis turnos; ya abierta, se queda.
+    NavTarget.StudentAppointments -> when {
+        currentRoute == STUDENT_APPOINTMENTS_ROUTE -> emptyList()
+        nav.fromList -> listOf(NavStep.Push(STUDENT_APPOINTMENTS_ROUTE))
+        else -> listOf(NavStep.Tab(STUDENT_PROFILE_ROUTE), NavStep.Push(STUDENT_APPOINTMENTS_ROUTE))
+    }
     NavTarget.None -> emptyList()
 }
 
@@ -96,5 +116,6 @@ private fun NavController.navigateStep(step: NavStep) {
         }
         // Sin singleTop: el detalle es una sola ruta con argumento y singleTop reusaría la entrada de otra sesión.
         is NavStep.Push -> navigate(step.route)
+        is NavStep.Deliver -> currentBackStackEntry?.savedStateHandle?.set(step.key, step.value)
     }
 }

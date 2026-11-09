@@ -1,8 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
-import { DRAFT_STORAGE_KEY, renderEditor, rowNames, storeDraft } from '../../../helpers/routines/editor';
+import { DRAFT_STORAGE_KEY, renderEditor, rowNames, storeDraft, warmUpEditor } from '../../../helpers/routines/editor';
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();
@@ -60,11 +62,11 @@ describe('RoutineEditorPage: borrador', () => {
   it('"Descartar" pide confirmación y limpia el borrador', async () => {
     storeDraft();
     await renderEditor();
-    await userEvent.click(await screen.findByRole('button', { name: 'Descartar' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await user.click(await screen.findByRole('button', { name: 'Descartar' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(screen.getByText('Recuperamos tu borrador')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Descartar' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Sí, descartar' }));
+    await user.click(screen.getByRole('button', { name: 'Descartar' }));
+    await user.click(screen.getByRole('button', { name: 'Sí, descartar' }));
     expect(screen.queryByText('Recuperamos tu borrador')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('');
     expect(screen.getByText('Agregá ejercicios desde la biblioteca')).toBeVisible();

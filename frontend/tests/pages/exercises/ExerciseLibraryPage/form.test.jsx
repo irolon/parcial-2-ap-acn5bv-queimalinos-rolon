@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { LIBRARY, exercise } from '../../../helpers/exercises/fixtures';
 import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
@@ -63,7 +63,7 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
     });
     renderRoute(PAGE_PATH);
     await screen.findByText(/^\d+ EJERCICIOS$/);
-    const user = userEvent.setup();
+    const user = setupUser();
     await openCreate(user);
     await user.type(field('Nombre'), 'Remo con banda');
     await user.selectOptions(field('Grupo muscular'), 'back');
@@ -97,7 +97,7 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
           }),
       },
     });
-    const user = userEvent.setup();
+    const user = setupUser();
     await openCreate(user);
     await fillRequired(user);
     await user.dblClick(screen.getByRole('button', { name: 'Guardar' }));
@@ -116,7 +116,7 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
           }),
       },
     });
-    const user = userEvent.setup();
+    const user = setupUser();
     await openCreate(user);
     await fillRequired(user);
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -132,7 +132,7 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
           errorResponse(400, 'VALIDATION_ERROR', 'Datos inválidos', [{ field: 'video_url', message: 'X' }]),
       },
     });
-    const user = userEvent.setup();
+    const user = setupUser();
     await openCreate(user);
     await fillRequired(user);
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -143,7 +143,7 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
 
   it('la validación local frena el envío', async () => {
     const fetchMock = await load();
-    const user = userEvent.setup();
+    const user = setupUser();
     await openCreate(user);
     await user.type(field('Nombre'), 'A');
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -154,7 +154,7 @@ describe('ExerciseLibraryPage: crear ejercicio', () => {
 
   it('al cerrar con errores y volver a abrir, el formulario arranca limpio', async () => {
     await load();
-    const user = userEvent.setup();
+    const user = setupUser();
     await openCreate(user);
     await user.type(field('Nombre'), 'A');
     await user.click(screen.getByRole('button', { name: 'Guardar' }));

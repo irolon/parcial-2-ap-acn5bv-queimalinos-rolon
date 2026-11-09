@@ -130,9 +130,12 @@ src/
   database/migrations/    database/checks/        database/seeds/
 tests/
   unit/<capa>/<módulo>/   (mismo árbol que src; unit/scripts/lib/ espeja scripts/lib/, sin módulo)
+  unit/app/               (tests de src/app.js, el punto de entrada: no tiene módulo)
   integration/
   helpers/<módulo>/       (helpers/integration/ para la suite de integración, con isolation/ y progress/; helpers/scripts/ para los tests de scripts/lib/)
+  helpers/app/            (utilidades de esos tests: levantar la app, recorrer sus rutas)
 scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en scripts/lib/)
+load/                     (scripts de carga de k6, no corren con jest; ver load/README.md)
 ```
 
 Excepciones de nombre: `gamification` (dominio de `/achievements`, `/challenges` y la racha de `/students/:id/streak`: comparten evaluación); `agenda` (agrupa `/availability` y `/appointments`: la disponibilidad define qué turnos se pueden pedir).

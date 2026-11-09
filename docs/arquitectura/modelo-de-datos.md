@@ -306,7 +306,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | type | enum | inactivity / appointment / comment / pr / achievement / routine_modified |
 | title | varchar | máx. 150 caracteres |
 | body | text | opcional |
-| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
+| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `scheduled_at`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
 | read | boolean | |
 | push_sent_at | timestamptz | cuándo salió el push a algún dispositivo; null si no se envió (sin credenciales, sin tokens, política "solo base" o error). No hay reintentos |
 | created_at | timestamptz | |

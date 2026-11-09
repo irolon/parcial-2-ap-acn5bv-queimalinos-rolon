@@ -37,6 +37,7 @@ private fun icon(type: NotificationType): String = when (type) {
     NotificationType.ACHIEVEMENT -> "🎖️"
     NotificationType.INACTIVITY -> "⏰"
     NotificationType.ROUTINE_MODIFIED -> "🔁"
+    NotificationType.APPOINTMENT -> "📅"
 }
 
 /** Un aviso. Sin leer: fondo azulado y un punto (sin borde lateral). Toda la fila es el toque (mínimo 44). */

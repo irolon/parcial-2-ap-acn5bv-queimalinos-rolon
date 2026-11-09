@@ -15,6 +15,7 @@ const ORDENES = [
   { value: 'nombre', label: 'Nombre' },
   { value: 'alta', label: 'Alta reciente' },
   { value: 'racha', label: 'Racha' },
+  { value: 'adherencia', label: 'Adherencia' },
 ];
 
 /** Buscador y selects del panel; `onChange` recibe los filtros completos. */

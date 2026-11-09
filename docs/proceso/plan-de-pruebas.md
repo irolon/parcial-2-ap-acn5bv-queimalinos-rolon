@@ -178,7 +178,7 @@ Cada fila de la tabla de la tarea 9 del plan es un caso `it.each` con el código
 
 ### 3.3 Pruebas End-to-End (E2E)
 
-**Herramientas:** Playwright (web), pruebas manuales guiadas y Espresso (Android). Las de la web son de la tarjeta 25.
+**Herramientas:** pruebas manuales guiadas en el navegador (web; Playwright quedó descartado, ver la spec de la tarjeta 53) y Espresso (Android). Resultado de la web, con los flujos críticos, las condiciones feas y los bugs: [`pruebas-web.md`](pruebas-web.md).
 
 | ID | Flujo | Plataforma | Resultado esperado |
 |---|---|---|---|
@@ -315,3 +315,7 @@ Fechas en UTC (en Argentina fue la noche del 03/11). La corrida final de la tarj
 | Tests E2E Android (modo offline incluido) | Pablo | Semana 13-14 |
 | Pruebas de usabilidad | Ambos | Semana 14 |
 | Corrección de bugs | Ambos | Semana 15 |
+
+---
+
+**Seguridad y carga:** la auditoría de seguridad (aislamiento, RLS, secretos, headers, rate limiting, validación, dependencias y errores) y la prueba de carga con k6 están en [`auditoria-seguridad.md`](auditoria-seguridad.md) (tarjeta 54).
