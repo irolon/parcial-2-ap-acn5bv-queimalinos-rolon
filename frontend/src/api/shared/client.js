@@ -53,8 +53,13 @@ function sharedRefresh() {
   return refreshing;
 }
 
+// El CSV de la exportación vuelve como texto. `res.text()` le saca el BOM, que Excel
+// necesita para leer los acentos: se decodifica a mano conservándolo.
+const isCsv = (res) => (res.headers.get('content-type') ?? '').includes('text/csv');
+
 async function readBody(res) {
   if (res.status === 204) return null;
+  if (isCsv(res)) return new TextDecoder('utf-8', { ignoreBOM: true }).decode(await res.arrayBuffer());
   const text = await res.text();
   if (!text) return null;
   try {
@@ -101,7 +106,7 @@ async function send(path, { method, body, auth, signal }) {
  * - `auth` (default true): manda `Authorization: Bearer <token>` si hay token.
  * - `refresh` (default true): ante 401 `UNAUTHORIZED`, renueva una vez y reintenta.
  *   Las rutas de `/auth/*` lo apagan para no entrar en bucle.
- * Devuelve el JSON de la respuesta (o `null` en 204); si falla, tira un `ApiError`.
+ * Devuelve el JSON de la respuesta (el texto si es `text/csv`, `null` en 204); si falla, tira un `ApiError`.
  */
 export async function request(path, { method = 'GET', body, auth = true, refresh = true, signal } = {}) {
   const options = { method, body, auth, signal };

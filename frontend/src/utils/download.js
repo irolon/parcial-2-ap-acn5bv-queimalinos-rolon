@@ -13,3 +13,13 @@ export function downloadCanvasPng(canvas, filename) {
   if (!canvas) return;
   downloadUrl(canvas.toDataURL('image/png'), filename);
 }
+
+/** Baja un texto (p. ej. un CSV) como archivo, con un `Blob` del tipo dado. */
+export function downloadText(text, filename, type = 'text/plain') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  try {
+    downloadUrl(url, filename);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
