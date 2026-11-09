@@ -25,6 +25,11 @@ jest.unstable_mockModule(src('repositories/agenda/availability.repository.js'), 
 jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudents);
 jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => mockNotify);
 jest.unstable_mockModule(src('repositories/notifications/trigger-data.repository.js'), () => mockTriggerData);
+// GX2: avatares firmados por lote; sin implementación no firma nada (avatar_url → null).
+export const mockAvatars = { signPaths: jest.fn() };
+jest.unstable_mockModule(src('repositories/students/avatars.repository.js'), () => ({
+  signPaths: async (paths) => (await mockAvatars.signPaths(paths)) ?? new Map(),
+}));
 
 export const importSrc = (p) => import(src(p));
 

@@ -16,6 +16,16 @@ import {
   toAppointment,
 } from '../../models/agenda/appointment.model.js';
 import { hourOf } from '../../models/agenda/availability.model.js';
+import { signAvatars } from '../students/avatar-urls.service.js';
+
+/**
+ * GX2: firma la foto del alumno embebido en cada turno, en una llamada para toda la lista.
+ * Vive acá (y no en appointments.service, que ya importa este archivo) para no armar un ciclo.
+ */
+export async function signAppointments(list) {
+  const students = await signAvatars(list.map((a) => a.student));
+  return list.map((a, i) => ({ ...a, student: students[i] }));
+}
 
 /** Hora en punto, posterior a ahora y hasta 1 año (día de Argentina): vale para los dos roles. */
 function assertOnTheHourAndFuture(scheduledAt, now) {
@@ -62,7 +72,7 @@ export async function createForStudent(user, input) {
   const row = await appointmentsRepo.insertAppointment(
     baseRow(student.trainer_id, student.id, input, STATUS.PENDING)
   );
-  const appointment = toAppointment(row);
+  const [appointment] = await signAppointments([toAppointment(row)]);
   await triggers.onAppointmentChanged('requested', appointment);
   return appointment;
 }
@@ -73,7 +83,7 @@ export async function createForTrainer(user, input) {
   if (!student.active) throw Errors.forbidden();
   assertOnTheHourAndFuture(input.scheduled_at, new Date());
   const row = await appointmentsRepo.insertAppointment(baseRow(user.id, student.id, input, STATUS.CONFIRMED));
-  const appointment = toAppointment(row);
+  const [appointment] = await signAppointments([toAppointment(row)]);
   await triggers.onAppointmentChanged('createdByTrainer', appointment);
   return appointment;
 }

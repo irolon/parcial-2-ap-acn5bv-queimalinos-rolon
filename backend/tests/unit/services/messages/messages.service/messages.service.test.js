@@ -3,7 +3,6 @@ import {
   mockMessagesRepo,
   mockImagesRepo,
   mockStudentsRepo,
-  mockAuthRepo,
   TRAINER,
   STUDENT,
   STUDENT_ID,

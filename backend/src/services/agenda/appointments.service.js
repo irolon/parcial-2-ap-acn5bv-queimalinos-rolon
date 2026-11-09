@@ -3,13 +3,13 @@ import * as triggers from '../notifications/triggers.service.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { argDayRange } from '../../shared/utils/dates/ranges.js';
 import { STATUS, canTransition, toAppointment } from '../../models/agenda/appointment.model.js';
-import { createForStudent, createForTrainer } from './appointment-create.service.js';
+import { createForStudent, createForTrainer, signAppointments } from './appointment-create.service.js';
 
 /** Turnos propios (PT: los suyos; alumno: los suyos) entre `from` y `to` (fechas de Argentina). */
 export async function list(user, { from, to }) {
   const { fromUtc, toUtc } = argDayRange(from, to);
   const filter = user.role === 'trainer' ? { trainer_id: user.id } : { student_id: user.id };
-  return (await repo.findAppointmentsInRange(filter, fromUtc, toUtc)).map(toAppointment);
+  return signAppointments((await repo.findAppointmentsInRange(filter, fromUtc, toUtc)).map(toAppointment));
 }
 
 /** Crea el turno según el rol (el body ya viene validado por el rol correspondiente). */
@@ -43,7 +43,7 @@ export async function changeStatus(user, id, { status }) {
   const updated = await repo.updateStatus(id, row.status, status);
   // Alguien cambió el estado entre la lectura y la escritura: no se pisa ni se notifica.
   if (!updated) throw Errors.invalidStatusTransition();
-  const appointment = toAppointment(updated);
+  const [appointment] = await signAppointments([toAppointment(updated)]);
   await triggers.onAppointmentChanged(EVENTS[user.role][status], appointment);
   return appointment;
 }
