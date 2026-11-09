@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { plural } from '@/utils/shared/plural';
+import { plural, pluralNoun } from '@/utils/shared/plural';
 
 describe('plural', () => {
   it('1 va en singular', () => {
@@ -8,5 +8,13 @@ describe('plural', () => {
 
   it.each([0, 2, 30])('%s va en plural', (n) => {
     expect(plural(n, 'día', 'días')).toBe(`${n} días`);
+  });
+});
+
+describe('pluralNoun', () => {
+  it('devuelve solo el sustantivo: singular con 1, plural con lo demás', () => {
+    expect(pluralNoun(1, 'día', 'días')).toBe('día');
+    expect(pluralNoun(0, 'día', 'días')).toBe('días');
+    expect(pluralNoun(6, 'sesión', 'sesiones')).toBe('sesiones');
   });
 });

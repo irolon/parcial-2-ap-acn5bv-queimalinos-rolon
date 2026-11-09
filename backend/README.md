@@ -266,12 +266,32 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 
 **Topes.** El alumno puede tener hasta 3 turnos `pending` a futuro (el 4.º: 409 `APPOINTMENT_LIMIT`) y ningún rol agenda a más de 1 año. Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`) se guardan la baja y después se cancelan sus turnos futuros. `GET /appointments` no pagina (límite documentado en el spec de agenda).
 
-**Notificaciones.** Tipo `appointment` con `data: { appointment_id }`: al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
+**Notificaciones.** Tipo `appointment` con `data: { appointment_id, scheduled_at }` (la fecha deja abrir la agenda en la semana del turno): al alumno con push cuando el PT confirma, cancela o agenda a mano; al PT solo en la base cuando el alumno pide o cancela.
 
 ### Autenticación
 
 - **Access token:** JWT firmado con `JWT_SECRET` (`{ sub, role, email }`), expira según `JWT_EXPIRES_IN`.
 - **Refresh token:** token opaco; en la DB se guarda solo su hash SHA-256. El logout lo revoca.
+
+### Rate limiting
+
+`express-rate-limit` en memoria (una sola instancia), en `src/shared/middlewares/rate-limit.middleware.js`. Al pasarse: `429 RATE_LIMIT_EXCEEDED` con `Retry-After`.
+
+Cada endpoint lleva su limitador en la cadena de su router (`limitRate('login')`, etc.; los arma `createApp` en `app.locals.rateLimiters`), así una ruta con doble barra (`/api/auth//login`) no lo esquiva. En el login corre primero el tope por IP y después el de IP + email (email acotado a 254 caracteres).
+
+**Los clientes deben tratar el 429 como un error temporal**: no es un problema de credenciales ni de sesión. En particular, un 429 del refresh no cierra la sesión (la web y el celular conservan el refresh token y reintentan después). Los cupos son por IP, y detrás de un NAT (gimnasio, oficina, CGNAT del celular) varios usuarios comparten el mismo cupo.
+
+| Endpoint | Límite por ventana | Clave | Variable |
+|---|---|---|---|
+| `POST /api/auth/login` | 10 | IP + email en minúsculas | `RATE_LIMIT_LOGIN_MAX` |
+| `POST /api/auth/login` (además, contra password spraying) | 50 | IP | `RATE_LIMIT_LOGIN_IP_MAX` |
+| `POST /api/auth/register`, `POST /api/auth/refresh` | 30 cada uno | IP | `RATE_LIMIT_AUTH_MAX` |
+| `GET /api/invitations/:token`, `POST /api/students` | 30 cada uno | IP | `RATE_LIMIT_PUBLIC_MAX` |
+
+- Ventana: `RATE_LIMIT_WINDOW_MS` (por defecto 15 min). Con `NODE_ENV=test` los máximos por defecto son 100 veces mayores, así la suite de integración no los toca; los tests del limitador arman la app con `createApp({ rateLimits })`.
+- Las IPv6 se agrupan por subred /56 (`ipKeyGenerator` de express-rate-limit 8): cambiar de dirección dentro de la misma subred no da un cupo nuevo.
+- `TRUST_PROXY`: saltos de proxy (en el VPS detrás de nginx, `1`). Sin eso, detrás del proxy todos los clientes tendrían la IP de nginx y compartirían el cupo. Por defecto, apagado; con `NODE_ENV=production` es obligatoria (si falta, la app no arranca) y `0` explícito significa sin proxy.
+- Body con `Content-Encoding` o charset no soportados → `415 UNSUPPORTED_MEDIA_TYPE`; gzip/deflate corrupto o cualquier otro error 4xx al leer el body → `400 VALIDATION_ERROR` (nunca 500).
 
 ## Notas de implementación (desvíos respecto del DER de Notion)
 

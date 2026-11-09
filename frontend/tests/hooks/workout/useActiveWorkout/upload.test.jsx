@@ -26,9 +26,13 @@ afterEach(() => {
 
 describe('useActiveWorkout: upload', () => {
   it('sube, borra la sesión del navegador, refresca lo que cambió y devuelve el resultado', async () => {
+    // Las series se suben por executedAt y, si empatan, por id (al azar): registradas en el mismo milisegundo, el orden
+    // de abajo saldría a cara o cruz. Con el reloj falso, la segunda va 90 s después, como en el gimnasio.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(0));
     const fetchMock = stubUpload();
     const view = renderActiveWorkout();
-    train(view);
+    train(view, { betweenSets: () => vi.setSystemTime(at(90)) });
     act(() => { view.result.current.finish(); });
     const invalidate = vi.spyOn(view.client, 'invalidateQueries');
     const result = await uploadNow(view);

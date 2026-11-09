@@ -126,3 +126,23 @@ describe('sortStudents por racha', () => {
     expect(parse('orden=racha').orden).toBe('racha');
   });
 });
+
+describe('sortStudents por adherencia', () => {
+  const withPct = (name, pct) => student({ name, adherence_7d: { assigned: 3, done: 1, pct } });
+
+  it('menor adherencia primero, sin plan al final y empate por nombre', () => {
+    const high = withPct('Alta', 90);
+    const low = withPct('Baja', 20);
+    const tieB = withPct('Beto', 50);
+    const tieA = withPct('Ana', 50);
+    const noPlan = withPct('Nadia', null);
+    const missing = student({ name: 'Mora' });
+    const sorted = sortStudents([missing, high, noPlan, tieB, low, tieA], 'adherencia');
+    expect(sorted).toEqual([low, tieA, tieB, high, missing, noPlan]);
+  });
+
+  it('parseStudentFilters acepta orden=adherencia y descarta lo inválido', () => {
+    expect(parse('orden=adherencia').orden).toBe('adherencia');
+    expect(parse('orden=adherencias').orden).toBe(DEFAULT_FILTERS.orden);
+  });
+});

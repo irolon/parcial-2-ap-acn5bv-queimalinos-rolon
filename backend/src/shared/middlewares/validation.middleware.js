@@ -9,7 +9,7 @@
  *   router.post('/login', validate(validateLogin), authController.login)
  */
 export function validate(validator, source = 'body') {
-  return (req, _res, next) => {
+  const middleware = (req, _res, next) => {
     try {
       req[source] = validator(req[source] || {});
       return next();
@@ -17,4 +17,7 @@ export function validate(validator, source = 'body') {
       return next(err);
     }
   };
+  // Marca para el barrido de rutas (tests/unit/app): qué parte del request valida.
+  middleware.validates = source;
+  return middleware;
 }

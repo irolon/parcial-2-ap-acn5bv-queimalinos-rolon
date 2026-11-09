@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../shared/user';
 import { calls } from '../shared/fetchMock';
 import { student } from '../students/fixtures';
 
@@ -15,5 +15,5 @@ export const DETAIL = {
 export { item };
 /** Opciones de `stubRoutinesApi` con una plantilla y un alumno. */
 export const api = (extra = {}) => ({ templates: [SUMMARY], template: DETAIL, students: [student({ id: 'st-9', name: 'Ana Paz' })], ...extra });
-export const open = (name) => userEvent.click(screen.getByRole('button', { name }));
+export const open = (name) => user.click(screen.getByRole('button', { name }));
 export const post = (fetchMock, path) => calls(fetchMock).find(([p, init]) => p === path && init?.method === 'POST');

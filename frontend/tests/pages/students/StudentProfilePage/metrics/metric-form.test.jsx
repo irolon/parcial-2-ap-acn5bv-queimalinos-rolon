@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { bodyOf, errorResponse, jsonResponse } from '../../../../helpers/shared/fetchMock';
 import { metric, studentDetail } from '../../../../helpers/students/fixtures';
 import { callsWith, loadProfile } from '../../../../helpers/students/profile';
+import { setupUser } from '../../../../helpers/shared/user';
 
 vi.mock('recharts', async (importOriginal) => {
   const { cloneElement } = await import('react');
@@ -75,6 +76,16 @@ describe('StudentProfilePage: cargar medida', () => {
     const posts = callsWith(fetchMock, 'POST');
     expect(posts).toHaveLength(2);
     expect(bodyOf(posts[1][1]).id).toBe(bodyOf(posts[0][1]).id);
+  });
+
+  it('un doble click en Guardar manda un solo POST', async () => {
+    const user = setupUser();
+    const createMetric = vi.fn(async () => created());
+    const { fetchMock, dialog } = await open(user, { handlers: { createMetric } });
+    await user.type(within(dialog).getByLabelText(/Peso/), '80');
+    await user.dblClick(within(dialog).getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(callsWith(fetchMock, 'POST')).toHaveLength(1);
   });
 
   it('la fecha vacía usa la hora del guardado, no la de apertura, y no hay max que frene la hora actual', async () => {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { LIBRARY } from '../../../helpers/exercises/fixtures';
 import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
@@ -33,7 +33,7 @@ async function openWith(handlers, buttonName) {
   stubLibrary({ handlers });
   renderRoute(PAGE_PATH);
   await screen.findByText(/^\d+ EJERCICIOS$/);
-  const user = userEvent.setup();
+  const user = setupUser();
   await user.click(page().getByRole('button', { name: buttonName }));
   return user;
 }

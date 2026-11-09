@@ -37,7 +37,7 @@ describe('ExerciseCurveCard', () => {
 
   it('con menos de 3 puntos muestra el aviso', () => {
     render(<ExerciseCurveCard data={curveData(SIX.slice(0, 2))} metric="e1rm_kg" onMetricChange={noop} />);
-    expect(screen.getByText(/Llevás 2 de 3 entrenamientos de Press banca/)).toBeInTheDocument();
+    expect(screen.getByText(/Hay 2 de 3 entrenamientos de Press banca/)).toBeInTheDocument();
   });
 
   it('peso máximo con días solo de peso corporal (max_kg null): dibuja solo los días con carga, ninguno en 0', () => {
@@ -54,7 +54,7 @@ describe('ExerciseCurveCard', () => {
     const pts = SIX.map((p, i) => (i < 4 ? { ...p, e1rm_kg: null } : p));
     render(<ExerciseCurveCard data={curveData(pts)} metric="e1rm_kg" onMetricChange={noop} />);
     expect(screen.getByText('Pocos datos de esta métrica: probá con otra')).toBeInTheDocument();
-    expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
   });
 });
 
@@ -81,13 +81,13 @@ describe('CurveTooltip', () => {
   it('con días suficientes en total pero pocos en el rango sugiere probar con Todo', () => {
     render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="3m" totalDays={10} />);
     expect(screen.getByText('Pocos entrenamientos en este rango: probá con Todo')).toBeInTheDocument();
-    expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
   });
 
   it('con el rango en Todo y pocos entrenamientos no sugiere probar con Todo', () => {
     render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="all" totalDays={1} />);
     expect(screen.queryByText(/probá con Todo/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Llevás 1 de 3/)).toBeInTheDocument();
+    expect(screen.getByText(/Hay 1 de 3/)).toBeInTheDocument();
   });
 
   it('con 3 o más puntos pero la métrica con menos de 3 valores dice "probá con otra"', () => {
@@ -96,15 +96,15 @@ describe('CurveTooltip', () => {
     for (const range of ['all', '3m']) {
       const { unmount } = render(<ExerciseCurveCard data={curveData(curl)} metric="e1rm_kg" onMetricChange={noop} range={range} totalDays={10} />);
       expect(screen.getByText('Pocos datos de esta métrica: probá con otra')).toBeInTheDocument();
-      expect(screen.queryByText(/Llevás/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Hay \d+ de 3/)).not.toBeInTheDocument();
       expect(screen.queryByText(/probá con Todo/)).not.toBeInTheDocument();
       unmount();
     }
   });
 
-  it('con menos de 3 días en total mantiene "Llevás N de 3"', () => {
+  it('con menos de 3 días en total mantiene "Hay N de 3"', () => {
     render(<ExerciseCurveCard data={curveData(SIX.slice(0, 1))} metric="e1rm_kg" onMetricChange={noop} range="3m" totalDays={2} />);
-    expect(screen.getByText(/Llevás 1 de 3 entrenamientos/)).toBeInTheDocument();
+    expect(screen.getByText(/Hay 1 de 3 entrenamientos/)).toBeInTheDocument();
   });
 
   it('el chip dice "Récord" con Todo y "Mejor del rango" con 1 o 3 meses', () => {

@@ -71,12 +71,17 @@ describe('DashboardPage', () => {
     expect(main().getByText('Nunca entrenó')).toBeInTheDocument();
   });
 
-  it('sin inactivos lo celebra', async () => {
+  it('sin inactivos lo dice sin afirmar que todos entrenaron', async () => {
     stubStudents({ list: [student({ last_session_at: daysAgo(2) })] });
     renderRoute('/pt/dashboard');
-    expect(
-      await screen.findByText('Todos tus alumnos entrenaron en la última semana'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Nadie lleva más de 7 días sin entrenar')).toBeInTheDocument();
+  });
+
+  it('con un alumno nuevo que nunca entrenó no dice que todos entrenaron (B3)', async () => {
+    stubStudents({ list: [student({ last_session_at: daysAgo(2) }), student({ id: 'nuevo', name: 'Nunca reciente', created_at: daysAgo(1), last_session_at: null })] });
+    renderRoute('/pt/dashboard');
+    await screen.findByText('Alertas de inactividad');
+    expect(main().queryByText(/Todos tus alumnos entrenaron/)).not.toBeInTheDocument();
   });
 
   it('sin alumnos invita a generar la primera invitación', async () => {
