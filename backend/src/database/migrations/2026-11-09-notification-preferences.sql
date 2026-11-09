@@ -1,7 +1,7 @@
 -- ============================================================================
 -- GX3 · Preferencias de notificación del alumno. Re-ejecutable.
 -- Correr en el SQL Editor de Supabase. También está en database/schema/
--- (06c-notification-preferences.sql y 07-rls.sql).
+-- (06-ai-and-agenda.sql y 07-rls.sql).
 -- ============================================================================
 
 -- Una fila por alumno, una columna por tipo. Sin fila = todo prendido.

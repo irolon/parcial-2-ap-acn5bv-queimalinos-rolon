@@ -1,6 +1,6 @@
 # Schema de la base de datos
 
-El schema de FitTrainer está repartido por dominio en diez archivos SQL.
+El schema de FitTrainer está repartido por dominio en nueve archivos SQL.
 
 | Archivo | Contenido |
 |---|---|
@@ -10,14 +10,13 @@ El schema de FitTrainer está repartido por dominio en diez archivos SQL.
 | `04-progress.sql` | `body_metrics`, `sessions`, la vista `student_last_session`, `session_sets`, el índice `idx_session_sets_exercise_session` y las funciones `exercise_progress`, `last_session_kg` y `session_records` |
 | `04b-progress-overview.sql` | las funciones `progress_exercises` y `weekly_volume` (overview de progreso); corre después de `04-progress.sql` |
 | `05-gamification.sql` | `achievements`, `student_achievements`, `challenges`, `student_challenges`, `student_streaks` y el índice único de desafíos activos |
-| `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `trainer_availability` (con la RPC de reemplazo), `notifications`, `push_tokens` |
+| `06-ai-and-agenda.sql` | `chat_messages`, `ai_routine_generations`, `appointments`, `trainer_availability` (con la RPC de reemplazo), `notifications`, `push_tokens`, `notification_preferences` (preferencias de push del alumno, GX3) |
 | `06b-messages.sql` | `messages` y el bucket privado `message-images` de Storage |
-| `06c-notification-preferences.sql` | `notification_preferences` (preferencias de push del alumno); corre después de `06b-messages.sql` |
 | `07-rls.sql` | Row Level Security (activado sin políticas en todas las tablas) |
 
 ## Cómo correrlos
 
-- En orden, del 01 al 07 (el 04b va después del 04, el 06b después del 06 y el 06c después del 06b), en el SQL Editor de Supabase o con el MCP. Cada
+- En orden, del 01 al 07 (el 04b va después del 04 y el 06b después del 06), en el SQL Editor de Supabase o con el MCP. Cada
   archivo depende de tablas creadas en él o en los anteriores.
 - Todos se pueden volver a correr: usan `if not exists` y los `alter` van en
   bloques idempotentes.

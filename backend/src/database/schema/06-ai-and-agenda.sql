@@ -1,6 +1,7 @@
 -- ============================================================================
 -- FitTrainer — Schema 06 · chat_messages, ai_routine_generations,
--- appointments, trainer_availability, notifications. Va después de 05-gamification.sql.
+-- appointments, trainer_availability, notifications, push_tokens y
+-- notification_preferences (GX3). Va después de 05-gamification.sql.
 -- Re-ejecutable.
 -- ============================================================================
 
@@ -155,3 +156,17 @@ create table if not exists push_tokens (
 );
 
 create index if not exists idx_push_tokens_user on push_tokens (user_id);
+
+-- ── notification_preferences (GX3) ──────────────────────────────────────────
+-- Una fila por alumno, una columna por tipo. Sin fila = todo prendido.
+-- Solo decide el push: la fila de notifications se guarda igual.
+-- Sin índice extra: la PK es el único acceso.
+create table if not exists notification_preferences (
+  student_id  uuid primary key references students (id) on delete cascade,
+  message     boolean not null default true,
+  comment     boolean not null default true,
+  appointment boolean not null default true,
+  pr          boolean not null default true,
+  achievement boolean not null default true,
+  updated_at  timestamptz not null default now()
+);

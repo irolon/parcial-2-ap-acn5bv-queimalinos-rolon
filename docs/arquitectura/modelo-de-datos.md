@@ -346,7 +346,7 @@ RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FC
 | achievement | boolean | not null, default `true` |
 | updated_at | timestamptz | not null, default `now()`; lo pone el backend en cada `PUT` |
 
-Una fila por alumno y una columna por tipo; **sin fila = todo prendido** (nadie migra datos). Solo decide si sale el push: la fila de `notifications` se guarda igual y, con el tipo apagado, queda con `push_sent_at` en `null`. El PT no tiene preferencias. Sin índice extra (la PK es el único acceso). RLS activado sin políticas (ADR 0001). Schema: `schema/06c-notification-preferences.sql`; migración: `backend/src/database/migrations/2026-11-09-notification-preferences.sql`.
+Una fila por alumno y una columna por tipo; **sin fila = todo prendido** (nadie migra datos). Solo decide si sale el push: la fila de `notifications` se guarda igual y, con el tipo apagado, queda con `push_sent_at` en `null`. El PT no tiene preferencias. Sin índice extra (la PK es el único acceso). RLS activado sin políticas (ADR 0001). Schema: `schema/06-ai-and-agenda.sql` (con `notifications` y `push_tokens`); migración: `backend/src/database/migrations/2026-11-09-notification-preferences.sql`.
 
 ---
 
