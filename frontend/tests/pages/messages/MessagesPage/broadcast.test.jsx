@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { stub } from '../../../helpers/messages/ptMessages';
 import { bodyOf, calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
@@ -25,7 +25,7 @@ describe('MessagesPage: envío masivo', () => {
   }
 
   it('muestra el aviso fijo y el botón está deshabilitado sin texto o sin alumnos', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     stub();
     renderRoute('/pt/mensajes');
     const dialog = await openDialog(user);
@@ -41,7 +41,7 @@ describe('MessagesPage: envío masivo', () => {
   });
 
   it('"Todos" selecciona y deselecciona; envía, avisa "Enviado a N alumnos" y cierra', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const fetchMock = stub();
     renderRoute('/pt/mensajes');
     const dialog = await openDialog(user);
@@ -62,7 +62,7 @@ describe('MessagesPage: envío masivo', () => {
   });
 
   it('"Todos" queda indeterminado con selección parcial', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     stub();
     renderRoute('/pt/mensajes');
     const dialog = await openDialog(user);
@@ -71,7 +71,7 @@ describe('MessagesPage: envío masivo', () => {
   });
 
   it('cancelar y reabrir deja el diálogo en blanco', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     stub();
     renderRoute('/pt/mensajes');
     let dialog = await openDialog(user);
@@ -85,7 +85,7 @@ describe('MessagesPage: envío masivo', () => {
   });
 
   it('durante el envío no se puede cancelar ni cerrar con Esc', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     let release;
     stub({
       '/messages/broadcast': () =>
@@ -106,7 +106,7 @@ describe('MessagesPage: envío masivo', () => {
   });
 
   it('un error del servidor se muestra y el diálogo sigue abierto', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     stub({ '/messages/broadcast': () => errorResponse(403, 'FORBIDDEN', 'Alumno ajeno') });
     renderRoute('/pt/mensajes');
     const dialog = await openDialog(user);

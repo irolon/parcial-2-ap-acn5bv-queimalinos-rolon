@@ -17,9 +17,10 @@ function ReadOnly({ label, value }) {
 
 /**
  * Datos precargados (solo lectura) + contraseña. `onFatal(message)` se llama si el
- * POST dice que la invitación ya no sirve.
+ * POST dice que la invitación ya no sirve. `onJoining(true|false)` avisa que la sesión que
+ * aparezca la crea este formulario (la página navega al inicio en vez de mostrar el aviso).
  */
-export default function JoinForm({ invitation, token, onFatal }) {
+export default function JoinForm({ invitation, token, onFatal, onJoining = () => {} }) {
   const join = useAuthStore((s) => s.joinFromInvitation);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
@@ -32,9 +33,11 @@ export default function JoinForm({ invitation, token, onFatal }) {
     if (Object.keys(fields).length > 0) return setErrors({ form: null, fields });
     setErrors(NO_FIELD_ERRORS);
     setSubmitting(true);
+    onJoining(true);
     try {
       await join({ token, password: values.password });
     } catch (error) {
+      onJoining(false);
       const fatal = invitationErrorMessage(error);
       if (fatal) return onFatal(fatal);
       setErrors(toJoinErrors(error));
