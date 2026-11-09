@@ -1,4 +1,6 @@
+import { WEEKDAYS_TITLE } from '@/utils/agenda/time';
 import { argentinaDate, pad } from '@/utils/dates';
+import { DAY_OPTIONS } from '@/utils/students/routineDays';
 
 /** "+4%" / "−3%" / "0%"; sin variación (`null`): "". Los mismos textos que el Inicio del celular. */
 export function deltaLabel(delta) {
@@ -23,14 +25,11 @@ export function relativeTime(iso, now = new Date()) {
 /** Las últimas `n` filas de `daily` (vienen de hoy − 13 a hoy, ascendentes). */
 export const lastDays = (daily, n) => (daily ?? []).slice(-n);
 
-const INITIALS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-const SHORT_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
 // `YYYY-MM-DD` es un día argentino: se toma su mediodía en Argentina para no depender de la zona del navegador.
 const weekdayOf = (date) => argentinaDate(`${date}T12:00:00-03:00`).weekday;
 
 /** Inicial del día de la semana para el eje: L, M, X, J, V, S, D. */
-export const dayInitial = (date) => INITIALS[weekdayOf(date) - 1];
+export const dayInitial = (date) => DAY_OPTIONS[weekdayOf(date) - 1].short;
 
 /** "Jue 06/11" para el tooltip. */
-export const dayTitle = (date) => `${SHORT_DAYS[weekdayOf(date) - 1]} ${date.slice(8, 10)}/${date.slice(5, 7)}`;
+export const dayTitle = (date) => `${WEEKDAYS_TITLE[weekdayOf(date) - 1]} ${date.slice(8, 10)}/${date.slice(5, 7)}`;

@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { AXIS, GRID, TooltipBox } from '@/components/progress/chartStyle';
 import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
+import { plural } from '@/utils/shared/plural';
 import { dayInitial, dayTitle, lastDays } from '@/utils/students/overviewFormat';
 
 const PERIODS = [7, 14];
@@ -10,7 +11,7 @@ const PERIODS = [7, 14];
 function DayTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const { date, count } = payload[0].payload;
-  return <TooltipBox title={dayTitle(date)} rows={[`${count} ${count === 1 ? 'sesión' : 'sesiones'}`]} />;
+  return <TooltipBox title={dayTitle(date)} rows={[plural(count, 'sesión', 'sesiones')]} />;
 }
 
 function PeriodToggle({ days, onChange }) {

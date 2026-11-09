@@ -1,11 +1,8 @@
+import { DAY_MS, arParts } from '@/utils/agenda/time';
 import { reply } from '../shared/fetchMock';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-// Argentina es UTC-3 todo el año: corrida 3 h, la fecha UTC es la del día argentino.
-const ARGENTINA_OFFSET_MS = 3 * 60 * 60 * 1000;
-
 /** `YYYY-MM-DD` argentino de hace `n` días. */
-const argentinaDay = (n, now = Date.now()) => new Date(now - ARGENTINA_OFFSET_MS - n * DAY_MS).toISOString().slice(0, 10);
+const argentinaDay = (n, now = Date.now()) => arParts(now - n * DAY_MS).date;
 
 /** Las 14 filas de `daily` (de hoy − 13 a hoy); `counts` son las cantidades en ese orden (por defecto, todo en 0). */
 export function daily(counts = Array(14).fill(0), now = Date.now()) {
