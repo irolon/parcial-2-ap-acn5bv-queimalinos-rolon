@@ -1,11 +1,14 @@
 import { routineSeconds } from '@/utils/routines/todayPlan';
 
-// Los campos del editor son strings del input: vacío, inválido o negativo cuenta 0 (no el valor por defecto, que
-// usaría la rutina del día si el dato no viniera: en el editor un campo vacío todavía no es nada).
+// Los campos del editor son strings del input: inválido o negativo cuenta 0 (no se deja guardar).
 const amount = (value) => {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : 0;
 };
+
+// El descanso es opcional y vacío se guarda como `null`: queda `null` para que `routineSeconds` lo cuente 90 s, como
+// Hoy y el celular. Las series son obligatorias: vacías cuentan 0.
+const rest = (value) => (String(value ?? '').trim() === '' ? null : amount(value));
 
 /**
  * Duración estimada de la rutina del editor en minutos, con la misma cuenta que la rutina del día (`routineSeconds`
@@ -14,7 +17,7 @@ const amount = (value) => {
  */
 export function estimateMinutes(exercises = []) {
   const seconds = routineSeconds(
-    (exercises ?? []).map(({ sets, rest_seconds }) => ({ sets: amount(sets), rest_seconds: amount(rest_seconds) })),
+    (exercises ?? []).map(({ sets, rest_seconds }) => ({ sets: amount(sets), rest_seconds: rest(rest_seconds) })),
   );
   if (seconds === 0) return 0;
   return Math.max(1, Math.round(seconds / 60));

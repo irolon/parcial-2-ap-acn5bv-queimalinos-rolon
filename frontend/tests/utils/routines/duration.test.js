@@ -23,7 +23,13 @@ describe('estimateMinutes', () => {
     expect(estimateMinutes([row('1', '10', '120')])).toBe(3); // 165 s
   });
 
-  it('un campo vacío, inválido o negativo cuenta 0', () => {
+  it('el descanso vacío cuenta como el null que se guarda (90 s), igual que la rutina del día', () => {
+    expect(estimateMinutes([row('4', '10', '')])).toBe(estimatedMinutes([{ sets: 4, reps: 10, rest_seconds: null }]));
+    expect(estimateMinutes([row('4', '10', '  ')])).toBe(9); // 4 × (45 + 90) = 540 s
+    expect(estimateMinutes([row('3', '10', ''), row('3', '10', ''), row('3', '10', ''), row('3', '10', '')])).toBe(27);
+  });
+
+  it('las series vacías y el descanso inválido o negativo cuentan 0', () => {
     expect(estimateMinutes([row('', '10', '90')])).toBe(0);
     expect(estimateMinutes([row('4', '10', 'abc')])).toBe(3); // 4 × 45 s
     expect(estimateMinutes([row('4', '10', '-30')])).toBe(3);
@@ -36,6 +42,6 @@ describe('estimateMinutes', () => {
   it('sin ejercicios o sin series da 0', () => {
     expect(estimateMinutes([])).toBe(0);
     expect(estimateMinutes(undefined)).toBe(0);
-    expect(estimateMinutes([row('', '', '')])).toBe(0);
+    expect(estimateMinutes([row('', '', '')])).toBe(0); // sin series no suma aunque el descanso cuente 90 s
   });
 });
