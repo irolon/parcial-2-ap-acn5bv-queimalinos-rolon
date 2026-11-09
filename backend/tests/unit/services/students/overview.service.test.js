@@ -37,4 +37,22 @@ describe('overview.service', () => {
     expect(r.at_risk).toBe(1);
     expect(r.attention[0]).toMatchObject({ kind: 'inactive', student_id: 'a', days: 16 });
   });
+
+  it('sin alumnos activos: daily con 14 ceros hasta hoy y el resto vacío', async () => {
+    mockOverviewRepo.findActiveStudents.mockResolvedValue([]);
+    const r = await overview('t1');
+    expect(r.daily).toHaveLength(14);
+    expect(r.daily.every((d) => d.count === 0)).toBe(true);
+    expect(r.daily[0].date).toBe('2026-10-23');
+    expect(r.daily.at(-1).date).toBe('2026-11-05');
+    expect(r).toMatchObject({
+      active_students: { count: 0, new_7d: 0 },
+      sessions_today: { done: 0, expected: 0 },
+      adherence_7d: { pct: null, delta: null },
+      at_risk: 0,
+      attention: [],
+      recent: [],
+      lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
+    });
+  });
 });
