@@ -14,7 +14,7 @@ const GHOST_LINK = `inline-flex h-8 shrink-0 items-center gap-2 rounded-lg borde
 
 function Trainer({ query }) {
   if (query.isPending) return <LoadingState rows={1} label="Cargando a tu entrenador/a…" />;
-  if (query.isError && !query.data) {
+  if (query.isError && query.data === undefined) {
     return <ErrorState message="No pudimos cargar los datos de tu entrenador/a." onRetry={() => query.refetch()} />;
   }
   if (!query.data) return <p className="font-body text-sm text-ink6">Sin entrenador/a asignado/a</p>;

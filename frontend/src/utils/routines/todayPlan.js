@@ -13,11 +13,18 @@ export const totalSets = (exercises = []) => exercises.reduce((sum, exercise) =>
  * Un descanso que no viene cuenta 90 s, igual que la cuenta regresiva de la sesión.
  */
 export function estimatedMinutes(exercises = []) {
-  const seconds = exercises.reduce(
+  return Math.round(routineSeconds(exercises) / 60);
+}
+
+/**
+ * Segundos de la rutina: Σ series × (descanso + 45 s). La comparten la rutina del día y el editor (`duration.js`), así
+ * el PT y el alumno ven la misma cuenta. Series o descanso que no vienen (`null`/`undefined`) cuentan 3 y 90 s.
+ */
+export function routineSeconds(exercises = []) {
+  return exercises.reduce(
     (sum, exercise) => sum + setsOf(exercise) * ((exercise.rest_seconds ?? DEFAULT_REST_SECONDS) + WORK_SECONDS_PER_SET),
     0,
   );
-  return Math.round(seconds / 60);
 }
 
 /** Cantidad de ejercicios de la rutina: "6 ejercicios" ("1 ejercicio"). */

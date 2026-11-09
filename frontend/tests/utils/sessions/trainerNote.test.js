@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestTrainerNote } from '@/utils/sessions/trainerNote';
+import { latestTrainerNote, noteTitle } from '@/utils/sessions/trainerNote';
 import { sessionItem } from '../../helpers/sessions/sessions';
 
 const at = (id, startedAt, trainerComment) => sessionItem({ id, started_at: startedAt, trainer_comment: trainerComment });
@@ -23,5 +23,17 @@ describe('latestTrainerNote', () => {
     expect(latestTrainerNote([at('a', '2026-11-06T13:00:00Z', null)])).toBeNull();
     expect(latestTrainerNote([])).toBeNull();
     expect(latestTrainerNote(undefined)).toBeNull();
+  });
+});
+
+describe('noteTitle', () => {
+  it('usa el primer nombre del entrenador/a', () => {
+    expect(noteTitle('Laura Gómez')).toBe('Nota de Laura');
+    expect(noteTitle('  Laura   Gómez ')).toBe('Nota de Laura');
+  });
+
+  it('sin nombre es genérico', () => {
+    expect(noteTitle(undefined)).toBe('Nota de tu entrenador/a');
+    expect(noteTitle('   ')).toBe('Nota de tu entrenador/a');
   });
 });

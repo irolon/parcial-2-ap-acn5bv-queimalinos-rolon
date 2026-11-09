@@ -1,3 +1,9 @@
+/** "Nota de Laura" con el primer nombre del entrenador/a; sin nombre (cargando, error o sin dato), genérico. */
+export const noteTitle = (trainerName) => {
+  const first = (trainerName ?? '').trim().split(/\s+/)[0];
+  return first ? `Nota de ${first}` : 'Nota de tu entrenador/a';
+};
+
 const hasComment = (session) => typeof session.trainer_comment === 'string' && session.trainer_comment.trim() !== '';
 
 /**

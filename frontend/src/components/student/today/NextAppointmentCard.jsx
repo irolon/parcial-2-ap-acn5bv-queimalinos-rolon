@@ -9,7 +9,7 @@ const RANGE_DAYS = 14;
 
 function Content({ appointment }) {
   if (!appointment) {
-    return <p className="font-body text-sm text-ink6">No tenés turnos en los próximos 14 días.</p>;
+    return <p className="font-body text-sm text-ink6">No tenés turnos en los próximos {RANGE_DAYS} días.</p>;
   }
   const status = STATUS_STYLES[appointment.status];
   return (

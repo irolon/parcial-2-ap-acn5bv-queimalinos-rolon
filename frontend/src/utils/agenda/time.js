@@ -22,6 +22,12 @@ export const parseDay = (day) => {
   return new Date(Date.UTC(y, m - 1, d));
 };
 
+/** `'06/11'` de una fecha `YYYY-MM-DD`. */
+export const dayMonth = (date) => {
+  const [, month, day] = date.split('-');
+  return `${day}/${month}`;
+};
+
 /** Fecha y hora de Argentina de un instante: `{ date: 'YYYY-MM-DD', hour, minute, weekday }` (weekday 1 = lunes … 7). */
 export function arParts(value) {
   const shifted = new Date(toDate(value).getTime() - AR_OFFSET_MS);

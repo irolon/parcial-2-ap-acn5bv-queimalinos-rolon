@@ -4,7 +4,7 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useCounterpart } from '@/hooks/messages/useConversations';
 import { useSessionsInfinite } from '@/hooks/sessions/useSessions';
 import { formatDayMonthAR } from '@/utils/dates';
-import { latestTrainerNote } from '@/utils/sessions/trainerNote';
+import { latestTrainerNote, noteTitle } from '@/utils/sessions/trainerNote';
 
 const aboutLabel = (session) =>
   [`Sobre tu sesión del ${formatDayMonthAR(session.started_at)}`, session.routine?.name].filter(Boolean).join(' · ');
@@ -21,7 +21,7 @@ export default function TrainerNoteCard() {
   if (!sessions.data) return null;
 
   const note = latestTrainerNote(sessions.data.pages[0]?.data);
-  const title = trainer?.name ? `Nota de ${trainer.name.split(' ')[0]}` : 'Nota de tu entrenador/a';
+  const title = noteTitle(trainer?.name);
   if (!note) {
     return (
       <Card title={title}>

@@ -1,5 +1,5 @@
 import { WEEKDAYS, pad } from '@/utils/dates';
-import { DAY_MS, arParts, isoDay, parseDay } from './time';
+import { DAY_MS, arParts, dayMonth, isoDay, parseDay } from './time';
 
 const UPCOMING = ['pending', 'confirmed'];
 
@@ -22,6 +22,5 @@ export function nextAppointment(list, now) {
 /** `'Jueves 12/11 · 18:00'` (hora de Argentina). */
 export function nextAppointmentLabel(iso) {
   const { date, hour, minute, weekday } = arParts(iso);
-  const [, month, day] = date.split('-');
-  return `${WEEKDAYS[weekday - 1]} ${day}/${month} · ${pad(hour)}:${pad(minute)}`;
+  return `${WEEKDAYS[weekday - 1]} ${dayMonth(date)} · ${pad(hour)}:${pad(minute)}`;
 }
