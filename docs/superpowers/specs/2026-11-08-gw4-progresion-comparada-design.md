@@ -24,7 +24,7 @@ Hoy la web dibuja **un** ejercicio por vez (`ExerciseCurveCard` dentro de `Progr
 | 5 | **Fuera de `ProgressPanel`**: componente propio, montado a nivel página. |
 | 6 | **Métrica**: 1RM estimado (`e1rm_kg`), que hace comparables series con distintas repeticiones (ADR 0004); si un ejercicio no tiene ningún `e1rm_kg`, su `max_kg`. Los de peso corporal (`hasKg` falso) no entran: no se comparan kg con repeticiones. |
 | 7 | **Rango propio** (select con `RANGES`: 1 mes, 3 meses, todo; por defecto 3 meses ≈ las 12 semanas de E3). No se comparte con el de `ProgressPanel` porque ese estado vive adentro del panel, que no se toca. Con el mismo rango, las curvas comparten caché con el panel (misma query key). |
-| 8 | **"Más entrenados en el rango"**: con rango, candidatos = **todos** los ejercicios de `overview.exercises` con `days ≥ 3` y `last_date` dentro del rango (`≥ from`), sin tope. `days` es de todo el historial y los puntos del rango solo se saben con la curva, así que cualquier orden que corte (por `days` o por `last_date`) tiene un contraejemplo: la rutina vieja tapando a la nueva, o la nueva de ayer (1 punto cada uno) tapando a uno de la anterior con 4 puntos en el mes. Los que entrenaron en el rango suelen ser pocos (la rutina actual y lo que quedó de la anterior) y comparten caché con el panel. Sin rango (todo el historial) `days` sí es del rango: se piden los 6 de más `days`. Con las curvas se descartan los que no tienen kg (eso solo se sabe con la curva) y se eligen los 3 con más puntos válidos (≥ 3), desempate por `days` y nombre. Así no se pide la curva de todo el catálogo. |
+| 8 | **"Más entrenados en el rango"**: con rango, candidatos = **todos** los ejercicios de `overview.exercises` con `days ≥ 3` y `last_date` dentro del rango (`≥ from`), sin tope. `days` es de todo el historial y los puntos del rango solo se saben con la curva, así que cualquier orden que corte (por `days` o por `last_date`) tiene un contraejemplo: la rutina vieja tapando a la nueva, o la nueva de ayer (1 punto cada uno) tapando a uno de la anterior con 4 puntos en el mes. Los que entrenaron en el rango suelen ser pocos (la rutina actual y lo que quedó de la anterior) y comparten caché con el panel. Sin rango (todo el historial) tampoco hay tope: se piden **todos** los de `days ≥ 3`. Un corte por `days` puede dejar solo ejercicios de peso corporal (6 dominadas y fondos de muchos días tapan a una banca de 4) y la tarjeta se quedaría sin líneas justo en el rango más largo; sin tope, `allBodyweight` mira todos. Con las curvas se descartan los que no tienen kg (eso solo se sabe con la curva) y se eligen los 3 con más puntos válidos (≥ 3), desempate por `days` y nombre. Así no se pide la curva de todo el catálogo. |
 | 9 | **También en la ficha del PT**: sí. `StudentProfilePage.jsx` no está en ninguna PR abierta y la sección "Progreso" ya existe; la tarjeta va arriba de `ProgressPanel`, sin tocar `ProfileActions.jsx` ni el panel. |
 
 ## Diseño
@@ -37,7 +37,7 @@ Hoy la web dibuja **un** ejercicio por vez (`ExerciseCurveCard` dentro de `Progr
 - Debajo, una línea mono: "1RM ESTIMADO · KG" (o "PESO MÁXIMO · KG" si todos los elegidos caen en `max_kg`; si se mezclan, cada select aclara "(peso máx.)").
 
 **Estados**
-- El overview no tiene ningún ejercicio con `days ≥ 3`, o todos los candidatos resultan de peso corporal (y el rango no dejó afuera a ninguno): **no se muestra la tarjeta** (el vacío ya lo explica `ProgressPanel`; así no hay dos textos de vacío).
+- El overview no tiene ningún ejercicio con `days ≥ 3`, o todos los candidatos resultan de peso corporal (y el rango no dejó afuera a ninguno): **no se muestra la tarjeta** (el vacío ya lo explica `ProgressPanel`; así no hay dos textos de vacío) Eso vale **de entrada**, en el rango por defecto: si el usuario ya cambió el rango, la tarjeta no se oculta más (si no, desaparecería el select y no habría cómo volver sin recargar). Queda el select de rango con el texto "Ningún ejercicio tiene peso registrado: no hay cargas para comparar."
 - Cargando curvas: `LoadingState rows={2}` "Cargando la progresión…".
 - Hay ejercicios con `days ≥ 3` pero ninguno llega a 3 puntos en el rango (o ninguno entrenó en él, y entonces no se pide ninguna curva): texto "En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo." y el select de rango.
 - Solo 1 o 2 llegan: se dibujan esos y los selects que sobran quedan en "Elegí un ejercicio".
@@ -54,7 +54,7 @@ Hoy la web dibuja **un** ejercicio por vez (`ExerciseCurveCard` dentro de `Progr
 
 ## Archivos que toca
 
-- Crea `frontend/src/utils/progress/compare.js`: `compareCandidates(exercises, max = 6)`, `pickTop(curves, n = 3)`, `compareMetric(points)`, `mergeSeries(curves, metric)` → filas `{ time, [id]: valor }`.
+- Crea `frontend/src/utils/progress/compare.js`: `compareCandidates(exercises, { from })`, `pickTop(curves, n = 3)`, `compareMetric(points)`, `mergeSeries(curves, metric)` → filas `{ time, [id]: valor }`.
 - Crea `frontend/src/hooks/progress/useCompareCurves.js` (`useQueries` + selección y reemplazo de las 3 líneas).
 - Modifica `frontend/src/hooks/progress/useProgress.js` (33 líneas: exporta `exerciseProgressOptions`; `useExerciseProgress` la usa).
 - Crea `frontend/src/components/progress/compare/CompareCard.jsx`, `CompareChart.jsx`, `CompareSlots.jsx`.
@@ -66,11 +66,11 @@ Hoy la web dibuja **un** ejercicio por vez (`ExerciseCurveCard` dentro de `Progr
 ## Pruebas
 
 **Vitest**
-- `compareCandidates`: excluye `days < 3` y, con `from`, los que no entrenaron desde ahí; ordena por `days` y nombre; con `from` no corta, sin `from` corta en 6. Con 6 viejos de muchos días y 1 punto en el rango y 1 nuevo de 4 días, el nuevo entra; con 6 nuevos de ayer (1 punto) y banca con 4 puntos y `last_date` de hace una semana, banca entra y se dibuja.
+- `compareCandidates`: excluye `days < 3` y, con `from`, los que no entrenaron desde ahí; ordena por `days` y nombre; no corta, ni con `from` ni sin él. Con 6 viejos de muchos días y 1 punto en el rango y 1 nuevo de 4 días, el nuevo entra; con 6 nuevos de ayer (1 punto) y banca con 4 puntos y `last_date` de hace una semana, banca entra y se dibuja.
 - `pickTop`: descarta peso corporal y los de menos de 3 puntos; los 3 con más puntos válidos en el rango; desempates.
 - `compareMetric`: `e1rm_kg` si hay alguno, si no `max_kg`.
 - `mergeSeries`: une por fecha con huecos en `null`.
-- `CompareCard`: 3 líneas con sus nombres; cambiar el select 2 pide la curva nueva y reemplaza la línea; rango "1 mes" vuelve a elegir; ninguno con 3 puntos muestra el texto; los de menos de 3 entrenamientos en el rango deshabilitados y la elegida a mano con 1 o 2 puntos sin dibujar y con aviso; con nadie entrenado en "1 mes" no pide curvas y queda el select de rango; sin candidatos no renderiza nada; error de una curva con su Reintentar.
+- `CompareCard`: 3 líneas con sus nombres; cambiar el select 2 pide la curva nueva y reemplaza la línea; rango "1 mes" vuelve a elegir; ninguno con 3 puntos muestra el texto; los de menos de 3 entrenamientos en el rango deshabilitados y la elegida a mano con 1 o 2 puntos sin dibujar y con aviso; con nadie entrenado en "1 mes" no pide curvas y queda el select de rango; sin candidatos no renderiza nada; de "3 meses" a "Todo" con 6 de peso corporal de muchos días y banca con 4 recientes, banca se sigue viendo; si con "Todo" son todos de peso corporal, aviso y select de rango para volver; error de una curva con su Reintentar.
 - Páginas: la tarjeta aparece en "Mi progreso" y en la ficha, con el `student_id` correcto, y comparte caché con el panel (un solo GET por ejercicio y rango).
 
 **Navegador:** alumno de QA con banca, sentadilla, peso muerto y una dominada (peso corporal); capturas en `docs/superpowers/specs/assets/gw4/` (`01-mi-progreso-comparada.jpg`, `02-cambiar-linea.jpg`, `03-rango-corto-sin-datos.jpg`, `04-ficha-pt.jpg`, `05-angosto-375.jpg`).

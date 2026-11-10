@@ -1,9 +1,6 @@
 import { dateToTime } from './format';
 import { MIN_POINTS, hasKg } from './metrics';
 
-/** Sin rango (todo el historial), cuántas curvas se piden para elegir las líneas: las de más días. */
-export const MAX_CANDIDATES = 6;
-
 /**
  * Cuántas líneas tiene el gráfico comparado y cómo se ve cada una: además del color, el trazo (`dash`, vacío =
  * continuo) y la forma del punto, para que no se distingan solo por color (accent y cool son dos azules).
@@ -24,16 +21,13 @@ const byDaysThenName = (a, b) => b.days - a.days || a.name.localeCompare(b.name,
 export const trainedSince = (exercise, from) => !from || !exercise.last_date || exercise.last_date >= from;
 
 /**
- * Ejercicios con al menos MIN_POINTS días (de todo el historial), de más a menos días. Con `from`, todos los que
- * entrenaron desde esa fecha, sin tope: `days` es de todo el historial y los puntos del rango solo se saben con la
- * curva, así que cualquier corte podría dejar afuera al que más puntos tiene en el rango (suelen ser pocos: la
- * rutina actual y lo que quedó de la anterior). Sin `from`, `days` sí es del rango y se corta en `max`.
+ * Ejercicios con al menos MIN_POINTS días (de todo el historial), de más a menos días; con `from`, solo los que
+ * entrenaron desde esa fecha. Sin tope, con rango o sin él: `days` no dice si hay kg (eso solo se sabe con la curva)
+ * y, con rango, tampoco cuántos puntos caen en él, así que cualquier corte podría dejar afuera al único con kg o al
+ * que más puntos tiene en el rango.
  */
-export function compareCandidates(exercises, { from, max = from ? Infinity : MAX_CANDIDATES } = {}) {
-  return exercises
-    .filter((e) => e.days >= MIN_POINTS && trainedSince(e, from))
-    .sort(byDaysThenName)
-    .slice(0, max);
+export function compareCandidates(exercises, { from } = {}) {
+  return exercises.filter((e) => e.days >= MIN_POINTS && trainedSince(e, from)).sort(byDaysThenName);
 }
 
 /** 1RM estimado si algún punto lo tiene (compara series con distintas reps); si no, el peso máximo. */

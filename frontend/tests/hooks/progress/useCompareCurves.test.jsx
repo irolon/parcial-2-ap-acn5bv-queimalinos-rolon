@@ -60,20 +60,25 @@ describe('useCompareCurves', () => {
     expect(result.current.hidden).toBe(false);
   });
 
-  // Con rango se piden todos los que entrenaron en él; sin rango, los 6 de más días: Militar (ex-7) queda afuera.
-  it('sin rango, cambiar una línea pide la curva nueva si no estaba y reemplaza solo esa', async () => {
+  it('sin rango pide todos los de 3 días o más (sin tope) y cambiar una línea reemplaza solo esa', async () => {
     const fetchMock = stub();
     const { result } = mount(({ range }) => useCompareCurves('s-1', EXERCISES, range), { range: ALL });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.slotLoading).toEqual([false, false, false]);
+    expect(ids(fetchMock)).toEqual(['ex-4', 'ex-1', 'ex-2', 'ex-3', 'ex-5', 'ex-6', 'ex-7']);
     act(() => result.current.setSlot(1, 'ex-7'));
-    expect(result.current.slots).toEqual(['ex-1', 'ex-7', 'ex-3']);
-    expect(result.current.slotLoading).toEqual([false, true, false]);
-    await waitFor(() => expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-7', 'ex-3']));
-    expect(result.current.slotLoading).toEqual([false, false, false]);
-    expect(ids(fetchMock).filter((id) => id === 'ex-7')).toHaveLength(1);
+    expect(result.current.lines.map((l) => l.id)).toEqual(['ex-1', 'ex-7', 'ex-3']);
     act(() => result.current.setSlot(2, ''));
     expect(result.current.slots).toEqual(['ex-1', 'ex-7', null]);
+  });
+
+  it('una elegida a mano que no se había pedido trae su curva y solo ese selector carga', async () => {
+    const fetchMock = stub({ ...COUNTS, 'ex-9': 3 });
+    const { result } = mount(({ range }) => useCompareCurves('s-1', [...EXERCISES, ex('ex-9', 'Hip thrust', 3, '2026-07-01')], range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setSlot(1, 'ex-9'));
+    expect(result.current.slotLoading).toEqual([false, true, false]);
+    await waitFor(() => expect(result.current.slotLoading).toEqual([false, false, false]));
+    expect(ids(fetchMock).filter((id) => id === 'ex-9')).toHaveLength(1);
   });
 
   it('al cambiar el rango vuelve a elegir con las curvas de ese rango', async () => {
@@ -173,13 +178,13 @@ describe('useCompareCurves', () => {
     expect(result.current.hidden).toBe(false);
   });
 
-  it('se oculta sin candidatos o si todos son de peso corporal', async () => {
+  it('se oculta sin candidatos; si todos son de peso corporal lo avisa (la tarjeta decide)', async () => {
     stub();
     const none = mount(() => useCompareCurves('s-1', [ex('ex-8', 'Curl', 2)], RANGE));
     expect(none.result.current.hidden).toBe(true);
-    const onlyBodyweight = mount(() => useCompareCurves('s-1', [ex('ex-4', 'Dominadas', 9)], RANGE));
+    const onlyBodyweight = mount(() => useCompareCurves('s-1', [ex('ex-4', 'Dominadas', 9)], ALL));
     await waitFor(() => expect(onlyBodyweight.result.current.loading).toBe(false));
-    expect(onlyBodyweight.result.current.hidden).toBe(true);
+    expect(onlyBodyweight.result.current).toMatchObject({ hidden: false, allBodyweight: true });
   });
 
   it('comparte la caché con la curva del panel: un solo GET por ejercicio y rango', async () => {

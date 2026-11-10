@@ -5,11 +5,12 @@ import { SLOT_STYLES, compareCandidates, compareMetric, isBodyweight, pickTop, t
 import { hasKg } from '@/utils/progress/metrics';
 
 /**
- * Curvas de la progresión comparada en `range` (`{ from, to }`): pide la de los candidatos (todos los que entrenaron
- * en el rango; sin rango, los de más días) y la de los elegidos a mano, en paralelo y con la misma caché que la curva del
+ * Curvas de la progresión comparada en `range` (`{ from, to }`): pide la de los candidatos (todos los de 3 días o más
+ * que entrenaron en el rango; sin rango, todos) y la de los elegidos a mano, en paralelo y con la misma caché que la curva del
  * panel. Las 3 líneas salen solas (`pickTop`) hasta que se cambia una; al cambiar el rango la elección a mano se
  * borra y vuelven a salir solas. Cada línea lleva el estilo de su lugar (`SLOT_STYLES`); `slotLoading[i]`: la curva
  * del lugar `i` todavía se está pidiendo. `few`: los que no llegan a MIN_POINTS puntos en el rango (no se dibujan).
+ * `hidden`: no hay candidatos. `allBodyweight`: todos los del rango son de peso corporal (la tarjeta decide si se oculta).
  */
 export function useCompareCurves(studentId, exercises, range) {
   const rangeKey = `${range?.from ?? ''}|${range?.to ?? ''}`;
@@ -18,7 +19,7 @@ export function useCompareCurves(studentId, exercises, range) {
   if (choice.rangeKey !== rangeKey) setChoice({ rangeKey, slots: null });
   const chosen = choice.rangeKey === rangeKey ? choice.slots : null;
 
-  const options = compareCandidates(exercises, { max: Infinity });
+  const options = compareCandidates(exercises);
   const candidates = compareCandidates(exercises, { from: range?.from });
   const requested = [...new Set([...candidates.map((e) => e.id), ...(chosen ?? []).filter(Boolean)])];
   const queries = useQueries({ queries: requested.map((id) => exerciseProgressOptions(id, studentId, range)) });
@@ -57,7 +58,7 @@ export function useCompareCurves(studentId, exercises, range) {
     .map(({ curve, style }) => ({ ...curve, ...style }));
 
   const allFailed = requested.length > 0 && entries.every(({ query }) => query.isError);
-  // Si el rango dejó afuera ejercicios no se oculta: puede que en otro rango haya con kg (queda el select de rango).
+  // Si el rango dejó afuera ejercicios no cuenta: puede que en otro rango haya con kg (queda el select de rango).
   const allBodyweight = outOfRange.length === 0 && !loading && failed.length === 0 && candidates.every((e) => bodyweight.has(e.id));
   return {
     options,
@@ -70,6 +71,7 @@ export function useCompareCurves(studentId, exercises, range) {
     allFailed,
     bodyweight,
     few,
-    hidden: options.length === 0 || allBodyweight,
+    allBodyweight,
+    hidden: options.length === 0,
   };
 }

@@ -24,21 +24,22 @@ const points = (n, kg) => Array.from({ length: n }, (_, i) => ({
   date: `2026-10-${String(i * 3 + 1).padStart(2, '0')}`, max_kg: kg, e1rm_kg: kg === null ? null : kg + i, sets: 3, reps: 24,
 }));
 
-/** `counts(id, short)` da los puntos de cada curva (`short`: rango de 1 mes); `fail(id)` la hace fallar. */
-function load({ exercises = EXERCISES, counts = (id) => COUNTS[id], fail = () => false } = {}) {
+/** `counts(id, short)` da los puntos de cada curva (`short`: rango de 1 mes); `fail(id)` la hace fallar; `bw(id)`: sin kg. */
+function load({ exercises = EXERCISES, counts = (id) => COUNTS[id], fail = () => false, bw = (id) => id === 'ex-4' } = {}) {
   const fetchMock = stubFetch(async (url) => {
     const path = url.replace(/^.*\/api/, '');
     if (path.startsWith('/progress/overview')) return jsonResponse(200, { data: { exercises, weekly_volume: [] } });
     const id = /^\/progress\/exercise\/([^/?]+)/.exec(path)[1];
     if (fail(id)) return errorResponse(500, 'INTERNAL');
     const short = path.includes(`from=${rangeFor('1m').from}`);
-    const data = { exercise: { id }, points: points(counts(id, short), id === 'ex-4' ? null : 80), pr: {}, default_metric: 'e1rm_kg' };
+    const data = { exercise: { id }, points: points(counts(id, short), bw(id) ? null : 80), pr: {}, default_metric: 'e1rm_kg' };
     return jsonResponse(200, { data });
   });
   const utils = renderWithQuery(<CompareCard studentId="s-1" />);
   return { fetchMock, ...utils };
 }
 
+const NO_DATA = 'En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo.';
 const chart = (names) => screen.findByRole('img', { name: `Progresión comparada de ${names}` });
 
 describe('CompareCard', () => {
@@ -77,19 +78,35 @@ describe('CompareCard', () => {
     expect(few('Militar')).toBeDisabled();
   });
 
-  // Con rango ya se pidieron todos los que entrenaron en él; con "Todo" solo los 6 de más días (Militar no).
-  it('con "Todo", cambiar el select 2 pide la curva nueva y reemplaza esa línea', async () => {
+  // Con "Todo" también se piden todos los de 3 días o más, sin tope: Militar ya está y no hace falta otro GET.
+  it('con "Todo", cambiar el select 2 reemplaza esa línea sin pedir de nuevo', async () => {
     const { fetchMock } = load();
     await chart('Press banca, Sentadilla y Peso muerto');
     fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: 'all' } });
     await waitFor(() => expect(screen.queryByText('Cargando la progresión…')).not.toBeInTheDocument());
     await chart('Press banca, Sentadilla y Peso muerto');
+    expect(progressUrls(fetchMock, 'exercise').filter((p) => !p.includes('from='))).toHaveLength(7);
     fireEvent.change(screen.getByLabelText('Ejercicio 2'), { target: { value: 'ex-7' } });
-    expect(screen.getByText('Cargando…')).toBeInTheDocument();
-    expect(screen.queryByText('Cargando la progresión…')).not.toBeInTheDocument();
     expect(await chart('Press banca, Militar y Peso muerto')).toBeInTheDocument();
-    expect(screen.queryByText('Cargando…')).not.toBeInTheDocument();
     expect(progressUrls(fetchMock, 'exercise').filter((p) => p.startsWith('/progress/exercise/ex-7') && !p.includes('from='))).toHaveLength(1);
+  });
+
+  it('de "3 meses" a "Todo" no se oculta aunque los 6 de más días sean de peso corporal', async () => {
+    const bodyweight = [1, 2, 3, 4, 5, 6].map((i) => ex(`bw-${i}`, `Peso corporal ${i}`, 20));
+    load({ exercises: [...bodyweight, ex('ex-1', 'Press banca', 4)], counts: (id) => (id === 'ex-1' ? 4 : 6), bw: (id) => id.startsWith('bw-') });
+    expect(await chart('Press banca')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: 'all' } });
+    await waitFor(() => expect(screen.queryByText('Cargando la progresión…')).not.toBeInTheDocument());
+    expect(await chart('Press banca')).toBeInTheDocument();
+  });
+
+  it('si con "Todo" son todos de peso corporal lo dice y deja volver al rango anterior', async () => {
+    load({ exercises: [ex('ex-4', 'Dominadas', 9), ex('ex-9', 'Fondos', 5, '2020-01-06')], bw: () => true, counts: () => 6 });
+    expect(await screen.findByText(NO_DATA)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: 'all' } });
+    expect(await screen.findByText('Ningún ejercicio tiene peso registrado: no hay cargas para comparar.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: '3m' } });
+    expect(await screen.findByText(NO_DATA)).toBeInTheDocument();
   });
 
   it('con el rango de 1 mes vuelve a elegir con las curvas de ese rango', async () => {
@@ -104,7 +121,7 @@ describe('CompareCard', () => {
 
   it('si ninguno llega a 3 entrenamientos en el rango lo dice y deja cambiar el rango', async () => {
     load({ counts: (id) => (id === 'ex-4' ? 6 : 2) });
-    expect(await screen.findByText('En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo.')).toBeInTheDocument();
+    expect(await screen.findByText(NO_DATA)).toBeInTheDocument();
     expect(screen.getByLabelText('Rango de la comparación')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
@@ -114,12 +131,12 @@ describe('CompareCard', () => {
     const { fetchMock } = load({ exercises: [ex('ex-1', 'Press banca', 8, old), ex('ex-2', 'Sentadilla', 7, old)] });
     await chart('Press banca y Sentadilla');
     fireEvent.change(screen.getByLabelText('Rango de la comparación'), { target: { value: '1m' } });
-    expect(await screen.findByText('En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo.')).toBeInTheDocument();
+    expect(await screen.findByText(NO_DATA)).toBeInTheDocument();
     expect(progressUrls(fetchMock, 'exercise').filter((p) => p.includes(`from=${rangeFor('1m').from}`))).toEqual([]);
     expect(within(screen.getByLabelText('Ejercicio 1')).getByRole('option', { name: 'Press banca (menos de 3 entrenamientos en el rango)' })).toBeDisabled();
   });
 
-  it('sin candidatos, o si todos son de peso corporal, no muestra la tarjeta', async () => {
+  it('sin candidatos, o si de entrada todos son de peso corporal, no muestra la tarjeta', async () => {
     const { container, fetchMock } = load({ exercises: [ex('ex-1', 'Press banca', 2)] });
     await waitFor(() => expect(progressUrls(fetchMock, 'overview')).toHaveLength(1));
     expect(container).toBeEmptyDOMElement();
