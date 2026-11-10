@@ -2,6 +2,8 @@ package com.fittrainer.navigation.trainer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -18,6 +20,7 @@ import com.fittrainer.navigation.trainerStudentEditRoute
 import com.fittrainer.navigation.trainerStudentMetricsRoute
 import com.fittrainer.navigation.trainerStudentSessionRoute
 import com.fittrainer.navigation.trainerStudentSessionsRoute
+import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.challenges.trainer.section.ChallengesSection
 import com.fittrainer.ui.invitations.InviteScreen
 import com.fittrainer.ui.messages.trainer.components.MessageStudentButton
@@ -40,6 +43,8 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
     }
     composable(TRAINER_STUDENT_DETAIL_ROUTE) { entry ->
         val id = entry.arguments?.getString("studentId").orEmpty()
+        // El handle de la entrada no es el del ViewModel: el aviso de "Guardar y asignar" se lee acá.
+        val aiNotice by entry.savedStateHandle.getStateFlow<String?>(AI_ROUTINE_NOTICE_KEY, null).collectAsStateWithLifecycle()
         StudentDetailScreen(
             onBack = { navController.popBackStack() },
             onEdit = { navController.navigate(trainerStudentEditRoute(id)) { launchSingleTop = true } },
@@ -56,6 +61,7 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
                 }
             },
             topSections = { offline, detail ->
+                aiNotice?.let { notice -> item { NoticeBanner(notice, onDismiss = { entry.savedStateHandle[AI_ROUTINE_NOTICE_KEY] = null }) } }
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         // A un alumno dado de baja no se le crea una rutina nueva (se puede ver y editar la que tiene).
@@ -64,6 +70,7 @@ fun NavGraphBuilder.trainerStudentRoutes(navController: NavHostController) {
                                 enabled = !offline,
                                 onNew = { navController.navigate(trainerNewRoutineRoute(id)) { launchSingleTop = true } },
                                 onFromTemplate = { navController.navigate(trainerStudentTemplatesRoute(id)) { launchSingleTop = true } },
+                                onWithAi = { navController.navigate(trainerAiRoutineRoute(id)) { launchSingleTop = true } },
                             )
                         }
                         MessageStudentButton { navController.navigate(trainerStudentChatRoute(id)) { launchSingleTop = true } }
