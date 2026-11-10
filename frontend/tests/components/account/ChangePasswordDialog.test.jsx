@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import ChangePasswordDialog from '@/components/account/ChangePasswordDialog';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { setupUser } from '../../helpers/shared/user';
@@ -99,6 +99,25 @@ describe('ChangePasswordDialog', () => {
       token: 'access-2',
       user: { password_changed_at: CHANGED_AT, must_change_password: false },
     });
+  });
+
+  it('dos Enter seguidos (antes del render con isPending) hacen un solo pedido', async () => {
+    let resolve;
+    const fetchMock = stubFetch(() => new Promise((r) => (resolve = r)));
+    const user = setupUser();
+    open();
+    await fillPasswordForm(user);
+    const form = screen.getByRole('dialog').querySelector('form');
+    // En el mismo act: React no re-renderiza entre los dos submits.
+    act(() => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    resolve(jsonResponse(200, { token: 'access-2', expires_in: '1h', password_changed_at: CHANGED_AT }));
+    await vi.waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
   });
 
   it('Cancelar cierra sin llamar la API', async () => {

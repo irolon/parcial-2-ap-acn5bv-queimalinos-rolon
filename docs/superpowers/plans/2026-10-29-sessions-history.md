@@ -34,7 +34,7 @@
 ### Task 1: SQL de récords y modelo del historial (backend)
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-10-29-sessions-history.sql`; Modify: `backend/src/database/schema/04-progress.sql` (si pasa 200 líneas, archivo nuevo `04c-sessions-history.sql` + `schema/README.md`); `backend/src/database/checks/schema-checks.sql` (función esperada)
+- Create: `backend/src/database/migrations/2026-10/2026-10-29-sessions-history.sql`; Modify: `backend/src/database/schema/04-progress.sql` (si pasa 200 líneas, archivo nuevo `04c-sessions-history.sql` + `schema/README.md`); `backend/src/database/checks/schema-checks.sql` (función esperada)
 - Create: `backend/src/models/sessions/session-history.model.js`
 - Test: `backend/tests/unit/models/sessions/session-history.model.test.js`
 

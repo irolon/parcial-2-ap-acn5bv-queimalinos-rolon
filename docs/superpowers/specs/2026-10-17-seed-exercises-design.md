@@ -50,7 +50,7 @@ Dentro de cada grupo con 4 o más ejercicios hay al menos dos equipamientos dist
 | Archivo | Cambio |
 |---|---|
 | `backend/src/database/schema/03-routines.sql` | Índice único parcial `uq_exercises_global_name on exercises (name) where is_global`. |
-| `backend/src/database/migrations/2026-10-17-exercises-global-name.sql` | Mismo índice, re-ejecutable, para la base ya creada. |
+| `backend/src/database/migrations/2026-10/2026-10-17-exercises-global-name.sql` | Mismo índice, re-ejecutable, para la base ya creada. |
 | `backend/src/database/seeds/seed.sql` → `seeds/exercises.sql` | Renombrado. 50 filas con `video_url`, upsert idempotente. |
 | `backend/src/database/checks/exercises-checks.sql` | Query que devuelve 0 filas si está todo bien (ver §5). |
 | `backend/src/models/exercises/exercise.model.js` | Constante `EQUIPMENT`. |

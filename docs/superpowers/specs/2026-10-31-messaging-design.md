@@ -33,7 +33,7 @@ Chat uno a uno entre el entrenador y cada alumno, con texto y fotos, y envío ma
 
 ## 3. Datos
 
-Migración `backend/src/database/migrations/2026-10-31-messages.sql` (re-ejecutable) y el mismo contenido en `schema/06b-messages.sql`; la tabla se suma a `07-rls.sql` y al `expected` de `checks/schema-checks.sql`.
+Migración `backend/src/database/migrations/2026-10/2026-10-31-messages.sql` (re-ejecutable) y el mismo contenido en `schema/06b-messages.sql`; la tabla se suma a `07-rls.sql` y al `expected` de `checks/schema-checks.sql`.
 
 ```sql
 create table if not exists messages (

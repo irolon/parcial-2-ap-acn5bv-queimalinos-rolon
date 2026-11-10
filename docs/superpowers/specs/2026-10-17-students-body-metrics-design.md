@@ -145,7 +145,7 @@ create or replace view student_last_session with (security_invoker = true) as
 ```
 
 - Va en `schema.sql`, junto a la tabla `body_metrics` y después de `sessions`, para que se pueda volver a correr sin romper nada.
-- Además va en `backend/src/database/migrations/2026-10-17-students-body-metrics.sql`, para correrla en Supabase dev.
+- Además va en `backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql`, para correrla en Supabase dev.
 - La vista se suma a `schema-checks.sql` y a `check-anon-access.js`, que verifican que el usuario anónimo no pueda leer nada.
 - Una vista común corre con los permisos de su dueño (`postgres`) y saltearía el RLS deny-all: el usuario anónimo podría leer las fechas de sesión de cualquiera. Por eso va con `security_invoker = true`, que aplica el RLS de `sessions` a quien consulta. El backend no se ve afectado, porque la `service_role` saltea el RLS igual.
 

@@ -44,7 +44,7 @@
 | Archivo | Acción | Responsabilidad |
 |---|---|---|
 | `backend/src/database/schema.sql` | Modificar | columna `body_metrics.recorded_by` y vista `student_last_session` |
-| `backend/src/database/migrations/2026-10-17-students-body-metrics.sql` | Crear | la misma migración, para correrla en Supabase dev |
+| `backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql` | Crear | la misma migración, para correrla en Supabase dev |
 | `backend/src/database/schema-checks.sql` | Modificar | chequea la columna, la vista y su `security_invoker` |
 | `backend/src/database/check-anon-access.js` | Modificar | suma la vista a la lista de tablas expuestas |
 | `backend/src/models/body-metrics/body-metric.model.js` | Crear | tabla, columnas, `computeBmi`, `toBodyMetric`, `withBmiHistory` |
@@ -102,7 +102,7 @@ Expected: lint sin errores (puede haber warnings) y todos los tests en PASS. Si 
 ### Task 1: Migración de la base (columna `recorded_by` y vista `student_last_session`)
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-10-17-students-body-metrics.sql`
+- Create: `backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql`
 - Modify: `backend/src/database/schema.sql` (después del índice `idx_body_metrics_student` y después del índice `idx_sessions_student`)
 - Modify: `backend/src/database/schema-checks.sql` (al final)
 - Modify: `backend/src/database/check-anon-access.js` (array `TABLES`)
@@ -112,7 +112,7 @@ Expected: lint sin errores (puede haber warnings) y todos los tests en PASS. Si 
 
 - [ ] **Step 1: Crear el archivo de migración**
 
-`backend/src/database/migrations/2026-10-17-students-body-metrics.sql`:
+`backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql`:
 
 ```sql
 -- ============================================================================

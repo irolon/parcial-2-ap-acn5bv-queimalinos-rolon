@@ -28,7 +28,7 @@ El PT carga su disponibilidad semanal, ve sus turnos en un calendario semanal y 
 
 ## 3. Datos
 
-Migración `backend/src/database/migrations/2026-10-31-agenda.sql` (re-ejecutable). También va en `schema/06-ai-and-agenda.sql`, en `07-rls.sql` y en `checks/schema-checks.sql`.
+Migración `backend/src/database/migrations/2026-10/2026-10-31-agenda.sql` (re-ejecutable). También va en `schema/06-ai-and-agenda.sql`, en `07-rls.sql` y en `checks/schema-checks.sql`.
 
 ```sql
 create table if not exists trainer_availability (

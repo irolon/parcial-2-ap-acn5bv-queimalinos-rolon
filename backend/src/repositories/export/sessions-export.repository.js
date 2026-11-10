@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase.js';
-import { fetchAll, unwrap } from '../../shared/utils/supabase-query.js';
+import { fetchAll } from '../../shared/utils/supabase-query.js';
 import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 
@@ -35,13 +35,15 @@ export async function findSessionsForStudents(studentIds) {
   );
 }
 
-/** Alumnos del trainer, activos y dados de baja (el CSV del PT incluye a todos). */
+/** Alumnos del trainer, activos y dados de baja (el CSV del PT incluye a todos), paginando. */
 export async function findTrainerStudents(trainerId) {
-  return unwrap(
-    await supabase
+  return fetchAll(() =>
+    supabase
       .from(STUDENTS_TABLE)
       .select('id, name, email, active')
       .eq('trainer_id', trainerId)
       .order('name')
+      // Desempate estable para la paginación, como el resto del repo de alumnos.
+      .order('id')
   );
 }

@@ -71,7 +71,7 @@ Para cada ejercicio de la rutina del día: el mayor `actual_kg` de las series co
 
 ## 4. Base de datos
 
-Migración `backend/src/database/migrations/2026-10-29-progress.sql` (y lo mismo en `schema/04-progress.sql`):
+Migración `backend/src/database/migrations/2026-10/2026-10-29-progress.sql` (y lo mismo en `schema/04-progress.sql`):
 
 - `create index if not exists idx_session_sets_exercise_session on session_sets (exercise_id, session_id);`
 - `create or replace function exercise_progress(p_student_id uuid, p_exercise_id uuid, p_from date default null, p_to date default null) returns table (date date, max_kg numeric, volume_kg numeric, e1rm_kg numeric, sets int, reps int)` — `language sql stable security invoker`, join `session_sets → sessions` filtrando `sessions.student_id`, `session_sets.exercise_id`, `completed`, `actual_reps > 0` y el rango sobre `(started_at at time zone 'America/Argentina/Buenos_Aires')::date`; agrupa por esa fecha.
