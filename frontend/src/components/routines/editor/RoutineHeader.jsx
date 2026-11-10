@@ -1,6 +1,7 @@
 import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
 import DayPicker from './DayPicker';
+import EstimatedDuration from './EstimatedDuration';
 import { ROUTINE_GOAL_OPTIONS } from '@/utils/routines/routineForm';
 
 const OPTIONS = [{ value: '', label: 'Elegí un objetivo' }, ...ROUTINE_GOAL_OPTIONS];
@@ -42,6 +43,7 @@ export default function RoutineHeader({ state, errors = {}, disabled = false, on
         />
       </div>
       <DayPicker value={state.days} onToggle={onToggleDay} error={errors.days} disabled={disabled} />
+      <EstimatedDuration exercises={state.exercises} />
     </div>
   );
 }
