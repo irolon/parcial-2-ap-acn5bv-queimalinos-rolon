@@ -1,6 +1,6 @@
 -- ============================================================================
 -- FitTrainer — Schema 06b · messages y bucket message-images (mensajería
--- interna). Va después de 06-ai-and-agenda.sql y antes de 07-rls.sql.
+-- interna). Va después de 06-ai-and-agenda/ y antes de 07-rls.sql.
 -- Re-ejecutable.
 -- ============================================================================
 

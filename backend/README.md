@@ -259,7 +259,7 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 | POST | `/api/appointments` | trainer | `{ student_id, scheduled_at, notes? }`. 201 `confirmed`, sin exigir disponibilidad. 403 si el alumno es de otro PT o está inactivo. Push al alumno |
 | PATCH | `/api/appointments/:id` | trainer / student | `{ status }` con `confirmed` o `cancelled`. PT: `pending`→`confirmed`, cualquier vivo→`cancelled`; alumno: solo cancelar. 409 `APPOINTMENT_PAST` si ya pasó, 409 `INVALID_STATUS_TRANSITION`; ajeno o inexistente 403 |
 
-**Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda.sql`:
+**Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda/02-agenda-and-notifications.sql`:
 - `src/database/migrations/2026-10/2026-10-31-agenda.sql`: tabla `trainer_availability`, índice único parcial de `appointments` y la RPC.
 - `2026-11-01-agenda-followup.sql`: checks de 60 min y hora en punto, y advisory lock en la RPC.
 - `2026-11-01-agenda-inactive-student.sql`: trigger `appointments_student_active` (no se agenda a un alumno dado de baja, ni con un alta en vuelo durante la baja).

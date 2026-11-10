@@ -9,7 +9,7 @@ tags: [arquitectura]
 
 # Modelo de datos (DER)
 
-Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 02/11/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07, más 04b y 06b-messages.sql) (24 tablas: estas 22 + refresh_tokens + notification_preferences de la GX3; trainer_availability es de la tarjeta 46 y messages de la 48). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, se suma la tabla push_tokens (tarjeta 44) y la tabla messages (tarjeta 48, mensajería interna PT ↔ alumno, `schema/06b-messages.sql`); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
+Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 02/11/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07, más 04b y 06b-messages.sql; el 06 es la carpeta 06-ai-and-agenda/ con 01-ai.sql y 02-agenda-and-notifications.sql) (24 tablas: estas 22 + refresh_tokens + notification_preferences de la GX3; trainer_availability es de la tarjeta 46 y messages de la 48). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, se suma la tabla push_tokens (tarjeta 44) y la tabla messages (tarjeta 48, mensajería interna PT ↔ alumno, `schema/06b-messages.sql`); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
 
 ---
 
@@ -347,7 +347,7 @@ RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FC
 | achievement | boolean | not null, default `true` |
 | updated_at | timestamptz | not null, default `now()`; lo pone el backend en cada `PUT` |
 
-Una fila por alumno y una columna por tipo; **sin fila = todo prendido** (nadie migra datos). Solo decide si sale el push: la fila de `notifications` se guarda igual y, con el tipo apagado, queda con `push_sent_at` en `null`. El PT no tiene preferencias. Sin índice extra (la PK es el único acceso). RLS activado sin políticas (ADR 0001). Schema: `schema/06-ai-and-agenda.sql` (con `notifications` y `push_tokens`); migración: `backend/src/database/migrations/2026-11/2026-11-09-notification-preferences.sql`.
+Una fila por alumno y una columna por tipo; **sin fila = todo prendido** (nadie migra datos). Solo decide si sale el push: la fila de `notifications` se guarda igual y, con el tipo apagado, queda con `push_sent_at` en `null`. El PT no tiene preferencias. Sin índice extra (la PK es el único acceso). RLS activado sin políticas (ADR 0001). Schema: `schema/06-ai-and-agenda/02-agenda-and-notifications.sql` (con `notifications` y `push_tokens`); migración: `backend/src/database/migrations/2026-11/2026-11-09-notification-preferences.sql`.
 
 ---
 

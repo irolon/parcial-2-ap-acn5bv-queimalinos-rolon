@@ -1,6 +1,6 @@
 -- ============================================================================
 -- FitTrainer — Schema 07 · Row Level Security de todas las tablas. Va último,
--- después de 06-ai-and-agenda.sql. Re-ejecutable.
+-- después de 06b-messages.sql. Re-ejecutable.
 -- ============================================================================
 
 -- ── Row Level Security ───────────────────────────────────────────────────────
