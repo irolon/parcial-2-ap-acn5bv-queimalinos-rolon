@@ -55,6 +55,11 @@ describe('TodayPage: la rutina del día', () => {
 });
 
 describe('TodayPage: la semana', () => {
+  it('con nivel lo suma al final del resumen', async () => {
+    open({ today: todayRoutine({ level: 'intermediate' }), mine: [mineRoutine()] });
+    expect(await screen.findByText('2 EJERCICIOS · 7 SERIES · ~14 MIN · INTERMEDIO')).toBeInTheDocument();
+  });
+
   it('marca los días de las rutinas, los entrenados y hoy', async () => {
     open({ today: todayRoutine(), mine: [mineRoutine()], sessions: sessionsPage([finished(MONDAY)]) });
     expect(await screen.findByText('Lunes: entrenaste')).toBeInTheDocument();
