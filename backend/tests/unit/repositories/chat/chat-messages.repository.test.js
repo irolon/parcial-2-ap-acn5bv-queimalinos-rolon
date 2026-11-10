@@ -6,6 +6,7 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
 const repo = await import(src('repositories/chat/chat-messages.repository.js'));
+const { CHAT_MESSAGE_COLUMNS } = await import(src('models/chat/chat-message.model.js'));
 const FROM = '2026-11-07T03:00:00.000Z';
 const TO = '2026-11-08T03:00:00.000Z';
 
@@ -16,7 +17,10 @@ describe('chat-messages.repository', () => {
     fake.result = { data: [{ id: 'm1' }], error: null };
     await expect(repo.findDayMessages('s-1', FROM, TO)).resolves.toEqual([{ id: 'm1' }]);
     expect(fake.tables).toEqual(['chat_messages']);
-    expect(callsOf('select')).toEqual([['id, role, content, created_at']]);
+    expect(callsOf('select')).toEqual([[CHAT_MESSAGE_COLUMNS]]);
+    for (const part of ['exercise_id', 'suggestions', 'exercise:exercises (id, name)', 'session:sessions (routine:routines (name))']) {
+      expect(CHAT_MESSAGE_COLUMNS).toContain(part);
+    }
     expect(callsOf('eq')).toEqual([['student_id', 's-1']]);
     expect(callsOf('gte')).toEqual([['created_at', FROM]]);
     expect(callsOf('lt')).toEqual([['created_at', TO]]);

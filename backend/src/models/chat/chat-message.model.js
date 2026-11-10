@@ -6,7 +6,13 @@ import { utcToArgentina } from '../../shared/utils/dates/argentina.js';
 import { argDayRange } from '../../shared/utils/dates/ranges.js';
 
 export const CHAT_MESSAGES_TABLE = 'chat_messages';
-export const CHAT_MESSAGE_COLUMNS = 'id, role, content, created_at';
+/**
+ * Lo que se lee de cada mensaje (GX5): el ejercicio sobre el que se preguntó y la rutina de la sesión, embebidos, y
+ * las sugerencias de la respuesta. `toChatMessage` lo aplana. La inserción devuelve solo `CHAT_SAVED_COLUMNS`.
+ */
+export const CHAT_MESSAGE_COLUMNS =
+  'id, role, content, created_at, exercise_id, suggestions, exercise:exercises (id, name), session:sessions (routine:routines (name))';
+export const CHAT_SAVED_COLUMNS = 'id, role, content, created_at';
 
 /** Mensajes del alumno (role = 'user') por día de Argentina. */
 export const CHAT_DAILY_LIMIT = 20;
@@ -45,3 +51,14 @@ export function chatDayBounds(now) {
 
 /** Consultas que le quedan hoy al alumno con `used` mensajes enviados. */
 export const remainingToday = (used) => Math.max(0, CHAT_DAILY_LIMIT - used);
+
+/** Un mensaje como lo devuelven GET /chat/today y GET /chat/history: con su contexto (o null) y sus sugerencias. */
+export const toChatMessage = (row) => ({
+  id: row.id,
+  role: row.role,
+  content: row.content,
+  created_at: row.created_at,
+  exercise: row.exercise ? { id: row.exercise.id, name: row.exercise.name } : null,
+  routine_name: row.session?.routine?.name ?? null,
+  suggestions: Array.isArray(row.suggestions) ? row.suggestions : [],
+});
