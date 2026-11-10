@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   mockCredentialsRepo,
   mockAuthRepo,
@@ -109,6 +109,28 @@ describe('password.service · changePassword (PUT /auth/password)', () => {
     expect(mockPushTokensRepo.deleteAllForUserExcept.mock.invocationCallOrder[0]).toBeLessThan(
       savedAt
     );
+  });
+
+  it('después de guardar repite la revocación de las otras sesiones (login concurrente)', async () => {
+    await passwordService.changePassword(USER, BODY);
+    const { calls, invocationCallOrder } = mockAuthRepo.revokeAllForUserExcept.mock;
+    expect(calls).toEqual([
+      ['stu-1', 'student', hashToken('rt-propio')],
+      ['stu-1', 'student', hashToken('rt-propio')],
+    ]);
+    const savedAt = mockCredentialsRepo.setPassword.mock.invocationCallOrder[0];
+    expect(invocationCallOrder[1]).toBeGreaterThan(savedAt);
+  });
+
+  it('si falla la segunda revocación igual responde ok (la clave ya cambió) y lo loguea', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockAuthRepo.revokeAllForUserExcept
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('db caída'));
+    const result = await passwordService.changePassword(USER, BODY);
+    expect(result.password_changed_at).toBe('2026-11-09T15:00:00Z');
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('[auth]'), 'db caída');
+    log.mockRestore();
   });
 
   it('sin push_token borra todos los push del usuario (la web no tiene)', async () => {

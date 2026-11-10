@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   mockCredentialsRepo,
   mockAuthRepo,
@@ -81,6 +81,29 @@ describe('password.service · resetStudentPassword (POST /students/:id/password-
       role: 'student',
     });
     expect(mockPushTokensRepo.deleteAllForUserExcept.mock.calls[0]).toHaveLength(1);
+  });
+
+  it('después de guardar repite la revocación (un login concurrente con la vieja no sobrevive)', async () => {
+    await passwordService.resetStudentPassword(TRAINER, 'stu-1');
+    const { calls, invocationCallOrder } = mockAuthRepo.revokeAllForUser.mock;
+    expect(calls).toEqual([
+      ['stu-1', 'student'],
+      ['stu-1', 'student'],
+    ]);
+    const savedAt = mockCredentialsRepo.setPassword.mock.invocationCallOrder[0];
+    expect(invocationCallOrder[1]).toBeGreaterThan(savedAt);
+  });
+
+  it('si falla la segunda revocación igual devuelve la temporal y lo loguea', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockAuthRepo.revokeAllForUser
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('db caída'));
+    const { temporary_password } = await passwordService.resetStudentPassword(TRAINER, 'stu-1');
+    const [, , { hash }] = mockCredentialsRepo.setPassword.mock.calls[0];
+    await expect(verifyPassword(temporary_password, hash)).resolves.toBe(true);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('[auth]'), 'db caída');
+    log.mockRestore();
   });
 
   it('la temporal cumple el formato (10 caracteres del alfabeto, mayúscula y número)', async () => {
