@@ -59,6 +59,17 @@ describe('SessionHeader', () => {
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled();
   });
 
+  it('Asistente avisa y dice si el panel está abierto', async () => {
+    const handlers = props({ onAssistant: vi.fn(), assistantOpen: false });
+    const { rerender } = render(<SessionHeader {...handlers} />);
+    const button = screen.getByRole('button', { name: 'Asistente' });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(button);
+    expect(handlers.onAssistant).toHaveBeenCalledTimes(1);
+    rerender(<SessionHeader {...handlers} assistantOpen />);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+  });
+
   it('al desmontar apaga el reloj', () => {
     const { unmount } = render(<SessionHeader {...props()} />);
     unmount();

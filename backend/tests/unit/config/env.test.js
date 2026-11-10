@@ -145,3 +145,13 @@ describe('env de n8n (asistente IA del entrenador)', () => {
     expect(env.N8N_WEBHOOK_SECRET).toBeUndefined();
   });
 });
+
+describe('env de n8n (chat IA del alumno)', () => {
+  const BASE = { NODE_ENV: 'production', ...PROD, TRUST_PROXY: '0' };
+
+  it('N8N_STUDENT_AI_WEBHOOK_URL es opcional y se lee recortada', async () => {
+    expect((await loadEnv({ ...BASE, N8N_STUDENT_AI_WEBHOOK_URL: undefined })).N8N_STUDENT_AI_WEBHOOK_URL).toBeUndefined();
+    const env = await loadEnv({ ...BASE, N8N_STUDENT_AI_WEBHOOK_URL: ' http://n8n:5678/webhook/student-ia ' });
+    expect(env.N8N_STUDENT_AI_WEBHOOK_URL).toBe('http://n8n:5678/webhook/student-ia');
+  });
+});
