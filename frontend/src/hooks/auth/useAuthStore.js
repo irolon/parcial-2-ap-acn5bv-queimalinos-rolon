@@ -16,9 +16,11 @@ const isTransientError = (err) => isNetworkError(err) || isRateLimited(err) || i
 
 // Sin respuesta del servidor (red caída, 429 o 5xx) no se sabe si la sesión sigue válida: se pasa a
 // `offline` y se descarta el access, pero `user` y `refreshToken` quedan guardados para reintentar
-// (`retry()`). Solo un rechazo del servidor (400/401/403) borra la sesión.
-function keepSessionOffline(set) {
-  set({ token: null, status: 'offline' });
+// (`retry()`). Solo un rechazo del servidor (400/401/403) borra la sesión. Sin `refreshToken` no hay nada que
+// reintentar (p. ej. ya cerró sesión): queda `anonymous`, así los guards muestran el login y no "Sin conexión".
+function keepSessionOffline(set, get) {
+  if (get().refreshToken) set({ token: null, status: 'offline' });
+  else set({ ...EMPTY_SESSION, status: 'anonymous' });
 }
 
 function saveSession(set, user, token, refreshToken) {
@@ -58,15 +60,12 @@ export const useAuthStore = create(
         return saveSession(set, { ...student, role: 'student' }, token, refreshToken);
       },
 
+      // La sesión local se limpia en el acto y la revocación sale sin esperarla (sus errores se ignoran): con el
+      // backend caído el pedido puede colgarse hasta el 504, y un `retry()` que vuelva bien en ese lapso no la revive.
       async logout() {
         const { refreshToken } = get();
-        try {
-          if (refreshToken) await authApi.logout(refreshToken);
-        } catch {
-          // Aunque el backend falle, la sesión local se limpia igual.
-        } finally {
-          set({ ...EMPTY_SESSION, status: 'anonymous' });
-        }
+        if (refreshToken) authApi.logout(refreshToken).catch(() => {});
+        set({ ...EMPTY_SESSION, status: 'anonymous' });
       },
 
       async restore() {
@@ -80,7 +79,7 @@ export const useAuthStore = create(
           const { token } = await authApi.refresh(refreshToken);
           set({ token, status: 'authenticated' });
         } catch (err) {
-          if (isTransientError(err)) keepSessionOffline(set);
+          if (isTransientError(err)) keepSessionOffline(set, get);
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
         }
       },
@@ -96,7 +95,7 @@ export const useAuthStore = create(
           if (!stale()) set({ token, status: 'authenticated' });
         } catch (err) {
           if (stale()) return;
-          if (isTransientError(err)) keepSessionOffline(set);
+          if (isTransientError(err)) keepSessionOffline(set, get);
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
         }
       },
@@ -109,14 +108,22 @@ export const useAuthStore = create(
   ),
 );
 
+// La renovación terminó cuando la sesión ya era otra (cerró sesión o entró otra cuenta): su fallo no la toca.
+class StaleRenewalError extends Error {}
+
 // La usa el cliente ante un 401: pide un access nuevo con el refresh guardado.
 async function renewAccessToken() {
   const { refreshToken } = useAuthStore.getState();
   if (!refreshToken) throw new Error('Sin refresh token');
-  const { token } = await authApi.refresh(refreshToken);
-  // Si mientras tanto cerró sesión o entró otra cuenta, el access nuevo es de la anterior: no pisa el de la actual.
-  if (useAuthStore.getState().refreshToken === refreshToken) useAuthStore.setState({ token });
-  return token;
+  // Si mientras tanto cerró sesión o entró otra cuenta, la respuesta (buena o mala) es de la anterior: no pisa la actual.
+  const stale = () => useAuthStore.getState().refreshToken !== refreshToken;
+  try {
+    const { token } = await authApi.refresh(refreshToken);
+    if (!stale()) useAuthStore.setState({ token });
+    return token;
+  } catch (err) {
+    throw stale() ? new StaleRenewalError('La sesión cambió durante la renovación', { cause: err }) : err;
+  }
 }
 
 configureClient({
@@ -125,7 +132,8 @@ configureClient({
   // Si la renovación falla: sin respuesta del servidor pasa a `offline` (los guards muestran "Sin conexión");
   // si el servidor la rechaza, logout y el router manda a /login.
   onAuthFailure: (err) => {
-    if (isTransientError(err)) keepSessionOffline(useAuthStore.setState);
+    if (err instanceof StaleRenewalError) return;
+    if (isTransientError(err)) keepSessionOffline(useAuthStore.setState, useAuthStore.getState);
     else useAuthStore.getState().logout();
   },
 });
