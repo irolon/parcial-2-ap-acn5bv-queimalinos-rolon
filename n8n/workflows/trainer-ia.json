@@ -1,0 +1,180 @@
+{
+  "name": "FitTrainer · trainer-ia",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trainer-ia",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "00000000-0000-4000-8000-000000000001",
+      "name": "Webhook trainer-ia",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "00000000-0000-4000-8000-0000000000aa",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "fittrainer-webhook",
+          "name": "FitTrainer webhook"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma el pedido a KIMI a partir del body que manda el backend de FitTrainer.\n// Para cambiar de modelo, editá MODEL (ver n8n/README.md).\nconst MODEL = 'kimi-k2-turbo-preview';\nconst TEMPERATURE = 0.3;\n\nconst raw = $input.first().json;\nconst body = (raw && typeof raw.body === 'object' && raw.body !== null) ? raw.body : (raw || {});\n// El backend puede mandar los parámetros sueltos o dentro de \"params\".\nconst params = (body.params && typeof body.params === 'object') ? { ...body, ...body.params } : body;\n\nconst GOALS = { hypertrophy: 'hipertrofia', strength: 'fuerza', weight_loss: 'bajar de peso', tonify: 'tonificar' };\nconst LEVELS = { beginner: 'principiante', intermediate: 'intermedio', advanced: 'avanzado' };\n\nconst frequency = Number.isInteger(params.frequency_per_week) ? params.frequency_per_week : Number(params.frequency_per_week) || 3;\nconst duration = Number(params.session_duration_min) || 60;\nconst equipment = Array.isArray(params.available_equipment) && params.available_equipment.length\n  ? params.available_equipment : ['bodyweight'];\nconst library = Array.isArray(body.library) ? body.library : [];\nconst previous = Array.isArray(body.previous_templates) ? body.previous_templates : [];\nconst base = body.base_template && typeof body.base_template === 'object' ? body.base_template : null;\n\nconst systemPrompt = [\n  'Sos un entrenador personal experto que arma rutinas de gimnasio para que un entrenador humano las revise antes de asignarlas.',\n  '',\n  'SEGURIDAD',\n  '- No des consejos médicos ni diagnósticos. Si hay lesiones o molestias, tratalas como restricciones: evitá cargar la zona lesionada y elegí alternativas seguras.',\n  '- Con principiantes sé conservador: pocos ejercicios por bloque, ejercicios simples, volumen moderado y descansos suficientes.',\n  '',\n  'EJERCICIOS',\n  '- Usá SOLO ejercicios de la biblioteca que te paso, referenciados por su \"id\" exacto, copiado tal cual. Nunca inventes ejercicios ni ids.',\n  '',\n  'ESTRUCTURA',\n  '- Elegí 1 bloque (la misma rutina todos los días, por ejemplo \"Cuerpo completo\") o un split de 2 a 7 bloques (por ejemplo \"Pecho y tríceps\" el lunes, \"Espalda y bíceps\" el miércoles y \"Piernas\" el viernes; o \"Tren superior\" lunes y jueves con \"Tren inferior\" martes y viernes), según el objetivo, el nivel, la frecuencia, las preferencias y la plantilla base si la hay.',\n  '- Un día nunca puede repetirse entre bloques, ni dentro de un mismo bloque.',\n  `- La suma de los días de todos los bloques tiene que ser EXACTAMENTE ${frequency}.`,\n  '- Dejá descanso entre sesiones que trabajen los mismos músculos cuando se pueda.',\n  `- Cada sesión tiene que entrar en unos ${duration} minutos contando series y descansos.`,\n  '',\n  'FORMATO DE SALIDA',\n  'Respondé SOLO con un objeto JSON, sin texto antes ni después y sin bloques de código, con esta forma exacta:',\n  '{\"routines\":[{\"name\":\"string\",\"days\":[\"monday\"],\"exercises\":[{\"exercise_id\":\"id de la biblioteca\",\"sets\":4,\"reps\":8,\"rest_seconds\":90,\"suggested_kg\":null,\"notes\":\"string\"}]}],\"rationale\":\"string\"}',\n  'Reglas de los campos:',\n  '- \"routines\": de 1 a 7 bloques.',\n  '- \"name\": de 1 a 60 caracteres, en español.',\n  '- \"days\": al menos 1, valores de \"monday\",\"tuesday\",\"wednesday\",\"thursday\",\"friday\",\"saturday\",\"sunday\", sin repetidos.',\n  '- \"exercises\": de 1 a 15 por bloque.',\n  '- \"sets\": entero de 1 a 10. \"reps\": entero de 1 a 50. \"rest_seconds\": entero de 0 a 600.',\n  '- \"suggested_kg\": null o un número de 0 a 500 (si no sabés la carga, null).',\n  '- \"notes\": opcional, hasta 200 caracteres, en español.',\n  '- \"rationale\": de 1 a 1000 caracteres, en español, explicando por qué armaste la rutina así.',\n  'Los números van como números, no como texto. No agregues otros campos.',\n].join('\\n');\n\nconst lines = [];\nlines.push('PARÁMETROS');\nlines.push(`- Objetivo: ${GOALS[params.goal] || params.goal || 'no indicado'}`);\nlines.push(`- Nivel: ${LEVELS[params.level] || params.level || 'no indicado'}`);\nlines.push(`- Días por semana: ${frequency}`);\nlines.push(`- Duración por sesión: ${duration} minutos`);\nlines.push(`- Equipamiento disponible: ${equipment.join(', ')}`);\nlines.push(`- Lesiones o molestias: ${params.injuries ? String(params.injuries) : 'ninguna informada'}`);\nlines.push(`- Preferencias: ${params.preferences ? String(params.preferences) : 'ninguna'}`);\nlines.push('');\nlines.push(`BIBLIOTECA DE EJERCICIOS (${library.length}; usá solo estos ids)`);\nfor (const e of library) {\n  lines.push(JSON.stringify({ id: e.id, name: e.name, muscle_group: e.muscle_group, equipment: e.equipment }));\n}\nif (previous.length) {\n  lines.push('');\n  lines.push('PLANTILLAS RECIENTES DEL ENTRENADOR (referencia de su estilo)');\n  for (const t of previous) lines.push(JSON.stringify(t));\n}\nif (base) {\n  lines.push('');\n  lines.push('PLANTILLA BASE A ADAPTAR (respetá su idea, pero cumplí todas las reglas)');\n  lines.push(JSON.stringify(base));\n}\nlines.push('');\nlines.push(`Devolvé el objeto JSON. Recordá: días sin repetir entre bloques y ${frequency} días en total.`);\n\nreturn [{\n  json: {\n    request: {\n      model: MODEL,\n      temperature: TEMPERATURE,\n      response_format: { type: 'json_object' },\n      messages: [\n        { role: 'system', content: systemPrompt },\n        { role: 'user', content: lines.join('\\n') },\n      ],\n    },\n  },\n}];"
+      },
+      "id": "00000000-0000-4000-8000-000000000002",
+      "name": "Armar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.moonshot.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.request) }}",
+        "options": {
+          "timeout": 25000
+        }
+      },
+      "id": "00000000-0000-4000-8000-000000000003",
+      "name": "KIMI chat completions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kimi",
+          "name": "KIMI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Saca el JSON de la respuesta de KIMI. Si no se puede, devuelve { error: \"INVALID_JSON\" }\n// y el backend lo trata como respuesta inválida (502 AI_INVALID_RESPONSE).\nconst res = $input.first().json || {};\nlet content = res.choices && res.choices[0] && res.choices[0].message ? res.choices[0].message.content : null;\n\nconst invalid = [{ json: { error: 'INVALID_JSON' } }];\nif (typeof content !== 'string' || !content.trim()) return invalid;\n\ncontent = content.trim();\nconst fence = content.match(/^```(?:json)?\\s*([\\s\\S]*?)\\s*```$/i);\nif (fence) content = fence[1];\nif (!content.startsWith('{')) {\n  const start = content.indexOf('{');\n  const end = content.lastIndexOf('}');\n  if (start === -1 || end <= start) return invalid;\n  content = content.slice(start, end + 1);\n}\n\ntry {\n  const parsed = JSON.parse(content);\n  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return invalid;\n  return [{ json: parsed }];\n} catch (err) {\n  return invalid;\n}"
+      },
+      "id": "00000000-0000-4000-8000-000000000004",
+      "name": "Parsear JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "00000000-0000-4000-8000-000000000005",
+      "name": "Responder propuesta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: \"LLM_UNAVAILABLE\" }) }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "00000000-0000-4000-8000-000000000006",
+      "name": "Responder error KIMI",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook trainer-ia": {
+      "main": [
+        [
+          {
+            "node": "Armar prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar prompt": {
+      "main": [
+        [
+          {
+            "node": "KIMI chat completions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KIMI chat completions": {
+      "main": [
+        [
+          {
+            "node": "Parsear JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error KIMI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear JSON": {
+      "main": [
+        [
+          {
+            "node": "Responder propuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
