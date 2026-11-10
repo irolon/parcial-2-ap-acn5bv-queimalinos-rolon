@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useClearCacheOnSessionChange } from '@/hooks/auth/useClearCacheOnSessionChange';
+import { AI_SESSION_KEY } from '@/utils/trainer-ai/proposalStore';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 
 const PT_A = { id: 't-a', name: 'A', role: 'trainer' };
@@ -22,6 +23,14 @@ describe('useClearCacheOnSessionChange', () => {
   it('al cerrar sesión borra la caché', async () => {
     await act(() => useAuthStore.getState().logout());
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+  });
+
+  it('al cerrar sesión borra la sesión del asistente IA (con lesiones) y deja la de otros', async () => {
+    sessionStorage.setItem(AI_SESSION_KEY('t-a'), '{"form":{"injuries":"Lumbalgia"}}');
+    sessionStorage.setItem(AI_SESSION_KEY('t-b'), '{}');
+    await act(() => useAuthStore.getState().logout());
+    expect(sessionStorage.getItem(AI_SESSION_KEY('t-a'))).toBeNull();
+    expect(sessionStorage.getItem(AI_SESSION_KEY('t-b'))).toBe('{}');
   });
 
   it('al entrar con otro usuario borra la caché del anterior', () => {

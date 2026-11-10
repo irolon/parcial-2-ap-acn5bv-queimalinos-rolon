@@ -247,7 +247,11 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | student_id | uuid | FK → students |
 | role | enum | user / assistant |
 | content | text | |
+| exercise_id | uuid | FK → exercises (`on delete set null`): el ejercicio sobre el que se preguntó, en la consulta y en su respuesta (null si no había o no era accesible). GX5, `2026-11/2026-11-09-chat-history.sql` |
+| suggestions | jsonb | sugerencias validadas de la respuesta `[{ exercise_id, name, reason }]` (default `[]`; `[]` en las del alumno). GX5 |
 | created_at | timestamptz | |
+
+Sin índice nuevo para el historial por día (`GET /chat/history`): `idx_chat_messages_student (student_id, created_at)` alcanza. La rutina de cada consulta sale de `session_id → sessions.routine_id`.
 
 **ai_routine_generations** *(historial de generaciones del asistente del entrenador)*
 
@@ -380,6 +384,7 @@ Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede ha
 | sessions | N ──── 1 | routines | Cada sesión ejecuta una rutina |
 | sessions | 1 ──── N | session_sets | Cada sesión tiene N series registradas |
 | sessions | 1 ──── N | chat_messages | Historial del chat IA por sesión |
+| exercises | 1 ──── N | chat_messages | Ejercicio sobre el que se consultó (GX5) |
 | achievements | 1 ──── N | student_achievements | Catálogo desbloqueado por alumnos |
 | challenges | 1 ──── N | student_challenges | Catálogo asumido por alumnos |
 

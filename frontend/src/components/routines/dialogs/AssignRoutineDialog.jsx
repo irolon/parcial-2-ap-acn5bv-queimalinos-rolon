@@ -43,9 +43,9 @@ export default function AssignRoutineDialog({ state, preselectedStudentId, onAss
     sending.current = true;
     setError(null);
     try {
-      await create.mutateAsync(buildRoutineBody(state, student.id));
+      const routine = await create.mutateAsync(buildRoutineBody(state, student.id));
       clearDraft(trainerId);
-      onAssigned(student);
+      onAssigned(student, routine);
     } catch (err) {
       sending.current = false;
       const invalid = err?.code === 'VALIDATION_ERROR';

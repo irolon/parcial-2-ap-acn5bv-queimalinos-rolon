@@ -1270,7 +1270,7 @@ Envía un mensaje al asistente IA.
 - `response` obligatorio (se recorta). Falta, vacío, no es texto, pasa de 1500, o la respuesta trae `error` (p. ej. `{ "error": "INVALID_JSON" }`) → 502 `AI_INVALID_RESPONSE`.
 - `suggestions` es informativo: se queda con las **3 primeras válidas**, solo con `exercise_id` de `alternatives`, `reason` de 1 a 200 y sin repetir. Las que no cumplen (o un `suggestions` que no es lista) **se descartan sin rechazar la respuesta**. El nombre sale de la biblioteca, no de la IA.
 
-**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`) y los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyó el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche). A igual `created_at` se ordena primero el del alumno. Las sugerencias no se guardan. La sesión no se toca nunca.
+**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`) y los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyó el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche). A igual `created_at` se ordena primero el del alumno. Desde la GX5 (migración `2026-11/2026-11-09-chat-history.sql`) los dos guardan `exercise_id` = el ejercicio actual si era accesible (si no, `null`): "Aplicar" en la web lo compara con el ejercicio a la vista. La respuesta guarda `suggestions` ya validadas (`[{ exercise_id, name, reason }]`); la del alumno, `[]`. La sesión no se toca nunca.
 
 **200 OK**
 
@@ -1310,13 +1310,50 @@ La conversación del día del alumno (día de Argentina), para que el panel la r
 ```json
 {
   "data": {
-    "messages": [ { "id": "uuid", "role": "user | assistant", "content": "…", "created_at": "ISO 8601" } ],
+    "messages": [
+      {
+        "id": "uuid",
+        "role": "user | assistant",
+        "content": "…",
+        "created_at": "ISO 8601",
+        "exercise": { "id": "uuid", "name": "Press banca plano" },
+        "routine_name": "Push · día 3",
+        "suggestions": [ { "exercise_id": "uuid", "name": "Press con mancuernas", "reason": "…" } ]
+      }
+    ],
     "remaining_today": 17
   }
 }
 ```
 
-`messages` va del más viejo al más nuevo (en el mismo instante, el del alumno antes que la respuesta), sin las sugerencias. `remaining_today` = 20 − mensajes del alumno hoy, nunca negativo. Solo devuelve los del alumno autenticado.
+`messages` va del más viejo al más nuevo (en el mismo instante, el del alumno antes que la respuesta). `remaining_today` = 20 − mensajes del alumno hoy, nunca negativo. Solo devuelve los del alumno autenticado.
+
+Desde la GX5 cada mensaje trae su contexto (aditivo): `exercise` (el ejercicio sobre el que se preguntó, o `null`), `routine_name` (la rutina de la sesión, vía `session_id` → `sessions.routine_id`; `null` si el mensaje no tiene sesión en el servidor, lo normal mientras la sesión web no se crea al empezar) y `suggestions` (`[]` en las del alumno y en los mensajes de antes de la migración).
+
+### GET /chat/history
+
+Los días anteriores del asistente (GX5), para la página "Asistente IA" de la web. Hoy sigue saliendo de `GET /chat/today`.
+
+**Headers:** `Authorization: Bearer <token>` (rol: alumno; otro rol → 403)
+
+**Query:** `before` (`YYYY-MM-DD`, opcional; por defecto hoy, que queda afuera; una fecha futura se toma como hoy) y `days` (entero de 1 a 14, por defecto 7).
+
+Lee los mensajes del alumno con `created_at` anterior al 00:00 de Argentina de `before`, de los más nuevos a los más viejos, con tope `days × 20 × 2` filas, y los agrupa por día de Argentina. Si se llegó al tope, el día más viejo pudo quedar cortado: se descarta (salvo que sea el único) y lo trae la página siguiente.
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "days": [ { "date": "2026-11-08", "messages": [ { "id": "uuid", "role": "user", "content": "…", "created_at": "ISO 8601", "exercise": null, "routine_name": null, "suggestions": [] } ] } ],
+    "next_before": "2026-11-02"
+  }
+}
+```
+
+`days` va del más nuevo al más viejo y los mensajes de cada día en orden, con la misma forma que en `GET /chat/today`. `next_before` es el día más viejo devuelto si puede haber más (se pasa como `before` para seguir), o `null`. Solo devuelve los del alumno autenticado.
+
+**Errores:** 400 `VALIDATION_ERROR` (`before` no es una fecha real `YYYY-MM-DD`, o `days` no es un entero de 1 a 14).
 
 ---
 

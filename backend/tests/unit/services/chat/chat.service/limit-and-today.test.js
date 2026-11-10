@@ -75,13 +75,31 @@ describe('chat · chat.service · límite de 20 por día de Argentina', () => {
   });
 });
 
+const chatRow = (id, role) => ({ id, role, content: id, created_at: '2026-11-07T13:00:00.000Z' });
+
 describe('chat · chat.service · getToday', () => {
-  it('los mensajes del día en orden, con id, role, content y created_at, y lo que queda', async () => {
+  it('los mensajes del día en orden, sin contexto si no lo tienen, y lo que queda', async () => {
     const rows = dayMessages(3);
     mockMessagesRepo.findDayMessages.mockResolvedValue(rows.map((r) => ({ ...r, session_id: 'x' })));
     const data = await chatService.getToday(STUDENT_ID, NOW);
     expect(mockMessagesRepo.findDayMessages).toHaveBeenCalledWith(STUDENT_ID, DAY.from, DAY.to);
-    expect(data).toEqual({ messages: rows, remaining_today: 17 });
+    const plain = rows.map((r) => ({ ...r, exercise: null, routine_name: null, suggestions: [] }));
+    expect(data).toEqual({ messages: plain, remaining_today: 17 });
+  });
+
+  it('cada mensaje trae exercise, routine_name y suggestions', async () => {
+    const suggestions = [{ exercise_id: 'e2', name: 'Flexiones', reason: 'Sin equipo' }];
+    const context = { exercise_id: 'e1', exercise: { id: 'e1', name: 'Press banca' }, session: { routine: { name: 'Push' } } };
+    mockMessagesRepo.findDayMessages.mockResolvedValue([
+      { ...chatRow('u0', 'user'), ...context, suggestions: [] },
+      { ...chatRow('a0', 'assistant'), ...context, suggestions },
+    ]);
+    const { messages } = await chatService.getToday(STUDENT_ID, NOW);
+    expect(messages.map(({ exercise, routine_name, suggestions: s }) => ({ exercise, routine_name, s }))).toEqual([
+      { exercise: { id: 'e1', name: 'Press banca' }, routine_name: 'Push', s: [] },
+      { exercise: { id: 'e1', name: 'Press banca' }, routine_name: 'Push', s: suggestions },
+    ]);
+    expect(messages[0]).not.toHaveProperty('exercise_id');
   });
 
   it('sin mensajes hoy: lista vacía y 20', async () => {

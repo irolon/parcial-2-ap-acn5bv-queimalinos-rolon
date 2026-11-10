@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { setCursor } from '@/utils/workout/workoutState/workoutState';
+import userEvent from '@testing-library/user-event';
+import { replaceExercise, setCursor } from '@/utils/workout/workoutState/workoutState';
 import { PanelHarness, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout, withSets } from '../../../../helpers/workout/workout';
 import { allowSlowScreens } from '../../../../helpers/shared/patience';
@@ -13,6 +14,34 @@ describe('ExercisePanel: lo que muestra', () => {
     expect(screen.getByRole('heading', { name: 'Press banca' })).toBeInTheDocument();
     expect(screen.getByText('OBJETIVO 4 × 10 · DESCANSO 90″')).toBeInTheDocument();
     expect(screen.getByText('SERIE 1 DE 4 · SUGERIDO 62,5 KG × 10')).toBeInTheDocument();
+  });
+
+  it('un ejercicio reemplazado dice en lugar de cuál, en mono', () => {
+    render(<PanelHarness initial={replaceExercise(freshWorkout(), 0, { id: 'e-9', name: 'Press inclinado' })} />);
+    expect(screen.getByRole('heading', { name: 'Press inclinado' })).toBeInTheDocument();
+    expect(screen.getByText('EN LUGAR DE PRESS BANCA')).toBeInTheDocument();
+  });
+
+  it('al reemplazar el ejercicio a la vista, los campos se vuelven a precargar con el nuevo (no quedan los kg del otro)', async () => {
+    render(
+      <PanelHarness>
+        {(setWorkout) => (
+          <button type="button" onClick={() => setWorkout((w) => replaceExercise(w, 0, { id: 'e-9', name: 'Flexiones' }))}>
+            reemplazar
+          </button>
+        )}
+      </PanelHarness>,
+    );
+    expect(weight()).toHaveValue('62,5');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'reemplazar' }));
+    expect(screen.getByText('SERIE 1 DE 4 · SUGERIDO 10 REPS')).toBeInTheDocument();
+    expect(weight()).toHaveValue('');
+    expect(reps()).toHaveValue('10');
+  });
+
+  it('sin reemplazo no muestra "EN LUGAR DE"', () => {
+    render(<PanelHarness />);
+    expect(screen.queryByText(/EN LUGAR DE/)).not.toBeInTheDocument();
   });
 
   it('precarga el peso y las reps del plan en los campos', () => {
