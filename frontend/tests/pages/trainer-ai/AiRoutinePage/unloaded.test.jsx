@@ -92,4 +92,13 @@ describe('AiRoutinePage: lo que no se pudo precargar sobrevive a la vuelta al fo
     await user.clear(screen.getByLabelText('Lesiones'));
     expect(await generateAgain(user, fetchMock, 2)).toMatchObject({ available_equipment: ['barbell'], injuries: null });
   });
+
+  it('entrada desde la ficha con la ficha caída: se genera para ese alumno y el backend completa con su ficha', async () => {
+    const user = setupUser();
+    const { fetchMock } = renderAi('/pt/rutinas/ia?alumno=st-2', { detail: () => 500, students: STUDENTS, generate: ok });
+    await screen.findByText(FAILED);
+    await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
+    await user.selectOptions(screen.getByLabelText('Nivel'), 'beginner');
+    expectStillUnloaded(await generateAgain(user, fetchMock, 1));
+  });
 });
