@@ -5,7 +5,7 @@ import { jest } from '@jest/globals';
  * sus llamadas en `calls` ([método, ...args]) y al hacer await devuelve `result`.
  * `rpc` devuelve `rpcResult`. Reiniciar con reset() en beforeEach.
  */
-const CHAIN = ['select', 'insert', 'update', 'eq', 'neq', 'or', 'in', 'gte', 'lt', 'order', 'limit', 'single', 'maybeSingle'];
+const CHAIN = ['select', 'insert', 'update', 'eq', 'neq', 'not', 'or', 'in', 'gte', 'lt', 'order', 'limit', 'single', 'maybeSingle'];
 
 export const fake = { calls: [], tables: [], result: { data: null, error: null }, rpcResult: { data: null, error: null } };
 

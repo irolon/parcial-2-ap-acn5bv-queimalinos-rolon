@@ -1,6 +1,7 @@
 import * as generationsRepository from '../../repositories/trainer-ai/ai-generations.repository.js';
 import { GENERATION_LIMIT, GENERATION_WINDOW_MS } from '../../models/trainer-ai/ai-generation.model.js';
 import { resolveParams, buildContext } from './context.service.js';
+import { buildExtraContext } from './extra-context.service.js';
 import { requestRoutineProposal } from './n8n.client.js';
 import { validateProposal } from './proposal.js';
 import { generationLimiter } from './generation-limiter.js';
@@ -51,8 +52,10 @@ async function generate(trainerId, body, now) {
   const params = await resolveParams(trainerId, body);
   const context = await buildContext(trainerId, params, body.base_template_id);
 
+  const extra = await buildExtraContext(trainerId, { goal: params.goal, studentId: body.student_id ?? null }, now);
+
   generationLimiter.recordAttempt(trainerId, now);
-  const raw = await requestRoutineProposal({ params, ...context });
+  const raw = await requestRoutineProposal({ params, ...context, ...extra });
   const proposal = validateProposal(raw, {
     frequency: params.frequency_per_week,
     libraryIds: new Set(context.library.map((e) => e.id)),

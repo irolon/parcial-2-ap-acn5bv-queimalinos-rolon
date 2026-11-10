@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, beforeEach } from '@jest/globals';
 import { fileURLToPath } from 'node:url';
 
 // Mocks y datos compartidos por los tests de services/trainer-ai/.
@@ -17,8 +17,21 @@ export const mockContextRepo = {
   findLibraryForEquipment: jest.fn(),
   findRecentTemplates: jest.fn(),
   findLibraryByIds: jest.fn(),
+  findRecentRoutines: jest.fn(),
 };
 jest.unstable_mockModule(src('repositories/trainer-ai/ai-context.repository.js'), () => mockContextRepo);
+
+export const mockHistoryRepo = { findFinishedSessionsSince: jest.fn() };
+jest.unstable_mockModule(src('repositories/trainer-ai/ai-history.repository.js'), () => mockHistoryRepo);
+
+export const mockSessionHistoryRepo = { findSetsForSessions: jest.fn() };
+jest.unstable_mockModule(src('repositories/sessions/session-history.repository.js'), () => mockSessionHistoryRepo);
+
+export const mockProgressRepo = { fetchLastSessionKg: jest.fn() };
+jest.unstable_mockModule(src('repositories/progress/progress.repository.js'), () => mockProgressRepo);
+
+export const mockRoutinesRepo = { findActiveRoutinesForStudent: jest.fn() };
+jest.unstable_mockModule(src('repositories/routines/routines.repository.js'), () => mockRoutinesRepo);
 
 export const mockStudentsRepo = { findStudentById: jest.fn() };
 jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
@@ -35,7 +48,18 @@ jest.unstable_mockModule(src('services/routines/routines.service/routines.servic
 export const mockClient = { requestRoutineProposal: jest.fn() };
 jest.unstable_mockModule(src('services/trainer-ai/n8n.client.js'), () => mockClient);
 
+// Defaults vacíos para todo lo que lee buildExtraContext (incluido el historial real de history.service),
+// así los tests de generate.service que no hablan de contexto extra no tienen que mockearlo.
+beforeEach(() => {
+  mockContextRepo.findRecentRoutines.mockResolvedValue([]);
+  mockRoutinesRepo.findActiveRoutinesForStudent.mockResolvedValue([]);
+  mockHistoryRepo.findFinishedSessionsSince.mockResolvedValue([]);
+  mockSessionHistoryRepo.findSetsForSessions.mockResolvedValue([]);
+  mockProgressRepo.fetchLastSessionKg.mockResolvedValue({});
+});
+
 export const contextService = await import(src('services/trainer-ai/context.service.js'));
+export const historyService = await import(src('services/trainer-ai/history.service.js'));
 export const generateService = await import(src('services/trainer-ai/generate.service.js'));
 export const saveService = await import(src('services/trainer-ai/save.service.js'));
 

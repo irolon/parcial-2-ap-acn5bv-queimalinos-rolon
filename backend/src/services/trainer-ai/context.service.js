@@ -80,7 +80,6 @@ function toBaseTemplate(template, byId) {
       reps: e.reps,
       rest_seconds: e.rest_seconds ?? null,
       suggested_kg: e.suggested_kg ?? null,
-      notes: e.notes ?? null,
     })),
   };
 }
@@ -101,7 +100,8 @@ async function withBaseExercises(trainerId, library, base) {
 /**
  * Contexto para n8n: la biblioteca filtrada por equipamiento (más bodyweight y los de la base), las
  * plantillas recientes del trainer y la plantilla base (404 TEMPLATE_NOT_FOUND si es ajena).
- * Sin el nombre de las plantillas: los PT suelen ponerles el del alumno.
+ * Sin el nombre de las plantillas (los PT suelen ponerles el del alumno) ni las notas de sus ejercicios
+ * (texto libre del PT, que puede traer datos del alumno): RNF-26.
  */
 export async function buildContext(trainerId, params, baseTemplateId) {
   const equipment = [...new Set([...params.available_equipment, BODYWEIGHT])];

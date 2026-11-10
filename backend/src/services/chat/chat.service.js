@@ -30,7 +30,7 @@ function findToday(studentId, now) {
   return messagesRepository.findDayMessages(studentId, fromIso, toIso);
 }
 
-// Alumnos con una consulta en curso (por proceso). Entre leer el día y guardar el par pasan hasta 9 s de n8n:
+// Alumnos con una consulta en curso (por proceso). Entre leer el día y guardar el par pasan hasta 16 s de n8n:
 // sin esto, dos envíos a la vez (dos pestañas, web y celular) con 19 pasarían los dos y quedarían 21.
 const inFlight = new Set();
 
@@ -53,7 +53,7 @@ async function answer(studentId, body, now) {
   chatAttempts.assertUnderLimit(studentId, now);
 
   const exercise = await findCurrentExercise(student, body.current_exercise_id);
-  const context = await buildChatContext(student, exercise);
+  const context = await buildChatContext(student, exercise, now);
   const history = today.slice(-HISTORY_SIZE).map(({ role, content }) => ({ role, content }));
   chatAttempts.record(studentId, now);
   const raw = await postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', { message: body.message, ...context, history }, N8N_OPTIONS);
@@ -73,7 +73,7 @@ async function answer(studentId, body, now) {
 /**
  * POST /chat: una consulta a la vez por alumno (la segunda en paralelo es 429 CHAT_IN_PROGRESS); valida la sesión
  * (si ya está en el servidor), aplica el límite de 20 por día, arma el contexto sin datos personales con los últimos
- * 6 mensajes del día, le pregunta a n8n (9 s) y valida la respuesta. Solo si sale bien guarda el par en una
+ * 6 mensajes del día, le pregunta a n8n (16 s) y valida la respuesta. Solo si sale bien guarda el par en una
  * inserción, con created_at = `now` (el día que se leyó, aunque n8n conteste pasada la medianoche): las fallas no
  * se guardan ni cuentan para el límite del día, pero sí para el tope de intentos por hora (`chat-attempts.js`).
  * La sesión no se toca nunca.

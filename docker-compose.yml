@@ -7,6 +7,11 @@
 #
 # No hay servicio de base de datos: los datos viven en Supabase (remoto). Las
 # credenciales salen de backend/.env — copiá backend/.env.example y completalo.
+#
+# n8n (los asistentes IA) es otro servicio de este compose: `docker compose up`
+# levanta los dos. Para levantar solo uno, se nombra: `docker compose up -d api`
+# o `docker compose up -d n8n`. Se configura con n8n/.env (copiá
+# n8n/.env.example); ver n8n/README.md.
 
 services:
   api:
@@ -49,3 +54,29 @@ services:
       retries: 5
       start_period: 15s
     restart: unless-stopped
+
+  n8n:
+    container_name: fittrainer-n8n
+    # Versión fija a propósito: una actualización automática puede romper los
+    # workflows. Para subirla, ver n8n/README.md.
+    image: n8nio/n8n:2.45.3
+    # Opcional: sin n8n/.env el servicio arranca igual, pero sin clave de
+    # cifrado propia ni las variables de los workflows.
+    env_file:
+      - path: ./n8n/.env
+        required: false
+    ports:
+      # Configurable igual que la API: `N8N_PORT=5679 docker compose up -d n8n`.
+      # Adentro del contenedor siempre es 5678 (la API lo ve como http://n8n:5678).
+      # Solo en localhost: nadie de la misma red toma el editor antes de crear la
+      # cuenta de dueño.
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    volumes:
+      # Credenciales, workflows importados y ejecuciones: sobreviven a `down`.
+      - n8n_data:/home/node/.n8n
+      # Los workflows del repo, solo lectura, para importarlos por CLI.
+      - ./n8n/workflows:/workflows:ro
+    restart: unless-stopped
+
+volumes:
+  n8n_data:

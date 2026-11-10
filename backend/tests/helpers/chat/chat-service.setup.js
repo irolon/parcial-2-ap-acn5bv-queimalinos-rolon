@@ -14,6 +14,9 @@ jest.unstable_mockModule(src('repositories/sessions/sessions.repository.js'), ()
 export const mockExercisesRepo = { findExerciseById: jest.fn() };
 jest.unstable_mockModule(src('repositories/exercises/exercises.repository.js'), () => mockExercisesRepo);
 
+export const mockRoutinesRepo = { findActiveRoutineForStudentToday: jest.fn(), findActiveRoutinesForStudent: jest.fn() };
+jest.unstable_mockModule(src('repositories/routines/routines.repository.js'), () => mockRoutinesRepo);
+
 export const mockContextRepo = { findAlternatives: jest.fn() };
 jest.unstable_mockModule(src('repositories/chat/chat-context.repository.js'), () => mockContextRepo);
 
@@ -28,7 +31,11 @@ export const chatService = await import(src('services/chat/chat.service.js'));
 export const { chatAttempts } = await import(src('services/chat/chat-attempts.js'));
 
 // El tope de intentos por hora vive en memoria: cada test arranca sin intentos.
-beforeEach(() => chatAttempts.clear());
+beforeEach(() => {
+  chatAttempts.clear();
+  mockRoutinesRepo.findActiveRoutineForStudentToday.mockResolvedValue(null);
+  mockRoutinesRepo.findActiveRoutinesForStudent.mockResolvedValue([]);
+});
 
 export const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
 export const OTHER_STUDENT = '33333333-3333-4333-8333-333333333333';
@@ -38,6 +45,7 @@ export const SESSION_ID = '44444444-4444-4444-8444-444444444444';
 export const EX_BENCH = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
 export const EX_DB = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
 export const EX_PUSHUP = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3';
+export const EX_ROW = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4';
 
 /** 12:00 de Argentina del 07/11/2026. */
 export const NOW = new Date('2026-11-07T15:00:00Z');
@@ -85,3 +93,18 @@ export function dayMessages(pairs) {
 
 /** Las filas insertadas con ids, como las devuelve la base. */
 export const inserted = (rows) => rows.map((r, i) => ({ id: i === 0 ? 'msg-user' : 'msg-assistant', created_at: NOW.toISOString(), ...r }));
+
+const routineExercise = (order_index, exercise_id, name, muscle_group) => ({
+  order_index, exercise_id, sets: 3, reps: '10', suggested_kg: 20, notes: 'nota del PT',
+  exercise: { id: exercise_id, name, muscle_group, equipment: 'barbell', video_url: null },
+});
+
+/** Rutina con press banca (orden 2) y remo (orden 1), desordenados a propósito; lleva nombre y notas. */
+export const routine = (patch = {}) => ({
+  name: 'Rutina de Lucía', goal: 'hypertrophy', days: ['saturday'],
+  routine_exercises: [
+    routineExercise(2, EX_BENCH, 'Press banca plano', 'chest'),
+    routineExercise(1, EX_ROW, 'Remo con barra', 'back'),
+  ],
+  ...patch,
+});

@@ -54,7 +54,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 
 **Cómo se corren:** `npm test` en `backend/` y en `frontend/`; las dos corren solas en el CI (§3.4). Las rutas de evidencia son relativas a `backend/tests/unit/`.
 
-**Última corrida (09/11/2026, rama `test/backend-suite` con `develop` traído):** backend 1805/1805 tests en 196 suites, sin `.env` (como en el CI); web 838/838 en 132 archivos con `npx vitest run --maxWorkers=2 --testTimeout=15000`, más lint y build.
+**Última corrida (09/11/2026, rama `test/backend-suite` con `develop` traído):** backend 1846/1846 tests en 202 suites, sin `.env` (como en el CI); web 838/838 en 132 archivos con `npx vitest run --maxWorkers=2 --testTimeout=15000`, más lint y build.
 
 #### Auth e invitaciones
 
@@ -128,7 +128,7 @@ UT-29 y UT-30 eran los casos pendientes de IA; UT-33 a UT-44 se sumaron con la #
 | UT-39 | `validateChatBody()` (StudentAI) | Body con `message` vacío, de 501, ids inválidos, `context` viejo | 400 `VALIDATION_ERROR` con el campo; `message` recortado; los campos de más se descartan | ✅ | `validations/chat/chat.validation.test.js` · 09/11 |
 | UT-40 | `resolveSessionId()` (StudentAI) | Sesión propia en curso, inexistente, ajena, terminada | Su id / `null` (offline-first, se acepta) / 404 `SESSION_NOT_FOUND` / 400 `SESSION_FINISHED`, sin llamar a n8n | ✅ | `services/chat/chat.service/send.test.js` · 09/11 |
 | UT-41 | `validateChatResponse()` (StudentAI) | JSON de n8n | `response` recortado; sugerencias inventadas, sin `reason`, repetidas o de más de 3 se descartan sin rechazar; `response` vacío, de más de 1500 o `{ "error": … }` → 502 `AI_INVALID_RESPONSE` | ✅ | `services/chat/response.test.js` · 09/11 |
-| UT-42 | `postToN8n()` (StudentAI) | Webhook del chat ok, timeout, 5xx, sin URL o sin secreto | URL de `N8N_STUDENT_AI_WEBHOOK_URL`, secreto en `x-webhook-secret`, `AbortSignal.timeout(9000)`; fallas → 503 "El asistente no está disponible ahora. Seguí con tu entrenamiento." | ✅ | `shared/utils/n8n.client.test.js`, `services/chat/chat.service/send.test.js` · 09/11 |
+| UT-42 | `postToN8n()` (StudentAI) | Webhook del chat ok, timeout, 5xx, sin URL o sin secreto | URL de `N8N_STUDENT_AI_WEBHOOK_URL`, secreto en `x-webhook-secret`, `AbortSignal.timeout(16000)` (el corte del chat; antes 9000, lo subió la #90); fallas → 503 "El asistente no está disponible ahora. Seguí con tu entrenamiento." | ✅ | `shared/utils/n8n.client.test.js`, `services/chat/chat.service/send.test.js` · 09/11 |
 | UT-43 | `sendMessage()` / `getToday()` (StudentAI, límite y guardado) | 19 y 20 mensajes del alumno hoy; 23:59 y 00:00 de Argentina; falla de n8n | 20 → 429 `CHAT_LIMIT_REACHED` sin llamar a n8n; el día corta a las 00:00 AR; el par se guarda en una inserción solo si sale bien; las fallas no se guardan ni cuentan; `remaining_today` nunca negativo | ✅ | `services/chat/chat.service/limit-and-today.test.js` · 09/11 |
 | UT-44 | `sendMessage()` (StudentAI, concurrencia y día) | Dos consultas a la vez del mismo alumno con 19; consulta a las 23:59:55 AR; inserción sin filas | La segunda → 429 `CHAT_IN_PROGRESS` sin llamar a n8n y el lugar se libera al terminar (bien o mal); el par se guarda con `created_at` de la consulta (queda en ese día); sin filas → 500 `INTERNAL_ERROR`; pasado el tope de 30 intentos por hora (también fallidos) → 429 `RATE_LIMIT_EXCEEDED` con `Retry-After` sin llamar a n8n | ✅ | `services/chat/chat.service/lock-and-insert.test.js`, `services/chat/chat-attempts.test.js` · 09/11 |
 
@@ -311,6 +311,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 05/11/2026 | `633fdec` | Review de la #76: teardown que espera los avisos, serie sustituida, agenda con `expectNoLeak`, controles por listado e IT-26 (dos corridas) | ✅ 186/186 y 186/186 | 334 s y 310 s | 0 QA y 0 filas sin dueño |
 | 07/11/2026 | `ad22303` | Segunda review de la #76: clean que solo informa las filas sin dueño (`--orphans` para borrarlas) y controles de `/students/overview`, `/routines` y `/notifications` del PT | ✅ 190/190 | 228 s | 0 QA y 0 filas sin dueño |
 | 09/11/2026 | merge de `develop` (`3460ca6`) | Suite completa (12 archivos) con la IA del entrenador y el chat del alumno (#83, #85) | ✅ 206/206 | 278 s | 0 de esta corrida (6 QA anteriores) y 0 filas sin dueño |
+| 09/11/2026 | merge de `develop` (`9356543`, #90) | Suite completa; `chat` y `trainer-ai` esperan las claves nuevas del contexto (`todays_routine`, `previous_routines`, `student_history`, `current_routine`) | ✅ 206/206 | 342 s | 0 de esta corrida (6 QA anteriores) y 0 filas sin dueño |
 
 Fechas en UTC (en Argentina fue la noche del 03/11). La corrida final de la tarjeta 52 es la de `52465a3`.
 
