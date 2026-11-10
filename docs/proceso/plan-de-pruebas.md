@@ -54,7 +54,7 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 
 **Cómo se corren:** `npm test` en `backend/` y en `frontend/`; las dos corren solas en el CI (§3.4). Las rutas de evidencia son relativas a `backend/tests/unit/`.
 
-**Última corrida (03/11/2026, rama `test/backend-suite`):** backend 1181/1181 tests en 138 suites, sin `.env` (como en el CI); web 838/838 en 132 archivos con `npx vitest run --maxWorkers=2 --testTimeout=15000`, más lint y build.
+**Última corrida (09/11/2026, rama `test/backend-suite` con `develop` traído):** backend 1805/1805 tests en 196 suites, sin `.env` (como en el CI); web 838/838 en 132 archivos con `npx vitest run --maxWorkers=2 --testTimeout=15000`, más lint y build.
 
 #### Auth e invitaciones
 
@@ -111,12 +111,26 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | UT-31 | `settleInFlight` | Avisos lanzados con `void` / `runInBackground` | Espera a todos (también a los rechazados y a los que se lanzan mientras tanto) antes del borrado | ✅ | `shared/utils/async/in-flight.test.js` · 05/11 |
 | UT-32 | `findOrphanRows` / `deleteOrphanRows` | Filas de `notifications`, `push_tokens` y `refresh_tokens` sin usuario | Las cuenta por tabla (paginando con orden estable: `user_id` y desempate por `id`) y borra solo las que, releídas, siguen sin dueño | ✅ | `scripts/lib/qa-orphans.test.js` · 05/11 |
 
-#### IA (pendiente)
+#### IA del entrenador y chat del alumno (tarjetas 15 y 13)
+
+UT-29 y UT-30 eran los casos pendientes de IA; UT-33 a UT-44 se sumaron con la #83 (en su plan eran UT-14 y UT-16 a UT-26).
 
 | ID | Unidad | Caso | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|
-| UT-29 | TrainerAI | Prompt y parseo de la rutina propuesta | Estructura validada o error | ⚠️ | Pendiente (tarjeta 13) |
-| UT-30 | StudentAI | Contexto de la sesión activa para n8n | Objeto con contexto enriquecido | ⚠️ | Pendiente (tarjeta 13) |
+| UT-29 | `buildContext()` / `generateRoutine()` (TrainerAI) | Parámetros + alumno con nombre, email y nacimiento | Payload a n8n (`params`, `library`, `previous_templates`, `base_template`) sin datos personales; biblioteca filtrada por equipamiento + `bodyweight` (el prompt lo arma n8n) | ✅ | `services/trainer-ai/context.service.test.js`, `generate.service.test.js` · 09/11 |
+| UT-30 | `buildChatContext()` / `sendMessage()` (StudentAI) | Alumno con nombre, email, nacimiento y equipamiento; ejercicio actual accesible, ajeno o ausente; 8 mensajes del día | Payload a n8n con exactamente `message`, `exercise`, `student`, `alternatives`, `history`, sin datos personales; alternativas (≤30) del grupo del ejercicio con el equipamiento del alumno + `bodyweight`; ejercicio inaccesible → `exercise: null` sin error; `history` = últimos 6 | ✅ | `services/chat/context.service.test.js`, `services/chat/chat.service/send.test.js` · 09/11 |
+| UT-33 | `validateProposal()` (TrainerAI) | JSON de n8n | Propuesta saneada (campos de más descartados) o 502 `AI_INVALID_RESPONSE`: ejercicio inventado, `"sets": "cuatro"`, días repetidos entre bloques, total de días ≠ frecuencia, `{ "error": "INVALID_JSON" }` | ✅ | `services/trainer-ai/proposal.test.js` · 09/11 |
+| UT-34 | `validateGenerateRoutine()` / `validateSaveAsTemplate()` (TrainerAI) | Body con cada regla rota | 400 `VALIDATION_ERROR` con el campo; goal/level opcionales solo con `student_id` | ✅ | `validations/trainer-ai/trainer-ai.validation.test.js` · 09/11 |
+| UT-35 | `resolveParams()` (TrainerAI) | `student_id` del trainer, ajeno o dado de baja | Completa goal, level, equipamiento y lesiones con el alumno; 404 `STUDENT_NOT_FOUND` si es ajeno o inactivo | ✅ | `services/trainer-ai/context.service.test.js` · 09/11 |
+| UT-36 | `requestRoutineProposal()` (TrainerAI) | Webhook ok, timeout, 5xx, sin URL | Secreto en `x-webhook-secret` y `AbortSignal.timeout(30000)`; timeout, 5xx o sin URL → 503 `AI_UNAVAILABLE` | ✅ | `shared/utils/n8n.client.test.js` · 09/11 |
+| UT-37 | `generateRoutine()` (TrainerAI, límite) | 20 generaciones o 20 intentos (también fallidos) en la última hora; o una generación del trainer en curso | 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n; las fallidas no se guardan pero cuentan | ✅ | `services/trainer-ai/generation-limiter.test.js`, `generate.service.test.js` · 09/11 |
+| UT-38 | `saveAsTemplate()` (TrainerAI) | Generación de 1 y de varios bloques | Una plantilla por bloque (`<nombre> · <bloque>`, ≤120); 404 ajena, 409 ya guardada, 400 `TEMPLATE_EXERCISES_UNAVAILABLE` sin crear nada | ✅ | `services/trainer-ai/save.service.test.js` · 09/11 |
+| UT-39 | `validateChatBody()` (StudentAI) | Body con `message` vacío, de 501, ids inválidos, `context` viejo | 400 `VALIDATION_ERROR` con el campo; `message` recortado; los campos de más se descartan | ✅ | `validations/chat/chat.validation.test.js` · 09/11 |
+| UT-40 | `resolveSessionId()` (StudentAI) | Sesión propia en curso, inexistente, ajena, terminada | Su id / `null` (offline-first, se acepta) / 404 `SESSION_NOT_FOUND` / 400 `SESSION_FINISHED`, sin llamar a n8n | ✅ | `services/chat/chat.service/send.test.js` · 09/11 |
+| UT-41 | `validateChatResponse()` (StudentAI) | JSON de n8n | `response` recortado; sugerencias inventadas, sin `reason`, repetidas o de más de 3 se descartan sin rechazar; `response` vacío, de más de 1500 o `{ "error": … }` → 502 `AI_INVALID_RESPONSE` | ✅ | `services/chat/response.test.js` · 09/11 |
+| UT-42 | `postToN8n()` (StudentAI) | Webhook del chat ok, timeout, 5xx, sin URL o sin secreto | URL de `N8N_STUDENT_AI_WEBHOOK_URL`, secreto en `x-webhook-secret`, `AbortSignal.timeout(9000)`; fallas → 503 "El asistente no está disponible ahora. Seguí con tu entrenamiento." | ✅ | `shared/utils/n8n.client.test.js`, `services/chat/chat.service/send.test.js` · 09/11 |
+| UT-43 | `sendMessage()` / `getToday()` (StudentAI, límite y guardado) | 19 y 20 mensajes del alumno hoy; 23:59 y 00:00 de Argentina; falla de n8n | 20 → 429 `CHAT_LIMIT_REACHED` sin llamar a n8n; el día corta a las 00:00 AR; el par se guarda en una inserción solo si sale bien; las fallas no se guardan ni cuentan; `remaining_today` nunca negativo | ✅ | `services/chat/chat.service/limit-and-today.test.js` · 09/11 |
+| UT-44 | `sendMessage()` (StudentAI, concurrencia y día) | Dos consultas a la vez del mismo alumno con 19; consulta a las 23:59:55 AR; inserción sin filas | La segunda → 429 `CHAT_IN_PROGRESS` sin llamar a n8n y el lugar se libera al terminar (bien o mal); el par se guarda con `created_at` de la consulta (queda en ese día); sin filas → 500 `INTERNAL_ERROR`; pasado el tope de 30 intentos por hora (también fallidos) → 429 `RATE_LIMIT_EXCEEDED` con `Retry-After` sin llamar a n8n | ✅ | `services/chat/chat.service/lock-and-insert.test.js`, `services/chat/chat-attempts.test.js` · 09/11 |
 
 ### 3.2 Pruebas de Integración
 
@@ -125,6 +139,8 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 **Cómo se corren:** desde `backend/`, con el `.env` de dev: `npm run test:integration` (o `-- <archivo>`). Cada corrida crea sus datos y los borra en el `afterAll`; `npm run test:integration:clean -- --check` cuenta lo que haya quedado. No corre en el CI. Las rutas de evidencia son relativas a `backend/tests/integration/` salvo las marcadas como unitario.
 
 #### Casos por endpoint
+
+IT-36 a IT-41 se sumaron con la #83 (en su plan eran IT-27 a IT-32; esos números ya eran de las tablas de abajo).
 
 | ID | Endpoint | Método | Descripción | Resultado esperado | Resultado | Evidencia |
 |---|---|---|---|---|---|---|
@@ -145,15 +161,21 @@ Documento que define la estrategia, tipos, casos y criterios de aceptación para
 | IT-15 | `/api/sessions/:id/sets` | POST | Lote con sustitución (`original_exercise_id`) | 200 + aviso al PT con from/to | ✅ | Unitario `services/sessions/session-sets.service/triggers.test.js` · 03/11; `progress.int.test.js` (S5: `has_modifications`, el detalle agrupa D con original P y la serie suma a D, no a P) · 05/11 |
 | IT-16 | `/api/progress/exercise/:id` | GET | Trainer ve progreso de su alumno | 200 + datos | ✅ | `flow.int.test.js`, `progress.int.test.js` · 04/11 |
 | IT-17 | `/api/progress/exercise/:id` | GET | Trainer ve alumno ajeno | 403 | ✅ | `isolation/trainer-cross.int.test.js` (#40) · 04/11 |
-| IT-18 | IA del entrenador (generar rutina) | POST | Solicitud válida | 200 + propuesta estructurada | ⚠️ | Pendiente (tarjeta 13) |
-| IT-19 | IA del entrenador | POST | n8n inalcanzable | 503 `AI_UNAVAILABLE` | ⚠️ | Pendiente (tarjeta 13) |
-| IT-20 | IA del entrenador (refinar) | POST | Refinar generación previa | 200 + nueva propuesta | ⚠️ | Pendiente (tarjeta 13) |
-| IT-21 | Chat IA del alumno | POST | Mensaje con sesión activa | 200 + respuesta IA | ⚠️ | Pendiente (tarjeta 13) |
-| IT-22 | Chat IA del alumno | POST | Sesión finalizada | 400 `SESSION_FINISHED` | ⚠️ | Pendiente (tarjeta 13) |
+| IT-18 | `/api/trainer-ai/generate-routine` | POST | Solicitud válida con alumno (n8n simulado por un servidor local) | 200 + `routine_proposal` con bloques y nombres; n8n recibe el secreto y ningún dato personal | ✅ | `trainer-ai.int.test.js` (genera con el alumno) · 09/11 |
+| IT-19 | `/api/trainer-ai/generate-routine`, `/api/chat` | POST | n8n responde 502 `LLM_UNAVAILABLE` / `{ "error": "INVALID_JSON" }` | 503 `AI_UNAVAILABLE` / 502 `AI_INVALID_RESPONSE`, sin guardar la generación ni los mensajes del chat (no cuentan para el límite) | ✅ | `trainer-ai.int.test.js`, `chat.int.test.js` (fallas de la IA) · 09/11 |
+| IT-20 | ~~`/api/trainer-ai/refine`~~ | POST | Fuera de alcance (tarjeta 15): el PT ajusta en el editor | — | — | Fuera de alcance |
+| IT-21 | `/api/chat` | POST | Mensaje con sesión en curso y ejercicio actual (n8n simulado por un servidor local) | 200 + `response`, sugerencias solo de `alternatives` con nombre y `remaining_today: 19`; n8n recibe el secreto y ningún dato personal; el par queda en `chat_messages` con la sesión. Con una sesión que todavía no subió: 200 y el par sin sesión | ✅ | `chat.int.test.js` (envía; sesión que todavía no subió) · 09/11 |
+| IT-22 | `/api/chat` | POST | Sesión finalizada | 400 `SESSION_FINISHED` sin llamar a n8n | ✅ | `chat.int.test.js` · 09/11 |
 | IT-23 | `/api/students/:id/achievements` | GET | Alumno con logros | 200 + lista | ✅ | `flow.int.test.js` · 04/11 |
 | IT-24 | `/api/students/:id/streak` | GET | Alumno con sesiones | 200 + `current_streak_days` | ✅ | `flow.int.test.js` · 04/11 |
 | IT-25 | `/api/challenges` | POST | Trainer crea challenge propio | 201 + challenge creado | ✅ | `isolation/*` (lo arma `buildWorld`) · 04/11 |
 | IT-26 | `/api/challenges/:id/assignments` | POST | Asignar challenge a sus alumnos | 201 | ✅ | `isolation/lists.int.test.js` (IT-26: `created` con la asignación de su alumno, `skipped` vacío) · 05/11 |
+| IT-36 | `/api/trainer-ai/save-as-template` | POST | Guardar una propuesta de 2 bloques | 201 + 2 plantillas en `GET /routine-templates` con `generated_by_ai = true`; la generación queda con `routine_template_ids` | ✅ | `trainer-ai.int.test.js` · 09/11 |
+| IT-37 | `/api/trainer-ai/save-as-template` | POST | Guardar dos veces la misma propuesta | 409 `GENERATION_ALREADY_SAVED` | ✅ | `trainer-ai.int.test.js` (y dos en paralelo: 201 y 409) · 09/11 |
+| IT-38 | `/api/trainer-ai/*` | POST | Otro PT guarda la generación, o genera con el alumno o la plantilla ajenos | 404 `GENERATION_NOT_FOUND` / `STUDENT_NOT_FOUND` / `TEMPLATE_NOT_FOUND`, sin ids ajenos en el body | ✅ | `trainer-ai.int.test.js` (aislamiento) · 09/11 |
+| IT-39 | `/api/chat/today` | GET | Después de enviar | 200 + los mensajes del día en orden (alumno, asistente) y `remaining_today`; el siguiente `POST /chat` manda ese par como `history` | ✅ | `chat.int.test.js` · 09/11 |
+| IT-40 | `/api/chat`, `/api/chat/today` | POST / GET | Otro alumno pide su conversación o usa la sesión ajena; un PT usa el chat | `{ messages: [], remaining_today: 20 }` / 404 `SESSION_NOT_FOUND` sin llamar a n8n / 403 | ✅ | `chat.int.test.js` (aislamiento entre alumnos) · 09/11 |
+| IT-41 | `/api/chat` | POST | Alumno con 20 mensajes hoy | 429 `CHAT_LIMIT_REACHED` sin llamar a n8n | ✅ | `chat.int.test.js` · 09/11 |
 
 #### Flujo, idempotencia y progreso
 
@@ -288,6 +310,7 @@ La integración (§3.2) no corre en el CI porque necesita Supabase dev: se corre
 | 05/11/2026 | `52465a3` | **Corrida final** sobre `develop` con la #49 mergeada, guard solo contra dev y rechazos sin ids de A | ✅ 178/178 | 220 s | 0 |
 | 05/11/2026 | `633fdec` | Review de la #76: teardown que espera los avisos, serie sustituida, agenda con `expectNoLeak`, controles por listado e IT-26 (dos corridas) | ✅ 186/186 y 186/186 | 334 s y 310 s | 0 QA y 0 filas sin dueño |
 | 07/11/2026 | `ad22303` | Segunda review de la #76: clean que solo informa las filas sin dueño (`--orphans` para borrarlas) y controles de `/students/overview`, `/routines` y `/notifications` del PT | ✅ 190/190 | 228 s | 0 QA y 0 filas sin dueño |
+| 09/11/2026 | merge de `develop` (`3460ca6`) | Suite completa (12 archivos) con la IA del entrenador y el chat del alumno (#83, #85) | ✅ 206/206 | 278 s | 0 de esta corrida (6 QA anteriores) y 0 filas sin dueño |
 
 Fechas en UTC (en Argentina fue la noche del 03/11). La corrida final de la tarjeta 52 es la de `52465a3`.
 
