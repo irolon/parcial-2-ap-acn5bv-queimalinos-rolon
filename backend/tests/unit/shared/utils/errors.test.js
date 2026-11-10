@@ -35,3 +35,47 @@ describe('Errors de mensajería', () => {
     expect(err.message).toBe(message);
   });
 });
+
+describe('Errors del asistente IA del entrenador', () => {
+  it.each([
+    ['aiUnavailable', [], 503, 'AI_UNAVAILABLE', 'El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.'],
+    ['aiInvalidResponse', [], 502, 'AI_INVALID_RESPONSE', 'El asistente devolvió una propuesta inválida. Probá de nuevo.'],
+    ['generationNotFound', [], 404, 'GENERATION_NOT_FOUND', 'La propuesta no existe'],
+    ['generationAlreadySaved', [], 409, 'GENERATION_ALREADY_SAVED', 'Esta propuesta ya se guardó como plantilla'],
+    ['studentNotFound', [], 404, 'STUDENT_NOT_FOUND', 'El alumno no existe'],
+  ])('%s', (name, args, status, code, message) => {
+    const err = Errors[name](...args);
+    expect(err.statusCode).toBe(status);
+    expect(err.code).toBe(code);
+    expect(err.message).toBe(message);
+  });
+
+  it('rateLimitExceeded es 429 con Retry-After en segundos', () => {
+    const err = Errors.rateLimitExceeded(120);
+    expect(err.statusCode).toBe(429);
+    expect(err.code).toBe('RATE_LIMIT_EXCEEDED');
+    expect(err.headers).toEqual({ 'Retry-After': '120' });
+  });
+
+  it('templateExercisesUnavailable acepta otro status (400 al guardar una propuesta)', () => {
+    const err = Errors.templateExercisesUnavailable(['ex-1'], 400);
+    expect(err.statusCode).toBe(400);
+    expect(err.code).toBe('TEMPLATE_EXERCISES_UNAVAILABLE');
+    expect(Errors.templateExercisesUnavailable(['ex-1']).statusCode).toBe(409);
+  });
+});
+
+describe('Errors del chat IA del alumno', () => {
+  it.each([
+    ['chatLimitReached', [], 429, 'CHAT_LIMIT_REACHED', 'Llegaste al límite de consultas de hoy. Mañana podés seguir.'],
+    ['chatInProgress', [], 429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.'],
+    ['sessionFinished', [], 400, 'SESSION_FINISHED', 'La sesión ya terminó'],
+    ['aiUnavailable', ['Seguí con tu entrenamiento.'], 503, 'AI_UNAVAILABLE', 'Seguí con tu entrenamiento.'],
+    ['aiInvalidResponse', ['Otra vez.'], 502, 'AI_INVALID_RESPONSE', 'Otra vez.'],
+  ])('%s', (name, args, status, code, message) => {
+    const err = Errors[name](...args);
+    expect(err.statusCode).toBe(status);
+    expect(err.code).toBe(code);
+    expect(err.message).toBe(message);
+  });
+});

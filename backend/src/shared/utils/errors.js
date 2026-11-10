@@ -7,8 +7,9 @@
 export const CHALLENGE_ALREADY_ACTIVE = 'CHALLENGE_ALREADY_ACTIVE';
 
 export class AppError extends Error {
-  constructor(statusCode, code, message, details = []) {
+  constructor(statusCode, code, message, details = [], headers = undefined) {
     super(message);
+    if (headers) this.headers = headers;
     this.name = 'AppError';
     this.statusCode = statusCode;
     this.code = code;
@@ -21,6 +22,13 @@ export class AppError extends Error {
 export const Errors = {
   validation: (message = 'Datos inválidos', details = []) =>
     new AppError(400, 'VALIDATION_ERROR', message, details),
+  invalidJson: () => new AppError(400, 'VALIDATION_ERROR', 'El cuerpo no es JSON válido'),
+  payloadTooLarge: () =>
+    new AppError(413, 'PAYLOAD_TOO_LARGE', 'El cuerpo es demasiado grande'),
+  unsupportedBodyEncoding: () =>
+    new AppError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Codificación del cuerpo no soportada'),
+  invalidBody: () =>
+    new AppError(400, 'VALIDATION_ERROR', 'El cuerpo de la solicitud es inválido'),
   invalidCredentials: () =>
     new AppError(401, 'INVALID_CREDENTIALS', 'Email o contraseña incorrectos'),
   unauthorized: (message = 'No autenticado') => new AppError(401, 'UNAUTHORIZED', message),
@@ -39,9 +47,9 @@ export const Errors = {
       'La plantilla está incompleta: editala antes de asignarla',
       details
     ),
-  templateExercisesUnavailable: (missingIds) =>
+  templateExercisesUnavailable: (missingIds, status = 409) =>
     new AppError(
-      409,
+      status,
       'TEMPLATE_EXERCISES_UNAVAILABLE',
       'La plantilla tiene ejercicios que ya no están disponibles',
       missingIds.map((id) => ({ field: 'exercise_id', message: id }))
@@ -92,6 +100,25 @@ export const Errors = {
   imageTooLarge: () => new AppError(413, 'IMAGE_TOO_LARGE', 'La foto supera 5 MB'),
   imageTypeInvalid: () =>
     new AppError(415, 'IMAGE_TYPE_INVALID', 'La foto tiene que ser JPG, PNG o WebP'),
+  studentNotFound: () => new AppError(404, 'STUDENT_NOT_FOUND', 'El alumno no existe'),
+  aiUnavailable: (message = 'El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.') =>
+    new AppError(503, 'AI_UNAVAILABLE', message),
+  aiInvalidResponse: (message = 'El asistente devolvió una propuesta inválida. Probá de nuevo.') =>
+    new AppError(502, 'AI_INVALID_RESPONSE', message),
+  chatLimitReached: () =>
+    new AppError(429, 'CHAT_LIMIT_REACHED', 'Llegaste al límite de consultas de hoy. Mañana podés seguir.'),
+  chatInProgress: () => new AppError(429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.'),
+  sessionFinished: () => new AppError(400, 'SESSION_FINISHED', 'La sesión ya terminó'),
+  generationNotFound: () => new AppError(404, 'GENERATION_NOT_FOUND', 'La propuesta no existe'),
+  generationAlreadySaved: () =>
+    new AppError(409, 'GENERATION_ALREADY_SAVED', 'Esta propuesta ya se guardó como plantilla'),
+  rateLimitExceeded: (
+    retryAfterSeconds,
+    message = 'Llegaste al límite de propuestas por hora. Probá de nuevo más tarde.'
+  ) =>
+    new AppError(429, 'RATE_LIMIT_EXCEEDED', message, [], {
+      'Retry-After': String(retryAfterSeconds),
+    }),
   internal: (message = 'Error interno del servidor') =>
     new AppError(500, 'INTERNAL_ERROR', message),
 };

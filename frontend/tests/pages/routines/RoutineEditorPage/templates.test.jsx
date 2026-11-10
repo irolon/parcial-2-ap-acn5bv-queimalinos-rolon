@@ -1,14 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { LIBRARY } from '../../../helpers/exercises/fixtures';
-import { fillRoutine, renderEditor, rowNames } from '../../../helpers/routines/editor';
+import { fillRoutine, renderEditor, rowNames, warmUpEditor } from '../../../helpers/routines/editor';
 import { stubRoutinesApi } from '../../../helpers/routines/routines';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
 import { bodyOf, calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { DETAIL, api, item, open, post } from '../../../helpers/routines/templates';
 
+
+beforeAll(warmUpEditor);
 
 beforeEach(() => {
   resetAuthStore();
@@ -20,7 +22,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const chooseTemplate = () => userEvent.click(screen.getByRole('button', { name: /Full body/ }));
+// El listado de plantillas llega después de abrir el diálogo: se espera la tarjeta antes de tocarla.
+const chooseTemplate = async () => user.click(await screen.findByRole('button', { name: /Full body/ }));
 
 describe('RoutineEditorPage: usar plantilla', () => {
   it('lista las plantillas y con el editor vacío precarga sin confirmar', async () => {
@@ -30,7 +33,7 @@ describe('RoutineEditorPage: usar plantilla', () => {
     expect(within(card).getByText('2 ejercicios')).toBeVisible();
     expect(within(card).getByText('Ganar masa muscular')).toBeVisible();
     expect(within(card).getByText(/Lunes · Viernes/)).toBeVisible();
-    await userEvent.click(card);
+    await user.click(card);
     await vi.waitFor(() => expect(rowNames()).toEqual(['Sentadilla', 'Plancha']));
     expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('Full body');
     expect(screen.getByLabelText('Series de Sentadilla')).toHaveValue('4');
@@ -50,7 +53,7 @@ describe('RoutineEditorPage: usar plantilla', () => {
     await open('Usar plantilla');
     await chooseTemplate();
     expect(screen.getByText('Vas a reemplazar lo que armaste')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(rowNames()).toEqual(['Press banca plano']);
     expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('Fuerza A');
     expect(calls(fetchMock).some(([path]) => path === '/routine-templates/t-1')).toBe(false);
@@ -61,7 +64,7 @@ describe('RoutineEditorPage: usar plantilla', () => {
     await fillRoutine(['Press banca plano']);
     await open('Usar plantilla');
     await chooseTemplate();
-    await userEvent.click(screen.getByRole('button', { name: 'Reemplazar' }));
+    await user.click(screen.getByRole('button', { name: 'Reemplazar' }));
     await vi.waitFor(() => expect(rowNames()).toEqual(['Sentadilla', 'Plancha']));
     expect(screen.getByLabelText('Nombre de la rutina')).toHaveValue('Full body');
   });
@@ -82,8 +85,8 @@ describe('RoutineEditorPage: usar plantilla', () => {
     await chooseTemplate();
     await vi.waitFor(() => expect(rowNames()).toHaveLength(2));
     await open('Asignar a alumno');
-    await userEvent.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
-    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await user.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
+    await user.click(screen.getByRole('button', { name: 'Asignar' }));
     await vi.waitFor(() => expect(create).toHaveBeenCalled());
     expect(bodyOf(post(fetchMock, '/routines')[1])).toMatchObject({
       template_id: 't-1', name: 'Full body', goal: 'hypertrophy', days: ['monday', 'friday'],
@@ -103,11 +106,11 @@ describe('RoutineEditorPage: plantilla de origen', () => {
   it('"Quitar" desvincula la plantilla y no manda `template_id`', async () => {
     const create = vi.fn(() => jsonResponse(201, { data: { id: 'r-1' } }));
     const { fetchMock } = await loadTemplate({ handlers: { create } });
-    await userEvent.click(screen.getByRole('button', { name: 'Quitar plantilla de origen' }));
+    await user.click(screen.getByRole('button', { name: 'Quitar plantilla de origen' }));
     expect(screen.queryByText('Desde: Full body')).not.toBeInTheDocument();
     await open('Asignar a alumno');
-    await userEvent.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
-    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await user.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
+    await user.click(screen.getByRole('button', { name: 'Asignar' }));
     await vi.waitFor(() => expect(create).toHaveBeenCalled());
     expect(bodyOf(post(fetchMock, '/routines')[1])).not.toHaveProperty('template_id');
   });
@@ -118,12 +121,12 @@ describe('RoutineEditorPage: plantilla de origen', () => {
       .mockImplementation(() => jsonResponse(201, { data: { id: 'r-1' } }));
     const { fetchMock } = await loadTemplate({ handlers: { create } });
     await open('Asignar a alumno');
-    await userEvent.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
-    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await user.selectOptions(await screen.findByLabelText('Alumno'), 'st-9');
+    await user.click(screen.getByRole('button', { name: 'Asignar' }));
     expect(await screen.findByText('La plantilla de origen ya no existe. Volvé a asignar y se guarda sin plantilla.')).toBeVisible();
     expect(screen.queryByText('Desde: Full body')).not.toBeInTheDocument();
     expect(create).toHaveBeenCalledTimes(1);
-    await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+    await user.click(screen.getByRole('button', { name: 'Asignar' }));
     await vi.waitFor(() => expect(create).toHaveBeenCalledTimes(2));
     const sent = calls(fetchMock).filter(([p, init]) => p === '/routines' && init?.method === 'POST');
     expect(bodyOf(sent[1][1])).not.toHaveProperty('template_id');
@@ -147,14 +150,14 @@ describe('RoutineEditorPage: usar plantilla con el detalle caído', () => {
 
   it('"Reintentar" vuelve a pedir el detalle y precarga', async () => {
     await renderFailingDetail(1);
-    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
     await vi.waitFor(() => expect(rowNames()).toEqual(['Sentadilla', 'Plancha']));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('"Elegir otra" vuelve al listado', async () => {
     await renderFailingDetail(5);
-    await userEvent.click(screen.getByRole('button', { name: 'Elegir otra' }));
+    await user.click(screen.getByRole('button', { name: 'Elegir otra' }));
     expect(await screen.findByRole('button', { name: /Full body/ })).toBeVisible();
     expect(screen.queryByText('No pudimos cargar la plantilla')).not.toBeInTheDocument();
   });

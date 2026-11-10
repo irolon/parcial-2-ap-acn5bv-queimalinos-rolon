@@ -1,11 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
 import { jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 import { student } from '../../../helpers/students/fixtures';
-import { daysAgo, stubStudents } from '../../../helpers/students/students';
+import { daysAgo, stubStudents, warmUpStudents } from '../../../helpers/students/students';
+
+beforeAll(warmUpStudents);
 
 beforeEach(() => {
   resetAuthStore();

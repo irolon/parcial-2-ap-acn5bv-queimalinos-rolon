@@ -5,6 +5,7 @@ import morgan from 'morgan';
 
 import { env } from './config/env.js';
 import { notFoundHandler, errorHandler } from './shared/middlewares/error.middleware.js';
+import { createRateLimiters } from './shared/middlewares/rate-limit.middleware.js';
 import healthRoutes from './routes/health/health.routes.js';
 import authRoutes from './routes/auth/auth.routes.js';
 import invitationsRoutes from './routes/invitations/invitations.routes.js';
@@ -20,18 +21,31 @@ import notificationsRoutes from './routes/notifications/notifications.routes.js'
 import availabilityRoutes from './routes/agenda/availability.routes.js';
 import appointmentsRoutes from './routes/agenda/appointments.routes.js';
 import messagesRoutes from './routes/messages/messages.routes.js';
+import trainerAiRoutes from './routes/trainer-ai/trainer-ai.routes.js';
+import chatRoutes from './routes/chat/chat.routes.js';
 
-export function createApp() {
+/**
+ * Arma la app. `rateLimits` ({ windowMs, login, loginIp, auth, public }) y `trustProxy` pisan
+ * los valores del env; los usan los tests (límites bajos, IP del cliente por X-Forwarded-For).
+ */
+export function createApp({ rateLimits, trustProxy = env.TRUST_PROXY } = {}) {
   const app = express();
+  // Detrás de nginx: cantidad de saltos de proxy, así req.ip es la IP real del cliente.
+  if (trustProxy !== undefined) app.set('trust proxy', trustProxy);
 
   // Seguridad y utilidades base.
   app.use(helmet());
-  app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+  // Retry-After se expone para que la web lea la espera de un 429 (asistente IA).
+  app.use(cors({ origin: env.FRONTEND_URL, credentials: true, exposedHeaders: ['Retry-After'] }));
   app.use(express.json());
   if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
   // Health checks (fuera de /api, como en el README).
   app.use('/health', healthRoutes);
+
+  // Limitadores de login, registro, refresh e invitaciones (públicos). Los corre limitRate(...)
+  // en la cadena de cada endpoint, dentro de su router.
+  app.locals.rateLimiters = createRateLimiters(rateLimits);
 
   // API REST — todos los módulos cuelgan de /api.
   app.use('/api/auth', authRoutes);
@@ -48,6 +62,8 @@ export function createApp() {
   app.use('/api/availability', availabilityRoutes);
   app.use('/api/appointments', appointmentsRoutes);
   app.use('/api/messages', messagesRoutes);
+  app.use('/api/trainer-ai', trainerAiRoutes);
+  app.use('/api/chat', chatRoutes);
 
   // 404 + manejador central de errores (siempre al final).
   app.use(notFoundHandler);

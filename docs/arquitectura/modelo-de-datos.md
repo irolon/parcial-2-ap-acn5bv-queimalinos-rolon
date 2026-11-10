@@ -258,8 +258,9 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | student_id | uuid | FK → students (opcional, si fue para un alumno específico) |
 | input_params | jsonb | parámetros enviados al LLM (objetivo, frecuencia, equipamiento, etc.) |
 | generated_routine | jsonb | rutina propuesta por la IA |
-| was_used | boolean | true si el PT terminó asignándola (con o sin ediciones) |
-| routine_template_id | uuid | FK → routine_templates (null si no se guardó como plantilla) |
+| was_used | boolean | true si el PT la guardó como plantilla (save-as-template; la IA nunca asigna) |
+| routine_template_id | uuid | FK → routine_templates (null si no se guardó como plantilla; con varios bloques, la primera) |
+| routine_template_ids | uuid[] | todas las plantillas creadas, una por bloque, en orden (default `{}`; sin FK). Tarjeta 15, `2026-11-06-trainer-ai-templates.sql` |
 | created_at | timestamptz | |
 
 ---
@@ -306,7 +307,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | type | enum | inactivity / appointment / comment / pr / achievement / routine_modified |
 | title | varchar | máx. 150 caracteres |
 | body | text | opcional |
-| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
+| data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `scheduled_at`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
 | read | boolean | |
 | push_sent_at | timestamptz | cuándo salió el push a algún dispositivo; null si no se envió (sin credenciales, sin tokens, política "solo base" o error). No hay reintentos |
 | created_at | timestamptz | |

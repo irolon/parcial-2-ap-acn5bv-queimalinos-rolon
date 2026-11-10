@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { setupUser } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { stub, stubDesktop } from '../../../helpers/messages/ptMessages';
 import { calls, errorResponse } from '../../../helpers/shared/fetchMock';
@@ -33,7 +33,7 @@ describe('MessagesPage: lista', () => {
   });
 
   it('busca por nombre sin acentos ni mayúsculas', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     stub();
     renderRoute('/pt/mensajes');
     await screen.findByRole('button', { name: /Ana Paz/ });
@@ -46,7 +46,7 @@ describe('MessagesPage: lista', () => {
   });
 
   it('?alumno= abre esa conversación y elegir otra actualiza el param con replace', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const fetchMock = stub();
     const { router } = renderRoute('/pt/mensajes?alumno=s-1');
     expect(await screen.findByRole('heading', { level: 2, name: 'Ana Paz' })).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('MessagesPage: responsive', () => {
   });
 
   it('en mobile con alumno se ve la conversación con "Volver", que limpia el param', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     stubDesktop(false);
     stub();
     const { router } = renderRoute('/pt/mensajes?alumno=s-1');

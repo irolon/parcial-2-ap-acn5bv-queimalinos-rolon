@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { user } from '../../../helpers/shared/user';
 import { resetAuthStore } from '../../../helpers/auth/authStore';
 import { LIBRARY, exercise } from '../../../helpers/exercises/fixtures';
 import { PAGE_PATH, page, stubLibrary } from '../../../helpers/exercises/library';
@@ -52,7 +52,7 @@ describe('ExerciseLibraryPage: carga', () => {
     renderRoute(PAGE_PATH);
     expect(await screen.findByText('Algo salió mal')).toBeInTheDocument();
     fetchMock.mockImplementation(async () => jsonResponse(200, { data: LIBRARY }));
-    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByText('5 EJERCICIOS')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -65,26 +65,26 @@ describe('ExerciseLibraryPage: filtros', () => {
     expect(within(group).getAllByRole('radio').map((r) => r.textContent)).toEqual([
       'Todos', 'Pecho', 'Piernas', 'Core', 'Gemelos',
     ]);
-    await userEvent.click(within(group).getByRole('radio', { name: 'Pecho' }));
+    await user.click(within(group).getByRole('radio', { name: 'Pecho' }));
     expect(within(group).getByRole('radio', { name: 'Pecho' })).toHaveAttribute('aria-checked', 'true');
     expect(names()).toEqual(['Press banca plano', 'Press inclinado con mancuernas']);
   });
 
   it('la búsqueda ignora tildes y no vuelve a pedir', async () => {
     const fetchMock = await load();
-    await userEvent.type(page().getByRole('searchbox', { name: 'Buscar ejercicio' }), 'elevacion');
+    await user.type(page().getByRole('searchbox', { name: 'Buscar ejercicio' }), 'elevacion');
     expect(names()).toEqual(['Elevación de talones']);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('combina equipamiento y músculo; Limpiar filtros restablece', async () => {
     await load();
-    await userEvent.click(page().getByRole('radio', { name: 'Pecho' }));
-    await userEvent.selectOptions(page().getByLabelText('Equipamiento'), 'Barra');
+    await user.click(page().getByRole('radio', { name: 'Pecho' }));
+    await user.selectOptions(page().getByLabelText('Equipamiento'), 'Barra');
     expect(names()).toEqual(['Press banca plano']);
-    await userEvent.selectOptions(page().getByLabelText('Equipamiento'), 'Peso corporal');
+    await user.selectOptions(page().getByLabelText('Equipamiento'), 'Peso corporal');
     expect(page().getByText('Ningún ejercicio coincide')).toBeInTheDocument();
-    await userEvent.click(page().getByRole('button', { name: 'Limpiar filtros' }));
+    await user.click(page().getByRole('button', { name: 'Limpiar filtros' }));
     expect(names()).toHaveLength(5);
     expect(page().getByLabelText('Equipamiento')).toHaveValue('');
   });
@@ -92,7 +92,7 @@ describe('ExerciseLibraryPage: filtros', () => {
   it('Propios sin ejercicios propios muestra el vacío con su botón', async () => {
     await load({ list: LIBRARY.filter((e) => e.is_global) });
     const origin = page().getByRole('radiogroup', { name: 'Origen' });
-    await userEvent.click(within(origin).getByRole('radio', { name: 'Propios' }));
+    await user.click(within(origin).getByRole('radio', { name: 'Propios' }));
     expect(page().getByText('Todavía no creaste ejercicios propios')).toBeInTheDocument();
     expect(page().getByText('Creá el primero con su video para usarlo en tus rutinas.')).toBeInTheDocument();
     expect(page().getAllByRole('button', { name: 'Nuevo ejercicio' })).toHaveLength(2);
