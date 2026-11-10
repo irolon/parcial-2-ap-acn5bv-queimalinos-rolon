@@ -29,11 +29,11 @@ jest.unstable_mockModule(
   () => mockInvitationsRepo
 );
 jest.unstable_mockModule(
-  src('repositories/students/students.repository.js'),
+  src('repositories/students/students.repository/students.repository.js'),
   () => mockStudentsRepo
 );
 jest.unstable_mockModule(
-  src('repositories/students/student-create.repository.js'),
+  src('repositories/students/students.repository/student-create.repository.js'),
   () => mockStudentCreateRepo
 );
 jest.unstable_mockModule(src('services/auth/auth.service.js'), () => ({

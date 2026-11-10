@@ -129,7 +129,7 @@ jest.unstable_mockModule(src('repositories/exercises/exercises.repository.js'), 
 export const mockStudentsRepo = {
   findStudentById: jest.fn(),
 };
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 
 export const service = await import(src('services/exercises/exercises.service.js'));
 
@@ -234,7 +234,7 @@ export async function findLibrary(trainerId) {
 En `src/services/exercises/exercises.service.js`, sumar el import y la función (debajo de `list`):
 
 ```js
-import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as studentsRepository from '../../repositories/students/students.repository/students.repository.js';
 ```
 
 ```js

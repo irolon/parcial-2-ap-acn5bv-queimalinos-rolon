@@ -23,7 +23,7 @@ export const mockStudentsRepo = {
   findStudentById: jest.fn(),
 };
 jest.unstable_mockModule(
-  src('repositories/students/students.repository.js'),
+  src('repositories/students/students.repository/students.repository.js'),
   () => mockStudentsRepo
 );
 

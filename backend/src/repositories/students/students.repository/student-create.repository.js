@@ -1,6 +1,6 @@
-import { supabase } from '../../config/supabase.js';
-import { Errors } from '../../shared/utils/errors.js';
-import { STUDENTS_TABLE, STUDENT_DETAIL_COLUMNS } from '../../models/students/student.model.js';
+import { supabase } from '../../../config/supabase.js';
+import { Errors } from '../../../shared/utils/errors.js';
+import { STUDENTS_TABLE, STUDENT_DETAIL_COLUMNS } from '../../../models/students/student.model.js';
 
 /** Crea un alumno y devuelve sus campos públicos (sin el hash). */
 export async function createStudent({

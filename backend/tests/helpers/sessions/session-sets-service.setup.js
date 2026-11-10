@@ -19,7 +19,7 @@ export const mockStudentsRepo = { findStudentById: jest.fn() };
 jest.unstable_mockModule(src('services/sessions/sessions.service.js'), () => mockSessions);
 jest.unstable_mockModule(src('repositories/sessions/session-sets.repository.js'), () => mockRepo);
 jest.unstable_mockModule(src('repositories/routines/routines.repository.js'), () => mockRoutinesRepo);
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 
 export const mockEvaluate = { evaluateStudent: jest.fn() };
 jest.unstable_mockModule(src('services/gamification/evaluate.service.js'), () => mockEvaluate);

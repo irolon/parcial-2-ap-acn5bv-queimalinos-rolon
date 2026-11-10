@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Errors } from '../../shared/utils/errors.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
 import { SENDER_ROLES } from '../../models/messages/message.model.js';
 import { onBroadcastSent } from '../notifications/message-triggers.service.js';

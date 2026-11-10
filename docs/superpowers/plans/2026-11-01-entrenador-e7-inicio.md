@@ -47,7 +47,7 @@ tarjeta: E7
 
 **Files:**
 - Create: `backend/src/models/students/activity.js` (estado `active` / `inactive` / `new` / `disabled` y `daysWithoutTraining`, las mismas reglas que la web), `backend/src/models/students/overview.js`
-- Create: `backend/src/services/students/overview.service.js` (consultas por lote: alumnos activos con `created_at`; días de rutina de E1; sesiones terminadas de los últimos 15 días con `id, student_id, started_at, finished_at, rpe, trainer_comment, routine:routines(name)`; las últimas 10 terminadas), funciones nuevas en `repositories/students/students.repository.js` o en un `overview.repository.js` si pasa de 200 líneas
+- Create: `backend/src/services/students/overview.service.js` (consultas por lote: alumnos activos con `created_at`; días de rutina de E1; sesiones terminadas de los últimos 15 días con `id, student_id, started_at, finished_at, rpe, trainer_comment, routine:routines(name)`; las últimas 10 terminadas), funciones nuevas en `repositories/students/students.repository/students.repository.js` o en un `overview.repository.js` si pasa de 200 líneas
 - Modify: controller, `routes/students/students.routes.js` (`router.get('/overview', authenticate, requireRole('trainer'), ...)` antes de `/:id`), contrato y `backend/README.md`
 - Test: `tests/unit/models/students/overview.test.js`, `activity.test.js`, `tests/unit/services/students/overview.service.test.js`, el test de rutas de students
 

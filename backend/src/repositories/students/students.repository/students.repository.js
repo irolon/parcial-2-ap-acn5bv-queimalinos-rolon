@@ -1,17 +1,17 @@
-import { supabase } from '../../config/supabase.js';
-import { Errors } from '../../shared/utils/errors.js';
-import { fetchAll } from '../../shared/utils/supabase-query.js';
-import { localDate } from '../../shared/utils/dates/dates.js';
-import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
-import { scheduleOf } from '../../models/students/adherence.js';
-import { SESSIONS_TABLE } from '../../models/sessions/session.model.js';
+import { supabase } from '../../../config/supabase.js';
+import { Errors } from '../../../shared/utils/errors.js';
+import { fetchAll } from '../../../shared/utils/supabase-query.js';
+import { localDate } from '../../../shared/utils/dates/dates.js';
+import { ROUTINES_TABLE } from '../../../models/routines/routine.model.js';
+import { scheduleOf } from '../../../models/students/adherence.js';
+import { SESSIONS_TABLE } from '../../../models/sessions/session.model.js';
 import {
   STUDENTS_TABLE,
   STUDENT_LIST_COLUMNS,
   STUDENT_DETAIL_COLUMNS,
   STUDENT_LAST_SESSION_VIEW,
-} from '../../models/students/student.model.js';
-import { STUDENT_STREAKS_TABLE } from '../../models/gamification/gamification.model.js';
+} from '../../../models/students/student.model.js';
+import { STUDENT_STREAKS_TABLE } from '../../../models/gamification/gamification.model.js';
 
 /** Lista (paginada) los alumnos de un trainer, con filtros opcionales. */
 export async function findStudentsByTrainer({ trainerId, active, search, page, limit }) {

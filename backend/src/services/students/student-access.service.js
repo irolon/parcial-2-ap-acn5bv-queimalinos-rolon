@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 
 /**
  * Verifica que `user` pueda ver o tocar al alumno `studentId` y devuelve su

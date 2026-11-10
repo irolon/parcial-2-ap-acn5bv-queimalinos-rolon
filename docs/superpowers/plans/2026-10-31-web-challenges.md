@@ -32,7 +32,7 @@
 ### Task 1: Racha en `GET /students`
 
 **Files:**
-- Modify: `backend/src/repositories/students/students.repository.js` (sumar `findStreaks`)
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js` (sumar `findStreaks`)
 - Modify: `backend/src/services/students/students.service.js:17-35` (`list`)
 - Test: `backend/tests/unit/services/students/students.service/` (el archivo de `list` que ya existe ahí, o uno nuevo `list-streak.test.js` si pasa de 200)
 - Docs: `docs/arquitectura/contratos-api.md` (GET /students, ~173-196)

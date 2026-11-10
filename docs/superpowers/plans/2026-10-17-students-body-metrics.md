@@ -50,7 +50,7 @@
 | `backend/src/models/body-metrics/body-metric.model.js` | Crear | tabla, columnas, `computeBmi`, `toBodyMetric`, `withBmiHistory` |
 | `backend/src/shared/utils/errors.js` | Modificar | `accountDisabled`, `metricNotFound`, `metricIdConflict` |
 | `backend/src/repositories/auth/auth.repository.js` | Modificar | `revokeAllForUser` |
-| `backend/src/repositories/students/students.repository.js` | Modificar | `findStudentById`, `updateStudent`, `findLastSessionDates`, columnas de listado |
+| `backend/src/repositories/students/students.repository/students.repository.js` | Modificar | `findStudentById`, `updateStudent`, `findLastSessionDates`, columnas de listado |
 | `backend/src/services/auth/auth.service.js` | Modificar | `ACCOUNT_DISABLED` en el login y el refresh |
 | `backend/src/models/students/student.model.js` | Modificar | `STUDENT_LIST_COLUMNS`, `STUDENT_DETAIL_COLUMNS`, enums y nombre de la vista |
 | `backend/src/services/students/student-access.service.js` | Crear | `assertCanAccessStudent` |
@@ -365,7 +365,7 @@ git commit -m "feat(body-metrics): modelo con IMC calculado"
 **Files:**
 - Modify: `backend/src/shared/utils/errors.js` (objeto `Errors`)
 - Modify: `backend/src/repositories/auth/auth.repository.js` (al final)
-- Modify: `backend/src/repositories/students/students.repository.js` (agrega `findStudentById`)
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js` (agrega `findStudentById`)
 - Modify: `backend/src/services/auth/auth.service.js` (`authenticateUser` y `refresh`)
 - Test: `backend/tests/unit/services/auth/auth.service.test.js`
 
@@ -542,7 +542,7 @@ git commit -m "feat(auth): rechaza al alumno dado de baja (ACCOUNT_DISABLED) en 
 
 **Files:**
 - Modify: `backend/src/models/students/student.model.js`
-- Modify: `backend/src/repositories/students/students.repository.js`
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js`
 - Modify: `backend/src/services/students/students.service.js` (`list`)
 - Modify: `backend/src/validations/students/students.validation.js`
 - Test: `backend/tests/unit/services/students/students.service.test.js`
@@ -991,7 +991,7 @@ import { jest } from '@jest/globals';
 
 const mockStudentsRepo = { findStudentById: jest.fn() };
 jest.unstable_mockModule(
-  '../../../../src/repositories/students/students.repository.js',
+  '../../../../src/repositories/students/students.repository/students.repository.js',
   () => mockStudentsRepo
 );
 
@@ -1058,7 +1058,7 @@ Expected: FAIL con "Cannot find module .../student-access.service.js".
 
 ```js
 import { Errors } from '../../shared/utils/errors.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 
 /**
  * Verifica que `user` pueda ver o tocar al alumno `studentId` y devuelve su

@@ -134,8 +134,8 @@ notify pgrst, 'reload schema';
 ### Task 3: Alta con teléfono (split de `students.repository.js`)
 
 **Files:**
-- Create: `backend/src/repositories/students/student-create.repository.js`, `backend/tests/unit/repositories/students/student-create.repository.test.js`
-- Modify: `backend/src/repositories/students/students.repository.js` (sale `createStudent`, −30), `backend/src/repositories/invitations/invitations.repository.js` (`INVITATION_WITH_TRAINER` + `student_phone`, Nota 5), `backend/src/services/students/students.service.js` (`registerFromInvitation`), `backend/tests/helpers/students/students-service.setup.js` (mock del repo nuevo), `backend/tests/unit/services/students/students.service/register-from-invitation.test.js`
+- Create: `backend/src/repositories/students/students.repository/student-create.repository.js`, `backend/tests/unit/repositories/students/students.repository/student-create.repository.test.js`
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js` (sale `createStudent`, −30), `backend/src/repositories/invitations/invitations.repository.js` (`INVITATION_WITH_TRAINER` + `student_phone`, Nota 5), `backend/src/services/students/students.service.js` (`registerFromInvitation`), `backend/tests/helpers/students/students-service.setup.js` (mock del repo nuevo), `backend/tests/unit/services/students/students.service/register-from-invitation.test.js`
 - Test: los dos de arriba.
 
 **Interfaces:**
@@ -158,7 +158,7 @@ notify pgrst, 'reload schema';
 
 **Interfaces:**
 - Consumes: `STUDENT_SELF_EDITABLE` (Task 1), `assertCanAccessStudent`.
-- Produces: `validateUpdateStudent` acepta `phone` (`null`, `''` → `null`, o string recortado que cumple `^[0-9 +()-]{6,30}$`; si no, detalle en `phone`: "phone debe tener entre 6 y 30 caracteres: números, espacios y + - ( )"); el mensaje de "al menos un campo" suma `phone`. `update(user, studentId, fields)`: `assertCanAccessStudent` primero; si `user.role === 'student'` y algún campo no está en `STUDENT_SELF_EDITABLE` → `Errors.forbidden('Solo podés cambiar tu nombre, teléfono y foto')`, **antes** de revocar/guardar/cancelar. El resto igual que hoy.
+- Produces: `validateUpdateStudent` acepta `phone` (`null`, `''` → `null`, o string recortado que cumple `^[0-9 +()-]{6,30}$`; si no, detalle en `phone`: "phone debe tener entre 6 y 30 caracteres con al menos 6 dígitos: números, espacios y + - ( )"; además exige 6 dígitos como mínimo); el mensaje de "al menos un campo" suma `phone`. `update(user, studentId, fields)`: `assertCanAccessStudent` primero; si `user.role === 'student'` y algún campo no está en `STUDENT_SELF_EDITABLE` → `Errors.forbidden('Solo podés cambiar tu nombre, teléfono y foto')`, **antes** de revocar/guardar/cancelar. El resto igual que hoy.
 
 - [ ] **Step 1: Tests que fallan:**
   - validación: `'+54 9 11 2233-4455'` pasa recortado; `'  '`/`''` → `null`; `null` → `null`; `'12345'` (5) y `'abc123456'` → detalle en `phone`; 31 caracteres → detalle.
@@ -298,7 +298,7 @@ Comandos: `cd frontend && npx vitest run <path>` y `cd frontend && npm run lint`
 
 **Interfaces:**
 - Produces:
-  - `PHONE_ERROR = 'Usá entre 6 y 30 caracteres: números, espacios y + - ( )'`; `validatePhone(value) => string|null` (vacío → `null`; mismo regex que el backend); `whatsappHref(phone) => string|null` (`https://wa.me/<solo dígitos>`; menos de 6 dígitos o vacío → `null`).
+  - `PHONE_ERROR = 'Usá entre 6 y 30 caracteres, con al menos 6 números: números, espacios y + - ( )'`; `validatePhone(value) => string|null` (vacío → `null`; mismo regex que el backend y al menos 6 dígitos); `whatsappHref(phone) => string|null` (`https://wa.me/<solo dígitos>`; menos de 6 dígitos o vacío → `null`).
   - `AVATAR_ACCEPT = 'image/jpeg,image/png,image/webp'`, `AVATAR_MAX_SIDE = 512`, `AVATAR_QUALITY = 0.85`.
   - `fitWithin(width, height, max = 512) => { width, height }`: escala el lado mayor a `max` conservando proporción y redondeando; nunca agranda.
   - `resizeToJpeg(file) => Promise<File>`: tipo fuera de `AVATAR_ACCEPT` → rechaza con `Error('IMAGE_TYPE_INVALID')`; decodifica con `createImageBitmap(file)` (falla → mismo error); canvas de `fitWithin(...)`, `toBlob('image/jpeg', 0.85)` → `new File([blob], 'avatar.jpg', { type: 'image/jpeg' })`.

@@ -416,7 +416,7 @@ Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alum
 | Campo | Regla |
 |---|---|
 | `name` | 2–100 caracteres |
-| `phone` | 6–30 caracteres entre dígitos, espacios y `+ - ( )`, recortado; `null` o vacío lo borra |
+| `phone` | 6–30 caracteres entre dígitos, espacios y `+ - ( )`, con **al menos 6 dígitos** ("------" no vale), recortado; `null` o vacío lo borra |
 | `goal` | `tonify`, `weight_loss`, `hypertrophy` o `strength` |
 | `level` | `beginner`, `intermediate` o `advanced` |
 | `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; además, sus turnos futuros `pending` o `confirmed` pasan a `cancelled` (liberan el horario, sin notificaciones). **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña; los turnos cancelados no vuelven |

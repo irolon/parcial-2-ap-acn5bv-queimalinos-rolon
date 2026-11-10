@@ -22,7 +22,7 @@ export const mockTriggerData = { findStudentInfo: jest.fn() };
 
 jest.unstable_mockModule(src('repositories/agenda/appointments.repository.js'), () => mockAppointments);
 jest.unstable_mockModule(src('repositories/agenda/availability.repository.js'), () => mockAvailability);
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudents);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudents);
 jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => mockNotify);
 jest.unstable_mockModule(src('repositories/notifications/trigger-data.repository.js'), () => mockTriggerData);
 // GX2: avatares firmados por lote; sin implementación no firma nada (avatar_url → null).

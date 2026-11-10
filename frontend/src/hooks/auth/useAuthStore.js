@@ -27,6 +27,23 @@ function withPasswordFlag(user, data) {
   return { ...user, must_change_password: data.must_change_password };
 }
 
+// GX2: el user (con la foto firmada, que vence en 1 h) vive en localStorage. Al restaurar la sesión de un alumno se
+// trae su ficha para que el sidebar tenga la foto y el nombre vigentes. Best-effort: si falla, queda lo guardado; si
+// mientras tanto cambió la sesión, no pisa a la nueva.
+async function refreshStudentProfile(get, set, refreshToken) {
+  const { user } = get();
+  // Con la clave blanqueada la API responde 403 a todo salvo el cambio: no se pide.
+  if (user?.role !== 'student' || user.must_change_password) return;
+  try {
+    const { name, avatar_url: avatarUrl } = await studentsApi.getStudent(user.id);
+    const current = get();
+    if (current.refreshToken !== refreshToken || current.user?.id !== user.id) return;
+    set({ user: { ...current.user, name, avatar_url: avatarUrl ?? null } });
+  } catch {
+    // Sin ficha queda el user guardado; Mi perfil la vuelve a traer.
+  }
+}
+
 function saveSession(set, user, token, refreshToken) {
   set({ user, token, refreshToken, status: 'authenticated' });
   return user;
@@ -104,7 +121,9 @@ export const useAuthStore = create(
         } catch (err) {
           if (isTransientError(err)) keepSessionOffline(set);
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
+          return;
         }
+        await refreshStudentProfile(get, set, refreshToken);
       },
     }),
     {

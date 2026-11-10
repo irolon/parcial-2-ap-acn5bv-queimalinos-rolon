@@ -4,7 +4,7 @@ import { detectImageType } from '../../shared/utils/files/image-type.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
 import * as imagesRepo from '../../repositories/messages/message-images.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import { SENDER_ROLES, toMessage, toPublicPerson, toTrainerPerson } from '../../models/messages/message.model.js';
 import { signAvatars } from '../students/avatar-urls.service.js';

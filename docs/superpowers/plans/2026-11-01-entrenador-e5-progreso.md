@@ -43,7 +43,7 @@ tarjeta: E5
 
 **Files:**
 - Create: `backend/src/models/students/attendance.js`
-- Modify: `backend/src/validations/students/students.validation.js` (`validateAttendanceQuery`: `month` opcional `^\d{4}-(0[1-9]|1[0-2])$` y no posterior al mes actual en Argentina), `services/students/students.service.js` (`attendance(user, studentId, month)` con el mismo ownership que `getById`; si `students.service.js` pasa de 200 líneas, va en `services/students/attendance.service.js`), `controllers/students/students.controller.js`, `routes/students/students.routes.js` (`GET /:id/attendance`, trainer o student), `repositories/students/students.repository.js` (sesiones terminadas del alumno entre dos fechas: `id, started_at`)
+- Modify: `backend/src/validations/students/students.validation.js` (`validateAttendanceQuery`: `month` opcional `^\d{4}-(0[1-9]|1[0-2])$` y no posterior al mes actual en Argentina), `services/students/students.service.js` (`attendance(user, studentId, month)` con el mismo ownership que `getById`; si `students.service.js` pasa de 200 líneas, va en `services/students/attendance.service.js`), `controllers/students/students.controller.js`, `routes/students/students.routes.js` (`GET /:id/attendance`, trainer o student), `repositories/students/students.repository/students.repository.js` (sesiones terminadas del alumno entre dos fechas: `id, started_at`)
 - Modify: contrato y `backend/README.md`
 - Test: `tests/unit/models/students/attendance.test.js`, `tests/unit/services/students/students.service/attendance.test.js`, el test de validación
 

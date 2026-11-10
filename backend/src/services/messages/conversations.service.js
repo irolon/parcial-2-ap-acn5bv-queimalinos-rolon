@@ -1,4 +1,4 @@
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
 import { SENDER_ROLES, toLastMessage, toPublicPerson } from '../../models/messages/message.model.js';
 import { signAvatars } from '../students/avatar-urls.service.js';
