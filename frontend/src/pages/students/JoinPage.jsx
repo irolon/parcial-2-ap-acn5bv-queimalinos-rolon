@@ -6,6 +6,7 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import BrandMark from '@/components/shared/ui/BrandMark';
 import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
+import SessionOffline from '@/components/shared/states/SessionOffline';
 import JoinForm from './JoinForm';
 import JoinSignedIn from './JoinSignedIn';
 import { homeFor } from '@/routes/routeTable';
@@ -50,6 +51,7 @@ export default function JoinPage() {
   if (!valid) return <Shell><ErrorState message={INVALID_LINK} /></Shell>;
   // Fuera de GuestOnly a propósito: con una sesión abierta el link no se pierde (B2 de las pruebas web).
   if (status === 'idle' || status === 'loading') return <Shell><LoadingState rows={3} label="Verificando la sesión…" /></Shell>;
+  if (status === 'offline') return <SessionOffline />;
   if (status === 'authenticated' && user) {
     return joining ? <Navigate to={homeFor(user.role)} replace /> : <Shell><JoinSignedIn user={user} /></Shell>;
   }
