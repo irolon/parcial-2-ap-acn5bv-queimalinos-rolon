@@ -47,7 +47,7 @@ function attention(risk, feedback) {
 /**
  * students: activos con { id, name, created_at, last_session_at }. routineDays: Map id → días.
  * daySince (opcional): Map id → (Map día de la semana → desde qué fecha vale), de scheduleOf.
- * sessions: terminadas desde hoy-14, con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
+ * sessions: terminadas que empezaron o terminaron desde hoy-14, con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
  * recent: las últimas terminadas (ya ordenadas y con tope), con la misma forma.
  */
 export function buildOverview({ students, routineDays, daySince = new Map(), sessions, recent, today }) {
