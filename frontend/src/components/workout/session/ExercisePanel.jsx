@@ -87,6 +87,9 @@ export default function ExercisePanel({ workout, onRegister, registerRef }) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-2xl font-bold tracking-[-1px] text-bone0 sm:text-[26px]">{exercise.name}</h2>
+          {exercise.originalName && (
+            <p className="mt-1 font-mono text-[10px] tracking-[0.5px] text-accentText">{`EN LUGAR DE ${exercise.originalName.toUpperCase()}`}</p>
+          )}
           <p className="mt-1 font-mono text-[10px] tracking-[0.5px] text-ink6">{goal(exercise)}</p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { setCursor } from '@/utils/workout/workoutState/workoutState';
+import { replaceExercise, setCursor } from '@/utils/workout/workoutState/workoutState';
 import { PanelHarness, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout, withSets } from '../../../../helpers/workout/workout';
 import { allowSlowScreens } from '../../../../helpers/shared/patience';
@@ -13,6 +13,17 @@ describe('ExercisePanel: lo que muestra', () => {
     expect(screen.getByRole('heading', { name: 'Press banca' })).toBeInTheDocument();
     expect(screen.getByText('OBJETIVO 4 × 10 · DESCANSO 90″')).toBeInTheDocument();
     expect(screen.getByText('SERIE 1 DE 4 · SUGERIDO 62,5 KG × 10')).toBeInTheDocument();
+  });
+
+  it('un ejercicio reemplazado dice en lugar de cuál, en mono', () => {
+    render(<PanelHarness initial={replaceExercise(freshWorkout(), 0, { id: 'e-9', name: 'Press inclinado' })} />);
+    expect(screen.getByRole('heading', { name: 'Press inclinado' })).toBeInTheDocument();
+    expect(screen.getByText('EN LUGAR DE PRESS BANCA')).toBeInTheDocument();
+  });
+
+  it('sin reemplazo no muestra "EN LUGAR DE"', () => {
+    render(<PanelHarness />);
+    expect(screen.queryByText(/EN LUGAR DE/)).not.toBeInTheDocument();
   });
 
   it('precarga el peso y las reps del plan en los campos', () => {
