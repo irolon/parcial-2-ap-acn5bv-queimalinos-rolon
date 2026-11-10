@@ -2,7 +2,7 @@ import { Errors } from '../../shared/utils/errors.js';
 import { normalizeEquipment } from '../../models/exercises/equipment.model.js';
 import { LIBRARY_LIMIT } from '../../models/trainer-ai/ai-generation.model.js';
 import { structureDays, structureExercises } from '../../models/routine-templates/routine-template.model.js';
-import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as studentsRepository from '../../repositories/students/students.repository/students.repository.js';
 import * as contextRepository from '../../repositories/trainer-ai/ai-context.repository.js';
 import * as templatesRepository from '../../repositories/routine-templates/routine-templates.repository.js';
 import { getOwnedTemplate } from '../routine-templates/routine-templates.service.js';

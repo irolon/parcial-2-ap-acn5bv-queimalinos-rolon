@@ -10,7 +10,8 @@ const cases = [
   ...rows('studentA', [
     [74, 'GET /students'],
     [75, 'GET /students/overview'],
-    [76, 'PATCH /students/:stA'],
+    // Desde la GX2 el alumno edita su contacto; lo que sigue siendo del PT (objetivo, nivel…) da 403.
+    [76, 'PATCH /students/:stA', null, null, { goal: 'strength' }],
     [77, 'POST /invitations'],
     [78, 'GET /exercises'],
     [79, 'POST /exercises'],
@@ -30,6 +31,8 @@ const cases = [
     [91, 'GET /routines/today'],
     [92, 'GET /routines/mine'],
     [93, 'GET /exercises/library'],
+    [98, 'PUT /students/:stA/avatar'],
+    [99, 'DELETE /students/:stA/avatar'],
   ]),
 ].map((c) => ({ ...c, status: 403, code: 'FORBIDDEN' }));
 
