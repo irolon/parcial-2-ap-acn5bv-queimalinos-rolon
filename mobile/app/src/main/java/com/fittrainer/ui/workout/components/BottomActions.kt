@@ -17,22 +17,35 @@ import androidx.compose.ui.semantics.stateDescription
 import com.fittrainer.ui.theme.Spacing
 
 /**
- * Técnica (hoja de la biblioteca), Reemplazar e IA (deshabilitado: es del sprint 5). Reemplazar bloqueado se
- * ve apagado pero se puede tocar: así la pantalla explica por qué (onReplaceLocked) en vez de un texto fijo.
+ * Técnica (hoja de la biblioteca), Reemplazar y ✦ IA (tarjeta 14). Bloqueados se ven apagados pero se pueden tocar:
+ * así la pantalla explica por qué (onReplaceLocked / onAiLocked) en vez de un texto fijo.
  */
 @Composable
-fun BottomActions(canReplace: Boolean, onTechnique: () -> Unit, onReplace: () -> Unit, onReplaceLocked: () -> Unit = {}) {
+fun BottomActions(
+    canReplace: Boolean,
+    aiEnabled: Boolean,
+    onTechnique: () -> Unit,
+    onReplace: () -> Unit,
+    onAi: () -> Unit,
+    onReplaceLocked: () -> Unit = {},
+    onAiLocked: () -> Unit = {},
+) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         OutlinedButton(onClick = onTechnique, modifier = Modifier.weight(1f).heightIn(min = Spacing.minTouchTarget)) { Text("Técnica") }
-        OutlinedButton(
-            onClick = if (canReplace) onReplace else onReplaceLocked,
-            colors = if (canReplace) ButtonDefaults.outlinedButtonColors() else ButtonDefaults.outlinedButtonColors(contentColor = FtColors.Ink5),
-            border = if (canReplace) ButtonDefaults.outlinedButtonBorder(true) else BorderStroke(1.dp, FtColors.Card),
-            modifier = Modifier.weight(1.3f).heightIn(min = Spacing.minTouchTarget).then(
-                // Sin `enabled` TalkBack lo leería como botón activo: se avisa que ahora no está disponible.
-                if (canReplace) Modifier else Modifier.semantics { stateDescription = "No disponible" },
-            ),
-        ) { Text("Reemplazar") }
-        OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.weight(0.7f).heightIn(min = Spacing.minTouchTarget)) { Text("IA") }
+        LockableButton("Reemplazar", canReplace, if (canReplace) onReplace else onReplaceLocked, Modifier.weight(1.3f))
+        LockableButton("✦ IA", aiEnabled, if (aiEnabled) onAi else onAiLocked, Modifier.weight(0.7f))
     }
+}
+
+/** Apagado pero tocable; sin `enabled`, TalkBack lo leería activo: se avisa que ahora no está disponible. */
+@Composable
+private fun LockableButton(label: String, enabled: Boolean, onClick: () -> Unit, modifier: Modifier) {
+    OutlinedButton(
+        onClick = onClick,
+        colors = if (enabled) ButtonDefaults.outlinedButtonColors() else ButtonDefaults.outlinedButtonColors(contentColor = FtColors.Ink5),
+        border = if (enabled) ButtonDefaults.outlinedButtonBorder(true) else BorderStroke(1.dp, FtColors.Card),
+        modifier = modifier.heightIn(min = Spacing.minTouchTarget).then(
+            if (enabled) Modifier else Modifier.semantics { stateDescription = "No disponible" },
+        ),
+    ) { Text(label) }
 }

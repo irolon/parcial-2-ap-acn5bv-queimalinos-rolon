@@ -63,7 +63,7 @@ describe('exercises.validation create — null, vacío y tipos', () => {
     expect(() => create({ equipment: 5 })).toThrow(
       expect.objectContaining({
         details: [{ field: 'equipment', message: 'equipment debe ser texto' }],
-      }),
+      })
     );
   });
   it('equipment, description y video_url null quedan en null', () => {
@@ -100,7 +100,24 @@ describe('validateListQuery — equipment', () => {
       return null;
     };
     expect(messageOf(() => validateListQuery({ equipment: 'TRX' }))).toBe(
-      messageOf(() => create({ equipment: 'TRX' })),
+      messageOf(() => create({ equipment: 'TRX' }))
     );
+  });
+});
+
+describe('exercises.validation create — nombre obligatorio', () => {
+  it.each([
+    ['sin name', {}],
+    ['name vacío', { name: '' }],
+    ['name en blanco', { name: '   ' }],
+    ['name null', { name: null }],
+    ['name de 1 carácter', { name: 'A' }],
+    ['name de más de 120', { name: 'x'.repeat(121) }],
+  ])('rechaza %s', (_label, extra) => {
+    invalid(validateCreateExercise, { muscle_group: 'chest', ...extra }, 'name');
+  });
+
+  it('el name se guarda sin espacios de los costados', () => {
+    expect(create({ name: '  Sentadilla  ' }).name).toBe('Sentadilla');
   });
 });
