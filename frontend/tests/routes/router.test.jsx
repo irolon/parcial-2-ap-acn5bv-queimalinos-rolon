@@ -14,6 +14,7 @@ vi.mock('@/pages/progress/MyProgressPage', () => ({ default: () => <p>Página Mi
 vi.mock('@/pages/student/MyRoutinesPage', () => ({ default: () => <p>Página Mis rutinas</p> }));
 vi.mock('@/pages/student/RoutineDetailPage', () => ({ default: () => <p>Página Detalle de la rutina</p> }));
 vi.mock('@/pages/student/HistoryPage', () => ({ default: () => <p>Página Historial</p> }));
+vi.mock('@/pages/student/AssistantPage', () => ({ default: () => <p>Página Asistente IA</p> }));
 vi.mock('@/pages/messages/StudentMessagesPage', () => ({ default: () => <p>Página Mensajes</p> }));
 vi.mock('@/pages/student/MyProfilePage', () => ({ default: () => <p>Página Mi perfil</p> }));
 vi.mock('@/pages/student/WorkoutPage', () => ({ default: () => <p>Página Entrenar</p> }));
@@ -96,8 +97,10 @@ describe('rutas del alumno', () => {
     await waitFor(() => expect(pathname()).toBe('/alumno/hoy'));
   });
 
-  it('el asistente salió del menú: su dirección ya no existe', async () => {
+  it('el asistente volvió al menú (GX5): /alumno/asistente es la página Asistente IA', async () => {
     renderRoute('/alumno/asistente');
-    expect(await screen.findByRole('heading', { level: 1, name: 'No encontramos esta página' })).toBeVisible();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Asistente IA' })).toBeVisible();
+    expect(screen.getByText('Página Asistente IA')).toBeVisible();
+    expect(within(menu()).getByRole('link', { current: 'page' })).toHaveTextContent('Asistente IA');
   });
 });

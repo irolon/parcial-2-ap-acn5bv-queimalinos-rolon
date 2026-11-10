@@ -15,6 +15,7 @@ import MessagesPage from '@/pages/messages/MessagesPage';
 import StudentMessagesPage from '@/pages/messages/StudentMessagesPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
+import AssistantPage from '@/pages/student/AssistantPage';
 import HistoryPage from '@/pages/student/HistoryPage';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import MyRoutinesPage from '@/pages/student/MyRoutinesPage';
@@ -105,6 +106,7 @@ export const routes = [
     progreso: <MyProgressPage />,
     rutinas: <MyRoutinesPage />,
     historial: <HistoryPage />,
+    asistente: <AssistantPage />,
     mensajes: <StudentMessagesPage />,
     perfil: <MyProfilePage />,
   }),
