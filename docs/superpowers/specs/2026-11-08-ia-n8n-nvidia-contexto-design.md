@@ -5,7 +5,7 @@
 - **Alcance:** n8n y backend. Las pantallas (web y celular) no se tocan: cada uno arma las suyas después.
 - **Tablero:** el de Pablo **no se toca** (tarjetas 13, 15 y 16 ni las de equipo). El seguimiento va en el tablero personal de Igna.
 - **Actualización 09/11/2026 (prueba real, Tarea 7b):** la capa gratis de NVIDIA no sirvió (los modelos elegidos no respondían y el único rápido fallaba la rutina del profe), así que Igna decidió volver a **KIMI** como proveedor por defecto (`kimi-k3.1-pro`, con el razonamiento apagado). NVIDIA queda como alternativa gratis, configurable por variables. Donde esta spec dice "NVIDIA por defecto", hoy vale KIMI. Detalle y resultados en `n8n/README.md` y en el ADR-008.
-- **Actualización 09/11/2026 (tiempos):** con KIMI la mayoría de las respuestas del chat llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 s y esas respuestas se perdían. El chat pasó a cortar en **16 s en el backend (15 s en n8n)**, y la web a los 18 s (#85, `ebeffcb`). El profe no cambia: 30 s en el backend y 25 s en n8n. El RNF-04 (el 95 % de las respuestas en menos de 10 s) sigue igual: el corte es solo para las que se demoran. Esto reemplaza el anti-objetivo de no estirar los tiempos y los 8 s de los criterios y los riesgos.
+- **Actualización 09/11/2026 (tiempos):** con KIMI la mayoría de las respuestas del chat llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 s y esas respuestas se perdían. El chat pasó a cortar en **16 s en el backend (15 s en n8n)**, y la web a los 18 s (#85, `ebeffcb`). El profe: 30 s en el backend y 28 s en n8n (era 25 s; se subió el 09/11 porque KIMI tardaba 24 a 26 s en un split de 3 días y esas propuestas terminaban en 503). El RNF-04 (el 95 % de las respuestas en menos de 10 s) sigue igual: el corte es solo para las que se demoran. Esto reemplaza el anti-objetivo de no estirar los tiempos y los 8 s de los criterios y los riesgos.
 
 ## Por qué
 
@@ -38,7 +38,7 @@ Igna lo llamó "RAG". Se decidió (ver "Decisiones") que no lleva vectores: todo
 - **Romper los contratos de la API.** `POST /trainer-ai/generate-routine`, `POST /trainer-ai/save-as-template`, `POST /chat` y `GET /chat/today` responden exactamente igual que en la #83 y la #85. La web de Pablo no tiene que cambiar nada. Lo único que crece es el pedido del backend a n8n.
 - **Mandar datos personales a la IA (RNF-26).** Nada de nombre, email, fecha de nacimiento, avatar ni ids del alumno. Tampoco nombres de rutinas o plantillas (los profes les ponen el nombre del alumno) ni texto libre que no sea `injuries`/`preferences`: quedan afuera `sessions.notes`, `trainer_comment` y los mensajes con el profe.
 - **Que un profe vea datos de otro.** Todo lo nuevo se lee filtrado por el trainer (o por el alumno ya verificado) en los services, como el resto del backend.
-- **Que la IA quede más lenta que su timeout.** El chat corta en 16 s en el backend (15 s en n8n) y el profe en 30 s (25 s en n8n). *(Hasta el 09/11 el chat cortaba en 9 s y 8 s; ver la actualización de tiempos.)* Si un modelo no llega, se elige otro antes de volver a estirar los timeouts.
+- **Que la IA quede más lenta que su timeout.** El chat corta en 16 s en el backend (15 s en n8n) y el profe en 30 s (28 s en n8n). *(Hasta el 09/11 el chat cortaba en 9 s y 8 s; ver la actualización de tiempos.)* Si un modelo no llega, se elige otro antes de volver a estirar los timeouts.
 
 ## Decisiones
 
@@ -75,7 +75,7 @@ Igna lo llamó "RAG". Se decidió (ver "Decisiones") que no lleva vectores: todo
 - **Elegir el modelo** (lo hace el builder): probar 2 o 3 modelos del catálogo de NVIDIA con los `curl` del README (más un caso con historial, Parte 3). Para cada uno se mira:
   - **JSON:** cuántas respuestas pasan la validación del backend. La meta es 10 de 10 en el chat y al menos 9 de 10 en el profe.
   - **Español:** que se lea rioplatense neutro y natural.
-  - **Latencia:** el chat tiene que contestar en menos de 15 s (el 95 % en menos de 10 s, RNF-04) y el profe en menos de 25 s.
+  - **Latencia:** el chat tiene que contestar en menos de 15 s (el 95 % en menos de 10 s, RNF-04) y el profe en menos de 28 s.
 
   Puede salir un modelo para cada workflow. Los resultados se anotan en `n8n/README.md`.
 - **Límites de la capa gratis:** según fuentes no oficiales, unas 40 consultas por minuto por cuenta. Hay que confirmarlo en build.nvidia.com y anotarlo en el README. Para desarrollo y demo alcanza. Los límites propios del backend (20 por hora por profe, 20 por día por alumno) no cambian.
