@@ -6,7 +6,7 @@ const THEIRS = 'rounded-bl-[4px] border border-ink3 bg-ink2 text-bone0';
 
 /**
  * Una burbuja de la conversación con el asistente: las del alumno a la derecha y las del asistente a la izquierda,
- * con sus sugerencias debajo (solo las respuestas de esta pestaña las traen: GET /chat/today no las devuelve).
+ * con sus sugerencias debajo (y "Aplicar", si corresponde: ver `SuggestionChips`).
  */
 export default function ChatBubble({ message }) {
   const mine = message.role === 'user';
@@ -16,7 +16,7 @@ export default function ChatBubble({ message }) {
       <div className={`max-w-full rounded-2xl px-3.5 py-2.5 font-body text-sm leading-[1.4] ${mine ? MINE : THEIRS}`}>
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
       </div>
-      {!mine && suggestions.length > 0 && <SuggestionChips suggestions={suggestions} />}
+      {!mine && suggestions.length > 0 && <SuggestionChips message={message} suggestions={suggestions} />}
     </div>
   );
 }

@@ -10,9 +10,25 @@ export const CHAT_TIMEOUT_MS = 18_000;
 
 const UNAVAILABLE = { status: 503, code: 'AI_UNAVAILABLE', message: '' };
 
-/** GET /chat/today (alumno) → `{ messages: [{ id, role, content, created_at }], remaining_today }`. */
+/**
+ * GET /chat/today (alumno) → `{ messages: [{ id, role, content, created_at, exercise, routine_name, suggestions }],
+ * remaining_today }`.
+ */
 export async function getChatToday() {
   const res = await request('/chat/today');
+  return res.data;
+}
+
+/**
+ * GET /chat/history (alumno) → `{ days: [{ date, messages }], next_before }`: los días anteriores a `before` (por
+ * defecto hoy, que queda afuera), del más nuevo al más viejo. Cada mensaje es como los de /chat/today.
+ */
+export async function getChatHistory({ before, days } = {}) {
+  const query = new URLSearchParams();
+  if (before) query.set('before', before);
+  if (days) query.set('days', String(days));
+  const search = query.toString();
+  const res = await request(`/chat/history${search ? `?${search}` : ''}`);
   return res.data;
 }
 

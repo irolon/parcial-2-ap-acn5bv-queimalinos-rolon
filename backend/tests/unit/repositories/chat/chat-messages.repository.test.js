@@ -6,6 +6,7 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
 const repo = await import(src('repositories/chat/chat-messages.repository.js'));
+const { CHAT_MESSAGE_COLUMNS } = await import(src('models/chat/chat-message.model.js'));
 const FROM = '2026-11-07T03:00:00.000Z';
 const TO = '2026-11-08T03:00:00.000Z';
 
@@ -16,7 +17,10 @@ describe('chat-messages.repository', () => {
     fake.result = { data: [{ id: 'm1' }], error: null };
     await expect(repo.findDayMessages('s-1', FROM, TO)).resolves.toEqual([{ id: 'm1' }]);
     expect(fake.tables).toEqual(['chat_messages']);
-    expect(callsOf('select')).toEqual([['id, role, content, created_at']]);
+    expect(callsOf('select')).toEqual([[CHAT_MESSAGE_COLUMNS]]);
+    for (const part of ['exercise_id', 'suggestions', 'exercise:exercises (id, name)', 'session:sessions (routine:routines (name))']) {
+      expect(CHAT_MESSAGE_COLUMNS).toContain(part);
+    }
     expect(callsOf('eq')).toEqual([['student_id', 's-1']]);
     expect(callsOf('gte')).toEqual([['created_at', FROM]]);
     expect(callsOf('lt')).toEqual([['created_at', TO]]);
@@ -35,9 +39,20 @@ describe('chat-messages.repository', () => {
     expect(callsOf('select')).toEqual([['id, role, content, created_at']]);
   });
 
+  it('findMessagesBefore: los del alumno antes de `before`, nuevos primero (la respuesta antes que su consulta), con tope', async () => {
+    fake.result = { data: [{ id: 'm1' }], error: null };
+    await expect(repo.findMessagesBefore('s-1', FROM, 280)).resolves.toEqual([{ id: 'm1' }]);
+    expect(callsOf('select')).toEqual([[CHAT_MESSAGE_COLUMNS]]);
+    expect(callsOf('eq')).toEqual([['student_id', 's-1']]);
+    expect(callsOf('lt')).toEqual([['created_at', FROM]]);
+    expect(callsOf('order')).toEqual([['created_at', { ascending: false }], ['role', { ascending: true }]]);
+    expect(callsOf('limit')).toEqual([[280]]);
+  });
+
   it('un error de la base es 500', async () => {
     fake.result = { data: null, error: { message: 'boom' } };
     await expect(repo.findDayMessages('s-1', FROM, TO)).rejects.toMatchObject({ statusCode: 500 });
     await expect(repo.insertExchange([])).rejects.toMatchObject({ statusCode: 500 });
+    await expect(repo.findMessagesBefore('s-1', FROM, 1)).rejects.toMatchObject({ statusCode: 500 });
   });
 });

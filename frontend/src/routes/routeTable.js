@@ -5,6 +5,7 @@ import {
   House,
   List,
   MessageSquare,
+  Sparkles,
   Trophy,
   User,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ export const STUDENT_NAV = {
     { path: 'progreso', label: 'Mi progreso', icon: ChartLine, subtitle: 'MEDIDAS Y MARCAS' },
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
+    { path: 'asistente', label: 'Asistente IA', icon: Sparkles, subtitle: 'CONSULTAS GUARDADAS' },
     { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'TU ENTRENADOR', unread: true },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
   ],

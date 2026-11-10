@@ -10,7 +10,8 @@ import { TODAY_ROUTINE_KEY } from '@/hooks/routines/useStudentRoutines';
 import { SESSIONS_KEY } from '@/hooks/sessions/useSessions';
 import { uploadWorkout } from '@/utils/workout/uploadWorkout';
 import {
-  adjustRest, finishWorkout, readyToUpload, registerSet, removeSet, setCursor, setFeedback, skipRest, startWorkout,
+  adjustRest, finishWorkout, readyToUpload, registerSet, removeSet, replaceExercise, setCursor, setFeedback, skipRest,
+  startWorkout,
 } from '@/utils/workout/workoutState/workoutState';
 import { readWorkout, subscribeWorkout, trackUpload, writeWorkout } from './workoutStore';
 
@@ -69,6 +70,8 @@ export function useActiveWorkout(studentId) {
   const skip = useCallback(() => change((s) => skipRest(s, new Date())), [change]);
   const finish = useCallback(() => change((s) => finishWorkout(s, new Date())), [change]);
   const feedback = useCallback((value) => change((s) => setFeedback(s, value)), [change]);
+  // GX5: "Aplicar" del asistente. Sin efecto si el ejercicio ya tiene series (devuelve la misma sesión).
+  const replace = useCallback((index, exercise) => change((s) => replaceExercise(s, index, exercise)), [change]);
 
   const discard = useCallback(() => {
     if (studentId) writeWorkout(studentId, null);
@@ -110,6 +113,7 @@ export function useActiveWorkout(studentId) {
     skipRest: skip,
     finish,
     setFeedback: feedback,
+    replace,
     discard,
     upload,
   };

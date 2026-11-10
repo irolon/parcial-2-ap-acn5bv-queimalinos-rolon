@@ -7,6 +7,7 @@ import {
   CHAT_WEBHOOK_TIMEOUT_MS,
   chatDayBounds,
   remainingToday,
+  toChatMessage,
 } from '../../../../src/models/chat/chat-message.model.js';
 
 describe('chat-message.model', () => {
@@ -40,5 +41,23 @@ describe('chat-message.model', () => {
     expect(remainingToday(3)).toBe(17);
     expect(remainingToday(20)).toBe(0);
     expect(remainingToday(25)).toBe(0);
+  });
+
+  it('toChatMessage: aplana el ejercicio y la rutina de la sesión; sugerencias [] si no hay', () => {
+    const row = {
+      id: 'm1', role: 'user', content: 'hola', created_at: 'x', exercise_id: 'e1', suggestions: [],
+      exercise: { id: 'e1', name: 'Press banca' }, session: { routine: { name: 'Push' } },
+    };
+    expect(toChatMessage(row)).toEqual({
+      id: 'm1', role: 'user', content: 'hola', created_at: 'x',
+      exercise: { id: 'e1', name: 'Press banca' }, routine_name: 'Push', suggestions: [],
+    });
+  });
+
+  it('toChatMessage: fila vieja (sin ejercicio, sesión ni sugerencias) queda sin contexto', () => {
+    const row = { id: 'm2', role: 'assistant', content: 'ok', created_at: 'x', exercise: null, session: null, suggestions: null };
+    expect(toChatMessage(row)).toEqual({
+      id: 'm2', role: 'assistant', content: 'ok', created_at: 'x', exercise: null, routine_name: null, suggestions: [],
+    });
   });
 });
