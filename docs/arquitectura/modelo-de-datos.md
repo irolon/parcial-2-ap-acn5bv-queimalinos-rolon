@@ -72,6 +72,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | delivery_channel | enum | whatsapp / qr / both |
 | expires_at | timestamptz | expira en 72hs |
 | used_at | timestamptz | null = no usado aún |
+| template_id | uuid | FK → routine_templates, `on delete set null`; plantilla inicial (opcional) que se copia al alumno en el alta (GX8) |
+| routine_days | text[] | días de la plantilla inicial (`sunday..saturday`); null = los de la plantilla al alta (GX8) |
 
 ---
 
@@ -114,6 +116,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | template_id | uuid | FK → routine_templates (null si fue manual) |
 | name | varchar | |
 | goal | enum | |
+| level | enum | beginner / intermediate / advanced; null = sin definir (GX8). Heredado de la plantilla al instanciarla |
 | days | text[] | ej: ['monday','wednesday','friday'] |
 | active | boolean | |
 | created_at | timestamptz | |
@@ -308,7 +311,7 @@ Sin índice nuevo para el historial por día (`GET /chat/history`): `idx_chat_me
 | id | uuid | PK |
 | user_id | uuid | FK → trainers o students (según `user_role`; sin FK dura) |
 | user_role | varchar | trainer / student |
-| type | enum | inactivity / appointment / comment / pr / achievement / routine_modified |
+| type | enum | inactivity / appointment / comment / pr / achievement / routine_modified / initial_routine_failed |
 | title | varchar | máx. 150 caracteres |
 | body | text | opcional |
 | data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `scheduled_at`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
