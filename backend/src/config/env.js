@@ -33,6 +33,9 @@ const required = isTest
       JWT_SECRET: process.env.JWT_SECRET,
     };
 
+/** Variable opcional: recortada; vacía o ausente queda undefined. */
+const optional = (key) => process.env[key]?.trim() || undefined;
+
 const errors = [];
 for (const [key, value] of Object.entries(required)) {
   if (!value || value.trim() === '') errors.push(`Falta la variable de entorno ${key}`);
@@ -97,4 +100,8 @@ export const env = {
   // Push (FCM HTTP v1): opcionales; sin credenciales el push es no-op. En test se ignoran.
   FCM_SERVICE_ACCOUNT_PATH: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_PATH,
   FCM_SERVICE_ACCOUNT_JSON: isTest ? undefined : process.env.FCM_SERVICE_ACCOUNT_JSON,
+  // Asistentes IA (n8n): opcionales; sin la URL o el secreto la IA responde 503 y la app arranca igual.
+  N8N_TRAINER_AI_WEBHOOK_URL: optional('N8N_TRAINER_AI_WEBHOOK_URL'),
+  N8N_STUDENT_AI_WEBHOOK_URL: optional('N8N_STUDENT_AI_WEBHOOK_URL'),
+  N8N_WEBHOOK_SECRET: optional('N8N_WEBHOOK_SECRET'),
 };

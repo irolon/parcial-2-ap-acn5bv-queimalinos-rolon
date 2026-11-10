@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import AssistantPanel, { ASSISTANT_SHEET_SPACE } from '@/components/chat/AssistantPanel';
 import { missingSets } from '@/utils/workout/workoutState/workoutState';
 import DeleteSetDialog from './dialogs/DeleteSetDialog';
 import FinishDialog from './dialogs/FinishDialog';
@@ -15,13 +16,17 @@ import SetsTable from './SetsTable';
  * Terminar pregunta si faltan series o si no hay ninguna (descartar); con todo hecho termina directo.
  * Cuando el botón que tenía el foco desaparece (Saltar el descanso, la ✕ de una serie que se borra), el foco va a
  * Registrar serie en vez de perderse.
+ * Asistente abre el panel del chat al costado (o abajo, en pantallas chicas), con el ejercicio a la vista como contexto:
+ * no es modal, así que la sesión se sigue usando con el panel abierto. Al cerrarlo, el foco vuelve a Asistente.
  */
 export default function ActiveSession({
   workout, register, remove, goTo, next, prev, adjustRest, skipRest, finish, discard,
 }) {
   const [finishing, setFinishing] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [assistant, setAssistant] = useState(false);
   const registerRef = useRef(null);
+  const assistantRef = useRef(null);
   const focusRegisterOnClose = useRef(false);
   const hasSets = workout.sets.length > 0;
   const missing = missingSets(workout);
@@ -30,6 +35,10 @@ export default function ActiveSession({
   const skip = () => {
     skipRest();
     registerRef.current?.focus();
+  };
+  const closeAssistant = () => {
+    setAssistant(false);
+    assistantRef.current?.focus();
   };
   const confirmDelete = () => {
     remove(deleting.id);
@@ -45,29 +54,37 @@ export default function ActiveSession({
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <SessionHeader
-        position={workout.cursor + 1}
-        total={workout.exercises.length}
-        startedAt={workout.startedAt}
-        onPrev={prev}
-        onNext={next}
-        onFinish={requestFinish}
-      />
-      <SegmentBar workout={workout} onSelect={goTo} />
-      <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
-        <div className="min-w-0 md:flex-[1.55]">
-          <ExercisePanel workout={workout} onRegister={register} registerRef={registerRef} />
-        </div>
-        <div className="flex min-w-0 flex-col gap-4 md:min-w-[250px] md:flex-1">
-          {workout.restEndsAt && (
-            <div className="order-first md:order-last">
-              <RestTimer workout={workout} onAdjust={adjustRest} onSkip={skip} />
-            </div>
-          )}
-          <SetsTable workout={workout} onDelete={setDeleting} />
+    <div className={`mx-auto flex w-full items-start gap-4 ${assistant ? `max-w-[1500px] ${ASSISTANT_SHEET_SPACE}` : 'max-w-6xl'}`}>
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <SessionHeader
+          position={workout.cursor + 1}
+          total={workout.exercises.length}
+          startedAt={workout.startedAt}
+          onPrev={prev}
+          onNext={next}
+          onFinish={requestFinish}
+          onAssistant={() => (assistant ? closeAssistant() : setAssistant(true))}
+          assistantOpen={assistant}
+          assistantRef={assistantRef}
+        />
+        <SegmentBar workout={workout} onSelect={goTo} />
+        <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
+          <div className="min-w-0 md:flex-[1.55]">
+            <ExercisePanel workout={workout} onRegister={register} registerRef={registerRef} />
+          </div>
+          <div className="flex min-w-0 flex-col gap-4 md:min-w-[250px] md:flex-1">
+            {workout.restEndsAt && (
+              <div className="order-first md:order-last">
+                <RestTimer workout={workout} onAdjust={adjustRest} onSkip={skip} />
+              </div>
+            )}
+            <SetsTable workout={workout} onDelete={setDeleting} />
+          </div>
         </div>
       </div>
+      {assistant && (
+        <AssistantPanel exercise={workout.exercises[workout.cursor]} sessionId={workout.id} onClose={closeAssistant} />
+      )}
       <FinishDialog
         open={finishing}
         hasSets={hasSets}
