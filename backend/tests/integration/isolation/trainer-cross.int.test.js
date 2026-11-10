@@ -2,7 +2,7 @@ import { api } from '../../helpers/integration/api.js';
 import { buildWorld } from '../../helpers/integration/isolation/world.js';
 import { ownerControl, rows, runCases } from '../../helpers/integration/isolation/isolation.js';
 
-// PT B sobre los datos del PT A y de su alumno (filas 1–48 de la tarea 9),
+// PT B sobre los datos del PT A y de su alumno (filas 1–48 de la tarea 9; la 49 es de GX8),
 // más el control positivo de los GET como PT A.
 let worlds;
 const getWorlds = () => worlds;
@@ -16,6 +16,13 @@ const routine = (st, ex) => ({
   ...exercises(ex),
 });
 const NAME = { name: 'IT · Otro' };
+// GX8: invitar con la plantilla de otro PT (el email no existe: el 404 sale de la plantilla).
+const INVITE_WITH = (tp) => ({
+  student_name: 'IT · Ajena',
+  student_email: 'it-cross-template@example.com',
+  delivery_channel: 'qr',
+  template_id: tp,
+});
 
 // prettier-ignore
 const cases = rows('trainerB', [
@@ -67,6 +74,7 @@ const cases = rows('trainerB', [
   [46, 'POST /messages/:stA/read', 403],
   [47, 'POST /messages/broadcast', 403, null, { student_ids: [':stA', ':stB'], body: 'IT · masivo' }],
   [48, 'POST /challenges/:chB/assignments', 201, null, { student_ids: [':stA'] }],
+  [49, 'POST /invitations', 404, 'TEMPLATE_NOT_FOUND', INVITE_WITH(':tpA')],
 ]);
 
 // #47: el masivo rechazado no le llega a nadie (B sigue con su único mensaje).

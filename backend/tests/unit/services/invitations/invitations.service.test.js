@@ -12,6 +12,12 @@ jest.unstable_mockModule(
   () => mockRepo
 );
 
+// La plantilla inicial se valida con el service de plantillas (propia o 404).
+const mockGetOwnedTemplate = jest.fn();
+jest.unstable_mockModule('../../../../src/services/routine-templates/routine-templates.service.js', () => ({
+  getOwnedTemplate: mockGetOwnedTemplate,
+}));
+
 const service = await import('../../../../src/services/invitations/invitations.service.js');
 
 const BASE_BODY = {
@@ -89,6 +95,33 @@ describe('invitations.service', () => {
 
       expect(result.qr_base64).toBeDefined();
       expect(result.whatsapp_share_url).toBeUndefined();
+    });
+
+    it('con plantilla inicial la valida y guarda template_id y routine_days', async () => {
+      mockRepo.studentEmailExists.mockResolvedValue(false);
+      mockRepo.createInvitation.mockResolvedValue(createdRow);
+      mockGetOwnedTemplate.mockResolvedValue({ id: 'tp-1' });
+      const body = { ...BASE_BODY, delivery_channel: 'whatsapp', template_id: 'tp-1', routine_days: ['monday'] };
+      await service.createInvitation('trainer-1', body);
+      expect(mockGetOwnedTemplate).toHaveBeenCalledWith('trainer-1', 'tp-1');
+      expect(mockRepo.createInvitation.mock.calls.at(-1)[0]).toMatchObject({ templateId: 'tp-1', routineDays: ['monday'] });
+    });
+
+    it('404 TEMPLATE_NOT_FOUND con una plantilla ajena o inexistente, sin crear la invitación', async () => {
+      mockRepo.studentEmailExists.mockResolvedValue(false);
+      mockGetOwnedTemplate.mockRejectedValue(Object.assign(new Error('x'), { code: 'TEMPLATE_NOT_FOUND', statusCode: 404 }));
+      await expect(
+        service.createInvitation('trainer-1', { ...BASE_BODY, template_id: 'tp-ajena' })
+      ).rejects.toMatchObject({ code: 'TEMPLATE_NOT_FOUND', statusCode: 404 });
+      expect(mockRepo.createInvitation).not.toHaveBeenCalled();
+    });
+
+    it('sin plantilla no la consulta y guarda las dos columnas en null', async () => {
+      mockRepo.studentEmailExists.mockResolvedValue(false);
+      mockRepo.createInvitation.mockResolvedValue(createdRow);
+      await service.createInvitation('trainer-1', { ...BASE_BODY, delivery_channel: 'whatsapp' });
+      expect(mockGetOwnedTemplate).not.toHaveBeenCalled();
+      expect(mockRepo.createInvitation.mock.calls.at(-1)[0]).toMatchObject({ templateId: null, routineDays: null });
     });
 
     it('lanza STUDENT_EMAIL_EXISTS si ya hay un alumno con ese email', async () => {
