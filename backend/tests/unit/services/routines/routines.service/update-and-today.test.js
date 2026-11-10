@@ -95,4 +95,22 @@ describe('routines.service', () => {
       expect(mockProgressRepo.fetchLastSessionKg).not.toHaveBeenCalled();
     });
   });
+
+  describe('today · día argentino', () => {
+    // Martes 02:59Z = lunes 23:59 en Buenos Aires.
+    beforeEach(() => jest.useFakeTimers({ now: new Date('2026-08-25T02:59:00Z') }));
+    afterEach(() => jest.useRealTimers());
+
+    it('a las 23:59 AR busca la rutina del día argentino', async () => {
+      mockRepo.findActiveRoutineForStudentToday.mockResolvedValue(null);
+      await service.today('st-1');
+      expect(mockRepo.findActiveRoutineForStudentToday).toHaveBeenCalledWith('st-1', 'monday');
+    });
+
+    it('día de descanso: null explícito y sin consultar last_session_kg', async () => {
+      mockRepo.findActiveRoutineForStudentToday.mockResolvedValue(null);
+      await expect(service.today('st-1')).resolves.toBeNull();
+      expect(mockProgressRepo.fetchLastSessionKg).not.toHaveBeenCalled();
+    });
+  });
 });

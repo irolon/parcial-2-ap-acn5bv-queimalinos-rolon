@@ -263,8 +263,9 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | student_id | uuid | FK → students (opcional, si fue para un alumno específico) |
 | input_params | jsonb | parámetros enviados al LLM (objetivo, frecuencia, equipamiento, etc.) |
 | generated_routine | jsonb | rutina propuesta por la IA |
-| was_used | boolean | true si el PT terminó asignándola (con o sin ediciones) |
-| routine_template_id | uuid | FK → routine_templates (null si no se guardó como plantilla) |
+| was_used | boolean | true si el PT la guardó como plantilla (save-as-template; la IA nunca asigna) |
+| routine_template_id | uuid | FK → routine_templates (null si no se guardó como plantilla; con varios bloques, la primera) |
+| routine_template_ids | uuid[] | todas las plantillas creadas, una por bloque, en orden (default `{}`; sin FK). Tarjeta 15, `2026-11-06-trainer-ai-templates.sql` |
 | created_at | timestamptz | |
 
 ---

@@ -129,3 +129,29 @@ describe('TRUST_PROXY en producción', () => {
     expect(exit).toEqual([]);
   });
 });
+
+describe('env de n8n (asistente IA del entrenador)', () => {
+  const BASE = { NODE_ENV: 'production', ...PROD, TRUST_PROXY: '0' };
+
+  it('arranca sin las variables de n8n (son opcionales)', async () => {
+    const env = await loadEnv({ ...BASE, N8N_TRAINER_AI_WEBHOOK_URL: undefined, N8N_WEBHOOK_SECRET: undefined });
+    expect(env.N8N_TRAINER_AI_WEBHOOK_URL).toBeUndefined();
+    expect(env.N8N_WEBHOOK_SECRET).toBeUndefined();
+  });
+
+  it('las lee recortadas; vacías quedan undefined', async () => {
+    const env = await loadEnv({ ...BASE, N8N_TRAINER_AI_WEBHOOK_URL: ' http://n8n:5678/webhook/trainer-ia ', N8N_WEBHOOK_SECRET: '  ' });
+    expect(env.N8N_TRAINER_AI_WEBHOOK_URL).toBe('http://n8n:5678/webhook/trainer-ia');
+    expect(env.N8N_WEBHOOK_SECRET).toBeUndefined();
+  });
+});
+
+describe('env de n8n (chat IA del alumno)', () => {
+  const BASE = { NODE_ENV: 'production', ...PROD, TRUST_PROXY: '0' };
+
+  it('N8N_STUDENT_AI_WEBHOOK_URL es opcional y se lee recortada', async () => {
+    expect((await loadEnv({ ...BASE, N8N_STUDENT_AI_WEBHOOK_URL: undefined })).N8N_STUDENT_AI_WEBHOOK_URL).toBeUndefined();
+    const env = await loadEnv({ ...BASE, N8N_STUDENT_AI_WEBHOOK_URL: ' http://n8n:5678/webhook/student-ia ' });
+    expect(env.N8N_STUDENT_AI_WEBHOOK_URL).toBe('http://n8n:5678/webhook/student-ia');
+  });
+});

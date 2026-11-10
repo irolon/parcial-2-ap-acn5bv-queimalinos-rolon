@@ -11,6 +11,9 @@ export class ApiError extends Error {
   }
 }
 
+/** Sin conexión con el servidor (fetch no llegó): el `ApiError` de status 0 que arma `send`. */
+export const isNetworkError = (err) => err?.status === 0 || err?.code === 'NETWORK_ERROR';
+
 const NETWORK_ERROR = {
   status: 0,
   code: 'NETWORK_ERROR',

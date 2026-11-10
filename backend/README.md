@@ -390,3 +390,23 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 - Rutas nuevas (no están en el contrato de Notion): `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. La agregación vive en funciones SQL (`exercise_progress`, `last_session_kg`) llamadas con `supabase.rpc`; son `security invoker`, con `search_path` fijo y ejecutables solo por `service_role`. Migración: `src/database/migrations/2026-10/2026-10-29-progress.sql`. `GET /progress/overview` usa `progress_exercises` y `weekly_volume` (`schema/04b-progress-overview.sql`, migración `2026-10-30-progress-overview.sql`).
 - **`GET /routines/today`:** `last_session_kg` deja de ser siempre `null`: es el mayor peso de la última sesión en que el alumno hizo el ejercicio.
+
+## Avisos
+
+### IA: modelo configurable y más contexto (08-09/11/2026)
+
+Cambios en los workflows de n8n y en lo que el backend les manda. **La API no cambió: la web no tiene que tocar nada.**
+
+- **Credencial `LLM`.** La credencial `KIMI` de n8n pasa a llamarse `LLM` (Header Auth, `Authorization: Bearer <key>`). La URL, el modelo y los campos extra del pedido van por variables de `n8n/.env` (`LLM_BASE_URL`, `LLM_TRAINER_MODEL`, `LLM_STUDENT_MODEL`, `LLM_EXTRA_BODY`).
+- **Sigue siendo KIMI, con otro modelo.** `kimi-k2-turbo-preview` figura como discontinuado: ahora el modelo por defecto es `kimi-k3.1-pro`, con el razonamiento apagado (`{"thinking":{"type":"disabled"},"temperature":0.6}`; con el razonamiento prendido tarda mucho más y gasta más tokens). Probamos la capa gratis de NVIDIA, pero no sirvió (detalle en `n8n/README.md`); queda como alternativa por variables.
+- **Límite de la cuenta de Moonshot.** Una cuenta nueva arranca con un tope de **3 pedidos por minuto** para toda la organización; pasado eso, la IA responde 503 hasta el minuto siguiente. Sube con el saldo cargado.
+- **El chat corta a los 16 s (antes 9 s).** `CHAT_WEBHOOK_TIMEOUT_MS` pasa a 16000 y el nodo del modelo en `student-ia`, a 15 s. Con KIMI la mayoría de las respuestas llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 y esas respuestas se perdían. El RNF-04 (95 % en menos de 10 s) no cambia. **Web (hay que tocarla):** `frontend/src/api/chat/chat.api.js` tiene `CHAT_TIMEOUT_MS = 12_000`. Con eso, la web abandona el pedido a los 12 s aunque la respuesta llegue entre los 12 y los 16 s. Hay que subirlo a unos 18 s (por encima de los 16 del backend). También conviene alargar a 16 s el tope visual de `ChatThinking.jsx` (`width 10s`) y corregir los comentarios que dicen "9 s" en los dos archivos. El celular espera hasta 30 s, así que no cambia.
+- **La plantilla base viaja sin notas.** `base_template` ya no incluye las `notes` de sus ejercicios. Son texto libre del PT y pueden traer datos del alumno (RNF-26). La IA ya no ve esas notas, pero sí todo lo demás de la plantilla.
+- **La rutina del profe es más corta.** El prompt pide notas de hasta 60 caracteres (vacías si no aportan) y un `rationale` de hasta 400. Así la respuesta entra en el timeout de 28 s de n8n. El backend sigue aceptando hasta 200 y 1000.
+- **n8n con el `docker-compose`.** Ahora se levanta con el servicio `n8n` (`docker compose up -d n8n`) y hay que **reimportar los dos workflows** (`trainer-ia` y `student-ia`).
+  - En una instancia de n8n que ya tiene los workflows viejos, reimportar crea **copias**, y activarlas choca con el path del webhook: borrá o desactivá los viejos antes, o usá el n8n del compose, que arranca vacío.
+  - `n8n/.env` solo aplica al servicio del compose. Con un n8n propio (por ejemplo con `npx`), las variables `LLM_*` y `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` van en el entorno de ese proceso. Si no, el nodo usa los valores por defecto (KIMI, `kimi-k3.1-pro`, razonamiento apagado), que sirven con una key de KIMI.
+- **El pedido del backend a n8n suma campos:**
+  - `trainer-ia`: `previous_routines`, `student_history` y `current_routine`.
+  - `student-ia`: `todays_routine`, y además `alternatives` llega **sin** los ejercicios de esa rutina.
+- **Dónde está todo:** la spec en `docs/superpowers/specs/2026-11-08-ia-n8n-nvidia-contexto-design.md`, el ADR-008 en `docs/arquitectura/adrs.md` y, en `n8n/README.md`, las secciones de Docker, credenciales, variables del modelo y payloads de cada workflow.

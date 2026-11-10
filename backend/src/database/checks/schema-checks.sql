@@ -92,10 +92,18 @@ where to_regclass('public.idx_session_sets_exercise_session') is null
 union all
 select 'falta la función ' || f
 from (values ('exercise_progress'), ('last_session_kg'), ('progress_exercises'), ('weekly_volume'),
-        ('replace_trainer_availability')) v (f)
+        ('replace_trainer_availability'), ('save_ai_generation_templates')) v (f)
 where not exists (
   select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.proname = v.f
+)
+
+union all
+select 'falta la columna ai_routine_generations.routine_template_ids (2026-11-06-trainer-ai-templates.sql)'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'ai_routine_generations'
+    and column_name = 'routine_template_ids' and is_nullable = 'NO'
 )
 
 union all
