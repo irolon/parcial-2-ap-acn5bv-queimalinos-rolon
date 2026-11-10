@@ -26,11 +26,12 @@ export const MAX_MESSAGE_LENGTH = 500;
 export const MAX_RESPONSE_LENGTH = 1500;
 export const MAX_REASON_LENGTH = 200;
 /**
- * RNF-04: el asistente responde en menos de 10 s o el alumno sigue sin él. Se corta a los 9 s para que el aviso
- * llegue antes de los 10 contando el viaje de vuelta (medido: con 10 s el alumno lo veía a los 10,6). El nodo de
- * KIMI del workflow corta a los 8 s, debajo de este.
+ * RNF-04: el 95 % de las respuestas del asistente llegan en menos de 10 s, y si se pasa del corte el alumno sigue
+ * sin él. Con KIMI (kimi-k3.1-pro) la mayoría llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 s: con el
+ * corte en 9 s se perdían respuestas que llegaban un poco después (09/11). Se corta a los 16 s; el nodo del modelo
+ * en el workflow corta a los 15 s, debajo de este. El celular espera hasta 30 s.
  */
-export const CHAT_WEBHOOK_TIMEOUT_MS = 9000;
+export const CHAT_WEBHOOK_TIMEOUT_MS = 16000;
 
 export const CHAT_UNAVAILABLE_MESSAGE = 'El asistente no está disponible ahora. Seguí con tu entrenamiento.';
 export const CHAT_INVALID_MESSAGE = 'El asistente respondió algo que no entendimos. Probá de nuevo.';

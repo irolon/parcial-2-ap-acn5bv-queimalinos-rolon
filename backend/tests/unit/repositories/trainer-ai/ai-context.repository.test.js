@@ -45,6 +45,24 @@ describe('ai-context.repository', () => {
     expect(callsOf('limit')).toEqual([[3]]);
   });
 
+  it('findRecentRoutines: las 3 más nuevas del trainer con ese goal, sin las del alumno excluido', async () => {
+    fake.result = { data: [], error: null };
+    await repo.findRecentRoutines('t-1', { goal: 'strength', excludeStudentId: 's-1' });
+    expect(fake.tables).toEqual(['routines']);
+    expect(callsOf('select')).toEqual([['goal, days, routine_exercises ( order_index, exercise:exercise_id ( name ) )']]);
+    expect(callsOf('eq')).toEqual([['trainer_id', 't-1'], ['goal', 'strength']]);
+    expect(callsOf('neq')).toEqual([['student_id', 's-1']]);
+    expect(callsOf('order')).toEqual([['created_at', { ascending: false }]]);
+    expect(callsOf('limit')).toEqual([[3]]);
+  });
+
+  it('findRecentRoutines sin excludeStudentId no filtra por alumno ni por active', async () => {
+    fake.result = { data: [], error: null };
+    await repo.findRecentRoutines('t-1', { goal: 'strength' });
+    expect(callsOf('neq')).toEqual([]);
+    expect(callsOf('eq')).toEqual([['trainer_id', 't-1'], ['goal', 'strength']]);
+  });
+
   it('un error de la base es 500', async () => {
     fake.result = { data: null, error: { message: 'boom' } };
     await expect(repo.findRecentTemplates('t-1')).rejects.toMatchObject({ statusCode: 500 });
