@@ -130,7 +130,7 @@ El alumno puede entrar desde la web o desde la mobile con la misma cuenta, pero 
 
 **Flujos alternativos**
 
-- **3a — Refinamiento:** El PT pide ajustes ("más volumen en piernas", "sustituir sentadilla por prensa"). El sistema llama a `POST /trainer-ai/refine` con la `generation_id` y la instrucción nueva.
+- **3a — Refinamiento (fuera de alcance, tarjeta 15: el PT ajusta la propuesta en el editor):** El PT pide ajustes ("más volumen en piernas", "sustituir sentadilla por prensa"). El sistema llama a `POST /trainer-ai/refine` con la `generation_id` y la instrucción nueva.
 - **2a — Adaptación de plantilla existente:** El PT elige una plantilla previa como base (`base_template_id`) y la IA la adapta al perfil del nuevo alumno.
 
 **Flujos de error**

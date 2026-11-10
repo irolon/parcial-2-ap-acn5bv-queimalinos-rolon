@@ -50,10 +50,10 @@ describe('StudentsPage: listado', () => {
     expect(within(card('Nico Nuevo')).getByText('Nuevo')).toBeInTheDocument();
   });
 
-  it('el subtítulo de la topbar cuenta activos e inactivos', async () => {
+  it('el subtítulo de la topbar cuenta activos e inactivos, en singular si es uno', async () => {
     await load();
     expect(screen.getByRole('heading', { level: 1, name: 'Alumnos' })).toBeVisible();
-    expect(await screen.findByText('3 ACTIVOS · 1 INACTIVOS')).toBeVisible();
+    expect(await screen.findByText('3 ACTIVOS · 1 INACTIVO')).toBeVisible();
   });
 
   it('la tarjeta lleva a la ficha conservando la búsqueda', async () => {

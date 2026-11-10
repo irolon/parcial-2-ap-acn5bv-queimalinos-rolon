@@ -39,6 +39,8 @@ class FakeTrainerTemplatesApi : TrainerTemplatesApi {
     var error: Throwable? = null
     var instantiateError: Throwable? = null
     var instantiateGate: CompletableDeferred<Unit>? = null
+    /** Una entrada por llamada a instantiate: null = sale bien, un Throwable = falla esa llamada. */
+    val instantiateFailures = ArrayDeque<Throwable?>()
     val instantiates = mutableListOf<Pair<String, InstantiateRequest>>()
     val fromRoutines = mutableListOf<FromRoutineRequest>()
 
@@ -57,6 +59,7 @@ class FakeTrainerTemplatesApi : TrainerTemplatesApi {
         instantiateGate?.await()
         error?.let { throw it }
         instantiateError?.let { throw it }
+        instantiateFailures.removeFirstOrNull()?.let { throw it }
         val rt = "rt-${instantiates.size}"
         return TrainerRoutineDetailResponse(
             routineDto(rt, body.studentId, exercises = listOf(exerciseDto("${rt}a", 0))).copy(name = body.name, days = body.days),

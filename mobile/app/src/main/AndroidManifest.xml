@@ -14,6 +14,13 @@
     <!-- Sin cámara igual se puede pegar el link: no la exige para instalar. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- Dictado del chat IA (tarjeta 14): sin esto, en Android 11+ no se ve la actividad de reconocimiento de voz. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+    </queries>
+
     <application
         android:name=".FitTrainerApp"
         android:allowBackup="false"
