@@ -4,7 +4,7 @@ import Card from '@/components/shared/ui/Card';
 import { sortForStudent } from '@/utils/agenda/studentAgenda';
 import AppointmentRow from './AppointmentRow';
 
-function Content({ query, onCancel }) {
+function Content({ query, now, onCancel }) {
   if (query.isError && query.data === undefined) {
     return <ErrorState message="No pudimos cargar tus turnos." onRetry={() => query.refetch()} />;
   }
@@ -15,7 +15,7 @@ function Content({ query, onCancel }) {
   return (
     <ul aria-label="Tus turnos" className="divide-y divide-ink2">
       {sortForStudent(query.data).map((appointment) => (
-        <AppointmentRow key={appointment.id} appointment={appointment} onCancel={onCancel} />
+        <AppointmentRow key={appointment.id} appointment={appointment} now={now} onCancel={onCancel} />
       ))}
     </ul>
   );
@@ -23,9 +23,9 @@ function Content({ query, onCancel }) {
 
 /**
  * "Tus turnos": la lista de `query` (`useAppointments`) con los próximos primero y los cancelados al final.
- * `notice` (el aviso de un turno recién pedido) va arriba, como `role="status"`.
+ * `notice` (el aviso de un turno recién pedido) va arriba, como `role="status"`. `now`: el reloj de la página.
  */
-export default function AppointmentList({ query, notice, onCancel }) {
+export default function AppointmentList({ query, notice, now, onCancel }) {
   return (
     <Card title="Tus turnos">
       {notice && (
@@ -33,7 +33,7 @@ export default function AppointmentList({ query, notice, onCancel }) {
           {notice}
         </p>
       )}
-      <Content query={query} onCancel={onCancel} />
+      <Content query={query} now={now} onCancel={onCancel} />
     </Card>
   );
 }

@@ -39,6 +39,21 @@ export const pendingAhead = (list, now) =>
 /** ¿El alumno puede cancelarlo? Pendiente o confirmado y que todavía no empezó. */
 export const canCancel = (appt, now) => ACTIVE.includes(appt.status) && time(appt) > now.getTime();
 
+/** Cuánto queda el aviso de "turno pedido" en Mis turnos si no se abre otro diálogo antes. */
+export const NOTICE_MS = 8000;
+
+/** Cada cuánto, como mucho, se vuelve a mirar el reloj de Mis turnos. */
+export const CLOCK_MAX_MS = 60_000;
+
+/**
+ * Milisegundos hasta el próximo cambio de Mis turnos: el próximo `scheduled_at` de la lista (ahí ese turno pasa a
+ * "Ya pasó" y deja de contar como pendiente) o `CLOCK_MAX_MS`, lo que llegue primero.
+ */
+export function msToNextChange(list, now) {
+  const ahead = (list ?? []).map(time).filter((t) => t > now.getTime());
+  return Math.min(CLOCK_MAX_MS, ...ahead.map((t) => t - now.getTime()));
+}
+
 /** `'jueves 12/11 a las 18:00'` (hora de Argentina). */
 export function dayAtLabel(iso) {
   const { date, hour, minute, weekday } = arParts(iso);

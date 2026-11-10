@@ -5,12 +5,13 @@ import { canCancel } from '@/utils/agenda/studentAgenda';
 
 /**
  * Un turno del alumno: día y hora, estado con su punto, la nota y "Cancelar" si todavía se puede. Los pendientes o
- * confirmados que ya empezaron dicen "Ya pasó"; los cancelados van atenuados. "Ya pasó" mira el reloj en cada render.
+ * confirmados que ya empezaron dicen "Ya pasó"; los cancelados van atenuados. "Ya pasó" y "Cancelar" miran `now`,
+ * el reloj de la página (`useAgendaClock`), así cambian solos cuando el turno empieza.
  */
-export default function AppointmentRow({ appointment, onCancel }) {
+export default function AppointmentRow({ appointment, now, onCancel }) {
   const status = STATUS_STYLES[appointment.status];
   const cancelled = appointment.status === 'cancelled';
-  const cancellable = canCancel(appointment, new Date());
+  const cancellable = canCancel(appointment, now);
   return (
     <li className={`flex items-start justify-between gap-3 py-3 ${cancelled ? 'opacity-60' : ''}`}>
       <div className="min-w-0">

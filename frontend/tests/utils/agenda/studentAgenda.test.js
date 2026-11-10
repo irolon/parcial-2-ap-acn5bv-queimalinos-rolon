@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  CLOCK_MAX_MS,
   MAX_PENDING,
   canCancel,
   dayAtLabel,
   groupFreeSlots,
+  msToNextChange,
   pendingAhead,
   sortForStudent,
 } from '@/utils/agenda/studentAgenda';
@@ -91,5 +93,20 @@ describe('dayAtLabel', () => {
   it('da el día completo en minúscula y la hora argentina', () => {
     expect(dayAtLabel('2026-11-12T21:00:00.000Z')).toBe('jueves 12/11 a las 18:00');
     expect(dayAtLabel('2026-11-07T02:00:00.000Z')).toBe('viernes 06/11 a las 23:00');
+  });
+});
+
+describe('msToNextChange', () => {
+  it('hasta el próximo turno que empieza, si falta menos de un minuto', () => {
+    const list = [appt({ scheduled_at: '2026-11-04T15:00:30.000Z' }), appt({ id: 'b', scheduled_at: '2026-11-04T15:00:10.000Z' })];
+    expect(msToNextChange(list, now())).toBe(10_000);
+  });
+
+  it('cada minuto si no hay turnos por empezar (los que ya empezaron no cuentan)', () => {
+    expect(msToNextChange([], now())).toBe(CLOCK_MAX_MS);
+    expect(msToNextChange(undefined, now())).toBe(CLOCK_MAX_MS);
+    expect(msToNextChange([appt({ scheduled_at: NOW }), appt({ id: 'b', scheduled_at: '2026-11-06T21:00:00.000Z' })], now())).toBe(
+      CLOCK_MAX_MS,
+    );
   });
 });
