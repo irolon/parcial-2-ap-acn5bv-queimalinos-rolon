@@ -38,9 +38,12 @@ fun aiChatErrorText(error: AiChatError): String = when (error) {
     AiChatError.Timeout -> AI_TIMEOUT
     AiChatError.DailyLimit -> AI_DAILY_LIMIT
     AiChatError.InProgress -> AI_IN_PROGRESS
-    is AiChatError.TooManyAttempts -> error.retryAfterSeconds
-        ?.let { "Hiciste muchas consultas seguidas. Probá de nuevo en ${(it + 59) / 60} min." }
-        ?: "Hiciste muchas consultas seguidas. Probá de nuevo más tarde."
+    // Menos de un minuto no se redondea a "1 min" (revisión de Pablo en la #96).
+    is AiChatError.TooManyAttempts -> "Hiciste muchas consultas seguidas. Probá de nuevo " + when (val s = error.retryAfterSeconds) {
+        null -> "más tarde."
+        in 0L until 60L -> "en unos segundos."
+        else -> "en ${(s + 59) / 60} min."
+    }
     is AiChatError.Unavailable -> error.message
     AiChatError.Unknown -> AI_UNKNOWN
 }

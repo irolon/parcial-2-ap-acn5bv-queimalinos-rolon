@@ -61,7 +61,7 @@ class AiChatRepository @Inject constructor(
         val (from, to) = dayBounds(day)
         guarded(started) {
             if (sends.get() != sendsAtStart) throw AiChatException(AiChatError.Unknown)
-            val kept = dao.getBetween(ownerId, from, to).associate { it.id to it.suggestionsJson }
+            val kept = dao.getBetween(ownerId, from, to).associateBy { it.id }
             dao.replaceBetween(ownerId, from, to, today.messages.map { it.toEntity(ownerId, kept[it.id]) })
         }
         AiChatQuota(today.remainingToday, day)
@@ -73,22 +73,24 @@ class AiChatRepository @Inject constructor(
         // El instante de la pregunta, como el backend: si la respuesta llega pasada la medianoche, el par sigue en
         // el día que la hoja está mirando.
         val askedAt = clock.millis()
-        val reply = post(ownerId, AiChatRequest(message, sessionId, exerciseId))
+        val (reply, asked) = post(ownerId, AiChatRequest(message, sessionId, exerciseId))
         guarded(started) {
-            dao.insert(listOf(userEntity(ownerId, message, askedAt), reply.toEntity(ownerId, askedAt)))
+            dao.insert(listOf(userEntity(ownerId, message, askedAt), reply.toEntity(ownerId, askedAt, asked)))
             sends.incrementAndGet()
         }
         AiChatQuota(reply.remainingToday, localDay(Instant.ofEpochMilli(askedAt)))
     }
 
-    private suspend fun post(ownerId: String, body: AiChatRequest): AiChatReplyDto = try {
-        api.send(RequiredUser(ownerId), body).data
+    /** La respuesta y el pedido que la obtuvo (sin session_id si hubo que reintentar por SESSION_FINISHED). */
+    private suspend fun post(ownerId: String, body: AiChatRequest): Pair<AiChatReplyDto, AiChatRequest> = try {
+        api.send(RequiredUser(ownerId), body).data to body
     } catch (e: HttpException) {
         val envelope = e.errorEnvelope()
         if (body.sessionId == null || e.code() != 400 || envelope?.code != SESSION_FINISHED) {
             throw AiChatException(httpAiChatError(e.code(), envelope, e.response()?.headers()?.get("Retry-After")), e)
         }
-        api.send(RequiredUser(ownerId), body.copy(sessionId = null)).data
+        val retry = body.copy(sessionId = null)
+        api.send(RequiredUser(ownerId), retry).data to retry
     }
 
     private suspend fun guarded(started: Long, write: suspend () -> Unit) = writeLock.withLock {

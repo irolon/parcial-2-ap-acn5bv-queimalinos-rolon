@@ -6,6 +6,14 @@ import java.time.LocalDate
 /** Lo que la hoja necesita de la sesión: a qué sesión y ejercicio se refiere la consulta. */
 data class AiChatTarget(val sessionId: String?, val exerciseId: String?, val exerciseName: String)
 
+/**
+ * Las sugerencias de esta respuesta reemplazan el ejercicio actual solo si se pidieron en esta misma sesión y en este
+ * mismo ejercicio (revisión de Pablo en la #96): una de la mañana sobre Sentadilla no cambia el Press banca de después.
+ */
+fun AiChatMessage.canReplaceFor(target: AiChatTarget): Boolean =
+    askedSessionId != null && askedExerciseId != null &&
+        askedSessionId == target.sessionId && askedExerciseId == target.exerciseId
+
 /** remaining: consultas que quedan hoy (null = todavía no se sabe). notice: el error del último intento. */
 data class AiChatUiState(
     val messages: List<AiChatMessage> = emptyList(),

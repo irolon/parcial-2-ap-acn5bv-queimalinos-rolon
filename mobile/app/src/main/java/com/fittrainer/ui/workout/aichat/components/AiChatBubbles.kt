@@ -27,13 +27,23 @@ import com.fittrainer.ui.theme.Spacing
 import com.fittrainer.ui.workout.aichat.AI_REPLACE
 import com.fittrainer.ui.workout.aichat.AI_THINKING
 
-/** Una burbuja: el alumno a la derecha (azul de marca), la IA a la izquierda, con sus sugerencias abajo. */
+/**
+ * Una burbuja: el alumno a la derecha (azul de marca), la IA a la izquierda, con sus sugerencias abajo. Solo las de
+ * una respuesta [actionable] (pedida en esta sesión y en este ejercicio) llevan «Reemplazar»; las otras quedan como texto.
+ */
 @Composable
-fun AiChatBubble(message: AiChatMessage, canReplace: Boolean, onReplace: (AiChatSuggestion) -> Unit, onReplaceLocked: () -> Unit) {
+fun AiChatBubble(
+    message: AiChatMessage,
+    actionable: Boolean,
+    canReplace: Boolean,
+    onReplace: (AiChatSuggestion) -> Unit,
+    onReplaceLocked: () -> Unit,
+) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = if (message.fromUser) Alignment.End else Alignment.Start) {
         Bubble(message.content, message.fromUser)
         message.suggestions.forEach { s ->
-            SuggestionCard(s, canReplace, onClick = { if (canReplace) onReplace(s) else onReplaceLocked() })
+            val onClick = if (actionable) ({ if (canReplace) onReplace(s) else onReplaceLocked() }) else null
+            SuggestionCard(s, canReplace, onClick)
         }
     }
 }
@@ -52,9 +62,12 @@ private fun Bubble(text: String, fromUser: Boolean) {
     }
 }
 
-/** «Reemplazar» bloqueado se ve apagado pero se puede tocar: así la hoja explica por qué. */
+/**
+ * «Reemplazar» bloqueado se ve apagado pero se puede tocar: así la hoja explica por qué. Sin [onClick] (una sugerencia
+ * de otro ejercicio o de otra sesión) no hay botón: es solo texto.
+ */
 @Composable
-private fun SuggestionCard(s: AiChatSuggestion, canReplace: Boolean, onClick: () -> Unit) {
+private fun SuggestionCard(s: AiChatSuggestion, canReplace: Boolean, onClick: (() -> Unit)?) {
     Row(
         Modifier.padding(top = Spacing.xs).widthIn(max = 300.dp).clip(MaterialTheme.shapes.medium)
             .background(FtColors.Elevated).padding(Spacing.sm),
@@ -65,6 +78,7 @@ private fun SuggestionCard(s: AiChatSuggestion, canReplace: Boolean, onClick: ()
             Text(s.name, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary)
             Text(s.reason, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
         }
+        if (onClick == null) return@Row
         OutlinedButton(
             onClick = onClick,
             colors = if (canReplace) ButtonDefaults.outlinedButtonColors() else ButtonDefaults.outlinedButtonColors(contentColor = FtColors.Ink5),

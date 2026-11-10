@@ -24,6 +24,11 @@ class AiChatTextsTest {
         assertEquals("Hiciste muchas consultas seguidas. Probá de nuevo más tarde.", aiChatErrorText(AiChatError.TooManyAttempts(null)))
     }
 
+    @Test fun `un 429 de pocos segundos no dice un minuto`() {
+        assertEquals("Hiciste muchas consultas seguidas. Probá de nuevo en unos segundos.", aiChatErrorText(AiChatError.TooManyAttempts(8)))
+        assertEquals("Hiciste muchas consultas seguidas. Probá de nuevo en 1 min.", aiChatErrorText(AiChatError.TooManyAttempts(60)))
+    }
+
     @Test fun `las consultas que quedan`() {
         assertEquals("Te queda 1 consulta hoy", remainingText(1))
         assertEquals("Te quedan 5 consultas hoy", remainingText(5))

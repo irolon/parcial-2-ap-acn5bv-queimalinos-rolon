@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 25,
-    "identityHash": "50359eb1ae3189eba7038668fdd28e70",
+    "identityHash": "3e575e7d0bd65fc893d4badfb3dca3ac",
     "entities": [
       {
         "tableName": "health_snapshot",
@@ -3048,7 +3048,7 @@
       },
       {
         "tableName": "ai_chat_messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `id` TEXT NOT NULL, `role` TEXT NOT NULL, `content` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `suggestionsJson` TEXT, PRIMARY KEY(`ownerId`, `id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `id` TEXT NOT NULL, `role` TEXT NOT NULL, `content` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `suggestionsJson` TEXT, `askedSessionId` TEXT, `askedExerciseId` TEXT, PRIMARY KEY(`ownerId`, `id`))",
         "fields": [
           {
             "fieldPath": "ownerId",
@@ -3084,6 +3084,16 @@
             "fieldPath": "suggestionsJson",
             "columnName": "suggestionsJson",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "askedSessionId",
+            "columnName": "askedSessionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "askedExerciseId",
+            "columnName": "askedExerciseId",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -3109,7 +3119,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '50359eb1ae3189eba7038668fdd28e70')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3e575e7d0bd65fc893d4badfb3dca3ac')"
     ]
   }
 }

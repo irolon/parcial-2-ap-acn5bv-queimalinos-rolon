@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fittrainer.data.chat.AiChatError
 import com.fittrainer.data.chat.AiChatException
+import com.fittrainer.data.chat.AiChatMessage
 import com.fittrainer.data.chat.AiChatQuota
 import com.fittrainer.data.chat.AiChatRepository
 import com.fittrainer.data.chat.AiChatToday
@@ -105,12 +106,18 @@ class AiChatViewModel @Inject constructor(
      * Busca el ejercicio en la biblioteca de Room; si no está, la refresca una vez. Si sigue sin estar, avisa. De a
      * una búsqueda: un segundo toque mientras tanto no hace nada.
      */
-    fun onReplaceSuggestion(exerciseId: String, onResolved: (LibraryExercise) -> Unit) {
+    fun onReplaceSuggestion(message: AiChatMessage, exerciseId: String, target: () -> AiChatTarget, onResolved: (LibraryExercise) -> Unit) {
+        // La hoja ya no muestra «Reemplazar» en esas sugerencias; esto cubre un toque que llegue igual.
+        if (!message.canReplaceFor(target())) return
         if (resolving?.isActive == true) return
         resolving = viewModelScope.launch {
             val id = owner()
             val found = find(id, exerciseId) ?: library.refresh(id).let { find(id, exerciseId) }
-            if (found != null) onResolved(found) else showNotice(AI_SUGGESTION_MISSING)
+            when {
+                found == null -> showNotice(AI_SUGGESTION_MISSING)
+                // [target] es el de ahora: si el alumno cambió de ejercicio mientras se buscaba, no se reemplaza.
+                message.canReplaceFor(target()) -> onResolved(found)
+            }
         }
     }
 

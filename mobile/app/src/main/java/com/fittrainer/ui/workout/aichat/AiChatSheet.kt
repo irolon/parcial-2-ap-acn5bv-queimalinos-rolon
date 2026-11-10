@@ -15,9 +15,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,7 +51,12 @@ fun AiChatSheet(
     val focus = remember { FocusRequester() }
     val list = rememberLazyListState()
     val dictate = rememberDictation(viewModel::onDictated)
+    // Una sugerencia que se resuelve tarde se aplica sobre la sesión y el ejercicio de ese momento, no los del toque.
+    val currentTarget by rememberUpdatedState(target)
+    val currentOnReplace by rememberUpdatedState(onReplace)
     LaunchedEffect(Unit) { viewModel.onOpen() }
+    // La hoja puede irse sin onDismissRequest (rotación, salir de la pantalla): la búsqueda en curso se cancela igual.
+    DisposableEffect(viewModel) { onDispose { viewModel.onClose() } }
     LaunchedEffect(state.messages.size, state.sending) {
         val last = state.messages.size + (if (state.sending) 1 else 0) - 1
         if (last >= 0) list.animateScrollToItem(last)
@@ -74,8 +81,8 @@ fun AiChatSheet(
                 }
                 items(state.messages, key = { it.id }) { m ->
                     AiChatBubble(
-                        m, canReplace,
-                        onReplace = { s -> viewModel.onReplaceSuggestion(s.exerciseId, onReplace) },
+                        m, actionable = m.canReplaceFor(target), canReplace = canReplace,
+                        onReplace = { s -> viewModel.onReplaceSuggestion(m, s.exerciseId, { currentTarget }) { currentOnReplace(it) } },
                         onReplaceLocked = { viewModel.showNotice(REPLACE_LOCKED) },
                     )
                 }

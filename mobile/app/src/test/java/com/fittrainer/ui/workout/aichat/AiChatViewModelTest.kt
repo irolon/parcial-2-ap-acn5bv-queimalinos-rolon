@@ -3,6 +3,7 @@ package com.fittrainer.ui.workout.aichat
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
+import com.fittrainer.data.chat.AiChatMessage
 import com.fittrainer.data.chat.AiChatRepository
 import com.fittrainer.data.api.LibraryResponse
 import com.fittrainer.data.library.LibraryExercise
@@ -47,6 +48,7 @@ class AiChatViewModelTest {
     private val connectivity = FakeConnectivityObserver()
     private val vm by lazy { AiChatViewModel(repo, library, FakeStudentSession(), connectivity, SavedStateHandle()) }
     private val target = AiChatTarget("s1", "e1", "Sentadilla")
+    private val asked = AiChatMessage("r1", false, "Probá press", Instant.EPOCH, emptyList(), "s1", "e1")
 
     private fun chatTest(block: suspend TestScope.() -> Unit) = runTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
@@ -144,7 +146,7 @@ class AiChatViewModelTest {
 
     @Test fun `reemplazar una sugerencia que no esta en Room refresca la biblioteca una vez`() = chatTest {
         var resolved: LibraryExercise? = null
-        vm.onReplaceSuggestion("e2") { resolved = it }
+        vm.onReplaceSuggestion(asked, "e2", { target }) { resolved = it }
         runCurrent()
         assertEquals("e2", resolved?.id)
         assertEquals(1, exerciseApi.calls)
@@ -152,7 +154,7 @@ class AiChatViewModelTest {
 
     @Test fun `una sugerencia que no aparece ni refrescando avisa`() = chatTest {
         var resolved: LibraryExercise? = null
-        vm.onReplaceSuggestion("nada") { resolved = it }
+        vm.onReplaceSuggestion(asked, "nada", { target }) { resolved = it }
         runCurrent()
         assertNull(resolved)
         assertEquals(AI_SUGGESTION_MISSING, vm.uiState.value.banner)
@@ -162,7 +164,7 @@ class AiChatViewModelTest {
         val gate = CompletableDeferred<Unit>()
         exerciseApi.gate = gate
         var resolved: LibraryExercise? = null
-        vm.onReplaceSuggestion("e2") { resolved = it }
+        vm.onReplaceSuggestion(asked, "e2", { target }) { resolved = it }
         runCurrent()
         vm.onClose()
         gate.complete(Unit)
@@ -174,9 +176,9 @@ class AiChatViewModelTest {
         val gate = CompletableDeferred<Unit>()
         exerciseApi.gate = gate
         var calls = 0
-        vm.onReplaceSuggestion("e2") { calls++ }
+        vm.onReplaceSuggestion(asked, "e2", { target }) { calls++ }
         runCurrent()
-        vm.onReplaceSuggestion("e2") { calls++ }
+        vm.onReplaceSuggestion(asked, "e2", { target }) { calls++ }
         gate.complete(Unit)
         runCurrent()
         assertEquals(1, calls)
