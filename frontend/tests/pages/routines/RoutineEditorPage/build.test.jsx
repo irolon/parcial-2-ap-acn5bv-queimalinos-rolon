@@ -121,7 +121,7 @@ describe('RoutineEditorPage: armado', () => {
     await renderEditor();
     await user.selectOptions(screen.getByLabelText('Objetivo'), 'strength');
     expect(screen.getByLabelText('Objetivo')).toHaveValue('strength');
-    expect(screen.queryByRole('option', { name: 'Sin definir' })).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Objetivo')).queryByRole('option', { name: 'Sin definir' })).not.toBeInTheDocument();
     const monday = screen.getByRole('checkbox', { name: 'Lunes' });
     await user.click(monday);
     expect(monday).toBeChecked();
