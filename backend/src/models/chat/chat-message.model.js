@@ -23,6 +23,9 @@ export const CHAT_DAILY_LIMIT = 20;
 export const CHAT_ATTEMPT_LIMIT = 30;
 export const CHAT_ATTEMPT_WINDOW_MS = 60 * 60 * 1000;
 export const CHAT_ATTEMPTS_MESSAGE = 'Hiciste muchas consultas seguidas. Probá de nuevo más tarde.';
+/** GET /chat/history: días por página (por defecto y tope). */
+export const HISTORY_DAYS_DEFAULT = 7;
+export const HISTORY_DAYS_MAX = 14;
 /** Últimos mensajes del día que viajan a n8n como memoria. */
 export const HISTORY_SIZE = 6;
 /** Ejercicios de la biblioteca que se le ofrecen a la IA para sugerir. */

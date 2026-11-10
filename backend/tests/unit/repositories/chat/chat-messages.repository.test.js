@@ -39,9 +39,20 @@ describe('chat-messages.repository', () => {
     expect(callsOf('select')).toEqual([['id, role, content, created_at']]);
   });
 
+  it('findMessagesBefore: los del alumno antes de `before`, nuevos primero (la respuesta antes que su consulta), con tope', async () => {
+    fake.result = { data: [{ id: 'm1' }], error: null };
+    await expect(repo.findMessagesBefore('s-1', FROM, 280)).resolves.toEqual([{ id: 'm1' }]);
+    expect(callsOf('select')).toEqual([[CHAT_MESSAGE_COLUMNS]]);
+    expect(callsOf('eq')).toEqual([['student_id', 's-1']]);
+    expect(callsOf('lt')).toEqual([['created_at', FROM]]);
+    expect(callsOf('order')).toEqual([['created_at', { ascending: false }], ['role', { ascending: true }]]);
+    expect(callsOf('limit')).toEqual([[280]]);
+  });
+
   it('un error de la base es 500', async () => {
     fake.result = { data: null, error: { message: 'boom' } };
     await expect(repo.findDayMessages('s-1', FROM, TO)).rejects.toMatchObject({ statusCode: 500 });
     await expect(repo.insertExchange([])).rejects.toMatchObject({ statusCode: 500 });
+    await expect(repo.findMessagesBefore('s-1', FROM, 1)).rejects.toMatchObject({ statusCode: 500 });
   });
 });
