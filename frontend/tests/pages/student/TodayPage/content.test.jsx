@@ -39,10 +39,13 @@ describe('TodayPage: la rutina del día', () => {
     expect(await screen.findByText('1 de 2 entrenamientos')).toBeInTheDocument();
   });
 
-  it('pide la rutina del día, las rutinas, el historial (primera página) y la racha del alumno', async () => {
+  it('pide la rutina del día, las rutinas, el historial (primera página), la racha, los turnos y el entrenador/a', async () => {
     const { fetchMock } = open({ today: todayRoutine(), mine: [mineRoutine()] });
     await screen.findByText('0 de 2 entrenamientos');
+    await screen.findByText('No tenés turnos en los próximos 14 días.');
     expect(calls(fetchMock).map(([path]) => path).sort()).toEqual([
+      '/appointments?from=2026-11-01&to=2026-11-14',
+      '/messages/s-1?limit=1',
       '/routines/mine',
       '/routines/today',
       '/students/s-1/sessions?page=1&limit=20',

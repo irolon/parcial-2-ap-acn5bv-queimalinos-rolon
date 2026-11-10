@@ -16,12 +16,15 @@ export function useProgressOverview(studentId, range) {
   });
 }
 
+/** Opciones de la curva de un ejercicio: las comparten la curva del panel y la progresión comparada (misma caché). */
+export const exerciseProgressOptions = (exerciseId, studentId, range) => ({
+  queryKey: [...PROGRESS_KEY, 'exercise', exerciseId, studentId, range?.from ?? null, range?.to ?? null],
+  queryFn: () => getExerciseProgress(exerciseId, studentId, range),
+  enabled: Boolean(exerciseId) && Boolean(studentId),
+});
+
 export function useExerciseProgress(exerciseId, studentId, range) {
-  return useQuery({
-    queryKey: [...PROGRESS_KEY, 'exercise', exerciseId, studentId, range?.from ?? null, range?.to ?? null],
-    queryFn: () => getExerciseProgress(exerciseId, studentId, range),
-    enabled: Boolean(exerciseId) && Boolean(studentId),
-  });
+  return useQuery(exerciseProgressOptions(exerciseId, studentId, range));
 }
 
 export function useBodyProgress(studentId) {

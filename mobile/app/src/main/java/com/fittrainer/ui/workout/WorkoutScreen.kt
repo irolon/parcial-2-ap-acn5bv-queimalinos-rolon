@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.data.notifications.notificationsAllowed
+import com.fittrainer.data.workout.canReplace
 import com.fittrainer.data.workout.isOver
 import com.fittrainer.data.workout.pendingSets
 import com.fittrainer.ui.components.exercise.ExerciseDetail
@@ -40,6 +41,9 @@ import com.fittrainer.ui.sync.UploadStatusViewModel
 import com.fittrainer.ui.sync.sessionUploadText
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import com.fittrainer.ui.workout.aichat.AI_OFFLINE
+import com.fittrainer.ui.workout.aichat.AiChatSheet
+import com.fittrainer.ui.workout.aichat.AiChatTarget
 import com.fittrainer.ui.workout.components.ExerciseListSheet
 import com.fittrainer.ui.workout.components.exit.ExitMenu
 import com.fittrainer.ui.workout.components.exit.ExitStep
@@ -51,7 +55,7 @@ import com.fittrainer.ui.workout.service.WorkoutService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private enum class Overlay { Edit, Technique, Replace, List }
+private enum class Overlay { Edit, Technique, Replace, List, Ai }
 
 /**
  * Cuánto sube el snackbar desde abajo para no tapar Técnica / Reemplazar / IA (alto de BottomActions + margen).
@@ -132,6 +136,8 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
                 onDismissError = viewModel::dismissError,
                 onReplaceLocked = { scope.launch { snackbar.flash(REPLACE_LOCKED) } },
                 onPlannedRestAdjust = viewModel::onPlannedRestAdjust,
+                onAi = { overlay = Overlay.Ai },
+                onAiLocked = { scope.launch { snackbar.flash(AI_OFFLINE) } },
             ),
         )
         // Encima de Técnica / Reemplazar: el aviso no tapa los botones mientras se ve.
@@ -173,6 +179,15 @@ fun WorkoutScreen(onExit: () -> Unit, viewModel: WorkoutViewModel = hiltViewMode
             viewModel.onSelectExercise(it)
             overlay = null
         }
+        Overlay.Ai -> AiChatSheet(
+            AiChatTarget(workout.id, exercise.exerciseId, exercise.name),
+            canReplace = workout.canReplace(workout.cursor.position),
+            onDismiss = { overlay = null },
+            onReplace = {
+                viewModel.onReplace(it)
+                overlay = null
+            },
+        )
         null -> Unit
     }
 }

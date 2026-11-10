@@ -580,27 +580,74 @@ Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda
 
 ## Módulo: Asistente IA del entrenador
 
+Spec: `docs/superpowers/specs/2026-11-06-trainer-ai-design.md` (tarjeta 15). La UI es la tarjeta 16. **La IA nunca asigna:** propone, el PT revisa y guarda como plantilla; asignar es el paso explícito de `POST /routine-templates/:id/instantiate`.
+
 ### POST /trainer-ai/generate-routine
 
-Pide al asistente IA que genere una propuesta de rutina para un alumno.
+Pide una propuesta de rutina: de 1 a 7 **bloques**, cada uno con nombre, días y ejercicios, sin repetir días entre bloques (1 bloque = la misma rutina en todos sus días; 2 o más = un split).
 
 **Headers:** `Authorization: Bearer <token>` (rol: trainer)
 
 **Body**
 
+| Campo | Regla |
+|---|---|
+| `student_id` | Opcional. Tiene que ser un alumno **activo del trainer** (si no, 404 `STUDENT_NOT_FOUND`). Lo que falte del body se completa con el alumno: `goal`, `level`, `gym_equipment` → `available_equipment` e `injuries` Solo se completa un campo **ausente** del body: `injuries` vacío o `null` es "sin lesiones" y `available_equipment` `[]` o `null` es "solo bodyweight" (el PT los borró a propósito). El `gym_equipment` de la ficha es texto libre: se normaliza al catálogo sin importar mayúsculas, acentos ni plural (mancuerna→`dumbbell`, barra→`barbell`, máquina→`machine`, polea→`cable`, pesa rusa/kettlebell→`kettlebell`, banda/elástico→`band`, peso corporal/sin equipamiento→`bodyweight`, más los códigos en inglés; `models/exercises/equipment.model.js`). Lo que no mapea (p. ej. "Banco plano") no entra en `available_equipment`: se suma al final de `preferences` como "Equipamiento extra del gimnasio: Banco plano". |
+| `goal` | `hypertrophy \| strength \| weight_loss \| tonify`. Obligatorio, salvo que lo complete el alumno. |
+| `level` | `beginner \| intermediate \| advanced`. Obligatorio, salvo que lo complete el alumno. |
+| `frequency_per_week` | Entero de 1 a 7. Obligatorio. |
+| `session_duration_min` | Entero de 20 a 180. Opcional (por defecto 60). |
+| `available_equipment` | Subconjunto sin repetidos de `barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`. `[]` o `null` → solo `bodyweight` (no se completa con el alumno). |
+| `injuries`, `preferences` | Texto opcional, hasta 500 caracteres cada uno. `injuries` vacío o `null` explícito = sin lesiones (no se completa con el alumno). |
+| `base_template_id` | Opcional. Una plantilla del trainer para adaptarla (si no, 404 `TEMPLATE_NOT_FOUND`). |
+
+Los campos de más se descartan.
+
+**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 30 s. **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
+
 ```json
 {
-  "student_id": "uuid (opcional, si es para un alumno específico)",
-  "goal": "hypertrophy | strength | weight_loss | tonify",
-  "level": "beginner | intermediate | advanced",
-  "frequency_per_week": 4,
-  "session_duration_min": 60,
-  "available_equipment": ["barbell", "dumbbell", "machine", "cable"],
-  "injuries": "string (opcional, ej: 'rodilla derecha')",
-  "preferences": "string (opcional, ej: 'priorizar tren superior')",
-  "base_template_id": "uuid (opcional, si quiere adaptar una plantilla existente)"
+  "params": {
+    "goal": "hypertrophy", "level": "beginner", "frequency_per_week": 3, "session_duration_min": 60,
+    "available_equipment": ["dumbbell", "bodyweight"], "injuries": "string | null", "preferences": "string | null"
+  },
+  "library": [ { "id": "uuid", "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" } ],
+  "previous_templates": [ { "goal": "…", "level": "… | null", "days": ["monday"], "exercise_names": ["…"] } ],
+  "base_template": null,
+  "previous_routines": [ { "goal": "hypertrophy", "days": ["monday"], "exercise_names": ["…"] } ],
+  "student_history": {
+    "sessions_per_week": 2.5, "days_since_last_session": 3, "avg_rpe": 7.5,
+    "exercises": [ { "exercise_id": "uuid", "exercise_name": "Press banca plano", "muscle_group": "chest",
+      "sessions": 4, "best_set": { "kg": 40, "reps": 8 }, "last_kg": 40 } ]
+  },
+  "current_routine": [ { "goal": "hypertrophy", "days": ["monday", "thursday"],
+    "exercises": [ { "exercise_name": "Press banca plano", "muscle_group": "chest", "sets": 4, "reps": 8, "suggested_kg": 40 } ] } ]
 }
 ```
+
+- `library`: ejercicios accesibles (globales y propios) cuyo equipamiento está en `available_equipment` o es `bodyweight`, hasta 200. Con `base_template_id` van además, primero y dentro de los 200, los ejercicios de la plantilla base que siguen accesibles (aunque su equipamiento no esté en la lista).
+- `previous_templates`: las 3 plantillas más recientes del trainer, sin su nombre (los PT suelen ponerle el del alumno).
+- `base_template`: `null`, o (sin el nombre de la plantilla ni las notas de sus ejercicios, que son texto libre del PT y pueden traer datos del alumno: RNF-26) `{ goal, level, days, exercises: [{ exercise_id, exercise_name, sets, reps, rest_seconds, suggested_kg }] }` si vino `base_template_id`.
+- `previous_routines`: las 3 rutinas más recientes del trainer con el mismo `goal`, de **otros** alumnos (sin la del alumno de la generación), sin nombre ni notas: `goal`, `days` y los nombres de los ejercicios en orden.
+- `student_history`: `null` sin `student_id`. Con alumno, el resumen de sus sesiones terminadas de los últimos 28 días: `sessions_per_week` (desde la primera sesión de la ventana, mínimo 1 semana), `days_since_last_session` (días de Argentina; `null` sin sesiones), `avg_rpe` (`null` sin RPE) y hasta 15 ejercicios, de más a menos sesiones, con `best_set` (la serie de más kilos; sin kilos, la de más reps) y `last_kg` (la carga de la última sesión). Sin sesiones: `{ "sessions_per_week": 0, "days_since_last_session": null, "avg_rpe": null, "exercises": [] }`. De acá sale el `suggested_kg`, con una progresión prudente.
+- `current_routine`: `null` sin `student_id`. Con alumno, sus rutinas activas (`[]` si no tiene), sin nombre ni notas: `goal`, `days` y los ejercicios en orden con `sets`, `reps` y `suggested_kg`.
+- `params.injuries` y `params.preferences` son **texto libre que se manda a la IA** tal cual (la IA necesita las lesiones). La UI del asistente (tarjeta 16) tiene que avisarle al PT que no ponga ahí datos personales.
+
+**Respuesta esperada de n8n** (el backend la valida):
+
+```json
+{
+  "routines": [
+    { "name": "Empuje", "days": ["monday", "thursday"],
+      "exercises": [ { "exercise_id": "uuid", "sets": 4, "reps": 8, "rest_seconds": 90, "suggested_kg": null, "notes": "Bajada controlada" } ] }
+  ],
+  "rationale": "Por qué se armó así"
+}
+```
+
+Reglas: 1 a 7 bloques; `name` de 1 a 60; `days` de `monday..sunday`, al menos 1, sin repetidos ni dentro del bloque ni entre bloques, y el total de días igual a `frequency_per_week`; 1 a 15 ejercicios por bloque, cada `exercise_id` **de la biblioteca que se mandó**; `sets` entero 1-10, `reps` entero 1-50, `rest_seconds` entero 0-600, `suggested_kg` `null` o número 0-500, `notes` opcional hasta 200; `rationale` de 1 a 1000. Un tipo incorrecto (`"sets": "cuatro"`) se rechaza; los campos de más se descartan. Si n8n no pudo parsear lo que devolvió el LLM responde `200 { "error": "INVALID_JSON" }`, que no pasa esta validación.
+
+**Guardado:** una fila en `ai_routine_generations` con `trainer_id`, `student_id`, `input_params` (los `params` de arriba más `base_template_id`, sin la biblioteca) y `generated_routine` (la propuesta validada). Las fallidas no se guardan (pero cuentan para el límite).
 
 **200 OK**
 
@@ -609,40 +656,51 @@ Pide al asistente IA que genere una propuesta de rutina para un alumno.
   "data": {
     "generation_id": "uuid",
     "routine_proposal": {
-      "name": "Hipertrofia 4 días",
-      "goal": "hypertrophy",
-      "days": ["monday", "tuesday", "thursday", "friday"],
-      "exercises": [
-        {
-          "day": "monday",
-          "exercise_id": "uuid",
-          "exercise_name": "Press banca plano",
-          "sets": 4,
-          "reps": 8,
-          "rest_seconds": 90,
-          "suggested_kg": null,
-          "notes": "Bajada controlada en 3 segundos"
-        }
+      "routines": [
+        { "name": "Empuje", "days": ["monday", "thursday"],
+          "exercises": [ { "exercise_id": "uuid", "exercise_name": "Press banca plano", "sets": 4, "reps": 8, "rest_seconds": 90, "suggested_kg": null, "notes": "Bajada controlada" } ] }
       ],
-      "rationale": "Se priorizó volumen en pectoral y dorsal por el objetivo de hipertrofia..."
+      "rationale": "…"
     }
   }
 }
 ```
 
-**Errores:** `400 VALIDATION_ERROR`, `503 AI_UNAVAILABLE` (n8n timeout 30s), `429 RATE_LIMIT_EXCEEDED`
+**Errores**
 
-### POST /trainer-ai/refine
-
-Pide a la IA que refine una rutina propuesta (más volumen, sustituir ejercicio, etc.).
-
-**Body:** `{ "generation_id": "uuid", "instruction": "string" }`
+| Código | Cuándo |
+|---|---|
+| 400 `VALIDATION_ERROR` | Body inválido, o falta `goal`/`level` ("goal es obligatorio"; con `student_id`: "…: el alumno no lo tiene cargado") |
+| 404 `STUDENT_NOT_FOUND` | `student_id` inexistente, de otro trainer o dado de baja |
+| 404 `TEMPLATE_NOT_FOUND` | `base_template_id` inexistente o de otro trainer |
+| 429 `RATE_LIMIT_EXCEEDED` | 20 intentos del trainer en la última hora: cuentan todos los que llegan a n8n, exitosos o fallidos (en memoria), y las generaciones guardadas en la base; aplica `max(guardadas, intentos) ≥ 20`. También si ya hay una generación del trainer en curso ("Ya hay una propuesta en curso…", `Retry-After` = lo que le falta a la generación en curso para los 30 s del timeout de n8n, redondeado hacia arriba, mínimo 1). Header `Retry-After` en segundos, expuesto por CORS (`Access-Control-Expose-Headers`) para que la web lo lea |
+| 502 `AI_INVALID_RESPONSE` | n8n respondió 2xx con un body que no es JSON, o la propuesta no pasa la validación (los detalles van al log, `details: []`). No se guarda nada |
+| 503 `AI_UNAVAILABLE` | Falta `N8N_TRAINER_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 30 s, error de red (también si la conexión se corta o vence el timeout mientras se lee el body) o n8n responde no 2xx (p. ej. `502 { "error": "LLM_UNAVAILABLE" }`). Mensaje: "El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano." |
 
 ### POST /trainer-ai/save-as-template
 
-Marca una generación IA como plantilla reutilizable.
+Guarda la propuesta como plantillas: **una por bloque**.
 
-**Body:** `{ "generation_id": "uuid", "template_name": "string" }`
+**Headers:** `Authorization: Bearer <token>` (rol: trainer)
+
+**Body:** `{ "generation_id": "uuid", "template_name": "string (1-120)" }`
+
+- Cada plantilla queda con `generated_by_ai = true`, `goal` y `level` de la generación, `frequency_per_week` = días del bloque y `structure` v1 (`days` y `exercises` con `order`).
+- Nombre: `template_name` si hay un solo bloque, o `"<template_name> · <bloque>"` (cortado a 120) si hay varios.
+- Los ejercicios se revalidan (globales o propios y que sigan existiendo).
+- **Todo o nada** (función SQL `save_ai_generation_templates`): se crean todas las plantillas y la generación queda con `was_used = true`, `routine_template_id` = la primera y `routine_template_ids` = todas, o no queda nada.
+
+**201 Created**
+
+```json
+{ "data": { "generation_id": "uuid", "templates": [ { "id": "uuid", "name": "Fuerza · Empuje", "days": ["monday", "thursday"] } ] } }
+```
+
+**Errores:** 400 `VALIDATION_ERROR`; 404 `GENERATION_NOT_FOUND` (inexistente o de otro trainer); 409 `GENERATION_ALREADY_SAVED`; **400 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio dejó de existir o de ser accesible, con `details: [{ "field": "exercise_id", "message": "<id>" }]` (no se crea nada).
+
+### POST /trainer-ai/refine — fuera de alcance
+
+Descartado en la tarjeta 15: el PT ajusta la propuesta en el editor (tarjeta 16) antes o después de guardarla.
 
 ---
 
@@ -1163,28 +1221,102 @@ Desafíos del alumno (activos, completados y fallidos), el más nuevo primero. R
 
 ## Módulo: Chat IA del alumno
 
+Spec: `docs/superpowers/specs/2026-11-07-student-ai-chat-design.md` (tarjeta 13). El asistente responde dudas del alumno durante la sesión (reemplazos, técnica, máquina ocupada). Tabla `chat_messages` (`session_id` admite null). **Sin conexión** el cliente deshabilita el chat (AL-10): el backend no tiene un error propio para eso.
+
 ### POST /chat
 
-Envía un mensaje al asistente IA en sesión.
+Envía un mensaje al asistente IA.
 
-**Headers:** `Authorization: Bearer <token>` (rol: alumno)
+**Headers:** `Authorization: Bearer <token>` (rol: alumno; otro rol → 403)
 
 **Body**
 
 ```json
+{ "message": "string (1-500)", "session_id": "uuid (opcional)", "current_exercise_id": "uuid (opcional)" }
+```
+
+- `message` se recorta; vacío o de más de 500 → 400 `VALIDATION_ERROR`. `null` en los opcionales = no enviado. Los campos de más se descartan, incluido el `context.gym_equipment` del contrato viejo: el equipamiento sale de la ficha del alumno (lo carga el PT).
+- `session_id`: la sesión se guarda en el servidor recién al terminar (offline-first), así que **si no existe se acepta** y el mensaje queda sin sesión. Si existe, tiene que ser del alumno (si no, 404 `SESSION_NOT_FOUND`, sin revelar que existe) y no estar terminada (400 `SESSION_FINISHED`).
+- `current_exercise_id`: si no es un ejercicio accesible para el alumno (global o de su PT), **se ignora sin error**.
+- **Límite:** 20 mensajes del alumno (`role = 'user'`) por día de Argentina (UTC-3, de 00:00 a 00:00). Las fallas no se guardan, así que no cuentan.
+- **Una consulta a la vez por alumno** (en memoria, por proceso): mientras una está en curso, otra del mismo alumno (otra pestaña, web y celular) es 429 `CHAT_IN_PROGRESS`. Sin esto, dos envíos a la vez con 19 pasarían los dos el límite.
+- **Tope de intentos por hora** (en memoria, por proceso): 30 consultas que llegan a n8n por alumno en una ventana deslizante de 1 h, salgan bien o mal. Las fallas no cuentan para el límite del día, pero cada una es una llamada a la IA: pasado el tope → 429 `RATE_LIMIT_EXCEEDED` con `Retry-After`, sin llamar a n8n.
+
+**Llamada a n8n.** `POST ${N8N_STUDENT_AI_WEBHOOK_URL}` (workflow `student-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de **16 s** (antes 9 s; se subió el 09/11 porque KIMI a veces tarda más de 8 s y esas respuestas se perdían). El RNF-04 pide que el 95 % de las respuestas lleguen en menos de 10 s; el timeout es el corte para las que se demoran. **Sin datos personales** (RNF-26: nunca nombre, email, fecha de nacimiento, avatar ni ids del alumno o de la sesión). El payload tiene exactamente estas claves:
+
+```json
 {
-  "session_id": "uuid",
-  "message": "string (1–500 chars)",
-  "context": {
-    "current_exercise_id": "uuid (opcional)",
-    "gym_equipment": ["barbell", "dumbbell", "cable"]
+  "message": "¿Con qué reemplazo el press de banca?",
+  "exercise": { "name": "Press banca plano", "muscle_group": "chest", "equipment": "barbell" },
+  "student": { "goal": "hypertrophy | null", "level": "beginner | null", "gym_equipment": ["dumbbell"], "injuries": "string | null" },
+  "alternatives": [ { "id": "uuid", "name": "Press con mancuernas", "muscle_group": "chest", "equipment": "dumbbell" } ],
+  "todays_routine": [ { "exercise_name": "Press banca plano", "muscle_group": "chest", "sets": 4, "reps": 8, "suggested_kg": 40, "is_current": true } ],
+  "history": [ { "role": "user", "content": "…" }, { "role": "assistant", "content": "…" } ]
+}
+```
+
+- `exercise`: el ejercicio actual, o `null` si no vino o no es accesible.
+- `student.gym_equipment`: el de la ficha normalizado al catálogo (`barbell, dumbbell, machine, cable, bodyweight, kettlebell, band`) y sin repetir: el texto libre se mapea igual que en el asistente del entrenador ("barra"→`barbell`, "Mancuernas"→`dumbbell`, etc.; `models/exercises/equipment.model.js`) y lo que no mapea no se manda. `injuries` recortado (vacío → `null`).
+- `alternatives`: hasta 30 ejercicios accesibles (globales y del PT del alumno) del mismo grupo muscular que `exercise` (de todos si es `null`), sin el ejercicio actual **ni los de `todays_routine`**, cuyo equipamiento esté en `gym_equipment` o sea `bodyweight`; por nombre.
+- `todays_routine`: los ejercicios de la rutina que el alumno está haciendo, en orden, sin el nombre de la rutina ni las notas (RNF-26), con `is_current` en el ejercicio actual; `null` si no tiene. La sesión llega al servidor recién al terminar, así que la rutina se deduce: la de hoy (día de Argentina) si tiene el ejercicio actual; si no, la activa más nueva que lo tenga; si ninguna, la de hoy.
+- `history`: los últimos 6 mensajes del día del alumno (antes de este), en orden.
+
+**Respuesta esperada de n8n** (el backend la valida):
+
+```json
+{ "response": "texto (1-1500)", "suggestions": [ { "exercise_id": "uuid", "reason": "texto (1-200)" } ] }
+```
+
+- `response` obligatorio (se recorta). Falta, vacío, no es texto, pasa de 1500, o la respuesta trae `error` (p. ej. `{ "error": "INVALID_JSON" }`) → 502 `AI_INVALID_RESPONSE`.
+- `suggestions` es informativo: se queda con las **3 primeras válidas**, solo con `exercise_id` de `alternatives`, `reason` de 1 a 200 y sin repetir. Las que no cumplen (o un `suggestions` que no es lista) **se descartan sin rechazar la respuesta**. El nombre sale de la biblioteca, no de la IA.
+
+**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`) y los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyó el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche). A igual `created_at` se ordena primero el del alumno. Las sugerencias no se guardan. La sesión no se toca nunca.
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "message_id": "uuid (el de la respuesta)",
+    "response": "Probá con press con mancuernas…",
+    "suggestions": [ { "exercise_id": "uuid", "name": "Press con mancuernas", "reason": "Mismo patrón con tu equipamiento" } ],
+    "remaining_today": 17
   }
 }
 ```
 
-**200 OK** — `{ message_id, response, suggestions[] }`
+**Errores**
 
-**Errores:** `503 AI_UNAVAILABLE` (n8n timeout 10s), `400 SESSION_FINISHED`, `503 OFFLINE_MODE` (sin conexión)
+| Código | Cuándo |
+|---|---|
+| 400 `VALIDATION_ERROR` | Body inválido (`message`, `session_id` o `current_exercise_id`) |
+| 400 `SESSION_FINISHED` | La sesión existe y ya terminó. No se llama a n8n |
+| 404 `SESSION_NOT_FOUND` | La sesión existe y es de otro alumno. No se llama a n8n |
+| 429 `CHAT_LIMIT_REACHED` | 20 mensajes del alumno hoy (día de Argentina). "Llegaste al límite de consultas de hoy. Mañana podés seguir." Sin `Retry-After`. No se llama a n8n |
+| 429 `CHAT_IN_PROGRESS` | El alumno ya tiene una consulta en curso. "Esperá la respuesta anterior." Código propio (no `CHAT_LIMIT_REACHED`) para que el cliente no deje el contador en 0. No se llama a n8n |
+| 429 `RATE_LIMIT_EXCEEDED` | Pasó el tope de 30 intentos por hora (exitosos o fallidos). "Hiciste muchas consultas seguidas. Probá de nuevo más tarde." Con `Retry-After`. No se llama a n8n |
+| 500 `INTERNAL_ERROR` | La inserción del par no devolvió la respuesta guardada |
+| 502 `AI_INVALID_RESPONSE` | La respuesta de n8n no pasa la validación o no es JSON. No se guarda nada |
+| 503 `AI_UNAVAILABLE` | Falta `N8N_STUDENT_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 16 s, error de red o n8n responde no 2xx. "El asistente no está disponible ahora. Seguí con tu entrenamiento." No se guarda nada |
+
+### GET /chat/today
+
+La conversación del día del alumno (día de Argentina), para que el panel la recupere al recargar.
+
+**Headers:** `Authorization: Bearer <token>` (rol: alumno; otro rol → 403)
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "messages": [ { "id": "uuid", "role": "user | assistant", "content": "…", "created_at": "ISO 8601" } ],
+    "remaining_today": 17
+  }
+}
+```
+
+`messages` va del más viejo al más nuevo (en el mismo instante, el del alumno antes que la respuesta), sin las sugerencias. `remaining_today` = 20 − mensajes del alumno hoy, nunca negativo. Solo devuelve los del alumno autenticado.
 
 ---
 
@@ -1612,7 +1744,7 @@ Marca como leídos los mensajes de la **otra** parte: el PT marca los del alumno
 > **Nota:** Esta es la versión 1.1 del contrato (Abril 2026). Cambios respecto a v1.0:
 > - Añadidos endpoints de plantillas de rutinas (`/routine-templates`: CRUD, `from-routine` e `instantiate` como copia, sin `customizations`).
 > - Añadidos `PATCH` y `DELETE /routines/:id/exercises/:routineExerciseId`.
-> - Añadido módulo completo de Asistente IA del entrenador (`/trainer-ai/*`).
+> - Asistente IA del entrenador (`/trainer-ai/*`): `generate-routine` propone 1 a 7 bloques y `save-as-template` crea una plantilla por bloque (tarjeta 15); `refine` queda fuera de alcance.
 > - Añadido módulo completo de Gamificación (`/students/:id/achievements`, `/streak`, `/challenges`).
 > - Añadido `GET /students/:id/achievements/progress` (progreso de logros, solo lectura; tarjeta 15).
 > - Modificado `POST /invitations` para soportar canal `whatsapp | qr | both`.

@@ -8,6 +8,7 @@ import WeightChart from '@/components/body-metrics/WeightChart';
 import SessionsHistory from '@/components/sessions/SessionsHistory';
 import EmptyState from '@/components/shared/states/EmptyState';
 import ProgressPanel from '@/components/progress/ProgressPanel';
+import CompareCard from '@/components/progress/compare/CompareCard';
 import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
 import Button from '@/components/shared/ui/Button';
@@ -116,6 +117,7 @@ export default function StudentProfilePage() {
             <h2 id="progreso-titulo" className="font-display text-lg font-semibold text-bone0">
               Progreso
             </h2>
+            <CompareCard key={`compare-${id}`} studentId={id} />
             <ProgressPanel key={id} studentId={id} />
           </section>
           <StudentDialogs dialog={dialog} student={data} metrics={metrics} onClose={close} />
