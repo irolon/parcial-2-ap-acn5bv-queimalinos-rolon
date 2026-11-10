@@ -12,6 +12,9 @@ export const ROUTINE_EXERCISES_TABLE = 'routine_exercises';
 /** Objetivos válidos de una rutina. */
 export const ROUTINE_GOALS = ['tonify', 'weight_loss', 'hypertrophy', 'strength'];
 
+/** Niveles de una rutina (los mismos de las plantillas); null = sin definir. */
+export const ROUTINE_LEVELS = ['beginner', 'intermediate', 'advanced'];
+
 /** Días válidos (en inglés, como en el resto del dominio). */
 export const DAYS = [
   'sunday',
@@ -24,7 +27,7 @@ export const DAYS = [
 ];
 
 export const ROUTINE_COLUMNS =
-  'id, trainer_id, student_id, template_id, name, goal, days, active, created_at';
+  'id, trainer_id, student_id, template_id, name, goal, level, days, active, created_at';
 
 // `order` es palabra reservada en SQL → la columna se llama order_index.
 export const ROUTINE_EXERCISE_COLUMNS =
@@ -74,7 +77,7 @@ export function toTodayRoutine(row, lastKgByExercise = {}) {
     ...e,
     last_session_kg: round1(lastKgByExercise[e.exercise?.id]),
   }));
-  return { routine_id: row.id, name: row.name, goal: row.goal, days: row.days, exercises };
+  return { routine_id: row.id, name: row.name, goal: row.goal, level: row.level ?? null, days: row.days, exercises };
 }
 
 /** Proyección para GET /routines/:id: la rutina completa con sus ejercicios. */
@@ -93,6 +96,7 @@ export function toStudentRoutines(rows) {
     routine_id: row.id,
     name: row.name,
     goal: row.goal,
+    level: row.level ?? null,
     days: row.days,
     created_at: row.created_at,
     exercises: mapRoutineExercises(row.routine_exercises),
