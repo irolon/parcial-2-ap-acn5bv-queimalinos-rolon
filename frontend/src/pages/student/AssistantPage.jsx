@@ -69,6 +69,7 @@ export default function AssistantPage() {
           selected={selected.date}
           today={today}
           onSelect={setPicked}
+          showEmpty={history.isSuccess}
         />
         <Select
           className="lg:hidden"
@@ -77,6 +78,12 @@ export default function AssistantPage() {
           options={options}
           onChange={(event) => setPicked(event.target.value)}
         />
+        {history.isError && (
+          <div role="alert" className="flex items-center justify-between gap-2 font-body text-sm text-ink6">
+            <p>No pudimos cargar los días anteriores.</p>
+            <Button variant="ghost" size="sm" onClick={() => history.refetch()}>Reintentar</Button>
+          </div>
+        )}
         {history.hasNextPage && (
           <Button variant="ghost" size="sm" loading={history.isFetchingNextPage} onClick={() => history.fetchNextPage()}>
             Ver días anteriores

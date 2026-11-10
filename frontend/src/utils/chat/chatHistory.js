@@ -29,7 +29,7 @@ export function contextLabel(message) {
  * Si la sugerencia `suggestion` de la respuesta `message` se puede aplicar a la sesión en curso `workout` (decisión
  * 7b): el mensaje es de hoy (`today`, aaaa-mm-dd de Argentina), la sesión no terminó y se preguntó sobre el ejercicio
  * a la vista (el actual o el planificado, si ya se reemplazó). Las de otro ejercicio, otra sesión o días pasados son
- * solo texto. Devuelve `{ status, index, planned }`:
+ * solo texto. Devuelve `{ status, index, planned, current }` (`current`: el nombre del ejercicio a la vista):
  * - `none`: no se aplica (o la sugerencia es ese mismo ejercicio);
  * - `can`: se puede (el ejercicio no tiene series);
  * - `locked`: ya tiene series registradas;
@@ -42,7 +42,8 @@ export function canApply({ message, suggestion, workout, today }) {
   if (!current || !asked || chatDayOf(new Date(message.created_at)) !== today) return none;
   const plannedId = current.originalExerciseId ?? current.exerciseId;
   if (asked !== current.exerciseId && asked !== plannedId) return none;
-  const result = (status) => ({ status, index: workout.cursor, planned: current.originalName ?? current.name });
+  const planned = current.originalName ?? current.name;
+  const result = (status) => ({ status, index: workout.cursor, planned, current: current.name });
   if (suggestion.exercise_id === current.exerciseId) return current.originalExerciseId ? result('applied') : none;
   return result(exerciseSets(workout).length > 0 ? 'locked' : 'can');
 }

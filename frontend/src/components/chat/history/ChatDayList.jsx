@@ -10,15 +10,15 @@ const IDLE = 'border-transparent hover:bg-white/[0.04]';
 /**
  * "Consultas guardadas" (la columna desde `lg`): los días con consultas (`days`: `[{ date, messages }]`, hoy primero),
  * cada uno con su primera consulta (entera en `title`) y "HOY", "AYER" o "05/11". El elegido (`selected`, aaaa-mm-dd)
- * lleva el borde de acento. Sin ninguna consulta, el aviso de vacío. "Nueva consulta" y "Ver días anteriores" los pone
+ * lleva el borde de acento. Sin ninguna consulta, el aviso de vacío (salvo `showEmpty` en `false`: el historial no cargó). "Nueva consulta" y "Ver días anteriores" los pone
  * la página, que también los muestra debajo de `lg`.
  */
-export default function ChatDayList({ days, selected, today, onSelect, className = '' }) {
+export default function ChatDayList({ days, selected, today, onSelect, showEmpty = true, className = '' }) {
   const withMessages = days.filter((day) => day.messages.length > 0);
   return (
     <nav aria-label="Consultas guardadas" className={`flex-col gap-3 ${className}`}>
       <h2 className="font-mono text-[10px] tracking-[1px] text-ink6">CONSULTAS GUARDADAS</h2>
-      {withMessages.length === 0 && (
+      {showEmpty && withMessages.length === 0 && (
         <p className="font-body text-sm text-ink6">Todavía no le preguntaste nada al asistente.</p>
       )}
       <ul className="flex flex-col gap-1">

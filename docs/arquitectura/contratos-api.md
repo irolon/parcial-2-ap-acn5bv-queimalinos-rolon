@@ -1336,7 +1336,7 @@ Los días anteriores del asistente (GX5), para la página "Asistente IA" de la w
 
 **Headers:** `Authorization: Bearer <token>` (rol: alumno; otro rol → 403)
 
-**Query:** `before` (`YYYY-MM-DD`, opcional; por defecto hoy, que queda afuera) y `days` (entero de 1 a 14, por defecto 7).
+**Query:** `before` (`YYYY-MM-DD`, opcional; por defecto hoy, que queda afuera; una fecha futura se toma como hoy) y `days` (entero de 1 a 14, por defecto 7).
 
 Lee los mensajes del alumno con `created_at` anterior al 00:00 de Argentina de `before`, de los más nuevos a los más viejos, con tope `days × 20 × 2` filas, y los agrupa por día de Argentina. Si se llegó al tope, el día más viejo pudo quedar cortado: se descarta (salvo que sea el único) y lo trae la página siguiente.
 

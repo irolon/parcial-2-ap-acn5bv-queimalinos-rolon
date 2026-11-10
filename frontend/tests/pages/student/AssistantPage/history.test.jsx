@@ -77,6 +77,18 @@ describe('AssistantPage: días anteriores', () => {
     expect(screen.queryByRole('button', { name: 'Ver días anteriores' })).not.toBeInTheDocument();
   });
 
+  it('si el historial falla lo dice (no "todavía no le preguntaste nada") y "Reintentar" lo vuelve a pedir', async () => {
+    let calls = 0;
+    stubAssistant({ history: () => (calls++ === 0 ? 'error' : historyPage([YESTERDAY])) });
+    renderAssistantPage();
+    expect(await screen.findByText('No pudimos cargar los días anteriores.')).toBeInTheDocument();
+    expect(screen.queryByText('Todavía no le preguntaste nada al asistente.')).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Reintentar' }));
+    const list = screen.getByRole('navigation', { name: 'Consultas guardadas' });
+    expect(await within(list).findByText('¿Con qué reemplazo el press?')).toBeInTheDocument();
+    expect(screen.queryByText('No pudimos cargar los días anteriores.')).not.toBeInTheDocument();
+  });
+
   it('debajo de lg (375 px) la lista pasa a un Select "Día" que cambia la conversación', async () => {
     stubAssistant({ history: historyPage([YESTERDAY]) });
     renderAssistantPage();

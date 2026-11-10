@@ -38,7 +38,7 @@ describe('dayLabel, dayTitle, contextLabel', () => {
 
 describe('canApply (decisión 7b)', () => {
   it('hoy, pedida sobre el ejercicio actual y sin series: se puede, con el índice y el planificado', () => {
-    expect(check(answer('e-1'), freshWorkout())).toEqual({ status: 'can', index: 0, planned: 'Press banca' });
+    expect(check(answer('e-1'), freshWorkout())).toEqual({ status: 'can', index: 0, planned: 'Press banca', current: 'Press banca' });
   });
 
   it('sugerencia pedida en el ejercicio A con el cursor en B: no se puede aplicar', () => {
@@ -65,8 +65,14 @@ describe('canApply (decisión 7b)', () => {
 
   it('ya aplicada: "applied"; otra sugerencia de esa consulta sigue disponible (incluido volver al original)', () => {
     const swapped = replaceExercise(freshWorkout(), 0, { id: 'e-9', name: 'Press inclinado' });
-    expect(check(answer('e-1'), swapped)).toEqual({ status: 'applied', index: 0, planned: 'Press banca' });
+    expect(check(answer('e-1'), swapped)).toMatchObject({ status: 'applied', index: 0, planned: 'Press banca' });
     expect(check(answer('e-1'), swapped, { exercise_id: 'e-10', name: 'Flexiones' }).status).toBe('can');
     expect(check(answer('e-1'), swapped, { exercise_id: 'e-1', name: 'Press banca' }).status).toBe('can');
+  });
+
+  it('bloqueado después de un reemplazo: `current` nombra el ejercicio que tiene las series, no el planificado', () => {
+    const swapped = replaceExercise(freshWorkout(), 0, { id: 'e-9', name: 'Press inclinado' });
+    const result = check(answer('e-1'), withSets(swapped, [[0, 20, 10]]), { exercise_id: 'e-10', name: 'Flexiones' });
+    expect(result).toMatchObject({ status: 'locked', planned: 'Press banca', current: 'Press inclinado' });
   });
 });

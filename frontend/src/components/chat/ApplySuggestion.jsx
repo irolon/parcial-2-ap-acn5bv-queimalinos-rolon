@@ -21,7 +21,7 @@ export default function ApplySuggestion({ suggestion, check }) {
     return <p role="status" className={`${NOTE} text-good`}>{`Listo: hoy hacés ${suggestion.name} en lugar de ${check.planned}.`}</p>;
   }
   if (check.status === 'locked') {
-    return <p className={`${NOTE} text-ink6`}>{`Ya registraste series de ${check.planned}: no se puede cambiar.`}</p>;
+    return <p className={`${NOTE} text-ink6`}>{`Ya registraste series de ${check.current}: no se puede cambiar.`}</p>;
   }
   return null;
 }

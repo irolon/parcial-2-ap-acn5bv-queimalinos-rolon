@@ -24,6 +24,11 @@ describe('chat · history.service · getHistory', () => {
     expect(mockMessagesRepo.findMessagesBefore).toHaveBeenCalledWith(STUDENT_ID, '2026-11-03T03:00:00.000Z', 40);
   });
 
+  it('un before futuro se toma como hoy: el historial nunca trae los mensajes de hoy', async () => {
+    await getHistory(STUDENT_ID, { before: '2026-12-01', days: 7 }, NOW);
+    expect(mockMessagesRepo.findMessagesBefore).toHaveBeenCalledWith(STUDENT_ID, '2026-11-07T03:00:00.000Z', 280);
+  });
+
   it('aislamiento: solo pide los mensajes del alumno que consulta', async () => {
     await getHistory(STUDENT_ID, { days: 7 }, NOW);
     expect(mockMessagesRepo.findMessagesBefore.mock.calls.map((c) => c[0])).toEqual([STUDENT_ID]);

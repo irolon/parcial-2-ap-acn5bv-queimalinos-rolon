@@ -35,7 +35,9 @@ export function stubAssistant({ day = chatDay(), history = historyPage(), send }
     other: (path) => {
       if (!path.startsWith('/chat/history')) return jsonResponse(200, { data: {} });
       const params = new URL(path, 'http://test.local').searchParams;
-      return jsonResponse(200, { data: typeof history === 'function' ? history(params) : history });
+      const page = typeof history === 'function' ? history(params) : history;
+      if (page === 'error') return jsonResponse(500, { error: { code: 'INTERNAL_ERROR', message: 'Error interno' } });
+      return jsonResponse(200, { data: page });
     },
   });
 }
