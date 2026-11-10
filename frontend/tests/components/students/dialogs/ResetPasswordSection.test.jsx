@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import ResetPasswordSection from '@/components/students/dialogs/ResetPasswordSection';
@@ -19,6 +20,19 @@ afterEach(() => {
 
 const button = (name) => screen.getByRole('button', { name });
 const render = () => renderWithQuery(<ResetPasswordSection student={STUDENT} />);
+
+/** Alterna `disabled` como lo haría un Guardar del diálogo que sale y vuelve. */
+function Toggle() {
+  const [disabled, setDisabled] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setDisabled((d) => !d)}>
+        Guardar en vuelo
+      </button>
+      <ResetPasswordSection student={STUDENT} disabled={disabled} />
+    </>
+  );
+}
 
 async function confirmReset(user) {
   await user.click(button('Blanquear clave'));
@@ -95,6 +109,20 @@ describe('ResetPasswordSection', () => {
     render();
     await confirmReset(user);
     expect(await screen.findByRole('alert')).toHaveTextContent('No hay conexión con el servidor');
+  });
+
+  it('con disabled (un Guardar en vuelo) no deja empezar ni confirmar el blanqueo', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(200, { temporary_password: TEMPORARY }));
+    const user = setupUser();
+    renderWithQuery(<Toggle />);
+    await user.click(button('Guardar en vuelo'));
+    expect(button('Blanquear clave')).toBeDisabled();
+    await user.click(button('Guardar en vuelo'));
+    await user.click(button('Blanquear clave'));
+    await user.click(button('Guardar en vuelo'));
+    await user.click(button('Blanquear'));
+    expect(button('Blanquear')).toBeDisabled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('al desmontar y volver a montar no se ve la clave', async () => {

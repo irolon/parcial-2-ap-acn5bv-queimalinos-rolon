@@ -10,8 +10,9 @@ const toMessage = (error) => fieldErrorsFrom(error, { fields: [], fallback: 'No 
  * "Acceso a la app" en Editar alumno: el PT blanquea la clave y ve la temporal una sola vez (la pasa por WhatsApp).
  * Pasos: botón → confirmación → la clave con Copiar. La clave vive solo en este estado: al cerrar el diálogo se pierde,
  * por eso avisa con `onBusyChange(true|false)` mientras el pedido está en vuelo (el diálogo no se deja cerrar).
+ * `disabled` (un Guardar del diálogo en vuelo) no deja empezar ni confirmar: al volver, ese Guardar cierra el diálogo.
  */
-export default function ResetPasswordSection({ student, onBusyChange = () => {} }) {
+export default function ResetPasswordSection({ student, disabled = false, onBusyChange = () => {} }) {
   const titleId = useId();
   const [step, setStep] = useState('idle');
   const [temporary, setTemporary] = useState(null);
@@ -23,6 +24,7 @@ export default function ResetPasswordSection({ student, onBusyChange = () => {} 
 
   const confirm = () =>
     lock(async () => {
+      if (disabled) return;
       setError(null);
       onBusyChange(true);
       try {
@@ -51,7 +53,7 @@ export default function ResetPasswordSection({ student, onBusyChange = () => {} 
         Acceso a la app
       </h3>
       {step === 'idle' && (
-        <Button variant="ghost" size="sm" className="mt-3" onClick={() => setStep('confirm')}>
+        <Button variant="ghost" size="sm" className="mt-3" disabled={disabled} onClick={() => setStep('confirm')}>
           Blanquear clave
         </Button>
       )}
@@ -67,7 +69,7 @@ export default function ResetPasswordSection({ student, onBusyChange = () => {} 
             <Button variant="ghost" size="sm" disabled={sending} onClick={() => setStep('idle')}>
               Cancelar
             </Button>
-            <Button variant="danger" size="sm" loading={sending} onClick={confirm}>
+            <Button variant="danger" size="sm" loading={sending} disabled={disabled} onClick={confirm}>
               Blanquear
             </Button>
           </div>
