@@ -18,7 +18,10 @@ export default function ExerciseDetailRow({ row }) {
       <span title={row.name} className="min-w-0 flex-1 truncate font-body text-sm text-bone0">
         {row.name}
       </span>
-      <Sparkline values={row.values} />
+      {/* En angosto la sparkline le dejaría al nombre pocas letras: se oculta debajo de sm. */}
+      <span className="hidden sm:block">
+        <Sparkline values={row.values} />
+      </span>
       <span className="w-20 shrink-0 text-right font-display text-sm font-semibold text-bone0">{value}</span>
       <span className={`w-14 shrink-0 text-right font-mono text-xs ${pctColor(row.pct)}`}>{pct}</span>
     </li>

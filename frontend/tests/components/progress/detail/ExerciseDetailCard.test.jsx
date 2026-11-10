@@ -45,6 +45,12 @@ describe('ExerciseDetailCard', () => {
     expect(screen.getByText('PESO MÁXIMO · 3 MESES')).toBeInTheDocument();
   });
 
+  it('en angosto (debajo de sm) la sparkline se oculta para que el nombre no quede cortado', async () => {
+    load({ curves: () => KG });
+    const row = await screen.findByRole('listitem', { name: /^Press banca/ });
+    expect(row.querySelector('svg').parentElement).toHaveClass('hidden', 'sm:block');
+  });
+
   it('muestra hasta 6 y "Ver todos (N)" abre el resto', async () => {
     load({ exercises: NAMES.map((_, i) => ex(i)) });
     await screen.findByRole('listitem', { name: /^Press banca/ });
