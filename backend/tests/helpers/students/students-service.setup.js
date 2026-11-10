@@ -58,6 +58,16 @@ jest.unstable_mockModule(
   () => mockAppointmentsService
 );
 
+// Rutina inicial del alta (initial-routine.service corre de verdad; se mockea lo que llama).
+export const mockInstantiate = jest.fn();
+export const mockNotify = jest.fn();
+jest.unstable_mockModule(src('services/routine-templates/routine-templates.service.js'), () => ({
+  instantiate: mockInstantiate,
+}));
+jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => ({
+  notify: mockNotify,
+}));
+
 export const service = await import(src('services/students/students.service.js'));
 
 export const VALID_INVITATION = {
