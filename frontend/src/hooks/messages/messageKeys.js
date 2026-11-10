@@ -2,6 +2,7 @@ export const MESSAGES_KEY = ['messages'];
 export const conversationsKey = [...MESSAGES_KEY, 'conversations'];
 export const unreadKey = [...MESSAGES_KEY, 'unread'];
 export const messagesKey = (studentId) => [...MESSAGES_KEY, 'thread', studentId];
+export const counterpartKey = (studentId) => [...MESSAGES_KEY, 'counterpart', studentId];
 // Los mensajes optimistas viven fuera de MESSAGES_KEY para que invalidar la conversación no los toque.
 export const pendingKey = (studentId) => ['messages-pending', studentId];
 

@@ -40,20 +40,21 @@ describe('chat · chat.service · sendMessage', () => {
   });
   afterEach(() => warn.mockRestore());
 
-  it('manda a n8n exactamente message, exercise, student, alternatives e history, sin datos personales', async () => {
+  it('manda a n8n exactamente message, exercise, student, alternatives, todays_routine e history, sin datos personales', async () => {
     await send();
     const [urlVar, payload, options] = mockClient.postToN8n.mock.calls[0];
     expect(urlVar).toBe('N8N_STUDENT_AI_WEBHOOK_URL');
-    expect(Object.keys(payload)).toEqual(['message', 'exercise', 'student', 'alternatives', 'history']);
+    expect(Object.keys(payload)).toEqual(['message', 'exercise', 'student', 'alternatives', 'todays_routine', 'history']);
     expect(payload).toEqual({
       message: BODY.message,
       exercise: { name: 'Press banca plano', muscle_group: 'chest', equipment: 'barbell' },
       student: { goal: 'hypertrophy', level: 'intermediate', gym_equipment: ['dumbbell', 'machine'], injuries: 'Hombro derecho' },
       alternatives: ALTERNATIVES,
+      todays_routine: null,
       history: [],
     });
     expect(options).toMatchObject({
-      timeoutMs: 9000,
+      timeoutMs: 16000,
       tag: 'chat',
       unavailableMessage: 'El asistente no está disponible ahora. Seguí con tu entrenamiento.',
     });

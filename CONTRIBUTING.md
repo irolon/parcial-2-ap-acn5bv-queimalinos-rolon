@@ -28,6 +28,7 @@ Este archivo es la fuente de verdad del flujo de trabajo. La documentación del 
 - Las ramas de trabajo salen de `develop` y vuelven a `develop` por PR:
   - `feature/` para funcionalidad;
   - `fix/` para correcciones;
+  - `test/` para pruebas y su infraestructura, sin cambios de código de producción;
   - `docs/` para cambios que son solo documentación.
 - Nombre de rama en inglés, kebab-case, sin número de tarjeta. Ejemplo: `feature/exercises-library`.
 - **Nadie pushea directo a `develop` ni a `master`.**
@@ -42,7 +43,7 @@ Este archivo es la fuente de verdad del flujo de trabajo. La documentación del 
 ## Pull requests y review
 
 - **Todo entra por PR.** Revisa, aprueba y **mergea el otro**, nunca el autor.
-- Como no hay CI, el revisor:
+- El CI (`.github/workflows/ci.yml`) corre en cada PR y en cada push a `develop`: lint y tests unitarios de backend, y lint, tests y build de la web (mobile e integración quedan afuera; la integración se corre a mano con `npm run test:integration`). Aunque el CI pase, el revisor:
   - corre lint y tests de lo afectado, combinado con `develop` (mergea `develop` en una copia local de la rama, sin pushear). Si hay conflictos, el autor actualiza su rama mergeando `develop` en ella;
   - compara contra el spec o la tarjeta y contra las reglas de código;
   - si el cambio toca Room u otro código instrumentado y el revisor no tiene emulador, el autor corre `connectedDebugAndroidTest` y pega el resultado en la PR;
@@ -131,7 +132,7 @@ tests/
   unit/<capa>/<módulo>/   (mismo árbol que src; unit/scripts/lib/ espeja scripts/lib/, sin módulo)
   unit/app/               (tests de src/app.js, el punto de entrada: no tiene módulo)
   integration/
-  helpers/<módulo>/
+  helpers/<módulo>/       (helpers/integration/ para la suite de integración, con isolation/ y progress/; helpers/scripts/ para los tests de scripts/lib/)
   helpers/app/            (utilidades de esos tests: levantar la app, recorrer sus rutas)
 scripts/                  (mantenimiento: chequeo de largo, etc.; sus helpers en scripts/lib/)
 load/                     (scripts de carga de k6, no corren con jest; ver load/README.md)

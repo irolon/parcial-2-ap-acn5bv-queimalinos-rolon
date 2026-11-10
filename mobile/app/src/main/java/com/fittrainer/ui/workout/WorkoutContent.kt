@@ -54,6 +54,9 @@ class WorkoutActions(
     val onReplaceLocked: () -> Unit = {},
     /** −15″ / +15″ del descanso del ejercicio, antes de arrancar la serie. */
     val onPlannedRestAdjust: (Int) -> Unit = {},
+    /** Abre el asistente IA (tarjeta 14); sin red, onAiLocked explica por qué no. */
+    val onAi: () -> Unit = {},
+    val onAiLocked: () -> Unit = {},
 )
 
 /** Serie (mockup p.13) o timer a pantalla completa (p.14). Sin scroll para completar una serie. */
@@ -113,7 +116,10 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
                 }
             },
             bottom = {
-                BottomActions(workout.canReplace(workout.cursor.position), actions.onTechnique, actions.onReplace, actions.onReplaceLocked)
+                BottomActions(
+                    workout.canReplace(workout.cursor.position), !state.isOffline,
+                    actions.onTechnique, actions.onReplace, actions.onAi, actions.onReplaceLocked, actions.onAiLocked,
+                )
             },
             modifier = Modifier.weight(1f),
         )

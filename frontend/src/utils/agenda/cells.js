@@ -1,5 +1,5 @@
 import { pad } from '@/utils/dates';
-import { WEEKDAYS_LONG, WEEKDAYS_TITLE, arParts } from './time';
+import { WEEKDAYS_LONG, WEEKDAYS_TITLE, arParts, dayMonth } from './time';
 
 const DEFAULT_FIRST = 8;
 const DEFAULT_LAST = 20;
@@ -29,20 +29,17 @@ export function appointmentCell(appt) {
 /** `'Jue 06/11 · 18:00–19:00'` (hora de Argentina, turnos de 60 min). */
 export function timeRangeLabel(iso) {
   const { date, hour, weekday } = arParts(iso);
-  const [, month, day] = date.split('-');
-  return `${WEEKDAYS_TITLE[weekday - 1]} ${day}/${month} · ${pad(hour)}:00–${pad((hour + 1) % 24)}:00`;
+  return `${WEEKDAYS_TITLE[weekday - 1]} ${dayMonth(date)} · ${pad(hour)}:00–${pad((hour + 1) % 24)}:00`;
 }
 
 /** `'viernes 06/11 18:00'` (hora de Argentina). */
 export function dayHourLabel(iso) {
   const { date, hour, weekday } = arParts(iso);
-  const [, month, day] = date.split('-');
-  return `${WEEKDAYS_LONG[weekday - 1]} ${day}/${month} ${pad(hour)}:00`;
+  return `${WEEKDAYS_LONG[weekday - 1]} ${dayMonth(date)} ${pad(hour)}:00`;
 }
 
 /** `'vie 06/11 a las 18:00'` (hora de Argentina). */
 export function shortDayHourLabel(iso) {
   const { date, hour, weekday } = arParts(iso);
-  const [, month, day] = date.split('-');
-  return `${WEEKDAYS_TITLE[weekday - 1].toLowerCase()} ${day}/${month} a las ${pad(hour)}:00`;
+  return `${WEEKDAYS_TITLE[weekday - 1].toLowerCase()} ${dayMonth(date)} a las ${pad(hour)}:00`;
 }

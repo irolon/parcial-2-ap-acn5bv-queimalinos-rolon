@@ -89,7 +89,7 @@ describe('chat (integración)', () => {
 
     const { headers, body } = n8n.received[0];
     expect(headers['x-webhook-secret']).toBe(SECRET);
-    expect(Object.keys(body).sort()).toEqual(['alternatives', 'exercise', 'history', 'message', 'student']);
+    expect(Object.keys(body).sort()).toEqual(['alternatives', 'exercise', 'history', 'message', 'student', 'todays_routine']);
     expect(body.exercise).toEqual({ name: 'Press banca plano', muscle_group: 'chest', equipment: 'barbell' });
     expect(Object.keys(body.student).sort()).toEqual(['goal', 'gym_equipment', 'injuries', 'level']);
     expect(body.student).toMatchObject({ gym_equipment: ['dumbbell'], injuries: 'Hombro derecho' });

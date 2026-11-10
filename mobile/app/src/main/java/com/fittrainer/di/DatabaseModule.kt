@@ -3,6 +3,7 @@ package com.fittrainer.di
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
+import com.fittrainer.data.db.chat.AiChatDao
 import com.fittrainer.data.db.FitTrainerDatabase
 import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.agenda.TrainerAgendaDao
@@ -112,6 +113,9 @@ object DatabaseModule {
 
     @Provides
     fun provideStudentAgendaDao(db: FitTrainerDatabase): StudentAgendaDao = db.studentAgendaDao()
+
+    @Provides
+    fun provideAiChatDao(db: FitTrainerDatabase): AiChatDao = db.aiChatDao()
 
     @Provides
     @Singleton

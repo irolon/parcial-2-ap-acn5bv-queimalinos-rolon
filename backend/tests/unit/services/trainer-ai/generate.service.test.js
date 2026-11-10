@@ -5,6 +5,7 @@ import {
   generateService,
   mockGenerationsRepo,
   mockContextRepo,
+  mockRoutinesRepo,
   mockStudentsRepo,
   mockTemplatesRepo,
   mockTemplatesService,
@@ -45,7 +46,42 @@ describe('trainer-ai · generate.service · generateRoutine', () => {
       library: LIBRARY,
       previous_templates: [],
       base_template: null,
+      previous_routines: [],
+      student_history: null,
+      current_routine: null,
     });
+  });
+
+  const MY_ROUTINE = {
+    name: 'Rutina de Lucía',
+    goal: 'strength',
+    days: ['monday'],
+    routine_exercises: [
+      { order_index: 1, sets: 4, reps: 8, suggested_kg: 60, notes: 'Cuidar el hombro derecho', exercise: { id: EX1, name: 'Press banca plano', muscle_group: 'chest' } },
+    ],
+  };
+
+  it('el pedido a n8n suma previous_routines, student_history y current_routine', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT);
+    mockContextRepo.findRecentRoutines.mockResolvedValue([
+      { goal: 'strength', days: ['friday'], routine_exercises: [{ order_index: 1, exercise: { name: 'Sentadilla' } }] },
+    ]);
+    mockRoutinesRepo.findActiveRoutinesForStudent.mockResolvedValue([MY_ROUTINE]);
+    await generateService.generateRoutine(TRAINER_ID, { ...BODY, student_id: STUDENT_ID }, NOW);
+    const sent = mockClient.requestRoutineProposal.mock.calls[0][0];
+    expect(sent.previous_routines).toEqual([{ goal: 'strength', days: ['friday'], exercise_names: ['Sentadilla'] }]);
+    expect(sent.student_history).toEqual(expect.objectContaining({ exercises: [] }));
+    expect(sent.current_routine).toHaveLength(1);
+    expect(mockContextRepo.findRecentRoutines).toHaveBeenCalledWith(TRAINER_ID, { goal: 'hypertrophy', excludeStudentId: STUDENT_ID });
+  });
+
+  it('el pedido a n8n no lleva datos personales ni nombres de rutinas', async () => {
+    mockStudentsRepo.findStudentById.mockResolvedValue(STUDENT);
+    mockRoutinesRepo.findActiveRoutinesForStudent.mockResolvedValue([MY_ROUTINE]);
+    await generateService.generateRoutine(TRAINER_ID, { ...BODY, student_id: STUDENT_ID }, NOW);
+    const sent = JSON.stringify(mockClient.requestRoutineProposal.mock.calls[0][0]);
+    const forbidden = [STUDENT.name, STUDENT.email, STUDENT.birth_date, STUDENT_ID, TRAINER_ID, MY_ROUTINE.name, MY_ROUTINE.routine_exercises[0].notes];
+    for (const value of forbidden) expect(sent).not.toContain(value);
   });
 
   it('el payload no trae datos personales del alumno (name, email, birth_date)', async () => {

@@ -2,6 +2,7 @@ import StudentMetrics from '@/components/body-metrics/StudentMetrics';
 import ErrorState from '@/components/shared/states/ErrorState';
 import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
+import TrainerCard from '@/components/student/profile/TrainerCard';
 import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
 import MyProfileCard from '@/components/students/profile/MyProfileCard';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
@@ -44,6 +45,7 @@ export default function MyProfilePage() {
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-5">
         <ProfileBlock query={profile} />
+        <TrainerCard studentId={studentId} />
       </div>
       <StudentMetrics studentId={studentId} />
     </div>

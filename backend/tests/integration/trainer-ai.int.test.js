@@ -83,7 +83,15 @@ describe('trainer-ai (integración)', () => {
 
     const { headers, body } = n8n.received[0];
     expect(headers['x-webhook-secret']).toBe(SECRET);
-    expect(Object.keys(body).sort()).toEqual(['base_template', 'library', 'params', 'previous_templates']);
+    expect(Object.keys(body).sort()).toEqual([
+      'base_template',
+      'current_routine',
+      'library',
+      'params',
+      'previous_routines',
+      'previous_templates',
+      'student_history',
+    ]);
     expect(body.params).toMatchObject({ goal: 'hypertrophy', frequency_per_week: 3, session_duration_min: 60 });
     const sent = JSON.stringify(body);
     for (const pii of [student.email, student.id, qaName('Alumno ia')]) expect(sent).not.toContain(pii);

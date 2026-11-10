@@ -64,3 +64,19 @@ describe('messages.api', () => {
     expect(bodyOf(bc[1])).toEqual({ student_ids: ['a', 'b'], body: 'Hola' });
   });
 });
+
+describe('messages.api · getCounterpart', () => {
+  it('pide un solo mensaje (GET, no marca leído) y devuelve el counterpart', async () => {
+    const counterpart = { id: 't-1', name: 'Laura Gómez', avatar_url: null };
+    const fetchMock = stubFetch(async () => jsonResponse(200, { data: [], meta: { next_before: null }, counterpart }));
+    await expect(messagesApi.getCounterpart('s-1')).resolves.toEqual(counterpart);
+    const [path, init] = calls(fetchMock)[0];
+    expect(path).toBe('/messages/s-1?limit=1');
+    expect(init?.method ?? 'GET').toBe('GET');
+  });
+
+  it('sin counterpart en la respuesta devuelve null', async () => {
+    stubFetch(async () => jsonResponse(200, { data: [], meta: {} }));
+    await expect(messagesApi.getCounterpart('s-1')).resolves.toBeNull();
+  });
+});
