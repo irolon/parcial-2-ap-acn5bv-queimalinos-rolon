@@ -78,7 +78,7 @@ export default function AssistantPanel({ exercise, sessionId, onClose }) {
   const ask = () => {
     const message = text.trim();
     if (!message || send.isPending) return;
-    const context = { message, sessionId, exerciseId: exercise?.exerciseId };
+    const context = { message, sessionId, exerciseId: exercise?.exerciseId, exerciseName: exercise?.name };
     send.mutate(context, { onSuccess: () => setText('') });
   };
   const notice = noticeFor({ online, problem, day, remaining, retrySend: ask });
