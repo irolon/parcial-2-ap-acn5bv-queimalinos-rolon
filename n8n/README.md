@@ -77,7 +77,7 @@ El nodo **Armar prompt** agrega las secciones "HISTORIAL DEL ALUMNO (últimos 28
 
 1. **Webhook trainer-ia**: `POST /webhook/trainer-ia`, autenticado con la credencial *Header Auth* `FitTrainer webhook` (header `x-webhook-secret`). Responde desde un nodo *Respond to Webhook*.
 2. **Armar prompt** (Code): prompt de sistema en español (rol, seguridad, solo ids de la biblioteca, 1 a 7 bloques, días sin repetir, total de días = `frequency_per_week`, esquema de salida) y prompt de usuario con el contexto (incluido el historial y las rutinas). El **modelo** sale de `LLM_TRAINER_MODEL`, la URL de `LLM_BASE_URL` y los campos extra de `LLM_EXTRA_BODY` (variables de `n8n/.env`); la temperatura (0.3) está en el nodo, pero `LLM_EXTRA_BODY` la puede pisar (con KIMI va 0.6). Para que la respuesta entre en el timeout, el prompt pide el `rationale` primero y de hasta 400 caracteres, y notas de hasta 60 (vacías si no aportan).
-3. **LLM chat completions** (HTTP Request): `POST` a la URL que arma **Armar prompt** (`llm_url`, por defecto `https://api.moonshot.ai/v1/chat/completions`) con la credencial `LLM`, `response_format: { type: "json_object" }` y timeout de **25 s** (el backend corta a los 30 s).
+3. **LLM chat completions** (HTTP Request): `POST` a la URL que arma **Armar prompt** (`llm_url`, por defecto `https://api.moonshot.ai/v1/chat/completions`) con la credencial `LLM`, `response_format: { type: "json_object" }` y timeout de **28 s** (el backend corta a los 30 s).
 4. **Parsear JSON** (Code): toma `choices[0].message.content`, saca los ```` ``` ```` si vienen y hace `JSON.parse`.
 5. **Responder propuesta** / **Responder error LLM** (Respond to Webhook).
 
@@ -87,7 +87,7 @@ El nodo **Armar prompt** agrega las secciones "HISTORIAL DEL ALUMNO (últimos 28
 |---|---|---|
 | Todo bien | 200 con `{ "routines": [...], "rationale": "..." }` | Valida; si pasa, guarda y responde 200 |
 | El modelo devolvió algo que no es JSON | 200 con `{ "error": "INVALID_JSON" }` | 502 `AI_INVALID_RESPONSE` |
-| El modelo falló (timeout de 25 s, 401 por key mala, 429, 5xx) | **502** con `{ "error": "LLM_UNAVAILABLE" }` | 503 `AI_UNAVAILABLE` |
+| El modelo falló (timeout de 28 s, 401 por key mala, 429, 5xx) | **502** con `{ "error": "LLM_UNAVAILABLE" }` | 503 `AI_UNAVAILABLE` |
 | Secreto incorrecto | 403 de n8n | 503 `AI_UNAVAILABLE` |
 | Workflow inactivo o URL mal | 404 de n8n | 503 `AI_UNAVAILABLE` |
 | Error inesperado dentro del workflow | 500 de n8n | 503 `AI_UNAVAILABLE` |
@@ -223,7 +223,7 @@ Sirve bien para el chat, pero arma mal muchas rutinas (ver la tabla). La capa gr
 
 **Límites de KIMI.** Es prepago: cada rutina y cada mensaje consumen saldo. Una cuenta nueva arranca con un tope de **3 pedidos por minuto para toda la organización** (Moonshot responde 429 `rate_limit_reached_error` y el backend, 503); el tope sube con el saldo acumulado. Además, cuando Moonshot está saturado responde 429 `engine_overloaded_error`, a veces después de 20 s: eso también llega como 503.
 
-El timeout del nodo HTTP es de 25 s en `trainer-ia` (el backend corta a los 30 s) y de 15 s en `student-ia` (el backend corta a los 16 s). El del chat era de 8 s y se subió el 09/11: con KIMI la mayoría de las respuestas llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 y esas respuestas se perdían.
+El timeout del nodo HTTP es de 28 s en `trainer-ia` (el backend corta a los 30 s; era de 25 s y se subió el 09/11 porque KIMI tarda 24 a 26 s en un split de 3 días) y de 15 s en `student-ia` (el backend corta a los 16 s). El del chat era de 8 s y se subió el 09/11: con KIMI la mayoría de las respuestas llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 y esas respuestas se perdían.
 
 > **Datos reales.** Con usuarios de prueba no hay problema. Antes de usar datos reales hay que revisar los términos de uso del proveedor (Moonshot o NVIDIA): el perfil y las lesiones del alumno viajan al proveedor del modelo.
 
