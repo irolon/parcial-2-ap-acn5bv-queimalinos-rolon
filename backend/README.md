@@ -33,7 +33,7 @@ src/
 ├── routes/<modulo>/<modulo>.routes.js
 ├── database/
 │   ├── schema/              # DDL por dominio: 01…07 en orden (ver su README)
-│   ├── migrations/          # cambios de schema con fecha, para bases ya creadas
+│   ├── migrations/          # cambios de schema con fecha, para bases ya creadas (una carpeta por mes: 2026-10/, 2026-11/)
 │   ├── checks/              # schema-checks.sql, exercises-checks.sql y check-anon-access.js
 │   └── seeds/               # exercises.sql (50 ejercicios globales), achievements.sql (catálogo de logros), challenges.sql (desafíos globales)
 ├── app.js                   # arma la app de Express y monta las rutas
@@ -239,7 +239,7 @@ Mensajería interna PT ↔ alumno, una conversación por alumno (no es el chat c
 | POST | `/api/messages/:studentId` | Envía. `multipart/form-data` con `body` y/o `image` (JPG/PNG/WebP, hasta 5 MB), o JSON `{ body }` de solo texto. 201 `{ data: mensaje }`. 400 `MESSAGE_EMPTY`, 413 `IMAGE_TOO_LARGE`, 415 `IMAGE_TYPE_INVALID` |
 | POST | `/api/messages/:studentId/read` | Marca como leídos los mensajes de la otra parte. 200 `{ data: { updated } }` |
 
-**Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
+**Fotos.** Van al bucket privado `message-images`; el tipo se valida por los bytes del archivo (no por el `Content-Type`) y la API devuelve `image_url` firmada por 1 hora. **Migración:** para bases ya creadas, correr `src/database/migrations/2026-10/2026-10-31-messages.sql` en el SQL Editor de Supabase (crea la tabla `messages`, sus índices y el bucket; es re-ejecutable).
 
 **`has_image` en los mensajes (E11 del celular, 03/11).** Cada mensaje trae `has_image` (`Boolean(image_path)`, sin exponer el path): con `has_image: true` e `image_url: null` la foto no se pudo firmar, aunque el mensaje tenga texto. El celular reintenta la firma pidiendo el historial; la web muestra "Foto no disponible".
 
@@ -260,7 +260,7 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 | PATCH | `/api/appointments/:id` | trainer / student | `{ status }` con `confirmed` o `cancelled`. PT: `pending`→`confirmed`, cualquier vivo→`cancelled`; alumno: solo cancelar. 409 `APPOINTMENT_PAST` si ya pasó, 409 `INVALID_STATUS_TRANSITION`; ajeno o inexistente 403 |
 
 **Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda.sql`:
-- `src/database/migrations/2026-10-31-agenda.sql`: tabla `trainer_availability`, índice único parcial de `appointments` y la RPC.
+- `src/database/migrations/2026-10/2026-10-31-agenda.sql`: tabla `trainer_availability`, índice único parcial de `appointments` y la RPC.
 - `2026-11-01-agenda-followup.sql`: checks de 60 min y hora en punto, y advisory lock en la RPC.
 - `2026-11-01-agenda-inactive-student.sql`: trigger `appointments_student_active` (no se agenda a un alumno dado de baja, ni con un alta en vuelo durante la baja).
 
@@ -345,7 +345,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 - **Nuevo `GET /routines/mine`** (solo alumno): devuelve `{ data: [...] }` con **todas** las rutinas activas del alumno, cada una con `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises` (la misma forma que en `/today`, sin `last_session_kg`), la más nueva primero; `[]` si no tiene. Lo usa la app mobile para guardar la rutina offline y resolver el día en el teléfono: `/today` no distingue "día de descanso" de "sin rutina" y no sirve para un caché que se usa otro día.
 - `GET /routines/today` no cambia.
-- **Nuevo `PUT /routines/:id/exercises/order`** (solo trainer, tarjeta E8 del celular): body `{ "routine_exercise_ids": [...] }` con exactamente los ejercicios de la rutina, en el orden nuevo (1 a 100, sin repetidos; si falta o sobra alguno → 400 `VALIDATION_ERROR` en `routine_exercise_ids`). Deja `order_index` = posición y devuelve el detalle como `GET /routines/:id`. Se agregó para que el entrenador reordene desde el celular; antes el orden solo se fijaba al crear. **Web:** el editor de rutinas puede usarlo para el drag & drop sobre una rutina ya asignada (opcional). Es atómico: lo hace la función SQL `reorder_routine_exercises` (valida el conjunto y guarda todo en una transacción con la rutina bloqueada). **Migración:** `src/database/migrations/2026-11-01-routines-reorder.sql` (también en `schema/03-routines.sql`); ya está aplicada en Supabase dev. En el código, el service se dividió en la carpeta `services/routines/routines.service/`: `routines.service.js` (de 178 a 119 líneas), `routine-exercises.service.js` (ejercicios de una rutina asignada) y `routine-access.service.js` (ownership). `routines.service.js` re-exporta todo; cambia la ruta del import en el controller y en `routine-templates.service.js`.
+- **Nuevo `PUT /routines/:id/exercises/order`** (solo trainer, tarjeta E8 del celular): body `{ "routine_exercise_ids": [...] }` con exactamente los ejercicios de la rutina, en el orden nuevo (1 a 100, sin repetidos; si falta o sobra alguno → 400 `VALIDATION_ERROR` en `routine_exercise_ids`). Deja `order_index` = posición y devuelve el detalle como `GET /routines/:id`. Se agregó para que el entrenador reordene desde el celular; antes el orden solo se fijaba al crear. **Web:** el editor de rutinas puede usarlo para el drag & drop sobre una rutina ya asignada (opcional). Es atómico: lo hace la función SQL `reorder_routine_exercises` (valida el conjunto y guarda todo en una transacción con la rutina bloqueada). **Migración:** `src/database/migrations/2026-11/2026-11-01-routines-reorder.sql` (también en `schema/03-routines.sql`); ya está aplicada en Supabase dev. En el código, el service se dividió en la carpeta `services/routines/routines.service/`: `routines.service.js` (de 178 a 119 líneas), `routine-exercises.service.js` (ejercicios de una rutina asignada) y `routine-access.service.js` (ownership). `routines.service.js` re-exporta todo; cambia la ruta del import en el controller y en `routine-templates.service.js`.
 
 ### Lo que le toca a la web
 
@@ -388,5 +388,5 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 ### Progreso (`/progress`) y `/routines/today`
 
-- Rutas nuevas (no están en el contrato de Notion): `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. La agregación vive en funciones SQL (`exercise_progress`, `last_session_kg`) llamadas con `supabase.rpc`; son `security invoker`, con `search_path` fijo y ejecutables solo por `service_role`. Migración: `src/database/migrations/2026-10-29-progress.sql`. `GET /progress/overview` usa `progress_exercises` y `weekly_volume` (`schema/04b-progress-overview.sql`, migración `2026-10-30-progress-overview.sql`).
+- Rutas nuevas (no están en el contrato de Notion): `GET /progress/exercise/:exerciseId` y `GET /progress/body/:studentId`. La agregación vive en funciones SQL (`exercise_progress`, `last_session_kg`) llamadas con `supabase.rpc`; son `security invoker`, con `search_path` fijo y ejecutables solo por `service_role`. Migración: `src/database/migrations/2026-10/2026-10-29-progress.sql`. `GET /progress/overview` usa `progress_exercises` y `weekly_volume` (`schema/04b-progress-overview.sql`, migración `2026-10-30-progress-overview.sql`).
 - **`GET /routines/today`:** `last_session_kg` deja de ser siempre `null`: es el mayor peso de la última sesión en que el alumno hizo el ejercicio.

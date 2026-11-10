@@ -1,5 +1,5 @@
 // Teléfono del alumno (GX2): mismo formato que valida el backend en PATCH /students/:id.
-export const PHONE_ERROR = 'Usá entre 6 y 30 caracteres: números, espacios y + - ( )';
+export const PHONE_ERROR = 'Usá entre 6 y 30 caracteres, con al menos 6 números: números, espacios y + - ( )';
 
 const PHONE_RE = /^[0-9 +()-]{6,30}$/;
 const MIN_DIGITS = 6;
@@ -8,7 +8,8 @@ const MIN_DIGITS = 6;
 export function validatePhone(value) {
   const phone = String(value ?? '').trim();
   if (!phone) return null;
-  return PHONE_RE.test(phone) ? null : PHONE_ERROR;
+  const digits = phone.replace(/\D/g, '').length;
+  return PHONE_RE.test(phone) && digits >= MIN_DIGITS ? null : PHONE_ERROR;
 }
 
 /**

@@ -8,9 +8,10 @@ const toMessage = (error) => fieldErrorsFrom(error, { fields: [], fallback: 'No 
 
 /**
  * "Acceso a la app" en Editar alumno: el PT blanquea la clave y ve la temporal una sola vez (la pasa por WhatsApp).
- * Pasos: botón → confirmación → la clave con Copiar. La clave vive solo en este estado: al cerrar el diálogo se pierde.
+ * Pasos: botón → confirmación → la clave con Copiar. La clave vive solo en este estado: al cerrar el diálogo se pierde,
+ * por eso avisa con `onBusyChange(true|false)` mientras el pedido está en vuelo (el diálogo no se deja cerrar).
  */
-export default function ResetPasswordSection({ student }) {
+export default function ResetPasswordSection({ student, onBusyChange = () => {} }) {
   const titleId = useId();
   const [step, setStep] = useState('idle');
   const [temporary, setTemporary] = useState(null);
@@ -23,12 +24,15 @@ export default function ResetPasswordSection({ student }) {
   const confirm = () =>
     lock(async () => {
       setError(null);
+      onBusyChange(true);
       try {
         const { temporary_password: password } = await reset.mutateAsync();
         setTemporary(password);
         setStep('done');
       } catch (err) {
         setError(toMessage(err));
+      } finally {
+        onBusyChange(false);
       }
     });
 

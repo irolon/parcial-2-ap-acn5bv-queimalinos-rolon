@@ -1,7 +1,7 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { detectImageType } from '../../shared/utils/files/image-type.js';
 import * as avatarsRepo from '../../repositories/students/avatars.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { avatarPath, isStudentAvatarPath } from '../../models/students/avatar.model.js';
 import { assertCanAccessStudent } from './student-access.service.js';
 import { signAvatars } from './avatar-urls.service.js';

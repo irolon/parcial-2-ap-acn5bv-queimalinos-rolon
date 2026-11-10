@@ -1,6 +1,6 @@
 import * as availabilityRepo from '../../repositories/agenda/availability.repository.js';
 import * as appointmentsRepo from '../../repositories/agenda/appointments.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { freeSlots } from '../../models/agenda/availability.model.js';
 import { studentHorizonMs } from '../../models/agenda/appointment.model.js';

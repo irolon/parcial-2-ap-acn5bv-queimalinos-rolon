@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fileURLToPath } from 'node:url';
 
-const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
+const src = (p) => fileURLToPath(new URL(`../../../../../src/${p}`, import.meta.url));
 
 // Builder encadenable: from → insert → select → single.
 const result = { current: { data: null, error: null } };
@@ -11,7 +11,7 @@ q.single = jest.fn(async () => result.current);
 const supabase = { from: jest.fn(() => q) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
-const { createStudent } = await import(src('repositories/students/student-create.repository.js'));
+const { createStudent } = await import(src('repositories/students/students.repository/student-create.repository.js'));
 
 const BASE = {
   trainerId: 'trainer-1',

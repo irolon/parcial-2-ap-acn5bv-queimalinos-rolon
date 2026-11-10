@@ -53,7 +53,7 @@ Query: `student_id` (UUID), `from`, `to` (`YYYY-MM-DD`, inclusivos, hora argenti
 
 ### 3.2 Base de datos
 
-Archivo nuevo `backend/src/database/schema/04b-progress-overview.sql` (04-progress.sql ya está cerca del límite y lo toca también la #33) + migración `backend/src/database/migrations/2026-10-30-progress-overview.sql`:
+Archivo nuevo `backend/src/database/schema/04b-progress-overview.sql` (04-progress.sql ya está cerca del límite y lo toca también la #33) + migración `backend/src/database/migrations/2026-10/2026-10-30-progress-overview.sql`:
 
 - `progress_exercises(p_student_id uuid) returns table (exercise_id uuid, name text, muscle_group text, days int, last_date date)`.
 - `weekly_volume(p_student_id uuid, p_from date default null, p_to date default null) returns table (week_start date, volume_kg numeric, sessions int)` con `generate_series` de semanas.

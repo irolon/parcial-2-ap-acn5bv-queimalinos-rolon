@@ -1,6 +1,6 @@
 import * as appointmentsRepo from '../../repositories/agenda/appointments.repository.js';
 import * as availabilityRepo from '../../repositories/agenda/availability.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import * as triggers from '../notifications/triggers.service.js';
 import { Errors } from '../../shared/utils/errors.js';

@@ -32,7 +32,7 @@
 ### Task 1: Racha en `GET /students`
 
 **Files:**
-- Modify: `backend/src/repositories/students/students.repository.js` (sumar `findStreaks`)
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js` (sumar `findStreaks`)
 - Modify: `backend/src/services/students/students.service.js:17-35` (`list`)
 - Test: `backend/tests/unit/services/students/students.service/` (el archivo de `list` que ya existe ahí, o uno nuevo `list-streak.test.js` si pasa de 200)
 - Docs: `docs/arquitectura/contratos-api.md` (GET /students, ~173-196)
@@ -55,7 +55,7 @@
 - Modify: `backend/src/repositories/gamification/challenges.repository.js` (sumar `countByChallenge`, `findActiveStudentIds`)
 - Modify: `backend/src/services/gamification/challenges.service.js` (`listChallenges`, nuevo `activeStudents`)
 - Modify: `backend/src/controllers/gamification/challenges.controller.js`, `backend/src/routes/gamification/challenges.routes.js`
-- Create: `backend/src/database/migrations/2026-10-31-challenge-templates.sql`
+- Create: `backend/src/database/migrations/2026-10/2026-10-31-challenge-templates.sql`
 - Modify: `backend/src/database/seeds/challenges.sql`
 - Test: `backend/tests/unit/services/gamification/challenges.service.test.js` (si pasa de 200, carpeta `challenges.service/`), `backend/tests/unit/routes/…` del módulo si existe el patrón
 - Docs: `contratos-api.md` (módulo Gamificación), `modelo-de-datos.md` (seed de desafíos), `backend/README.md` (tabla de rutas)

@@ -14,7 +14,7 @@ export const mockStudentsRepo = { updateStudent: jest.fn() };
 export const mockAccess = { assertCanAccessStudent: jest.fn() };
 
 jest.unstable_mockModule(src('repositories/students/avatars.repository.js'), () => mockAvatarsRepo);
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 jest.unstable_mockModule(src('services/students/student-access.service.js'), () => mockAccess);
 
 export const service = await import(src('services/students/avatar.service.js'));

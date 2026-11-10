@@ -93,7 +93,7 @@
 - Test: `backend/tests/unit/services/sessions/session-sets.service/*.test.js` (+ setup en `tests/helpers/sessions/`), rutas.
 
 **Interfaces:**
-- Consumes: `getOwnedSession` (Task 2), `parseSet`, `validateSetsEnvelope`, `isSubstitution` (Task 1); `findAccessibleExerciseIds(ids, trainerId)` de `repositories/routines/routines.repository.js`; `findStudentById(id)` de `repositories/students/students.repository.js` (para `trainer_id`).
+- Consumes: `getOwnedSession` (Task 2), `parseSet`, `validateSetsEnvelope`, `isSubstitution` (Task 1); `findAccessibleExerciseIds(ids, trainerId)` de `repositories/routines/routines.repository.js`; `findStudentById(id)` de `repositories/students/students.repository/students.repository.js` (para `trainer_id`).
 - Produces (repository): `findSetsByIds(ids) → [{ id, session_id }]`, `findRoutineExerciseIds(routineId, ids) → string[]`, `upsertSets(rows) → [{ id }]` (`onConflict: 'id'`), `markSessionModified(sessionId) → void`.
 - Produces (service): `addSets(studentId, sessionId, body) → { saved: [{ id, created }], failed: [{ id, index, code, message }] }`.
 

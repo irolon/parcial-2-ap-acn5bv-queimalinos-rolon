@@ -44,13 +44,13 @@
 | Archivo | Acción | Responsabilidad |
 |---|---|---|
 | `backend/src/database/schema.sql` | Modificar | columna `body_metrics.recorded_by` y vista `student_last_session` |
-| `backend/src/database/migrations/2026-10-17-students-body-metrics.sql` | Crear | la misma migración, para correrla en Supabase dev |
+| `backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql` | Crear | la misma migración, para correrla en Supabase dev |
 | `backend/src/database/schema-checks.sql` | Modificar | chequea la columna, la vista y su `security_invoker` |
 | `backend/src/database/check-anon-access.js` | Modificar | suma la vista a la lista de tablas expuestas |
 | `backend/src/models/body-metrics/body-metric.model.js` | Crear | tabla, columnas, `computeBmi`, `toBodyMetric`, `withBmiHistory` |
 | `backend/src/shared/utils/errors.js` | Modificar | `accountDisabled`, `metricNotFound`, `metricIdConflict` |
 | `backend/src/repositories/auth/auth.repository.js` | Modificar | `revokeAllForUser` |
-| `backend/src/repositories/students/students.repository.js` | Modificar | `findStudentById`, `updateStudent`, `findLastSessionDates`, columnas de listado |
+| `backend/src/repositories/students/students.repository/students.repository.js` | Modificar | `findStudentById`, `updateStudent`, `findLastSessionDates`, columnas de listado |
 | `backend/src/services/auth/auth.service.js` | Modificar | `ACCOUNT_DISABLED` en el login y el refresh |
 | `backend/src/models/students/student.model.js` | Modificar | `STUDENT_LIST_COLUMNS`, `STUDENT_DETAIL_COLUMNS`, enums y nombre de la vista |
 | `backend/src/services/students/student-access.service.js` | Crear | `assertCanAccessStudent` |
@@ -102,7 +102,7 @@ Expected: lint sin errores (puede haber warnings) y todos los tests en PASS. Si 
 ### Task 1: Migración de la base (columna `recorded_by` y vista `student_last_session`)
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-10-17-students-body-metrics.sql`
+- Create: `backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql`
 - Modify: `backend/src/database/schema.sql` (después del índice `idx_body_metrics_student` y después del índice `idx_sessions_student`)
 - Modify: `backend/src/database/schema-checks.sql` (al final)
 - Modify: `backend/src/database/check-anon-access.js` (array `TABLES`)
@@ -112,7 +112,7 @@ Expected: lint sin errores (puede haber warnings) y todos los tests en PASS. Si 
 
 - [ ] **Step 1: Crear el archivo de migración**
 
-`backend/src/database/migrations/2026-10-17-students-body-metrics.sql`:
+`backend/src/database/migrations/2026-10/2026-10-17-students-body-metrics.sql`:
 
 ```sql
 -- ============================================================================
@@ -365,7 +365,7 @@ git commit -m "feat(body-metrics): modelo con IMC calculado"
 **Files:**
 - Modify: `backend/src/shared/utils/errors.js` (objeto `Errors`)
 - Modify: `backend/src/repositories/auth/auth.repository.js` (al final)
-- Modify: `backend/src/repositories/students/students.repository.js` (agrega `findStudentById`)
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js` (agrega `findStudentById`)
 - Modify: `backend/src/services/auth/auth.service.js` (`authenticateUser` y `refresh`)
 - Test: `backend/tests/unit/services/auth/auth.service.test.js`
 
@@ -542,7 +542,7 @@ git commit -m "feat(auth): rechaza al alumno dado de baja (ACCOUNT_DISABLED) en 
 
 **Files:**
 - Modify: `backend/src/models/students/student.model.js`
-- Modify: `backend/src/repositories/students/students.repository.js`
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js`
 - Modify: `backend/src/services/students/students.service.js` (`list`)
 - Modify: `backend/src/validations/students/students.validation.js`
 - Test: `backend/tests/unit/services/students/students.service.test.js`
@@ -991,7 +991,7 @@ import { jest } from '@jest/globals';
 
 const mockStudentsRepo = { findStudentById: jest.fn() };
 jest.unstable_mockModule(
-  '../../../../src/repositories/students/students.repository.js',
+  '../../../../src/repositories/students/students.repository/students.repository.js',
   () => mockStudentsRepo
 );
 
@@ -1058,7 +1058,7 @@ Expected: FAIL con "Cannot find module .../student-access.service.js".
 
 ```js
 import { Errors } from '../../shared/utils/errors.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 
 /**
  * Verifica que `user` pueda ver o tocar al alumno `studentId` y devuelve su

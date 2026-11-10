@@ -1,7 +1,7 @@
 import { getOwnedSession } from './sessions.service.js';
 import * as setsRepo from '../../repositories/sessions/session-sets.repository.js';
 import { findAccessibleExerciseIds } from '../../repositories/routines/routines.repository.js';
-import { findStudentById } from '../../repositories/students/students.repository.js';
+import { findStudentById } from '../../repositories/students/students.repository/students.repository.js';
 import { isSubstitution } from '../../models/sessions/session.model.js';
 import { safeEvaluate } from '../gamification/safe-evaluate.js';
 import { onSessionClosed, onSessionModified } from '../notifications/triggers.service.js';

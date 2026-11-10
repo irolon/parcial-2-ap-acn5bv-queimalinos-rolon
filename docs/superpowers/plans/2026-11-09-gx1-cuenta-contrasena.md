@@ -60,7 +60,7 @@ Comandos (desde `C:\ft-gx1x`):
 ### Task 1: Migración, schema y columnas de los modelos
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-11-09-account-password.sql`
+- Create: `backend/src/database/migrations/2026-11/2026-11-09-account-password.sql`
 - Modify: `backend/src/database/schema/01-auth.sql`, `backend/src/database/schema/02-students.sql`, `backend/src/models/students/student.model.js:25-26`, `backend/src/models/auth/trainer.model.js:11`
 - Test: `backend/tests/unit/models/students/` y `backend/tests/unit/models/auth/` (sumar casos al test existente del modelo; si no hay, `student.model.test.js` / `trainer.model.test.js`)
 

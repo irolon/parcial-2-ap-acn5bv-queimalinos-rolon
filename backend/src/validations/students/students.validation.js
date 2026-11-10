@@ -8,6 +8,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 /** GX2: 6 a 30 caracteres entre dígitos, espacios y + - ( ) (sobre el valor recortado). */
 const PHONE_RE = /^[0-9 +()-]{6,30}$/;
+// Con separadores alcanza el largo sin ser un número ("------"): pide 6 dígitos como mínimo.
+const PHONE_MIN_DIGITS = 6;
 
 /**
  * Valida el body de POST /students (alta desde invitación).
@@ -96,8 +98,11 @@ export function validateUpdateStudent(body) {
     // Vacío = borrar (el formulario puede vaciar el campo).
     const phone = isString(body.phone) ? body.phone.trim() : body.phone;
     if (phone === null || phone === '') out.phone = null;
-    else if (!isString(phone) || !PHONE_RE.test(phone)) {
-      details.push({ field: 'phone', message: 'phone debe tener entre 6 y 30 caracteres: números, espacios y + - ( )' });
+    else if (!isString(phone) || !PHONE_RE.test(phone) || phone.replace(/\D/g, '').length < PHONE_MIN_DIGITS) {
+      details.push({
+        field: 'phone',
+        message: 'phone debe tener entre 6 y 30 caracteres con al menos 6 dígitos: números, espacios y + - ( )',
+      });
     } else out.phone = phone;
   }
   Object.assign(out, parseStudentContext(body, details));

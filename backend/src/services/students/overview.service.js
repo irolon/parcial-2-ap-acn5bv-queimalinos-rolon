@@ -1,5 +1,5 @@
 import * as overviewRepo from '../../repositories/students/overview.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { buildOverview } from '../../models/students/overview.js';
 import { addDays } from '../../models/gamification/streak.js';
 import { localDate } from '../../shared/utils/dates/dates.js';

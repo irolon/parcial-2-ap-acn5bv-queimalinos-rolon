@@ -93,6 +93,24 @@ describe('password.service · changePassword (PUT /auth/password)', () => {
     expect(payload).not.toHaveProperty('must_change_password');
   });
 
+  it.each([
+    ['la revocación de las otras sesiones', () => mockAuthRepo.revokeAllForUserExcept],
+    ['el borrado de los push ajenos', () => mockPushTokensRepo.deleteAllForUserExcept],
+  ])('si falla %s no toca la clave (el reintento sigue aceptando la actual)', async (_c, fn) => {
+    fn().mockRejectedValueOnce(new Error('db caída'));
+    await expect(passwordService.changePassword(USER, BODY)).rejects.toThrow('db caída');
+    expect(mockCredentialsRepo.setPassword).not.toHaveBeenCalled();
+  });
+
+  it('revoca sesiones y push ANTES de guardar la clave nueva', async () => {
+    await passwordService.changePassword(USER, BODY);
+    const savedAt = mockCredentialsRepo.setPassword.mock.invocationCallOrder[0];
+    expect(mockAuthRepo.revokeAllForUserExcept.mock.invocationCallOrder[0]).toBeLessThan(savedAt);
+    expect(mockPushTokensRepo.deleteAllForUserExcept.mock.invocationCallOrder[0]).toBeLessThan(
+      savedAt
+    );
+  });
+
   it('sin push_token borra todos los push del usuario (la web no tiene)', async () => {
     const { push_token: _omit, ...body } = BODY;
     mockAuthRepo.findRefreshToken.mockResolvedValue(storedRefresh('t-1', 'trainer'));

@@ -85,7 +85,7 @@ describe('students.validation — validateUpdateStudent · phone (GX2)', () => {
     }
     return undefined;
   };
-  const MSG = 'phone debe tener entre 6 y 30 caracteres: números, espacios y + - ( )';
+  const MSG = 'phone debe tener entre 6 y 30 caracteres con al menos 6 dígitos: números, espacios y + - ( )';
 
   it('acepta el formato y lo recorta', () => {
     expect(validateUpdateStudent({ phone: ' +54 9 11 2233-4455 ' })).toEqual({ phone: '+54 9 11 2233-4455' });
@@ -98,6 +98,13 @@ describe('students.validation — validateUpdateStudent · phone (GX2)', () => {
     expect(validateUpdateStudent({ phone: null })).toEqual({ phone: null });
   });
   it('rechaza 5 caracteres', () => expect(phoneError('12345')).toBe(MSG));
+  it('rechaza símbolos sin dígitos o con menos de 6 ("------", "(12) 3-4-5")', () => {
+    expect(phoneError('------')).toBe(MSG);
+    expect(phoneError('(12) 3-4-5')).toBe(MSG);
+  });
+  it('acepta 6 dígitos con separadores', () => {
+    expect(validateUpdateStudent({ phone: '12-34-56' })).toEqual({ phone: '12-34-56' });
+  });
   it('rechaza letras', () => expect(phoneError('abc123456')).toBe(MSG));
   it('rechaza 31 caracteres', () => expect(phoneError('1'.repeat(31))).toBe(MSG));
   it('rechaza un número (no string)', () => expect(phoneError(1122334455)).toBe(MSG));

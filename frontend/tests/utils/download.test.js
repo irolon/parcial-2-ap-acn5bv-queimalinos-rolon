@@ -19,19 +19,22 @@ afterEach(() => {
 });
 
 describe('downloadText', () => {
-  it('arma un Blob del tipo dado (con el BOM), hace clic en un <a download> y revoca la URL', async () => {
+  it('arma un Blob del tipo dado (con el BOM), hace clic en un <a download> y revoca la URL después', async () => {
     const clicked = [];
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function click() {
       clicked.push({ href: this.getAttribute('href'), download: this.download, inDom: document.body.contains(this) });
     });
 
     downloadText('﻿a;b\r\n', 'x.csv', 'text/csv');
+    // Revocar en el mismo tick que el click puede cortar la descarga en Firefox.
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
 
     expect(blob).toBeInstanceOf(Blob);
     expect(blob.type).toBe('text/csv');
     const bytes = new Uint8Array(await blob.arrayBuffer());
     expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     expect(clicked).toEqual([{ href: 'blob:x', download: 'x.csv', inDom: true }]);
+    await new Promise((r) => setTimeout(r, 0));
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:x');
     expect(document.querySelector('a[download]')).toBeNull();
   });

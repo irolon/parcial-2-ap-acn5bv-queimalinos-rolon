@@ -71,6 +71,15 @@ describe('sessions-export.repository · findTrainerStudents', () => {
     expect(q.select).toHaveBeenCalledWith('id, name, email, active');
     expect(q.eq).toHaveBeenCalledWith('trainer_id', 'tr-1');
     expect(q.eq).not.toHaveBeenCalledWith('active', expect.anything());
-    expect(q.order).toHaveBeenCalledWith('name');
+    expect(q.order.mock.calls.map((c) => c[0])).toEqual(['name', 'id']);
+  });
+
+  it('pagina de a 1000 (más de 1000 alumnos → el CSV no queda incompleto)', async () => {
+    responses.push(page(1000), page(5));
+    await expect(repo.findTrainerStudents('tr-1')).resolves.toHaveLength(1005);
+    expect(q.range.mock.calls).toEqual([
+      [0, 999],
+      [1000, 1999],
+    ]);
   });
 });

@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 
 const mockStudentsRepo = { findStudentById: jest.fn(), findFinishedSessionsBetween: jest.fn(), findActiveRoutineSchedules: jest.fn() };
 const mockHistoryRepo = { fetchSessionRecords: jest.fn() };
-jest.unstable_mockModule('../../../../src/repositories/students/students.repository.js', () => mockStudentsRepo);
+jest.unstable_mockModule('../../../../src/repositories/students/students.repository/students.repository.js', () => mockStudentsRepo);
 jest.unstable_mockModule('../../../../src/repositories/sessions/session-history.repository.js', () => mockHistoryRepo);
 
 const { attendance } = await import('../../../../src/services/students/attendance.service.js');

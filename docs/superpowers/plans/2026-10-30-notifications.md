@@ -33,7 +33,7 @@
 
 ### Task 1: Base de datos y modelos puros
 
-**Files:** migración `backend/src/database/migrations/2026-10-30-notifications.sql`; `schema/06-ai-and-agenda.sql`, `07-rls.sql`, `checks/schema-checks.sql`, `checks/check-anon-access.js`, `schema/README.md`; `backend/src/models/notifications/{notification.model.js,texts.js,push-policy.js}`; `missedAssignedDays` en `backend/src/models/gamification/streak.js`; `Errors.notificationNotFound` en `shared/utils/errors.js`. Tests espejo.
+**Files:** migración `backend/src/database/migrations/2026-10/2026-10-30-notifications.sql`; `schema/06-ai-and-agenda.sql`, `07-rls.sql`, `checks/schema-checks.sql`, `checks/check-anon-access.js`, `schema/README.md`; `backend/src/models/notifications/{notification.model.js,texts.js,push-policy.js}`; `missedAssignedDays` en `backend/src/models/gamification/streak.js`; `Errors.notificationNotFound` en `shared/utils/errors.js`. Tests espejo.
 
 **Interfaces:** `missedAssignedDays({ lastDate, assignedDays, today }) → number`; `texts.inactivity({ studentName, daysSince, missed })`, `texts.routineModified({ studentName, date, substitutions:[{from,to}] })`, `texts.prForStudent({ exerciseNames, date })`, `texts.prForTrainer({ studentName, exerciseNames })`, `texts.achievementForStudent({ name, description })`, `texts.achievementsSummary(names)`, `texts.achievementForTrainer({ studentName, name })`, `texts.comment({ date, comment })` → `{ title, body }` (título recortado a 150); `PUSH_POLICY` / `shouldPush(type, role, { fromJob })`; constantes `NOTIFICATION_TYPES`, `INACTIVITY_MISSED_DAYS = 3`, `INACTIVITY_COOLDOWN_DAYS = 7`, columnas.
 

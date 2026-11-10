@@ -126,7 +126,7 @@ src/
   repositories/<módulo>/  validations/<módulo>/   models/<módulo>/
   shared/middlewares/     shared/utils/
   database/schema/        (01-…sql a 07-…sql, en orden de ejecución; 04b-progress-overview.sql corre después de 04-progress.sql)
-  database/migrations/    database/checks/        database/seeds/
+  database/migrations/AAAA-MM/  (una carpeta por mes)   database/checks/   database/seeds/
 tests/
   unit/<capa>/<módulo>/   (mismo árbol que src; unit/scripts/lib/ espeja scripts/lib/, sin módulo)
   unit/app/               (tests de src/app.js, el punto de entrada: no tiene módulo)

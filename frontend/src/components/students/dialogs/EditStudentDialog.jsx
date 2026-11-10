@@ -25,12 +25,15 @@ export default function EditStudentDialog({ student, onClose }) {
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const update = useUpdateStudent(student.id);
   const saving = update.isPending;
+  // Blanqueo en vuelo: cerrar ahora perdería la clave temporal, que se ve una sola vez.
+  const [resetting, setResetting] = useState(false);
+  const busy = saving || resetting;
   const defaults = studentFormDefaults(student);
   const { fields } = errors;
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (saving) return;
+    if (busy) return;
     const body = buildStudentBody(new FormData(event.currentTarget), student);
     if (Object.keys(body).length === 0) {
       onClose();
@@ -53,15 +56,15 @@ export default function EditStudentDialog({ student, onClose }) {
   return (
     <Dialog
       open
-      dismissible={!saving}
+      dismissible={!busy}
       onOpenChange={(next) => !next && onClose()}
       title="Editar alumno"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
             Cancelar
           </Button>
-          <Button type="submit" form={FORM_ID} loading={saving}>
+          <Button type="submit" form={FORM_ID} loading={saving} disabled={resetting}>
             Guardar
           </Button>
         </>
@@ -108,7 +111,7 @@ export default function EditStudentDialog({ student, onClose }) {
           error={fields.birth_date}
         />
       </form>
-      {student.active && <ResetPasswordSection student={student} />}
+      {student.active && <ResetPasswordSection student={student} onBusyChange={setResetting} />}
     </Dialog>
   );
 }

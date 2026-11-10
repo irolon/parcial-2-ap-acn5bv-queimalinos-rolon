@@ -1,4 +1,4 @@
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { fetchSessionRecords } from '../../repositories/sessions/session-history.repository.js';
 import { buildAttendance, monthRange } from '../../models/students/attendance.js';
 import { localDate } from '../../shared/utils/dates/dates.js';

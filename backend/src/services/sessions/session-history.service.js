@@ -1,6 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repo from '../../repositories/sessions/session-history.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { onSessionCommented } from '../notifications/triggers.service.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import { toSessionSummary, groupSetsByExercise } from '../../models/sessions/session-history.model.js';

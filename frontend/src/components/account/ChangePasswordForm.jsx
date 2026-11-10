@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Input from '@/components/shared/ui/Input';
 import { useChangePassword } from '@/hooks/account/useChangePassword';
+import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { validatePasswordChange } from '@/utils/account/passwordRules';
 import { NO_FIELD_ERRORS, fieldErrorsFrom } from '@/utils/fieldErrors';
 import PasswordRulesList from './PasswordRulesList';
@@ -19,7 +20,9 @@ const toErrors = (error) =>
 export default function ChangePasswordForm({ formId, currentLabel = 'Contraseña actual', onSuccess }) {
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
-  const { submit, isPending } = useChangePassword();
+  const { submit } = useChangePassword();
+  // isPending llega un render tarde: dos Enter seguidos mandarían dos pedidos.
+  const lock = useSubmitLock();
   const { fields } = errors;
   const bind = (name) => ({
     name,
@@ -29,22 +32,23 @@ export default function ChangePasswordForm({ formId, currentLabel = 'Contraseña
     type: 'password',
   });
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault();
-    if (isPending) return;
-    const clientErrors = validatePasswordChange(values);
-    if (Object.keys(clientErrors).length > 0) {
-      setErrors({ form: null, fields: clientErrors });
-      return;
-    }
-    setErrors(NO_FIELD_ERRORS);
-    try {
-      await submit({ current_password: values.current_password, new_password: values.new_password });
-    } catch (error) {
-      setErrors(toErrors(error));
-      return;
-    }
-    onSuccess?.();
+    return lock(async () => {
+      const clientErrors = validatePasswordChange(values);
+      if (Object.keys(clientErrors).length > 0) {
+        setErrors({ form: null, fields: clientErrors });
+        return;
+      }
+      setErrors(NO_FIELD_ERRORS);
+      try {
+        await submit({ current_password: values.current_password, new_password: values.new_password });
+      } catch (error) {
+        setErrors(toErrors(error));
+        return;
+      }
+      onSuccess?.();
+    });
   }
 
   return (

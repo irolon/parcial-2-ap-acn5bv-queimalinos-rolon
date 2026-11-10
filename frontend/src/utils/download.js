@@ -14,12 +14,15 @@ export function downloadCanvasPng(canvas, filename) {
   downloadUrl(canvas.toDataURL('image/png'), filename);
 }
 
-/** Baja un texto (p. ej. un CSV) como archivo, con un `Blob` del tipo dado. */
+/**
+ * Baja un texto (p. ej. un CSV) como archivo, con un `Blob` del tipo dado. La URL se revoca en el tick siguiente:
+ * revocarla en el mismo tick que el click puede cortar la descarga en Firefox.
+ */
 export function downloadText(text, filename, type = 'text/plain') {
   const url = URL.createObjectURL(new Blob([text], { type }));
   try {
     downloadUrl(url, filename);
   } finally {
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 }

@@ -299,7 +299,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 
 Índice único `uq_availability_slot` sobre `(trainer_id, weekday, start_time)`. Checks `availability_range` (`start_time < end_time`) y `availability_on_the_hour` (minutos y segundos en 0). Hay varias franjas por día; los turnos de 60 min salen de cada hora en punto de cada franja. RLS activado sin políticas (ADR 0001).
 
-**Función `replace_trainer_availability(p_trainer uuid, p_slots jsonb)`**: borra e inserta las franjas del entrenador en una sola transacción (supabase-js no tiene transacciones) y devuelve las filas ordenadas por `weekday, start_time`. `security invoker`, `search_path = public`, ejecutable solo por `service_role`. Migración: `backend/src/database/migrations/2026-10-31-agenda.sql`.
+**Función `replace_trainer_availability(p_trainer uuid, p_slots jsonb)`**: borra e inserta las franjas del entrenador en una sola transacción (supabase-js no tiene transacciones) y devuelve las filas ordenadas por `weekday, start_time`. `security invoker`, `search_path = public`, ejecutable solo por `service_role`. Migración: `backend/src/database/migrations/2026-10/2026-10-31-agenda.sql`.
 
 **notifications**
 
@@ -367,13 +367,13 @@ Una fila por alumno y una columna por tipo; **sin fila = todo prendido** (nadie 
 
 Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede haber los dos).
 
-Índices: `idx_messages_student_created` sobre `(student_id, created_at desc)` para el historial paginado y el último mensaje de cada conversación, e `idx_messages_unread` parcial sobre `(student_id, sender_role) where read_at is null` para contar los no leídos. RLS activado sin políticas (ADR 0001). Migración: `backend/src/database/migrations/2026-10-31-messages.sql` (y `schema/06b-messages.sql` + `07-rls.sql` para bases nuevas).
+Índices: `idx_messages_student_created` sobre `(student_id, created_at desc)` para el historial paginado y el último mensaje de cada conversación, e `idx_messages_unread` parcial sobre `(student_id, sender_role) where read_at is null` para contar los no leídos. RLS activado sin políticas (ADR 0001). Migración: `backend/src/database/migrations/2026-10/2026-10-31-messages.sql` (y `schema/06b-messages.sql` + `07-rls.sql` para bases nuevas).
 
 > **No confundir con `chat_messages`:** esa tabla es el historial del asistente IA del alumno (`POST /chat`). `messages` es la mensajería entre personas y no tiene relación con ella.
 
 **Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
 
-**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
+**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
 
 ---
 

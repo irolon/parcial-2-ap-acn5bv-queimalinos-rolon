@@ -19,6 +19,12 @@ describe('validatePhone', () => {
     expect(validatePhone('11 2233 abcd')).toBe(PHONE_ERROR);
   });
 
+  it('sin al menos 6 dígitos → PHONE_ERROR aunque tenga 6+ caracteres', () => {
+    expect(validatePhone('------')).toBe(PHONE_ERROR);
+    expect(validatePhone('(12) 3-4-5')).toBe(PHONE_ERROR);
+    expect(validatePhone('12-34-56')).toBeNull();
+  });
+
   it('recorta antes de validar', () => {
     expect(validatePhone('  123456  ')).toBeNull();
   });

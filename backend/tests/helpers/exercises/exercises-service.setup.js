@@ -19,7 +19,7 @@ jest.unstable_mockModule(src('repositories/exercises/exercises.repository.js'), 
 export const mockStudentsRepo = {
   findStudentById: jest.fn(),
 };
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 
 export const service = await import(src('services/exercises/exercises.service.js'));
 

@@ -29,7 +29,7 @@ export const mockMessageTriggers = { onMessageSent: jest.fn(), onBroadcastSent: 
 
 jest.unstable_mockModule(src('repositories/messages/messages.repository.js'), () => mockMessagesRepo);
 jest.unstable_mockModule(src('repositories/messages/message-images.repository.js'), () => mockImagesRepo);
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 jest.unstable_mockModule(src('repositories/auth/auth.repository.js'), () => mockAuthRepo);
 jest.unstable_mockModule(src('services/notifications/message-triggers.service.js'), () => mockMessageTriggers);
 // GX2: avatares firmados por lote. El wrapper sobrevive a jest.resetAllMocks(): sin

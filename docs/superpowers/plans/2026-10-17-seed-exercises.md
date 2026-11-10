@@ -20,7 +20,7 @@
 - `backend/src/database/schema/03-routines.sql`: debajo de los índices de `exercises`, agregar
   `create unique index if not exists uq_exercises_global_name on exercises (name) where is_global;`
   con un comentario: un nombre no se repite entre los globales; hace idempotente el seed (`on conflict`).
-- `backend/src/database/migrations/2026-10-17-exercises-global-name.sql`: encabezado con el mismo estilo que `migrations/2026-10-17-students-body-metrics.sql` ("Tarjeta 1 · Seed de ejercicios. Re-ejecutable. …También está en database/schema/ (03-routines.sql)."), y el mismo `create unique index if not exists …`.
+- `backend/src/database/migrations/2026-10/2026-10-17-exercises-global-name.sql`: encabezado con el mismo estilo que `migrations/2026-10/2026-10-17-students-body-metrics.sql` ("Tarjeta 1 · Seed de ejercicios. Re-ejecutable. …También está en database/schema/ (03-routines.sql)."), y el mismo `create unique index if not exists …`.
 - Test: `backend/tests/unit/models/exercises/exercise.model.test.js` — `EQUIPMENT` tiene exactamente esos 7 valores, sin repetidos.
 
 **Commit:** `feat(db): índice único de nombres globales en exercises y constante EQUIPMENT`
