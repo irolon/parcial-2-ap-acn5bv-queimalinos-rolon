@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { replaceExercise, setCursor } from '@/utils/workout/workoutState/workoutState';
 import { PanelHarness, reps, weight } from '../../../../helpers/workout/exercisePanel';
 import { freshWorkout, withSets } from '../../../../helpers/workout/workout';
@@ -19,6 +20,23 @@ describe('ExercisePanel: lo que muestra', () => {
     render(<PanelHarness initial={replaceExercise(freshWorkout(), 0, { id: 'e-9', name: 'Press inclinado' })} />);
     expect(screen.getByRole('heading', { name: 'Press inclinado' })).toBeInTheDocument();
     expect(screen.getByText('EN LUGAR DE PRESS BANCA')).toBeInTheDocument();
+  });
+
+  it('al reemplazar el ejercicio a la vista, los campos se vuelven a precargar con el nuevo (no quedan los kg del otro)', async () => {
+    render(
+      <PanelHarness>
+        {(setWorkout) => (
+          <button type="button" onClick={() => setWorkout((w) => replaceExercise(w, 0, { id: 'e-9', name: 'Flexiones' }))}>
+            reemplazar
+          </button>
+        )}
+      </PanelHarness>,
+    );
+    expect(weight()).toHaveValue('62,5');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'reemplazar' }));
+    expect(screen.getByText('SERIE 1 DE 4 · SUGERIDO 10 REPS')).toBeInTheDocument();
+    expect(weight()).toHaveValue('');
+    expect(reps()).toHaveValue('10');
   });
 
   it('sin reemplazo no muestra "EN LUGAR DE"', () => {
