@@ -67,6 +67,8 @@ const cases = rows('trainerB', [
   [46, 'POST /messages/:stA/read', 403],
   [47, 'POST /messages/broadcast', 403, null, { student_ids: [':stA', ':stB'], body: 'IT · masivo' }],
   [48, 'POST /challenges/:chB/assignments', 201, null, { student_ids: [':stA'] }],
+  [94, 'GET /students/:stA/export', 403],
+  [95, 'POST /students/:stA/password-reset', 403],
 ]);
 
 // #47: el masivo rechazado no le llega a nadie (B sigue con su único mensaje).
