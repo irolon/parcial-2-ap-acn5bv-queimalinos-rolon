@@ -67,7 +67,9 @@ Completá `backend/.env`:
 | `CRON_ENABLED` | No | Jobs nocturnos (03:00 Buenos Aires) dentro del server: gamificación y luego alerta de inactividad. Por defecto activo; `false` los apaga. En tests siempre están apagados |
 | `FCM_SERVICE_ACCOUNT_PATH` | No | Ruta al JSON de la cuenta de servicio de Firebase (desarrollo local, fuera del repo). Ver [Firebase / FCM](#firebase--fcm-push) |
 | `FCM_SERVICE_ACCOUNT_JSON` | No | El mismo JSON en base64 (VPS). Si están las dos, gana la ruta. Sin ninguna, el push queda apagado y las notificaciones se guardan igual |
-| `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` | No | Chat IA. Se usan en fases posteriores; dejalas vacías |
+| `N8N_TRAINER_AI_WEBHOOK_URL` | No | URL del webhook `trainer-ia` de n8n (asistente IA del entrenador), p. ej. `http://n8n:5678/webhook/trainer-ia` en el compose. Sin ella la app arranca igual y `POST /trainer-ai/generate-routine` responde 503 `AI_UNAVAILABLE`. **Para que la IA funcione hacen falta esta y `N8N_WEBHOOK_SECRET`.** Ver `n8n/README.md` |
+| `N8N_WEBHOOK_SECRET` | No | Secreto compartido con n8n: el backend lo manda en el header `x-webhook-secret` y n8n lo compara con su credencial *Header Auth* (`FitTrainer webhook`). Tiene que ser el mismo valor de los dos lados y es uno solo para los dos asistentes (entrenador y alumno). **Obligatoria para usar la IA:** si falta, el backend no llama a n8n, lo loguea y responde 503 `AI_UNAVAILABLE` |
+| `N8N_STUDENT_AI_WEBHOOK_URL` | No | URL del webhook `student-ia` de n8n (chat IA del alumno durante la sesión, tarjeta 13), p. ej. `http://n8n:5678/webhook/student-ia` en el compose. Sin ella la app arranca igual y `POST /chat` responde 503 `AI_UNAVAILABLE` ("El asistente no está disponible ahora. Seguí con tu entrenamiento."). Usa el mismo `N8N_WEBHOOK_SECRET`. Ver `n8n/README.md` |
 
 Para generar un `JWT_SECRET`:
 
@@ -268,6 +270,25 @@ docker compose up --build
 
 La API queda en `http://localhost:3001`. Si el puerto está ocupado: `API_PORT=3002 docker compose up --build`. Los archivos son `docker-compose.yml` (desarrollo) y `docker-compose.prod.yml` (VPS).
 
+### n8n (asistentes IA)
+
+Los asistentes de IA (entrenador y alumno) pasan por n8n, que corre como otro servicio del mismo `docker-compose.yml` (imagen `n8nio/n8n:2.45.3`, editor en `http://localhost:5678`).
+
+> **Hace falta Docker Compose 2.24 o más** (`docker compose version`). El servicio usa `env_file` con `path` y `required: false` para arrancar aunque no exista `n8n/.env`; con un Compose más viejo falla **todo** el `docker compose up`, también `api`. Docker Desktop actual ya lo trae.
+
+```bash
+# Una sola vez: crear la configuración (los valores del ejemplo sirven; N8N_ENCRYPTION_KEY es opcional, ver n8n/README.md)
+cp n8n/.env.example n8n/.env
+
+docker compose up -d n8n
+curl -s -o /dev/null -w "%{http_code}" http://localhost:5678/healthz   # 200
+
+# Una sola vez: importar los dos workflows (en Git Bash anteponé MSYS_NO_PATHCONV=1)
+docker compose exec n8n n8n import:workflow --separate --input=/workflows
+```
+
+Las credenciales (`FitTrainer webhook` y `LLM`, con la key del proveedor del modelo: KIMI por defecto) **se crean a mano** en el editor: no viajan en los workflows. El paso a paso, el puerto (`N8N_PORT`) y cómo actualizar la versión están en `n8n/README.md`. Con la API dentro de Docker, `backend/.env` apunta a `http://n8n:5678/webhook/trainer-ia` y `http://n8n:5678/webhook/student-ia`; con la API nativa, a `http://localhost:5678/webhook/...`.
+
 ---
 
 ## 11. Scripts del backend
@@ -320,7 +341,7 @@ Antes de abrir una PR: `npm test` y `npm run lint` en verde, y probar a mano lo 
 > Con HTTP no funciona: la app corta cualquier host que no sea `10.0.2.2` o `localhost`. Conectá el celular por USB y corré `adb reverse tcp:3001 tcp:3001`.
 
 > [!note]- ❌ `npm install` o el server fallan por la versión de Node
-> Usá Node 22 (`nvm use`). El backend funciona desde Node 20, pero la web (Vite 8) necesita 20.19 o más.
+> Usá Node 22 (`nvm use`). El backend necesita Node 22 (el cliente de Supabase usa el WebSocket nativo) y la web (Vite 8), 20.19 o más.
 
 ---
 

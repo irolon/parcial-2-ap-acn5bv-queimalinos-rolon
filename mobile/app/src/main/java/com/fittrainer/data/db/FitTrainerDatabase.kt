@@ -3,6 +3,8 @@ package com.fittrainer.data.db
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.fittrainer.data.db.chat.AiChatDao
+import com.fittrainer.data.db.chat.AiChatMessageEntity
 import com.fittrainer.data.db.agenda.TrainerAgendaDao
 import com.fittrainer.data.db.agenda.TrainerAgendaWeekEntity
 import com.fittrainer.data.db.agenda.TrainerAppointmentEntity
@@ -130,8 +132,9 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         StudentAppointmentsSyncEntity::class,
         StudentFreeSlotEntity::class,
         StudentFreeSlotsSyncEntity::class,
+        AiChatMessageEntity::class,
     ],
-    version = 24,
+    version = 25,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -162,6 +165,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 22, to = 23),
         // v24: turnos del alumno (tarjeta 16), cuatro tablas nuevas.
         AutoMigration(from = 23, to = 24),
+        // v25: chat IA del alumno (tarjeta 14), una tabla nueva.
+        AutoMigration(from = 24, to = 25),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {
@@ -185,4 +190,5 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun trainerMessagesDao(): TrainerMessagesDao
     abstract fun trainerAgendaDao(): TrainerAgendaDao
     abstract fun studentAgendaDao(): StudentAgendaDao
+    abstract fun aiChatDao(): AiChatDao
 }

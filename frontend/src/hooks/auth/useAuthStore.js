@@ -3,13 +3,12 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import * as authApi from '@/api/auth/auth.api';
 import * as studentsApi from '@/api/students/students.api';
 import * as accountApi from '@/api/account/account.api';
-import { configureClient } from '@/api/shared/client';
+import { configureClient, isNetworkError } from '@/api/shared/client';
 
 export const SESSION_STORAGE_KEY = 'fittrainer.session';
 
 const EMPTY_SESSION = { user: null, token: null, refreshToken: null };
 
-const isNetworkError = (err) => err?.status === 0 || err?.code === 'NETWORK_ERROR';
 // 429 del refresh: el cupo por IP se agotó (recargas seguidas, varios PT en la misma red). Es temporal.
 const isRateLimited = (err) => err?.status === 429 || err?.code === 'RATE_LIMIT_EXCEEDED';
 const isTransientError = (err) => isNetworkError(err) || isRateLimited(err);

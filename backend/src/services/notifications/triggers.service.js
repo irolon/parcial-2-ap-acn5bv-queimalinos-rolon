@@ -4,15 +4,21 @@ import { shouldPush } from '../../models/notifications/push-policy.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import * as triggerData from '../../repositories/notifications/trigger-data.repository.js';
 import { fetchSessionRecords } from '../../repositories/sessions/session-history.repository.js';
+import { trackInFlight } from '../../shared/utils/async/in-flight.js';
 
-/** Ejecuta el disparador sin dejar escapar ningún error: nunca rompe la operación que lo origina. */
-async function safely(label, fn) {
+async function run(label, fn) {
   try {
     await fn();
   } catch (err) {
     console.error(`[notifications] ${label}`, err.message);
   }
 }
+
+/**
+ * Ejecuta el disparador sin dejar escapar ningún error: nunca rompe la operación que lo origina.
+ * Queda anotado como tarea en curso (los services lo llaman con `void`).
+ */
+const safely = (label, fn) => trackInFlight(run(label, fn));
 
 const uniq = (values) => [...new Set(values.filter(Boolean))];
 

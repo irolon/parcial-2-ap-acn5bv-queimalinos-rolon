@@ -21,6 +21,8 @@ import notificationsRoutes from './routes/notifications/notifications.routes.js'
 import availabilityRoutes from './routes/agenda/availability.routes.js';
 import appointmentsRoutes from './routes/agenda/appointments.routes.js';
 import messagesRoutes from './routes/messages/messages.routes.js';
+import trainerAiRoutes from './routes/trainer-ai/trainer-ai.routes.js';
+import chatRoutes from './routes/chat/chat.routes.js';
 
 /**
  * Arma la app. `rateLimits` ({ windowMs, login, loginIp, auth, public }) y `trustProxy` pisan
@@ -33,7 +35,8 @@ export function createApp({ rateLimits, trustProxy = env.TRUST_PROXY } = {}) {
 
   // Seguridad y utilidades base.
   app.use(helmet());
-  app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+  // Retry-After se expone para que la web lea la espera de un 429 (asistente IA).
+  app.use(cors({ origin: env.FRONTEND_URL, credentials: true, exposedHeaders: ['Retry-After'] }));
   app.use(express.json());
   if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
@@ -59,6 +62,8 @@ export function createApp({ rateLimits, trustProxy = env.TRUST_PROXY } = {}) {
   app.use('/api/availability', availabilityRoutes);
   app.use('/api/appointments', appointmentsRoutes);
   app.use('/api/messages', messagesRoutes);
+  app.use('/api/trainer-ai', trainerAiRoutes);
+  app.use('/api/chat', chatRoutes);
 
   // 404 + manejador central de errores (siempre al final).
   app.use(notFoundHandler);
