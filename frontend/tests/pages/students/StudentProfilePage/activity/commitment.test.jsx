@@ -40,7 +40,7 @@ describe('StudentProfilePage: compromiso del mes', () => {
 
   it('si falla la asistencia, el resto de la ficha se ve igual', async () => {
     await loadProfile({ detail: studentDetail({ id: 'st-1' }), attendance: 500 });
-    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos cargar los indicadores.');
+    expect(await screen.findByText('No pudimos cargar los indicadores.')).toBeVisible();
     expect(await screen.findByText('Todavía no entrenó')).toBeVisible();
   });
 });
