@@ -27,8 +27,14 @@ function Legend({ lines }) {
   );
 }
 
-/** `1RM estimado · kg`, `Peso máximo · kg` si todas van con peso máximo, o la excepción entre paréntesis. */
-function metricNote(lines) {
+const NOTES = { max_kg: 'Peso máximo · kg', volume_kg: 'Volumen · kg' };
+
+/**
+ * Con peso máximo o volumen, esa; con 1RM estimado (por defecto), `1RM estimado · kg`, `Peso máximo · kg` si todas van
+ * con peso máximo, o la excepción entre paréntesis.
+ */
+function metricNote(lines, metric) {
+  if (NOTES[metric]) return NOTES[metric];
   const maxNames = lines.filter((l) => l.metric === 'max_kg').map((l) => l.name);
   if (maxNames.length === lines.length) return 'Peso máximo · kg';
   return maxNames.length ? `1RM estimado · kg (${joinNames(maxNames)}: peso máximo)` : '1RM estimado · kg';
@@ -37,9 +43,9 @@ function metricNote(lines) {
 /**
  * Hasta 3 ejercicios superpuestos (`lines`: `{ id, name, color, dash, shape, metric, points }`), con el eje X de
  * tiempo real y pocas marcas parejas (`timeTicks`) para que las fechas no se encimen.
- * Cada línea usa su métrica: el 1RM estimado o, si el ejercicio no tiene ninguno, el peso máximo.
+ * Cada línea usa su métrica (`metric` de la línea): con 1RM estimado, si el ejercicio no tiene ninguno, el peso máximo.
  */
-export default function CompareChart({ lines }) {
+export default function CompareChart({ lines, metric = 'e1rm_kg' }) {
   const rows = mergeSeries(lines, (l) => l.metric);
   return (
     <div>
@@ -79,7 +85,7 @@ export default function CompareChart({ lines }) {
         </ResponsiveContainer>
       </div>
       <p className="mt-2 font-mono text-[10px] uppercase tracking-[1px] text-ink6">
-        {metricNote(lines)}
+        {metricNote(lines, metric)}
       </p>
     </div>
   );
