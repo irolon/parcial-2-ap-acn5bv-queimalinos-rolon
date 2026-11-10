@@ -10,13 +10,15 @@ const EMPTY_SESSION = { user: null, token: null, refreshToken: null };
 
 // 429 del refresh: el cupo por IP se agotó (recargas seguidas, varios PT en la misma red). Es temporal.
 const isRateLimited = (err) => err?.status === 429 || err?.code === 'RATE_LIMIT_EXCEEDED';
-const isTransientError = (err) => isNetworkError(err) || isRateLimited(err);
+// 5xx: en producción nginx contesta 502/503/504 con el backend caído.
+const isServerDown = (err) => err?.status >= 500;
+const isTransientError = (err) => isNetworkError(err) || isRateLimited(err) || isServerDown(err);
 
-// Sin conexión con el servidor (o con el refresh limitado) no se sabe si la sesión sigue
-// válida: se pasa a `anonymous` y se descarta el access, pero `user` y `refreshToken`
-// quedan guardados para reintentar en la próxima carga.
+// Sin respuesta del servidor (red caída, 429 o 5xx) no se sabe si la sesión sigue válida: se pasa a
+// `offline` y se descarta el access, pero `user` y `refreshToken` quedan guardados para reintentar
+// (`retry()`). Solo un rechazo del servidor (400/401/403) borra la sesión.
 function keepSessionOffline(set) {
-  set({ token: null, status: 'anonymous' });
+  set({ token: null, status: 'offline' });
 }
 
 function saveSession(set, user, token, refreshToken) {
@@ -26,7 +28,8 @@ function saveSession(set, user, token, refreshToken) {
 
 /**
  * Sesión de la web.
- * - `status`: `idle` (sin chequear) → `loading` (restore en curso) → `authenticated` | `anonymous`.
+ * - `status`: `idle` (sin chequear) → `loading` (restore en curso) → `authenticated` | `anonymous` | `offline`
+ *   (sesión guardada sin verificar porque el servidor no responde; `retry()` la vuelve a probar).
  * - Solo `user` y `refreshToken` se guardan en localStorage; el `token` vive en memoria.
  */
 export const useAuthStore = create(
@@ -81,6 +84,22 @@ export const useAuthStore = create(
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
         }
       },
+
+      // Reintento desde `offline`, sin pasar por `loading` (la pantalla de "Sin conexión" no parpadea).
+      async retry() {
+        const { status, refreshToken } = get();
+        if (status !== 'offline' || !refreshToken) return;
+        // Si mientras tanto cerró sesión (u otra cuenta entró), la respuesta ya no le corresponde.
+        const stale = () => get().refreshToken !== refreshToken;
+        try {
+          const { token } = await authApi.refresh(refreshToken);
+          if (!stale()) set({ token, status: 'authenticated' });
+        } catch (err) {
+          if (stale()) return;
+          if (isTransientError(err)) keepSessionOffline(set);
+          else set({ ...EMPTY_SESSION, status: 'anonymous' });
+        }
+      },
     }),
     {
       name: SESSION_STORAGE_KEY,
@@ -103,7 +122,8 @@ async function renewAccessToken() {
 configureClient({
   getToken: () => useAuthStore.getState().token,
   refreshSession: renewAccessToken,
-  // Si la renovación falla, el status pasa a `anonymous` y el router manda a /login.
+  // Si la renovación falla: sin respuesta del servidor pasa a `offline` (los guards muestran "Sin conexión");
+  // si el servidor la rechaza, logout y el router manda a /login.
   onAuthFailure: (err) => {
     if (isTransientError(err)) keepSessionOffline(useAuthStore.setState);
     else useAuthStore.getState().logout();

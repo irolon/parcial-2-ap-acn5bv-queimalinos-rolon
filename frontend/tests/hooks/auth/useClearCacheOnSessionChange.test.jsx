@@ -35,6 +35,11 @@ describe('useClearCacheOnSessionChange', () => {
     expect(queryClient.getQueryData(['messages', 'conversations'])).toEqual([{ student: 'de A' }]);
   });
 
+  it('al quedar sin conexión (offline conserva el user) no la toca', () => {
+    act(() => useAuthStore.setState({ token: null, status: 'offline' }));
+    expect(queryClient.getQueryData(['messages', 'conversations'])).toEqual([{ student: 'de A' }]);
+  });
+
   it('al desmontar deja de escuchar', () => {
     const q = new QueryClient();
     q.setQueryData(['x'], 1);
