@@ -19,7 +19,8 @@ import { DEFAULT_FORM, buildGenerateBody } from '@/utils/trainer-ai/aiForm';
  * Asistente IA del entrenador: formulario → esperando → propuesta (más el error, siempre con salida).
  * La propuesta vive en `sessionStorage` (ver `useAiSession`). Las entradas (`?alumno=` desde la ficha, precargado, o
  * `?nueva=1` desde Rutinas) abren siempre el formulario, con "Verla" si hay una propuesta sin terminar; sin marca de
- * entrada (la vuelta del editor) se muestra la propuesta guardada.
+ * entrada (la vuelta del editor) se muestra la propuesta guardada. Las vueltas al formulario (errores de campo, Cancelar,
+ * "Generar otra") llevan los `options` del pedido: lo que no se pudo precargar se sigue sin mandar.
  */
 export default function AiRoutinePage() {
   const trainerId = useAuthStore((s) => s.user?.id);
@@ -52,18 +53,18 @@ export default function AiRoutinePage() {
     if (result.aborted) return;
     if (result.error) {
       const error = aiErrorOf(result.error);
-      show(error.kind === 'fields' ? { phase: 'form', form, student, errors: error } : { phase: 'error', form, student, options, error });
+      show(error.kind === 'fields' ? { phase: 'form', form, student, options, errors: error } : { phase: 'error', form, student, options, error });
       return;
     }
     setSession({
-      form, student, generationId: result.data.generation_id, proposal: result.data.routine_proposal, assigned: {}, saved: null,
+      form, student, options, generationId: result.data.generation_id, proposal: result.data.routine_proposal, assigned: {}, saved: null,
     });
     showProposal();
   });
 
   const handleCancel = () => {
     cancel();
-    show({ phase: 'form', form: view.form, student: view.student });
+    show({ phase: 'form', form: view.form, student: view.student, options: view.options });
   };
 
   if (view.phase === 'waiting') return <AiWaiting startedAt={view.startedAt} hasStudent={Boolean(view.student)} onCancel={handleCancel} />;
@@ -76,12 +77,12 @@ export default function AiRoutinePage() {
         session={session}
         manualHref={newRoutineHref(session.student?.id)}
         onSaved={(saved) => setSession((s) => ({ ...s, saved }))}
-        onAgain={() => show({ phase: 'form', form: session.form, student: session.student })}
+        onAgain={() => show({ phase: 'form', form: session.form, student: session.student, options: session.options })}
       />
     );
   }
   if (!view.form && entry?.status === 'loading') return <LoadingState rows={4} label="Cargando los datos del alumno…" />;
-  const fallback = isEntry ? { form: DEFAULT_FORM, student: null } : { form: session?.form ?? DEFAULT_FORM, student: session?.student ?? null };
+  const fallback = isEntry ? { form: DEFAULT_FORM, student: null } : { form: session?.form ?? DEFAULT_FORM, student: session?.student ?? null, options: session?.options };
   const start = view.form ? view : (entry ?? fallback);
   return (
     <div className="flex flex-col gap-4">
@@ -90,6 +91,7 @@ export default function AiRoutinePage() {
         key={view.id}
         initial={start.form}
         student={start.student}
+        initialUnloaded={start.options?.unloaded}
         pendingStudentId={!view.form && entry?.status === 'failed' ? entryId : null}
         errors={view.form ? view.errors : entry?.errors}
         onSubmit={run}

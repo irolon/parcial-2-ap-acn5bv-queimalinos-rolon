@@ -30,12 +30,15 @@ function TemplateSelect({ value, error, onChange }) {
  * `pendingStudentId`: alumno de la entrada cuya ficha no cargó (aviso con "Reintentar", ver `useStudentPick`).
  * `errors` trae los del servidor (`fields`, `form`); los del cliente se calculan al enviar.
  * `onSubmit(form, student, { unloaded })` recibe el formulario ya validado y lo que no se pudo precargar (ver
- * `buildGenerateBody`); mientras carga la ficha del alumno no se puede generar.
+ * `buildGenerateBody`); mientras carga la ficha del alumno no se puede generar. `initialUnloaded`: lo que no se pudo
+ * precargar en un pedido anterior (al volver al formulario); se sigue sin mandar salvo que el PT lo toque.
  */
-export default function AiRoutineForm({ initial, student: initialStudent, pendingStudentId = null, errors: serverErrors, onSubmit }) {
+export default function AiRoutineForm({
+  initial, student: initialStudent, initialUnloaded, pendingStudentId = null, errors: serverErrors, onSubmit,
+}) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState(serverErrors?.fields ?? {});
-  const pick = useStudentPick({ initialStudent, pendingId: pendingStudentId, setForm });
+  const pick = useStudentPick({ initialStudent, initialUnloaded, pendingId: pendingStudentId, setForm });
   const { student } = pick;
   const clearError = (field) => setErrors((current) => Object.fromEntries(Object.entries(current).filter(([name]) => name !== field)));
   const set = (field, value) => {

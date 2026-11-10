@@ -1,5 +1,5 @@
 // La sesión del asistente vive en `sessionStorage` para que el ida y vuelta con el editor y una recarga no la pierdan.
-// Forma: `{ form, student, generationId, proposal, saved,
+// Forma: `{ form, student, options: { unloaded }, generationId, proposal, saved,
 //   assigned: { [bloque]: { studentId, studentName, routineId, block: { name, days, exercises } } } }`.
 
 export const AI_SESSION_KEY = (trainerId) => `fittrainer.ai-proposal.${trainerId}`;
@@ -16,7 +16,8 @@ function isSession(data) {
     && Array.isArray(data.proposal.routines)
     && data.proposal.routines.length > 0
     && data.proposal.routines.every(isBlock)
-    && (data.assigned === undefined || isObject(data.assigned));
+    && (data.assigned === undefined || isObject(data.assigned))
+    && (data.options === undefined || (isObject(data.options) && Array.isArray(data.options.unloaded)));
 }
 
 /** La sesión guardada, o `null` si no hay, no se puede leer, tiene otra forma o no hay entrenador. */
