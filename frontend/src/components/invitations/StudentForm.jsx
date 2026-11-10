@@ -2,6 +2,7 @@ import { QrCode } from 'lucide-react';
 import Button from '@/components/shared/ui/Button';
 import Input from '@/components/shared/ui/Input';
 import Select from '@/components/shared/ui/Select';
+import InitialTemplateField from './InitialTemplateField';
 import {
   GOAL_OPTIONS,
   LEVEL_OPTIONS,
@@ -67,6 +68,7 @@ export default function StudentForm({ errors, submitting, onSubmit }) {
             error={fields.level}
           />
         </div>
+        <InitialTemplateField errors={fields} />
         {errors.form && (
           <p
             role="alert"

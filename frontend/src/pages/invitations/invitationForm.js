@@ -3,23 +3,26 @@ import { fieldErrorsFrom } from '@/utils/fieldErrors';
 const PHONE_ERROR = 'Ingresá un teléfono válido: al menos 8 dígitos, con código de país';
 const MIN_PHONE_DIGITS = 8;
 
-const FIELDS = ['student_name', 'student_email', 'student_phone', 'goal', 'level'];
+const FIELDS = ['student_name', 'student_email', 'student_phone', 'goal', 'level', 'template_id', 'routine_days'];
 
 const text = (data, name) => String(data.get(name) ?? '').trim();
 
 /**
  * Arma el body de `POST /invitations` desde el formulario.
- * Siempre va por los dos canales (hay teléfono) y los opcionales vacíos no se mandan.
+ * Siempre va por los dos canales (hay teléfono) y los opcionales vacíos no se mandan. Con plantilla inicial
+ * van `template_id` y sus días (`routine_days`, aunque queden vacíos: el backend pide al menos uno).
  */
 export function buildInvitationBody(formData) {
   const goal = text(formData, 'goal');
   const level = text(formData, 'level');
+  const templateId = text(formData, 'template_id');
   return {
     student_name: text(formData, 'student_name'),
     student_email: text(formData, 'student_email'),
     student_phone: text(formData, 'student_phone'),
     ...(goal && { goal }),
     ...(level && { level }),
+    ...(templateId && { template_id: templateId, routine_days: formData.getAll('routine_days').map(String) }),
     delivery_channel: 'both',
   };
 }

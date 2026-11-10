@@ -33,6 +33,17 @@ describe('invitationForm', () => {
     );
   });
 
+  it('buildInvitationBody manda la plantilla inicial con sus días (vacíos también); sin plantilla, nada', () => {
+    const data = formData({ ...BASE, template_id: 't-1' });
+    data.append('routine_days', 'monday');
+    data.append('routine_days', 'friday');
+    expect(buildInvitationBody(data)).toMatchObject({ template_id: 't-1', routine_days: ['monday', 'friday'] });
+    expect(buildInvitationBody(formData({ ...BASE, template_id: 't-1' }))).toMatchObject({ routine_days: [] });
+    const without = buildInvitationBody(formData(BASE));
+    expect(without).not.toHaveProperty('template_id');
+    expect(without).not.toHaveProperty('routine_days');
+  });
+
   it('validateInvitationBody pide al menos 8 dígitos de teléfono', () => {
     expect(validateInvitationBody({ student_phone: '+54 ' })).toHaveProperty('student_phone');
     expect(validateInvitationBody({ student_phone: '+54 1234 56' })).toEqual({});
@@ -46,6 +57,11 @@ describe('invitationForm', () => {
     expect(
       toInvitationErrors(err('VALIDATION_ERROR', [{ field: 'level', message: 'Nivel inválido' }])),
     ).toEqual({ form: null, fields: { level: 'Nivel inválido' } });
+    const days = [{ field: 'routine_days', message: 'Días inválidos' }, { field: 'template_id', message: 'No existe' }];
+    expect(toInvitationErrors(err('VALIDATION_ERROR', days)).fields).toEqual({
+      routine_days: 'Días inválidos',
+      template_id: 'No existe',
+    });
     expect(toInvitationErrors(err('NETWORK_ERROR')).form).toBe('No hay conexión con el servidor');
     expect(toInvitationErrors(err('FORBIDDEN')).form).toBe('Backend');
   });
