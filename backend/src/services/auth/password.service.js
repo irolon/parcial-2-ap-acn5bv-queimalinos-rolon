@@ -17,10 +17,26 @@ const fieldError = (field, message) =>
   Errors.validation('Error de validación', [{ field, message }]);
 
 /**
+ * Segunda revocación, DESPUÉS de guardar la clave: un login con la vieja que
+ * verificó antes del cambio y guardó su refresh después de la primera
+ * revocación sobreviviría (limitación en docs/proceso/auditoria-seguridad.md).
+ * Achica la ventana, no la cierra. Best-effort: la clave ya cambió, así que un
+ * fallo acá no puede tumbar el pedido (en el blanqueo se perdería la temporal).
+ */
+async function revokeAgain(label, revoke) {
+  try {
+    await revoke();
+  } catch (err) {
+    console.error(`[auth] ${label}: falló la segunda revocación de sesiones`, err.message);
+  }
+}
+
+/**
  * PUT /auth/password (GX1): alumno o PT cambian su clave con la actual.
  * Orden: el refresh_token tiene que ser de este usuario (es la sesión que se
  * conserva) → la actual tiene que coincidir → la nueva no puede ser la misma
- * → se revocan las OTRAS sesiones y sus push tokens → recién ahí se guarda.
+ * → se revocan las OTRAS sesiones y sus push tokens → recién ahí se guarda
+ * → se revocan de nuevo las otras sesiones (best-effort, ver revokeAgain).
  * Lo repetible va primero: si algo falla antes de guardar, la clave no
  * cambió y el reintento sigue aceptando la actual.
  * La actual incorrecta es 400 y no 401: el cliente web renovaría la sesión
@@ -52,6 +68,9 @@ export async function changePassword(
     hash,
     mustChange: false,
   });
+  await revokeAgain('cambio', () =>
+    authRepo.revokeAllForUserExcept(user.id, user.role, keepTokenHash)
+  );
 
   const token = signAccessToken({ sub: user.id, role: user.role, email: user.email });
   return { token, expires_in: env.JWT_EXPIRES_IN, password_changed_at };
@@ -63,7 +82,8 @@ export async function changePassword(
  * Revoca las sesiones y borra los push tokens ANTES de guardar la clave
  * (mismo criterio que la baja, que revoca antes de marcarlo inactivo): si algo
  * falla, la temporal no quedó guardada sin que el PT la viera y el reintento
- * genera otra. Prende must_change_password, que obliga a elegir una nueva.
+ * genera otra. Después de guardar revoca otra vez (best-effort, ver revokeAgain).
+ * Prende must_change_password, que obliga a elegir una nueva.
  * Ajeno o inexistente → 403 de assertCanAccessStudent (no revela qué ids existen).
  */
 export async function resetStudentPassword(trainer, studentId) {
@@ -76,5 +96,6 @@ export async function resetStudentPassword(trainer, studentId) {
   await authRepo.revokeAllForUser(studentId, 'student');
   await pushTokensRepo.deleteAllForUserExcept({ id: studentId, role: 'student' });
   await credentialsRepo.setPassword(studentId, 'student', { hash, mustChange: true });
+  await revokeAgain('blanqueo', () => authRepo.revokeAllForUser(studentId, 'student'));
   return { temporary_password: temporary };
 }

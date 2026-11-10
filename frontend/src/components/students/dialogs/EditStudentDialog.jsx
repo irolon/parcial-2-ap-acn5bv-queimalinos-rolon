@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
@@ -27,7 +27,13 @@ export default function EditStudentDialog({ student, onClose }) {
   const saving = update.isPending;
   // Blanqueo en vuelo: cerrar ahora perdería la clave temporal, que se ve una sola vez.
   const [resetting, setResetting] = useState(false);
+  // El PATCH vuelve con el `resetting` de cuando arrancó: el ref dice si hay un blanqueo en vuelo ahora.
+  const resettingRef = useRef(false);
   const busy = saving || resetting;
+  const onResetBusy = (value) => {
+    resettingRef.current = value;
+    setResetting(value);
+  };
   const defaults = studentFormDefaults(student);
   const { fields } = errors;
 
@@ -47,7 +53,7 @@ export default function EditStudentDialog({ student, onClose }) {
     setErrors(NO_FIELD_ERRORS);
     try {
       await update.mutateAsync(body);
-      onClose();
+      if (!resettingRef.current) onClose();
     } catch (error) {
       setErrors(toStudentErrors(error));
     }
@@ -103,7 +109,7 @@ export default function EditStudentDialog({ student, onClose }) {
           error={fields.birth_date}
         />
       </form>
-      {student.active && <ResetPasswordSection student={student} onBusyChange={setResetting} />}
+      {student.active && <ResetPasswordSection student={student} disabled={saving} onBusyChange={onResetBusy} />}
     </Dialog>
   );
 }

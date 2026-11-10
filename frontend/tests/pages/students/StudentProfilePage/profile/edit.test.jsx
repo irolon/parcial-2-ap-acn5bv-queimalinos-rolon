@@ -47,6 +47,23 @@ describe('StudentProfilePage: editar alumno', () => {
     expect(within(dialog).getByRole('button', { name: 'Guardar' })).toBeEnabled();
   });
 
+  it('con un Guardar en vuelo no deja blanquear: el PATCH vuelve, cierra y no hubo blanqueo', async () => {
+    const user = userEvent.setup();
+    let resolve;
+    const update = vi.fn(() => new Promise((r) => (resolve = r)));
+    const { fetchMock, dialog } = await open(user, { handlers: { update } });
+    await user.type(within(dialog).getByLabelText('Nombre'), 'x');
+    await user.click(within(dialog).getByRole('button', { name: 'Blanquear clave' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    const confirm = within(dialog).getByRole('button', { name: 'Blanquear' });
+    expect(confirm).toBeDisabled();
+    await user.click(confirm);
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/password-reset'))).toHaveLength(0);
+    resolve(jsonResponse(200, { data: studentDetail({ name: 'Ana Pérezx' }) }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/password-reset'))).toHaveLength(0);
+  });
+
   it('dado de baja no ofrece blanquear la clave', async () => {
     const user = userEvent.setup();
     const { dialog } = await open(user, { detail: studentDetail({ active: false }) });
