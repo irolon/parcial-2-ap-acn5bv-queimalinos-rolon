@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareCandidates, compareMetric, mergeSeries, pickTop, timeTicks } from '@/utils/progress/compare';
+import { COMPARE_METRICS, compareCandidates, compareMetric, mergeSeries, pickTop, timeTicks, tooFewPoints } from '@/utils/progress/compare';
 
 const ex = (id, days, name = id, last = '2026-10-27') => ({ id, name, days, muscle_group: 'x', last_date: last });
 const pt = (day, kg, e1rm = kg + 10) => ({ date: `2026-10-${String(day).padStart(2, '0')}`, max_kg: kg, e1rm_kg: e1rm });
@@ -86,6 +86,30 @@ describe('compareMetric', () => {
 
   it('si no hay ningún 1RM estimado usa el peso máximo', () => {
     expect(compareMetric([pt(1, 80, null), pt(2, 82, null)])).toBe('max_kg');
+  });
+
+  it('con otra métrica elegida la usa tal cual', () => {
+    expect(compareMetric([pt(1, 80)], 'volume_kg')).toBe('volume_kg');
+    expect(compareMetric([pt(1, 80)], 'max_kg')).toBe('max_kg');
+    expect(COMPARE_METRICS.map((m) => m.value)).toEqual(['e1rm_kg', 'max_kg', 'volume_kg']);
+  });
+});
+
+describe('métrica elegida', () => {
+  const vol = (day, kg, volume) => ({ ...pt(day, kg), volume_kg: volume });
+
+  it('pickTop cuenta los puntos válidos de la métrica elegida', () => {
+    const fewVolume = [vol(1, 80, 800), vol(2, 81, null), vol(3, 82, 820)];
+    const curves = [curve('few', fewVolume, 9), curve('ok', kgPoints(3).map((p) => ({ ...p, volume_kg: 900 })))];
+    expect(pickTop(curves, 3, 'volume_kg').map((c) => c.id)).toEqual(['ok']);
+    expect(pickTop(curves, 3, 'max_kg').map((c) => c.id)).toEqual(['few', 'ok']);
+    expect(tooFewPoints(fewVolume, 'volume_kg')).toBe(true);
+    expect(tooFewPoints(fewVolume)).toBe(false);
+  });
+
+  it('mergeSeries dibuja la métrica que se le pasa', () => {
+    const rows = mergeSeries([curve('a', [vol(1, 80, 800)])], () => 'volume_kg');
+    expect(rows[0]).toMatchObject({ a: 800 });
   });
 });
 
