@@ -101,14 +101,14 @@ export const Errors = {
   imageTypeInvalid: () =>
     new AppError(415, 'IMAGE_TYPE_INVALID', 'La foto tiene que ser JPG, PNG o WebP'),
   studentNotFound: () => new AppError(404, 'STUDENT_NOT_FOUND', 'El alumno no existe'),
-  aiUnavailable: () =>
-    new AppError(
-      503,
-      'AI_UNAVAILABLE',
-      'El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.'
-    ),
-  aiInvalidResponse: () =>
-    new AppError(502, 'AI_INVALID_RESPONSE', 'El asistente devolvió una propuesta inválida. Probá de nuevo.'),
+  aiUnavailable: (message = 'El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano.') =>
+    new AppError(503, 'AI_UNAVAILABLE', message),
+  aiInvalidResponse: (message = 'El asistente devolvió una propuesta inválida. Probá de nuevo.') =>
+    new AppError(502, 'AI_INVALID_RESPONSE', message),
+  chatLimitReached: () =>
+    new AppError(429, 'CHAT_LIMIT_REACHED', 'Llegaste al límite de consultas de hoy. Mañana podés seguir.'),
+  chatInProgress: () => new AppError(429, 'CHAT_IN_PROGRESS', 'Esperá la respuesta anterior.'),
+  sessionFinished: () => new AppError(400, 'SESSION_FINISHED', 'La sesión ya terminó'),
   generationNotFound: () => new AppError(404, 'GENERATION_NOT_FOUND', 'La propuesta no existe'),
   generationAlreadySaved: () =>
     new AppError(409, 'GENERATION_ALREADY_SAVED', 'Esta propuesta ya se guardó como plantilla'),

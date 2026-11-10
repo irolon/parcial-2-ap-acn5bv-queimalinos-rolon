@@ -1,11 +1,11 @@
 import { jest } from '@jest/globals';
 
 /**
- * Supabase falso para los repositories de trainer-ai: cada consulta encadenable anota
+ * Supabase falso para los repositories de trainer-ai y chat: cada consulta encadenable anota
  * sus llamadas en `calls` ([método, ...args]) y al hacer await devuelve `result`.
  * `rpc` devuelve `rpcResult`. Reiniciar con reset() en beforeEach.
  */
-const CHAIN = ['select', 'insert', 'update', 'eq', 'or', 'in', 'gte', 'order', 'limit', 'single', 'maybeSingle'];
+const CHAIN = ['select', 'insert', 'update', 'eq', 'neq', 'or', 'in', 'gte', 'lt', 'order', 'limit', 'single', 'maybeSingle'];
 
 export const fake = { calls: [], tables: [], result: { data: null, error: null }, rpcResult: { data: null, error: null } };
 
