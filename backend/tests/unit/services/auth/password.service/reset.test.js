@@ -48,12 +48,25 @@ describe('password.service · resetStudentPassword (POST /students/:id/password-
     expect(mockCredentialsRepo.setPassword).not.toHaveBeenCalled();
   });
 
-  it('revoca las sesiones ANTES de guardar la clave (mismo criterio que la baja)', async () => {
+  it('revoca las sesiones y borra los push ANTES de guardar la clave', async () => {
     await passwordService.resetStudentPassword(TRAINER, 'stu-1');
     expect(mockAuthRepo.revokeAllForUser).toHaveBeenCalledWith('stu-1', 'student');
-    const revokedAt = mockAuthRepo.revokeAllForUser.mock.invocationCallOrder[0];
     const savedAt = mockCredentialsRepo.setPassword.mock.invocationCallOrder[0];
-    expect(revokedAt).toBeLessThan(savedAt);
+    expect(mockAuthRepo.revokeAllForUser.mock.invocationCallOrder[0]).toBeLessThan(savedAt);
+    expect(mockPushTokensRepo.deleteAllForUserExcept.mock.invocationCallOrder[0]).toBeLessThan(
+      savedAt
+    );
+  });
+
+  it.each([
+    ['la revocación de sesiones', () => mockAuthRepo.revokeAllForUser],
+    ['el borrado de push tokens', () => mockPushTokensRepo.deleteAllForUserExcept],
+  ])('si falla %s no guarda la temporal (el PT reintenta sin perderla)', async (_c, fn) => {
+    fn().mockRejectedValueOnce(new Error('db caída'));
+    await expect(passwordService.resetStudentPassword(TRAINER, 'stu-1')).rejects.toThrow(
+      'db caída'
+    );
+    expect(mockCredentialsRepo.setPassword).not.toHaveBeenCalled();
   });
 
   it('guarda solo el hash con el flag prendido y borra todos sus push tokens', async () => {

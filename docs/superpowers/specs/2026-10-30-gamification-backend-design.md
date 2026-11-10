@@ -92,7 +92,7 @@ Desafío visible para un alumno = global o de su entrenador; si no → 404 `CHAL
 
 ## 5. Base de datos
 
-Migración `backend/src/database/migrations/2026-10-30-gamification.sql` (y lo mismo en `schema/05-gamification.sql`):
+Migración `backend/src/database/migrations/2026-10/2026-10-30-gamification.sql` (y lo mismo en `schema/05-gamification.sql`):
 
 - `create table if not exists student_streaks (student_id uuid primary key references students on delete cascade, current_days int not null default 0, longest_days int not null default 0, last_trained_date date, updated_at timestamptz not null default now())`.
 - `create unique index if not exists uq_student_challenges_active on student_challenges (student_id, challenge_id) where status = 'active'`.

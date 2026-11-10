@@ -297,7 +297,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 
 Índice único `uq_availability_slot` sobre `(trainer_id, weekday, start_time)`. Checks `availability_range` (`start_time < end_time`) y `availability_on_the_hour` (minutos y segundos en 0). Hay varias franjas por día; los turnos de 60 min salen de cada hora en punto de cada franja. RLS activado sin políticas (ADR 0001).
 
-**Función `replace_trainer_availability(p_trainer uuid, p_slots jsonb)`**: borra e inserta las franjas del entrenador en una sola transacción (supabase-js no tiene transacciones) y devuelve las filas ordenadas por `weekday, start_time`. `security invoker`, `search_path = public`, ejecutable solo por `service_role`. Migración: `backend/src/database/migrations/2026-10-31-agenda.sql`.
+**Función `replace_trainer_availability(p_trainer uuid, p_slots jsonb)`**: borra e inserta las franjas del entrenador en una sola transacción (supabase-js no tiene transacciones) y devuelve las filas ordenadas por `weekday, start_time`. `security invoker`, `search_path = public`, ejecutable solo por `service_role`. Migración: `backend/src/database/migrations/2026-10/2026-10-31-agenda.sql`.
 
 **notifications**
 
@@ -351,7 +351,7 @@ RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FC
 
 Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede haber los dos).
 
-Índices: `idx_messages_student_created` sobre `(student_id, created_at desc)` para el historial paginado y el último mensaje de cada conversación, e `idx_messages_unread` parcial sobre `(student_id, sender_role) where read_at is null` para contar los no leídos. RLS activado sin políticas (ADR 0001). Migración: `backend/src/database/migrations/2026-10-31-messages.sql` (y `schema/06b-messages.sql` + `07-rls.sql` para bases nuevas).
+Índices: `idx_messages_student_created` sobre `(student_id, created_at desc)` para el historial paginado y el último mensaje de cada conversación, e `idx_messages_unread` parcial sobre `(student_id, sender_role) where read_at is null` para contar los no leídos. RLS activado sin políticas (ADR 0001). Migración: `backend/src/database/migrations/2026-10/2026-10-31-messages.sql` (y `schema/06b-messages.sql` + `07-rls.sql` para bases nuevas).
 
 > **No confundir con `chat_messages`:** esa tabla es el historial del asistente IA del alumno (`POST /chat`). `messages` es la mensajería entre personas y no tiene relación con ella.
 

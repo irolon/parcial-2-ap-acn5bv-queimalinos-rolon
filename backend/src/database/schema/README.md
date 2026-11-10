@@ -27,5 +27,5 @@ El schema de FitTrainer está repartido por dominio en nueve archivos SQL.
 
 ## Cambios nuevos
 
-Un cambio de schema va al archivo de su dominio y también a `../migrations/`
-(un archivo con fecha), para poder aplicarlo sobre una base ya creada.
+Un cambio de schema va al archivo de su dominio y también a `../migrations/AAAA-MM/`
+(un archivo con fecha, en la carpeta de su mes), para poder aplicarlo sobre una base ya creada.

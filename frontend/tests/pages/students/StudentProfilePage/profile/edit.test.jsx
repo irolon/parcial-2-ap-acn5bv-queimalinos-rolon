@@ -25,6 +25,28 @@ describe('StudentProfilePage: editar alumno', () => {
     expect(within(dialog).getByRole('button', { name: 'Blanquear clave' })).toBeEnabled();
   });
 
+  it('con un blanqueo en vuelo no se cierra (Esc, Cancelar, Guardar) y la clave temporal llega', async () => {
+    const user = userEvent.setup();
+    const { fetchMock, dialog } = await open(user);
+    let resolve;
+    const inner = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((url, init) =>
+      url.endsWith('/password-reset') ? new Promise((r) => (resolve = r)) : inner(url, init),
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Blanquear clave' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Blanquear' }));
+    // El Cancelar de la sección y el del pie del diálogo.
+    for (const cancel of within(dialog).getAllByRole('button', { name: 'Cancelar' })) expect(cancel).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Guardar' })).toBeDisabled();
+    await user.keyboard('{Escape}');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    expect(screen.getByRole('dialog', { name: 'Editar alumno' })).toBeInTheDocument();
+    expect(callsWith(fetchMock, 'PATCH')).toHaveLength(0);
+    resolve(jsonResponse(200, { temporary_password: 'Ab3kP9mQx2' }));
+    expect(await within(dialog).findByText('Ab3kP9mQx2')).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Guardar' })).toBeEnabled();
+  });
+
   it('dado de baja no ofrece blanquear la clave', async () => {
     const user = userEvent.setup();
     const { dialog } = await open(user, { detail: studentDetail({ active: false }) });

@@ -37,7 +37,7 @@
 ### Task 1: Backend — `GET /api/progress/overview`
 
 **Files:**
-- Create: `backend/src/database/schema/04b-progress-overview.sql`, `backend/src/database/migrations/2026-10-30-progress-overview.sql`
+- Create: `backend/src/database/schema/04b-progress-overview.sql`, `backend/src/database/migrations/2026-10/2026-10-30-progress-overview.sql`
 - Modify: `backend/src/database/schema/README.md` (fila y orden), `backend/src/database/checks/schema-checks.sql` si lista funciones esperadas
 - Modify: `backend/src/{validations,repositories,services,controllers,routes,models}/progress/*`
 - Test: `backend/tests/unit/{models,validations,repositories,services,routes}/progress/…`

@@ -20,7 +20,9 @@ const fieldError = (field, message) =>
  * PUT /auth/password (GX1): alumno o PT cambian su clave con la actual.
  * Orden: el refresh_token tiene que ser de este usuario (es la sesión que se
  * conserva) → la actual tiene que coincidir → la nueva no puede ser la misma
- * → se guarda → se revocan las OTRAS sesiones y sus push tokens.
+ * → se revocan las OTRAS sesiones y sus push tokens → recién ahí se guarda.
+ * Lo repetible va primero: si algo falla antes de guardar, la clave no
+ * cambió y el reintento sigue aceptando la actual.
  * La actual incorrecta es 400 y no 401: el cliente web renovaría la sesión
  * ante un 401. Devuelve un access nuevo sin el claim must_change_password
  * (el refresh actual sigue valiendo).
@@ -44,12 +46,12 @@ export async function changePassword(
   }
 
   const hash = await hashPassword(new_password);
+  await authRepo.revokeAllForUserExcept(user.id, user.role, keepTokenHash);
+  await pushTokensRepo.deleteAllForUserExcept({ id: user.id, role: user.role }, push_token);
   const { password_changed_at } = await credentialsRepo.setPassword(user.id, user.role, {
     hash,
     mustChange: false,
   });
-  await authRepo.revokeAllForUserExcept(user.id, user.role, keepTokenHash);
-  await pushTokensRepo.deleteAllForUserExcept({ id: user.id, role: user.role }, push_token);
 
   const token = signAccessToken({ sub: user.id, role: user.role, email: user.email });
   return { token, expires_in: env.JWT_EXPIRES_IN, password_changed_at };
@@ -58,10 +60,10 @@ export async function changePassword(
 /**
  * POST /students/:id/password-reset (GX1): blanqueo sin mail. El PT dueño
  * genera una clave temporal que ve una sola vez; solo se guarda el hash.
- * Revoca las sesiones ANTES de guardar la clave (mismo criterio que la baja,
- * que revoca antes de marcarlo inactivo: si falla, el PT reintenta y nada
- * quedó a medias con sesiones vivas) y prende must_change_password, que
- * obliga a elegir una nueva.
+ * Revoca las sesiones y borra los push tokens ANTES de guardar la clave
+ * (mismo criterio que la baja, que revoca antes de marcarlo inactivo): si algo
+ * falla, la temporal no quedó guardada sin que el PT la viera y el reintento
+ * genera otra. Prende must_change_password, que obliga a elegir una nueva.
  * Ajeno o inexistente → 403 de assertCanAccessStudent (no revela qué ids existen).
  */
 export async function resetStudentPassword(trainer, studentId) {
@@ -72,7 +74,7 @@ export async function resetStudentPassword(trainer, studentId) {
   const temporary = generateTemporaryPassword();
   const hash = await hashPassword(temporary);
   await authRepo.revokeAllForUser(studentId, 'student');
-  await credentialsRepo.setPassword(studentId, 'student', { hash, mustChange: true });
   await pushTokensRepo.deleteAllForUserExcept({ id: studentId, role: 'student' });
+  await credentialsRepo.setPassword(studentId, 'student', { hash, mustChange: true });
   return { temporary_password: temporary };
 }
