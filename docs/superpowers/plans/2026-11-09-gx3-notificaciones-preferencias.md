@@ -56,8 +56,8 @@ Comandos (desde `C:\ft-gx3x`):
 ### Task 1: Migración, schema y modelo de preferencias
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-11-09-notification-preferences.sql`, `backend/src/database/schema/06c-notification-preferences.sql`, `backend/src/models/notifications/preferences.js`
-- Modify: `backend/src/database/schema/07-rls.sql` (+1 línea), `backend/src/database/schema/README.md` (fila de `06c`, "nueve" → "diez" archivos, orden "el 06c después del 06b"), `backend/src/database/checks/schema-checks.sql` (`('notification_preferences')` al final de `expected`)
+- Create: `backend/src/database/migrations/2026-11/2026-11-09-notification-preferences.sql`, `backend/src/models/notifications/preferences.js`
+- Modify: `backend/src/database/schema/06-ai-and-agenda.sql` (bloque `notification_preferences` al final, después de `push_tokens`), `backend/src/database/schema/07-rls.sql` (+1 línea), `backend/src/database/schema/README.md` (`notification_preferences` en la fila de `06-ai-and-agenda.sql`), `backend/src/database/checks/schema-checks.sql` (`('notification_preferences')` al final de `expected`)
 - Test: `backend/tests/unit/models/notifications/preferences.test.js`
 
 **Interfaces:**
@@ -77,7 +77,7 @@ Comandos (desde `C:\ft-gx3x`):
 -- ============================================================================
 -- GX3 · Preferencias de notificación del alumno. Re-ejecutable.
 -- Correr en el SQL Editor de Supabase. También está en database/schema/
--- (06c-notification-preferences.sql y 07-rls.sql).
+-- (06-ai-and-agenda.sql y 07-rls.sql).
 -- ============================================================================
 
 -- Una fila por alumno, una columna por tipo. Sin fila = todo prendido.
@@ -97,7 +97,7 @@ alter table notification_preferences enable row level security;
 notify pgrst, 'reload schema';
 ```
 
-  `06c-notification-preferences.sql`: encabezado como `06b` ("Schema 06c · notification_preferences. Va después de 06b-messages.sql y antes de 07-rls.sql. Re-ejecutable.") y el mismo `create table` (sin `alter … rls` ni `notify`: el RLS va en `07-rls.sql`).
+  En `06-ai-and-agenda.sql`: bloque `-- ── notification_preferences (GX3)` al final con el mismo `create table` (sin `alter … rls` ni `notify`: el RLS va en `07-rls.sql`) y la tabla sumada al encabezado del archivo. Se descartó un `06c-notification-preferences.sql` aparte: entra en el 06, que ya tiene `notifications` y `push_tokens`.
 - [ ] **Step 4: Implementar el modelo.** Correr el test → PASS; `npm run lint` → OK.
 - [ ] **Step 5: Pasarle a Pablo** el SQL y la comprobación: `select * from notification_preferences limit 1;` (0 filas, sin error) y `schema-checks.sql` → 0 filas.
 - [ ] **Step 6: Commit** `feat(db): tabla notification_preferences y modelo de preferencias (GX3)`
