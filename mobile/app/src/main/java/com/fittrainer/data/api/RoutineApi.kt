@@ -21,6 +21,7 @@ data class StudentRoutineDto(
     val days: List<String> = emptyList(),
     @SerialName("created_at") val createdAt: String? = null,
     val exercises: List<RoutineExerciseDto> = emptyList(),
+    val level: String? = null,
 )
 
 @Serializable

@@ -21,9 +21,4 @@ class InviteTextsTest {
         assertTrue(shareText("Pedro Gómez", "https://x/join").startsWith("¡Hola Pedro!"))
         assertTrue(shareText("Pedro Gómez", "https://x/join").endsWith("https://x/join"))
     }
-
-    @Test fun `etiquetas de nivel`() {
-        assertEquals("Principiante", levelLabel("beginner"))
-        assertEquals("Sin definir", levelLabel(null))
-    }
 }

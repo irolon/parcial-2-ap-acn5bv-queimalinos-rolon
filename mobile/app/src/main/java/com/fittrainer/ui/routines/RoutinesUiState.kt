@@ -4,6 +4,7 @@ import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineCache
 import com.fittrainer.data.routine.TodayContent
 import com.fittrainer.data.routine.resolveToday
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.today.dayInitial
 import com.fittrainer.ui.today.dayName
@@ -52,7 +53,7 @@ fun routinesContent(cache: RoutineCache, date: LocalDate): RoutinesContent {
 private fun Routine.toCard(isToday: Boolean) = RoutineCardUi(
     id = id,
     name = name,
-    goal = goal?.let(::goalLabel),
+    goal = listOfNotNull(goal?.let(::goalLabel), levelLabel(level)).joinToString(" · ").ifEmpty { null },
     dayInitials = days.sorted().map(::dayInitial),
     dayNames = days.sorted().joinToString(", ") { dayName(it) },
     exercisesText = if (exercises.size == 1) "1 ejercicio" else "${exercises.size} ejercicios",

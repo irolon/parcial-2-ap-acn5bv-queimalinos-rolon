@@ -13,6 +13,7 @@ fun StudentRoutineDto.toEntity() = RoutineEntity(
     goal = goal,
     days = days.joinToString(","),
     createdAt = parseCreatedAt(createdAt),
+    level = level,
 )
 
 /** Un ejercicio sin datos del ejercicio (no debería pasar: hay FK) se descarta en vez de romper el sync. */
@@ -43,6 +44,7 @@ fun RoutineWithExercises.toDomain() = Routine(
     days = parseDays(routine.days.split(',')),
     createdAt = Instant.ofEpochMilli(routine.createdAt),
     exercises = exercises.sortedBy { it.orderIndex }.map { it.toDomain() },
+    level = routine.level,
 )
 
 private fun RoutineExerciseEntity.toDomain() = RoutineExercise(

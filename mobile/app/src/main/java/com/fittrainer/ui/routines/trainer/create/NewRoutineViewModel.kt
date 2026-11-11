@@ -162,7 +162,7 @@ class NewRoutineViewModel @Inject constructor(
         local.update { it.copy(creating = true, notice = null) }
         viewModelScope.launch {
             val t = trainer()
-            val request = CreateRoutineRequest(studentId, l.header.name.trim(), l.header.goal.orEmpty(), l.header.orderedDays(), l.items.toRequestItems())
+            val request = CreateRoutineRequest(studentId, l.header.name.trim(), l.header.goal.orEmpty(), l.header.orderedDays(), l.items.toRequestItems(), l.header.level)
             val id = repository.create(t, request).getOrElse {
                 return@launch local.update { it.copy(creating = false, notice = CREATE_FAILED) }
             }

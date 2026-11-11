@@ -55,6 +55,7 @@ class InviteRepository @Inject constructor(private val api: TrainerInvitationApi
         val envelope = e.errorEnvelope() ?: return null
         return when (envelope.code) {
             "STUDENT_EMAIL_EXISTS" -> InviteResult.Rejected(mapOf(InviteField.EMAIL to EMAIL_TAKEN), null)
+            "TEMPLATE_NOT_FOUND" -> InviteResult.Rejected(mapOf(InviteField.TEMPLATE to TEMPLATE_GONE), null)
             "VALIDATION_ERROR" -> {
                 val fields = envelope.details.mapNotNull { d -> inviteFieldOf(d.field)?.let { it to d.message.orEmpty() } }
                 InviteResult.Rejected(fields.toMap(), envelope.message.takeIf { fields.isEmpty() })
@@ -65,5 +66,6 @@ class InviteRepository @Inject constructor(private val api: TrainerInvitationApi
 
     private companion object {
         const val EMAIL_TAKEN = "Ya hay un alumno con ese email"
+        const val TEMPLATE_GONE = "Esa plantilla ya no existe; elegí otra"
     }
 }

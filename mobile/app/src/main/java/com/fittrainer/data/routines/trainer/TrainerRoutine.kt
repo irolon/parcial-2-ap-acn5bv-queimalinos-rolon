@@ -12,6 +12,7 @@ data class TrainerRoutineSummary(
     val days: List<String>,
     val active: Boolean,
     val createdAt: Instant?,
+    val level: String? = null,
 )
 
 data class TrainerRoutineExercise(

@@ -62,6 +62,11 @@ class RoutineTextsTest {
         assertEquals("2 EJERCICIOS · ~20 MIN · 8 SERIES", heroSummary(two))
     }
 
+    @Test fun `resumen de la tarjeta con nivel termina en el nivel en mayusculas`() {
+        val routine = Routine("r", "Push", null, emptySet(), Instant.EPOCH, listOf(exercise(sets = 1, rest = 60)), level = "intermediate")
+        assertEquals("1 EJERCICIO · ~5 MIN · 1 SERIE · INTERMEDIO", heroSummary(routine))
+    }
+
     // Review Focus 2: sin próximo día, sin "null".
     @Test fun `mensaje de descanso con y sin proximo dia`() {
         assertEquals("Hoy descansás. Tu próximo entreno es el jueves.", restMessage(DayOfWeek.THURSDAY))

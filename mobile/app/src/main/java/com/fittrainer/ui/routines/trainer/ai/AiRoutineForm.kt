@@ -1,8 +1,8 @@
 package com.fittrainer.ui.routines.trainer.ai
 
+import com.fittrainer.data.invitation.invite.LEVELS
 import com.fittrainer.data.students.detail.StudentDetail
 import com.fittrainer.data.trainerai.AiRoutineParams
-import com.fittrainer.ui.templates.trainer.LEVELS
 import kotlinx.serialization.Serializable
 
 const val DEFAULT_DAYS = 3

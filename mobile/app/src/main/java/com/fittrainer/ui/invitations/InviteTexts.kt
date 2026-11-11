@@ -13,15 +13,6 @@ const val INVITE_WHATSAPP = "Enviar por WhatsApp"
 const val INVITE_SHARE = "Compartir link"
 const val INVITE_ANOTHER = "Invitar a otro"
 
-/** Etiquetas de los niveles del backend. */
-fun levelLabel(level: String?): String = when (level) {
-    null -> "Sin definir"
-    "beginner" -> "Principiante"
-    "intermediate" -> "Intermedio"
-    "advanced" -> "Avanzado"
-    else -> level
-}
-
 /** "VÁLIDO 47H": horas que faltan para el vencimiento, redondeadas hacia abajo. */
 fun expiryText(expiresAt: Instant, now: Instant): String {
     val hours = Duration.between(now, expiresAt).toHours().coerceAtLeast(0)

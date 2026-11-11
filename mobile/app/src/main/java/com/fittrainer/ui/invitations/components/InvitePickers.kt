@@ -42,22 +42,24 @@ fun OptionPicker(
     labelOf: (String?) -> String,
     error: String?,
     allowNone: Boolean = true,
+    enabled: Boolean = true,
     onSelect: (String?) -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         FieldLabel(label)
-        ExposedDropdownMenuBox(expanded = open, onExpandedChange = { open = it }) {
+        ExposedDropdownMenuBox(expanded = open && enabled, onExpandedChange = { open = it && enabled }) {
             OutlinedTextField(
                 value = labelOf(value),
                 onValueChange = {},
                 readOnly = true,
+                enabled = enabled,
                 isError = error != null,
                 supportingText = error?.let { { Text(it) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = open) },
                 modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
             )
-            ExposedDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            ExposedDropdownMenu(expanded = open && enabled, onDismissRequest = { open = false }) {
                 ((if (allowNone) listOf<String?>(null) else emptyList()) + options).forEach { option ->
                     DropdownMenuItem(
                         text = { Text(labelOf(option)) },

@@ -4,6 +4,7 @@ import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.ui.components.exercise.ExerciseDetail
 import com.fittrainer.ui.components.exercise.muscleLabel
+import com.fittrainer.ui.components.levelLabel
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlin.math.roundToInt
@@ -76,7 +77,8 @@ fun heroSummary(routine: Routine): String = listOf(
     plural(routine.exercises.size, "EJERCICIO", "EJERCICIOS"),
     "~${estimatedMinutes(routine.exercises)} MIN",
     plural(totalSets(routine.exercises), "SERIE", "SERIES"),
-).joinToString(" · ")
+    levelLabel(routine.level)?.uppercase(),
+).filterNotNull().joinToString(" · ")
 
 fun restMessage(nextDay: DayOfWeek?): String =
     nextDay?.let { "Hoy descansás. Tu próximo entreno es el ${dayName(it)}." } ?: "Hoy descansás."
