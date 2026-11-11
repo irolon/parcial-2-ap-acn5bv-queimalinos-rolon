@@ -11,7 +11,10 @@ import com.fittrainer.data.students.detail.TrainerStudentDetailRepository
 import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
 import com.fittrainer.data.trainerai.AiRoutineProposal
 import com.fittrainer.data.trainerai.MAX_TEMPLATE_NAME
+import com.fittrainer.data.trainerai.AiEquipment
 import com.fittrainer.data.trainerai.TrainerAiRepository
+import com.fittrainer.data.trainerai.extraEquipmentNote
+import com.fittrainer.data.trainerai.normalizeEquipment
 import com.fittrainer.data.trainerai.toTrainerAiError
 import com.fittrainer.ui.routines.trainer.ai.assign.AiAssignController
 import com.fittrainer.ui.routines.trainer.ai.assign.AiAssignProgress
@@ -70,6 +73,9 @@ class AiRoutineViewModel @Inject constructor(
     }
 
     private val student = trainerId.filterNotNull().flatMapLatest { details.observe(it, studentId) }.map { it?.detail }
+    // El equipamiento de la ficha llevado al catálogo: de ahí arranca "Cambiar" (no de cero).
+    private val profileGear = student.map { normalizeEquipment(it?.gymEquipment) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AiEquipment(emptyList(), emptyList()))
     private val studentRoutines = trainerId.filterNotNull().flatMapLatest { routines.observeStudentRoutines(it, studentId) }
 
     private val online = connectivity.isOnline.stateIn(viewModelScope, SharingStarted.Eagerly, true)
@@ -93,7 +99,7 @@ class AiRoutineViewModel @Inject constructor(
     fun onLevel(level: String) = editForm(AiField.LEVEL) { it.copy(level = level) }
     fun onDays(days: Int) = editForm(AiField.DAYS) { it.copy(daysPerWeek = days.coerceIn(1, 7)) }
     fun onDuration(min: Int) = editForm(AiField.DURATION) { it.copy(durationMin = min) }
-    fun onChangeEquipment() = editForm(AiField.EQUIPMENT) { it.copy(equipment = emptyList()) }
+    fun onChangeEquipment() = editForm(AiField.EQUIPMENT) { it.copy(equipment = profileGear.value.codes) }
     fun onToggleEquipment(code: String) = editForm(AiField.EQUIPMENT) { f ->
         val now = f.equipment.orEmpty()
         f.copy(equipment = if (code in now) now - code else now + code)
@@ -109,9 +115,10 @@ class AiRoutineViewModel @Inject constructor(
         // Se decide con el estado de origen: el derivado (uiState) puede no haber emitido todavía tras revivir el proceso.
         if (local.value.generating || proposal.value != null) return
         if (!online.value) return local.update { it.copy(notice = AI_NEEDS_NETWORK) }
-        val errors = form.value.errors()
+        val note = extraEquipmentNote(profileGear.value.unmapped)
+        val errors = form.value.errors(note)
         if (errors.isNotEmpty()) return local.update { it.copy(fieldErrors = errors) }
-        val params = form.value.toParams(studentId)
+        val params = form.value.toParams(studentId, note)
         local.update { it.copy(generating = true, notice = null, offerManual = false, fieldErrors = emptyMap()) }
         viewModelScope.launch {
             ai.generate(trainer(), params)
