@@ -153,4 +153,12 @@ describe('JoinPage', () => {
     // No gasta el cupo del limitador de `GET /invitations/:token` (#80) hasta que la sesión se cierre.
     expect(calls(fetchMock).some(([url]) => String(url).includes('/invitations/'))).toBe(false);
   });
+
+  it('sin conexión con el servidor muestra la pantalla de reintento y no pide la invitación', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(200, INVITATION));
+    setSession(TRAINER, 'offline');
+    renderRoute(`/join?token=${TOKEN}`);
+    expect(await screen.findByRole('heading', { name: 'Sin conexión con el servidor' })).toBeInTheDocument();
+    expect(calls(fetchMock).some(([url]) => String(url).includes('/invitations/'))).toBe(false);
+  });
 });

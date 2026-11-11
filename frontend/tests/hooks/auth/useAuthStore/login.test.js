@@ -88,7 +88,7 @@ describe('useAuthStore: restore', () => {
     expect(savedSession()).toEqual({ user: null, refreshToken: null });
   });
 
-  it('sin conexión queda anonymous pero conserva user y refresh guardados', async () => {
+  it('sin conexión queda offline y conserva user y refresh guardados', async () => {
     await seedSavedSession();
     stubFetch(async () => {
       throw new TypeError('Failed to fetch');
@@ -98,7 +98,7 @@ describe('useAuthStore: restore', () => {
       user: USER,
       token: null,
       refreshToken: 'refresh-1',
-      status: 'anonymous',
+      status: 'offline',
     });
     expect(savedSession()).toEqual({ user: USER, refreshToken: 'refresh-1' });
   });
@@ -146,13 +146,13 @@ describe('useAuthStore + client', () => {
     expect(state()).toMatchObject({ user: null, token: null, refreshToken: null });
   });
 
-  it('si la renovación falla por red, conserva user y refresh y no hace logout', async () => {
+  it('si la renovación falla por red, pasa a offline, conserva user y refresh y no hace logout', async () => {
     const fetchMock = stubFetch(async (url) => {
       if (url.endsWith('/auth/refresh')) throw new TypeError('Failed to fetch');
       return errorResponse(401, 'UNAUTHORIZED');
     });
     await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
-    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
+    await vi.waitFor(() => expect(state().status).toBe('offline'));
     expect(state()).toMatchObject({ user: USER, token: null, refreshToken: 'refresh-1' });
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh']);
   });

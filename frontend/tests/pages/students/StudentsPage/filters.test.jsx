@@ -77,6 +77,18 @@ describe('StudentsPage: filtros', () => {
     expect(cards()).toEqual([expect.stringContaining('Jose Pérez')]);
   });
 
+  it('filtra por adherencia, lo guarda en la URL y respeta el orden', async () => {
+    const list = [
+      student({ name: 'Ana Paz', last_session_at: daysAgo(1), adherence_7d: { assigned: 4, done: 1, pct: 25 } }),
+      student({ name: 'Marcos Díaz', last_session_at: daysAgo(2), adherence_7d: { assigned: 4, done: 4, pct: 100 } }),
+      student({ name: 'Jose Pérez', last_session_at: daysAgo(3), adherence_7d: { assigned: 3, done: 0, pct: 0 } }),
+    ];
+    const { router } = await load('/pt/alumnos?orden=adherencia', { list });
+    await userEvent.selectOptions(main().getByLabelText('Adherencia'), 'baja');
+    expect(cards().map((t) => t.split('·')[0])).toEqual([expect.stringContaining('Jose Pérez'), expect.stringContaining('Ana Paz')]);
+    expect(router.state.location.search).toContain('adherencia=baja');
+  });
+
   it('sin resultados permite limpiar los filtros', async () => {
     const { router } = await load('/pt/alumnos?q=zzz');
     expect(await screen.findByText('Ningún alumno coincide')).toBeVisible();

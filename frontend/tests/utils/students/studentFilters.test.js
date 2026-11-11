@@ -19,11 +19,11 @@ describe('parseStudentFilters / filtersToSearch', () => {
   });
 
   it('los valores inválidos caen al default', () => {
-    expect(parse('estado=zzz&orden=nada&objetivo=x')).toEqual({ ...DEFAULT_FILTERS, objetivo: 'x' });
+    expect(parse('estado=zzz&orden=nada&objetivo=x&adherencia=mucha')).toEqual({ ...DEFAULT_FILTERS, objetivo: 'x' });
   });
 
   it('ida y vuelta, omitiendo defaults', () => {
-    const f = { estado: 'inactivos', objetivo: 'strength', orden: 'nombre', q: 'jo' };
+    const f = { estado: 'inactivos', objetivo: 'strength', orden: 'nombre', q: 'jo', adherencia: 'baja' };
     expect(parse(filtersToSearch(f))).toEqual(f);
     expect(filtersToSearch(DEFAULT_FILTERS)).toBe('');
     expect(filtersToSearch({ ...DEFAULT_FILTERS, q: 'ana' })).toBe('q=ana');
@@ -37,6 +37,17 @@ describe('filterStudents', () => {
   const off = student({ name: 'Baja', active: false });
   const all = [jose, old, fresh, off];
   const run = (over) => filterStudents(all, { ...DEFAULT_FILTERS, ...over }, NOW);
+
+  it('adherencia, combinada con el estado', () => {
+    const low = student({ name: 'Baja adherencia', last_session_at: '2026-10-23T10:00:00Z', adherence_7d: { assigned: 4, done: 1, pct: 25 } });
+    const high = student({ name: 'Alta', last_session_at: '2026-10-01T10:00:00Z', adherence_7d: { assigned: 4, done: 4, pct: 100 } });
+    const list = [low, high, old];
+    const pick = (over) => filterStudents(list, { ...DEFAULT_FILTERS, ...over }, NOW);
+    expect(pick({ adherencia: 'baja' })).toEqual([low]);
+    expect(pick({ adherencia: 'alta' })).toEqual([high]);
+    expect(pick({ adherencia: 'sin-plan' })).toEqual([old]);
+    expect(pick({ adherencia: 'alta', estado: 'al-dia' })).toEqual([]);
+  });
 
   it('estado', () => {
     expect(run({}).length).toBe(4);
