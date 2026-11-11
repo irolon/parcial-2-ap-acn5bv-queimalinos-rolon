@@ -45,8 +45,8 @@ class RoutineTextsTest {
     @Test fun `minutos estimados redondeados a 5`() {
         // 3 ejercicios × 4 series × (45 + 90) s = 1620 s = 27 min → 25
         assertEquals(25, estimatedMinutes(List(3) { exercise(sets = 4, rest = 90) }))
-        // 4 × (45 + 60 por defecto) = 420 s = 7 min → 5
-        assertEquals(5, estimatedMinutes(listOf(exercise(sets = 4, rest = null))))
+        // Sin descanso cuenta el de la sesión (90 s, como la web): 4 × (45 + 90) = 540 s = 9 min → 10
+        assertEquals(10, estimatedMinutes(listOf(exercise(sets = 4, rest = null))))
         assertEquals(0, estimatedMinutes(emptyList()))
     }
 
