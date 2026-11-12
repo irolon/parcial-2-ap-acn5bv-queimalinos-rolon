@@ -41,9 +41,9 @@ async function putInDay(queryClient, key, update) {
 }
 
 /**
- * Manda una consulta (`mutate({ message, sessionId, exerciseId })`). Si sale bien suma el intercambio a la
- * conversación del día; con 429 deja el contador en 0. Lo hace aunque el panel ya se haya cerrado: los callbacks
- * de `useMutation` corren igual. El error queda en `error` para el aviso (ver `chatProblem`).
+ * Manda una consulta (`mutate({ message, sessionId, exerciseId, exerciseName })`; el nombre solo va a la caché).
+ * Si sale bien suma el intercambio a la conversación del día; con 429 deja el contador en 0. Lo hace aunque el panel
+ * ya se haya cerrado: los callbacks de `useMutation` corren igual. El error queda en `error` para el aviso (ver `chatProblem`).
  * El día se fija al mandar (`onMutate`), como hace el servidor: una respuesta que llega pasada la medianoche va a la
  * conversación de ayer, no a la de hoy.
  */
@@ -53,8 +53,8 @@ export function useSendChat() {
   return useMutation({
     mutationFn: sendChat,
     onMutate: () => ({ key: chatTodayKey(studentId) }),
-    onSuccess: (reply, { message }, { key }) =>
-      putInDay(queryClient, key, (day) => appendExchange(day, message, reply)),
+    onSuccess: (reply, { message, exerciseId, exerciseName }, { key }) =>
+      putInDay(queryClient, key, (day) => appendExchange(day, message, reply, new Date(), { exerciseId, exerciseName })),
     onError: (error, _variables, sent) => {
       if (error?.code === 'CHAT_LIMIT_REACHED' && sent) return putInDay(queryClient, sent.key, withoutRemaining);
       return undefined;

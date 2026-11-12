@@ -4,11 +4,11 @@ import { INVITATIONS_TABLE } from '../../models/invitations/invitation.model.js'
 import { STUDENTS_TABLE } from '../../models/students/student.model.js';
 
 // Datos del trainer embebidos en la invitación (para los datos precargados).
-// El contexto para la IA se lee para copiarlo al alumno en el alta; la
+// El contexto para la IA y la plantilla inicial se leen para el alta; la
 // proyección pública (toPublicInvitation) no lo expone.
 const INVITATION_WITH_TRAINER =
   'id, token, student_name, student_email, student_phone, student_goal, expires_at, used_at, ' +
-  'student_gym_equipment, student_injuries, student_level, ' +
+  'student_gym_equipment, student_injuries, student_level, template_id, routine_days, ' +
   'trainer:trainer_id (id, name, specialty, avatar_url)';
 
 /** Crea una invitación y devuelve id, token y expiración. */
@@ -26,6 +26,8 @@ export async function createInvitation(data) {
       student_gym_equipment: data.studentGymEquipment,
       student_injuries: data.studentInjuries,
       student_level: data.studentLevel,
+      template_id: data.templateId,
+      routine_days: data.routineDays,
       expires_at: data.expiresAt,
     })
     .select('id, token, expires_at')

@@ -19,6 +19,7 @@ const val STUDENTS_OFFLINE_ERROR = "Sin conexión. Conectate y reintentá."
 const val STUDENTS_REFRESH_FAILED = "No pudimos actualizar. Mostrando la última lista"
 const val STUDENTS_RETRY = "Reintentar"
 const val NO_PLAN = "Sin plan"
+const val NO_DAYS_YET = "Sin días todavía"
 const val STUDENTS_INVITE = "Invitar alumno"
 const val STUDENTS_INVITE_FIRST = "Invitar a tu primer alumno"
 
@@ -36,6 +37,12 @@ fun lastTrainingLabel(lastSessionAt: Instant?, today: LocalDate): String {
 /** "4 ACTIVOS · 1 EN RIESGO". */
 fun headerCounts(active: Int, atRisk: Int): String =
     "$active ${if (active == 1) "ACTIVO" else "ACTIVOS"} · $atRisk EN RIESGO"
+
+/**
+ * Lo que va en lugar de la barra de adherencia cuando no hay porcentaje, como la web (`noAdherenceText`): con
+ * rutina pero sin ningún día asignado pasado todavía (recién asignada), "Sin días todavía"; sin días, "Sin plan".
+ */
+fun noAdherenceText(daysPerWeek: Int): String = if (daysPerWeek > 0) NO_DAYS_YET else NO_PLAN
 
 /** "Ganar masa muscular · 4 d", o solo el objetivo si no tiene rutina. */
 fun studentSubtitle(goal: String?, daysPerWeek: Int): String =

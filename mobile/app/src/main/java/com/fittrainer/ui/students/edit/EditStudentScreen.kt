@@ -34,10 +34,10 @@ import com.fittrainer.data.invitation.invite.LEVELS
 import com.fittrainer.data.students.detail.EditField
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
+import com.fittrainer.ui.components.levelOptionLabel
 import com.fittrainer.ui.invitations.components.EquipmentChips
 import com.fittrainer.ui.invitations.components.FieldLabel
 import com.fittrainer.ui.invitations.components.OptionPicker
-import com.fittrainer.ui.invitations.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.students.detail.DETAIL_GONE
 import com.fittrainer.ui.students.detail.DETAIL_NEEDS_NETWORK
@@ -79,7 +79,7 @@ fun EditStudentScreen(onBack: () -> Unit, onGone: () -> Unit, viewModel: EditStu
         OptionPicker("OBJETIVO", form.goal, GOALS, ::goalLabel, e[EditField.GOAL], allowNone = form.goal == null) { v ->
             viewModel.onChange({ it.copy(goal = v ?: it.goal) }, EditField.GOAL)
         }
-        OptionPicker("NIVEL", form.level, LEVELS, ::levelLabel, e[EditField.LEVEL], allowNone = form.level == null) { v ->
+        OptionPicker("NIVEL", form.level, LEVELS, ::levelOptionLabel, e[EditField.LEVEL], allowNone = form.level == null) { v ->
             viewModel.onChange({ it.copy(level = v ?: it.level) }, EditField.LEVEL)
         }
         BirthDateField(form.birthDate, viewModel.today(), e[EditField.BIRTH_DATE]) { d ->

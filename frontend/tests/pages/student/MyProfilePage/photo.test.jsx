@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { resizeToJpeg } from '@/utils/students/resizeImage';
+import { resizeToJpeg } from '@/utils/students/profile/resizeImage';
 import { calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { allowSlowScreens } from '../../../helpers/shared/patience';
 import { setupUser } from '../../../helpers/shared/user';
 import { renderOwn, selfDetail, signInSelf, stubSelf } from '../../../helpers/students/self';
 
-vi.mock('@/utils/students/resizeImage', async (importOriginal) => ({
+vi.mock('@/utils/students/profile/resizeImage', async (importOriginal) => ({
   ...(await importOriginal()),
   resizeToJpeg: vi.fn(),
 }));

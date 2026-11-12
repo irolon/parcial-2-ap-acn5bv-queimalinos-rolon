@@ -1,10 +1,13 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import LoadingState from '@/components/shared/states/LoadingState';
+import SessionOffline from '@/components/shared/states/SessionOffline';
 import { CHANGE_PASSWORD_PATH, homeFor } from './routeTable';
 
 // `idle` = todavía no corrió `restore()`; se trata igual que `loading`.
 const isChecking = (status) => status === 'idle' || status === 'loading';
+// `offline` = sesión guardada sin verificar (el servidor no responde): ni login ni página, la pantalla de reintento.
+// Al volver a `authenticated` se renderiza la ruta pedida: la URL no cambió.
 
 function useSession() {
   const status = useAuthStore((s) => s.status);
@@ -31,6 +34,8 @@ export function RequireRole({ role }) {
   const location = useLocation();
 
   if (isChecking(status)) return <SessionLoading />;
+  // Offline antes que el flag: sin servidor no se sabe si la clave sigue blanqueada.
+  if (status === 'offline') return <SessionOffline />;
   if (!home) return <Navigate to="/login" replace state={{ from: location }} />;
   if (user.must_change_password) return <Navigate to={CHANGE_PASSWORD_PATH} replace />;
   if (user.role !== role) return <Navigate to={home} replace />;
@@ -42,6 +47,7 @@ export function RequirePasswordChange() {
   const { status, user, home } = useSession();
 
   if (isChecking(status)) return <SessionLoading />;
+  if (status === 'offline') return <SessionOffline />;
   if (!home) return <Navigate to="/login" replace />;
   if (!user.must_change_password) return <Navigate to={home} replace />;
   return <Outlet />;
@@ -53,6 +59,7 @@ export function GuestOnly() {
   const from = useLocation().state?.from;
 
   if (isChecking(status)) return <SessionLoading />;
+  if (status === 'offline') return <SessionOffline />;
   if (home) {
     const target = from ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}` : home;
     return <Navigate to={target} replace />;
@@ -64,5 +71,6 @@ export function GuestOnly() {
 export function RootRedirect() {
   const { status, home } = useSession();
   if (isChecking(status)) return <SessionLoading />;
+  if (status === 'offline') return <SessionOffline />;
   return <Navigate to={home ?? '/login'} replace />;
 }

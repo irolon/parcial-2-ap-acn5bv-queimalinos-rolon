@@ -53,6 +53,14 @@ describe('routine-templates.service (createFromRoutine)', () => {
     expect(mockRepo.createTemplate.mock.calls[0][0]).toMatchObject({ name: 'Mi plantilla', level: 'advanced' });
   });
 
+  it('sin level en el body usa el nivel de la rutina; con level lo pisa', async () => {
+    mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, level: 'beginner' });
+    await service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' });
+    await service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1', level: null });
+    const levels = mockRepo.createTemplate.mock.calls.map(([f]) => f.level);
+    expect(levels).toEqual(['beginner', null]);
+  });
+
   it('400 field goal si la rutina no tiene objetivo y el body no trae uno', async () => {
     mockRoutinesRepo.findRoutineByIdWithExercises.mockResolvedValue({ ...ROUTINE, goal: null });
     await expect(service.createFromRoutine(TRAINER_ID, { routine_id: 'rt-1' })).rejects.toMatchObject({

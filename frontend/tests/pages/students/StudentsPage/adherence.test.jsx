@@ -39,7 +39,7 @@ describe('StudentsPage: adherencia', () => {
     await load('/pt/alumnos');
     const meters = main().getAllByRole('meter', { name: 'Adherencia de los últimos 7 días' });
     expect(meters.map((m) => m.getAttribute('aria-valuenow')).sort()).toEqual(['40', '85']);
-    expect(main().getAllByText('Sin plan')).toHaveLength(1);
+    expect(main().getAllByText('Sin plan', { ignore: 'option' })).toHaveLength(1);
   });
 
   it('el orden "Adherencia" pone primero al que menos cumple y queda en la URL', async () => {

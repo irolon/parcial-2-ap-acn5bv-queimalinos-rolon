@@ -1,9 +1,10 @@
 package com.fittrainer.data.invitation.invite
 
 import com.fittrainer.data.api.invitation.CreateInvitationRequest
+import com.fittrainer.data.routines.trainer.WEEK_DAYS
 
 /** Campos del formulario "Invitar alumno". */
-enum class InviteField { NAME, EMAIL, GOAL, LEVEL, PHONE, EQUIPMENT, INJURIES }
+enum class InviteField { NAME, EMAIL, GOAL, LEVEL, PHONE, EQUIPMENT, INJURIES, TEMPLATE, DAYS }
 
 /** Lo que escribió el entrenador, tal cual (los opcionales vacíos son ""/null). */
 data class InviteForm(
@@ -14,6 +15,8 @@ data class InviteForm(
     val phone: String = "",
     val equipment: List<String> = emptyList(),
     val injuries: String = "",
+    val templateId: String? = null,
+    val routineDays: Set<String> = emptySet(),
 )
 
 val GOALS = listOf("tonify", "weight_loss", "hypertrophy", "strength")
@@ -43,6 +46,7 @@ fun InviteForm.errors(): Map<InviteField, String> = buildMap {
             put(InviteField.EQUIPMENT, "Cada elemento de 1 a $MAX_EQUIPMENT_LENGTH caracteres")
     }
     if (injuries.trim().length > MAX_INJURIES) put(InviteField.INJURIES, "Hasta $MAX_INJURIES caracteres")
+    if (templateId != null && WEEK_DAYS.none { it in routineDays }) put(InviteField.DAYS, "Elegí al menos un día")
 }
 
 /** Con teléfono va por los dos canales ("both"); sin teléfono, solo QR. Vacíos → null. */
@@ -57,6 +61,8 @@ fun InviteForm.toRequest(): CreateInvitationRequest {
         gymEquipment = equipment.map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { null },
         injuries = injuries.trim().ifEmpty { null },
         deliveryChannel = if (digits.isEmpty()) "qr" else "both",
+        templateId = templateId,
+        routineDays = templateId?.let { WEEK_DAYS.filter { d -> d in routineDays } },
     )
 }
 
@@ -69,5 +75,7 @@ fun inviteFieldOf(apiField: String?): InviteField? = when (apiField) {
     "student_phone", "delivery_channel" -> InviteField.PHONE
     "gym_equipment" -> InviteField.EQUIPMENT
     "injuries" -> InviteField.INJURIES
+    "template_id" -> InviteField.TEMPLATE
+    "routine_days" -> InviteField.DAYS
     else -> null
 }

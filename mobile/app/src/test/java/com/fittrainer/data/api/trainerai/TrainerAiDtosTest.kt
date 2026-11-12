@@ -2,6 +2,8 @@ package com.fittrainer.data.api.trainerai
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,14 +15,19 @@ class TrainerAiDtosTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test fun `el equipamiento sin tocar no viaja y las lesiones vacias viajan como null`() {
-        val body = json.encodeToString(GenerateRoutineRequest("s1", "strength", "beginner", 3, 60, null, null))
+        val body = json.encodeToString(GenerateRoutineRequest("s1", "strength", "beginner", 3, 60, null, JsonNull))
         assertFalse(body.contains("available_equipment"))
         assertTrue(body.contains("\"injuries\":null"))
         assertFalse(body.contains("preferences"))
     }
 
+    @Test fun `sin lesiones (ficha sin cargar) el campo no viaja`() {
+        val body = json.encodeToString(GenerateRoutineRequest("s1", "strength", "beginner", 3, 60, null, null))
+        assertFalse(body.contains("injuries"))
+    }
+
     @Test fun `una lista vacia de equipamiento viaja vacia`() {
-        val body = json.encodeToString(GenerateRoutineRequest("s1", "strength", "beginner", 3, 60, emptyList(), "Rodilla"))
+        val body = json.encodeToString(GenerateRoutineRequest("s1", "strength", "beginner", 3, 60, emptyList(), JsonPrimitive("Rodilla")))
         assertTrue(body.contains("\"available_equipment\":[]"))
         assertTrue(body.contains("\"injuries\":\"Rodilla\""))
     }

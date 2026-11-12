@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PHONE_ERROR, validatePhone, whatsappHref } from '@/utils/students/phone';
+import { PHONE_ERROR, validatePhone, whatsappHref } from '@/utils/students/profile/phone';
 
 describe('validatePhone', () => {
   it('acepta números con espacios, + - ( )', () => {

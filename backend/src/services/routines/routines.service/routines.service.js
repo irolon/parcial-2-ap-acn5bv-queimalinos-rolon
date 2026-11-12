@@ -67,6 +67,7 @@ export async function create(trainerId, data) {
       template_id: data.template_id ?? null,
       name: data.name,
       goal: data.goal,
+      level: data.level ?? null,
       days: data.days,
       active: true,
     },
@@ -87,7 +88,7 @@ export async function getById(trainerId, routineId) {
   return toRoutineDetail(routine);
 }
 
-/** Actualiza una rutina propia del trainer (nombre, goal, días, active). */
+/** Actualiza una rutina propia del trainer (nombre, goal, nivel, días, active). */
 export async function update(trainerId, routineId, fields) {
   await getOwnedRoutine(trainerId, routineId, 'modificar');
   return repository.updateRoutine(routineId, fields);

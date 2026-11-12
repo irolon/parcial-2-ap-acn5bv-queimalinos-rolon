@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { exerciseProgressOptions } from '@/hooks/progress/useProgress';
-import { SLOT_STYLES, compareCandidates, compareMetric, isBodyweight, pickTop, tooFewPoints, trainedSince } from '@/utils/progress/compare';
+import { DEFAULT_COMPARE_METRIC, SLOT_STYLES, compareCandidates, compareMetric, isBodyweight, pickTop, tooFewPoints, trainedSince } from '@/utils/progress/compare';
 import { hasKg } from '@/utils/progress/metrics';
 
 /**
@@ -11,8 +11,9 @@ import { hasKg } from '@/utils/progress/metrics';
  * borra y vuelven a salir solas. Cada línea lleva el estilo de su lugar (`SLOT_STYLES`); `slotLoading[i]`: la curva
  * del lugar `i` todavía se está pidiendo. `few`: los que no llegan a MIN_POINTS puntos en el rango (no se dibujan).
  * `hidden`: no hay candidatos. `allBodyweight`: todos los del rango son de peso corporal (la tarjeta decide si se oculta).
+ * `metric`: la métrica elegida (`COMPARE_METRICS`); cambiarla no borra la elección a mano ni pide curvas.
  */
-export function useCompareCurves(studentId, exercises, range) {
+export function useCompareCurves(studentId, exercises, range, metric = DEFAULT_COMPARE_METRIC) {
   const rangeKey = `${range?.from ?? ''}|${range?.to ?? ''}`;
   const [choice, setChoice] = useState({ rangeKey, slots: null });
   // Al cambiar el rango se borra la elección a mano (si no, volver al rango anterior la traería de vuelta).
@@ -30,7 +31,7 @@ export function useCompareCurves(studentId, exercises, range) {
       .filter(({ exercise, query }) => exercise && query.data)
       .map(({ exercise, query }) => {
         const points = query.data.points ?? [];
-        return [exercise.id, { ...exercise, points, metric: compareMetric(points) }];
+        return [exercise.id, { ...exercise, points, metric: compareMetric(points, metric) }];
       }),
   );
   const loading = entries.slice(0, candidates.length).some(({ query }) => query.isPending);
@@ -42,10 +43,10 @@ export function useCompareCurves(studentId, exercises, range) {
   const outOfRange = options.filter((e) => !trainedSince(e, range?.from));
   const few = new Set([
     ...outOfRange.map((e) => e.id),
-    ...[...curves.values()].filter((c) => tooFewPoints(c.points)).map((c) => c.id),
+    ...[...curves.values()].filter((c) => tooFewPoints(c.points, metric)).map((c) => c.id),
   ]);
 
-  const auto = pickTop(candidates.map((e) => curves.get(e.id)).filter(Boolean)).map((c) => c.id);
+  const auto = pickTop(candidates.map((e) => curves.get(e.id)).filter(Boolean), SLOT_STYLES.length, metric).map((c) => c.id);
   const slots = chosen ?? SLOT_STYLES.map((_, i) => auto[i] ?? null);
   const setSlot = (index, id) => setChoice({ rangeKey, slots: slots.map((s, i) => (i === index ? id || null : s)) });
 

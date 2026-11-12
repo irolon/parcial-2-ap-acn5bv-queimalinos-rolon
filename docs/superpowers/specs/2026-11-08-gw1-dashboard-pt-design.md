@@ -38,8 +38,10 @@ Orden de arriba hacia abajo: fila de 4 KPIs, después dos columnas en `lg` (grá
 |---|---|---|
 | ALUMNOS ACTIVOS | `count` | "+2 en los últimos 7 días" (verde) si `new_7d > 0`; si no, nada |
 | SESIONES HOY | `done` con unidad `/expected` | "Hoy nadie tiene entrenamiento asignado" si `expected = 0` |
-| ADHERENCIA 7 DÍAS | `pct` + `%` | "+4% vs. semana anterior" (verde si sube, coral si baja, gris si es 0); `pct null` → valor "—" y "Ningún alumno tiene plan asignado" |
-| EN RIESGO | `at_risk` | "7 días o más sin entrenar"; el número va en coral si es > 0 |
+| ADHERENCIA 7 DÍAS | `pct` + `%` | "+4% vs. semana anterior" (verde si sube, coral si baja, gris si es 0); `pct null` → valor "—" y "Ningún alumno tiene plan asignado"; con `pct` y `delta null`, sin línea (como `adherenceSummary` del celular) |
+| EN RIESGO | `at_risk` | "7 días o más sin entrenar"; el número va en coral si es > 0 (prop `hot` nueva de `Stat`) |
+
+El número de ALUMNOS ACTIVOS va en `accent`, como en el prototipo.
 
 **Actividad** (`ActivityChart`): `Card` con título "Actividad · 7 días" o "Actividad · 14 días" y un grupo de dos botones `7D` / `14D` (`aria-pressed`, 7 por defecto). Barras de recharts (`BarChart`) con `AXIS` y `GRID` de `chartStyle.jsx`; eje X con la inicial del día (L, M, X…), barra de hoy en `--color-accent`, resto en `--color-ink4`. Tooltip `TooltipBox`: "Jue 06/11" y "3 sesiones" / "1 sesión". Todo en 0: en lugar del gráfico, "Ninguna sesión terminada en los últimos 7 días" (o 14). `role="img"` con `aria-label="Sesiones terminadas por día, últimos 7 días"`.
 
@@ -47,7 +49,7 @@ Orden de arriba hacia abajo: fila de 4 KPIs, después dos columnas en `lg` (grá
 
 **Estados** (el overview carga una vez para KPIs, gráfico y recientes):
 - Cargando: `LoadingState` dentro de cada `Card`, con label "Cargando el resumen…".
-- Error: un solo `ErrorState` arriba con "No pudimos cargar el resumen." y Reintentar (`refetch`). `InactivityAlerts` sigue con su propia consulta y no se tapa.
+- Error: un solo `ErrorState` arriba con "No pudimos cargar el resumen." y Reintentar (`refetch`). `InactivityAlerts` sigue con su propia consulta y no se tapa (pasa a todo el ancho). Un refetch que falla con datos ya cargados no muestra el error: siguen los datos.
 
 ## Datos
 
@@ -66,9 +68,9 @@ Orden de arriba hacia abajo: fila de 4 KPIs, después dos columnas en `lg` (grá
 **Web**
 - Crea `frontend/src/api/students/overview.api.js`, `frontend/src/hooks/students/useStudentsOverview.js`, `frontend/src/utils/students/overviewFormat.js` (`deltaLabel`, `relativeTime`, `lastDays(daily, n)`).
 - Crea `frontend/src/components/students/overview/OverviewKpis.jsx`, `ActivityChart.jsx`, `RecentActivity.jsx`.
-- Modifica `frontend/src/pages/dashboard/DashboardPage.jsx` (39 líneas: saca `Indicators`, arma el layout).
+- Modifica `frontend/src/pages/dashboard/DashboardPage.jsx` (39 líneas: saca `Indicators`, arma el layout) y `frontend/src/components/shared/ui/Stat.jsx` (prop `hot`).
 - Tests (crea): `frontend/tests/api/students/overview.api.test.js`, `frontend/tests/utils/students/overviewFormat.test.js`, `frontend/tests/components/students/overview/{OverviewKpis,ActivityChart,RecentActivity}.test.jsx`, `frontend/tests/helpers/students/overview.js` (fixture y ruta del overview).
-- Tests (modifica): `frontend/tests/pages/dashboard/DashboardPage.test.jsx`.
+- Tests (modifica): `frontend/tests/pages/dashboard/DashboardPage.test.jsx`, `frontend/tests/components/shared/ui/Display.test.jsx` (`hot`) y `frontend/tests/helpers/students/students.js` (`stubStudents` contesta el overview; está en la #81, por eso esta PR va después).
 
 **Chequeo contra PRs abiertas.** No toca ninguno de la lista a evitar: `InactivityAlerts.jsx`, `students.routes.js` (el endpoint no cambia de ruta), `useAuthStore.js`, `ProfileActions.jsx`, `RoutineEditorPage.jsx`, `NotEnoughData.jsx`, `ProgressPanel.jsx`, ni nada de `trainer-ai`/`chat`. **Dos riesgos:**
 - `frontend/tests/pages/dashboard/DashboardPage.test.jsx` lo modifica la **#81**, y este ticket lo tiene que cambiar (sus aserciones sobre "Nunca entrenaron" dejan de valer). **Se abre la PR después del merge de la #81** (o se mergea `develop` antes de tocar ese test).

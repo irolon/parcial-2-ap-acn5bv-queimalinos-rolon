@@ -1,7 +1,7 @@
 import { todayString } from '@/utils/dates';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { EQUIPMENT_LABELS } from '@/utils/exercises/exerciseOptions';
-import { validatePhone } from '@/utils/students/phone';
+import { validatePhone } from '@/utils/students/profile/phone';
 
 export const STUDENT_FIELDS = ['name', 'phone', 'goal', 'level', 'birth_date', 'gym_equipment', 'injuries'];
 export const MAX_EQUIPMENT = 30;

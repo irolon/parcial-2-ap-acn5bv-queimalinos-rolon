@@ -97,4 +97,10 @@ describe('editorState', () => {
     expect(state.exercises).toHaveLength(1);
     expect(fromTemplate(templateFixture(), new Map([[EX_A, {}]])).missing).toBe(1);
   });
+
+  it('nivel: arranca vacío y fromTemplate lo hereda de la plantilla (sin nivel, vacío)', () => {
+    expect(EMPTY_ROUTINE.level).toBe('');
+    expect(fromTemplate(templateFixture(), exercisesById).state.level).toBe('beginner');
+    expect(fromTemplate(templateFixture({ level: null }), exercisesById).state.level).toBe('');
+  });
 });

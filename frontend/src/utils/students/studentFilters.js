@@ -1,9 +1,11 @@
 import { activityStatus, daysWithoutTraining } from './activity';
-import { adherencePct } from './adherence';
+import { adherenceBucket, adherencePct } from './adherence';
 
-export const DEFAULT_FILTERS = { estado: 'todos', objetivo: '', orden: 'ultima-sesion', q: '' };
+export const DEFAULT_FILTERS = { estado: 'todos', objetivo: '', orden: 'ultima-sesion', q: '', adherencia: '' };
 export const ESTADOS = ['todos', 'inactivos', 'al-dia', 'nuevos', 'baja'];
 export const ORDENES = ['ultima-sesion', 'nombre', 'alta', 'racha', 'adherencia'];
+/** Rangos del filtro por adherencia (`''` = todas). */
+export const ADHERENCIAS = ['alta', 'media', 'baja', 'sin-plan'];
 
 const STATUS_BY_ESTADO = { inactivos: 'inactive', 'al-dia': 'active', nuevos: 'new', baja: 'disabled' };
 
@@ -19,11 +21,13 @@ export const normalize = (text) =>
 export function parseStudentFilters(searchParams) {
   const estado = searchParams.get('estado');
   const orden = searchParams.get('orden');
+  const adherencia = searchParams.get('adherencia');
   return {
     estado: ESTADOS.includes(estado) ? estado : DEFAULT_FILTERS.estado,
     objetivo: searchParams.get('objetivo') ?? DEFAULT_FILTERS.objetivo,
     orden: ORDENES.includes(orden) ? orden : DEFAULT_FILTERS.orden,
     q: searchParams.get('q') ?? DEFAULT_FILTERS.q,
+    adherencia: ADHERENCIAS.includes(adherencia) ? adherencia : DEFAULT_FILTERS.adherencia,
   };
 }
 
@@ -42,6 +46,7 @@ export function filterStudents(students, filters, now) {
     (s) =>
       (filters.estado === 'todos' || activityStatus(s, now) === STATUS_BY_ESTADO[filters.estado]) &&
       (!filters.objetivo || s.goal === filters.objetivo) &&
+      (!filters.adherencia || adherenceBucket(s) === filters.adherencia) &&
       (!q || normalize(s.name).includes(q)),
   );
 }

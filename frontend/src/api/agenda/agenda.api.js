@@ -26,7 +26,10 @@ export async function listAppointments(from, to) {
   return res.data;
 }
 
-/** POST /appointments (entrenador: `{ student_id, scheduled_at, notes? }`) → turno `confirmed`. */
+/**
+ * POST /appointments → el turno creado. Entrenador: `{ student_id, scheduled_at, notes? }` (nace `confirmed`);
+ * alumno: `{ scheduled_at, notes? }` (nace `pending`).
+ */
 export async function createAppointment(body) {
   const res = await request('/appointments', { method: 'POST', body });
   return res.data;

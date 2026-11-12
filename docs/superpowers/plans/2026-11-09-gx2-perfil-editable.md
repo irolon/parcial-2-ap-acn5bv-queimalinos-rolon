@@ -293,8 +293,8 @@ Comandos: `cd frontend && npx vitest run <path>` y `cd frontend && npm run lint`
 ### Task 11: Teléfono y achicado de la foto
 
 **Files:**
-- Create: `frontend/src/utils/students/phone.js`, `frontend/src/utils/students/resizeImage.js` (Nota 8)
-- Test: `frontend/tests/utils/students/phone.test.js`, `frontend/tests/utils/students/resizeImage.test.js`
+- Create: `frontend/src/utils/students/profile/phone.js`, `frontend/src/utils/students/profile/resizeImage.js` (Nota 8)
+- Test: `frontend/tests/utils/students/profile/phone.test.js`, `frontend/tests/utils/students/profile/resizeImage.test.js`
 
 **Interfaces:**
 - Produces:

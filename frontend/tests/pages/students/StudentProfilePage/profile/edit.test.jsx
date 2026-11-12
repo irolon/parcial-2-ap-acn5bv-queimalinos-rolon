@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { bodyOf, errorResponse, jsonResponse } from '../../../../helpers/shared/fetchMock';
 import { studentDetail } from '../../../../helpers/students/fixtures';
 import { callsWith, loadProfile } from '../../../../helpers/students/profile';
-import { PHONE_ERROR } from '@/utils/students/phone';
+import { PHONE_ERROR } from '@/utils/students/profile/phone';
 
 afterEach(() => {
   vi.restoreAllMocks();

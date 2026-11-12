@@ -17,6 +17,8 @@ data class RoutineEntity(
     val days: String,
     /** created_at del backend en epoch millis (0 si no se pudo leer: queda como la más vieja). */
     val createdAt: Long,
+    /** Nivel de la rutina (beginner, intermediate, advanced); null si no tiene o el backend es viejo. */
+    val level: String? = null,
 )
 
 /** Ejercicio de una rutina, con los datos del ejercicio copiados en la fila. */

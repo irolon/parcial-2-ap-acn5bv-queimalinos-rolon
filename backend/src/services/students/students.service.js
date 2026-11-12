@@ -10,6 +10,7 @@ import * as routinesRepo from '../../repositories/routines/routines.repository.j
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
 import { signAvatars } from './avatar-urls.service.js';
+import { assignInitialRoutine } from './initial-routine.service.js';
 import * as appointments from '../agenda/appointments.service.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
@@ -158,6 +159,8 @@ export async function registerFromInvitation({ token, password }) {
     throw err;
   }
 
+  // Plantilla inicial de la invitación (GX8): nunca hace fallar el alta.
+  await assignInitialRoutine(invitation, student);
   const tokens = await issueTokens(student, 'student');
   return { student, ...tokens };
 }

@@ -7,6 +7,7 @@
 export const PUSH_POLICY = {
   inactivity: { trainer: true },
   routine_modified: { trainer: true },
+  initial_routine_failed: { trainer: true },
   pr: { student: true },
   achievement: { student: true },
   comment: { student: true },

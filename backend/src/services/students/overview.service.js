@@ -1,6 +1,7 @@
 import * as overviewRepo from '../../repositories/students/overview.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { buildOverview } from '../../models/students/overview.js';
+import { dailySessions } from '../../models/students/overview-daily.js';
 import { addDays } from '../../models/gamification/streak.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 
@@ -9,7 +10,8 @@ export const RECENT_LIMIT = 10;
 /** Ventana de sesiones: hoy y los 14 días anteriores (las dos semanas de la adherencia). */
 const WINDOW_DAYS = 14;
 
-const EMPTY = {
+/** Sin alumnos activos: todo vacío y el gráfico en 0 (se arma con hoy, por eso es función). */
+const empty = (today) => ({
   active_students: { count: 0, new_7d: 0 },
   sessions_today: { done: 0, expected: 0 },
   adherence_7d: { pct: null, delta: null },
@@ -17,18 +19,19 @@ const EMPTY = {
   attention: [],
   recent: [],
   lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
-};
+  daily: dailySessions([], today),
+});
 
 /**
  * GET /students/overview — Inicio del entrenador. Solo sus alumnos activos (los dados de baja no cuentan
  * en nada). Una consulta por lote para cada dato, sin N+1.
  */
 export async function overview(trainerId) {
+  const today = localDate();
   const students = await overviewRepo.findActiveStudents(trainerId);
-  if (!students.length) return EMPTY;
+  if (!students.length) return empty(today);
 
   const ids = students.map((s) => s.id);
-  const today = localDate();
   const [schedules, lastSessions, sessions, recent] = await Promise.all([
     studentsRepo.findActiveRoutineSchedules(ids),
     studentsRepo.findLastSessionDates(ids),

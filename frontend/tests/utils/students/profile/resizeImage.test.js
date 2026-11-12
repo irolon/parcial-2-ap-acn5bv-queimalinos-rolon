@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AVATAR_ACCEPT, AVATAR_MAX_SIDE, AVATAR_QUALITY, fitWithin, resizeToJpeg } from '@/utils/students/resizeImage';
+import { AVATAR_ACCEPT, AVATAR_MAX_SIDE, AVATAR_QUALITY, fitWithin, resizeToJpeg } from '@/utils/students/profile/resizeImage';
 
 afterEach(() => {
   vi.unstubAllGlobals();

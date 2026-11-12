@@ -5,11 +5,11 @@ import { avatarErrorMessage, useAvatar } from '@/hooks/students/useAvatar';
 import { STUDENTS_KEY } from '@/hooks/students/useStudents';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { ApiError, configureClient } from '@/api/shared/client';
-import { resizeToJpeg } from '@/utils/students/resizeImage';
+import { resizeToJpeg } from '@/utils/students/profile/resizeImage';
 import { calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 
-vi.mock('@/utils/students/resizeImage', async (importOriginal) => ({
+vi.mock('@/utils/students/profile/resizeImage', async (importOriginal) => ({
   ...(await importOriginal()),
   resizeToJpeg: vi.fn(),
 }));

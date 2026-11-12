@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { resetAuthStore, seedSavedSession } from '../../helpers/auth/authStore';
-import { calls, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { STUDENT, TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 import { stubStudentHome } from '../../helpers/student/home';
 
@@ -38,6 +38,18 @@ describe('guard: cambio obligatorio de clave', () => {
     expect(await screen.findByText(TEXT)).toBeInTheDocument();
     expect(pathname()).toBe('/cambiar-clave');
     expect(calls(fetchMock).map(([p]) => p)).toEqual(['/auth/refresh']);
+  });
+
+  // Offline va antes que el flag: sin servidor no se sabe si la clave sigue blanqueada.
+  it.each(['/alumno/hoy', '/cambiar-clave'])('blanqueado + servidor caído + recarga en %s: "Sin conexión", no /cambiar-clave', async (path) => {
+    await seedSavedSession({ user: BLOCKED, refreshToken: 'refresh-1' });
+    stubFetch(async () => errorResponse(503, 'HTTP_ERROR'), { unread: null });
+    await useAuthStore.getState().restore();
+    expect(useAuthStore.getState().status).toBe('offline');
+    const { pathname } = renderRoute(path);
+    expect(await screen.findByRole('heading', { name: 'Sin conexión con el servidor' })).toBeInTheDocument();
+    expect(screen.queryByText(TEXT)).not.toBeInTheDocument();
+    expect(pathname()).toBe(path);
   });
 
   it('sin el flag, /cambiar-clave manda a la home del rol', async () => {

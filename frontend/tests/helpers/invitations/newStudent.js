@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { calls, errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
 
 export const PAGE_PATH = '/pt/alumnos/nuevo';
 export const QR_PNG = 'data:image/png;base64,UVI=';
@@ -49,3 +50,20 @@ export async function fillAndSubmit(
   await user.click(main.getByRole('button', { name: 'Generar QR' }));
   return user;
 }
+
+/**
+ * Stub de la página: `GET /routine-templates` responde `templates` (una lista, un status de error o `'never'`
+ * para que quede cargando); el resto va a `handler`.
+ */
+export function stubInvitationApi(handler, { templates = [] } = {}) {
+  return stubFetch(async (url, init = {}) => {
+    if ((init.method ?? 'GET') !== 'GET' || !String(url).endsWith('/routine-templates')) return handler(url, init);
+    if (templates === 'never') return new Promise(() => {});
+    if (typeof templates === 'number') return errorResponse(templates, 'INTERNAL_ERROR', 'Falló');
+    return jsonResponse(200, { data: templates });
+  });
+}
+
+/** Los `POST /invitations` que salieron. */
+export const invitationPosts = (fetchMock) =>
+  calls(fetchMock).filter(([path, init]) => path === '/invitations' && init?.method === 'POST');

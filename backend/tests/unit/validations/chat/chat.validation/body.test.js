@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { validateChatBody } from '../../../../src/validations/chat/chat.validation.js';
+import { validateChatBody } from '../../../../../src/validations/chat/chat.validation.js';
 
 const ID = '11111111-1111-4111-8111-111111111111';
 const EX = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';

@@ -85,6 +85,8 @@ describe('AppShell: sidebar del alumno', () => {
       'Mi progreso',
       'Mis rutinas',
       'Historial',
+      'Asistente IA',
+      'Turnos',
       'Mensajes',
       'Mi perfil',
     ]);

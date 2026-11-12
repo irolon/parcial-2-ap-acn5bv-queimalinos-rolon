@@ -5,7 +5,7 @@ import { calls, errorResponse, stubFetch } from '../../../helpers/shared/fetchMo
 import { USER, resetAuthStore, savedSession, seedSavedSession } from '../../../helpers/auth/authStore';
 
 // Un 429 del refresh es temporal (cupo por IP compartido, muchas recargas): la sesión no se
-// pierde, igual que sin conexión. Se reintenta en la próxima carga.
+// pierde, igual que sin conexión: queda `offline` y se reintenta (GX9 c).
 const state = () => useAuthStore.getState();
 const rateLimited = () => errorResponse(429, 'RATE_LIMIT_EXCEEDED', 'Demasiados intentos.');
 
@@ -17,11 +17,11 @@ afterEach(() => {
 });
 
 describe('useAuthStore: refresh con 429', () => {
-  it('restore() queda anonymous pero conserva user y refresh guardados', async () => {
+  it('restore() queda offline y conserva user y refresh guardados', async () => {
     await seedSavedSession();
     stubFetch(async () => rateLimited());
     await state().restore();
-    expect(state()).toMatchObject({ user: USER, token: null, refreshToken: 'refresh-1', status: 'anonymous' });
+    expect(state()).toMatchObject({ user: USER, token: null, refreshToken: 'refresh-1', status: 'offline' });
     expect(savedSession()).toEqual({ user: USER, refreshToken: 'refresh-1' });
   });
 
@@ -31,7 +31,7 @@ describe('useAuthStore: refresh con 429', () => {
       url.endsWith('/auth/refresh') ? rateLimited() : errorResponse(401, 'UNAUTHORIZED'),
     );
     await expect(api.get('/students')).rejects.toMatchObject({ status: 401 });
-    await vi.waitFor(() => expect(state().status).toBe('anonymous'));
+    await vi.waitFor(() => expect(state().status).toBe('offline'));
     expect(state()).toMatchObject({ user: USER, token: null, refreshToken: 'refresh-1' });
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students', '/auth/refresh']);
   });

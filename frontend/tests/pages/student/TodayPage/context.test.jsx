@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { appt } from '../../../helpers/agenda/fixtures';
 import { mineRoutine, todayRoutine } from '../../../helpers/routines/studentRoutines';
@@ -20,6 +20,7 @@ beforeEach(() => signInStudent());
 afterEach(cleanUpStudent);
 
 const open = (options) => openStudent('/alumno/hoy', { today: todayRoutine(), mine: [mineRoutine()], ...options });
+const user = () => userEvent.setup();
 const cardOf = async (title) => (await screen.findByText(title)).closest('.rounded-xl');
 
 describe('TodayPage: la nota del entrenador/a', () => {
@@ -78,6 +79,27 @@ describe('TodayPage: el próximo turno', () => {
     await userEvent.setup().click(within(alert).getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByText('Jueves 05/11 · 18:00')).toBeInTheDocument();
     expect(screen.getByText('Pendiente')).toBeInTheDocument();
+  });
+});
+
+describe('TodayPage: "Ver agenda" del próximo turno', () => {
+  const link = async () => within(await cardOf('Próximo turno')).findByRole('link', { name: 'Ver agenda' });
+
+  it.each([
+    ['con turno', [appt({ scheduled_at: THURSDAY_18 })]],
+    ['sin turnos', []],
+    ['con error', 500],
+  ])('está %s y lleva a Mis turnos', async (_, appointments) => {
+    const { pathname } = open({ appointments });
+    await user().click(await link());
+    await waitFor(() => expect(pathname()).toBe('/alumno/turnos'));
+  });
+
+  it('mientras cargan los turnos no está', async () => {
+    open({ appointments: () => new Promise(() => {}) });
+    const card = await cardOf('Próximo turno');
+    expect(within(card).getByText('Cargando tus turnos…')).toBeInTheDocument();
+    expect(within(card).queryByRole('link', { name: 'Ver agenda' })).not.toBeInTheDocument();
   });
 });
 
