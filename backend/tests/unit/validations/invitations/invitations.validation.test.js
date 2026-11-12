@@ -82,17 +82,21 @@ describe('invitations.validation — plantilla inicial (opcional)', () => {
     });
   });
 
-  it('con plantilla y días los devuelve; sin días, routine_days null', () => {
+  it('con plantilla y días los devuelve', () => {
     const days = ['monday', 'friday'];
     expect(validateCreateInvitation({ ...BASE, template_id: TPL, routine_days: days })).toMatchObject({
       template_id: TPL,
       routine_days: days,
     });
-    expect(validateCreateInvitation({ ...BASE, template_id: TPL }).routine_days).toBeNull();
+  });
+
+  it('plantilla sin días (ausentes o null) es 400 en routine_days', () => {
+    expect(fields({ template_id: TPL })).toEqual(['routine_days']);
+    expect(fields({ template_id: TPL, routine_days: null })).toEqual(['routine_days']);
   });
 
   it('template_id con formato inválido es 400 en template_id', () => {
-    expect(fields({ template_id: 'no-uuid' })).toEqual(['template_id']);
+    expect(fields({ template_id: 'no-uuid', routine_days: ['monday'] })).toEqual(['template_id']);
   });
 
   it('días sin plantilla son 400 en routine_days', () => {

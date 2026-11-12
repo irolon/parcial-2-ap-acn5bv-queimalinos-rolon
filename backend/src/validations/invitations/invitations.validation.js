@@ -78,8 +78,8 @@ export function validateCreateInvitation(body) {
 }
 
 /**
- * Plantilla inicial (opcional): `template_id` uuid y `routine_days` (solo con plantilla;
- * null = los días de la plantilla al momento del alta). null cuenta como ausente.
+ * Plantilla inicial (opcional): `template_id` uuid y `routine_days`, obligatorio con
+ * plantilla (así una plantilla borrada se reconoce por los días). null cuenta como ausente.
  */
 function parseInitialTemplate(body, details) {
   const templateId = body.template_id ?? null;
@@ -87,12 +87,14 @@ function parseInitialTemplate(body, details) {
   if (templateId !== null && !isUuid(templateId)) {
     details.push({ field: 'template_id', message: 'template_id inválido' });
   }
-  if (days !== null) {
-    if (templateId === null) {
+  if (templateId === null) {
+    if (days !== null) {
       details.push({ field: 'routine_days', message: 'routine_days solo va con template_id' });
-    } else {
-      validateDays(days, 'routine_days', details);
     }
+  } else if (days === null) {
+    details.push({ field: 'routine_days', message: 'routine_days es requerido con template_id' });
+  } else {
+    validateDays(days, 'routine_days', details);
   }
   return { template_id: templateId, routine_days: days };
 }

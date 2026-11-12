@@ -53,12 +53,6 @@ describe('initial-routine.service — assignInitialRoutine', () => {
     expect(mockNotify).not.toHaveBeenCalled();
   });
 
-  it('sin días guardados usa los de la plantilla (days undefined)', async () => {
-    mockInstantiate.mockResolvedValue({ id: 'rt-1' });
-    await assignInitialRoutine({ ...INVITATION, routine_days: null }, STUDENT);
-    expect(mockInstantiate.mock.calls[0][2]).toEqual({ student_id: 'st-1', days: undefined });
-  });
-
   it('si instantiate falla devuelve null, deja un warn y avisa al PT', async () => {
     mockInstantiate.mockRejectedValue(Object.assign(new Error('x'), { code: 'TEMPLATE_EXERCISES_UNAVAILABLE' }));
     expect(await assignInitialRoutine(INVITATION, STUDENT)).toBeNull();

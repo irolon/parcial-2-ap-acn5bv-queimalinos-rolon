@@ -144,11 +144,11 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
   "gym_equipment": ["string (opcional, hasta 30 ítems de 1–50 chars)"],
   "injuries": "string (opcional, hasta 1000 chars)",
   "template_id": "uuid (opcional): plantilla inicial, propia",
-  "routine_days": ["monday", "..."]
+  "routine_days": ["monday", "..."] (requerido con template_id)
 }
 ```
 
-> **Plantilla inicial (GX8).** `template_id` (opcional, `null` = sin plantilla) es una plantilla **propia**: ajena o inexistente → **404 `TEMPLATE_NOT_FOUND`** (no se revela qué ids existen). `routine_days` es un arreglo no vacío de `monday..sunday` sin repetidos y **solo va con `template_id`** (sin plantilla → 400 en `routine_days`); sin días, al alta se usan los de la plantilla. La plantilla se valida al invitar y se **copia al alta** (`POST /students`): vale la versión de la plantilla en ese momento. `GET /invitations/:token` no la expone.
+> **Plantilla inicial (GX8).** `template_id` (opcional, `null` = sin plantilla) es una plantilla **propia**: ajena o inexistente → **404 `TEMPLATE_NOT_FOUND`** (no se revela qué ids existen). `routine_days` es un arreglo no vacío de `monday..sunday` sin repetidos y va **siempre y solo con `template_id`**: plantilla sin días (ausentes o `null`) → 400 en `routine_days`, y días sin plantilla → 400 en `routine_days`. Así, si la plantilla se borra antes del alta (la FK deja `template_id` en `null`), la invitación se sigue distinguiendo de una sin plantilla por sus días y al PT le llega `initial_routine_failed`. La plantilla se valida al invitar y se **copia al alta** (`POST /students`): vale la versión de la plantilla en ese momento. `GET /invitations/:token` no la expone.
 
 > `goal`, `level`, `gym_equipment` e `injuries` son opcionales: si faltan o vienen en `null`, se guardan como `null` (el alumno queda sin objetivo/contexto). Si vienen, deben cumplir las reglas de arriba; `injuries` con solo espacios se guarda como `null`, y los textos de `gym_equipment` se recortan. El contexto pasa al alumno cuando acepta la invitación.
 
@@ -197,7 +197,7 @@ Crea el alumno desde el token de invitación. Público.
 
 **201 Created** — `{ student, token, refresh_token }`
 
-> **Rutina inicial (GX8).** Si la invitación tenía plantilla inicial, el alumno arranca con esa rutina activa (copia de la plantilla con `POST /routine-templates/:id/instantiate`, con los `routine_days` de la invitación o los de la plantilla). La respuesta no cambia. **El alta nunca falla por la rutina:** si la plantilla se borró después de invitar, tiene ejercicios que ya no están o falla el insert, el alumno se crea igual, sin rutina, y al PT le llega la notificación `initial_routine_failed` (ver Módulo: Notificaciones).
+> **Rutina inicial (GX8).** Si la invitación tenía plantilla inicial, el alumno arranca con esa rutina activa (copia de la plantilla con `POST /routine-templates/:id/instantiate`, con los `routine_days` de la invitación). La respuesta no cambia. **El alta nunca falla por la rutina:** si la plantilla se borró después de invitar, tiene ejercicios que ya no están o falla el insert, el alumno se crea igual, sin rutina, y al PT le llega la notificación `initial_routine_failed` (ver Módulo: Notificaciones).
 
 **Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del alta).
 

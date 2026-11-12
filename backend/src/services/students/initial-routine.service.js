@@ -35,7 +35,8 @@ async function failed(invitation, student, reason) {
  * Alta del alumno (POST /students): si la invitación trae plantilla inicial, le crea
  * la rutina copiándola con `instantiate` (vale la versión de la plantilla al alta).
  * Nunca lanza: si no se puede crear, avisa al PT y devuelve null (el alta sigue).
- * Plantilla borrada después de invitar: la FK la deja en null, pero los días quedan.
+ * Plantilla borrada después de invitar: la FK la deja en null, pero los días quedan
+ * (POST /invitations exige routine_days con template_id, así que siempre hay días).
  */
 export async function assignInitialRoutine(invitation, student) {
   if (!invitation.template_id) {
@@ -44,7 +45,7 @@ export async function assignInitialRoutine(invitation, student) {
   try {
     return await instantiate(invitation.trainer.id, invitation.template_id, {
       student_id: student.id,
-      days: invitation.routine_days ?? undefined,
+      days: invitation.routine_days,
     });
   } catch (err) {
     return failed(invitation, student, err.code ?? err.message);

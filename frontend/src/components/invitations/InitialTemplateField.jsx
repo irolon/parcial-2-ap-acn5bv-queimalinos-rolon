@@ -21,9 +21,11 @@ function emptyLabel(query) {
  */
 export default function InitialTemplateField({ errors = {} }) {
   const templates = useTemplatesQuery();
-  const [templateId, setTemplateId] = useState('');
+  const [picked, setTemplateId] = useState('');
   const [days, setDays] = useState([]);
   const items = Array.isArray(templates.data) ? templates.data : [];
+  // Si la elegida ya no está en la lista (se borró y se recargaron), queda sin plantilla.
+  const templateId = items.some((t) => t.id === picked) ? picked : '';
 
   function pick(event) {
     const id = event.target.value;

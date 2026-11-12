@@ -63,6 +63,27 @@ describe('NewStudentPage: plantilla inicial', () => {
     expect(await page().findByText('routine_days debe ser un arreglo no vacío')).toBeInTheDocument();
   });
 
+  it('plantilla borrada antes de invitar: avisa en el campo, recarga las plantillas y la deselecciona', async () => {
+    const LEGS = { id: 't-2', name: 'Piernas', level: null, days: ['tuesday'] };
+    const templates = [PUSH, LEGS];
+    const fetchMock = stubInvitationApi(
+      async () => {
+        templates.splice(0, 1);
+        return errorResponse(404, 'TEMPLATE_NOT_FOUND', 'Plantilla no encontrada');
+      },
+      { templates },
+    );
+    renderRoute(PAGE_PATH);
+    const user = setupUser();
+    await pickPush(user);
+    await fillAndSubmit({}, user);
+    expect(await page().findByText('Esa plantilla ya no existe; elegí otra')).toBeInTheDocument();
+    await vi.waitFor(() => expect(page().queryByRole('option', { name: /Push A/ })).not.toBeInTheDocument());
+    expect(page().getByLabelText('Plantilla inicial')).toHaveValue('');
+    expect(page().queryByRole('checkbox', { name: 'Lunes' })).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/routine-templates'))).toHaveLength(2);
+  });
+
   it('si las plantillas no cargan, la invitación sale igual sin plantilla', async () => {
     const fetchMock = stubInvitationApi(async () => created(), { templates: 500 });
     renderRoute(PAGE_PATH);

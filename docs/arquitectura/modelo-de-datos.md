@@ -73,7 +73,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | expires_at | timestamptz | expira en 72hs |
 | used_at | timestamptz | null = no usado aún |
 | template_id | uuid | FK → routine_templates, `on delete set null`; plantilla inicial (opcional) que se copia al alumno en el alta (GX8) |
-| routine_days | text[] | días de la plantilla inicial (`sunday..saturday`); null = los de la plantilla al alta (GX8) |
+| routine_days | text[] | días de la plantilla inicial (`sunday..saturday`); obligatorios con `template_id` (los exige `POST /invitations`): null con `template_id` null = sin plantilla; con días = la plantilla se borró antes del alta (GX8) |
 
 ---
 

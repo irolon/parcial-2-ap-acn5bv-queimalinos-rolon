@@ -24,7 +24,7 @@
 
 1. Plantilla borrada entre invitar y el alta (FK `set null` → `template_id` null): el alta no intenta nada y no avisa (no hay qué asignar). Test en Tarea 4.
 2. `instantiate` tira (409 ejercicios borrados, error de BD) → alumno creado, 201, `console.warn`, notificación `initial_routine_failed` al PT; si además la notificación falla, el alta sigue igual. Tests en Tarea 4.
-3. `routine_days` mandado sin `template_id` → 400 en `routine_days`; `template_id` con formato inválido → 400 en `template_id`. Tests en Tarea 3.
+3. `routine_days` mandado sin `template_id`, o `template_id` sin `routine_days` → 400 en `routine_days`; `template_id` con formato inválido → 400 en `template_id`. Tests en Tarea 3.
 4. Borrador local viejo (sin `level`) restaura con `level: ''`. Test en Tarea 6.
 5. Error al cargar las plantillas en el formulario de invitación no bloquea "Generar QR". Test en Tarea 8.
 
@@ -49,16 +49,16 @@
 
 ### Tarea 3: Plantilla inicial en POST /invitations
 
-**Archivos:** `validations/invitations/invitations.validation.js` (`template_id` uuid opcional con `isUuid` de `shared/utils/validators.js`; `routine_days` con `validateDays`, solo con `template_id`; devuelve `template_id` y `routine_days` o `null`), `services/invitations/invitations.service.js` (`getOwnedTemplate(trainerId, template_id)` antes del insert), `repositories/invitations/invitations.repository.js` (insert de `template_id`, `routine_days`; `INVITATION_WITH_TRAINER` las lee).
+**Archivos:** `validations/invitations/invitations.validation.js` (`template_id` uuid opcional con `isUuid` de `shared/utils/validators.js`; `routine_days` con `validateDays`, obligatorio con `template_id` y solo con él; devuelve `template_id` y `routine_days` o `null`), `services/invitations/invitations.service.js` (`getOwnedTemplate(trainerId, template_id)` antes del insert), `repositories/invitations/invitations.repository.js` (insert de `template_id`, `routine_days`; `INVITATION_WITH_TRAINER` las lee).
 
-- [ ] Tests: validación (sin plantilla → ambos `null`; `template_id` sin días → `routine_days null`; días sin plantilla → 400 `routine_days`; día repetido/inválido → 400; uuid inválido → 400 `template_id`); service (plantilla ajena → 404 `TEMPLATE_NOT_FOUND` sin insertar; el insert lleva `templateId` y `routineDays`). Fila de aislamiento cruzado `POST /invitations` con `template_id: ':tpA'` → 404.
+- [ ] Tests: validación (sin plantilla → ambos `null`; `template_id` sin días → 400 `routine_days`; días sin plantilla → 400 `routine_days`; día repetido/inválido → 400; uuid inválido → 400 `template_id`); service (plantilla ajena → 404 `TEMPLATE_NOT_FOUND` sin insertar; el insert lleva `templateId` y `routineDays`). Fila de aislamiento cruzado `POST /invitations` con `template_id: ':tpA'` → 404.
 - [ ] Commit `feat(invitations): plantilla inicial opcional al invitar`.
 
 ### Tarea 4: Rutina inicial en el alta y aviso al PT
 
 **Archivos:** crea `services/students/initial-routine.service.js` con `assignInitialRoutine(invitation, student) → Promise<routine|null>`; modifica `services/students/students.service.js`, `models/notifications/notification.model.js` (tipo), `models/notifications/push-policy.js` (`initial_routine_failed: { trainer: true }`), `models/notifications/texts.js` (`initialRoutineFailed({ studentName })` → "No pudimos asignarle la rutina inicial a {nombre}", body "Asignale una rutina desde su ficha.").
 
-**Interfaces:** `assignInitialRoutine` llama a `instantiate(invitation.trainer.id, invitation.template_id, { student_id: student.id, days: invitation.routine_days ?? undefined })`; ante error: `console.warn('[invitations] rutina inicial no creada', …)`, `notify({ userId: trainerId, userRole: 'trainer', type: 'initial_routine_failed', title, body, data: { student_id }, push: shouldPush(...) })` dentro de try/catch, y devuelve `null`.
+**Interfaces:** `assignInitialRoutine` llama a `instantiate(invitation.trainer.id, invitation.template_id, { student_id: student.id, days: invitation.routine_days })`; ante error: `console.warn('[invitations] rutina inicial no creada', …)`, `notify({ userId: trainerId, userRole: 'trainer', type: 'initial_routine_failed', title, body, data: { student_id }, push: shouldPush(...) })` dentro de try/catch, y devuelve `null`.
 
 - [ ] Tests del servicio nuevo (sin plantilla no llama; con plantilla llama con trainer, alumno y días; si tira → `null`, warn y notify; si notify también tira → `null`) y del alta (llama a `assignInitialRoutine` antes de los tokens; si devuelve `null` el alta sigue y no libera la invitación). Tests de modelo de notificaciones (tipo, política, texto).
 - [ ] Commit `feat(students): rutina inicial al darse de alta y aviso al PT si falla`.

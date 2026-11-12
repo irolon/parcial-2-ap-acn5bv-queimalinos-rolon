@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { createInvitation } from '@/api/invitations/invitations.api';
 import SharePanel from '@/components/invitations/SharePanel';
 import StudentForm from '@/components/invitations/StudentForm';
+import { TEMPLATES_KEY } from '@/hooks/routine-templates/useRoutineTemplates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import { buildInvitationBody, toInvitationErrors, validateInvitationBody } from './invitationForm';
 
@@ -10,6 +12,7 @@ import { buildInvitationBody, toInvitationErrors, validateInvitationBody } from 
  * (`POST /invitations`, por mail y WhatsApp) y se muestra el QR para compartir.
  */
 export default function NewStudentPage() {
+  const queryClient = useQueryClient();
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const [submitting, setSubmitting] = useState(false);
   const [generated, setGenerated] = useState(null);
@@ -39,6 +42,8 @@ export default function NewStudentPage() {
       setGenerated({ invitation, studentName: body.student_name });
     } catch (error) {
       setErrors(toInvitationErrors(error));
+      // La plantilla se borró en otra pestaña: se recargan y el campo suelta la que ya no está.
+      if (error?.code === 'TEMPLATE_NOT_FOUND') queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
     } finally {
       setSubmitting(false);
     }

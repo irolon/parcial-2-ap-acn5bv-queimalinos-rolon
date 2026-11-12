@@ -36,6 +36,7 @@ export function validateInvitationBody(body) {
 /**
  * Traduce el error de `POST /invitations` a lo que muestra el formulario.
  * - `STUDENT_EMAIL_EXISTS` → en el campo email.
+ * - `TEMPLATE_NOT_FOUND` (la plantilla se borró después de cargar el select) → en la plantilla.
  * - `VALIDATION_ERROR` → cada detalle en su campo.
  * - el resto (sin red incluido) → mensaje general.
  */
@@ -44,6 +45,7 @@ export function toInvitationErrors(error) {
     fields: FIELDS,
     fieldCodes: {
       STUDENT_EMAIL_EXISTS: { field: 'student_email', message: 'Ya existe un alumno con ese email' },
+      TEMPLATE_NOT_FOUND: { field: 'template_id', message: 'Esa plantilla ya no existe; elegí otra' },
     },
     fallback: 'No pudimos generar la invitación',
   });

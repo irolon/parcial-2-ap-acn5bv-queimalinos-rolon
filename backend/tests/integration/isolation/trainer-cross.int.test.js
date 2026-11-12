@@ -22,6 +22,7 @@ const INVITE_WITH = (tp) => ({
   student_email: 'it-cross-template@example.com',
   delivery_channel: 'qr',
   template_id: tp,
+  routine_days: ['monday'],
 });
 
 // prettier-ignore

@@ -62,6 +62,10 @@ describe('invitationForm', () => {
       routine_days: 'Días inválidos',
       template_id: 'No existe',
     });
+    expect(toInvitationErrors(err('TEMPLATE_NOT_FOUND'))).toEqual({
+      form: null,
+      fields: { template_id: 'Esa plantilla ya no existe; elegí otra' },
+    });
     expect(toInvitationErrors(err('NETWORK_ERROR')).form).toBe('No hay conexión con el servidor');
     expect(toInvitationErrors(err('FORBIDDEN')).form).toBe('Backend');
   });
