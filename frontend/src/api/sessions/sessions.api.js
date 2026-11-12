@@ -26,8 +26,8 @@ export async function createSession(body, { signal } = {}) {
  * POST /sessions sin `finished_at`, RPE ni notas: abre la sesión al empezar (GX4). El cierre es la subida final, que
  * repite el POST con el mismo `id` (el servidor lo toma como reintento y completa lo que faltaba).
  */
-export async function openSession({ finished_at: _finished, rpe: _rpe, notes: _notes, ...body }) {
-  const res = await request('/sessions', { method: 'POST', body });
+export async function openSession({ id, routine_id, started_at }) {
+  const res = await request('/sessions', { method: 'POST', body: { id, routine_id, started_at } });
   return res.data;
 }
 
