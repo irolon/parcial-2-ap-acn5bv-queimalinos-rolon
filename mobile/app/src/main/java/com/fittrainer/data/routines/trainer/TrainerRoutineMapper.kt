@@ -13,10 +13,10 @@ import java.time.OffsetDateTime
 private fun millis(iso: String?): Long? = iso?.let { runCatching { OffsetDateTime.parse(it).toInstant().toEpochMilli() }.getOrNull() }
 
 fun TrainerRoutineSummaryDto.toEntity(trainerId: String) =
-    TrainerRoutineEntity(trainerId, id, studentId, name, goal, days.joinToString(","), active, millis(createdAt))
+    TrainerRoutineEntity(trainerId, id, studentId, name, goal, days.joinToString(","), active, millis(createdAt), level)
 
 fun TrainerRoutineDetailDto.toEntity(trainerId: String) =
-    TrainerRoutineEntity(trainerId, id, studentId, name, goal, days.joinToString(","), active, millis(createdAt))
+    TrainerRoutineEntity(trainerId, id, studentId, name, goal, days.joinToString(","), active, millis(createdAt), level)
 
 fun TrainerRoutineDetailDto.toExerciseEntities(trainerId: String) =
     exercises.sortedBy { it.orderIndex }.mapIndexed { index, dto -> dto.toEntity(trainerId, id, index) }
@@ -31,7 +31,7 @@ private fun RoutineExerciseDto.toEntity(trainerId: String, routineId: String, fa
 fun TrainerRoutineEntity.toDomain() = TrainerRoutineSummary(
     id = id, studentId = studentId, name = name, goal = goal,
     days = days.split(',').filter { it.isNotBlank() }, active = active,
-    createdAt = createdAt?.let(Instant::ofEpochMilli),
+    createdAt = createdAt?.let(Instant::ofEpochMilli), level = level,
 )
 
 fun TrainerRoutineExerciseEntity.toDomain() = TrainerRoutineExercise(

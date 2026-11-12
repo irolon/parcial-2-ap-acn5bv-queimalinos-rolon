@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { remainingText } from '@/utils/chat/chatProblem';
 
 export const MAX_LENGTH = 500;
+// Los del panel de la sesión; la página Asistente IA pasa los suyos (`shortcuts`).
 const SHORTCUTS = ['¿Con qué lo reemplazo?', '¿Cómo es la técnica?', 'Está ocupada la máquina'];
 const SHORTCUT = [
   'cursor-pointer rounded-pill border border-white/[0.12] bg-white/[0.06] px-3 py-1.5 font-body text-xs text-bone0',
@@ -22,10 +23,12 @@ const FIELD = [
 /**
  * La caja de la consulta: atajos que cargan su texto (sin enviarlo), el texto (hasta 500; Enter envía y Shift+Enter
  * hace un salto de línea), Enviar y "Te quedan N consultas hoy" (`remaining`, si ya se sabe). Con `disabled` no se
- * puede escribir ni enviar; el texto queda.
+ * puede escribir ni enviar; el texto queda. `shortcuts` cambia los atajos; `fieldRef` deja enfocar la caja desde afuera;
+ * `about` va arriba (de qué se pregunta).
  */
-export default function ChatComposer({ value, onChange, onSend, disabled, remaining }) {
-  const fieldRef = useRef(null);
+export default function ChatComposer({ value, onChange, onSend, disabled, remaining, shortcuts = SHORTCUTS, fieldRef: outerRef, about }) {
+  const ownRef = useRef(null);
+  const fieldRef = outerRef ?? ownRef;
   const canSend = !disabled && value.trim() !== '';
 
   const pickShortcut = (text) => {
@@ -40,8 +43,9 @@ export default function ChatComposer({ value, onChange, onSend, disabled, remain
 
   return (
     <div className="shrink-0 border-t border-ink2 px-3 pb-3 pt-2.5">
+      {about && <p className="mb-2 truncate font-mono text-[10px] tracking-[0.3px] text-ink6">{about}</p>}
       <div className="mb-2 flex flex-wrap gap-1.5">
-        {SHORTCUTS.map((text) => (
+        {shortcuts.map((text) => (
           <button key={text} type="button" disabled={disabled} onClick={() => pickShortcut(text)} className={SHORTCUT}>
             {text}
           </button>

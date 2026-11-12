@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useCompareCurves } from '@/hooks/progress/useCompareCurves';
 import { useExerciseProgress } from '@/hooks/progress/useProgress';
-import { progressUrls } from '../../helpers/progress/progress';
-import { jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { progressUrls } from '../../../helpers/progress/progress';
+import { jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 afterEach(() => {
   vi.unstubAllGlobals();

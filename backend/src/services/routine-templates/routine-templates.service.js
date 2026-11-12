@@ -78,7 +78,7 @@ function routineStructureOrFail(routine) {
   }
 }
 
-/** Guarda una rutina propia como plantilla (copia goal, días y ejercicios; `goal` del body pisa el de la rutina). */
+/** Guarda una rutina propia como plantilla (copia goal, nivel, días y ejercicios; `goal` y `level` del body pisan los de la rutina). */
 export async function createFromRoutine(trainerId, data) {
   const row = await routinesRepository.findRoutineByIdWithExercises(data.routine_id);
   if (!row) throw Errors.notFound('Rutina no encontrada');
@@ -93,7 +93,7 @@ export async function createFromRoutine(trainerId, data) {
   return create(trainerId, {
     name: data.name ?? routine.name,
     goal,
-    level: data.level ?? null,
+    level: data.level !== undefined ? data.level : (routine.level ?? null),
     structure: routineStructureOrFail(routine),
   });
 }
@@ -141,6 +141,7 @@ export async function instantiate(trainerId, templateId, data) {
       template_id: template.id,
       name: data.name ?? template.name,
       goal: template.goal,
+      level: template.level ?? null,
       days: data.days ?? structure.days,
       active: true,
     },

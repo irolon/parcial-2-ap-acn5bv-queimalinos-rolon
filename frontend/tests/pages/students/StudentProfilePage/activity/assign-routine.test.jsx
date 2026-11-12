@@ -18,5 +18,12 @@ describe('StudentProfilePage: asignar rutina', () => {
   it('un alumno dado de baja no lo tiene', async () => {
     await loadProfile({ detail: studentDetail({ active: false }) });
     expect(screen.queryByRole('link', { name: 'Asignar rutina' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Generar rutina con IA' })).toBeNull();
+  });
+
+  it('junto a "Asignar rutina" está "Generar rutina con IA", con el alumno', async () => {
+    await loadProfile({ detail: studentDetail({ id: 'st-1' }) });
+    const link = within(screen.getByRole('main')).getByRole('link', { name: 'Generar rutina con IA' });
+    expect(link).toHaveAttribute('href', '/pt/rutinas/ia?alumno=st-1');
   });
 });

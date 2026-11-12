@@ -74,6 +74,7 @@ describe('routines.api: rutinas del alumno', () => {
       routine_id: 'r-1',
       name: 'Push · día 3',
       goal: 'hypertrophy',
+      level: null,
       days: ['monday', 'thursday'],
       created_at: '2026-10-20T12:00:00Z',
       exercises: data[0].exercises.map((exercise) => ({ ...exercise, last_session_kg: null })),
@@ -100,10 +101,16 @@ describe('routines.api: rutinas del alumno', () => {
     expect(routine.routine_id).toBe(id);
   });
 
-  it('completa lo que falte: days y exercises vacíos, goal y created_at en null', async () => {
+  it('conserva el nivel de la rutina', async () => {
+    stubFetch(async () => jsonResponse(200, { data: [mineRoutine({ level: 'advanced' })] }));
+    const [routine] = await routinesApi.getMyRoutines();
+    expect(routine.level).toBe('advanced');
+  });
+
+  it('completa lo que falte: days y exercises vacíos, goal, level y created_at en null', async () => {
     stubFetch(async () => jsonResponse(200, { data: { routine_id: 'r-9', name: 'Sola' } }));
     await expect(routinesApi.getTodayRoutine()).resolves.toEqual({
-      routine_id: 'r-9', name: 'Sola', goal: null, days: [], created_at: null, exercises: [],
+      routine_id: 'r-9', name: 'Sola', goal: null, level: null, days: [], created_at: null, exercises: [],
     });
   });
 });

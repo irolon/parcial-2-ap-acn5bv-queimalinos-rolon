@@ -3,6 +3,14 @@ package com.fittrainer.ui.invitations
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.invitation.invite.InviteField
 import com.fittrainer.data.invitation.invite.InviteRepository
+import com.fittrainer.data.routines.trainer.TrainerRoutinesRepository
+import com.fittrainer.data.templates.trainer.TrainerTemplatesRepository
+import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesApi
+import com.fittrainer.testing.fakes.routines.FakeTrainerRoutinesDao
+import com.fittrainer.testing.fakes.students.FakeTrainerSession
+import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesApi
+import com.fittrainer.testing.fakes.templates.FakeTrainerTemplatesDao
+import java.time.Clock
 import com.fittrainer.testing.MainDispatcherRule
 import com.fittrainer.testing.fakes.auth.httpError
 import com.fittrainer.testing.fakes.invitation.FakeTrainerInvitationApi
@@ -26,7 +34,15 @@ class InviteViewModelTest {
     private val api = FakeTrainerInvitationApi()
     private val connectivity = FakeConnectivityObserver()
     private val saved = SavedStateHandle()
-    private val vm by lazy { InviteViewModel(InviteRepository(api), connectivity, saved) }
+    private val templates = FakeTrainerTemplatesApi()
+    private val templatesDao = FakeTrainerTemplatesDao()
+    private val source = InitialTemplatesSource(
+        TrainerTemplatesRepository(
+            templates, templatesDao, TrainerRoutinesRepository(FakeTrainerRoutinesApi(), FakeTrainerRoutinesDao(), Clock.systemUTC()), Clock.systemUTC(),
+        ),
+        FakeTrainerSession(),
+    )
+    private val vm by lazy { InviteViewModel(InviteRepository(api), connectivity, source, saved) }
 
     private val editing get() = vm.state.value as InviteUiState.Editing
 
@@ -152,7 +168,7 @@ class InviteViewModelTest {
     @Test fun `el formulario sobrevive en el SavedStateHandle`() = runTest {
         fillValid()
         vm.onAddEquipment(" barra ")
-        val again = InviteViewModel(InviteRepository(api), connectivity, saved)
+        val again = InviteViewModel(InviteRepository(api), connectivity, source, saved)
         val form = (again.state.value as InviteUiState.Editing).form
         assertEquals("pedro@mail.com", form.email)
         assertEquals(listOf("barra"), form.equipment)

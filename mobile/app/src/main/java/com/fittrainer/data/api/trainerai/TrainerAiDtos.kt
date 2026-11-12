@@ -2,10 +2,11 @@ package com.fittrainer.data.api.trainerai
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Body de POST /trainer-ai/generate-routine (E15). available_equipment null = no viaja (el backend usa la ficha);
- * injuries no tiene default: viaja siempre (null = sin lesiones). preferences null no viaja.
+ * injuries null no viaja (el backend usa las de la ficha) y JsonNull es "sin lesiones". preferences null no viaja.
  */
 @Serializable
 data class GenerateRoutineRequest(
@@ -15,7 +16,8 @@ data class GenerateRoutineRequest(
     @SerialName("frequency_per_week") val frequencyPerWeek: Int,
     @SerialName("session_duration_min") val sessionDurationMin: Int,
     @SerialName("available_equipment") val availableEquipment: List<String>? = null,
-    val injuries: String?,
+    /** Ausente (null): el backend usa las de la ficha; JsonNull: "sin lesiones"; si no, el texto. */
+    val injuries: JsonElement? = null,
     val preferences: String? = null,
 )
 

@@ -14,6 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.fittrainer.data.invitation.invite.LEVELS
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.routines.trainer.ai.AI_PRIVACY
 import com.fittrainer.ui.routines.trainer.ai.AiField
@@ -23,8 +25,6 @@ import com.fittrainer.ui.routines.trainer.ai.DURATIONS
 import com.fittrainer.ui.routines.trainer.ai.GOALS
 import com.fittrainer.ui.routines.trainer.ai.MAX_TEXT
 import com.fittrainer.ui.routines.trainer.ai.durationLabel
-import com.fittrainer.ui.templates.trainer.LEVELS
-import com.fittrainer.ui.templates.trainer.levelLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 

@@ -24,6 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -64,7 +65,7 @@ class AiRoutineViewModelTest {
         vm.onGenerate()
         advanceUntilIdle()
         assertEquals("s1", aiApi.requests.single().studentId)
-        assertEquals("Lumbalgia", aiApi.requests.single().injuries)
+        assertEquals(JsonPrimitive("Lumbalgia"), aiApi.requests.single().injuries)
         assertNotNull(vm.uiState.value.proposal)
         assertFalse(vm.uiState.value.generating)
     }
@@ -111,18 +112,30 @@ class AiRoutineViewModelTest {
         assertTrue(vm.uiState.value.gone)
     }
 
-    @Test fun `el equipamiento cambiado viaja y usar el del perfil lo saca`() = runTest {
+    @Test fun `el equipamiento cambiado arranca del de la ficha, viaja y usar el del perfil lo saca`() = runTest {
         val vm = vm()
         vm.onChangeEquipment()
+        assertEquals(listOf("dumbbell"), vm.uiState.value.form.equipment)
         vm.onToggleEquipment("barbell")
         vm.onGenerate()
         advanceUntilIdle()
-        assertEquals(listOf("barbell"), aiApi.requests.last().availableEquipment)
+        assertEquals(listOf("dumbbell", "barbell"), aiApi.requests.last().availableEquipment)
+        assertEquals("Equipamiento extra del gimnasio: Banco", aiApi.requests.last().preferences)
         vm.onGenerateAnother()
         vm.onUseProfileEquipment()
         vm.onGenerate()
         advanceUntilIdle()
         assertNull(aiApi.requests.last().availableEquipment)
+    }
+
+    @Test fun `con el equipamiento cambiado y preferencias largas pide acortarlas y no genera`() = runTest {
+        val vm = vm()
+        vm.onChangeEquipment()
+        vm.onPreferences("a".repeat(MAX_TEXT))
+        vm.onGenerate()
+        advanceUntilIdle()
+        assertTrue(aiApi.requests.isEmpty())
+        assertNotNull(vm.uiState.value.fieldErrors[AiField.PREFERENCES])
     }
 
     @Test fun `la propuesta y el formulario vuelven si Android mata el proceso`() = runTest {

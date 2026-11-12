@@ -5,18 +5,14 @@ import { resetAuthStore } from '../../../helpers/auth/authStore';
 import {
   PAGE_PATH,
   fillAndSubmit,
+  invitationPosts,
   invitationResponse,
   page,
   stubCanvas,
+  stubInvitationApi,
 } from '../../../helpers/invitations/newStudent';
 import { TRAINER, renderRoute, setSession } from '../../../helpers/routes/renderRoute';
-import {
-  bodyOf,
-  calls,
-  errorResponse,
-  jsonResponse,
-  stubFetch,
-} from '../../../helpers/shared/fetchMock';
+import { bodyOf, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { stubStudents } from '../../../helpers/students/students';
 
 beforeEach(() => {
@@ -61,11 +57,11 @@ describe('NewStudentPage: formulario', () => {
   });
 
   it('envía delivery_channel both y no manda los opcionales vacíos', async () => {
-    const fetchMock = stubFetch(async () => created());
+    const fetchMock = stubInvitationApi(async () => created());
     renderRoute(PAGE_PATH);
     await fillAndSubmit({ name: ' Tomás Rivera ' });
     await page().findByRole('img', { name: /Código QR/ });
-    const [[path, init]] = calls(fetchMock);
+    const [[path, init]] = invitationPosts(fetchMock);
     expect(path).toBe('/invitations');
     expect(init.method).toBe('POST');
     expect(bodyOf(init)).toEqual({
@@ -77,26 +73,26 @@ describe('NewStudentPage: formulario', () => {
   });
 
   it('manda objetivo y nivel cuando se eligen', async () => {
-    const fetchMock = stubFetch(async () => created());
+    const fetchMock = stubInvitationApi(async () => created());
     renderRoute(PAGE_PATH);
     await fillAndSubmit({ goal: 'hypertrophy', level: 'beginner' });
     await page().findByRole('img', { name: /Código QR/ });
-    expect(bodyOf(calls(fetchMock)[0][1])).toMatchObject({ goal: 'hypertrophy', level: 'beginner' });
+    expect(bodyOf(invitationPosts(fetchMock)[0][1])).toMatchObject({ goal: 'hypertrophy', level: 'beginner' });
   });
 
   it('con el teléfono inválido muestra el error en el campo sin llamar a la API', async () => {
-    const fetchMock = stubFetch(async () => created());
+    const fetchMock = stubInvitationApi(async () => created());
     renderRoute(PAGE_PATH);
     await fillAndSubmit({ phone: '1234' });
     expect(page().getByLabelText('Teléfono')).toHaveAccessibleDescription(
       /al menos 8 dígitos/,
     );
     expect(page().getByLabelText('Teléfono')).toHaveAttribute('aria-invalid', 'true');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(invitationPosts(fetchMock)).toHaveLength(0);
   });
 
   it('STUDENT_EMAIL_EXISTS se muestra en el campo email', async () => {
-    stubFetch(async () => errorResponse(409, 'STUDENT_EMAIL_EXISTS', 'Ya existe'));
+    stubInvitationApi(async () => errorResponse(409, 'STUDENT_EMAIL_EXISTS', 'Ya existe'));
     renderRoute(PAGE_PATH);
     await fillAndSubmit();
     expect(await page().findByLabelText('Email')).toHaveAccessibleDescription(
@@ -107,7 +103,7 @@ describe('NewStudentPage: formulario', () => {
   });
 
   it('VALIDATION_ERROR se muestra en cada campo', async () => {
-    stubFetch(async () =>
+    stubInvitationApi(async () =>
       errorResponse(400, 'VALIDATION_ERROR', 'Error de validación', [
         { field: 'student_name', message: 'El nombre debe tener entre 2 y 100 caracteres' },
         { field: 'goal', message: 'goal inválido' },
@@ -125,7 +121,7 @@ describe('NewStudentPage: formulario', () => {
 
   it('sin red muestra el mensaje general y se puede reintentar', async () => {
     let fail = true;
-    const fetchMock = stubFetch(async () => {
+    const fetchMock = stubInvitationApi(async () => {
       if (fail) throw new TypeError('Failed to fetch');
       return created();
     });
@@ -135,7 +131,7 @@ describe('NewStudentPage: formulario', () => {
     fail = false;
     await user.click(page().getByRole('button', { name: 'Generar QR' }));
     expect(await page().findByRole('img', { name: /Código QR/ })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(invitationPosts(fetchMock)).toHaveLength(2);
   });
 
   it('el CTA "Generar QR" del sidebar lleva a la página', async () => {

@@ -21,6 +21,7 @@ data class TrainerRoutineEntity(
     val days: String,
     val active: Boolean,
     val createdAt: Long?,
+    val level: String? = null,
 )
 
 /**

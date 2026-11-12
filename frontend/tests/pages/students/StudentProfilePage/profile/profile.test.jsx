@@ -89,6 +89,13 @@ describe('StudentProfilePage: ficha', () => {
     await loadProfile({ detail: studentDetail({ active_routine: routine }) });
     expect(await main().findByText('Fuerza A')).toBeVisible();
     expect(main().getByText('Lunes · Jueves')).toBeVisible();
+    expect(main().queryByText(/^Nivel:/)).not.toBeInTheDocument();
+  });
+
+  it('rutina activa con nivel lo muestra', async () => {
+    const routine = { id: 'r-1', name: 'Fuerza A', level: 'intermediate', days: ['monday'] };
+    await loadProfile({ detail: studentDetail({ active_routine: routine }) });
+    expect(await main().findByText('Nivel: Intermedio')).toBeVisible();
   });
 
   it('sin rutina lo avisa', async () => {

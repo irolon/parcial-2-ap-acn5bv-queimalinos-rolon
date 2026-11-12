@@ -16,6 +16,11 @@ create table if not exists chat_messages (
   created_at timestamptz not null default now()
 );
 
+-- GX5: el ejercicio sobre el que se preguntó (consulta y respuesta) y las sugerencias
+-- validadas de la respuesta ([{ exercise_id, name, reason }], [] en las del alumno).
+alter table chat_messages add column if not exists exercise_id uuid references exercises (id) on delete set null;
+alter table chat_messages add column if not exists suggestions jsonb not null default '[]';
+
 create index if not exists idx_chat_messages_student on chat_messages (student_id, created_at);
 create index if not exists idx_chat_messages_session on chat_messages (session_id);
 
@@ -150,7 +155,8 @@ create table if not exists notifications (
   user_id    uuid not null,
   user_role  varchar(20) not null check (user_role in ('trainer', 'student')),
   type       varchar(30) not null check (type in (
-    'inactivity', 'appointment', 'comment', 'pr', 'achievement', 'routine_modified'
+    'inactivity', 'appointment', 'comment', 'pr', 'achievement', 'routine_modified',
+    'initial_routine_failed'
   )),
   title      varchar(150) not null,
   body       text,

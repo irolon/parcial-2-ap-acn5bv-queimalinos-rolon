@@ -11,6 +11,7 @@ describe('notification.model', () => {
   it('tipos iguales al check del schema', () => {
     expect(NOTIFICATION_TYPES).toEqual([
       'inactivity', 'appointment', 'comment', 'pr', 'achievement', 'routine_modified',
+      'initial_routine_failed',
     ]);
   });
 

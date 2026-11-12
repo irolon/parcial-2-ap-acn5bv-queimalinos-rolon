@@ -1,6 +1,7 @@
 package com.fittrainer.ui.templates.trainer
 
 import com.fittrainer.data.templates.trainer.TemplateSummary
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.routines.trainer.routineDaysLabel
 
@@ -22,17 +23,6 @@ const val PREVIOUS_LOADING = "Buscando sus rutinas actuales…"
 
 fun assignTo(studentName: String) = "Asignar a $studentName"
 fun templatesFor(studentName: String) = "Plantillas · para $studentName"
-
-/** Etiquetas de los niveles del backend (models/routine-templates TEMPLATE_LEVELS). */
-fun levelLabel(level: String?): String? = when (level) {
-    null -> null
-    "beginner" -> "Principiante"
-    "intermediate" -> "Intermedio"
-    "advanced" -> "Avanzado"
-    else -> level
-}
-
-val LEVELS = listOf("beginner", "intermediate", "advanced")
 
 /** "Ganar fuerza · Intermedio". */
 fun templateGoalLine(t: TemplateSummary): String =

@@ -28,7 +28,7 @@ class SaveAsTemplateControllerTest {
     private val notices = mutableListOf<String>()
 
     private fun TestScope.controller() =
-        SaveAsTemplateController(repo, this, "r1", { "t1" }, { offline }, { notices += it }).apply { open("Push") }
+        SaveAsTemplateController(repo, this, "r1", { "t1" }, { offline }, { notices += it }).apply { open("Push", null) }
 
     @Test fun `arranca con el nombre de la rutina y guarda con el nivel elegido`() = runTest {
         val c = controller()
@@ -40,6 +40,12 @@ class SaveAsTemplateControllerTest {
         assertEquals("r1", api.fromRoutines.single().routineId)
         assertNull(c.state.value)
         assertEquals(listOf(SAVED_AS_TEMPLATE), notices)
+    }
+
+    @Test fun `abre con el nivel de la rutina`() = runTest {
+        val c = controller()
+        c.open("Push", "intermediate")
+        assertEquals("intermediate", c.state.value!!.level)
     }
 
     @Test fun `nombre corto no se manda`() = runTest {

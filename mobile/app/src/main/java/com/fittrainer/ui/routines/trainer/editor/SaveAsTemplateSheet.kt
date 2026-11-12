@@ -20,9 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.fittrainer.data.invitation.invite.LEVELS
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
-import com.fittrainer.ui.templates.trainer.LEVELS
-import com.fittrainer.ui.templates.trainer.levelLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 

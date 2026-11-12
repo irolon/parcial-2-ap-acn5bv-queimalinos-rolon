@@ -28,6 +28,7 @@ La web no tiene sustitución de ejercicio: `setBody` manda `original_exercise_id
 | 5 | Página **"Asistente IA"** en el menú del alumno (`/alumno/asistente`, ícono `Sparkles`), después de Historial, como en `AlSidebar`. |
 | 6 | Los días anteriores son **de solo lectura** (sin caja). Solo se aplican sugerencias **de hoy** y solo si hay una sesión en curso **en esta web** que tenga ese ejercicio. |
 | 7 | **"Aplicar" vive en `SuggestionChips`**, compartido: funciona igual en el panel de la sesión (#85) y en la página. |
+| 7b | **"Aplicar" solo en la sugerencia del ejercicio actual** (09/11, de la review de la #96 del celular): cada respuesta guarda el `exercise_id` con que se preguntó, y "Aplicar" se habilita solo si coincide con el ejercicio actual de la sesión en curso. Las sugerencias de otros ejercicios, de otra sesión o de días pasados se muestran como texto. Test: sugerencia pedida en el ejercicio A con el cursor en B → no se puede aplicar. |
 | 8 | **Rama y orden:** la rama sale de `develop` cuando entren #83, #85 y #90 (la cadena del chat). Si al empezar siguen abiertas, sale de `feature/ai-rag-nvidia` y la PR apunta ahí: es apilada, la excepción de CONTRIBUTING. Al mergear la #90 se re-apunta a `develop`. No sale de la #85 sola porque la #90 reescribe `chat.service.js`, `chat-message.model.js` y `context.service.js`, que esta PR también toca. Conviene que entre después de la GX4 (ver Chequeo). |
 
 ## Diseño

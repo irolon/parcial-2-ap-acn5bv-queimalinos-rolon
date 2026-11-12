@@ -3,6 +3,7 @@ import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { toQrDataUrl } from '../../shared/utils/qr.js';
 import * as repository from '../../repositories/invitations/invitations.repository.js';
+import { getOwnedTemplate } from '../routine-templates/routine-templates.service.js';
 import {
   INVITATION_EXPIRY_HOURS,
   includesWhatsapp,
@@ -30,11 +31,14 @@ function expiryISO() {
 /**
  * CU-01 — Genera una invitación para un alumno y devuelve el token, la URL de
  * registro y (según el canal) el QR en base64 y/o el link de WhatsApp.
+ * Con `template_id`, la plantilla inicial que se le asigna al alumno en el alta.
  */
 export async function createInvitation(trainerId, data) {
   if (await repository.studentEmailExists(data.student_email)) {
     throw Errors.studentEmailExists();
   }
+  // Plantilla inicial: propia y existente (si no, 404 TEMPLATE_NOT_FOUND). Se copia en el alta.
+  if (data.template_id) await getOwnedTemplate(trainerId, data.template_id);
 
   const token = crypto.randomUUID();
   const row = await repository.createInvitation({
@@ -48,6 +52,8 @@ export async function createInvitation(trainerId, data) {
     studentGymEquipment: data.gym_equipment ?? null,
     studentInjuries: data.injuries ?? null,
     studentLevel: data.level ?? null,
+    templateId: data.template_id ?? null,
+    routineDays: data.routine_days ?? null,
     expiresAt: expiryISO(),
   });
 

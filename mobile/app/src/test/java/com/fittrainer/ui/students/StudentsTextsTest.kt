@@ -50,6 +50,11 @@ class StudentsTextsTest {
         assertEquals("Actualizado hace 3 días", syncedAgo(now.minusSeconds(3 * 86_400), now))
     }
 
+    @Test fun `sin porcentaje dice sin plan o sin dias todavia como la web`() {
+        assertEquals("Sin plan", noAdherenceText(0))
+        assertEquals("Sin días todavía", noAdherenceText(3))
+    }
+
     @Test fun `iniciales`() {
         assertEquals("JP", initials("José Pérez"))
         assertEquals("A", initials("ana"))

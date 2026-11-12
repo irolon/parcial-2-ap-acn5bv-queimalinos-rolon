@@ -5,29 +5,14 @@ import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import { useCompareCurves } from '@/hooks/progress/useCompareCurves';
 import { useProgressOverview } from '@/hooks/progress/useProgress';
-import { DEFAULT_RANGE, RANGES, rangeFor } from '@/utils/progress/ranges';
+import { DEFAULT_COMPARE_METRIC } from '@/utils/progress/compare';
+import { DEFAULT_RANGE, rangeFor } from '@/utils/progress/ranges';
 import CompareChart from './CompareChart';
+import CompareControls from './CompareControls';
 import CompareSlots from './CompareSlots';
 
 const NO_DATA = 'En este rango ningún ejercicio tiene 3 entrenamientos. Probá con un rango más largo.';
 const NO_KG = 'Ningún ejercicio tiene peso registrado: no hay cargas para comparar.';
-
-function RangeSelect({ value, onChange }) {
-  return (
-    <select
-      aria-label="Rango de la comparación"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-8 rounded-md border border-ink3 bg-ink1 px-2 font-mono text-xs text-bone0 outline-none focus:border-accentText"
-    >
-      {RANGES.map((r) => (
-        <option key={r.value} value={r.value}>
-          {r.label}
-        </option>
-      ))}
-    </select>
-  );
-}
 
 function FailedCurve({ name, retry }) {
   return (
@@ -40,7 +25,7 @@ function FailedCurve({ name, retry }) {
   );
 }
 
-function Body({ compare }) {
+function Body({ compare, metric }) {
   const { lines, loading, failed, allFailed } = compare;
   if (allFailed) return <ErrorState message="No pudimos cargar la progresión." onRetry={() => failed.forEach((f) => f.retry())} />;
   if (loading) return <LoadingState rows={2} label="Cargando la progresión…" />;
@@ -61,32 +46,38 @@ function Body({ compare }) {
       {failed.map((f) => (
         <FailedCurve key={f.id} name={f.name} retry={f.retry} />
       ))}
-      {lines.length > 0 ? <CompareChart lines={lines} /> : <p className="font-body text-sm text-ink6">{NO_DATA}</p>}
+      {lines.length > 0 ? <CompareChart lines={lines} metric={metric} /> : <p className="font-body text-sm text-ink6">{NO_DATA}</p>}
     </div>
   );
 }
 
 /**
- * Progresión comparada: hasta 3 ejercicios superpuestos, los más entrenados del rango (propio de la tarjeta),
- * cada uno reemplazable. No se muestra si no hay candidatos, o si de entrada todos son de peso corporal: ese vacío lo
- * explica el panel. Una vez que se cambió el rango no se oculta más: queda el select para volver, con un aviso.
+ * Progresión comparada: hasta 3 ejercicios superpuestos, los más entrenados del rango, cada uno reemplazable, con la
+ * métrica elegida. Rango y métrica son propios de la tarjeta o, si llegan `range`/`onRange` y `metric`/`onMetric`,
+ * de afuera (Mi progreso los comparte con el detalle). No se muestra si no hay candidatos, o si de entrada todos son
+ * de peso corporal: ese vacío lo explica el panel. Una vez que se cambió el rango desde la tarjeta no se oculta más:
+ * queda el select para volver, con un aviso.
  */
-export default function CompareCard({ studentId }) {
-  const [range, setRangeValue] = useState(DEFAULT_RANGE);
+export default function CompareCard({ studentId, range: rangeProp, onRange, metric: metricProp, onMetric }) {
+  const [ownRange, setOwnRange] = useState(DEFAULT_RANGE);
+  const [ownMetric, setOwnMetric] = useState(DEFAULT_COMPARE_METRIC);
   const [touched, setTouched] = useState(false);
+  const range = rangeProp ?? ownRange;
+  const metric = metricProp ?? ownMetric;
   const setRange = (value) => {
     setTouched(true);
-    setRangeValue(value);
+    (onRange ?? setOwnRange)(value);
   };
   const rangeObj = useMemo(() => rangeFor(range), [range]);
   // Los ejercicios del overview no dependen del rango: se usa el del rango por defecto, el mismo que pide el panel.
   const defaultRange = useMemo(() => rangeFor(DEFAULT_RANGE), []);
   const overview = useProgressOverview(studentId, defaultRange);
-  const compare = useCompareCurves(studentId, overview.data?.exercises ?? [], rangeObj);
+  const compare = useCompareCurves(studentId, overview.data?.exercises ?? [], rangeObj, metric);
   if (!overview.isSuccess || compare.hidden || (compare.allBodyweight && !touched)) return null;
+  const controls = <CompareControls range={range} onRange={setRange} metric={metric} onMetric={onMetric ?? setOwnMetric} />;
   return (
-    <Card title="Progresión comparada" extra={<RangeSelect value={range} onChange={setRange} />} className="min-w-0">
-      <Body compare={compare} />
+    <Card title="Progresión comparada" extra={controls} className="min-w-0">
+      <Body compare={compare} metric={metric} />
     </Card>
   );
 }

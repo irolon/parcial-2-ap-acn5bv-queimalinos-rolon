@@ -75,6 +75,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | delivery_channel | enum | whatsapp / qr / both |
 | expires_at | timestamptz | expira en 72hs |
 | used_at | timestamptz | null = no usado aún |
+| template_id | uuid | FK → routine_templates, `on delete set null`; plantilla inicial (opcional) que se copia al alumno en el alta (GX8) |
+| routine_days | text[] | días de la plantilla inicial (`sunday..saturday`); obligatorios con `template_id` (los exige `POST /invitations`): null con `template_id` null = sin plantilla; con días = la plantilla se borró antes del alta (GX8) |
 
 ---
 
@@ -117,6 +119,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | template_id | uuid | FK → routine_templates (null si fue manual) |
 | name | varchar | |
 | goal | enum | |
+| level | enum | beginner / intermediate / advanced; null = sin definir (GX8). Heredado de la plantilla al instanciarla |
 | days | text[] | ej: ['monday','wednesday','friday'] |
 | active | boolean | |
 | created_at | timestamptz | |
@@ -250,7 +253,11 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | student_id | uuid | FK → students |
 | role | enum | user / assistant |
 | content | text | |
+| exercise_id | uuid | FK → exercises (`on delete set null`): el ejercicio sobre el que se preguntó, en la consulta y en su respuesta (null si no había o no era accesible). GX5, `2026-11/2026-11-09-chat-history.sql` |
+| suggestions | jsonb | sugerencias validadas de la respuesta `[{ exercise_id, name, reason }]` (default `[]`; `[]` en las del alumno). GX5 |
 | created_at | timestamptz | |
+
+Sin índice nuevo para el historial por día (`GET /chat/history`): `idx_chat_messages_student (student_id, created_at)` alcanza. La rutina de cada consulta sale de `session_id → sessions.routine_id`.
 
 **ai_routine_generations** *(historial de generaciones del asistente del entrenador)*
 
@@ -307,7 +314,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | id | uuid | PK |
 | user_id | uuid | FK → trainers o students (según `user_role`; sin FK dura) |
 | user_role | varchar | trainer / student |
-| type | enum | inactivity / appointment / comment / pr / achievement / routine_modified |
+| type | enum | inactivity / appointment / comment / pr / achievement / routine_modified / initial_routine_failed |
 | title | varchar | máx. 150 caracteres |
 | body | text | opcional |
 | data | jsonb | contexto para navegar (`student_id`, `session_id`, `achievement_code`, `exercise_ids`, `appointment_id`, `scheduled_at`, `missed_days`, `days_since`). `{}` por defecto, nunca null |
@@ -383,6 +390,7 @@ Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede ha
 | sessions | N ──── 1 | routines | Cada sesión ejecuta una rutina |
 | sessions | 1 ──── N | session_sets | Cada sesión tiene N series registradas |
 | sessions | 1 ──── N | chat_messages | Historial del chat IA por sesión |
+| exercises | 1 ──── N | chat_messages | Ejercicio sobre el que se consultó (GX5) |
 | achievements | 1 ──── N | student_achievements | Catálogo desbloqueado por alumnos |
 | challenges | 1 ──── N | student_challenges | Catálogo asumido por alumnos |
 
