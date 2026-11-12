@@ -8,6 +8,7 @@ import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { PROGRESS_KEY } from '@/hooks/progress/useProgress';
 import { TODAY_ROUTINE_KEY } from '@/hooks/routines/useStudentRoutines';
 import { SESSIONS_KEY } from '@/hooks/sessions/useSessions';
+import { closeOnServer, openOnServer } from '@/utils/workout/openSession';
 import { uploadWorkout } from '@/utils/workout/uploadWorkout';
 import {
   adjustRest, finishWorkout, readyToUpload, registerSet, removeSet, replaceExercise, setCursor, setFeedback, skipRest,
@@ -16,6 +17,13 @@ import {
 import { readWorkout, subscribeWorkout, trackUpload, writeWorkout } from './workoutStore';
 
 const api = { createSession, uploadSets };
+
+// Solo se habla con el servidor con este alumno adentro y la sesión verificada (no `offline`): sin token, el pedido
+// daría 401 y dispararía una renovación.
+const signedInAs = (studentId) => {
+  const { status, user } = useAuthStore.getState();
+  return status === 'authenticated' && user?.id === studentId;
+};
 
 // Lo que cambia al guardar un entrenamiento: historial, progreso, la rutina del día (`last_session_kg`) y racha,
 // logros (los desbloqueados y su avance) y desafíos (las claves de `hooks/achievements/useStudentGamification.js`).
@@ -33,6 +41,7 @@ const staleAfterUpload = (studentId) => [
  * La sesión en curso del alumno (`workout`, o null) y sus acciones. Vive en memoria compartida por todas las páginas
  * y se guarda en localStorage en cada cambio (ft.workout.<studentId>). Sin `studentId` no hace nada.
  * - `start(routine)` no pisa una sesión abierta: si hay una, devuelve esa (la página ofrece Continuar o Descartar).
+ *   La nueva se abre en el servidor (GX4, best-effort: `openOnServer`) y `discard()` la borra (`closeOnServer`).
  * - Las acciones devuelven el estado nuevo (o null sin sesión). `register` no registra un peso ilegible ni reps
  *   que no son número: devuelve el mismo estado.
  * - `upload()` fija finished_at y el feedback ("Saltar") si faltaban, sube y, si sale bien, borra la sesión y
@@ -57,7 +66,10 @@ export function useActiveWorkout(studentId) {
     const open = readWorkout(studentId);
     if (open) return open;
     const created = startWorkout(routine);
-    if (created) writeWorkout(studentId, created);
+    if (created) {
+      writeWorkout(studentId, created);
+      void openOnServer(created, { shouldSend: () => signedInAs(studentId) });
+    }
     return created;
   }, [studentId]);
 
@@ -74,7 +86,10 @@ export function useActiveWorkout(studentId) {
   const replace = useCallback((index, exercise) => change((s) => replaceExercise(s, index, exercise)), [change]);
 
   const discard = useCallback(() => {
-    if (studentId) writeWorkout(studentId, null);
+    const open = studentId ? readWorkout(studentId) : null;
+    if (!open) return;
+    writeWorkout(studentId, null);
+    void closeOnServer(open.id, { shouldSend: () => signedInAs(studentId) });
   }, [studentId]);
 
   const upload = useCallback(() => {
