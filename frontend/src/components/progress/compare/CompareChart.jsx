@@ -1,6 +1,6 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { mergeSeries, timeTicks } from '@/utils/progress/compare';
-import { formatKg, formatLongDate, formatShortDate, timeToDate } from '@/utils/progress/format';
+import { formatLongDate, formatMetric, formatShortDate, timeToDate } from '@/utils/progress/format';
 import { AXIS, GRID, TooltipBox } from '../chartStyle';
 import SlotMark, { SlotDot } from './SlotMark';
 
@@ -10,7 +10,7 @@ const joinNames = (names) => (names.length < 2 ? names.join('') : `${names.slice
 export function CompareTooltip({ active, payload, lines }) {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
-  const rows = lines.filter((l) => row[l.id] !== null && row[l.id] !== undefined).map((l) => `${l.name}: ${formatKg(row[l.id])}`);
+  const rows = lines.filter((l) => row[l.id] !== null && row[l.id] !== undefined).map((l) => `${l.name}: ${formatMetric(l.metric, row[l.id])}`);
   return <TooltipBox title={formatLongDate(row.date)} rows={rows} />;
 }
 

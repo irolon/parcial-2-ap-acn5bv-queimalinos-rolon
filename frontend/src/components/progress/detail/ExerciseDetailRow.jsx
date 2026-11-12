@@ -8,15 +8,24 @@ const pctColor = (pct) => {
   return 'text-ink6';
 };
 
-/** Una fila del detalle: nombre, sparkline, valor actual y % de mejora del rango (ver `detailRows`). */
+const MAX_HINT = '(peso máx.)';
+
+/**
+ * Una fila del detalle: nombre, sparkline, valor actual y % de mejora del rango (ver `detailRows`). Si con 1RM cayó a
+ * peso máximo lo aclara al lado del nombre, como la comparada.
+ */
 export default function ExerciseDetailRow({ row }) {
   const value = formatMetric(row.metric, row.current);
   const pct = formatPct(row.pct);
-  const label = row.pct === null ? `${row.name}: ${value}` : `${row.name}: ${value}, ${pct} en el rango`;
+  const name = row.maxFallback ? `${row.name} ${MAX_HINT}` : row.name;
+  const label = row.pct === null ? `${name}: ${value}` : `${name}: ${value}, ${pct} en el rango`;
   return (
     <li aria-label={label} className="flex items-center gap-3 py-2.5">
-      <span title={row.name} className="min-w-0 flex-1 truncate font-body text-sm text-bone0">
-        {row.name}
+      <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+        <span title={row.name} className="min-w-0 truncate font-body text-sm text-bone0">
+          {row.name}
+        </span>
+        {row.maxFallback && <span className="shrink-0 font-mono text-[11px] text-ink6">{MAX_HINT}</span>}
       </span>
       {/* En angosto la sparkline le dejaría al nombre pocas letras: se oculta debajo de sm. */}
       <span className="hidden sm:block">
