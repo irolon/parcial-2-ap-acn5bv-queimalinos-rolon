@@ -21,7 +21,7 @@ function Row({ session, now }) {
           <span className="block truncate font-body text-xs text-ink6">{session.routine_name ?? 'Sin rutina'}</span>
         </span>
         <span className="shrink-0 font-mono text-[11px] text-bone0">RPE {session.rpe ?? '—'}</span>
-        <span className="w-16 shrink-0 text-right font-mono text-[11px] text-ink6">
+        <span className="w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] text-ink6">
           {daysAgoLabel(session.finished_at, now)}
         </span>
       </Link>

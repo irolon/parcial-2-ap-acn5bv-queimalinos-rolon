@@ -25,6 +25,12 @@ describe('FeedbackPending', () => {
     expect(within(link).getByText('hace 2 d')).toBeInTheDocument();
   });
 
+  it('una de hoy dice "hace un momento" en una sola línea (columna de Actividad reciente)', () => {
+    renderPending([feedbackRow({ finished_at: new Date().toISOString() })]);
+    const label = screen.getByText('hace un momento');
+    expect(label).toHaveClass('w-24', 'whitespace-nowrap');
+  });
+
   it('lista hasta 5 y resume el resto en "y N más"', () => {
     renderPending(Array.from({ length: 7 }, (_, i) => feedbackRow({ session_id: `s-${i}`, name: `Alumno ${i}` })));
     expect(screen.getAllByRole('link').map((a) => a.textContent)).toHaveLength(5);
