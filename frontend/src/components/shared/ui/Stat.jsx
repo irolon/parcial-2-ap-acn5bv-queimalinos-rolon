@@ -1,4 +1,6 @@
-export default function Stat({ label, value, unit, delta, accent = false, big = false }) {
+/** Número con label; `accent` o `hot` pintan el valor. */
+export default function Stat({ label, value, unit, delta, accent = false, hot = false, big = false }) {
+  const valueTone = (accent && 'text-accentText') || (hot && 'text-hot') || 'text-bone0';
   const positive = typeof delta === 'string' && delta.startsWith('+');
   return (
     <div>
@@ -7,7 +9,7 @@ export default function Stat({ label, value, unit, delta, accent = false, big = 
         <div
           className={`font-display font-semibold leading-none tracking-[-1px] ${
             big ? 'text-[40px]' : 'text-2xl'
-          } ${accent ? 'text-accentText' : 'text-bone0'}`}
+          } ${valueTone}`}
         >
           {value}
         </div>

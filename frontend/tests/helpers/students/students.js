@@ -4,6 +4,7 @@ import { errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
 import { warmUp } from '../shared/warmUp';
 import { sessionsRoute } from '../sessions/sessions';
 import { student } from './fixtures';
+import { overviewRoute } from './overview';
 
 const NOT_HANDLED = () => errorResponse(500, 'INTERNAL', 'Sin handler');
 
@@ -16,6 +17,7 @@ export const daysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
  * Stub de la API de alumnos sobre `stubFetch`.
  * - `list`: respuesta de `GET /students` (activos); `disabled`: la de `?active=false` (o funciones que la arman en cada GET).
  * - `detail`: ficha de `GET /students/:id` (o función que la arma en cada GET) (`detailError`: status de error, 403 o 400 con `:id` inválido); `metrics`: respuesta de `GET /students/:id/metrics`.
+ * - `overview`: respuesta de `GET /students/overview` (dato, status de error o función; por defecto, uno vacío; ver `overviewRoute`).
  * - `progress`: respuesta de `GET /progress/*` (o función `path => data`; por defecto, un overview vacío).
  * - Racha, logros y desafíos del alumno (`/streak`, `/achievements`, `/challenges`): siempre vacíos.
  * - `sessions`, `sessionDetails`, `handlers.comment`: historial de sesiones (ver `sessionsRoute`); por defecto, vacío.
@@ -28,15 +30,19 @@ export function stubStudents({
   detailError,
   metrics = [],
   metricsError,
+  overview,
   progress,
   sessions,
   sessionDetails,
   handlers = {},
 } = {}) {
   const sessionsHandler = sessionsRoute({ sessions, details: sessionDetails, comment: handlers.comment });
+  const overviewHandler = overviewRoute(overview);
   return stubFetch(async (url, init = {}) => {
     const method = init.method ?? 'GET';
     const path = url.replace(/^.*\/api/, '');
+    const overviewResponse = overviewHandler(method, path);
+    if (overviewResponse) return overviewResponse;
     if (method === 'GET' && path.startsWith('/students?')) {
       const data = path.includes('active=false') ? disabled : list;
       return jsonResponse(200, { data: typeof data === 'function' ? data() : data });

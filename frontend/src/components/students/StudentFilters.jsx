@@ -10,6 +10,13 @@ const ESTADOS = [
   { value: 'nuevos', label: 'Nuevos' },
   { value: 'baja', label: 'Dados de baja' },
 ];
+const ADHERENCIAS = [
+  { value: '', label: 'Todas' },
+  { value: 'alta', label: 'Alta (70 % o más)' },
+  { value: 'media', label: 'Media (50 a 69 %)' },
+  { value: 'baja', label: 'Baja (menos de 50 %)' },
+  { value: 'sin-plan', label: 'Sin plan' },
+];
 const ORDENES = [
   { value: 'ultima-sesion', label: 'Última sesión' },
   { value: 'nombre', label: 'Nombre' },
@@ -34,9 +41,10 @@ export default function StudentFilters({ filters, onChange }) {
           className="h-[46px] w-full rounded-md border border-ink3 bg-ink1 pl-10 pr-3.5 font-body text-sm text-bone0 outline-none placeholder:text-ink5 focus:border-accentText"
         />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Select label="Objetivo" options={OBJETIVOS} value={filters.objetivo} onChange={set('objetivo')} />
         <Select label="Estado" options={ESTADOS} value={filters.estado} onChange={set('estado')} />
+        <Select label="Adherencia" options={ADHERENCIAS} value={filters.adherencia} onChange={set('adherencia')} />
         <Select label="Orden" options={ORDENES} value={filters.orden} onChange={set('orden')} />
       </div>
     </div>

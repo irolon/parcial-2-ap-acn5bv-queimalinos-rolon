@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetAuthStore } from '../helpers/auth/authStore';
 import { jsonResponse, stubFetch } from '../helpers/shared/fetchMock';
 import { STUDENT, TRAINER, renderRoute, setSession } from '../helpers/routes/renderRoute';
 import { stubStudentHome } from '../helpers/student/home';
 import { stubStudents } from '../helpers/students/students';
+import { workoutKey } from '@/utils/workout/workoutStorage';
 
 // El dashboard del entrenador pide la lista de alumnos.
 beforeEach(() => {
@@ -88,6 +89,34 @@ describe('guard de rutas privadas', () => {
     await heading('Dashboard');
     setSession(null);
     await waitFor(() => expect(pathname()).toBe('/login'));
+  });
+});
+
+describe('sin conexión con el servidor (status offline)', () => {
+  const OFFLINE_TITLE = 'Sin conexión con el servidor';
+
+  it.each(['/pt/alumnos', '/login', '/'])('%s muestra la pantalla y no navega', async (path) => {
+    setSession(TRAINER, 'offline');
+    const { pathname } = renderRoute(path);
+    expect(await heading(OFFLINE_TITLE)).toBeInTheDocument();
+    expect(pathname()).toBe(path);
+  });
+
+  it('al volver la conexión muestra la página pedida', async () => {
+    setSession(TRAINER, 'offline');
+    const { pathname } = renderRoute('/pt/agenda');
+    await heading(OFFLINE_TITLE);
+    act(() => setSession(TRAINER));
+    expect(await heading('Agenda')).toBeInTheDocument();
+    expect(pathname()).toBe('/pt/agenda');
+  });
+
+  it('no toca el entrenamiento en curso guardado del alumno', async () => {
+    localStorage.setItem(workoutKey(STUDENT.id), '{"en":"curso"}');
+    setSession(STUDENT, 'offline');
+    renderRoute('/alumno/entrenar');
+    await heading(OFFLINE_TITLE);
+    expect(localStorage.getItem(workoutKey(STUDENT.id))).toBe('{"en":"curso"}');
   });
 });
 
