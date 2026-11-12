@@ -42,6 +42,38 @@ class AiRoutineFormTest {
         assertEquals(listOf("barbell"), base.copy(equipment = listOf("barbell")).toParams("s1").equipment)
     }
 
+    @Test fun `sin ficha y sin lesiones escritas no viajan, con ficha o escritas si`() {
+        val base = AiRoutineForm(goal = "strength", level = "beginner")
+        assertNull(base.toParams("s1").injuries)
+        assertEquals("Hombro", base.copy(injuries = "Hombro").toParams("s1").injuries)
+        assertEquals("", base.copy(prefilled = true).toParams("s1").injuries)
+    }
+
+    @Test fun `con el equipamiento cambiado la nota del extra va a preferencias una sola vez`() {
+        val note = "Equipamiento extra del gimnasio: Banco"
+        val base = AiRoutineForm(goal = "strength", level = "beginner", preferences = "Sin saltos")
+        assertEquals("Sin saltos", base.toParams("s1", note).preferences)
+        val changed = base.copy(equipment = listOf("dumbbell"))
+        assertEquals("Sin saltos. $note", changed.toParams("s1", note).preferences)
+        assertEquals("Sin saltos. $note", changed.copy(preferences = "Sin saltos. $note").toParams("s1", note).preferences)
+        assertEquals(note, changed.copy(preferences = "").toParams("s1", note).preferences)
+        assertEquals("Sin saltos", changed.toParams("s1", null).preferences)
+    }
+
+    @Test fun `la nota no se recorta, si no entra se pide acortar las preferencias`() {
+        val note = "Equipamiento extra del gimnasio: Banco"
+        val room = MAX_TEXT - note.length - 2 // ". " entre las preferencias y la nota
+        val changed = AiRoutineForm(goal = "strength", level = "beginner", equipment = listOf("dumbbell"))
+        val fits = changed.copy(preferences = "a".repeat(room))
+        assertTrue(fits.errors(note).isEmpty())
+        assertEquals(MAX_TEXT, fits.toParams("s1", note).preferences!!.length)
+        assertTrue(fits.toParams("s1", note).preferences!!.endsWith(note))
+        val long = changed.copy(preferences = "a".repeat(MAX_TEXT))
+        assertEquals(preferencesTooLong(room), long.errors(note)[AiField.PREFERENCES])
+        // Sin cambiar el equipamiento la nota la suma el backend: 500 propios entran.
+        assertTrue(long.copy(equipment = null).errors(note).isEmpty())
+    }
+
     @Test fun `los campos del backend van a su campo`() {
         assertEquals(AiField.DAYS, aiFieldOf("frequency_per_week"))
         assertEquals(AiField.EQUIPMENT, aiFieldOf("available_equipment"))

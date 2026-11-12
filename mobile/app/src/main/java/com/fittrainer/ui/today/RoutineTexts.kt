@@ -2,6 +2,7 @@ package com.fittrainer.ui.today
 
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineExercise
+import com.fittrainer.data.workout.DEFAULT_REST_SECONDS
 import com.fittrainer.ui.components.exercise.ExerciseDetail
 import com.fittrainer.ui.components.exercise.muscleLabel
 import java.time.DayOfWeek
@@ -10,7 +11,6 @@ import kotlin.math.roundToInt
 
 /** Segundos de trabajo por serie para estimar la duración (el backend no lo informa). */
 private const val WORK_SECONDS_PER_SET = 45
-private const val DEFAULT_REST_SECONDS = 60
 private const val MINUTES_STEP = 5
 
 private val DAY_NAMES = mapOf(
@@ -61,7 +61,10 @@ fun exerciseSubtitle(exercise: RoutineExercise): String =
 
 fun totalSets(exercises: List<RoutineExercise>): Int = exercises.sumOf { it.sets ?: 0 }
 
-/** Minutos estimados, redondeados a múltiplos de 5 y nunca menos de 5 si hay ejercicios. */
+/**
+ * Minutos estimados, redondeados a múltiplos de 5 y nunca menos de 5 si hay ejercicios. Sin descanso
+ * cuenta el de la sesión activa (DEFAULT_REST_SECONDS, 90 s, igual que la web).
+ */
 fun estimatedMinutes(exercises: List<RoutineExercise>): Int {
     if (exercises.isEmpty()) return 0
     val seconds = exercises.sumOf {

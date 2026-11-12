@@ -5,6 +5,7 @@ import com.fittrainer.testing.fakes.trainerai.FakeTrainerAiApi
 import com.fittrainer.testing.fakes.trainerai.proposalDto
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -21,11 +22,17 @@ class TrainerAiRepositoryTest {
         val sent = api.requests.single()
         assertEquals("t1", api.owners.single())
         assertNull(sent.availableEquipment)
-        assertNull(sent.injuries)
+        assertEquals(JsonNull, sent.injuries)
         assertEquals("Sin saltos", sent.preferences)
         assertEquals("g1", proposal.generationId)
         assertEquals(listOf("Pecho y tríceps", "Espalda y bíceps", "Piernas"), proposal.blocks.map { it.name })
         assertEquals("Press de banca", proposal.blocks[0].exercises[0].name)
+    }
+
+    @Test fun `sin lesiones en los parametros el campo no viaja`() = runTest {
+        api.generated = proposalDto(1)
+        repo.generate("t1", params.copy(injuries = null)).getOrThrow()
+        assertNull(api.requests.single().injuries)
     }
 
     @Test fun `los dias quedan en orden de la semana y un ejercicio sin nombre tiene uno`() = runTest {

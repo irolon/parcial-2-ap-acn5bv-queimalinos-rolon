@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.students.StudentStatus
-import com.fittrainer.ui.students.NO_PLAN
 import com.fittrainer.ui.students.StudentRowUi
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
@@ -53,7 +52,7 @@ fun StudentRow(row: StudentRowUi, modifier: Modifier = Modifier, onClick: (() ->
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(row.name, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(row.subtitle, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            AdherenceBar(row.adherencePct)
+            AdherenceBar(row.adherencePct, row.noAdherence)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             StatusPill(row.statusLabel, statusColor(row.status))
@@ -63,9 +62,9 @@ fun StudentRow(row: StudentRowUi, modifier: Modifier = Modifier, onClick: (() ->
 }
 
 @Composable
-private fun AdherenceBar(pct: Int?) {
+private fun AdherenceBar(pct: Int?, noAdherence: String) {
     if (pct == null) {
-        Text(NO_PLAN, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+        Text(noAdherence, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
         return
     }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
