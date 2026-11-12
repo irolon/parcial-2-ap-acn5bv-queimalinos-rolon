@@ -28,13 +28,13 @@ describe('overview.service', () => {
     expect(mockOverviewRepo.findFinishedSessionsSince).not.toHaveBeenCalled();
   });
 
-  it('una consulta por lote para cada dato, con la ventana de 14 días en hora argentina', async () => {
+  it('una consulta por lote para cada dato, con la ventana de 30 días en hora argentina', async () => {
     mockOverviewRepo.findActiveStudents.mockResolvedValue([{ id: 'a', name: 'Ana', created_at: '2026-09-01T12:00:00Z' }]);
     mockStudentsRepo.findLastSessionDates.mockResolvedValue([{ student_id: 'a', last_session_at: '2026-10-20T15:00:00Z' }]);
     const r = await overview('t1');
     expect(mockOverviewRepo.findActiveStudents).toHaveBeenCalledWith('t1');
     expect(mockStudentsRepo.findActiveRoutineSchedules).toHaveBeenCalledWith(['a']);
-    expect(mockOverviewRepo.findFinishedSessionsSince).toHaveBeenCalledWith(['a'], '2026-10-22T00:00:00-03:00');
+    expect(mockOverviewRepo.findFinishedSessionsSince).toHaveBeenCalledWith(['a'], '2026-10-06T00:00:00-03:00');
     expect(mockOverviewRepo.findRecentFinished).toHaveBeenCalledWith(['a'], RECENT_LIMIT);
     // Abiertas de las últimas 4 h (hoy 05/11 16:00 UTC).
     expect(mockOpenRepo.findOpenSessions).toHaveBeenCalledWith(['a'], '2026-11-05T12:00:00.000Z');
@@ -44,27 +44,48 @@ describe('overview.service', () => {
   });
 
   it('una sesión que empezó antes de la ventana y se cerró adentro cuenta en daily, no en la adherencia', async () => {
-    // Hoy 05/11: empezó el miércoles 21/10 y se cerró el 23/10 (primera barra del gráfico).
+    // Hoy 05/11: empezó el lunes 05/10 y se cerró el miércoles 07/10 (primera barra del gráfico).
     mockOverviewRepo.findActiveStudents.mockResolvedValue([{ id: 'a', name: 'Ana', created_at: '2026-09-01T12:00:00Z' }]);
     mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(
       new Map([['a', { days: ['wednesday'], daySince: new Map([['wednesday', '2026-09-01']]) }]])
     );
     mockOverviewRepo.findFinishedSessionsSince.mockResolvedValue([
-      { id: 's1', student_id: 'a', started_at: '2026-10-21T15:00:00Z', finished_at: '2026-10-23T15:00:00Z', trainer_comment: 'ok' },
+      { id: 's1', student_id: 'a', started_at: '2026-10-05T15:00:00Z', finished_at: '2026-10-07T15:00:00Z', trainer_comment: 'ok' },
     ]);
     const r = await overview('t1');
-    expect(r.daily[0]).toEqual({ date: '2026-10-23', count: 1 });
+    expect(r.daily[0]).toEqual({ date: '2026-10-07', count: 1 });
     expect(r.daily.reduce((n, d) => n + d.count, 0)).toBe(1);
-    // El 21/10 queda fuera de las dos semanas de la adherencia (29/10–04/11 y 22/10–28/10): 0 % en ambas.
+    // El 05/10 queda fuera de las dos semanas de la adherencia (29/10–04/11 y 22/10–28/10): 0 % en ambas.
     expect(r.adherence_7d).toEqual({ pct: 0, delta: 0 });
   });
 
-  it('sin alumnos activos: daily con 14 ceros hasta hoy y el resto vacío', async () => {
+  it('una sesión de hace 20 días suma en daily y no en la adherencia, la lista de hoy ni el feedback', async () => {
+    // Hoy jueves 05/11; el viernes 16/10 entrenó sin comentario del PT. Tiene asignado el viernes.
+    mockOverviewRepo.findActiveStudents.mockResolvedValue([{ id: 'a', name: 'Ana', created_at: '2026-09-01T12:00:00Z' }]);
+    mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(
+      new Map([['a', { days: ['friday'], daySince: new Map([['friday', '2026-09-01']]) }]])
+    );
+    mockOverviewRepo.findFinishedSessionsSince.mockResolvedValue([
+      { id: 's20', student_id: 'a', started_at: '2026-10-16T15:00:00Z', finished_at: '2026-10-16T16:00:00Z', trainer_comment: null },
+    ]);
+    const r = await overview('t1');
+    expect(r.daily.find((d) => d.date === '2026-10-16')).toEqual({ date: '2026-10-16', count: 1 });
+    expect(r.daily.reduce((n, d) => n + d.count, 0)).toBe(1);
+    // Viernes 30/10 y 23/10 sin entrenar: 0 % en las dos semanas de la adherencia.
+    expect(r.adherence_7d).toEqual({ pct: 0, delta: 0 });
+    expect(r.lists.students[0].adherence_pct).toBe(0);
+    expect(r.sessions_today.done).toBe(0);
+    expect(r.lists.today).toEqual([]);
+    expect(r.lists.feedback_pending).toEqual([]);
+    expect(r.attention.some((a) => a.kind === 'feedback_pending')).toBe(false);
+  });
+
+  it('sin alumnos activos: daily con 30 ceros hasta hoy y el resto vacío', async () => {
     mockOverviewRepo.findActiveStudents.mockResolvedValue([]);
     const r = await overview('t1');
-    expect(r.daily).toHaveLength(14);
+    expect(r.daily).toHaveLength(30);
     expect(r.daily.every((d) => d.count === 0)).toBe(true);
-    expect(r.daily[0].date).toBe('2026-10-23');
+    expect(r.daily[0].date).toBe('2026-10-07');
     expect(r.daily.at(-1).date).toBe('2026-11-05');
     expect(r).toMatchObject({
       active_students: { count: 0, new_7d: 0 },

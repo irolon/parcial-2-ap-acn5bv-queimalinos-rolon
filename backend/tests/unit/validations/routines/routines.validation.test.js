@@ -108,3 +108,25 @@ describe('validateUpdateRoutine', () => {
     });
   });
 });
+
+describe('routines.validation — nivel (opcional)', () => {
+  it('create: conserva un nivel válido; ausente o null quedan en null', () => {
+    expect(validateCreateRoutine(createBody({ level: 'intermediate' })).level).toBe('intermediate');
+    expect(validateCreateRoutine(createBody()).level).toBeNull();
+    expect(validateCreateRoutine(createBody({ level: null })).level).toBeNull();
+  });
+
+  it('create: un nivel fuera del enum es 400 en level', () => {
+    expect(fieldsOf(validateCreateRoutine, createBody({ level: 'pro' }))).toEqual(['level']);
+  });
+
+  it('update: acepta un nivel o null y lo devuelve; sin level no lo agrega', () => {
+    expect(validateUpdateRoutine({ level: 'advanced' })).toEqual({ level: 'advanced' });
+    expect(validateUpdateRoutine({ level: null })).toEqual({ level: null });
+    expect(validateUpdateRoutine({ name: 'Otra' })).not.toHaveProperty('level');
+  });
+
+  it('update: un nivel inválido es 400 en level', () => {
+    expect(fieldsOf(validateUpdateRoutine, { level: 'experto', name: 'Otra' })).toEqual(['level']);
+  });
+});

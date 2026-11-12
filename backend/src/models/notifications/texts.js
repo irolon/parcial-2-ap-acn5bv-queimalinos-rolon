@@ -66,6 +66,10 @@ export const texts = {
 
   achievementForTrainer: ({ studentName, name }) => build(`${studentName} desbloqueó ${name}`, null),
 
+  // Alta del alumno sin la rutina de la plantilla inicial (GX8): el PT la asigna a mano.
+  initialRoutineFailed: ({ studentName }) =>
+    build(`No pudimos asignarle la rutina inicial a ${studentName}`, 'Asignale una rutina desde su ficha.'),
+
   comment: ({ date, comment }) =>
     build(`Tu entrenador comentó tu sesión del ${ddmm(date)}`, clip(comment, COMMENT_PREVIEW_MAX)),
 

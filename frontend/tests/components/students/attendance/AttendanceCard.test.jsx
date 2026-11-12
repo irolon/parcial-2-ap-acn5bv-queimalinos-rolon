@@ -80,8 +80,13 @@ describe('AttendanceCard', () => {
     expect(await screen.findByText(`Asistencia · ${monthName(PREV)}`)).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Días del mes' })).toHaveAttribute('aria-busy', 'true');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    // El conteo todavía es el del mes anterior: se atenúa como la grilla, y se anuncia como ocupado.
+    const stale = await count('14 DE 16');
+    expect(stale).toHaveClass('opacity-50');
+    expect(stale).toHaveAttribute('aria-busy', 'true');
     release();
     expect(await screen.findByRole('img', { name: '1, entrenó' })).toBeInTheDocument();
+    expect(await count('14 DE 16')).not.toHaveClass('opacity-50');
   });
 
   it('no pasa del mes del alta', async () => {

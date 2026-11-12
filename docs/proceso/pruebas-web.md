@@ -44,7 +44,8 @@ Cada funcionalidad numerada de la guía contra la web de hoy. ➖ es lo que la g
 |---|---|---|---|
 | A1 Hoy | Rutina del día resuelta por el sistema | ✅ "Hoy · Jueves · Fuerza QA" sin elegir nada | `al-01-hoy` |
 | | Tabla completa de ejercicios | ✅ Ejercicio, series × reps y peso sugerido | |
-| | Columna de contexto (semana, nota del PT, próximo turno) | ⚠️ La semana con los días entrenados y la racha; la nota del PT y el próximo turno no están en Hoy | |
+| | Columna de contexto (semana, nota del PT, próximo turno) | ✅ La semana con los días entrenados y la racha, la nota del PT (GW5) y el próximo turno con "Ver agenda", que lleva a Mis turnos (GX6) | |
+| | Turnos del alumno ("Ver agenda") | ✅ Mis turnos (`/alumno/turnos`, ítem "Turnos" del menú): sus turnos de hoy a hoy + 59 con cancelar, y pedir turno en un horario libre de su PT (hoy a hoy + 27) con nota opcional y tope de 3 pendientes (GX6) | |
 | | Un solo CTA primario | ✅ "Empezar entrenamiento" | |
 | A2 Sesión activa | Ejercicio actual a la izquierda, registro en dos pasos | ✅ Peso y reps grandes con ajustes ±2,5 / ±1 y "Registrar serie" | `refresh-01-sesion-en-curso` |
 | | Registro de series a la derecha | ✅ Tabla de series con la que sigue | |

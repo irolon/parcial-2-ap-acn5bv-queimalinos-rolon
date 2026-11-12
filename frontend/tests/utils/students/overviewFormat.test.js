@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayInitial, dayTitle, daysAgoLabel, deltaLabel, lastDays, relativeTime } from '@/utils/students/overviewFormat';
+import { dayInitial, dayNumber, dayTitle, daysAgoLabel, deltaLabel, lastDays, relativeTime } from '@/utils/students/overviewFormat';
 import { daily } from '../../helpers/students/overview';
 
 // Domingo 08/11/2026 15:00 en Argentina (18:00 UTC).
@@ -42,10 +42,11 @@ describe('relativeTime', () => {
 });
 
 describe('lastDays', () => {
-  it('se queda con las últimas 7 o las 14 filas, en orden', () => {
-    const rows = daily([...Array(13).fill(0), 5]);
-    expect(lastDays(rows, 7)).toEqual(rows.slice(7));
-    expect(lastDays(rows, 14)).toEqual(rows);
+  it('se queda con las últimas 7, 14 o 30 filas, en orden', () => {
+    const rows = daily([...Array(29).fill(0), 5]);
+    expect(lastDays(rows, 7)).toEqual(rows.slice(23));
+    expect(lastDays(rows, 14)).toEqual(rows.slice(16));
+    expect(lastDays(rows, 30)).toEqual(rows);
     expect(lastDays(rows, 7).at(-1).count).toBe(5);
   });
 
@@ -57,6 +58,10 @@ describe('lastDays', () => {
 describe('etiquetas del día', () => {
   it('inicial del día de la semana (miércoles = X)', () => {
     expect(['2026-11-02', '2026-11-04', '2026-11-08'].map(dayInitial)).toEqual(['L', 'X', 'D']);
+  });
+
+  it('número del día para el eje de 30 días, con dos cifras', () => {
+    expect(['2026-11-09', '2026-10-31', '2026-11-15'].map(dayNumber)).toEqual(['09', '31', '15']);
   });
 
   it('título del tooltip: día abreviado y dd/mm', () => {

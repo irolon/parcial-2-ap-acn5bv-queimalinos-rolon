@@ -1,5 +1,6 @@
 import {
   Calendar,
+  CalendarClock,
   ChartLine,
   Dumbbell,
   House,
@@ -12,7 +13,8 @@ import {
 
 export const ROLES = { TRAINER: 'trainer', STUDENT: 'student' };
 
-// Ítems del sidebar en el orden y con los íconos del prototipo. `path` es relativo a `base`.
+// Ítems del sidebar en el orden y con los íconos del prototipo. `path` es relativo a `base`; `title` (opcional) es el
+// título de la topbar cuando no es el `label`.
 export const TRAINER_NAV = {
   base: '/pt',
   items: [
@@ -34,6 +36,7 @@ export const STUDENT_NAV = {
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
     { path: 'asistente', label: 'Asistente IA', icon: Sparkles, subtitle: 'CONSULTAS GUARDADAS' },
+    { path: 'turnos', label: 'Turnos', title: 'Mis turnos', icon: CalendarClock, subtitle: 'TURNOS CON TU ENTRENADOR' },
     { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'TU ENTRENADOR', unread: true },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
   ],
@@ -47,6 +50,9 @@ export const MY_ROUTINES_PATH = `${STUDENT_NAV.base}/rutinas`;
 
 /** Mi perfil del alumno (el ítem `perfil` de su menú). */
 export const MY_PROFILE_PATH = `${STUDENT_NAV.base}/perfil`;
+
+/** Mis turnos del alumno (el ítem `turnos` de su menú; también se entra con "Ver agenda" de Hoy). */
+export const MY_APPOINTMENTS_PATH = `${STUDENT_NAV.base}/turnos`;
 
 // Detalle de una rutina del alumno: fuera del menú. El `handle` de router.jsx es el título por defecto;
 // la página puede pisarlo con `usePageHeader`.

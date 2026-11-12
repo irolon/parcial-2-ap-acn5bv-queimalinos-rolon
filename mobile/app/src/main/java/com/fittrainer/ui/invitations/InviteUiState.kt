@@ -16,6 +16,7 @@ sealed interface InviteUiState {
         val sending: Boolean = false,
         val offline: Boolean = false,
         val notice: String? = null,
+        val templates: TemplateChoices = TemplateChoices.Loading,
     ) : InviteUiState {
         val canSubmit: Boolean get() = !sending && !offline
     }

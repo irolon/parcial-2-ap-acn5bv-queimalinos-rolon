@@ -25,6 +25,8 @@ data class CreateInvitationRequest(
     @SerialName("gym_equipment") val gymEquipment: List<String>?,
     val injuries: String?,
     @SerialName("delivery_channel") val deliveryChannel: String,
+    @SerialName("template_id") val templateId: String? = null,
+    @SerialName("routine_days") val routineDays: List<String>? = null,
 )
 
 @Serializable

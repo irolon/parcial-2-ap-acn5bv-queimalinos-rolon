@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fittrainer.data.routines.trainer.TrainerRoutineSummary
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.routines.trainer.ROUTINES_EMPTY
 import com.fittrainer.ui.routines.trainer.ROUTINES_NOT_LOADED
@@ -63,7 +64,7 @@ private fun RoutineRow(routine: TrainerRoutineSummary, onClick: () -> Unit) {
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(routine.name, style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary)
-            val line = listOf(routineDaysLabel(routine.days), routine.goal?.let(::goalLabel).orEmpty()).filter { it.isNotEmpty() }
+            val line = listOf(routineDaysLabel(routine.days), routine.goal?.let(::goalLabel).orEmpty(), levelLabel(routine.level).orEmpty()).filter { it.isNotEmpty() }
             Text(line.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
         }
         val color = if (routine.active) FtColors.Brand else FtColors.TextSecondary

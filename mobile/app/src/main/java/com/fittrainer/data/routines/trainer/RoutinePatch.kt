@@ -2,6 +2,7 @@ package com.fittrainer.data.routines.trainer
 
 import com.fittrainer.data.invitation.invite.GOALS
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -9,14 +10,14 @@ import kotlinx.serialization.json.buildJsonObject
 /** Días del backend, en orden de la semana. */
 val WEEK_DAYS = listOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
-enum class RoutineField { NAME, GOAL, DAYS }
+enum class RoutineField { NAME, GOAL, DAYS, LEVEL }
 
 /** Nombre, objetivo y días de una rutina (hoja "Editar" y paso 1 del asistente). */
-data class RoutineHeaderInput(val name: String = "", val goal: String? = null, val days: Set<String> = emptySet())
+data class RoutineHeaderInput(val name: String = "", val goal: String? = null, val days: Set<String> = emptySet(), val level: String? = null)
 
-fun TrainerRoutineSummary.toHeaderInput() = RoutineHeaderInput(name, goal, days.toSet())
+fun TrainerRoutineSummary.toHeaderInput() = RoutineHeaderInput(name, goal, days.toSet(), level)
 
-/** Reglas de POST/PATCH /routines: nombre 2-120, objetivo del enum, al menos un día. Vacío = válido. */
+/** Reglas de POST/PATCH /routines: nombre 2-120, objetivo del enum, al menos un día. El nivel es opcional y sale de chips. */
 fun RoutineHeaderInput.errors(): Map<RoutineField, String> = buildMap {
     if (name.trim().length !in 2..120) put(RoutineField.NAME, "Entre 2 y 120 caracteres")
     if (goal !in GOALS) put(RoutineField.GOAL, "Elegí un objetivo")
@@ -29,6 +30,7 @@ fun RoutineHeaderInput.orderedDays(): List<String> = WEEK_DAYS.filter { it in da
 /** PATCH con solo lo que cambió de nombre, objetivo y días; null si no cambió nada. */
 fun headerPatch(before: TrainerRoutineSummary, after: RoutineHeaderInput): JsonObject? {
     val body = buildJsonObject {
+        if (after.level != before.level) put("level", after.level?.let(::JsonPrimitive) ?: JsonNull)
         val name = after.name.trim()
         if (name != before.name) put("name", JsonPrimitive(name))
         if (after.goal != null && after.goal != before.goal) put("goal", JsonPrimitive(after.goal))
@@ -46,5 +48,6 @@ fun routineFieldOf(apiField: String?): RoutineField? = when (apiField) {
     "name" -> RoutineField.NAME
     "goal" -> RoutineField.GOAL
     "days" -> RoutineField.DAYS
+    "level" -> RoutineField.LEVEL
     else -> null
 }

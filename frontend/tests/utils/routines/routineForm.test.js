@@ -89,6 +89,11 @@ describe('buildRoutineBody', () => {
   it('omite template_id si no hay plantilla', () => {
     expect(buildRoutineBody(stateWith(), 's-1')).not.toHaveProperty('template_id');
   });
+
+  it('manda el nivel elegido, o null si no hay', () => {
+    expect(buildRoutineBody(stateWith([EX_A], { level: 'intermediate' }), 's-1').level).toBe('intermediate');
+    expect(buildRoutineBody(stateWith(), 's-1').level).toBeNull();
+  });
 });
 
 describe('reglas compartidas', () => {

@@ -141,7 +141,7 @@ export async function findActiveRoutineForStudentToday(studentId, day) {
 export async function findActiveRoutineSummary(studentId) {
   const { data, error } = await supabase
     .from(ROUTINES_TABLE)
-    .select('id, name, days')
+    .select('id, name, level, days')
     .eq('student_id', studentId)
     .eq('active', true)
     .order('created_at', { ascending: false })

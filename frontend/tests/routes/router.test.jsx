@@ -17,6 +17,7 @@ vi.mock('@/pages/student/HistoryPage', () => ({ default: () => <p>Página Histor
 vi.mock('@/pages/student/AssistantPage', () => ({ default: () => <p>Página Asistente IA</p> }));
 vi.mock('@/pages/messages/StudentMessagesPage', () => ({ default: () => <p>Página Mensajes</p> }));
 vi.mock('@/pages/student/MyProfilePage', () => ({ default: () => <p>Página Mi perfil</p> }));
+vi.mock('@/pages/student/MyAppointmentsPage', () => ({ default: () => <p>Página Mis turnos</p> }));
 vi.mock('@/pages/student/WorkoutPage', () => ({ default: () => <p>Página Entrenar</p> }));
 
 beforeEach(() => {
@@ -66,6 +67,7 @@ describe('rutas del alumno', () => {
     ['/alumno/progreso', 'Mi progreso', 'Página Mi progreso'],
     ['/alumno/rutinas', 'Mis rutinas', 'Página Mis rutinas'],
     ['/alumno/historial', 'Historial', 'Página Historial'],
+    ['/alumno/turnos', 'Mis turnos', 'Página Mis turnos'],
     ['/alumno/mensajes', 'Mensajes', 'Página Mensajes'],
     ['/alumno/perfil', 'Mi perfil', 'Página Mi perfil'],
   ])('%s muestra su página bajo el título del menú', async (path, title, content) => {
@@ -76,6 +78,12 @@ describe('rutas del alumno', () => {
   });
 
   const menu = () => within(screen.getByTestId('sidebar-fixed')).getByRole('navigation', { name: 'Navegación principal' });
+
+  it('Mis turnos marca el ítem "Turnos" del menú', async () => {
+    renderRoute('/alumno/turnos');
+    await screen.findByText('Página Mis turnos');
+    expect(within(menu()).getByRole('link', { current: 'page' })).toHaveTextContent('Turnos');
+  });
 
   it('el detalle de una rutina está fuera del menú, dentro del shell y con "Mis rutinas" marcado', async () => {
     renderRoute('/alumno/rutinas/r-1');

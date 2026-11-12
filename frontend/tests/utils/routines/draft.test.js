@@ -82,4 +82,12 @@ describe('draft', () => {
     expect(readDraft('t-1')).toBeNull();
     expect(() => clearDraft('t-1')).not.toThrow();
   });
+
+  it('guarda y restaura el nivel; un borrador viejo sin nivel restaura vacío', () => {
+    const raw = serializeDraft(stateWith([EX_A], { level: 'advanced' }));
+    expect(restoreDraft(raw, exercisesById).state.level).toBe('advanced');
+    const { level, ...old } = JSON.parse(raw);
+    expect(level).toBe('advanced');
+    expect(restoreDraft(JSON.stringify(old), exercisesById).state.level).toBe('');
+  });
 });

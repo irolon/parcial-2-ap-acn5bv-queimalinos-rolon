@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.fittrainer.ui.components.OneLineLabel
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -97,6 +99,9 @@ fun notificationsUnread(): Int {
 }
 
 /** Barra de pestañas del rol. backStack: las rutas de abajo hacia arriba. badges: el globito rojo de cada pestaña que lo lleva (Progreso del alumno y Mensajes de los dos roles). */
+/** Letra mínima de las pestañas: solo se llega en pantallas muy angostas (zoom grande + letra grande). */
+private val NAV_LABEL_MIN_SIZE = 8.sp
+
 @Composable
 fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: NavController, badges: Map<String, TabBadge>) {
     val routes = tabs.map { it.route }
@@ -126,7 +131,9 @@ fun RoleNavigationBar(tabs: List<Tab>, backStack: List<String?>, navController: 
                         Icon(tab.icon, contentDescription = null)
                     }
                 },
-                label = { Text(tab.label, maxLines = 1) },
+                // Una línea que achica la letra si no entra: con zoom grande "Progreso" se cortaba en "Progre" (11/11).
+                // Hasta 8 sp: en mono con espaciado, a 10 sp "Progreso" todavía no entra en una pestaña de 58 dp.
+                label = { OneLineLabel(tab.label, minSize = NAV_LABEL_MIN_SIZE) },
             )
         }
     }

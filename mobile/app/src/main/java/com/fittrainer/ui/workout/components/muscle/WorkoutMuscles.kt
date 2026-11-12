@@ -16,7 +16,7 @@ fun cardFits(available: Int, card: Int, cta: Int, bottom: Int, gap: Int): Boolea
 
 /**
  * Y de las acciones de abajo (px): ancladas al fondo, pero nunca más arriba que el botón principal más la
- * separación. Si no entran, se recortan por abajo (como la columna original) en vez de taparle los toques al botón.
+ * separación. Con alto acotado y sin lugar, quedan debajo del botón en vez de taparle los toques.
  */
 fun bottomActionsY(height: Int, ctaBottom: Int, gap: Int, bottom: Int): Int =
     maxOf(height - bottom, ctaBottom + gap)

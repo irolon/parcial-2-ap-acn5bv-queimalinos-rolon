@@ -90,6 +90,12 @@ class ChartsViewModelTest {
         assertEquals(70.0, s.record!!.value, 0.0)
     }
 
+    @Test fun siElMasRecienteTieneUnSoloDiaArrancaEnElQueTieneCurva() = runTest {
+        load()
+        dao.seedTrained("u1", TrainedExercise("e2", "Press", 1, "2026-10-31"), TrainedExercise("e1", "Sentadilla", 3, "2026-10-30"), fetchedAt = clock.millis)
+        assertEquals("e1", started(vm()).uiState.value.selectedExerciseId)
+    }
+
     @Test fun cambiarElPeriodoFiltraSinPedirDeNuevo() = runTest {
         load()
         val model = started(vm())

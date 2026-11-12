@@ -141,14 +141,14 @@ describe('models/students/overview', () => {
     expect(r.adherence_7d).toEqual({ pct: 0, delta: null });
   });
 
-  it('daily: 14 filas { date, count } de hoy − 13 a hoy, por el día del fin', () => {
+  it('daily: 30 filas { date, count } de hoy − 29 a hoy, por el día del fin', () => {
     const r = buildOverview({
       ...base,
       students: [student('a'), student('b')],
       sessions: [session('1', 'a', '11-05'), session('2', 'b', '11-05'), session('3', 'a', '11-02')],
     });
-    expect(r.daily).toHaveLength(14);
-    expect(r.daily[0]).toEqual({ date: '2026-10-23', count: 0 });
+    expect(r.daily).toHaveLength(30);
+    expect(r.daily[0]).toEqual({ date: '2026-10-07', count: 0 });
     expect(r.daily.at(-1)).toEqual({ date: TODAY, count: 2 });
     expect(r.daily.find((d) => d.date === '2026-11-02')).toEqual({ date: '2026-11-02', count: 1 });
   });

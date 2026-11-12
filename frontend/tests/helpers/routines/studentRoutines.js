@@ -32,6 +32,7 @@ export function todayRoutine(overrides = {}) {
     routine_id: 'r-1',
     name: 'Push · día 3',
     goal: 'hypertrophy',
+    level: null,
     days: ['monday', 'thursday'],
     exercises: [
       { ...routineExercise(), last_session_kg: 62.5 },
@@ -47,6 +48,7 @@ export function mineRoutine(overrides = {}) {
     routine_id: 'r-1',
     name: 'Push · día 3',
     goal: 'hypertrophy',
+    level: null,
     days: ['monday', 'thursday'],
     created_at: '2026-10-20T12:00:00Z',
     exercises: [routineExercise(), routineExercise(SECOND_EXERCISE)],

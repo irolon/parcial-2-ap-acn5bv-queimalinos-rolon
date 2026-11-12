@@ -86,6 +86,15 @@ begin
   end if;
 end $$;
 
+-- GX8: nivel de la rutina (null = sin definir) y plantilla inicial de la invitación
+-- (invitations está en 02-students.sql, antes que routine_templates: van acá).
+alter table routines add column if not exists level varchar(20)
+  check (level in ('beginner', 'intermediate', 'advanced'));
+alter table invitations add column if not exists template_id uuid
+  references routine_templates (id) on delete set null;
+alter table invitations add column if not exists routine_days text[]
+  check (routine_days <@ array['sunday','monday','tuesday','wednesday','thursday','friday','saturday']::text[]);
+
 
 -- ── reorder_routine_exercises (tarjeta E8 del celular) ──────────────────────
 -- Reordena los ejercicios de una rutina en una sola transacción: bloquea la

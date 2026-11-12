@@ -142,9 +142,13 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
   "delivery_channel": "whatsapp | qr | both",
   "level": "beginner | intermediate | advanced (opcional)",
   "gym_equipment": ["string (opcional, hasta 30 ítems de 1–50 chars)"],
-  "injuries": "string (opcional, hasta 1000 chars)"
+  "injuries": "string (opcional, hasta 1000 chars)",
+  "template_id": "uuid (opcional): plantilla inicial, propia",
+  "routine_days": ["monday", "..."] (requerido con template_id)
 }
 ```
+
+> **Plantilla inicial (GX8).** `template_id` (opcional, `null` = sin plantilla) es una plantilla **propia**: ajena o inexistente → **404 `TEMPLATE_NOT_FOUND`** (no se revela qué ids existen). `routine_days` es un arreglo no vacío de `monday..sunday` sin repetidos y va **siempre y solo con `template_id`**: plantilla sin días (ausentes o `null`) → 400 en `routine_days`, y días sin plantilla → 400 en `routine_days`. Así, si la plantilla se borra antes del alta (la FK deja `template_id` en `null`), la invitación se sigue distinguiendo de una sin plantilla por sus días y al PT le llega `initial_routine_failed`. La plantilla se valida al invitar y se **copia al alta** (`POST /students`): vale la versión de la plantilla en ese momento. `GET /invitations/:token` no la expone.
 
 > `goal`, `level`, `gym_equipment` e `injuries` son opcionales: si faltan o vienen en `null`, se guardan como `null` (el alumno queda sin objetivo/contexto). Si vienen, deben cumplir las reglas de arriba; `injuries` con solo espacios se guarda como `null`, y los textos de `gym_equipment` se recortan. El contexto pasa al alumno cuando acepta la invitación.
 
@@ -166,7 +170,7 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
 > `qr_base64` solo se incluye si `delivery_channel` es `qr` o `both`.
 > `whatsapp_share_url` solo si es `whatsapp` o `both`.
 
-**Errores:** `400 VALIDATION_ERROR`, `409 STUDENT_EMAIL_EXISTS`
+**Errores:** `400 VALIDATION_ERROR`, `404 TEMPLATE_NOT_FOUND`, `409 STUDENT_EMAIL_EXISTS`
 
 ### GET /invitations/:token
 
@@ -192,6 +196,8 @@ Crea el alumno desde el token de invitación. Público.
 ```
 
 **201 Created** — `{ student, token, refresh_token }`
+
+> **Rutina inicial (GX8).** Si la invitación tenía plantilla inicial, el alumno arranca con esa rutina activa (copia de la plantilla con `POST /routine-templates/:id/instantiate`, con los `routine_days` de la invitación). La respuesta no cambia. **El alta nunca falla por la rutina:** si la plantilla se borró después de invitar, tiene ejercicios que ya no están o falla el insert, el alumno se crea igual, sin rutina, y al PT le llega la notificación `initial_routine_failed` (ver Módulo: Notificaciones).
 
 **Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del alta).
 
@@ -262,7 +268,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
     "students": [ { "student_id": "uuid", "name": "Ana Paz", "status": "active", "days_without_training": 1,
                     "adherence_pct": 67 } ]
   },
-  "daily": [ { "date": "2026-10-23", "count": 0 }, { "date": "2026-10-24", "count": 3 }, "…",
+  "daily": [ { "date": "2026-10-07", "count": 0 }, { "date": "2026-10-08", "count": 3 }, "…",
              { "date": "2026-11-05", "count": 8 } ]
 } }
 ```
@@ -279,7 +285,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
   - `at_risk`: los mismos de `at_risk`, de más días a menos.
   - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
   - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
-- `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 14 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 13 a hoy, ascendentes. `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 14 filas en 0.
+- `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 30 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 29 a hoy, ascendentes (la web elige 7, 14 o 30 días con las últimas filas). `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 30 filas en 0. La adherencia, `sessions_today` y las listas no cambian: cada una recorta su propia ventana.
 - Todo en hora argentina.
 
 ### GET /students/:id
@@ -298,7 +304,7 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
-    "active_routine": { "id": "uuid", "name": "Push/Pull", "days": ["monday", "thursday"] },
+    "active_routine": { "id": "uuid", "name": "Push/Pull", "level": "intermediate", "days": ["monday", "thursday"] },
     "last_session_at": "2026-10-20T10:00:00Z"
   }
 }
@@ -456,7 +462,7 @@ Elimina un ejercicio propio. **204 No Content**. **403** si no es del trainer o 
 
 Rutinas del trainer, la más nueva primero. Query: `student_id`, `active`.
 
-**200 OK** — cada rutina trae sus columnas (`id`, `trainer_id`, `student_id`, `template_id`, `name`, `goal`, `days`, `active`, `created_at`) y el alumno embebido, para que el listado no tenga que pedir `GET /students`:
+**200 OK** — cada rutina trae sus columnas (`id`, `trainer_id`, `student_id`, `template_id`, `name`, `goal`, `level`, `days`, `active`, `created_at`) y el alumno embebido, para que el listado no tenga que pedir `GET /students`:
 
 ```json
 {
@@ -474,13 +480,15 @@ Rutinas del trainer, la más nueva primero. Query: `student_id`, `active`.
 
 ### POST /routines
 
-Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goal`, `days`, `exercises[]`. Cada ejercicio cumple los límites de abajo. Si falla la inserción de los ejercicios, la rutina no queda creada. Un `template_id` de otro trainer o inexistente → **404 `TEMPLATE_NOT_FOUND`** (igual que el módulo de plantillas; no se revela qué ids existen).
+Crea y asigna rutina. Body: `student_id`, `template_id` (opcional), `name`, `goal`, `level` (opcional), `days`, `exercises[]`. Cada ejercicio cumple los límites de abajo. Si falla la inserción de los ejercicios, la rutina no queda creada. Un `template_id` de otro trainer o inexistente → **404 `TEMPLATE_NOT_FOUND`** (igual que el módulo de plantillas; no se revela qué ids existen).
 
 **Límites de un ejercicio** (rutina y plantilla): `exercise_id` uuid (global o del trainer, si no 403); `sets` y `reps` enteros > 0; `rest_seconds` entero ≥ 0 o `null`; `suggested_kg` número ≥ 0 o `null`; `tempo` hasta 20 caracteres o `null`; `notes` hasta 500 o `null`; `order` entero ≥ 0 opcional.
 
 **Orden:** los ejercicios se ordenan de forma estable por `order` (los que no lo traen usan su posición) y se **renumeran 0..n-1**: nunca quedan órdenes repetidos. En `POST /routines/:id/exercises` la renumeración es sobre la lista nueva y se desplaza después del mayor `order_index` que ya tiene la rutina: los ejercicios agregados siempre quedan al final, sin repetir órdenes.
 
 `POST /routines` y `POST /routines/:id/exercises` aplican estos límites por ejercicio (`PATCH /routines/:id` no recibe ejercicios, así que no le aplican; antes un valor inválido se guardaba como `null`; ahora es 400). `days` (en `POST /routines` y `PATCH /routines/:id`) es un arreglo no vacío de `monday..sunday` y **rechaza días repetidos** con 400.
+
+**Nivel (GX8):** `level` (en `POST /routines` y `PATCH /routines/:id`) es opcional: `null` (sin definir) o uno de `beginner | intermediate | advanced`; otro valor → 400 con `field: "level"`. Ausente en el alta, queda `null`. Lo devuelven `GET /routines`, `GET /routines/:id`, `GET /routines/today`, `GET /routines/mine` y el `active_routine` de `GET /students/:id`.
 
 ### PATCH /routines/:id/exercises/:routineExerciseId
 
@@ -498,13 +506,13 @@ Reordena los ejercicios de una rutina propia (trainer dueño). Body: `{ "routine
 
 Rutina activa del alumno para hoy. Solo alumnos.
 
-**200 OK** — incluye `routine_id`, `name`, `goal`, `days` y `exercises[]`, cada uno con `last_session_kg`: el mayor `actual_kg` de las series completadas con repeticiones del ejercicio en la **última sesión** (por `started_at`) en que el alumno lo hizo, a 1 decimal. Es `null` si nunca lo hizo o no cargó peso. Se calcula con una sola consulta por rutina (función SQL `last_session_kg`).
+**200 OK** — incluye `routine_id`, `name`, `goal`, `level`, `days` y `exercises[]`, cada uno con `last_session_kg`: el mayor `actual_kg` de las series completadas con repeticiones del ejercicio en la **última sesión** (por `started_at`) en que el alumno lo hizo, a 1 decimal. Es `null` si nunca lo hizo o no cargó peso. Se calcula con una sola consulta por rutina (función SQL `last_session_kg`).
 
 ### GET /routines/mine
 
 Todas las rutinas **activas** del alumno con sus ejercicios, la más nueva primero. Solo alumnos (otro rol → 403). La usan el caché offline del celular (que resuelve el día en el teléfono) y la web del alumno (Mis rutinas, y para distinguir "hoy es descanso" de "sin rutina asignada").
 
-**200 OK** — `{ data: [...] }` (arreglo vacío si no tiene rutinas). Cada elemento: `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises[]` ordenados por `order_index`, cada uno con `routine_exercise_id`, `exercise`, `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` y `order_index`. A diferencia de `GET /routines/today`, no trae `last_session_kg`.
+**200 OK** — `{ data: [...] }` (arreglo vacío si no tiene rutinas). Cada elemento: `routine_id`, `name`, `goal`, `level`, `days`, `created_at` y `exercises[]` ordenados por `order_index`, cada uno con `routine_exercise_id`, `exercise`, `sets`, `reps`, `rest_seconds`, `suggested_kg`, `tempo`, `notes` y `order_index`. A diferencia de `GET /routines/today`, no trae `last_session_kg`.
 
 ---
 
@@ -563,7 +571,7 @@ Crea una plantilla. **Body:** `{ "name": "2-120", "goal": "tonify|weight_loss|hy
 
 ### POST /routine-templates/from-routine
 
-Guarda una rutina propia como plantilla (copia `goal`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "goal": "opcional (pisa el de la rutina)", "level": "opcional" }`. Rutina inexistente → 404; ajena → 403. **400** si la rutina no tiene objetivo y el body no trae `goal` (`field: "goal"`, "Elegí un objetivo para la plantilla"), o si la rutina rompe las reglas de una plantilla (`days` vacíos o inválidos, 0 o más de 50 ejercicios, o límites por ejercicio). Estos errores se informan en términos de la rutina, con `field: "routine_id"` y mensajes como "El ejercicio 3 de la rutina: notes debe tener como máximo 500 caracteres", "La rutina tiene que tener entre 1 y 50 ejercicios" o "Los días de la rutina: ...". **201** → `{ data }`.
+Guarda una rutina propia como plantilla (copia `goal`, `level`, `days` y ejercicios). **Body:** `{ "routine_id": "uuid", "name": "opcional (por defecto, el de la rutina)", "goal": "opcional (pisa el de la rutina)", "level": "opcional (pisa el de la rutina; null = sin nivel)" }`. Rutina inexistente → 404; ajena → 403. **400** si la rutina no tiene objetivo y el body no trae `goal` (`field: "goal"`, "Elegí un objetivo para la plantilla"), o si la rutina rompe las reglas de una plantilla (`days` vacíos o inválidos, 0 o más de 50 ejercicios, o límites por ejercicio). Estos errores se informan en términos de la rutina, con `field: "routine_id"` y mensajes como "El ejercicio 3 de la rutina: notes debe tener como máximo 500 caracteres", "La rutina tiene que tener entre 1 y 50 ejercicios" o "Los días de la rutina: ...". **201** → `{ data }`.
 
 ### PATCH /routine-templates/:id
 
@@ -577,7 +585,7 @@ Edita `name`, `goal`, `level` y/o `structure` (al menos uno). `structure` se ree
 
 Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda como origen; la rutina nueva convive con las otras activas del alumno).
 
-**Body:** `{ "student_id": "uuid", "name": "2-120 (opcional)", "days": ["monday", "..."] (opcional, >= 1, sin repetidos) }`. Por defecto usa `name` y `days` de la plantilla.
+**Body:** `{ "student_id": "uuid", "name": "2-120 (opcional)", "days": ["monday", "..."] (opcional, >= 1, sin repetidos) }`. Por defecto usa `name` y `days` de la plantilla. La rutina hereda `goal` y `level` de la plantilla.
 
 **201 Created** → `{ data }` con la rutina en la forma de `GET /routines/:id`.
 
@@ -1572,6 +1580,7 @@ Lista las notificaciones propias, las más nuevas primero (`created_at` desc).
 | `pr` | Se cierra una sesión con récords; una por sesión | Alumno y PT del alumno | Alumno (el PT solo la ve en la lista) | `student_id`, `session_id`, `exercise_ids` |
 | `achievement` | Se desbloquea un logro al cerrar una sesión; una por logro, para el alumno y para el PT. Los que desbloquea el job nocturno quedan solo en la base | Alumno y PT del alumno | Alumno (con varios logros en la sesión, un único push resumen); el PT solo la ve en la lista | `student_id`, `achievement_code` |
 | `comment` | El PT guarda un comentario de sesión no vacío y distinto del anterior (`PATCH /sessions/:id/comment`) | Alumno | Alumno | `session_id` |
+| `initial_routine_failed` | Alta del alumno (`POST /students`) cuya invitación traía plantilla inicial y la rutina no se pudo crear (plantilla borrada, ejercicios que ya no están o error al guardar). Título: `No pudimos asignarle la rutina inicial a Pedro Gómez`; cuerpo: `Asignale una rutina desde su ficha.` Best-effort: si el aviso falla, el alta sigue | PT del alumno | PT | `student_id` (abre la ficha) |
 | `appointment` | Cambios en un turno (ver Módulo: Turnos). El PT confirma, cancela o agenda a mano: `Tu turno del vie 06/11 a las 18:00 quedó confirmado` / `… fue cancelado` / `Tu entrenador te agendó un turno el vie 06/11 a las 18:00`. El alumno pide o cancela: `Lucía pidió un turno para el vie 06/11 a las 18:00` / `Lucía canceló su turno del vie 06/11 a las 18:00` | Alumno (acciones del PT) o PT (acciones del alumno) | Alumno; el PT solo la ve en la lista | `appointment_id`, `scheduled_at` (ISO UTC: el cliente abre la agenda en la semana del turno) |
 
 El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que el cliente necesita para navegar: el alumno (`student_id`), la sesión (`session_id`), el turno (`appointment_id` y su `scheduled_at`), el logro (`achievement_code`) o los ejercicios (`exercise_ids`, array de uuid). 

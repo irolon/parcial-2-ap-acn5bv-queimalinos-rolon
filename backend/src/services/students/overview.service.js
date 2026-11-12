@@ -9,8 +9,8 @@ import { localDate } from '../../shared/utils/dates/dates.js';
 
 export const RECENT_LIMIT = 10;
 
-/** Ventana de sesiones: hoy y los 14 días anteriores (las dos semanas de la adherencia). */
-const WINDOW_DAYS = 14;
+/** Ventana de sesiones: hoy y los 30 días anteriores: el gráfico; la adherencia y las listas recortan la suya. */
+const WINDOW_DAYS = 30;
 
 /** Sin alumnos activos: todo vacío y el gráfico en 0 (se arma con hoy, por eso es función). */
 const empty = (today) => ({

@@ -37,6 +37,15 @@ describe('routines.service', () => {
       expect(mockRepo.createRoutine).not.toHaveBeenCalled();
     });
 
+    it('guarda el nivel de la rutina (null si no viene)', async () => {
+      mockRepo.isStudentOfTrainer.mockResolvedValue(true);
+      mockRepo.createRoutine.mockResolvedValue(ROUTINE);
+      mockRepo.addRoutineExercises.mockResolvedValue([]);
+      await service.create(TRAINER_ID, { ...BODY, level: 'advanced' });
+      await service.create(TRAINER_ID, BODY);
+      expect(mockRepo.createRoutine.mock.calls.map(([f]) => f.level)).toEqual(['advanced', null]);
+    });
+
     it('no consulta plantillas si no viene template_id', async () => {
       mockRepo.isStudentOfTrainer.mockResolvedValue(true);
       mockRepo.createRoutine.mockResolvedValue(ROUTINE);

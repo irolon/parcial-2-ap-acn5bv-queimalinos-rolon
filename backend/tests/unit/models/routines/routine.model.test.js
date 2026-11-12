@@ -1,5 +1,6 @@
 import {
   dayName,
+  ROUTINE_COLUMNS,
   toStudentRoutines,
   toTodayRoutine,
 } from '../../../../src/models/routines/routine.model.js';
@@ -38,6 +39,7 @@ describe('routine.model · toStudentRoutines', () => {
     student_id: 'st-1',
     name: 'Full body',
     goal: 'strength',
+    level: 'beginner',
     days: ['monday', 'thursday'],
     active: true,
     created_at: '2026-10-01T10:00:00.123456+00:00',
@@ -53,6 +55,7 @@ describe('routine.model · toStudentRoutines', () => {
       routine_id: 'rt-1',
       name: 'Full body',
       goal: 'strength',
+      level: 'beginner',
       days: ['monday', 'thursday'],
       created_at: '2026-10-01T10:00:00.123456+00:00',
     });
@@ -87,5 +90,20 @@ describe('routine.model · toTodayRoutine', () => {
   it('sin mapa, todos null; sin fila, null', () => {
     expect(toTodayRoutine(row).exercises.every((e) => e.last_session_kg === null)).toBe(true);
     expect(toTodayRoutine(null)).toBeNull();
+  });
+});
+
+describe('routine.model · nivel', () => {
+  it('toTodayRoutine devuelve el nivel (null si no tiene)', () => {
+    expect(toTodayRoutine({ id: 'rt-1', level: 'advanced', routine_exercises: [] }).level).toBe('advanced');
+    expect(toTodayRoutine({ id: 'rt-1', routine_exercises: [] }).level).toBeNull();
+  });
+
+  it('toStudentRoutines devuelve el nivel (null si no tiene)', () => {
+    expect(toStudentRoutines([{ id: 'rt-1', routine_exercises: [] }])[0].level).toBeNull();
+  });
+
+  it('ROUTINE_COLUMNS incluye level', () => {
+    expect(ROUTINE_COLUMNS.split(', ')).toContain('level');
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AI_ROUTINE,
+  MY_APPOINTMENTS_PATH,
   MY_PROFILE_PATH,
   MY_ROUTINES_PATH,
   NEW_ROUTINE,
@@ -27,23 +28,29 @@ describe('tabla de rutas', () => {
     ]);
   });
 
-  it('tiene los ítems del alumno en el orden del prototipo, con el asistente después de Historial', () => {
+  it('tiene los ítems del alumno en el orden del prototipo, con el asistente después de Historial y después Turnos', () => {
     expect(STUDENT_NAV.items.map((i) => i.label)).toEqual([
-      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Asistente IA', 'Mensajes', 'Mi perfil',
+      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Asistente IA', 'Turnos', 'Mensajes', 'Mi perfil',
     ]);
     expect(STUDENT_NAV.items.map((i) => i.path)).toEqual([
-      'hoy', 'progreso', 'rutinas', 'historial', 'asistente', 'mensajes', 'perfil',
+      'hoy', 'progreso', 'rutinas', 'historial', 'asistente', 'turnos', 'mensajes', 'perfil',
     ]);
+    expect(STUDENT_NAV.items.find((i) => i.path === 'turnos')).toMatchObject({
+      title: 'Mis turnos',
+      subtitle: 'TURNOS CON TU ENTRENADOR',
+    });
   });
 
   it('arma los links del alumno que no están en el menú', () => {
     expect(WORKOUT_PATH).toBe('/alumno/entrenar');
     expect(MY_ROUTINES_PATH).toBe('/alumno/rutinas');
     expect(MY_PROFILE_PATH).toBe('/alumno/perfil');
+    expect(MY_APPOINTMENTS_PATH).toBe('/alumno/turnos');
     expect(STUDENT_ROUTINE.path).toBe('/alumno/rutinas/:id');
     expect(studentRoutineHref('r-1')).toBe('/alumno/rutinas/r-1');
     const menuLinks = STUDENT_NAV.items.map((i) => `${STUDENT_NAV.base}/${i.path}`);
     expect(menuLinks).toContain(MY_PROFILE_PATH);
+    expect(menuLinks).toContain(MY_APPOINTMENTS_PATH);
     expect(menuLinks).not.toContain(WORKOUT_PATH);
     expect(menuLinks).not.toContain(studentRoutineHref('r-1'));
   });

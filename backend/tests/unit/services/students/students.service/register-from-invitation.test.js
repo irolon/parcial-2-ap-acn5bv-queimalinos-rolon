@@ -1,7 +1,10 @@
+import { jest } from '@jest/globals';
 import {
   mockInvitationsRepo,
   mockStudentsRepo,
   mockIssueTokens,
+  mockInstantiate,
+  mockNotify,
   service,
   VALID_INVITATION,
   CREATED_STUDENT,
@@ -130,5 +133,35 @@ it('con dos registros simultáneos del mismo token crea un solo alumno', async (
     ).rejects.toThrow('la base se cayó');
 
     expect(mockInvitationsRepo.releaseInvitation).toHaveBeenCalledWith('inv-1');
+  });
+
+  describe('rutina inicial', () => {
+    const WITH_TEMPLATE = { ...VALID_INVITATION, template_id: 'tp-1', routine_days: ['monday'] };
+    beforeEach(() => {
+      mockInvitationsRepo.findInvitationByToken.mockResolvedValue(WITH_TEMPLATE);
+      mockInvitationsRepo.claimInvitation.mockResolvedValue(true);
+      mockStudentsRepo.createStudent.mockResolvedValue(CREATED_STUDENT);
+      mockIssueTokens.mockResolvedValue({ token: 'access', refresh_token: 'refresh' });
+    });
+
+    it('con plantilla en la invitación le crea la rutina al alumno', async () => {
+      mockInstantiate.mockResolvedValue({ id: 'rt-1' });
+      const result = await service.registerFromInvitation({ token: 'tok', password: 'Password1' });
+      expect(mockInstantiate).toHaveBeenCalledWith('trainer-1', 'tp-1', { student_id: 'student-1', days: ['monday'] });
+      expect(result).toEqual({ student: CREATED_STUDENT, token: 'access', refresh_token: 'refresh' });
+    });
+
+    it('si la rutina falla, el alta sigue, la invitación queda usada y se avisa al PT', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockInstantiate.mockRejectedValue(new Error('ejercicios borrados'));
+      mockNotify.mockResolvedValue({ id: 'n-1' });
+      const result = await service.registerFromInvitation({ token: 'tok', password: 'Password1' });
+      expect(result.student).toBe(CREATED_STUDENT);
+      expect(mockInvitationsRepo.releaseInvitation).not.toHaveBeenCalled();
+      expect(mockNotify).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'trainer-1', type: 'initial_routine_failed', data: { student_id: 'student-1' } })
+      );
+      warn.mockRestore();
+    });
   });
 });

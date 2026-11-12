@@ -45,6 +45,14 @@ describe('ExerciseDetailCard', () => {
     expect(screen.getByText('PESO MÁXIMO · 3 MESES')).toBeInTheDocument();
   });
 
+  it('con 1RM, la fila que cae a peso máximo lo aclara con "(peso máx.)", como la comparada', async () => {
+    const noE1rm = KG.map((p) => ({ ...p, e1rm_kg: null }));
+    load({ metric: 'e1rm_kg', curves: (id) => (id === 'ex-1' ? noE1rm : KG) });
+    const squat = await screen.findByRole('listitem', { name: 'Sentadilla (peso máx.): 70 kg, +17 % en el rango' });
+    expect(squat).toHaveTextContent('(peso máx.)');
+    expect(screen.getByRole('listitem', { name: 'Press banca: 80 kg, +14 % en el rango' })).not.toHaveTextContent('peso máx.');
+  });
+
   it('en angosto (debajo de sm) la sparkline se oculta para que el nombre no quede cortado', async () => {
     load({ curves: () => KG });
     const row = await screen.findByRole('listitem', { name: /^Press banca/ });

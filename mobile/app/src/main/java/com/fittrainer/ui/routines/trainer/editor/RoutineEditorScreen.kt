@@ -35,6 +35,7 @@ import com.fittrainer.data.routines.trainer.TrainerRoutineDetail
 import com.fittrainer.ui.components.InfoCard
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.routines.trainer.NEEDS_NETWORK
 import com.fittrainer.ui.routines.trainer.ROUTINE_GONE
@@ -138,7 +139,7 @@ private fun HeaderCard(detail: TrainerRoutineDetail, canEdit: Boolean, onEdit: (
         val r = detail.routine
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(r.goal?.let(::goalLabel).orEmpty(), style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
+                Text(listOfNotNull(r.goal?.let(::goalLabel), levelLabel(r.level)).joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = FtColors.TextPrimary)
                 Text(routineDaysLabel(r.days), style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
             }
             TextButton(onClick = onEdit, enabled = canEdit, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text("Editar") }
