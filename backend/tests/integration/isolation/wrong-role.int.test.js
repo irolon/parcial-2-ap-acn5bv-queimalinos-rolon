@@ -1,7 +1,7 @@
 import { buildWorld } from '../../helpers/integration/isolation/world.js';
 import { rows, runCases } from '../../helpers/integration/isolation/isolation.js';
 
-// Rol equivocado (filas 74–93 de la tarea 9): el alumno en endpoints de PT y el PT
+// Rol equivocado (filas 74–93 de la tarea 9, y la 95 de GX4): el alumno en endpoints de PT y el PT
 // en endpoints de alumno, todos 403 FORBIDDEN aunque el recurso sea propio.
 let worlds;
 const getWorlds = () => worlds;
@@ -30,6 +30,7 @@ const cases = [
     [91, 'GET /routines/today'],
     [92, 'GET /routines/mine'],
     [93, 'GET /exercises/library'],
+    [95, 'DELETE /sessions/:sessA'],
   ]),
 ].map((c) => ({ ...c, status: 403, code: 'FORBIDDEN' }));
 
