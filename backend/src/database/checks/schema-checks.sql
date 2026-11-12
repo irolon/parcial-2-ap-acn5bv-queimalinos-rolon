@@ -144,6 +144,15 @@ where oid = to_regclass('public.student_last_session')
   and not coalesce('security_invoker=true' = any (reloptions), false)
 
 union all
+select 'la vista student_last_session debería contar solo sesiones terminadas (falta 2026-11-09-open-sessions.sql)'
+where to_regclass('public.student_last_session') is not null
+  and pg_get_viewdef('public.student_last_session'::regclass) not like '%finished_at IS NOT NULL%'
+
+union all
+select 'falta el índice idx_sessions_open (falta 2026-11-09-open-sessions.sql)'
+where to_regclass('public.idx_sessions_open') is null
+
+union all
 select 'falta la columna invitations.' || c
 from (values ('student_gym_equipment'), ('student_injuries'), ('student_level')) v (c)
 where not exists (
