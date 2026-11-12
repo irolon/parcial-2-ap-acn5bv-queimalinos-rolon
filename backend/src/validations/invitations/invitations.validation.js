@@ -1,6 +1,8 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { GOALS, DELIVERY_CHANNELS, includesWhatsapp } from '../../models/invitations/invitation.model.js';
 import { parseStudentContext } from '../students/student-context.validation.js';
+import { isUuid } from '../../shared/utils/validators.js';
+import { validateDays } from '../routines/routines.validation.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isString = (v) => typeof v === 'string';
@@ -58,6 +60,8 @@ export function validateCreateInvitation(body) {
     details
   );
 
+  const initial = parseInitialTemplate(body, details);
+
   if (details.length > 0) throw Errors.validation('Error de validación', details);
 
   return {
@@ -69,7 +73,30 @@ export function validateCreateInvitation(body) {
     gym_equipment: context.gym_equipment ?? null,
     injuries: context.injuries ?? null,
     level: context.level ?? null,
+    ...initial,
   };
+}
+
+/**
+ * Plantilla inicial (opcional): `template_id` uuid y `routine_days`, obligatorio con
+ * plantilla (así una plantilla borrada se reconoce por los días). null cuenta como ausente.
+ */
+function parseInitialTemplate(body, details) {
+  const templateId = body.template_id ?? null;
+  const days = body.routine_days ?? null;
+  if (templateId !== null && !isUuid(templateId)) {
+    details.push({ field: 'template_id', message: 'template_id inválido' });
+  }
+  if (templateId === null) {
+    if (days !== null) {
+      details.push({ field: 'routine_days', message: 'routine_days solo va con template_id' });
+    }
+  } else if (days === null) {
+    details.push({ field: 'routine_days', message: 'routine_days es requerido con template_id' });
+  } else {
+    validateDays(days, 'routine_days', details);
+  }
+  return { template_id: templateId, routine_days: days };
 }
 
 /** Valida el :token de GET /invitations/:token. */

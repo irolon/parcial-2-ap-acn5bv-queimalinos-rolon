@@ -35,7 +35,7 @@ function validate(form, state) {
  * `onInvalid` marca la tabla (valores locales); `onServerInvalid(error)` recibe el 400 del backend para marcarla.
  */
 export default function SaveTemplateDialog({ state, onSaved, onInvalid, onServerInvalid, onClose }) {
-  const [form, setForm] = useState({ name: state.name, goal: state.goal, level: '' });
+  const [form, setForm] = useState({ name: state.name, goal: state.goal, level: state.level ?? '' });
   const [errors, setErrors] = useState({});
   const create = useCreateTemplate();
   const lock = useSubmitLock();

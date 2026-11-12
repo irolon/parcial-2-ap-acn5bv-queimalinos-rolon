@@ -37,6 +37,11 @@ describe('MyRoutinesPage', () => {
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/routines/mine']);
   });
 
+  it('con nivel lo suma a la línea de los días', async () => {
+    open({ mine: [mineRoutine({ level: 'advanced' })] });
+    expect(await screen.findByText('Lun · Jue · Avanzado')).toBeInTheDocument();
+  });
+
   it('cada rutina lleva a su detalle', async () => {
     const { pathname } = open({ mine: [mineRoutine(), LEG_DAY] });
     await userEvent.setup().click(await screen.findByRole('link', { name: /Pierna/ }));

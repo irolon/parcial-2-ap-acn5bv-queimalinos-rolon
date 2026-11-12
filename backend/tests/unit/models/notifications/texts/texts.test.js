@@ -133,3 +133,12 @@ describe('texts · message', () => {
     expect(title.isWellFormed()).toBe(true);
   });
 });
+
+describe('texts.initialRoutineFailed', () => {
+  it('nombra al alumno y manda a la ficha', () => {
+    expect(texts.initialRoutineFailed({ studentName: 'Pedro Gómez' })).toEqual({
+      title: 'No pudimos asignarle la rutina inicial a Pedro Gómez',
+      body: 'Asignale una rutina desde su ficha.',
+    });
+  });
+});

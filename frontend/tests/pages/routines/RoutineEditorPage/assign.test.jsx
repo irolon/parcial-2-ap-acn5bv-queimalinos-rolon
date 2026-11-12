@@ -56,6 +56,7 @@ describe('RoutineEditorPage: asignar', () => {
       student_id: 'st-9',
       name: 'Fuerza A',
       goal: 'strength',
+      level: null,
       days: ['monday'],
       exercises: [row('ex-bench', 0), row('ex-squat', 1), row('ex-plank', 2)],
     });

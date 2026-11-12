@@ -19,6 +19,7 @@ function toStudentRoutine(routine) {
     routine_id: routine.routine_id ?? routine.id,
     name: routine.name,
     goal: routine.goal ?? null,
+    level: routine.level ?? null,
     days: routine.days ?? [],
     created_at: routine.created_at ?? null,
     exercises: (routine.exercises ?? []).map((exercise) => ({

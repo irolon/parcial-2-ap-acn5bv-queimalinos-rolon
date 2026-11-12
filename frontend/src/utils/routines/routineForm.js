@@ -79,7 +79,9 @@ function bodyExercises(state) {
 }
 
 export function buildRoutineBody(state, studentId) {
-  const body = { student_id: studentId, name: state.name.trim(), goal: state.goal, days: sortDays(state.days) };
+  const body = {
+    student_id: studentId, name: state.name.trim(), goal: state.goal, level: state.level || null, days: sortDays(state.days),
+  };
   if (state.templateId) body.template_id = state.templateId;
   return { ...body, exercises: bodyExercises(state) };
 }

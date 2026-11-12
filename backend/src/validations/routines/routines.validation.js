@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { ROUTINE_GOALS, DAYS } from '../../models/routines/routine.model.js';
+import { ROUTINE_GOALS, ROUTINE_LEVELS, DAYS } from '../../models/routines/routine.model.js';
 import {
   isUuid,
   validateExerciseItem,
@@ -9,6 +9,8 @@ import {
 
 const isString = (v) => typeof v === 'string';
 const trimmed = (v) => (isString(v) ? v.trim() : v);
+const LEVEL_ERROR = { field: 'level', message: `level debe ser null o uno de: ${ROUTINE_LEVELS.join(', ')}` };
+const isLevel = (v) => v === null || ROUTINE_LEVELS.includes(v);
 
 /**
  * Valida un arreglo de días: no vacío, cada uno de DAYS y sin repetidos.
@@ -55,6 +57,7 @@ export function validateCreateRoutine(body) {
   if (!ROUTINE_GOALS.includes(body.goal)) {
     details.push({ field: 'goal', message: `goal debe ser uno de: ${ROUTINE_GOALS.join(', ')}` });
   }
+  if (body.level !== undefined && !isLevel(body.level)) details.push(LEVEL_ERROR);
   validateDays(body.days, 'days', details);
   const exercises = validateExercisesArray(body.exercises, details);
 
@@ -64,6 +67,7 @@ export function validateCreateRoutine(body) {
     template_id: body.template_id ?? null,
     name,
     goal: body.goal,
+    level: body.level ?? null,
     days: body.days,
     exercises,
   };
@@ -92,6 +96,10 @@ export function validateUpdateRoutine(body) {
     if (!ROUTINE_GOALS.includes(body.goal)) {
       details.push({ field: 'goal', message: `goal debe ser uno de: ${ROUTINE_GOALS.join(', ')}` });
     } else out.goal = body.goal;
+  }
+  if (body.level !== undefined) {
+    if (!isLevel(body.level)) details.push(LEVEL_ERROR);
+    else out.level = body.level;
   }
   if (body.days !== undefined) {
     if (validateDays(body.days, 'days', details)) out.days = body.days;

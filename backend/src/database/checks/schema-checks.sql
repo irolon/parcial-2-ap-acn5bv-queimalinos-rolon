@@ -145,7 +145,8 @@ where oid = to_regclass('public.student_last_session')
 
 union all
 select 'falta la columna invitations.' || c
-from (values ('student_gym_equipment'), ('student_injuries'), ('student_level')) v (c)
+from (values ('student_gym_equipment'), ('student_injuries'), ('student_level'),
+  ('template_id'), ('routine_days')) v (c)
 where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = 'invitations' and column_name = v.c
@@ -165,4 +166,17 @@ union all
 select 'exercise_progress debería devolver max_kg null en peso corporal (falta 2026-11-02-progress-bodyweight.sql)'
 from pg_proc
 where oid = to_regprocedure('public.exercise_progress(uuid, uuid, date, date)')
-  and prosrc not like '%nullif(max(ss.actual_kg), 0)%';
+  and prosrc not like '%nullif(max(ss.actual_kg), 0)%'
+
+union all
+select 'falta la columna routines.level (falta 2026-11-09-routine-level-initial-template.sql)'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'routines' and column_name = 'level'
+)
+
+union all
+select 'notifications.type debería aceptar initial_routine_failed (falta 2026-11-09-routine-level-initial-template.sql)'
+from pg_constraint
+where conname = 'notifications_type_check'
+  and pg_get_constraintdef(oid) not like '%initial_routine_failed%';

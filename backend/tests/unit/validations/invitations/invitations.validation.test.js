@@ -62,3 +62,50 @@ describe('invitations.validation — contexto para la IA (opcional)', () => {
   it('rechaza gym_equipment que no es lista', () => invalid({ gym_equipment: 'barbell' }));
   it('rechaza injuries de más de 1000 caracteres', () => invalid({ injuries: 'x'.repeat(1001) }));
 });
+
+describe('invitations.validation — plantilla inicial (opcional)', () => {
+  const TPL = '3f1c2b9a-1d2e-4f5a-8b7c-9d0e1f2a3b4c';
+  const fields = (body) => {
+    try {
+      validateCreateInvitation({ ...BASE, ...body });
+    } catch (err) {
+      return err.details.map((d) => d.field);
+    }
+    return [];
+  };
+
+  it('sin plantilla, template_id y routine_days quedan en null', () => {
+    expect(validateCreateInvitation(BASE)).toMatchObject({ template_id: null, routine_days: null });
+    expect(validateCreateInvitation({ ...BASE, template_id: null, routine_days: null })).toMatchObject({
+      template_id: null,
+      routine_days: null,
+    });
+  });
+
+  it('con plantilla y días los devuelve', () => {
+    const days = ['monday', 'friday'];
+    expect(validateCreateInvitation({ ...BASE, template_id: TPL, routine_days: days })).toMatchObject({
+      template_id: TPL,
+      routine_days: days,
+    });
+  });
+
+  it('plantilla sin días (ausentes o null) es 400 en routine_days', () => {
+    expect(fields({ template_id: TPL })).toEqual(['routine_days']);
+    expect(fields({ template_id: TPL, routine_days: null })).toEqual(['routine_days']);
+  });
+
+  it('template_id con formato inválido es 400 en template_id', () => {
+    expect(fields({ template_id: 'no-uuid', routine_days: ['monday'] })).toEqual(['template_id']);
+  });
+
+  it('días sin plantilla son 400 en routine_days', () => {
+    expect(fields({ routine_days: ['monday'] })).toEqual(['routine_days']);
+  });
+
+  it('días vacíos, repetidos o inválidos son 400 en routine_days', () => {
+    for (const routine_days of [[], ['monday', 'monday'], ['lunes'], 'monday']) {
+      expect(fields({ template_id: TPL, routine_days })).toEqual(['routine_days']);
+    }
+  });
+});
