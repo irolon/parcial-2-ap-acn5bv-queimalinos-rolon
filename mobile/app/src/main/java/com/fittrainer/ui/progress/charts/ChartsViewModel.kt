@@ -10,6 +10,7 @@ import com.fittrainer.data.progress.ChartRange
 import com.fittrainer.data.progress.DEFAULT_RANGE
 import com.fittrainer.data.progress.ProgressRepository
 import com.fittrainer.data.progress.TrainedExercises
+import com.fittrainer.data.progress.defaultExerciseId
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.ui.progress.charts.ChartsKeys.BODY_FIELD
@@ -73,9 +74,9 @@ class ChartsViewModel @Inject constructor(
         .flatMapLatest { repository.observeTrainedExercises(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** El elegido; si no existe (nunca eligió o el 404 lo sacó de la lista), el primero que quede. */
+    /** El elegido; si no existe (nunca eligió o el 404 lo sacó de la lista), el de [defaultExerciseId]. */
     private val selectedId: StateFlow<String?> = combine(exercises, savedExercise) { list, saved ->
-        list?.items.orEmpty().let { l -> l.firstOrNull { it.exerciseId == saved }?.exerciseId ?: l.firstOrNull()?.exerciseId }
+        list?.items.orEmpty().let { l -> l.firstOrNull { it.exerciseId == saved }?.exerciseId ?: defaultExerciseId(l) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
@@ -168,7 +169,7 @@ class ChartsViewModel @Inject constructor(
 
     private fun resolveExercise(): String? {
         val list = exercises.value?.items.orEmpty()
-        return list.firstOrNull { it.exerciseId == savedState.get<String?>(EXERCISE_ID) }?.exerciseId ?: list.firstOrNull()?.exerciseId
+        return list.firstOrNull { it.exerciseId == savedState.get<String?>(EXERCISE_ID) }?.exerciseId ?: defaultExerciseId(list)
     }
 
     /** Refresca lo que se está viendo; en Cargas, la lista del desplegable y el ejercicio elegido. */

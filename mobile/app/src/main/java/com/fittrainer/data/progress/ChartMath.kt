@@ -3,9 +3,18 @@ package com.fittrainer.data.progress
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
 import com.fittrainer.data.db.progress.ProgressExerciseMetaEntity
 import com.fittrainer.data.db.progress.ProgressExercisePointEntity
+import com.fittrainer.data.db.progress.TrainedExercise
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+
+/**
+ * Ejercicio que viene elegido en Cargas ([items] ya ordenados del más reciente al más viejo): el más reciente que
+ * tiene curva (2 días o más); si ninguno tiene, el más reciente. Antes era siempre el más reciente y, con un solo
+ * día, la pantalla arrancaba sin gráfico aunque hubiera otro con curva (Igna, 11/11).
+ */
+fun defaultExerciseId(items: List<TrainedExercise>): String? =
+    (items.firstOrNull { it.days >= 2 } ?: items.firstOrNull())?.exerciseId
 
 fun availableMetrics(points: List<ProgressExercisePointEntity>): List<ChartMetric> {
     val metrics = buildList {
