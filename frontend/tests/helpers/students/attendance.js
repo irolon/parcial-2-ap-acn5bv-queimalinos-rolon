@@ -3,7 +3,7 @@ import { sessionsPage } from '../sessions/sessions';
 import { errorResponse, jsonResponse, stubFetch } from '../shared/fetchMock';
 
 /** Respuesta de `GET /students/:id/attendance` (sin `days`, que la web no usa). */
-export const ATTENDANCE = { month: '2026-11', sessions: 6, assigned_days: 9, prs: 2, days: [] };
+export const ATTENDANCE = { month: '2026-11', sessions: 6, assigned_days: 9, has_plan: true, prs: 2, days: [] };
 
 const ATTENDANCE_PATH = /^\/students\/[^/]+\/attendance(\?|$)/;
 

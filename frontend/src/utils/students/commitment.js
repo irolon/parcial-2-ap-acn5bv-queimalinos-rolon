@@ -23,6 +23,12 @@ export const monthName = (month) => MONTH_FORMAT.format(new Date(`${month}-15T12
 export const formatRpe = (n) => RPE_FORMAT.format(n);
 
 /**
+ * Texto de "Sesiones del mes" cuando no hay días planificados hasta hoy: con rutina (`has_plan`) es que todavía no
+ * llegó ninguno de sus días (por ejemplo, recién dado de alta), como la fila de adherencia; sin rutina, no hay plan.
+ */
+export const unplannedContext = (attendance) => (attendance.has_plan ? 'Sin días todavía' : 'Sin plan este mes');
+
+/**
  * RPE promedio, a 1 decimal, de las sesiones terminadas del mes (por `started_at`, en hora argentina) que lo cargaron:
  * `{ average, count }`, o `null` si no hay ninguna.
  */
