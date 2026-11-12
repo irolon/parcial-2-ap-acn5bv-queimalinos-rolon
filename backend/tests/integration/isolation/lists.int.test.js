@@ -17,7 +17,7 @@ const TRAINER_LISTS = [
   '/messages/conversations',
   '/notifications',
 ];
-const STUDENT_LISTS = ['/challenges', '/routines/mine', '/notifications', '/messages/unread-count'];
+const STUDENT_LISTS = ['/challenges', '/routines/mine', '/notifications', '/messages/unread-count', '/chat/today', '/chat/history'];
 
 // Control positivo: cada listado trae lo de B (si viniera vacío, el «nada de A» pasaría igual).
 // [quién, path, rol, ids del body, id propio de B]

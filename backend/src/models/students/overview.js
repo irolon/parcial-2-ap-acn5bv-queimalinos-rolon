@@ -1,12 +1,13 @@
 /**
  * Resumen del Inicio del entrenador (GET /students/overview). Funciones puras: reciben los alumnos
  * activos, sus días asignados, sus sesiones terminadas de los últimos 15 días y las últimas 10, y
- * arman KPIs, "requieren atención", actividad reciente y las listas de los filtros de la app. Fechas en hora argentina.
+ * arman KPIs, "requieren atención", actividad reciente, sesiones por día y las listas de los filtros de la app. Fechas en hora argentina.
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d } from './adherence.js';
 import { activityStatus } from './activity.js';
+import { dailySessions } from './overview-daily.js';
 import { feedbackList, riskList, studentsList, todayList } from './overview-lists.js';
 
 export const ATTENTION_LIMIT = 10;
@@ -46,7 +47,7 @@ function attention(risk, feedback) {
 /**
  * students: activos con { id, name, created_at, last_session_at }. routineDays: Map id → días.
  * daySince (opcional): Map id → (Map día de la semana → desde qué fecha vale), de scheduleOf.
- * sessions: terminadas desde hoy-14, con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
+ * sessions: terminadas que empezaron o terminaron desde hoy-14, con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
  * recent: las últimas terminadas (ya ordenadas y con tope), con la misma forma.
  */
 export function buildOverview({ students, routineDays, daySince = new Map(), sessions, recent, today }) {
@@ -88,5 +89,6 @@ export function buildOverview({ students, routineDays, daySince = new Map(), ses
       feedback_pending: feedback,
       students: studentsList(students, routineDays, datesByStudent, today, daySince),
     },
+    daily: dailySessions(sessions, today),
   };
 }

@@ -13,6 +13,7 @@ import {
   CHAT_INVALID_MESSAGE,
   chatDayBounds,
   remainingToday,
+  toChatMessage,
 } from '../../models/chat/chat-message.model.js';
 
 const N8N_OPTIONS = {
@@ -34,12 +35,16 @@ function findToday(studentId, now) {
 // sin esto, dos envíos a la vez (dos pestañas, web y celular) con 19 pasarían los dos y quedarían 21.
 const inFlight = new Set();
 
-/** El par a guardar, los dos con el instante de la consulta: así cuentan en el mismo día que se leyó. */
-function exchangeRows(studentId, sessionId, message, reply, now) {
-  const base = { student_id: studentId, session_id: sessionId, created_at: now.toISOString() };
+/**
+ * El par a guardar, los dos con el instante de la consulta (así cuentan en el mismo día que se leyó) y con el
+ * ejercicio sobre el que se preguntó (o null): "Aplicar" en la web compara contra él. La respuesta guarda las
+ * sugerencias ya validadas.
+ */
+function exchangeRows({ studentId, sessionId, exerciseId, message, reply, now }) {
+  const base = { student_id: studentId, session_id: sessionId, exercise_id: exerciseId, created_at: now.toISOString() };
   return [
-    { ...base, role: 'user', content: message },
-    { ...base, role: 'assistant', content: reply },
+    { ...base, role: 'user', content: message, suggestions: [] },
+    { ...base, role: 'assistant', content: reply.response, suggestions: reply.suggestions },
   ];
 }
 
@@ -59,7 +64,8 @@ async function answer(studentId, body, now) {
   const raw = await postToN8n('N8N_STUDENT_AI_WEBHOOK_URL', { message: body.message, ...context, history }, N8N_OPTIONS);
   const reply = validateChatResponse(raw, context.alternatives);
 
-  const rows = await messagesRepository.insertExchange(exchangeRows(studentId, sessionId, body.message, reply.response, now));
+  const exchange = { studentId, sessionId, exerciseId: exercise?.id ?? null, message: body.message, reply, now };
+  const rows = await messagesRepository.insertExchange(exchangeRows(exchange));
   const saved = rows?.find((r) => r.role === 'assistant');
   if (!saved) throw Errors.internal('No se pudo guardar la respuesta del asistente');
   return {
@@ -88,11 +94,11 @@ export async function sendMessage(studentId, body, now = new Date()) {
   }
 }
 
-/** GET /chat/today: la conversación del día (para recuperarla al recargar) y las consultas que quedan. */
+/** GET /chat/today: la conversación del día con su contexto (para recuperarla al recargar) y las consultas que quedan. */
 export async function getToday(studentId, now = new Date()) {
   const today = await findToday(studentId, now);
   return {
-    messages: today.map(({ id, role, content, created_at }) => ({ id, role, content, created_at })),
+    messages: today.map(toChatMessage),
     remaining_today: remainingToday(usedToday(today)),
   };
 }

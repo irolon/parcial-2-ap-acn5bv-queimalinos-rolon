@@ -21,6 +21,15 @@ describe('draft', () => {
     expect(JSON.parse(raw).exercises[0]).toMatchObject({ exercise_id: EX_A, sets: '3' });
   });
 
+  it('guarda la marca del bloque de la IA del que salió; sin marca o con otra forma vuelve null', () => {
+    const marked = stateWith([EX_A], { aiBlock: { generationId: 'g-1', index: 2 } });
+    expect(restoreDraft(serializeDraft(marked), exercisesById).state.aiBlock).toEqual({ generationId: 'g-1', index: 2 });
+    expect(JSON.parse(serializeDraft(stateWith([EX_A])))).not.toHaveProperty('aiBlock');
+    expect(restoreDraft(serializeDraft(stateWith([EX_A])), exercisesById).state.aiBlock).toBeNull();
+    const broken = JSON.stringify({ ...JSON.parse(serializeDraft(stateWith([EX_A]))), aiBlock: { generationId: 'g-1', index: '2' } });
+    expect(restoreDraft(broken, exercisesById).state.aiBlock).toBeNull();
+  });
+
   it('ida y vuelta conserva el contenido con keys nuevas', () => {
     const state = stateWith([EX_A, EX_B], { templateId: 't-1', templateName: 'Base' });
     const { state: restored, missing } = restoreDraft(serializeDraft(state), exercisesById);

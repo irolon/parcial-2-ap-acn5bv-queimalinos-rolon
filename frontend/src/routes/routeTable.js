@@ -6,6 +6,7 @@ import {
   House,
   List,
   MessageSquare,
+  Sparkles,
   Trophy,
   User,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ export const STUDENT_NAV = {
     { path: 'progreso', label: 'Mi progreso', icon: ChartLine, subtitle: 'MEDIDAS Y MARCAS' },
     { path: 'rutinas', label: 'Mis rutinas', icon: List, subtitle: 'TUS PLANES' },
     { path: 'historial', label: 'Historial', icon: Calendar, subtitle: 'SESIONES COMPLETADAS' },
+    { path: 'asistente', label: 'Asistente IA', icon: Sparkles, subtitle: 'CONSULTAS GUARDADAS' },
     { path: 'turnos', label: 'Turnos', title: 'Mis turnos', icon: CalendarClock, subtitle: 'TURNOS CON TU ENTRENADOR' },
     { path: 'mensajes', label: 'Mensajes', icon: MessageSquare, subtitle: 'TU ENTRENADOR', unread: true },
     { path: 'perfil', label: 'Mi perfil', icon: User, subtitle: 'TUS DATOS' },
@@ -77,6 +79,29 @@ export const NEW_ROUTINE = { path: `${ROUTINES_PATH}/nueva` };
 
 /** Link al editor; con `studentId` llega con el alumno preseleccionado. */
 export const newRoutineHref = (studentId) => (studentId ? `${NEW_ROUTINE.path}?alumno=${studentId}` : NEW_ROUTINE.path);
+
+/** Asistente IA del entrenador (fuera del menú): se entra desde la ficha del alumno o desde Rutinas. */
+export const AI_ROUTINE = {
+  path: `${ROUTINES_PATH}/ia`,
+  title: 'Rutina con IA',
+  subtitle: 'RUTINAS › ASISTENTE IA · REVISÁ LA PROPUESTA ANTES DE ASIGNARLA',
+};
+
+/**
+ * Entrada al asistente: abre siempre el formulario (aunque haya una propuesta sin terminar). Con `studentId` llega con
+ * el alumno y sus datos precargados (`?alumno=`); sin alumno, con `?nueva=1`. Sin ninguno de los dos (la vuelta del
+ * editor) se muestra la propuesta guardada.
+ */
+export const aiRoutineHref = (studentId) => `${AI_ROUTINE.path}?${studentId ? `alumno=${studentId}` : 'nueva=1'}`;
+
+/** Link al editor con un bloque de la propuesta (`ia` = generación, `bloque` = índice) y el alumno si hay. */
+export function aiBlockHref({ studentId, generationId, index }) {
+  const params = new URLSearchParams();
+  if (studentId) params.set('alumno', studentId);
+  params.set('ia', generationId);
+  params.set('bloque', String(index));
+  return `${NEW_ROUTINE.path}?${params}`;
+}
 
 // Ficha del alumno: la página fija su propio título con `usePageHeader`.
 export const STUDENT_PROFILE = { path: `${STUDENTS_PATH}/:id` };

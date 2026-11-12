@@ -5,6 +5,7 @@ import { resetAuthStore } from '../../helpers/auth/authStore';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { student } from '../../helpers/students/fixtures';
+import { overview, recentSession } from '../../helpers/students/overview';
 import { daysAgo, stubStudents } from '../../helpers/students/students';
 
 beforeEach(() => {
@@ -19,34 +20,60 @@ afterEach(() => {
 });
 
 const main = () => within(screen.getByRole('main'));
-const stat = (label) => within(main().getByText(label).parentElement);
+const kpi = (label) => within(main().getByText(label).closest('[data-kpi]'));
 
 describe('DashboardPage', () => {
-  it('muestra los indicadores y la alerta del alumno inactivo', async () => {
+  it('muestra los indicadores del resumen, la actividad reciente y la alerta del alumno inactivo', async () => {
     const inactive = student({ name: 'Marcos Díaz', last_session_at: daysAgo(10) });
     stubStudents({
-      list: [
-        student({ name: 'Ana Paz', last_session_at: daysAgo(1) }),
-        inactive,
-        student({ name: 'Nico Nuevo', created_at: daysAgo(1) }),
-      ],
+      list: [student({ name: 'Ana Paz', last_session_at: daysAgo(1) }), inactive],
+      overview: overview({
+        active_students: { count: 2, new_7d: 1 },
+        sessions_today: { done: 1, expected: 2 },
+        adherence_7d: { pct: 75, delta: -5 },
+        at_risk: 1,
+        recent: [recentSession({ student_id: 'st-ana', name: 'Ana Paz', routine_name: 'Pierna', rpe: 7 })],
+      }),
     });
     renderRoute('/pt/dashboard');
     await screen.findByText('Alertas de inactividad');
     expect(screen.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
-    expect(stat('Alumnos activos').getByText('3')).toBeInTheDocument();
-    expect(stat('Inactivos > 7 días').getByText('1')).toBeInTheDocument();
-    expect(stat('Nunca entrenaron').getByText('1')).toBeInTheDocument();
+    await main().findByText('Alumnos activos');
+    expect(kpi('Alumnos activos').getByText('2')).toBeInTheDocument();
+    expect(kpi('Alumnos activos').getByText('+1 en los últimos 7 días')).toBeInTheDocument();
+    expect(kpi('Sesiones hoy').getByText('/2')).toBeInTheDocument();
+    expect(kpi('Adherencia 7 días').getByText('−5% vs. semana anterior')).toBeInTheDocument();
+    expect(kpi('En riesgo').getByText('1')).toBeInTheDocument();
+    expect(main().getByText('Actividad · 7 días')).toBeInTheDocument();
+    expect(main().getByText('Ninguna sesión terminada en los últimos 7 días')).toBeInTheDocument();
+    expect(main().getByRole('link', { name: /Ana Paz.*Pierna/ })).toHaveAttribute('href', '/pt/alumnos/st-ana');
     expect(main().getByRole('link', { name: /Marcos Díaz/ })).toHaveAttribute(
       'href',
       `/pt/alumnos/${inactive.id}`,
     );
     expect(main().getByText('Hace 10 días')).toBeInTheDocument();
-    expect(main().queryByText('Ana Paz')).not.toBeInTheDocument();
     expect(main().getByRole('link', { name: 'Ver todos' })).toHaveAttribute(
       'href',
       '/pt/alumnos?estado=inactivos',
     );
+  });
+
+  it('si falla el resumen muestra un solo error con Reintentar, sin tapar las alertas', async () => {
+    let fail = true;
+    stubStudents({
+      list: [student({ name: 'Marcos Díaz', last_session_at: daysAgo(10) })],
+      overview: () => (fail ? 500 : overview({ active_students: { count: 1, new_7d: 0 } })),
+    });
+    renderRoute('/pt/dashboard');
+    expect(await main().findByRole('alert')).toHaveTextContent('No pudimos cargar el resumen.');
+    expect(main().getByRole('link', { name: /Marcos Díaz/ })).toBeInTheDocument();
+    expect(main().queryByText('Actividad reciente')).not.toBeInTheDocument();
+    expect(main().getAllByRole('button', { name: 'Reintentar' })).toHaveLength(1);
+    fail = false;
+    await userEvent.click(main().getByRole('button', { name: 'Reintentar' }));
+    await main().findByText('Alumnos activos');
+    expect(kpi('Alumnos activos').getByText('1')).toBeInTheDocument();
+    expect(main().queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('lista hasta 5 inactivos: más días sin entrenar primero, contando desde el alta si nunca entrenó', async () => {

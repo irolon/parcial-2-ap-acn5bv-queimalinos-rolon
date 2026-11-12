@@ -33,7 +33,8 @@ from (values
   ('sessions',      'routine_id',          'n'),
   ('session_sets',  'session_id',          'c'),
   ('session_sets',  'routine_exercise_id', 'n'),
-  ('chat_messages', 'session_id',          'n')
+  ('chat_messages', 'session_id',          'n'),
+  ('chat_messages', 'exercise_id',         'n')
 ) v (tbl, col, expected)
 where not exists (
   select 1
@@ -104,6 +105,14 @@ where not exists (
   select 1 from information_schema.columns
   where table_schema = 'public' and table_name = 'ai_routine_generations'
     and column_name = 'routine_template_ids' and is_nullable = 'NO'
+)
+
+union all
+select 'falta la columna chat_messages.' || c || ' (2026-11/2026-11-09-chat-history.sql)'
+from (values ('exercise_id'), ('suggestions')) v (c)
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'chat_messages' and column_name = v.c
 )
 
 union all

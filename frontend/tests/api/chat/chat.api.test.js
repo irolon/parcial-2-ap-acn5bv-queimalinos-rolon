@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CHAT_TIMEOUT_MS, getChatToday, sendChat } from '@/api/chat/chat.api';
+import { CHAT_TIMEOUT_MS, getChatHistory, getChatToday, sendChat } from '@/api/chat/chat.api';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 
 afterEach(() => {
@@ -14,6 +14,14 @@ describe('chat.api', () => {
     const fetchMock = stubFetch(async () => jsonResponse(200, { data: day }));
     expect(await getChatToday()).toEqual(day);
     expect(calls(fetchMock)[0][0]).toBe('/chat/today');
+  });
+
+  it('getChatHistory: GET /chat/history con before y days si vienen → { days, next_before }', async () => {
+    const data = { days: [], next_before: null };
+    const fetchMock = stubFetch(async () => jsonResponse(200, { data }));
+    expect(await getChatHistory()).toEqual(data);
+    await getChatHistory({ before: '2026-11-03', days: 7 });
+    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/chat/history', '/chat/history?before=2026-11-03&days=7']);
   });
 
   it('sendChat: POST /chat con message, session_id y current_exercise_id; devuelve data', async () => {

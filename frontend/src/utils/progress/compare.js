@@ -1,5 +1,5 @@
 import { dateToTime } from './format';
-import { MIN_POINTS, hasKg } from './metrics';
+import { METRICS, MIN_POINTS, hasKg } from './metrics';
 
 /**
  * Cuántas líneas tiene el gráfico comparado y cómo se ve cada una: además del color, el trazo (`dash`, vacío =
@@ -10,6 +10,11 @@ export const SLOT_STYLES = [
   { color: 'var(--color-cool)', dash: '7 4', shape: 'square' },
   { color: 'var(--color-hot)', dash: '2 3', shape: 'diamond' },
 ];
+
+/** Métricas que se pueden comparar (sin repeticiones: la comparada no dibuja peso corporal). */
+export const COMPARE_METRICS = METRICS.filter((m) => m.value !== 'reps');
+
+export const DEFAULT_COMPARE_METRIC = 'e1rm_kg';
 
 const DAY = 86_400_000;
 
@@ -30,28 +35,34 @@ export function compareCandidates(exercises, { from } = {}) {
   return exercises.filter((e) => e.days >= MIN_POINTS && trainedSince(e, from)).sort(byDaysThenName);
 }
 
-/** 1RM estimado si algún punto lo tiene (compara series con distintas reps); si no, el peso máximo. */
-export const compareMetric = (points) => (points.some((p) => hasValue(p.e1rm_kg)) ? 'e1rm_kg' : 'max_kg');
+/**
+ * Clave que dibuja un ejercicio con la métrica elegida (`wanted`): con 1RM estimado, el 1RM si algún punto lo tiene
+ * (compara series con distintas reps) y si no el peso máximo; con peso máximo o volumen, esa.
+ */
+export const compareMetric = (points, wanted = DEFAULT_COMPARE_METRIC) => {
+  if (wanted !== 'e1rm_kg') return wanted;
+  return points.some((p) => hasValue(p.e1rm_kg)) ? 'e1rm_kg' : 'max_kg';
+};
 
-const validCount = (points) => {
-  const metric = compareMetric(points);
+const validCount = (points, wanted) => {
+  const metric = compareMetric(points, wanted);
   return points.filter((p) => hasValue(p[metric])).length;
 };
 
-/** Tiene kg pero menos de MIN_POINTS puntos válidos: no alcanza para dibujar su línea. */
-export const tooFewPoints = (points) => hasKg(points) && validCount(points) < MIN_POINTS;
+/** Tiene kg pero menos de MIN_POINTS puntos válidos de la métrica: no alcanza para dibujar su línea. */
+export const tooFewPoints = (points, wanted) => hasKg(points) && validCount(points, wanted) < MIN_POINTS;
 
 /** Hay puntos pero ninguno con kg: peso corporal (sin puntos no se sabe). */
 export const isBodyweight = (points) => points.length > 0 && !hasKg(points);
 
 /**
- * Las `n` curvas (`{ id, name, days, points }`) con más puntos válidos en el rango, sin las de peso corporal
- * ni las de menos de MIN_POINTS puntos. Desempata por días y después por nombre.
+ * Las `n` curvas (`{ id, name, days, points }`) con más puntos válidos de la métrica `wanted` en el rango, sin las de
+ * peso corporal ni las de menos de MIN_POINTS puntos. Desempata por días y después por nombre.
  */
-export function pickTop(curves, n = SLOT_STYLES.length) {
+export function pickTop(curves, n = SLOT_STYLES.length, wanted = DEFAULT_COMPARE_METRIC) {
   return curves
     .filter((c) => hasKg(c.points))
-    .map((c) => ({ curve: c, count: validCount(c.points) }))
+    .map((c) => ({ curve: c, count: validCount(c.points, wanted) }))
     .filter((c) => c.count >= MIN_POINTS)
     .sort((a, b) => b.count - a.count || byDaysThenName(a.curve, b.curve))
     .slice(0, n)

@@ -1,7 +1,8 @@
 import { sortDays } from '@/utils/students/routineDays';
 
+/** `aiBlock`: `{ generationId, index }` del bloque de la propuesta de la IA del que salió lo que hay, o `null`. */
 export const EMPTY_ROUTINE = Object.freeze({
-  name: '', goal: '', days: [], templateId: null, templateName: null, exercises: [],
+  name: '', goal: '', days: [], templateId: null, templateName: null, exercises: [], aiBlock: null,
 });
 
 const DEFAULTS = { sets: '3', reps: '10', rest_seconds: '90', suggested_kg: '', tempo: '', notes: '' };

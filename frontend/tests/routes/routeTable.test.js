@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AI_ROUTINE,
   MY_APPOINTMENTS_PATH,
   MY_PROFILE_PATH,
   MY_ROUTINES_PATH,
@@ -12,6 +13,8 @@ import {
   STUDENT_ROUTINE,
   TRAINER_NAV,
   WORKOUT_PATH,
+  aiBlockHref,
+  aiRoutineHref,
   homeFor,
   newRoutineHref,
   profileHref,
@@ -25,12 +28,12 @@ describe('tabla de rutas', () => {
     ]);
   });
 
-  it('tiene los ítems del alumno en el orden del prototipo, con Turnos y sin el asistente', () => {
+  it('tiene los ítems del alumno en el orden del prototipo, con el asistente después de Historial y después Turnos', () => {
     expect(STUDENT_NAV.items.map((i) => i.label)).toEqual([
-      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Turnos', 'Mensajes', 'Mi perfil',
+      'Hoy', 'Mi progreso', 'Mis rutinas', 'Historial', 'Asistente IA', 'Turnos', 'Mensajes', 'Mi perfil',
     ]);
     expect(STUDENT_NAV.items.map((i) => i.path)).toEqual([
-      'hoy', 'progreso', 'rutinas', 'historial', 'turnos', 'mensajes', 'perfil',
+      'hoy', 'progreso', 'rutinas', 'historial', 'asistente', 'turnos', 'mensajes', 'perfil',
     ]);
     expect(STUDENT_NAV.items.find((i) => i.path === 'turnos')).toMatchObject({
       title: 'Mis turnos',
@@ -65,6 +68,14 @@ describe('tabla de rutas', () => {
     expect(NEW_ROUTINE.path).toBe('/pt/rutinas/nueva');
     expect(newRoutineHref()).toBe('/pt/rutinas/nueva');
     expect(newRoutineHref('st-1')).toBe('/pt/rutinas/nueva?alumno=st-1');
+  });
+
+  it('arma los links del asistente IA y de un bloque en el editor', () => {
+    expect(AI_ROUTINE.path).toBe('/pt/rutinas/ia');
+    expect(aiRoutineHref()).toBe('/pt/rutinas/ia?nueva=1');
+    expect(aiRoutineHref('st-1')).toBe('/pt/rutinas/ia?alumno=st-1');
+    expect(aiBlockHref({ studentId: 'st-1', generationId: 'g-1', index: 2 })).toBe('/pt/rutinas/nueva?alumno=st-1&ia=g-1&bloque=2');
+    expect(aiBlockHref({ studentId: null, generationId: 'g-1', index: 0 })).toBe('/pt/rutinas/nueva?ia=g-1&bloque=0');
   });
 
   it('da la home de cada rol', () => {

@@ -25,14 +25,15 @@ export function sessionBody(state) {
 }
 
 /**
- * Una serie de POST /sessions/:id/sets como SessionSetDto: sin sustitución en la web y peso corporal = 0 kg.
+ * Una serie de POST /sessions/:id/sets como SessionSetDto: `original_exercise_id` es el planificado si se reemplazó
+ * ("Aplicar" del asistente) o null, y peso corporal = 0 kg.
  * `rest_seconds` es el descanso real después de la serie; null si no hay (última serie, Terminar con el descanso
  * abierto, ejercicio sin descanso o sesión guardada antes de que existiera el campo).
  */
 export const setBody = (set) => ({
   id: set.id,
   exercise_id: set.exerciseId,
-  original_exercise_id: null,
+  original_exercise_id: set.originalExerciseId ?? null,
   routine_exercise_id: set.routineExerciseId ?? null,
   set_number: set.setNumber,
   actual_reps: set.reps,

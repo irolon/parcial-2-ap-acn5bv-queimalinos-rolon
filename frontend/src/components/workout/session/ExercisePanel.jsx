@@ -35,14 +35,15 @@ const initialFields = (workout) => {
 
 /**
  * El ejercicio a la vista: su nombre, la serie que toca, los campos de peso y reps (con sus botones de paso) y
- * Registrar serie. Los campos se precargan con `prefill` cada vez que cambia el ejercicio o las series registradas.
+ * Registrar serie. Los campos se precargan con `prefill` cada vez que cambia el ejercicio (de lugar o porque se lo
+ * reemplazó con "Aplicar") o las series registradas.
  * `onRegister(kg, reps)` devuelve la sesión nueva (o la misma si el motor no registró). `registerRef` es el ref del
  * botón Registrar serie: la página lo usa para llevar el foco ahí cuando el botón que lo tenía desaparece.
  */
 export default function ExercisePanel({ workout, onRegister, registerRef }) {
   const exercise = workout.exercises[workout.cursor];
   const done = exerciseSets(workout).length;
-  const prefillKey = `${workout.cursor}:${done}`;
+  const prefillKey = `${workout.cursor}:${exercise.exerciseId}:${done}`;
   const [fields, setFields] = useState(() => initialFields(workout));
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
@@ -74,7 +75,7 @@ export default function ExercisePanel({ workout, onRegister, registerRef }) {
     }
     const set = next.sets.at(-1);
     setNotice({
-      key: `${workout.cursor}:${done + 1}`, // el prefillKey con el que queda el panel después de registrar
+      key: `${workout.cursor}:${exercise.exerciseId}:${done + 1}`, // el prefillKey con el que queda el panel después de registrar
       text: `Serie ${set.setNumber} registrada · ${kgLabel(set.kg)} × ${set.reps}`,
     });
   }
@@ -87,6 +88,9 @@ export default function ExercisePanel({ workout, onRegister, registerRef }) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-2xl font-bold tracking-[-1px] text-bone0 sm:text-[26px]">{exercise.name}</h2>
+          {exercise.originalName && (
+            <p className="mt-1 font-mono text-[10px] tracking-[0.5px] text-accentText">{`EN LUGAR DE ${exercise.originalName.toUpperCase()}`}</p>
+          )}
           <p className="mt-1 font-mono text-[10px] tracking-[0.5px] text-ink6">{goal(exercise)}</p>
         </div>
       </div>
