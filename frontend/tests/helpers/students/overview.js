@@ -4,8 +4,8 @@ import { reply } from '../shared/fetchMock';
 /** `YYYY-MM-DD` argentino de hace `n` días. */
 const argentinaDay = (n, now = Date.now()) => arParts(now - n * DAY_MS).date;
 
-/** Las 14 filas de `daily` (de hoy − 13 a hoy); `counts` son las cantidades en ese orden (por defecto, todo en 0). */
-export function daily(counts = Array(14).fill(0), now = Date.now()) {
+/** Las 30 filas de `daily` (de hoy − 29 a hoy); `counts` son las cantidades en ese orden (por defecto, todo en 0). */
+export function daily(counts = Array(30).fill(0), now = Date.now()) {
   return counts.map((count, i) => ({ date: argentinaDay(counts.length - 1 - i, now), count }));
 }
 

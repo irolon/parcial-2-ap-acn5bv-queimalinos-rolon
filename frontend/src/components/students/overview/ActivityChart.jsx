@@ -4,9 +4,11 @@ import { AXIS, GRID, TooltipBox } from '@/components/progress/chartStyle';
 import LoadingState from '@/components/shared/states/LoadingState';
 import Card from '@/components/shared/ui/Card';
 import { plural } from '@/utils/shared/plural';
-import { dayInitial, dayTitle, lastDays } from '@/utils/students/overviewFormat';
+import { dayInitial, dayNumber, dayTitle, lastDays } from '@/utils/students/overviewFormat';
 
-const PERIODS = [7, 14];
+const PERIODS = [7, 14, 30];
+/** Período largo: el eje muestra el número de día cada 5 barras en lugar de la inicial de todas. */
+const LONG = 30;
 
 function DayTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -40,7 +42,12 @@ function Bars({ rows, days }) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid {...GRID} />
-          <XAxis dataKey="date" tickFormatter={dayInitial} interval={0} {...AXIS} />
+          <XAxis
+            dataKey="date"
+            tickFormatter={days === LONG ? dayNumber : dayInitial}
+            interval={days === LONG ? 4 : 0}
+            {...AXIS}
+          />
           <YAxis allowDecimals={false} width={28} {...AXIS} />
           <Tooltip content={<DayTooltip />} cursor={{ fill: 'var(--color-ink3)', opacity: 0.4 }} />
           <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -54,7 +61,7 @@ function Bars({ rows, days }) {
   );
 }
 
-/** Sesiones terminadas por día (la última barra es hoy), con selector de 7 o 14 días. Sin `daily`, cargando. */
+/** Sesiones terminadas por día (la última barra es hoy), con selector de 7, 14 o 30 días. Sin `daily`, cargando. */
 export default function ActivityChart({ daily }) {
   const [days, setDays] = useState(7);
   const rows = lastDays(daily, days);
