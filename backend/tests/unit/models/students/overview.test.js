@@ -21,10 +21,22 @@ describe('models/students/overview', () => {
       at_risk: 0,
       attention: [],
       recent: [],
+      in_session: [],
       lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
       daily: expect.any(Array),
     });
     expect(r.daily.every((d) => d.count === 0)).toBe(true);
+  });
+
+  it('in_session: las abiertas de los alumnos activos, una por alumno, con su nombre', () => {
+    const open = [
+      { id: 'o-a', student_id: 'a', started_at: at('11-05', 20), routine_name: 'Push' },
+      { id: 'o-viejo', student_id: 'a', started_at: at('11-05', 18), routine_name: null },
+    ];
+    const r = buildOverview({ ...base, students: [student('a')], open });
+    expect(r.in_session).toEqual([
+      { student_id: 'a', name: 'Alumno a', session_id: 'o-a', routine_name: 'Push', started_at: at('11-05', 20) },
+    ]);
   });
 
   it('alumnos activos y altas de los últimos 7 días', () => {

@@ -1,4 +1,4 @@
-import { feedbackList, riskList, studentsList, todayList } from '../../../../src/models/students/overview-lists.js';
+import { feedbackList, inSessionList, riskList, studentsList, todayList } from '../../../../src/models/students/overview-lists.js';
 
 // Hoy: jueves 2026-11-05 (Argentina).
 const TODAY = '2026-11-05';
@@ -97,5 +97,24 @@ describe('models/students/overview-lists', () => {
       new Map([['v', new Map(mwf.map((d) => [d, '2026-11-01']))]]),
     );
     expect(r.map((x) => x.adherence_pct)).toEqual([100, 50]);
+  });
+
+  describe('inSessionList', () => {
+    it('una por alumno (la más nueva), con nombre y rutina, de la más nueva a la más vieja', () => {
+      const names = new Map([['a', 'Ana'], ['b', 'Beto']]);
+      const open = [
+        { id: 'o-b', student_id: 'b', started_at: at('11-05', 20), routine_name: null },
+        { id: 'o-a2', student_id: 'a', started_at: at('11-05', 19), routine_name: 'Pierna' },
+        { id: 'o-a1', student_id: 'a', started_at: at('11-05', 18), routine_name: 'Push' },
+      ];
+      expect(inSessionList(open, names)).toEqual([
+        { student_id: 'b', name: 'Beto', session_id: 'o-b', routine_name: null, started_at: at('11-05', 20) },
+        { student_id: 'a', name: 'Ana', session_id: 'o-a2', routine_name: 'Pierna', started_at: at('11-05', 19) },
+      ]);
+    });
+
+    it('sin abiertas: []', () => {
+      expect(inSessionList([], new Map())).toEqual([]);
+    });
   });
 });

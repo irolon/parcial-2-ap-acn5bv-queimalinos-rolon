@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { scheduleOf } from '../../../../../src/models/students/adherence.js';
 import {
+  mockOpenSessionsRepo,
   mockStudentsRepo,
   service,
 } from '../../../../helpers/students/students-service.setup.js';
@@ -13,6 +14,7 @@ describe('students.service — list', () => {
     mockStudentsRepo.findStreaks.mockResolvedValue([]);
     mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(new Map());
     mockStudentsRepo.findFinishedSessionDates.mockResolvedValue(new Map());
+    mockOpenSessionsRepo.findOpenSessions.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -158,5 +160,18 @@ describe('students.service — list', () => {
     mockStudentsRepo.findStudentsByTrainer.mockResolvedValue({ data: [{ id: 'a' }], total: 1 });
     const r = await service.list('trainer-1', {});
     expect(r.data[0].streak).toBeNull();
+  });
+
+  it('GX4: open_session con la abierta más nueva de las últimas 4 h, o null', async () => {
+    fakeNow('2026-11-09T21:05:00Z');
+    mockStudentsRepo.findStudentsByTrainer.mockResolvedValue({ data: [{ id: 's1' }, { id: 's2' }], total: 2 });
+    mockOpenSessionsRepo.findOpenSessions.mockResolvedValue([
+      { id: 'nueva', student_id: 's1', started_at: '2026-11-09T21:00:00Z', routine_name: 'Pierna' },
+      { id: 'vieja', student_id: 's1', started_at: '2026-11-09T19:00:00Z', routine_name: null },
+    ]);
+    const r = await service.list('trainer-1', {});
+    expect(mockOpenSessionsRepo.findOpenSessions).toHaveBeenCalledWith(['s1', 's2'], '2026-11-09T17:05:00.000Z');
+    expect(r.data[0].open_session).toEqual({ id: 'nueva', started_at: '2026-11-09T21:00:00Z' });
+    expect(r.data[1].open_session).toBeNull();
   });
 });
