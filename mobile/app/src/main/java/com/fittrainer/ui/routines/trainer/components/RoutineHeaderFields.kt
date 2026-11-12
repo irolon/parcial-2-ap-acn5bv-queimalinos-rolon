@@ -15,11 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.fittrainer.data.invitation.invite.GOALS
+import com.fittrainer.data.invitation.invite.LEVELS
 import com.fittrainer.data.routines.trainer.RoutineField
 import com.fittrainer.data.routines.trainer.RoutineHeaderInput
-import com.fittrainer.data.routines.trainer.WEEK_DAYS
+import com.fittrainer.ui.components.DayChips
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
-import com.fittrainer.ui.routines.trainer.dayChip
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
@@ -56,20 +57,21 @@ fun RoutineHeaderFields(
                 )
             }
         }
-        Label("DÍAS", errors[RoutineField.DAYS])
+        Label("NIVEL", errors[RoutineField.LEVEL])
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            WEEK_DAYS.forEach { day ->
-                val on = day in input.days
+            LEVELS.forEach { lvl ->
                 FilterChip(
-                    selected = on,
-                    onClick = { onChange { it.copy(days = if (on) it.days - day else it.days + day) } },
+                    selected = input.level == lvl,
+                    onClick = { onChange { it.copy(level = if (it.level == lvl) null else lvl) } },
                     enabled = enabled,
-                    label = { Text(dayChip(day)) },
+                    label = { Text(levelLabel(lvl) ?: lvl) },
                     colors = chipColors(),
                     modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
                 )
             }
         }
+        Label("DÍAS", errors[RoutineField.DAYS])
+        DayChips(input.days, enabled) { day -> onChange { it.copy(days = if (day in it.days) it.days - day else it.days + day) } }
     }
 }
 

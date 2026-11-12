@@ -19,8 +19,8 @@ class RoutinesContentTest {
 
     private fun exercise(i: Int) = RoutineExercise("re-$i", "ex-$i", "Ej $i", "chest", null, null, 3, 10, 60, 40.0, null, null)
 
-    private fun routine(id: String, days: Set<java.time.DayOfWeek>, created: String, n: Int = 2, goal: String? = "strength") =
-        Routine(id, "Rutina $id", goal, days, Instant.parse(created), (0 until n).map(::exercise))
+    private fun routine(id: String, days: Set<java.time.DayOfWeek>, created: String, n: Int = 2, goal: String? = "strength", level: String? = null) =
+        Routine(id, "Rutina $id", goal, days, Instant.parse(created), (0 until n).map(::exercise), level = level)
 
     @Test fun `sin sincronizar nunca`() {
         assertEquals(RoutinesContent.NeverSynced, routinesContent(RoutineCache(emptyList(), null), monday))
@@ -42,6 +42,13 @@ class RoutinesContentTest {
         assertEquals("2 ejercicios", cards[0].exercisesText)
         assertNull(cards[1].goal)
         assertEquals("Ganar fuerza", cards[0].goal)
+    }
+
+    @Test fun `la tarjeta suma el nivel al objetivo`() {
+        fun goal(g: String?, l: String?) = (routinesContent(RoutineCache(listOf(routine("a", setOf(MONDAY), "2026-10-01T10:00:00Z", goal = g, level = l)), synced), monday) as RoutinesContent.Routines).cards[0].goal
+        assertEquals("Ganar masa muscular · Intermedio", goal("hypertrophy", "intermediate"))
+        assertEquals("Intermedio", goal(null, "intermediate"))
+        assertNull(goal(null, null))
     }
 
     @Test fun `la marca Hoy va solo en la rutina que muestra Hoy`() {

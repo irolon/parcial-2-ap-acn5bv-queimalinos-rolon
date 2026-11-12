@@ -186,7 +186,7 @@ class RoutineEditorViewModel @Inject constructor(
     }
 
     fun dismissNotice() = local.update { it.copy(notice = null) }
-    fun onOpenSaveAsTemplate() = current()?.routine?.takeIf { uiState.value.canEdit }?.let { saveAsTemplate.open(it.name) }
+    fun onOpenSaveAsTemplate() = current()?.routine?.takeIf { uiState.value.canEdit }?.let { saveAsTemplate.open(it.name, it.level) }
 
     /** Una acción sin hoja (activar/desactivar): busy mientras viaja y aviso si falla. */
     private fun act(block: suspend (String) -> Result<Unit>) {

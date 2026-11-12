@@ -1,6 +1,7 @@
 package com.fittrainer.data.routine
 
 import com.fittrainer.data.api.MineResponse
+import com.fittrainer.data.api.StudentRoutineDto
 import com.fittrainer.data.db.routine.RoutineEntity
 import com.fittrainer.data.db.routine.RoutineExerciseEntity
 import com.fittrainer.data.db.routine.RoutineWithExercises
@@ -9,6 +10,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RoutineMapperTest {
@@ -63,6 +65,21 @@ class RoutineMapperTest {
     @Test fun `rutina sin dias queda con el set vacio`() {
         val row = RoutineWithExercises(RoutineEntity("rt-1", "Push", null, "", 0L), emptyList())
         assertEquals(emptySet<DayOfWeek>(), row.toDomain().days)
+    }
+
+    @Test fun `dto con level llega al dominio`() {
+        val dto = StudentRoutineDto(routineId = "rt-1", name = "Push", level = "advanced")
+        val entity = dto.toEntity()
+        assertEquals("advanced", entity.level)
+        assertEquals("advanced", RoutineWithExercises(entity, emptyList()).toDomain().level)
+    }
+
+    // Backend sin la #104: la clave no llega y no se rompe la deserializacion.
+    @Test fun `dto sin level queda null`() {
+        val dto = json.decodeFromString<StudentRoutineDto>("""{"routine_id":"rt-1","name":"Push"}""")
+        assertNull(dto.level)
+        assertNull(dto.toEntity().level)
+        assertNull(RoutineWithExercises(dto.toEntity(), emptyList()).toDomain().level)
     }
 
     private fun exercise(id: String, order: Int) = RoutineExerciseEntity(

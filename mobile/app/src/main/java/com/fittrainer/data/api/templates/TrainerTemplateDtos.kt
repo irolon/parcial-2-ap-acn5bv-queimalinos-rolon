@@ -1,6 +1,8 @@
 package com.fittrainer.data.api.templates
 
 import com.fittrainer.data.api.ExerciseDto
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -58,9 +60,10 @@ data class InstantiateRequest(
     val days: List<String>,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class FromRoutineRequest(
     @SerialName("routine_id") val routineId: String,
     val name: String,
-    val level: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val level: String? = null,
 )

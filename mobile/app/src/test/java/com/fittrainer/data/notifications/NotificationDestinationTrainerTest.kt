@@ -62,6 +62,14 @@ class NotificationDestinationTrainerTest {
         assertEquals(list, destinationOf("achievement", emptyMap(), Role.TRAINER))
     }
 
+    // Tarea 7: el backend avisa al PT que la rutina inicial de un alumno no se pudo crear. Lleva a su ficha.
+    @Test fun rutinaInicialFallidaAbreLaFichaDelAlumno() {
+        val data = mapOf("student_id" to "st1")
+        assertEquals(NotificationDestination.StudentProfile("st1"), destinationOf("initial_routine_failed", data, Role.TRAINER))
+        assertEquals(NotificationDestination.StudentProfile("st1"), destinationOf("initial_routine_failed", data))
+        assertEquals(list, destinationOf("initial_routine_failed", emptyMap(), Role.TRAINER))
+    }
+
     @Test fun elPushDelEntrenadorSeResuelveSinElRol() {
         val launch = launchFromExtras(full + mapOf("type" to "routine_modified", "notification_id" to "n9"))
         assertEquals(PendingLaunch(NotificationDestination.StudentSession("st1", "se1"), "n9"), launch)

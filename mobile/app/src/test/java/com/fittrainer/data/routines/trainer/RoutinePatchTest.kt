@@ -42,4 +42,16 @@ class RoutinePatchTest {
     @Test fun `activar y desactivar`() {
         assertEquals("""{"active":false}""", routineActivePatch(false).toString())
     }
+
+    @Test fun `el nivel se manda al cambiar y null explicito al quitarlo`() {
+        assertEquals("""{"level":"advanced"}""", headerPatch(before, before.toHeaderInput().copy(level = "advanced"))!!.toString())
+        val withLevel = before.copy(level = "advanced")
+        assertEquals("""{"level":null}""", headerPatch(withLevel, withLevel.toHeaderInput().copy(level = null))!!.toString())
+        assertNull(headerPatch(withLevel, withLevel.toHeaderInput()))
+    }
+
+    @Test fun `el nivel no se valida y el campo del backend se mapea`() {
+        assertTrue(before.toHeaderInput().copy(level = "cualquiera").errors().isEmpty())
+        assertEquals(RoutineField.LEVEL, routineFieldOf("level"))
+    }
 }

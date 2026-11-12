@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.students.detail.StudentDetail
-import com.fittrainer.ui.invitations.levelLabel
+import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.students.detail.EMPTY_VALUE
 import com.fittrainer.ui.students.detail.NO_METRICS

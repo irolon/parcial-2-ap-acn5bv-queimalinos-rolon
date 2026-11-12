@@ -5,6 +5,7 @@ import java.time.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -22,6 +23,12 @@ class NotificationMapperTest {
     @Test fun guardaLosTiposDelEntrenador() {
         val saved = listOf("inactivity", "routine_modified").map { dto(it).toEntity("t1")?.toModel()?.type }
         assertEquals(listOf(NotificationType.INACTIVITY, NotificationType.ROUTINE_MODIFIED), saved)
+    }
+
+    @Test fun guardaElAvisoDeRutinaInicialFallida() {
+        val saved = dto("initial_routine_failed", data = """{"student_id":"s1"}""").toEntity("t1")
+        assertNotNull(saved)
+        assertEquals(NotificationType.INITIAL_ROUTINE_FAILED, saved?.toModel()?.type)
     }
 
     @Test fun guardaLosAvisosDeTurnos() {
