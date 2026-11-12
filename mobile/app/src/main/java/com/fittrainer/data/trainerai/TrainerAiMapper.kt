@@ -3,11 +3,13 @@ package com.fittrainer.data.trainerai
 import com.fittrainer.data.api.trainerai.GenerateRoutineRequest
 import com.fittrainer.data.api.trainerai.GeneratedRoutineDto
 import com.fittrainer.data.routines.trainer.WEEK_DAYS
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 
 /** Si el backend no mandara el nombre (no debería: sale de la biblioteca), la tarjeta igual muestra algo. */
 const val UNKNOWN_EXERCISE = "Ejercicio"
 
-/** Lesiones o preferencias en blanco viajan como null ("sin lesiones" / nada). */
+/** Lesiones en blanco viajan como null ("sin lesiones"); sin lesiones (null), no viajan. Preferencias en blanco, tampoco. */
 fun AiRoutineParams.toRequest() = GenerateRoutineRequest(
     studentId = studentId,
     goal = goal,
@@ -15,7 +17,7 @@ fun AiRoutineParams.toRequest() = GenerateRoutineRequest(
     frequencyPerWeek = frequencyPerWeek,
     sessionDurationMin = sessionDurationMin,
     availableEquipment = equipment,
-    injuries = injuries?.trim()?.ifEmpty { null },
+    injuries = injuries?.let { text -> text.trim().ifEmpty { null }?.let(::JsonPrimitive) ?: JsonNull },
     preferences = preferences?.trim()?.ifEmpty { null },
 )
 

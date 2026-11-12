@@ -10,6 +10,7 @@ import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import RoutineEditorPage from '@/pages/routines/RoutineEditorPage';
 import RoutinesPage from '@/pages/routines/RoutinesPage';
+import AiRoutinePage from '@/pages/trainer-ai/AiRoutinePage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
 import MyProgressPage from '@/pages/progress/MyProgressPage';
 import JoinPage from '@/pages/students/JoinPage';
@@ -17,7 +18,9 @@ import MessagesPage from '@/pages/messages/MessagesPage';
 import StudentMessagesPage from '@/pages/messages/StudentMessagesPage';
 import StudentProfilePage from '@/pages/students/StudentProfilePage';
 import StudentsPage from '@/pages/students/StudentsPage';
+import AssistantPage from '@/pages/student/AssistantPage';
 import HistoryPage from '@/pages/student/HistoryPage';
+import MyAppointmentsPage from '@/pages/student/MyAppointmentsPage';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import MyRoutinesPage from '@/pages/student/MyRoutinesPage';
 import RoutineDetailPage from '@/pages/student/RoutineDetailPage';
@@ -27,6 +30,7 @@ import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
 import { GuestOnly, RequirePasswordChange, RequireRole, RootRedirect } from './guards';
 import {
+  AI_ROUTINE,
   CHANGE_PASSWORD_PATH,
   NEW_ROUTINE,
   NEW_STUDENT,
@@ -53,7 +57,7 @@ function roleSection(role, nav, pages = [], elements = {}) {
           { index: true, element: <Navigate to={nav.items[0].path} replace /> },
           ...nav.items.map((item) => ({
             path: item.path,
-            handle: { title: item.label, subtitle: item.subtitle },
+            handle: { title: item.title ?? item.label, subtitle: item.subtitle },
             element: elements[item.path] ?? <PlaceholderPage title={item.label} />,
           })),
           ...pages,
@@ -89,6 +93,11 @@ export const routes = [
     { path: STUDENT_PROFILE.path, element: <StudentProfilePage /> },
     { path: NEW_ROUTINE.path, element: <RoutineEditorPage /> },
     {
+      path: AI_ROUTINE.path,
+      handle: { title: AI_ROUTINE.title, subtitle: AI_ROUTINE.subtitle },
+      element: <AiRoutinePage />,
+    },
+    {
       path: TRAINER_ACCOUNT.path,
       handle: { title: TRAINER_ACCOUNT.title, subtitle: TRAINER_ACCOUNT.subtitle },
       element: <TrainerAccountPage />,
@@ -119,6 +128,8 @@ export const routes = [
     progreso: <MyProgressPage />,
     rutinas: <MyRoutinesPage />,
     historial: <HistoryPage />,
+    asistente: <AssistantPage />,
+    turnos: <MyAppointmentsPage />,
     mensajes: <StudentMessagesPage />,
     perfil: <MyProfilePage />,
   }),

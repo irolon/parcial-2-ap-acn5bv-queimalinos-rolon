@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Sparkles, X } from 'lucide-react';
-import { useChatToday, useSendChat } from '@/hooks/chat/useChat';
-import { useOnline } from '@/hooks/shared/useOnline';
+import { useChatToday } from '@/hooks/chat/useChat';
+import { useAskAssistant } from '@/hooks/chat/useAskAssistant';
 import { useToday } from '@/hooks/shared/useToday';
-import { chatDayOf } from '@/utils/chat/chatDay';
-import { LIMIT_TEXT, OFFLINE_TEXT, chatProblem } from '@/utils/chat/chatProblem';
 import ChatComposer from './ChatComposer';
 import ChatLog from './ChatLog';
 import ChatNotice from './ChatNotice';
@@ -22,66 +20,21 @@ const LAYOUT = [
 ].join(' ');
 export const ASSISTANT_SHEET_SPACE = 'pb-[50dvh] xl:pb-0';
 
-const LOAD_ERROR = 'No pudimos cargar la conversación de hoy.';
-
-// El aviso que toca, de a uno: sin conexión (sin Reintentar: no serviría), el error de la última consulta, la carga
-// fallida o el límite.
-function noticeFor({ online, problem, day, remaining, retrySend }) {
-  if (!online) return { text: OFFLINE_TEXT };
-  if (problem) return { text: problem.text, onRetry: problem.retry ? retrySend : undefined };
-  if (day.isError && !day.data) return { text: LOAD_ERROR, onRetry: () => day.refetch() };
-  return remaining === 0 ? { text: LIMIT_TEXT } : null;
-}
-
-/** Al volver la conexión se olvida la falla de red de la última consulta (el texto sigue en la caja para mandarlo). */
-function useClearOnReconnect(online, offlineFailure, reset) {
-  const wasOnline = useRef(online);
-  useEffect(() => {
-    const reconnected = online && !wasOnline.current;
-    wasOnline.current = online;
-    if (reconnected && offlineFailure) reset();
-  }, [online, offlineFailure, reset]);
-}
-
-/** Pasada la medianoche se olvida el error de la última consulta (un 429 del límite de ayer ya no vale). */
-function useClearOnNewDay(today, reset) {
-  const lastDay = useRef(today);
-  useEffect(() => {
-    if (today === lastDay.current) return;
-    lastDay.current = today;
-    reset();
-  }, [today, reset]);
-}
-
 /**
  * El asistente durante la sesión activa: la conversación del día, sobre qué ejercicio se pregunta (`exercise`, el
  * de la sesión a la vista, o null), atajos, el contador y los avisos. La consulta viaja con `sessionId` y el
- * ejercicio. Si falla, el texto queda en la caja para Reintentar. Sin conexión o en el límite la caja se deshabilita; el
+ * ejercicio (la caja es `useAskAssistant`, la misma de la página Asistente IA). Si falla, el texto queda para Reintentar.
+ * Sin conexión o en el límite la caja se deshabilita; el
  * estado de conexión sigue al del navegador: al volver, se va el aviso y la caja se habilita. Con el panel abierto pasada
  * la medianoche de Argentina (`useToday`) se pide la conversación del día nuevo y se olvida el error de ayer.
  * No toca la sesión: lo que pase acá no frena el registro de series ni el descanso. Cerrar y Escape llaman a `onClose`.
  */
 export default function AssistantPanel({ exercise, sessionId, onClose }) {
-  const online = useOnline();
   const now = useToday();
   const day = useChatToday(now);
-  const send = useSendChat();
-  const [text, setText] = useState('');
+  const box = useAskAssistant({ now, day, sessionId, exercise });
   const panelRef = useRef(null);
   useEffect(() => panelRef.current?.focus({ preventScroll: true }), []);
-
-  const problem = chatProblem(send.error);
-  const remaining = day.data?.remaining_today;
-  const blocked = !online || remaining === 0 || problem?.kind === 'limit';
-  useClearOnReconnect(online, problem?.kind === 'offline', send.reset);
-  useClearOnNewDay(chatDayOf(now), send.reset);
-  const ask = () => {
-    const message = text.trim();
-    if (!message || send.isPending) return;
-    const context = { message, sessionId, exerciseId: exercise?.exerciseId };
-    send.mutate(context, { onSuccess: () => setText('') });
-  };
-  const notice = noticeFor({ online, problem, day, remaining, retrySend: ask });
 
   const onKeyDown = (event) => {
     if (event.key !== 'Escape') return;
@@ -119,18 +72,14 @@ export default function AssistantPanel({ exercise, sessionId, onClose }) {
           <X size={18} aria-hidden="true" />
         </button>
       </header>
-      <ChatLog
-        messages={day.data?.messages ?? []}
-        pending={send.isPending ? send.variables.message : null}
-        loading={day.isPending && online}
-      />
-      {notice && <ChatNotice text={notice.text} onRetry={notice.onRetry} />}
+      <ChatLog messages={day.data?.messages ?? []} pending={box.pending} loading={day.isPending && box.online} />
+      {box.notice && <ChatNotice text={box.notice.text} onRetry={box.notice.onRetry} />}
       <ChatComposer
-        value={text}
-        onChange={setText}
-        onSend={ask}
-        disabled={blocked || send.isPending}
-        remaining={remaining}
+        value={box.text}
+        onChange={box.setText}
+        onSend={box.ask}
+        disabled={box.disabled}
+        remaining={box.remaining}
       />
     </aside>
   );

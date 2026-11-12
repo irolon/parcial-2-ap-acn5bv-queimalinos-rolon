@@ -12,6 +12,7 @@ import CompareCard from '@/components/progress/compare/CompareCard';
 import ErrorState from '@/components/shared/states/ErrorState';
 import QueryState from '@/components/shared/states/QueryState';
 import Button from '@/components/shared/ui/Button';
+import AttendanceCard from '@/components/students/attendance/AttendanceCard';
 import TrainerCommitmentCard from '@/components/students/commitment/TrainerCommitmentCard';
 import StudentDialogs from '@/components/students/dialogs/StudentDialogs';
 import ActiveRoutineCard from '@/components/students/profile/ActiveRoutineCard';
@@ -100,6 +101,7 @@ export default function StudentProfilePage() {
             </div>
             <div className="flex min-w-0 flex-col gap-5">
               <TrainerCommitmentCard studentId={id} />
+              <AttendanceCard key={`attendance-${id}`} studentId={id} />
               {metricsQuery.isError ? (
                 <ErrorState message={metricsQuery.error?.message} onRetry={() => metricsQuery.refetch()} />
               ) : (

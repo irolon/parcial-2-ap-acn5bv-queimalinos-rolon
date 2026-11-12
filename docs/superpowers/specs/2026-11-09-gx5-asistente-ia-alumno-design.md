@@ -28,6 +28,7 @@ La web no tiene sustitución de ejercicio: `setBody` manda `original_exercise_id
 | 5 | Página **"Asistente IA"** en el menú del alumno (`/alumno/asistente`, ícono `Sparkles`), después de Historial, como en `AlSidebar`. |
 | 6 | Los días anteriores son **de solo lectura** (sin caja). Solo se aplican sugerencias **de hoy** y solo si hay una sesión en curso **en esta web** que tenga ese ejercicio. |
 | 7 | **"Aplicar" vive en `SuggestionChips`**, compartido: funciona igual en el panel de la sesión (#85) y en la página. |
+| 7b | **"Aplicar" solo en la sugerencia del ejercicio actual** (09/11, de la review de la #96 del celular): cada respuesta guarda el `exercise_id` con que se preguntó, y "Aplicar" se habilita solo si coincide con el ejercicio actual de la sesión en curso. Las sugerencias de otros ejercicios, de otra sesión o de días pasados se muestran como texto. Test: sugerencia pedida en el ejercicio A con el cursor en B → no se puede aplicar. |
 | 8 | **Rama y orden:** la rama sale de `develop` cuando entren #83, #85 y #90 (la cadena del chat). Si al empezar siguen abiertas, sale de `feature/ai-rag-nvidia` y la PR apunta ahí: es apilada, la excepción de CONTRIBUTING. Al mergear la #90 se re-apunta a `develop`. No sale de la #85 sola porque la #90 reescribe `chat.service.js`, `chat-message.model.js` y `context.service.js`, que esta PR también toca. Conviene que entre después de la GX4 (ver Chequeo). |
 
 ## Diseño
@@ -65,7 +66,7 @@ La web no tiene sustitución de ejercicio: `setBody` manda `original_exercise_id
 
 ## Datos
 
-- **Migración `backend/src/database/migrations/2026-11/2026-11-09-chat-history.sql`** (lo mismo en el bloque de `chat_messages` de `schema/06-ai-and-agenda.sql`): `exercise_id uuid references exercises (id) on delete set null` y `suggestions jsonb not null default '[]'`. Sin índice nuevo: `idx_chat_messages_student (student_id, created_at)` alcanza. Se actualiza `modelo-de-datos.md` (§chat_messages).
+- **Migración `backend/src/database/migrations/2026-11/09-15/2026-11-09-chat-history.sql`** (lo mismo en el bloque de `chat_messages` de `schema/06-ai-and-agenda/01-ai.sql`): `exercise_id uuid references exercises (id) on delete set null` y `suggestions jsonb not null default '[]'`. Sin índice nuevo: `idx_chat_messages_student (student_id, created_at)` alcanza. Se actualiza `modelo-de-datos.md` (§chat_messages).
 - **Guardado** (`exchangeRows`): la consulta lleva `exercise_id` (el `findCurrentExercise`, o `null`); la respuesta lleva `suggestions: [{ exercise_id, name, reason }]` ya validadas.
 - **`GET /chat/today`** (aditivo): cada mensaje suma `exercise: { id, name } | null`, `routine_name` y `suggestions` (`[]` en las del alumno).
 - **Nuevo `GET /chat/history`** (rol `student`). Query: `before` (`YYYY-MM-DD`, opcional; por defecto hoy, que queda afuera) y `days` (1–14, por defecto 7). Lee los mensajes con `created_at` anterior al inicio de `before` (hora argentina), de los más nuevos a los más viejos, con tope `days × CHAT_DAILY_LIMIT × 2`; agrupa por día argentino y descarta el más viejo si pudo quedar cortado por el tope.
@@ -81,7 +82,7 @@ Las líneas de los archivos de la #85 y la #90 se miden en `feature/ai-rag-nvidi
 - Crea:
   - `models/chat/chat-history.js` (`groupByDay(rows, days, limitPerDay)`);
   - `services/chat/history.service.js` (`getHistory`);
-  - `database/migrations/2026-11/2026-11-09-chat-history.sql`;
+  - `database/migrations/2026-11/09-15/2026-11-09-chat-history.sql`;
   - tests en `tests/unit/`: `models/chat/chat-history.test.js`, `services/chat/history.service.test.js` y `validations/chat/chat.validation/history.test.js`.
 - Modifica:
   - `models/chat/chat-message.model.js` (47: columnas con embebidos y `HISTORY_DAYS_MAX`);
@@ -90,7 +91,7 @@ Las líneas de los archivos de la #85 y la #90 se miden en `feature/ai-rag-nvidi
   - `validations/chat/chat.validation.js` (24: `validateHistoryQuery`);
   - `controllers/chat/chat.controller.js` (12);
   - `routes/chat/chat.routes.js` (16);
-  - `database/schema/06-ai-and-agenda.sql`;
+  - `database/schema/06-ai-and-agenda/01-ai.sql`;
   - tests: `chat.service/send.test.js`, `limit-and-today.test.js`, `chat-messages.repository.test.js` y `chat.routes.test.js`.
 
 **Web**
@@ -127,7 +128,7 @@ Las líneas de los archivos de la #85 y la #90 se miden en `feature/ai-rag-nvidi
 **Chequeo contra PRs abiertas.**
 
 - **#85 y #90**: casi todo `chat` es de ellas (ver decisión 8). La #90 cambia `chat.service.js`, `chat-message.model.js`, `context.service.js`, `chat-context.repository.js`, `send.test.js` y `chat-service.setup.js`. Partiendo de su rama no hay conflicto.
-- **#83**: toca `schema/06-ai-and-agenda.sql` (bloque `ai_routine_generations`); el de `chat_messages` es otro bloque. También toca `contratos-api.md`, como la #85 y la #90 en §Chat: se edita sobre la versión de la #90.
+- **#83**: toca `schema/06-ai-and-agenda/01-ai.sql` (bloque `ai_routine_generations`); el de `chat_messages` es otro bloque. También toca `contratos-api.md`, como la #85 y la #90 en §Chat: se edita sobre la versión de la #90.
 - **#84**: `routeTable.js` y `router.jsx`, pero en el bloque del PT (`AI_ROUTINE`). Esta PR toca `STUDENT_NAV` y el mapa del alumno: merge automático esperado.
 - **GX4**: también toca `useActiveWorkout.js`, en otras funciones. Si entra antes, se mergea `develop`.
 - **GX6**: también suma una ruta del alumno en los mismos archivos. Es un conflicto trivial: lo resuelve la segunda en entrar.

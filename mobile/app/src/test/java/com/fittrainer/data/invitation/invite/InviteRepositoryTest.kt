@@ -58,4 +58,10 @@ class InviteRepositoryTest {
         api.error = apiError(500, "INTERNAL")
         assertEquals(InviteResult.Failed(DataError.Http(500)), repo.create(form))
     }
+
+    @Test fun `404 TEMPLATE_NOT_FOUND marca la plantilla`() = runTest {
+        api.error = apiError(404, "TEMPLATE_NOT_FOUND")
+        val result = repo.create(form) as InviteResult.Rejected
+        assertEquals(mapOf(InviteField.TEMPLATE to "Esa plantilla ya no existe; elegí otra"), result.fields)
+    }
 }

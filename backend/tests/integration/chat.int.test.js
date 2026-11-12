@@ -118,7 +118,8 @@ describe('chat (integración)', () => {
     expectStatus(today, 200, 'GET /chat/today');
     expect(today.body.data.remaining_today).toBe(19);
     expect(today.body.data.messages.map((m) => m.role)).toEqual(['user', 'assistant']);
-    expect(Object.keys(today.body.data.messages[0]).sort()).toEqual(['content', 'created_at', 'id', 'role']);
+    const keys = ['content', 'created_at', 'exercise', 'id', 'role', 'routine_name', 'suggestions'];
+    expect(Object.keys(today.body.data.messages[0]).sort()).toEqual(keys);
 
     const res = await api(student.token).post('/chat').send({ message: '¿Y otra opción?' });
     expectStatus(res, 200, 'segundo POST /chat');
@@ -159,6 +160,7 @@ describe('chat (integración)', () => {
 
     it('un PT no puede usar el chat del alumno (403)', async () => {
       expectStatus(await api(pt.token).get('/chat/today'), 403, 'GET /chat/today como PT');
+      expectStatus(await api(pt.token).get('/chat/history'), 403, 'GET /chat/history como PT');
       expectStatus(await api(pt.token).post('/chat').send({ message: 'hola' }), 403, 'POST /chat como PT');
     });
   });

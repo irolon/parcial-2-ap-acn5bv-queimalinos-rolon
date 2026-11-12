@@ -87,7 +87,8 @@ create table if not exists notifications (
   user_id    uuid not null,
   user_role  varchar(20) not null check (user_role in ('trainer', 'student')),
   type       varchar(30) not null check (type in (
-    'inactivity', 'appointment', 'comment', 'pr', 'achievement', 'routine_modified'
+    'inactivity', 'appointment', 'comment', 'pr', 'achievement', 'routine_modified',
+    'initial_routine_failed'
   )),
   title      varchar(150) not null,
   body       text,

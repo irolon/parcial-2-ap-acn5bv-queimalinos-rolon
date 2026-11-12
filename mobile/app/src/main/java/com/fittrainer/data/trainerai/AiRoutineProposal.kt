@@ -26,7 +26,10 @@ data class AiRoutineProposal(val generationId: String, val blocks: List<AiPropos
 @Serializable
 data class AiSavedTemplate(val id: String, val name: String)
 
-/** Lo que pide el entrenador. equipment null = el de la ficha (no viaja); vacío = solo peso corporal. */
+/**
+ * Lo que pide el entrenador. equipment null = el de la ficha (no viaja); vacío = solo peso corporal.
+ * injuries null = las de la ficha (no viaja: la ficha no cargó y el PT no escribió nada); en blanco = "sin lesiones".
+ */
 data class AiRoutineParams(
     val studentId: String,
     val goal: String,

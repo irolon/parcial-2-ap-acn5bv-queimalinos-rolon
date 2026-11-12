@@ -15,14 +15,17 @@ export async function findActiveStudents(trainerId) {
   );
 }
 
-/** Sesiones terminadas de esos alumnos que empezaron desde `fromIso`. */
+/**
+ * Sesiones terminadas de esos alumnos que empezaron o terminaron desde `fromIso`: el gráfico cuenta por
+ * finished_at y no hay tope de duración (la adherencia filtra por sus propios días).
+ */
 export async function findFinishedSessionsSince(studentIds, fromIso) {
   const rows = await fetchAll(() =>
     supabase
       .from(SESSIONS_TABLE)
       .select(SESSION_COLUMNS)
       .in('student_id', studentIds)
-      .gte('started_at', fromIso)
+      .or(`started_at.gte.${fromIso},finished_at.gte.${fromIso}`)
       .not('finished_at', 'is', null)
       .order('id')
   );

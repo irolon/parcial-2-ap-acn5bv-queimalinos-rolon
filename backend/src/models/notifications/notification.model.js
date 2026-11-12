@@ -14,6 +14,7 @@ export const NOTIFICATION_TYPES = [
   'pr',
   'achievement',
   'routine_modified',
+  'initial_routine_failed',
 ];
 
 /** Días asignados sin entrenar a partir de los cuales un alumno está inactivo. */

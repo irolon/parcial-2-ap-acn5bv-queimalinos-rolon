@@ -10,7 +10,10 @@ import com.fittrainer.data.students.status
 import java.time.Instant
 import java.time.LocalDate
 
-/** Una fila ya armada para la pantalla. adherencePct == null: sin plan (o el backend no la mandó). */
+/**
+ * Una fila ya armada para la pantalla. adherencePct == null: sin plan, rutina recién asignada o el backend no la
+ * mandó; en su lugar va noAdherence ("Sin plan" / "Sin días todavía").
+ */
 data class StudentRowUi(
     val id: String,
     val name: String,
@@ -20,6 +23,7 @@ data class StudentRowUi(
     val statusLabel: String,
     val lastTraining: String,
     val adherencePct: Int?,
+    val noAdherence: String = NO_PLAN,
 )
 
 data class Counts(val active: Int = 0, val atRisk: Int = 0)
@@ -60,6 +64,7 @@ fun TrainerStudent.toRow(today: LocalDate): StudentRowUi {
         statusLabel = statusLabel(status),
         lastTraining = lastTrainingLabel(lastSessionAt, today),
         adherencePct = adherence?.pct,
+        noAdherence = noAdherenceText(daysPerWeek),
     )
 }
 

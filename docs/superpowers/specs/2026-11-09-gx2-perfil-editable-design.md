@@ -60,7 +60,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 
 - Backend, crea: `services/students/avatar.service.js`, `repositories/students/avatars.repository.js`, `repositories/students/students.repository/student-create.repository.js`, `models/students/avatar.model.js`, `controllers/students/avatar.controller.js`, `services/auth/profile.service.js`, `controllers/auth/profile.controller.js`, `validations/auth/profile.validation.js`, la migración.
 - Backend, modifica: `repositories/students/students.repository/students.repository.js` (200, −30), `services/students/students.service.js` (151, +8), `validations/students/students.validation.js` (102, +10), `routes/students/students.routes.js` (67 + GX1, +16), `models/students/student.model.js` (+1), `models/auth/trainer.model.js` (+1), `repositories/auth/auth.repository.js` (+12), `routes/auth/auth.routes.js` (+3), `models/messages/message.model.js` (52, +3), `services/messages/messages.service.js` (102, +1), `database/schema/01-auth.sql`, `02-students.sql`, `06b-messages.sql`.
-- Web, crea: `api/account/profile.api.js` (`getMe`, `updateMe`), `api/students/avatar.api.js`, `hooks/account/useTrainerProfile.js`, `hooks/students/useAvatar.js`, `utils/files/resizeImage.js` (`fitWithin(w, h, max)` puro + `resizeToJpeg(file)`), `utils/students/phone.js` (`whatsappHref`, validación), `components/student/profile/ProfilePhoto.jsx`, `EditContactDialog.jsx`, `components/account/TrainerProfileCard.jsx`.
+- Web, crea: `api/account/profile.api.js` (`getMe`, `updateMe`), `api/students/avatar.api.js`, `hooks/account/useTrainerProfile.js`, `hooks/students/useAvatar.js`, `utils/files/resizeImage.js` (`fitWithin(w, h, max)` puro + `resizeToJpeg(file)`), `utils/students/profile/phone.js` (`whatsappHref`, validación), `components/student/profile/ProfilePhoto.jsx`, `EditContactDialog.jsx`, `components/account/TrainerProfileCard.jsx`.
 - Web, modifica: `components/shared/ui/Avatar.jsx` (37, +12), `components/students/profile/MyProfileCard.jsx` (34, reescrito ~50), `components/student/profile/TrainerCard.jsx` (#89, +4), `components/students/profile/ProfileHeader.jsx` (24, +10), `components/students/dialogs/EditStudentDialog.jsx` (104 + GX1, +8), `components/shared/layout/UserBlock.jsx` y `Topbar.jsx` (63, +1 `src`), `hooks/auth/useAuthStore.js` (+6: `updateUser`), `pages/account/TrainerAccountPage.jsx` (GX1, +2).
 - Tests: ver Pruebas.
 
@@ -78,7 +78,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 - Rutas: `students.routes.test.js` y `auth.routes.test.js` (roles, multipart).
 
 **Vitest (web)**
-- `utils/files/resizeImage.test.js` (`fitWithin`), `utils/students/phone.test.js`.
+- `utils/files/resizeImage.test.js` (`fitWithin`), `utils/students/profile/phone.test.js`.
 - `pages/student/MyProfilePage/edit.test.jsx`: editar nombre y teléfono, error por campo, el sidebar muestra el nombre nuevo; `…/photo.test.jsx`: sube (con `resizeToJpeg` mockeado), error 413, quitar.
 - `components/shared/ui/Avatar.test.jsx`: con `src` muestra la imagen; `onError` → iniciales.
 - `components/account/TrainerProfileCard.test.jsx`; `components/student/profile/TrainerCard.test.jsx` (título visible / ausente).

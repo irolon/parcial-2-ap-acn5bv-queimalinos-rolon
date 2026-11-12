@@ -62,7 +62,7 @@ Comandos (desde `C:\ft-gx2x`):
 ### Task 1: Migración, schema y columnas de los modelos
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-11/2026-11-09-profile-editable.sql`
+- Create: `backend/src/database/migrations/2026-11/09-15/2026-11-09-profile-editable.sql`
 - Modify: `backend/src/database/schema/01-auth.sql` (trainers), `backend/src/database/schema/02-students.sql` (students), `backend/src/database/schema/06b-messages.sql` (bucket, junto al de `message-images`), `backend/src/models/students/student.model.js`, `backend/src/models/auth/trainer.model.js`
 - Test: `backend/tests/unit/models/students/student.model.test.js`, `backend/tests/unit/models/auth/trainer.model.test.js`
 
@@ -293,8 +293,8 @@ Comandos: `cd frontend && npx vitest run <path>` y `cd frontend && npm run lint`
 ### Task 11: Teléfono y achicado de la foto
 
 **Files:**
-- Create: `frontend/src/utils/students/phone.js`, `frontend/src/utils/students/resizeImage.js` (Nota 8)
-- Test: `frontend/tests/utils/students/phone.test.js`, `frontend/tests/utils/students/resizeImage.test.js`
+- Create: `frontend/src/utils/students/profile/phone.js`, `frontend/src/utils/students/profile/resizeImage.js` (Nota 8)
+- Test: `frontend/tests/utils/students/profile/phone.test.js`, `frontend/tests/utils/students/profile/resizeImage.test.js`
 
 **Interfaces:**
 - Produces:

@@ -33,8 +33,8 @@ class SaveAsTemplateController(
     private val _state = MutableStateFlow<SaveTemplateState?>(null)
     val state: StateFlow<SaveTemplateState?> = _state
 
-    fun open(routineName: String) {
-        _state.value = SaveTemplateState(routineName)
+    fun open(routineName: String, level: String?) {
+        _state.value = SaveTemplateState(routineName, level)
     }
 
     fun onName(name: String) = _state.update { it?.copy(name = name, nameError = null, message = null) }

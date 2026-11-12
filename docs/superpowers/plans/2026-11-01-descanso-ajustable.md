@@ -36,7 +36,7 @@ tarjeta: descanso-ajustable
 ### Task 1: Backend — columna, validación e historial
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-11/2026-11-01-session-sets-rest.sql`
+- Create: `backend/src/database/migrations/2026-11/01-08/2026-11-01-session-sets-rest.sql`
 - Modify: `backend/src/database/schema/04-progress.sql` (tabla `session_sets`), `backend/src/database/checks/schema-checks.sql`
 - Modify: `backend/src/validations/sessions/session-set.validation.js` (`parseSet`)
 - Modify: `backend/src/repositories/sessions/session-history.repository.js` (`SET_COLUMNS`, select del plan en la línea ~100)

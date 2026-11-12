@@ -65,4 +65,12 @@ describe('useAuthStore: restore refresca la ficha del alumno', () => {
     await state().restore();
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/refresh']);
   });
+
+  it('al volver de offline con retry() también trae la ficha', async () => {
+    useAuthStore.setState({ user: STUDENT, token: null, refreshToken: 'refresh-1', status: 'offline' });
+    const fetchMock = route(async () => jsonResponse(200, { data: { id: 's-1', name: 'Ana P.', avatar_url: FRESH } }));
+    await state().retry();
+    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/refresh', '/students/s-1']);
+    expect(state()).toMatchObject({ status: 'authenticated', user: { ...STUDENT, name: 'Ana P.', avatar_url: FRESH } });
+  });
 });

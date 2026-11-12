@@ -3,10 +3,11 @@ import Select from '@/components/shared/ui/Select';
 import DayPicker from './DayPicker';
 import EstimatedDuration from './EstimatedDuration';
 import { ROUTINE_GOAL_OPTIONS } from '@/utils/routines/routineForm';
+import { LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 
 const OPTIONS = [{ value: '', label: 'Elegí un objetivo' }, ...ROUTINE_GOAL_OPTIONS];
 
-/** Nombre, objetivo y días de la rutina; `errors` es el `header` de `validateRoutine`. `disabled` bloquea los campos mientras no cargó la biblioteca. `onClearTemplate` desvincula la plantilla de origen. */
+/** Nombre, objetivo, nivel (opcional, sin validación) y días de la rutina; `errors` es el `header` de `validateRoutine`. `disabled` bloquea los campos mientras no cargó la biblioteca. `onClearTemplate` desvincula la plantilla de origen. */
 export default function RoutineHeader({ state, errors = {}, disabled = false, onChange, onToggleDay, onClearTemplate }) {
   return (
     <div className="flex flex-col gap-4">
@@ -23,7 +24,7 @@ export default function RoutineHeader({ state, errors = {}, disabled = false, on
           </button>
         </p>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
         <Input
           label="Nombre de la rutina"
           value={state.name}
@@ -39,6 +40,14 @@ export default function RoutineHeader({ state, errors = {}, disabled = false, on
           error={errors.goal}
           disabled={disabled}
           onChange={(event) => onChange('goal', event.target.value)}
+          className="min-w-0"
+        />
+        <Select
+          label="Nivel"
+          options={LEVEL_OPTIONS}
+          value={state.level ?? ''}
+          disabled={disabled}
+          onChange={(event) => onChange('level', event.target.value)}
           className="min-w-0"
         />
       </div>

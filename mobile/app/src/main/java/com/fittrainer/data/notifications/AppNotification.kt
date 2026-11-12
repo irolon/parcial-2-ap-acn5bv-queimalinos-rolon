@@ -5,7 +5,8 @@ import java.time.Instant
 /**
  * Tipos que muestra la app: los del alumno (comment, pr, achievement) y los del entrenador (E12: inactivity,
  * routine_modified, y también pr y achievement de sus alumnos). appointment (E13) es de los dos: al PT le avisa que
- * un alumno pidió o canceló un turno; al alumno, lo que hizo el PT. El servidor solo manda los del usuario logueado;
+ * un alumno pidió o canceló un turno; al alumno, lo que hizo el PT. initial_routine_failed (tarea 7) es solo del PT:
+ * la rutina inicial de un alumno no se pudo crear. El servidor solo manda los del usuario logueado;
  * los que no están acá se descartan.
  */
 enum class NotificationType(val wire: String) {
@@ -15,6 +16,7 @@ enum class NotificationType(val wire: String) {
     INACTIVITY("inactivity"),
     ROUTINE_MODIFIED("routine_modified"),
     APPOINTMENT("appointment"),
+    INITIAL_ROUTINE_FAILED("initial_routine_failed"),
     ;
 
     companion object {

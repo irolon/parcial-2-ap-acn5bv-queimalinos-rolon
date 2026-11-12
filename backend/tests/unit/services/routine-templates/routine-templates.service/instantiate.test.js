@@ -71,6 +71,7 @@ describe('routine-templates.service (instantiate)', () => {
         template_id: 'tp-1',
         name: 'Fuerza',
         goal: 'strength',
+        level: null,
         days: STRUCTURE.days,
         active: true,
       },
@@ -101,5 +102,11 @@ describe('routine-templates.service (instantiate)', () => {
     expect(mockRoutinesService.createWithExercises).toHaveBeenCalledTimes(2);
     expect(mockRepo.updateTemplate).not.toHaveBeenCalled();
     expect(mockRepo.deleteTemplate).not.toHaveBeenCalled();
+  });
+
+  it('la rutina hereda el nivel de la plantilla', async () => {
+    mockRepo.findTemplateById.mockResolvedValue({ ...TEMPLATE, level: 'intermediate' });
+    await service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' });
+    expect(mockRoutinesService.createWithExercises.mock.calls[0][0].level).toBe('intermediate');
   });
 });

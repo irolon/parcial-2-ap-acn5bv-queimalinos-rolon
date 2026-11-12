@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { removeAvatar, uploadAvatar } from '@/api/students/avatar.api';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { STUDENTS_KEY } from '@/hooks/students/useStudents';
-import { resizeToJpeg } from '@/utils/students/resizeImage';
+import { resizeToJpeg } from '@/utils/students/profile/resizeImage';
 
 export const AVATAR_ERRORS = {
   IMAGE_TOO_LARGE: 'La foto supera 5 MB',

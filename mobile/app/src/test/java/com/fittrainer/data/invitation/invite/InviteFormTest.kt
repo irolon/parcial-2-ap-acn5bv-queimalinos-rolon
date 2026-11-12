@@ -1,5 +1,6 @@
 package com.fittrainer.data.invitation.invite
 
+import com.fittrainer.data.api.invitation.CreateInvitationRequest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -64,5 +65,30 @@ class InviteFormTest {
         assertEquals(InviteField.EMAIL, inviteFieldOf("student_email"))
         assertEquals(InviteField.PHONE, inviteFieldOf("delivery_channel"))
         assertNull(inviteFieldOf("otro"))
+    }
+
+    @Test fun `sin plantilla el pedido no lleva template_id ni routine_days`() {
+        val request = ok.copy(routineDays = setOf("monday")).toRequest()
+        assertNull(request.templateId)
+        assertNull(request.routineDays)
+        val json = kotlinx.serialization.json.Json.encodeToString(CreateInvitationRequest.serializer(), request)
+        assertTrue("template_id" !in json && "routine_days" !in json)
+    }
+
+    @Test fun `con plantilla manda los dias en orden de la semana`() {
+        val request = ok.copy(templateId = "t1", routineDays = setOf("friday", "monday")).toRequest()
+        assertEquals("t1", request.templateId)
+        assertEquals(listOf("monday", "friday"), request.routineDays)
+    }
+
+    @Test fun `con plantilla y sin dias da error en DAYS`() {
+        assertEquals("Elegí al menos un día", ok.copy(templateId = "t1").errors()[InviteField.DAYS])
+        assertTrue(ok.copy(templateId = "t1", routineDays = setOf("monday")).errors().isEmpty())
+        assertTrue(ok.copy(routineDays = emptySet()).errors().isEmpty())
+    }
+
+    @Test fun `template_id y routine_days del backend a campos del formulario`() {
+        assertEquals(InviteField.TEMPLATE, inviteFieldOf("template_id"))
+        assertEquals(InviteField.DAYS, inviteFieldOf("routine_days"))
     }
 }

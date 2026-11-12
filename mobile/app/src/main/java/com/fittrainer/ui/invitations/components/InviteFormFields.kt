@@ -21,12 +21,12 @@ import com.fittrainer.data.invitation.invite.InviteField
 import com.fittrainer.data.invitation.invite.LEVELS
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
+import com.fittrainer.ui.components.levelOptionLabel
 import com.fittrainer.ui.invitations.INVITE_MORE
 import com.fittrainer.ui.invitations.INVITE_NEEDS_NETWORK
 import com.fittrainer.ui.invitations.INVITE_SUBMIT
 import com.fittrainer.ui.invitations.InviteUiState
 import com.fittrainer.ui.invitations.InviteViewModel
-import com.fittrainer.ui.invitations.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
@@ -40,7 +40,8 @@ fun InviteFormFields(state: InviteUiState.Editing, vm: InviteViewModel) {
         LabeledField("NOMBRE Y APELLIDO", form.name, state.errors[InviteField.NAME]) { vm.onChange(InviteField.NAME, it) }
         LabeledField("EMAIL", form.email, state.errors[InviteField.EMAIL], KeyboardType.Email) { vm.onChange(InviteField.EMAIL, it) }
         OptionPicker("OBJETIVO", form.goal, GOALS, ::goalLabel, state.errors[InviteField.GOAL]) { vm.onChange(InviteField.GOAL, it) }
-        OptionPicker("NIVEL", form.level, LEVELS, ::levelLabel, state.errors[InviteField.LEVEL]) { vm.onChange(InviteField.LEVEL, it) }
+        OptionPicker("NIVEL", form.level, LEVELS, ::levelOptionLabel, state.errors[InviteField.LEVEL]) { vm.onChange(InviteField.LEVEL, it) }
+        InitialTemplateField(state, vm::onTemplate, vm::onToggleDay)
         TextButton(onClick = vm::onToggleMore, modifier = Modifier.height(Spacing.minTouchTarget)) {
             Text(if (state.showMore) "Ocultar más datos" else "$INVITE_MORE (teléfono, equipamiento, lesiones)")
         }

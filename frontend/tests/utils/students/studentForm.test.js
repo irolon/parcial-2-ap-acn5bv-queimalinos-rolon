@@ -6,7 +6,7 @@ import {
   studentFormDefaults,
   validateStudentBody,
 } from '@/utils/students/studentForm';
-import { PHONE_ERROR } from '@/utils/students/phone';
+import { PHONE_ERROR } from '@/utils/students/profile/phone';
 
 const STUDENT = {
   name: 'Ana Paz',

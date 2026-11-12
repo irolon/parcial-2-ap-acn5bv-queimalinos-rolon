@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import MyProfilePage from '@/pages/student/MyProfilePage';
 import UserBlock from '@/components/shared/layout/UserBlock';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
-import { PHONE_ERROR } from '@/utils/students/phone';
+import { PHONE_ERROR } from '@/utils/students/profile/phone';
 import { bodyOf, calls, errorResponse, jsonResponse } from '../../../helpers/shared/fetchMock';
 import { allowSlowScreens } from '../../../helpers/shared/patience';
 import { setupUser } from '../../../helpers/shared/user';

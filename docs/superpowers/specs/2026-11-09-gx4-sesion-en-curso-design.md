@@ -74,7 +74,7 @@ Sin abiertas, la tarjeta queda como hoy.
 - **`GET /students`**: cada fila suma `open_session: { id, started_at } | null`.
 - **`GET /students/overview`**: suma `in_session: [{ student_id, name, session_id, routine_name, started_at }]`, de la más nueva a la más vieja, una por alumno (la más nueva). `EMPTY` lleva `[]`.
 - **`GET /students/:id/sessions`**: solo terminadas; `meta.total` también. El detalle `/:sessionId` no cambia.
-- **Migración `backend/src/database/migrations/2026-11/2026-11-09-open-sessions.sql`**:
+- **Migración `backend/src/database/migrations/2026-11/09-15/2026-11-09-open-sessions.sql`**:
   - `create or replace view student_last_session … where finished_at is not null`;
   - `create index if not exists idx_sessions_open on sessions (student_id, started_at desc) where finished_at is null`.
 

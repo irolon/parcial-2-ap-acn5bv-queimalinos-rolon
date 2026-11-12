@@ -8,6 +8,7 @@ const reply = {
   suggestions: [{ exercise_id: 'e-7', name: 'Press con mancuernas', reason: 'Tenés mancuernas.' }],
   remaining_today: 16,
 };
+const NO_CONTEXT = { exercise_id: null, exercise: null, routine_name: null };
 const earlier = { id: 'a-1', role: 'assistant', content: 'Hola.', created_at: '2026-11-07T13:00:00.000Z' };
 
 describe('appendExchange', () => {
@@ -15,9 +16,9 @@ describe('appendExchange', () => {
     expect(appendExchange({ messages: [earlier], remaining_today: 17 }, '¿Y otra?', reply, NOW)).toEqual({
       messages: [
         earlier,
-        { id: 'a-2-question', role: 'user', content: '¿Y otra?', created_at: NOW.toISOString() },
+        { id: 'a-2-question', role: 'user', content: '¿Y otra?', ...NO_CONTEXT, suggestions: [], created_at: NOW.toISOString() },
         {
-          id: 'a-2', role: 'assistant', content: 'Probá con mancuernas.', suggestions: reply.suggestions,
+          id: 'a-2', role: 'assistant', content: 'Probá con mancuernas.', ...NO_CONTEXT, suggestions: reply.suggestions,
           created_at: NOW.toISOString(),
         },
       ],
@@ -29,6 +30,11 @@ describe('appendExchange', () => {
     const day = appendExchange(undefined, 'Hola', { ...reply, suggestions: undefined }, NOW);
     expect(day.messages.map((m) => m.role)).toEqual(['user', 'assistant']);
     expect(day.messages[1].suggestions).toEqual([]);
+  });
+
+  it('los dos mensajes guardan el ejercicio sobre el que se preguntó (para Aplicar y el contexto)', () => {
+    const day = appendExchange(undefined, 'Hola', reply, NOW, { exerciseId: 'e-1', exerciseName: 'Press banca' });
+    day.messages.forEach((m) => expect(m).toMatchObject({ exercise_id: 'e-1', exercise: { id: 'e-1', name: 'Press banca' } }));
   });
 });
 

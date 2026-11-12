@@ -1,7 +1,8 @@
 import { sortDays } from '@/utils/students/routineDays';
 
+/** `level`: `''` = sin definir. `aiBlock`: `{ generationId, index }` del bloque de la propuesta de la IA del que salió lo que hay, o `null`. */
 export const EMPTY_ROUTINE = Object.freeze({
-  name: '', goal: '', days: [], templateId: null, templateName: null, exercises: [],
+  name: '', goal: '', level: '', days: [], templateId: null, templateName: null, exercises: [], aiBlock: null,
 });
 
 const DEFAULTS = { sets: '3', reps: '10', rest_seconds: '90', suggested_kg: '', tempo: '', notes: '' };
@@ -77,6 +78,7 @@ export function fromTemplate(template, exercisesById = new Map()) {
       ...EMPTY_ROUTINE,
       name: template.name ?? '',
       goal: template.goal ?? '',
+      level: template.level ?? '',
       days: sortDays(template.structure?.days),
       templateId: template.id,
       templateName: template.name,

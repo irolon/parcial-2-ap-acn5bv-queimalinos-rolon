@@ -56,7 +56,7 @@ Todo push sale por `services/notifications/notify.service.js` (67 líneas): `not
 - `GET /notifications/preferences` (alumno) → `200 { data: { message, comment, appointment, pr, achievement, updated_at } }`; sin fila, todo `true` y `updated_at: null`. Trainer → 403.
 - `PUT /notifications/preferences` (alumno), body `{ message, comment, appointment, pr, achievement }` (booleanos, los cinco) → `200 { data: … }` igual que el GET. 400 si falta alguno o no es booleano.
 - Efecto en los push existentes: ninguno cambia de forma; los apagados no salen.
-- Migración `backend/src/database/migrations/2026-11/2026-11-09-notification-preferences.sql`:
+- Migración `backend/src/database/migrations/2026-11/09-15/2026-11-09-notification-preferences.sql`:
   ```sql
   create table if not exists notification_preferences (
     student_id  uuid primary key references students (id) on delete cascade,

@@ -6,13 +6,14 @@ import { MAX_REPS, MAX_SET_NUMBER, exerciseSets, missingSets, toSetKg, toSetReps
 // La sesión en curso como datos puros (spec §3): cada función recibe el estado y devuelve uno nuevo, o el mismo si
 // no cambia nada. Las horas son ISO absolutas, así que recargar la página no corre el descanso ni las series.
 // Es la única puerta para las páginas: también re-exporta las lecturas de las series (workoutSets.js) y el descanso
-// (workoutRest.js).
+// (workoutRest.js) y la sustitución (workoutSwap.js).
 export {
   exerciseSets, missingSets, planLoad, prefill, toSetKg, toSetReps, totals,
 } from './workoutSets';
 export {
   adjustRest, closeRest, restRemaining, restTotal, skipRest, startRest,
 } from './workoutRest';
+export { canReplace, replaceExercise } from './workoutSwap';
 
 const MAX_NOTES = 1000;
 
@@ -85,6 +86,7 @@ export function registerSet(state, { kg, reps } = {}, now = new Date(), { newId 
   const set = {
     id: newId(),
     exerciseId: exercise.exerciseId,
+    ...(exercise.originalExerciseId ? { originalExerciseId: exercise.originalExerciseId } : {}),
     routineExerciseId: exercise.routineExerciseId,
     setNumber: done + 1,
     reps: actualReps,

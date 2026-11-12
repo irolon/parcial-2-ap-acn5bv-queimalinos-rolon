@@ -31,7 +31,8 @@ const val MESSAGE_PUSH_TYPE = "message"
 /**
  * Resuelve el destino con el `data` del aviso. Si falta algo o viene roto, abre la lista: nunca crashea.
  * [role] decide los tipos que comparten nombre (`pr`, `achievement`). Los push del entrenador (`inactivity`,
- * `routine_modified`) son tipos que el alumno nunca recibe: el intent de un push se resuelve sin saber el rol.
+ * `routine_modified`, `initial_routine_failed`) son tipos que el alumno nunca recibe: el intent de un push se resuelve
+ * sin saber el rol.
  * `appointment` lleva al PT a su agenda y al alumno a «Mis turnos» (tarjeta 16). Su push solo le llega al alumno (el
  * PT recibe solo el aviso de la lista, política de la #49), así que el default sin rol son los turnos del alumno.
  */
@@ -43,6 +44,7 @@ fun destinationOf(type: String?, data: Map<String, String>, role: Role = Role.ST
     NotificationType.ACHIEVEMENT.wire -> if (role == Role.TRAINER) studentProfile(data) else null
     NotificationType.ROUTINE_MODIFIED.wire -> studentSession(data)
     NotificationType.INACTIVITY.wire -> studentProfile(data)
+    NotificationType.INITIAL_ROUTINE_FAILED.wire -> studentProfile(data)
     NotificationType.APPOINTMENT.wire ->
         if (role == Role.TRAINER) NotificationDestination.Agenda(weekStartOfIso(data.text("scheduled_at")))
         else NotificationDestination.StudentAppointments

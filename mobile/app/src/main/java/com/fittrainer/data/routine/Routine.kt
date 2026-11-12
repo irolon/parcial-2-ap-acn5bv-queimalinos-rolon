@@ -11,6 +11,7 @@ data class Routine(
     val days: Set<DayOfWeek>,
     val createdAt: Instant,
     val exercises: List<RoutineExercise>,
+    val level: String? = null,
 )
 
 /** Un ejercicio de la rutina. La lista ya viene ordenada por el orden que puso el entrenador. */

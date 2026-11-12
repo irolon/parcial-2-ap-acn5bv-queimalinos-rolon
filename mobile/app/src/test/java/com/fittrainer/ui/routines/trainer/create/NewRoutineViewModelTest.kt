@@ -19,6 +19,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -76,6 +78,16 @@ class NewRoutineViewModelTest {
         assertEquals(listOf(0, 1), request.exercises.map { it.order })
         assertEquals("new1", state().done?.routineId)
         assertNull(state().done?.warning)
+    }
+
+    @Test fun `crear con nivel lo manda y sin nivel no codifica la clave`() = runTest {
+        ready()
+        vm.onHeaderChange { it.copy(level = "beginner") }
+        vm.onCreate()
+        advanceUntilIdle()
+        val request = api.creates.single()
+        assertEquals("beginner", request.level)
+        assertFalse("level" in Json.encodeToString(request.copy(level = null)))
     }
 
     @Test fun `la casilla aparece si tiene una activa y viene marcada`() = runTest {

@@ -32,6 +32,10 @@ const val AI_NAME_REQUIRED = "Poné un nombre de 1 a 120 caracteres"
 const val PICK_GOAL = "Elegí un objetivo"
 const val PICK_LEVEL = "Elegí un nivel"
 
+/** Con el equipamiento cambiado, la nota del equipamiento extra de la ficha ocupa parte del tope. */
+fun preferencesTooLong(max: Int) =
+    "Con el equipamiento extra de la ficha, las preferencias pueden tener hasta ${max.coerceAtLeast(0)} caracteres"
+
 private val DAY_MONTH = DateTimeFormatter.ofPattern("dd/MM")
 
 /** "IA · Ganar fuerza · 09/11". */

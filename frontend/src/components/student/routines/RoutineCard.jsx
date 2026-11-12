@@ -3,10 +3,11 @@ import { ChevronRight } from 'lucide-react';
 import { studentRoutineHref } from '@/routes/routeTable';
 import { exerciseCount } from '@/utils/routines/todayPlan';
 import { formatRoutineDaysShort } from '@/utils/students/routineDays';
+import { levelLabel } from '@/utils/students/studentOptions';
 
-/** Una rutina de "Mis rutinas": nombre, días abreviados ("Lun · Mié · Vie") y cantidad de ejercicios; lleva al detalle. */
+/** Una rutina de "Mis rutinas": nombre, días abreviados y nivel ("Lun · Mié · Vie · Intermedio") y cantidad de ejercicios; lleva al detalle. */
 export default function RoutineCard({ routine }) {
-  const days = formatRoutineDaysShort(routine.days);
+  const days = [formatRoutineDaysShort(routine.days), levelLabel(routine.level)].filter(Boolean).join(' · ');
   return (
     <li>
       <Link

@@ -19,6 +19,7 @@ data class TrainerRoutineSummaryDto(
     val days: List<String> = emptyList(),
     val active: Boolean = true,
     @SerialName("created_at") val createdAt: String? = null,
+    val level: String? = null,
 )
 
 @Serializable
@@ -34,6 +35,7 @@ data class TrainerRoutineDetailDto(
     val active: Boolean = true,
     @SerialName("created_at") val createdAt: String? = null,
     val exercises: List<RoutineExerciseDto> = emptyList(),
+    val level: String? = null,
 )
 
 @Serializable
@@ -50,6 +52,7 @@ data class CreateRoutineRequest(
     val goal: String,
     val days: List<String>,
     val exercises: List<NewRoutineExerciseDto>,
+    val level: String? = null,
 )
 
 @Serializable

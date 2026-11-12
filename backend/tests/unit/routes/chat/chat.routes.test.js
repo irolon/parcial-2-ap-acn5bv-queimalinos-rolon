@@ -44,6 +44,18 @@ describe('chat.routes', () => {
     expect(handler).toBe(controller.today);
   });
 
+  it('GET /history: solo alumno, valida la query y termina en el controller', () => {
+    const route = routeOf('/history', 'get');
+    expect(route).toBeDefined();
+    const [role, validate, handler] = route.stack.map((l) => l.handle);
+    expect(run(role, { user: { role: 'trainer' } })).toMatchObject({ statusCode: 403 });
+    expect(run(role, { user: { role: 'student' } })).toBeUndefined();
+    expect(validate.validates).toBe('query');
+    expect(run(validate, { query: { days: '15' } })).toMatchObject({ statusCode: 400 });
+    expect(run(validate, { query: { before: '2026-11-05' } })).toBeUndefined();
+    expect(handler).toBe(controller.history);
+  });
+
   it('está montado en /api/chat', () => {
     const app = createApp();
     const mounted = app._router.stack.some((l) => l.regexp?.test('/api/chat/today') && l.name === 'router');

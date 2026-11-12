@@ -49,7 +49,7 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 - `POST /students/:id/password-reset` (trainer dueño) → `200 { temporary_password }`. 403, 404, 409 `STUDENT_INACTIVE`, 429.
 - `GET /students/export` (trainer; va antes de `/:id`) y `GET /students/:id/export` (trainer dueño o el propio alumno) → `200 text/csv`, archivo `fittrainer-alumnos-AAAA-MM-DD.csv` / `fittrainer-mis-sesiones-AAAA-MM-DD.csv` (el PT, `fittrainer-<nombre>-AAAA-MM-DD.csv`).
 - `POST /auth/login` y `POST /auth/refresh`: suman `must_change_password` (y login, `password_changed_at`). Cualquier otro endpoint: `403 PASSWORD_CHANGE_REQUIRED` con el claim.
-- Migración `backend/src/database/migrations/2026-11/2026-11-09-account-password.sql`: `students.must_change_password boolean not null default false`, `students.password_changed_at timestamptz`, `trainers.password_changed_at timestamptz`. Igual en `schema/01-auth.sql` y `02-students.sql`.
+- Migración `backend/src/database/migrations/2026-11/09-15/2026-11-09-account-password.sql`: `students.must_change_password boolean not null default false`, `students.password_changed_at timestamptz`, `trainers.password_changed_at timestamptz`. Igual en `schema/01-auth.sql` y `02-students.sql`.
 - Contrato: `docs/arquitectura/contratos-api.md` (Auth: los 2 cambios y `PUT /auth/password`; Alumnos: reset y export; error `PASSWORD_CHANGE_REQUIRED`); `modelo-de-datos.md` (columnas nuevas).
 
 ## Archivos que toca

@@ -43,5 +43,7 @@ describe('Stat', () => {
     rerender(<Stat label="Peso" value="72" delta="-1.2" accent big />);
     expect(screen.getByText('-1.2')).toHaveClass('text-hot');
     expect(screen.getByText('72')).toHaveClass('text-accentText', 'text-[40px]');
+    rerender(<Stat label="En riesgo" value="3" hot />);
+    expect(screen.getByText('3')).toHaveClass('text-hot');
   });
 });

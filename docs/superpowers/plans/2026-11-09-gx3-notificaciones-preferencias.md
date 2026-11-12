@@ -56,7 +56,7 @@ Comandos (desde `C:\ft-gx3x`):
 ### Task 1: Migración, schema y modelo de preferencias
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-11/2026-11-09-notification-preferences.sql`, `backend/src/models/notifications/preferences.js`
+- Create: `backend/src/database/migrations/2026-11/09-15/2026-11-09-notification-preferences.sql`, `backend/src/models/notifications/preferences.js`
 - Modify: `backend/src/database/schema/06-ai-and-agenda.sql` (bloque `notification_preferences` al final, después de `push_tokens`), `backend/src/database/schema/07-rls.sql` (+1 línea), `backend/src/database/schema/README.md` (`notification_preferences` en la fila de `06-ai-and-agenda.sql`), `backend/src/database/checks/schema-checks.sql` (`('notification_preferences')` al final de `expected`)
 - Test: `backend/tests/unit/models/notifications/preferences.test.js`
 

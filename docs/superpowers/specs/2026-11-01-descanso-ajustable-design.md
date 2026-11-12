@@ -28,7 +28,7 @@ El entrenador propone el descanso de cada ejercicio (`rest_seconds` de la rutina
 
 ### 3.1 Base de datos
 
-Migración `backend/src/database/migrations/2026-11/2026-11-01-session-sets-rest.sql` (re-ejecutable) y el mismo cambio en `schema/04-progress.sql`:
+Migración `backend/src/database/migrations/2026-11/01-08/2026-11-01-session-sets-rest.sql` (re-ejecutable) y el mismo cambio en `schema/04-progress.sql`:
 
 ```sql
 alter table session_sets

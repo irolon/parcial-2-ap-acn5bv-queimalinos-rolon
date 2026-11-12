@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import Avatar from '@/components/shared/ui/Avatar';
 import Button from '@/components/shared/ui/Button';
 import { avatarErrorMessage, useAvatar } from '@/hooks/students/useAvatar';
-import { AVATAR_ACCEPT } from '@/utils/students/resizeImage';
+import { AVATAR_ACCEPT } from '@/utils/students/profile/resizeImage';
 
 const UPLOAD_ERROR = 'No pudimos subir la foto';
 const REMOVE_ERROR = 'No pudimos quitar la foto';

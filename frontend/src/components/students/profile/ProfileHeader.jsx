@@ -4,7 +4,7 @@ import Pill from '@/components/shared/ui/Pill';
 import StudentStatusPill from '@/components/students/StudentStatusPill';
 import { activityStatus } from '@/utils/students/activity';
 import { ageFrom } from '@/utils/students/age';
-import { whatsappHref } from '@/utils/students/phone';
+import { whatsappHref } from '@/utils/students/profile/phone';
 import { goalLabel, levelLabel } from '@/utils/students/studentOptions';
 
 /** El teléfono del alumno con link a WhatsApp (GX2); si no alcanza para un link, como texto. */

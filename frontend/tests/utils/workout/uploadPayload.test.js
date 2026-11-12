@@ -61,6 +61,11 @@ describe('setBody: una serie como SessionSetDto del celular', () => {
     const [set] = withSets(freshWorkout(), [[0, null, 15]]).sets;
     expect(setBody(set).actual_kg).toBe(0);
   });
+
+  it('una serie de un ejercicio reemplazado manda el planificado como original_exercise_id', () => {
+    const set = { ...finishedWorkout(1).sets[0], exerciseId: 'e-9', originalExerciseId: 'e-1' };
+    expect(setBody(set)).toMatchObject({ exercise_id: 'e-9', original_exercise_id: 'e-1' });
+  });
 });
 
 describe('pendingSets y batches', () => {
