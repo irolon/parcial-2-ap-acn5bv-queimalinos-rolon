@@ -13,6 +13,7 @@ function findSource(trainerId, generationId, index) {
     index,
     generationId,
     goal: session.form.goal ?? '',
+    level: session.form.level ?? '',
     names: session.proposal.routines.map((routine) => routine.name ?? null),
   };
 }
