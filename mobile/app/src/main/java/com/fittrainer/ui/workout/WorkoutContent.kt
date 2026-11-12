@@ -1,9 +1,7 @@
 package com.fittrainer.ui.workout
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -14,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.workout.canReplace
@@ -30,6 +29,8 @@ import com.fittrainer.ui.workout.components.rest.RestPicker
 import com.fittrainer.ui.workout.components.rest.RestTimer
 import com.fittrainer.ui.workout.components.SetTabs
 import com.fittrainer.ui.workout.components.WorkoutTopBar
+import com.fittrainer.ui.workout.components.layout.ScrollWhenTight
+import com.fittrainer.ui.workout.components.layout.isCompactHeight
 import com.fittrainer.ui.workout.components.muscle.CardIfFitsLayout
 import com.fittrainer.ui.workout.components.muscle.MuscleCard
 import com.fittrainer.ui.workout.components.muscle.showsMuscleCard
@@ -59,12 +60,13 @@ class WorkoutActions(
     val onAiLocked: () -> Unit = {},
 )
 
-/** Serie (mockup p.13) o timer a pantalla completa (p.14). Sin scroll para completar una serie. */
+/** Serie (mockup p.13) o timer a pantalla completa (p.14). Sin scroll para completar una serie, salvo que no entre. */
 @Composable
 fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean, actions: WorkoutActions) {
     val workout = state.workout ?: return
     val exercise = state.exercise ?: return
     val rest = workout.rest
+    val compact = isCompactHeight(LocalConfiguration.current.screenHeightDp)
     if (state.isResting && rest != null) {
         val done = workout.lastDoneSet()
         // El aviso de error va arriba del timer: si falla Room al tocar Saltar/Pausar/±15 se tiene que ver.
@@ -79,6 +81,7 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
                 onAdjust = actions.onRestAdjust,
                 onTogglePause = actions.onRestTogglePause,
                 onSkip = actions.onRestSkip,
+                compact = compact,
             )
             state.error?.let {
                 NoticeBanner(it, actions.onDismissError, Modifier.align(Alignment.TopCenter).padding(Spacing.lg))
@@ -86,42 +89,47 @@ fun WorkoutContent(state: WorkoutUiState, now: Instant, notificationsOn: Boolean
         }
         return
     }
-    Column(
-        Modifier.fillMaxSize().padding(Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-    ) {
-        WorkoutTopBar(workout, formatElapsed(workout.startedAt, now), actions.onClose, actions.onOpenList)
-        if (!notificationsOn) {
-            // Tocar el aviso abre los Ajustes de notificaciones de la app.
-            Text(
-                NO_NOTIFICATIONS,
-                style = MaterialTheme.typography.bodySmall,
-                color = FtColors.Amber,
-                modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget).clickable(onClick = actions.onOpenSettings),
-            )
-        }
-        state.error?.let { NoticeBanner(it, actions.onDismissError) }
-        SetTabs(workout, state.shownSet, actions.onSelectSet)
-        ExerciseHeading(exercise.name, actions.onOpenList)
-        LoadPanel(suggestedChip(exercise), state.load, actions.onAdjustKg, actions.onEdit)
-        // Al corregir una serie hecha no se muestra: el descanso es de las series que faltan.
-        if (!state.isCorrecting) RestPicker(exercise, actions.onPlannedRestAdjust)
-        // La tarjeta se mide contra el alto que de verdad sobra (fuente grande, banners): si no entra, no se pone.
-        CardIfFitsLayout(
-            gap = with(LocalDensity.current) { Spacing.lg.roundToPx() },
-            card = if (showsMuscleCard(exercise.muscleGroup)) ({ MuscleCard(exercise) }) else null,
-            cta = {
-                Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                    Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
-                }
-            },
-            bottom = {
-                BottomActions(
-                    workout.canReplace(workout.cursor.position), !state.isOffline,
-                    actions.onTechnique, actions.onReplace, actions.onAi, actions.onReplaceLocked, actions.onAiLocked,
+    // Fija si entra; si no (pantalla baja, letra grande), se puede bajar en vez de recortar las acciones.
+    val gap = if (compact) Spacing.md else Spacing.lg
+    ScrollWhenTight(
+        gap = gap,
+        padding = Spacing.lg,
+        modifier = Modifier.fillMaxSize(),
+        top = {
+            WorkoutTopBar(workout, formatElapsed(workout.startedAt, now), actions.onClose, actions.onOpenList)
+            if (!notificationsOn) {
+                // Tocar el aviso abre los Ajustes de notificaciones de la app.
+                Text(
+                    NO_NOTIFICATIONS,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FtColors.Amber,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget).clickable(onClick = actions.onOpenSettings),
                 )
-            },
-            modifier = Modifier.weight(1f),
-        )
-    }
+            }
+            state.error?.let { NoticeBanner(it, actions.onDismissError) }
+            SetTabs(workout, state.shownSet, actions.onSelectSet)
+            ExerciseHeading(exercise.name, actions.onOpenList)
+            LoadPanel(suggestedChip(exercise), state.load, actions.onAdjustKg, actions.onEdit, compact)
+            // Al corregir una serie hecha no se muestra: el descanso es de las series que faltan.
+            if (!state.isCorrecting) RestPicker(exercise, actions.onPlannedRestAdjust)
+        },
+        fill = {
+            // La tarjeta se mide contra el alto visible que sobra (fuente grande, banners): si no entra, no se pone.
+            CardIfFitsLayout(
+                gap = with(LocalDensity.current) { gap.roundToPx() },
+                card = if (showsMuscleCard(exercise.muscleGroup)) ({ MuscleCard(exercise) }) else null,
+                cta = {
+                    Button(onClick = actions.onConfirm, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                        Text(ctaLabel(state), style = MaterialTheme.typography.labelLarge)
+                    }
+                },
+                bottom = {
+                    BottomActions(
+                        workout.canReplace(workout.cursor.position), !state.isOffline,
+                        actions.onTechnique, actions.onReplace, actions.onAi, actions.onReplaceLocked, actions.onAiLocked,
+                    )
+                },
+            )
+        },
+    )
 }
