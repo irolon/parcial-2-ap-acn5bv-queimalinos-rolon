@@ -1,6 +1,6 @@
-import { dailySessions } from '../../../../src/models/students/overview-daily.js';
+import { DAILY_DAYS, dailySessions } from '../../../../src/models/students/overview-daily.js';
 
-// Hoy: jueves 2026-11-05 (Argentina). La ventana de 14 días va del 23/10 al 05/11.
+// Hoy: jueves 2026-11-05 (Argentina). La ventana de 30 días va del 07/10 al 05/11.
 const TODAY = '2026-11-05';
 const session = (id, studentId, startedAt, finishedAt) => ({
   id, student_id: studentId, started_at: startedAt, finished_at: finishedAt,
@@ -8,14 +8,15 @@ const session = (id, studentId, startedAt, finishedAt) => ({
 const countOf = (daily, date) => daily.find((d) => d.date === date).count;
 
 describe('models/students/overview-daily', () => {
-  it('14 filas de hoy − 13 a hoy, ascendentes, con la forma del contrato', () => {
+  it('30 filas de hoy − 29 a hoy, ascendentes, con la forma del contrato', () => {
     const daily = dailySessions([], TODAY);
-    expect(daily).toHaveLength(14);
-    expect(daily[0]).toEqual({ date: '2026-10-23', count: 0 });
-    expect(daily[13]).toEqual({ date: '2026-11-05', count: 0 });
+    expect(DAILY_DAYS).toBe(30);
+    expect(daily).toHaveLength(30);
+    expect(daily[0]).toEqual({ date: '2026-10-07', count: 0 });
+    expect(daily[29]).toEqual({ date: '2026-11-05', count: 0 });
     const dates = daily.map((d) => d.date);
     expect(dates).toEqual([...dates].sort());
-    expect(new Set(dates).size).toBe(14);
+    expect(new Set(dates).size).toBe(30);
   });
 
   it('sin sesiones, todo en 0', () => {
@@ -45,13 +46,13 @@ describe('models/students/overview-daily', () => {
     expect(daily.reduce((total, d) => total + d.count, 0)).toBe(3);
   });
 
-  it('las de antes de la ventana no entran (el service trae desde hoy − 14)', () => {
+  it('las de antes de la ventana no entran (el service trae desde hoy − 30)', () => {
     const daily = dailySessions([
-      session('vieja', 'a', '2026-10-22T15:00:00Z', '2026-10-22T16:00:00Z'),
-      session('primera', 'a', '2026-10-23T15:00:00Z', '2026-10-23T16:00:00Z'),
+      session('vieja', 'a', '2026-10-06T15:00:00Z', '2026-10-06T16:00:00Z'),
+      session('primera', 'a', '2026-10-07T15:00:00Z', '2026-10-07T16:00:00Z'),
     ], TODAY);
-    expect(daily.map((d) => d.date)).not.toContain('2026-10-22');
-    expect(countOf(daily, '2026-10-23')).toBe(1);
+    expect(daily.map((d) => d.date)).not.toContain('2026-10-06');
+    expect(countOf(daily, '2026-10-07')).toBe(1);
     expect(daily.reduce((total, d) => total + d.count, 0)).toBe(1);
   });
 

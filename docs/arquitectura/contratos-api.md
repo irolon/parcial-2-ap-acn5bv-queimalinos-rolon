@@ -259,7 +259,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
     "students": [ { "student_id": "uuid", "name": "Ana Paz", "status": "active", "days_without_training": 1,
                     "adherence_pct": 67 } ]
   },
-  "daily": [ { "date": "2026-10-23", "count": 0 }, { "date": "2026-10-24", "count": 3 }, "…",
+  "daily": [ { "date": "2026-10-07", "count": 0 }, { "date": "2026-10-08", "count": 3 }, "…",
              { "date": "2026-11-05", "count": 8 } ]
 } }
 ```
@@ -275,7 +275,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
   - `at_risk`: los mismos de `at_risk`, de más días a menos.
   - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
   - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
-- `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 14 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 13 a hoy, ascendentes. `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 14 filas en 0.
+- `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 30 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 29 a hoy, ascendentes (la web elige 7, 14 o 30 días con las últimas filas). `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 30 filas en 0. La adherencia, `sessions_today` y las listas no cambian: cada una recorta su propia ventana.
 - Todo en hora argentina.
 
 ### GET /students/:id
