@@ -26,6 +26,7 @@ const val MAX_NOTES = 1000
 class WorkoutRepository @Inject constructor(
     private val dao: WorkoutDao,
     private val clock: Clock,
+    private val notifier: OpenSessionNotifier,
     private val ids: IdGenerator,
 ) {
     private val mutex = Mutex()
@@ -52,6 +53,7 @@ class WorkoutRepository @Inject constructor(
             rest = null,
         )
         dao.start(workout.toSessionEntity(), workout.exercises.map { it.toEntity(workout.id) })
+        notifier.open(ownerId, workout.id, routine.id, workout.startedAt)
         workout.id
     }
 
@@ -126,6 +128,7 @@ class WorkoutRepository @Inject constructor(
     suspend fun finish(ownerId: String): WorkoutSummary? = withActive(ownerId) { w ->
         if (w.sets.isEmpty()) {
             dao.deleteSession(w.id)
+            notifier.close(ownerId, w.id)
             return@withActive null
         }
         val now = clock.instant()
@@ -134,7 +137,10 @@ class WorkoutRepository @Inject constructor(
         w.summary(now)
     }
 
-    suspend fun discard(ownerId: String) = withActive(ownerId) { dao.deleteSession(it.id) }
+    suspend fun discard(ownerId: String) = withActive(ownerId) {
+        dao.deleteSession(it.id)
+        notifier.close(ownerId, it.id)
+    }
 
     /**
      * Feedback post-entreno (spec §4 de la tarjeta 12). La nota se recorta y vacía pasa a null; sin RPE

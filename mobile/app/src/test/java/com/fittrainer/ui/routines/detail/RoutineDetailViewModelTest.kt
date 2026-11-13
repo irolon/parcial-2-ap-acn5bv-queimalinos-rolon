@@ -1,5 +1,6 @@
 package com.fittrainer.ui.routines.detail
 
+import com.fittrainer.testing.fakes.workout.testNotifier
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.api.MineResponse
 import com.fittrainer.data.routine.RoutineRepository
@@ -32,7 +33,7 @@ class RoutineDetailViewModelTest {
     private val api = FakeRoutineApi(MineResponse(listOf(routineDto("rt-1"), routineDto("rt-2"))))
     private val routines = RoutineRepository(api, FakeRoutineDao(), clock)
     private var next = 0
-    private val workouts = WorkoutRepository(FakeWorkoutDao(), clock) { "id-${next++}" }
+    private val workouts = WorkoutRepository(FakeWorkoutDao(), clock, testNotifier()) { "id-${next++}" }
 
     private fun viewModel(id: String = "rt-1") = RoutineDetailViewModel(
         SavedStateHandle(mapOf(ROUTINE_ID_ARG to id)), routines, workouts, FakeStudentSession(), FakeConnectivityObserver(),

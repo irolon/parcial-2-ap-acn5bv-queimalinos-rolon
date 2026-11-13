@@ -1,5 +1,6 @@
 package com.fittrainer.data.workout
 
+import com.fittrainer.testing.fakes.workout.testNotifier
 import com.fittrainer.data.db.workout.FEEDBACK_NONE
 import com.fittrainer.data.db.workout.FEEDBACK_PENDING
 import com.fittrainer.data.db.workout.FEEDBACK_REJECTED
@@ -14,7 +15,7 @@ import org.junit.Test
 
 class WorkoutRepositoryFeedbackTest {
     private val dao = FakeWorkoutDao().apply { state.value = FakeWorkoutDao.State(sessions = mapOf("w1" to finishedSession())) }
-    private val repository = WorkoutRepository(dao, fixedClock(), IdGenerator { "id" })
+    private val repository = WorkoutRepository(dao, fixedClock(), testNotifier(), IdGenerator { "id" })
     private fun saved() = dao.state.value.sessions.getValue("w1")
 
     @Test fun guardaRpeYNotaRecortadaComoPendiente() = runTest {

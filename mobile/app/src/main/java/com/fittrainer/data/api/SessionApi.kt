@@ -8,6 +8,7 @@ import com.fittrainer.data.auth.RequiredUser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -15,7 +16,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Tag
 
-/** POST /sessions: la sesión ya terminada, con el feedback si el alumno lo cargó (tarjeta 12). */
+/** POST /sessions: la sesión terminada, con el feedback si el alumno lo cargó (tarjeta 12); también abre una sesión con finished_at null (GX4). */
 @Serializable
 data class CreateSessionRequest(
     val id: String,
@@ -70,6 +71,10 @@ interface SessionApi {
 
     @POST("sessions/{id}/sets")
     suspend fun addSets(@Tag owner: RequiredUser, @Path("id") id: String, @Body body: SessionSetsRequest): SessionSetsResponse
+
+    /** Borra la sesión abierta que se descartó (GX4-M1). Si ya no está, 404. */
+    @DELETE("sessions/{id}")
+    suspend fun discard(@Tag owner: RequiredUser, @Path("id") id: String)
 
     @PATCH("sessions/{id}")
     suspend fun update(@Tag owner: RequiredUser, @Path("id") id: String, @Body body: UpdateSessionRequest)
