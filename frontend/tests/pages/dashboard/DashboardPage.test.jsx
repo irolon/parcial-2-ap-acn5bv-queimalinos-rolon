@@ -5,7 +5,7 @@ import { resetAuthStore } from '../../helpers/auth/authStore';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
 import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { student } from '../../helpers/students/fixtures';
-import { overview, recentSession } from '../../helpers/students/overview';
+import { feedbackRow, inSessionRow, overview, recentSession } from '../../helpers/students/overview';
 import { daysAgo, stubStudents } from '../../helpers/students/students';
 
 beforeEach(() => {
@@ -58,6 +58,28 @@ describe('DashboardPage', () => {
     );
   });
 
+  it('GX4: "En curso" arriba de la actividad reciente y "Feedback pendiente" con link a la ficha', async () => {
+    stubStudents({
+      list: [student({ name: 'Ana Paz', last_session_at: daysAgo(1) })],
+      overview: overview({
+        recent: [recentSession({ student_id: 'st-ana', name: 'Ana Paz' })],
+        in_session: [inSessionRow({ student_id: 'st-lu', name: 'Lucía Gómez' })],
+        lists: { today: [], at_risk: [], students: [], feedback_pending: [feedbackRow({ student_id: 'st-to', name: 'Tomás Rivera' })] },
+      }),
+    });
+    renderRoute('/pt/dashboard');
+    const live = await main().findByRole('link', { name: 'Lucía Gómez, entrenando ahora' });
+    expect(live).toHaveAttribute('href', '/pt/alumnos/st-lu');
+    const feedback = within(main().getByText('Feedback pendiente').parentElement.parentElement);
+    expect(feedback.getByRole('link', { name: /Tomás Rivera/ })).toHaveAttribute('href', '/pt/alumnos/st-to');
+  });
+
+  it('GX4: sin sesiones por comentar lo dice', async () => {
+    stubStudents({ list: [student({ last_session_at: daysAgo(1) })], overview: overview() });
+    renderRoute('/pt/dashboard');
+    expect(await main().findByText('Comentaste todas las sesiones de los últimos 7 días.')).toBeInTheDocument();
+  });
+
   it('si falla el resumen muestra un solo error con Reintentar, sin tapar las alertas', async () => {
     let fail = true;
     stubStudents({
@@ -68,6 +90,7 @@ describe('DashboardPage', () => {
     expect(await main().findByRole('alert')).toHaveTextContent('No pudimos cargar el resumen.');
     expect(main().getByRole('link', { name: /Marcos Díaz/ })).toBeInTheDocument();
     expect(main().queryByText('Actividad reciente')).not.toBeInTheDocument();
+    expect(main().queryByText('Feedback pendiente')).not.toBeInTheDocument();
     expect(main().getAllByRole('button', { name: 'Reintentar' })).toHaveLength(1);
     fail = false;
     await userEvent.click(main().getByRole('button', { name: 'Reintentar' }));

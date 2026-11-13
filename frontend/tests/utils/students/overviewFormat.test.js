@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayInitial, dayNumber, dayTitle, deltaLabel, lastDays, relativeTime } from '@/utils/students/overviewFormat';
+import { dayInitial, dayNumber, dayTitle, daysAgoLabel, deltaLabel, lastDays, relativeTime } from '@/utils/students/overviewFormat';
 import { daily } from '../../helpers/students/overview';
 
 // Domingo 08/11/2026 15:00 en Argentina (18:00 UTC).
@@ -68,5 +68,14 @@ describe('etiquetas del día', () => {
     expect(dayTitle('2026-11-05')).toBe('Jue 05/11');
     expect(dayTitle('2026-11-06')).toBe('Vie 06/11');
     expect(dayTitle('2026-11-04')).toBe('Mié 04/11');
+  });
+});
+
+describe('daysAgoLabel', () => {
+  it('el mismo día argentino, como relativeTime; si no, los días', () => {
+    expect(daysAgoLabel(minutesAgo(12), NOW)).toBe('hace 12 min');
+    expect(daysAgoLabel('2026-11-08T03:10:00Z', NOW)).toBe('hace 14 h');
+    expect(daysAgoLabel('2026-11-08T02:50:00Z', NOW)).toBe('hace 1 d'); // 23:50 del sábado en Argentina
+    expect(daysAgoLabel('2026-11-06T18:00:00Z', NOW)).toBe('hace 2 d');
   });
 });

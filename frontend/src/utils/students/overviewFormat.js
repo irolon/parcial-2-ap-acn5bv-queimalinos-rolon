@@ -22,6 +22,12 @@ export function relativeTime(iso, now = new Date()) {
   return `${pad(at.day)}/${pad(at.month)}`;
 }
 
+/** Como `relativeTime` en el mismo día; si no, "hace 2 d" (días argentinos). Para "Feedback pendiente". */
+export function daysAgoLabel(iso, now = new Date()) {
+  const days = argentinaDate(now).dayNumber - argentinaDate(iso).dayNumber;
+  return days < 1 ? relativeTime(iso, now) : `hace ${days} d`;
+}
+
 /** Las últimas `n` filas de `daily` (vienen de hoy − 29 a hoy, ascendentes). */
 export const lastDays = (daily, n) => (daily ?? []).slice(-n);
 

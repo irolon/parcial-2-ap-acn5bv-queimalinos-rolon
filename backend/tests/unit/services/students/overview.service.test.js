@@ -4,6 +4,8 @@ const mockOverviewRepo = { findActiveStudents: jest.fn(), findFinishedSessionsSi
 const mockStudentsRepo = { findActiveRoutineSchedules: jest.fn(), findLastSessionDates: jest.fn() };
 jest.unstable_mockModule('../../../../src/repositories/students/overview.repository.js', () => mockOverviewRepo);
 jest.unstable_mockModule('../../../../src/repositories/students/students.repository.js', () => mockStudentsRepo);
+const mockOpenRepo = { findOpenSessions: jest.fn() };
+jest.unstable_mockModule('../../../../src/repositories/sessions/open-sessions.repository.js', () => mockOpenRepo);
 
 const { overview, RECENT_LIMIT } = await import('../../../../src/services/students/overview.service.js');
 
@@ -14,6 +16,7 @@ beforeEach(() => {
   mockStudentsRepo.findLastSessionDates.mockResolvedValue([]);
   mockOverviewRepo.findFinishedSessionsSince.mockResolvedValue([]);
   mockOverviewRepo.findRecentFinished.mockResolvedValue([]);
+  mockOpenRepo.findOpenSessions.mockResolvedValue([]);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -33,6 +36,8 @@ describe('overview.service', () => {
     expect(mockStudentsRepo.findActiveRoutineSchedules).toHaveBeenCalledWith(['a']);
     expect(mockOverviewRepo.findFinishedSessionsSince).toHaveBeenCalledWith(['a'], '2026-10-06T00:00:00-03:00');
     expect(mockOverviewRepo.findRecentFinished).toHaveBeenCalledWith(['a'], RECENT_LIMIT);
+    // Abiertas de las últimas 4 h (hoy 05/11 16:00 UTC).
+    expect(mockOpenRepo.findOpenSessions).toHaveBeenCalledWith(['a'], '2026-11-05T12:00:00.000Z');
     // Última sesión hace 16 días: en riesgo.
     expect(r.at_risk).toBe(1);
     expect(r.attention[0]).toMatchObject({ kind: 'inactive', student_id: 'a', days: 16 });
@@ -89,7 +94,9 @@ describe('overview.service', () => {
       at_risk: 0,
       attention: [],
       recent: [],
+      in_session: [],
       lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
     });
+    expect(mockOpenRepo.findOpenSessions).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import router from '../../../../src/routes/sessions/sessions.routes.js';
 import { authenticate } from '../../../../src/shared/middlewares/auth.middleware.js';
+import * as sessionsController from '../../../../src/controllers/sessions/sessions.controller.js';
 
 const routeOf = (method, path) =>
   router.stack.find((l) => l.route?.path === path && l.route.methods[method]);
@@ -21,7 +22,7 @@ describe('sessions.routes', () => {
     expect(router.stack[1].route).toBeDefined();
   });
 
-  it.each([['post', '/'], ['patch', '/:id'], ['post', '/:id/sets']])(
+  it.each([['post', '/'], ['patch', '/:id'], ['delete', '/:id'], ['post', '/:id/sets']])(
     '%s %s exige student',
     (method, path) => {
       expect(roleResult(method, path, 'trainer')).toMatchObject({ statusCode: 403 });
@@ -42,9 +43,19 @@ describe('sessions.routes', () => {
     expect(err).toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
   });
 
-  it('expone POST /, PATCH /:id, POST /:id/sets y PATCH /:id/comment', () => {
+  it('DELETE /:id valida el id (400) y termina en sessionsController.discard', () => {
+    const handlers = handlersOf('delete', '/:id');
+    expect(handlers).toHaveLength(3);
+    let err;
+    handlers[1]({ params: { id: 'no-es-uuid' } }, {}, (e) => { err = e; });
+    expect(err).toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
+    expect(handlers[2]).toBe(sessionsController.discard);
+  });
+
+  it('expone POST /, PATCH /:id, DELETE /:id, POST /:id/sets y PATCH /:id/comment', () => {
     expect(routeOf('post', '/')).toBeDefined();
     expect(routeOf('patch', '/:id')).toBeDefined();
+    expect(routeOf('delete', '/:id')).toBeDefined();
     expect(routeOf('post', '/:id/sets')).toBeDefined();
     expect(routeOf('patch', '/:id/comment')).toBeDefined();
   });

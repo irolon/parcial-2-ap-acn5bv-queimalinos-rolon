@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createQueryClient } from '@/api/shared/queryClient';
 // Importarlo también conecta el cliente de la API con la sesión.
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import { useClearCacheOnSessionChange } from '@/hooks/auth/useClearCacheOnSessionChange';
 import { routes } from '@/routes/router';
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
-  });
-}
 
 export default function App() {
   const [queryClient] = useState(createQueryClient);

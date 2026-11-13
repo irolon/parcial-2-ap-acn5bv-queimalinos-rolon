@@ -6,7 +6,7 @@ const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url
 // Builder encadenable y "thenable": cada método devuelve el mismo objeto.
 const result = { current: { data: [], count: 0, error: null } };
 const q = {};
-for (const m of ['select', 'eq', 'in', 'order', 'range', 'maybeSingle', 'update', 'single']) q[m] = jest.fn(() => q);
+for (const m of ['select', 'eq', 'in', 'not', 'order', 'range', 'maybeSingle', 'update', 'single']) q[m] = jest.fn(() => q);
 const queue = [];
 q.then = (resolve) => resolve(queue.length ? queue.shift() : result.current);
 const supabase = { from: jest.fn(() => q), rpc: jest.fn(() => q) };
@@ -28,6 +28,8 @@ describe('session-history.repository', () => {
     });
     expect(q.select).toHaveBeenCalledWith(expect.stringContaining('trainer_comment'), { count: 'exact' });
     expect(q.eq).toHaveBeenCalledWith('student_id', 'st');
+    // GX4: una sesión abierta (creada al empezar) no es una sesión hecha; tampoco cuenta en el total.
+    expect(q.not).toHaveBeenCalledWith('finished_at', 'is', null);
     expect(q.order).toHaveBeenCalledWith('started_at', { ascending: false });
     expect(q.order).toHaveBeenNthCalledWith(2, 'id', { ascending: false });
     expect(q.range).toHaveBeenCalledWith(40, 59);

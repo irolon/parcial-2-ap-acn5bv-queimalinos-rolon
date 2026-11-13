@@ -22,6 +22,23 @@ export function recentSession(overrides = {}) {
   };
 }
 
+/** Fila de `in_session` (sesión abierta, GX4); `overrides` pisa cualquier campo. */
+export function inSessionRow(overrides = {}) {
+  return {
+    student_id: 'st-1',
+    name: 'Lucía Gómez',
+    session_id: 'open-1',
+    routine_name: 'Pierna',
+    started_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/** Fila de `lists.feedback_pending`; `overrides` pisa cualquier campo. */
+export function feedbackRow(overrides = {}) {
+  return { ...recentSession(), ...overrides };
+}
+
 /** Respuesta de `GET /students/overview` (vacía: todo en 0); `overrides` pisa cualquier campo de primer nivel. */
 export function overview(overrides = {}) {
   return {
@@ -31,6 +48,7 @@ export function overview(overrides = {}) {
     at_risk: 0,
     attention: [],
     recent: [],
+    in_session: [],
     lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
     daily: daily(),
     ...overrides,

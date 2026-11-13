@@ -6,6 +6,8 @@ import * as studentsRepo from '../../repositories/students/students.repository.j
 import { isUsed, isExpired } from '../../models/invitations/invitation.model.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
+import { findOpenSessions } from '../../repositories/sessions/open-sessions.repository.js';
+import { openSince } from '../../models/sessions/session.model.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
 import { assignInitialRoutine } from './initial-routine.service.js';
@@ -16,7 +18,8 @@ import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/stu
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
  * sesión, su racha, los días por semana de su rutina activa y la adherencia de los
- * últimos 7 días (models/students/adherence.js). Por defecto solo activos.
+ * últimos 7 días (models/students/adherence.js). Por defecto solo activos. `open_session` ({ id, started_at } o
+ * null) es la sesión abierta más nueva de las últimas 4 h (GX4: "Entrenando ahora").
  * Cada dato extra sale de UNA consulta por lote para toda la página; la racha sale de
  * student_streaks (null si todavía no se calculó).
  */
@@ -35,13 +38,17 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
 
   const ids = rows.map((s) => s.id);
   const today = localDate();
-  const [lastSessions, streaks, schedules, finishedDates] = await Promise.all([
+  const [lastSessions, streaks, schedules, finishedDates, openSessions] = await Promise.all([
     studentsRepo.findLastSessionDates(ids),
     studentsRepo.findStreaks(ids),
     studentsRepo.findActiveRoutineSchedules(ids),
     // AR = UTC-3 fijo (sin horario de verano), la misma zona que TIMEZONE de shared/utils/dates/dates.js.
     studentsRepo.findFinishedSessionDates(ids, `${adherenceWindowStart(today)}T00:00:00-03:00`),
+    findOpenSessions(ids, openSince()),
   ]);
+  // Vienen de la más nueva a la más vieja: queda la primera de cada alumno.
+  const openByStudent = new Map();
+  for (const o of openSessions) if (!openByStudent.has(o.student_id)) openByStudent.set(o.student_id, o);
   const lastByStudent = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
   const streakByStudent = new Map(
     streaks.map(({ student_id, ...streak }) => [student_id, streak])
@@ -51,12 +58,14 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
     const { days: assignedDays, daySince } = schedules.get(s.id) ?? { days: [], daySince: new Map() };
     // Los días anteriores al alta o a la rutina no cuentan como faltados.
     const since = s.created_at ? localDate(s.created_at) : null;
+    const open = openByStudent.get(s.id);
     return {
       ...s,
       last_session_at: lastByStudent.get(s.id) ?? null,
       streak: streakByStudent.get(s.id) ?? null,
       days_per_week: daysPerWeek(assignedDays),
       adherence_7d: adherence7d({ assignedDays, finishedDates: finishedDates.get(s.id), today, since, daySince }),
+      open_session: open ? { id: open.id, started_at: open.started_at } : null,
     };
   });
   return { data, meta };

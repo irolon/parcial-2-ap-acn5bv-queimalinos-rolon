@@ -23,6 +23,20 @@ export async function createSession(body, { signal } = {}) {
 }
 
 /**
+ * POST /sessions sin `finished_at`, RPE ni notas: abre la sesión al empezar (GX4). El cierre es la subida final, que
+ * repite el POST con el mismo `id` (el servidor lo toma como reintento y completa lo que faltaba).
+ */
+export async function openSession({ id, routine_id, started_at }) {
+  const res = await request('/sessions', { method: 'POST', body: { id, routine_id, started_at } });
+  return res.data;
+}
+
+/** DELETE /sessions/:id → 204. Solo una abierta y propia; si no, 404 `SESSION_NOT_FOUND`. */
+export function deleteSession(sessionId) {
+  return request(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+}
+
+/**
  * POST /sessions/:id/sets → `{ saved, failed, unlocked_achievements }` para un lote de hasta 100 series.
  * También es idempotente por `id` de cada serie; las `failed` son errores por serie, no del pedido.
  */
