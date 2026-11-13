@@ -41,6 +41,25 @@ jest.unstable_mockModule(
   () => mockAvatarsRepo
 );
 
+// El login relee la clave por id después de guardar su refresh. Por defecto no cambió en el medio: devuelve el hash
+// que el login acaba de leer por email (los tests de la carrera lo pisan).
+async function lastReadHash() {
+  const reads = [
+    ...mockStudentsRepo.findStudentByEmailWithHash.mock.results,
+    ...mockRepo.findTrainerByEmailWithHash.mock.results,
+  ];
+  for (const read of reads) {
+    const row = await read.value;
+    if (row) return row.password_hash ?? null;
+  }
+  return null;
+}
+export const mockCredentialsRepo = { findPasswordHash: jest.fn(lastReadHash) };
+jest.unstable_mockModule(
+  src('repositories/auth/credentials.repository.js'),
+  () => mockCredentialsRepo
+);
+
 export const authService = await import(src('services/auth/auth.service.js'));
 export const { hashPassword } = await import(src('shared/utils/password.js'));
 export const { verifyAccessToken, hashToken } = await import(src('shared/utils/jwt.js'));
