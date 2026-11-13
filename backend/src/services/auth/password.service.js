@@ -19,9 +19,11 @@ const fieldError = (field, message) =>
 /**
  * Segunda revocación, DESPUÉS de guardar la clave: un login con la vieja que
  * verificó antes del cambio y guardó su refresh después de la primera
- * revocación sobreviviría (limitación en docs/proceso/auditoria-seguridad.md).
- * Achica la ventana, no la cierra. Best-effort: la clave ya cambió, así que un
- * fallo acá no puede tumbar el pedido (en el blanqueo se perdería la temporal).
+ * revocación sobreviviría. Junto con la relectura del hash que hace el login
+ * después de guardar su refresh (auth.service, assertPasswordUnchanged) cierra
+ * la carrera (docs/proceso/auditoria-seguridad.md, fila 12). Best-effort: la
+ * clave ya cambió, así que un fallo acá no puede tumbar el pedido (en el
+ * blanqueo se perdería la temporal).
  */
 async function revokeAgain(label, revoke) {
   try {

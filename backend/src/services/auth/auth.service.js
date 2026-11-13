@@ -10,6 +10,7 @@ import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/auth/auth.repository.js';
 import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as credentialsRepo from '../../repositories/auth/credentials.repository.js';
 import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
 import { toTrainer } from '../../models/auth/trainer.model.js';
 import { toStudent } from '../../models/students/student.model.js';
@@ -82,11 +83,24 @@ async function authenticateUser(password, row, toPublic, role) {
 
   const user = toPublic(row); // descarta password_hash vía el modelo
   const tokens = await issueTokens(user, role);
+  await assertPasswordUnchanged(row, role, tokens.refresh_token);
   const account = {
     must_change_password: user.must_change_password === true,
     password_changed_at: user.password_changed_at ?? null,
   };
   return { user: { ...user, ...account, role }, ...tokens, expires_in: env.JWT_EXPIRES_IN };
+}
+
+/**
+ * Login concurrente con un cambio o blanqueo de clave (auditoría, fila 12): si la clave cambió entre la verificación y
+ * el guardado del refresh, se revoca ese refresh y el login falla. Si esta relectura es anterior a guardar la nueva,
+ * la segunda revocación del cambio ya borra el refresh; si es posterior, ve el hash nuevo. Ningún intercalado lo deja vivo.
+ */
+async function assertPasswordUnchanged(row, role, refreshToken) {
+  const current = await credentialsRepo.findPasswordHash(row.id, role);
+  if (current === row.password_hash) return;
+  await repository.revokeRefreshToken(hashToken(refreshToken));
+  throw Errors.invalidCredentials();
 }
 
 /** Emite un nuevo access token a partir de un refresh token válido. */
