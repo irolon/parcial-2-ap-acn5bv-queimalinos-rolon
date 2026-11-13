@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fittrainer.data.students.overview.InSessionItem
 import com.fittrainer.data.students.overview.TrainerOverview
 import com.fittrainer.ui.components.InfoCard
 import com.fittrainer.ui.components.NoticeBanner
@@ -29,11 +30,13 @@ import com.fittrainer.ui.students.overview.components.DayCard
 import com.fittrainer.ui.students.overview.components.FeedbackRow
 import com.fittrainer.ui.students.overview.components.FilterGrid
 import com.fittrainer.ui.students.overview.components.HomeHeader
+import com.fittrainer.ui.students.overview.components.InSessionRow
 import com.fittrainer.ui.students.overview.components.RiskRow
 import com.fittrainer.ui.students.overview.components.StudentRow
 import com.fittrainer.ui.students.overview.components.TodayRow
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
+import java.time.Instant
 
 /** Adónde llevan las filas: la ficha (E3) o el detalle de una sesión para comentar (E4). */
 class HomeNavigation(
@@ -50,7 +53,7 @@ fun TrainerHomeScreen(nav: HomeNavigation, unreadNotifications: Int, viewModel: 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LifecycleStartEffect(viewModel) {
         viewModel.onStart()
-        onStopOrDispose { }
+        onStopOrDispose { viewModel.onStop() }
     }
     val showToday = { viewModel.onFilter(HomeFilter.TODAY) }
     PullToRefreshBox(state.refreshing, viewModel::onPullToRefresh, Modifier.fillMaxSize().background(FtColors.Background)) {
@@ -68,6 +71,7 @@ fun TrainerHomeScreen(nav: HomeNavigation, unreadNotifications: Int, viewModel: 
                 o == null -> Unit
                 state.noStudents -> item { InviteCard(nav.onInvite) }
                 else -> {
+                    if (state.liveInSession.isNotEmpty()) inSessionItems(state.liveInSession, state.now, nav)
                     item { DayCard(o, showToday) }
                     item { FilterGrid(o, state.filter, viewModel::onFilter) }
                     filterItems(o, state, nav)
@@ -94,6 +98,11 @@ private fun LazyListScope.filterItems(o: TrainerOverview, state: TrainerHomeUiSt
         }
         HomeFilter.STUDENTS -> items(o.students, key = { "s-${it.studentId}" }) { s -> StudentRow(s) { nav.onStudent(s.studentId) } }
     }
+}
+
+private fun LazyListScope.inSessionItems(items: List<InSessionItem>, now: Instant, nav: HomeNavigation) {
+    item { SectionText(IN_SESSION_TITLE) }
+    items(items, key = { "i-${it.studentId}" }) { i -> InSessionRow(i, now) { nav.onStudent(i.studentId) } }
 }
 
 @Composable

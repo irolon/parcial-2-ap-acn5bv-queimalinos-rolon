@@ -22,6 +22,7 @@ data class TrainerStudentEntity(
     val adherenceAssigned: Int?,
     val adherenceDone: Int?,
     val adherencePct: Int?,
+    val openSessionStartedAt: Long? = null,
 )
 
 /** Última sincronización buena de la lista. Una sola fila (id = 0); trainerId = dueño del caché. */

@@ -8,6 +8,9 @@ import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import com.fittrainer.data.students.ARGENTINA
+import com.fittrainer.data.students.isOpenSessionLive
+import com.fittrainer.data.students.reemitAtOpenSessionExpiry
+import com.fittrainer.data.students.overview.InSessionItem
 import com.fittrainer.data.students.overview.OverviewCache
 import com.fittrainer.data.students.overview.TrainerOverview
 import com.fittrainer.data.students.overview.TrainerOverviewRepository
@@ -19,6 +22,9 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +37,9 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** Cada cuánto se refresca solo el Inicio mientras está abierto. */
+const val HOME_AUTO_REFRESH_MS = 60_000L
 
 /**
  * loaded: Room ya respondió. overview == null con loaded: nunca se bajó el resumen. error: el último
@@ -48,6 +57,7 @@ data class TrainerHomeUiState(
     val error: String? = null,
     val filter: HomeFilter = HomeFilter.TODAY,
 ) {
+    val liveInSession: List<InSessionItem> get() = overview?.inSession.orEmpty().filter { isOpenSessionLive(it.startedAt, now) }
     val noStudents: Boolean get() = overview?.activeStudents == 0
     val showErrorScreen: Boolean get() = loaded && overview == null && error != null && !refreshing
 }
@@ -57,7 +67,7 @@ data class TrainerHomeUiState(
 class TrainerHomeViewModel @Inject constructor(
     private val repository: TrainerOverviewRepository,
     sessionRepository: SessionRepository,
-    connectivity: ConnectivityObserver,
+    private val connectivity: ConnectivityObserver,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -68,6 +78,7 @@ class TrainerHomeViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val cache = trainer.filterNotNull().flatMapLatest { repository.observe(it.id) }
         .map<OverviewCache?, Loaded> { Loaded(it) }.onStart { emit(Loaded(null, false)) }
+        .flatMapLatest { c -> reemitAtOpenSessionExpiry(c, c.cache?.overview?.inSession.orEmpty().map { it.startedAt }, clock) }
 
     val uiState: StateFlow<TrainerHomeUiState> = combine(cache, trainer, connectivity.isOnline, local) { c, user, online, l ->
         val now = clock.instant()
@@ -85,7 +96,23 @@ class TrainerHomeViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TrainerHomeUiState())
 
-    fun onStart() = refresh()
+    private var autoRefresh: Job? = null
+
+    fun onStart() {
+        refresh()
+        if (autoRefresh?.isActive == true) return
+        autoRefresh = viewModelScope.launch {
+            while (isActive) {
+                delay(HOME_AUTO_REFRESH_MS)
+                silentRefresh()
+            }
+        }
+    }
+
+    fun onStop() {
+        autoRefresh?.cancel()
+        autoRefresh = null
+    }
 
     fun onPullToRefresh() = refresh()
 
@@ -108,6 +135,13 @@ class TrainerHomeViewModel @Inject constructor(
             }
             local.update { it.copy(refreshing = false, error = text) }
         }
+    }
+
+    /** Refresco en segundo plano: sin red o con otro refresh en curso no hace nada, y no toca refreshing ni error. */
+    private suspend fun silentRefresh() {
+        if (local.value.refreshing || !connectivity.isOnline.first()) return
+        val user = trainer.filterNotNull().first()
+        repository.refresh(user.id)
     }
 
     private data class Loaded(val cache: OverviewCache?, val loaded: Boolean = true)

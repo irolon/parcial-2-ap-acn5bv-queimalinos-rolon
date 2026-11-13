@@ -29,7 +29,12 @@ data class StudentListItemDto(
     @SerialName("last_session_at") val lastSessionAt: String? = null,
     @SerialName("days_per_week") val daysPerWeek: Int = 0,
     @SerialName("adherence_7d") val adherence: AdherenceDto? = null,
+    @SerialName("open_session") val openSession: OpenSessionDto? = null,
 )
+
+/** Sesión abierta del alumno (últimas 4 h): GET /students la manda como open_session, o null. */
+@Serializable
+data class OpenSessionDto(val id: String, @SerialName("started_at") val startedAt: String)
 
 @Serializable
 data class AdherenceDto(val assigned: Int, val done: Int, val pct: Int? = null)

@@ -1,8 +1,10 @@
 package com.fittrainer.ui.students
 
+import com.fittrainer.data.api.students.OpenSessionDto
 import com.fittrainer.data.students.StudentFilter
 import com.fittrainer.data.students.TrainerStudentsRepository
 import com.fittrainer.testing.MainDispatcherRule
+import com.fittrainer.testing.fakes.auth.MutableClock
 import com.fittrainer.testing.fakes.routine.FakeConnectivityObserver
 import com.fittrainer.testing.fakes.students.FakeStudentsApi
 import com.fittrainer.testing.fakes.students.FakeTrainerSession
@@ -15,7 +17,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -119,5 +123,21 @@ class StudentsViewModelTest {
         advanceUntilIdle()
         assertTrue(vm.uiState.value.offline)
         assertEquals("Actualizado hace un momento", vm.uiState.value.syncedLabel)
+    }
+
+    @Test fun `Entrenando ahora se apaga al cruzar las 4 h sin red ni cambios en Room`() = runTest {
+        // Empezó hace 3 h 59 min (son las 15:00 UTC).
+        val open = studentDto("ok", "Ana", openSession = OpenSessionDto("x9", "2026-11-10T11:01:00Z"))
+        val api = FakeStudentsApi(pages = mapOf(true to listOf(listOf(open)), false to listOf(emptyList())))
+        val clock = MutableClock(Instant.parse("2026-11-10T15:00:00Z").toEpochMilli())
+        val vm = StudentsViewModel(TrainerStudentsRepository(api, FakeTrainerStudentsDao(), clock), FakeTrainerSession(), connectivity, clock)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        vm.onStart()
+        runCurrent()
+        assertTrue(vm.uiState.value.students.single().trainingNow)
+        connectivity.state.value = false
+        clock.millis += 120_000
+        advanceTimeBy(60_002)
+        assertFalse(vm.uiState.value.students.single().trainingNow)
     }
 }

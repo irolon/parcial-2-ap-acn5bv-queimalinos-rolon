@@ -16,6 +16,17 @@ data class OverviewDto(
     val attention: List<AttentionDto> = emptyList(),
     val recent: List<RecentDto> = emptyList(),
     val lists: OverviewListsDto = OverviewListsDto(),
+    @SerialName("in_session") val inSession: List<InSessionDto> = emptyList(),
+)
+
+/** Alumno con una sesión abierta ahora. Un caché viejo sin `in_session` se lee con la lista vacía. */
+@Serializable
+data class InSessionDto(
+    @SerialName("student_id") val studentId: String,
+    val name: String? = null,
+    @SerialName("session_id") val sessionId: String,
+    @SerialName("routine_name") val routineName: String? = null,
+    @SerialName("started_at") val startedAt: String,
 )
 
 @Serializable

@@ -1,6 +1,7 @@
 package com.fittrainer.ui.students.overview
 
 import com.fittrainer.data.students.overview.FeedbackItem
+import com.fittrainer.data.students.overview.InSessionItem
 import com.fittrainer.data.students.overview.RiskItem
 import com.fittrainer.data.students.overview.StudentItem
 import com.fittrainer.data.students.StudentStatus
@@ -83,5 +84,12 @@ class HomeTextsTest {
     @Test fun `cabecera`() {
         assertEquals("DOMINGO · 1 NOV", headerDate(LocalDate.of(2026, 11, 1)))
         assertEquals("Hola, Profe", greeting("Profe Card 8"))
+    }
+
+    @Test fun `linea de en curso`() {
+        val started = now.minusSeconds(12 * 60)
+        assertEquals("Pierna · hace 12 min", inSessionLine(InSessionItem("s", "A", "Pierna", started), now))
+        assertEquals("hace 12 min", inSessionLine(InSessionItem("s", "A", null, started), now))
+        assertEquals("En curso", IN_SESSION_TITLE)
     }
 }

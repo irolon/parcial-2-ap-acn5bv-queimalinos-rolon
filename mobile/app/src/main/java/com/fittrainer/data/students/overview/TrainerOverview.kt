@@ -1,6 +1,7 @@
 package com.fittrainer.data.students.overview
 
 import com.fittrainer.data.api.students.FeedbackDto
+import com.fittrainer.data.api.students.InSessionDto
 import com.fittrainer.data.api.students.OverviewDto
 import com.fittrainer.data.api.students.OverviewStudentDto
 import com.fittrainer.data.api.students.RiskDto
@@ -21,6 +22,7 @@ data class TrainerOverview(
     val atRisk: List<RiskItem>,
     val feedback: List<FeedbackItem>,
     val students: List<StudentItem>,
+    val inSession: List<InSessionItem> = emptyList(),
 ) {
     /** Los que tienen hoy asignado (el anillo del día es plannedDone de plannedToday). */
     val plannedToday: Int get() = today.count { it.planned }
@@ -49,6 +51,9 @@ data class FeedbackItem(val studentId: String, val name: String, val sessionId: 
 /** status: ACTIVE, NEW o INACTIVE (al Inicio nunca llega un dado de baja). */
 data class StudentItem(val studentId: String, val name: String, val status: StudentStatus, val daysWithoutTraining: Int, val adherencePct: Int?)
 
+/** Alumno entrenando ahora: sesión abierta desde startedAt. */
+data class InSessionItem(val studentId: String, val name: String, val routineName: String?, val startedAt: Instant)
+
 data class OverviewCache(val overview: TrainerOverview, val fetchedAt: Instant)
 
 private fun parse(iso: String): Instant = OffsetDateTime.parse(iso).toInstant()
@@ -61,6 +66,10 @@ private fun TodayDto.toDomain(): TodayItem {
         if (done) sessionId else null, routineName, if (done) finishedAt?.let(::parse) else null, rpe,
     )
 }
+
+/** Un started_at ilegible descarta ese item en vez de romper el Inicio. */
+private fun InSessionDto.toDomain(): InSessionItem? =
+    runCatching { parse(startedAt) }.getOrNull()?.let { InSessionItem(studentId, name ?: "Alumno", routineName, it) }
 
 private fun RiskDto.toDomain() = RiskItem(studentId, name.orEmpty(), days, neverTrained)
 
@@ -86,4 +95,5 @@ fun OverviewDto.toDomain() = TrainerOverview(
     atRisk = lists.atRisk.map { it.toDomain() },
     feedback = lists.feedbackPending.map { it.toDomain() },
     students = lists.students.map { it.toDomain() },
+    inSession = inSession.mapNotNull { it.toDomain() },
 )

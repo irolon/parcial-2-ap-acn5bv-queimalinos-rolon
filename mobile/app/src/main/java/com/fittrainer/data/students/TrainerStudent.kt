@@ -14,6 +14,7 @@ data class TrainerStudent(
     val lastSessionAt: Instant?,
     val daysPerWeek: Int,
     val adherence: Adherence?,
+    val openSessionStartedAt: Instant? = null,
 )
 
 /** Últimos 7 días completos: días asignados con sesión terminada. pct == null: sin plan. */

@@ -12,6 +12,7 @@ import com.fittrainer.data.students.ARGENTINA
 import com.fittrainer.data.students.StudentFilter
 import com.fittrainer.data.students.StudentsCache
 import com.fittrainer.data.students.TrainerStudentsRepository
+import com.fittrainer.data.students.reemitAtOpenSessionExpiry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import javax.inject.Inject
@@ -59,6 +60,7 @@ class StudentsViewModel @Inject constructor(
         .flatMapLatest { repository.observe(it.id) }
         .map<StudentsCache, StudentsCache?> { it }
         .onStart { emit(null) }
+        .flatMapLatest { c -> reemitAtOpenSessionExpiry(c, c?.students.orEmpty().mapNotNull { it.openSessionStartedAt }, clock) }
 
     val uiState: StateFlow<StudentsUiState> =
         combine(cache, filters, online, refreshState) { c, f, isOnline, r ->

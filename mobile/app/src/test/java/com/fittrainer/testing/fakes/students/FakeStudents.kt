@@ -5,6 +5,7 @@ import com.fittrainer.data.api.students.CreateMetricRequest
 import com.fittrainer.data.api.students.MetricResponse
 import com.fittrainer.data.api.students.MetricsResponse
 import com.fittrainer.data.api.students.AdherenceDto
+import com.fittrainer.data.api.students.OpenSessionDto
 import com.fittrainer.data.api.students.AttendanceResponse
 import com.fittrainer.data.api.students.StreakResponse
 import com.fittrainer.data.api.students.StudentDetailResponse
@@ -23,9 +24,11 @@ fun studentDto(
     active: Boolean = true,
     lastSessionAt: String? = "2026-10-30T15:00:00Z",
     adherence: AdherenceDto? = AdherenceDto(3, 2, 67),
+    openSession: OpenSessionDto? = null,
 ) = StudentListItemDto(
     id = id, name = name, email = "$id@mail.com", goal = "hypertrophy", active = active,
     createdAt = "2026-09-01T12:00:00Z", lastSessionAt = lastSessionAt, daysPerWeek = 3, adherence = adherence,
+    openSession = openSession,
 )
 
 fun trainerStudent(
@@ -37,7 +40,10 @@ fun trainerStudent(
     goal: String? = "hypertrophy",
     daysPerWeek: Int = 3,
     adherence: Adherence? = Adherence(3, 2, 67),
-) = TrainerStudent(id, name, "$id@mail.com", goal, active, createdAt, lastSessionAt, daysPerWeek, adherence)
+    openSessionStartedAt: Instant? = null,
+) = TrainerStudent(
+    id, name, "$id@mail.com", goal, active, createdAt, lastSessionAt, daysPerWeek, adherence, openSessionStartedAt,
+)
 
 /**
  * API falsa: [pages] por valor de `active` (página 1 = índice 0). [failOn] = (active, page) que lanza [error].
