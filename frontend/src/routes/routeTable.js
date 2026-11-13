@@ -71,6 +71,9 @@ export const NEW_STUDENT = {
   subtitle: 'ALUMNOS › NUEVO · GENERÁ QR Y COMPARTILO POR WHATSAPP',
 };
 
+/** Cuenta del PT (contraseña y exportación): fuera del menú, se entra con "Configuración" del sidebar. */
+export const TRAINER_ACCOUNT = { path: `${TRAINER_NAV.base}/cuenta`, title: 'Tu cuenta', subtitle: 'CONTRASEÑA Y DATOS' };
+
 /** Listado de rutinas (el ítem `rutinas` del menú del entrenador). */
 export const ROUTINES_PATH = `${TRAINER_NAV.base}/rutinas`;
 
@@ -111,6 +114,9 @@ export const messagesHref = (studentId) => `${TRAINER_NAV.base}/mensajes?alumno=
 
 /** Link a la ficha; `search` (sin `?`) conserva los filtros del panel. */
 export const profileHref = (id, search = '') => `${STUDENTS_PATH}/${id}${search ? `?${search}` : ''}`;
+
+/** Con la clave blanqueada por su PT, el alumno elige una nueva acá antes de cualquier otra pantalla (sin shell). */
+export const CHANGE_PASSWORD_PATH = '/cambiar-clave';
 
 const NAV_BY_ROLE = { [ROLES.TRAINER]: TRAINER_NAV, [ROLES.STUDENT]: STUDENT_NAV };
 

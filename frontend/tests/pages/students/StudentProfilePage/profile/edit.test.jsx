@@ -18,6 +18,58 @@ const open = async (user, stub = {}) => {
 };
 
 describe('StudentProfilePage: editar alumno', () => {
+  it('con el alumno activo trae la sección para blanquear la clave', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await open(user);
+    expect(within(dialog).getByRole('region', { name: 'Acceso a la app' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Blanquear clave' })).toBeEnabled();
+  });
+
+  it('con un blanqueo en vuelo no se cierra (Esc, Cancelar, Guardar) y la clave temporal llega', async () => {
+    const user = userEvent.setup();
+    const { fetchMock, dialog } = await open(user);
+    let resolve;
+    const inner = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((url, init) =>
+      url.endsWith('/password-reset') ? new Promise((r) => (resolve = r)) : inner(url, init),
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Blanquear clave' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Blanquear' }));
+    // El Cancelar de la sección y el del pie del diálogo.
+    for (const cancel of within(dialog).getAllByRole('button', { name: 'Cancelar' })) expect(cancel).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Guardar' })).toBeDisabled();
+    await user.keyboard('{Escape}');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    expect(screen.getByRole('dialog', { name: 'Editar alumno' })).toBeInTheDocument();
+    expect(callsWith(fetchMock, 'PATCH')).toHaveLength(0);
+    resolve(jsonResponse(200, { temporary_password: 'Ab3kP9mQx2' }));
+    expect(await within(dialog).findByText('Ab3kP9mQx2')).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Guardar' })).toBeEnabled();
+  });
+
+  it('con un Guardar en vuelo no deja blanquear: el PATCH vuelve, cierra y no hubo blanqueo', async () => {
+    const user = userEvent.setup();
+    let resolve;
+    const update = vi.fn(() => new Promise((r) => (resolve = r)));
+    const { fetchMock, dialog } = await open(user, { handlers: { update } });
+    await user.type(within(dialog).getByLabelText('Nombre'), 'x');
+    await user.click(within(dialog).getByRole('button', { name: 'Blanquear clave' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    const confirm = within(dialog).getByRole('button', { name: 'Blanquear' });
+    expect(confirm).toBeDisabled();
+    await user.click(confirm);
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/password-reset'))).toHaveLength(0);
+    resolve(jsonResponse(200, { data: studentDetail({ name: 'Ana Pérezx' }) }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/password-reset'))).toHaveLength(0);
+  });
+
+  it('dado de baja no ofrece blanquear la clave', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await open(user, { detail: studentDetail({ active: false }) });
+    expect(within(dialog).queryByRole('region', { name: 'Acceso a la app' })).toBeNull();
+  });
+
   it('precarga los datos y manda solo el nombre cambiado', async () => {
     const user = userEvent.setup();
     const update = vi.fn(async () => jsonResponse(200, { data: studentDetail({ name: 'Ana Gómez' }) }));

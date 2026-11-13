@@ -57,6 +57,11 @@ export function createRateLimiters(limits = env.RATE_LIMITS) {
     refresh: [byIp(limits.auth)],
     invitation: [byIp(limits.public)],
     studentSignup: [byIp(limits.public)],
+    // GX1: van con usuario autenticado, pero el cambio prueba claves (fuerza bruta a la actual),
+    // el blanqueo escribe y la exportación arma el CSV en memoria. Mismo cupo que auth.
+    passwordChange: [byIp(limits.auth)],
+    passwordReset: [byIp(limits.auth)],
+    export: [byIp(limits.auth)],
   };
 }
 

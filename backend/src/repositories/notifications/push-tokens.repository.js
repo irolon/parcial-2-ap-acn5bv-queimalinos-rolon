@@ -40,3 +40,17 @@ export async function deleteTokens(tokens) {
   if (tokens.length === 0) return;
   unwrap(await supabase.from(PUSH_TOKENS_TABLE).delete().in('token', tokens));
 }
+
+/**
+ * Borra los push tokens del usuario (GX1: cambio y blanqueo de la clave), salvo
+ * el de este dispositivo si viene: el que cambió la clave sigue recibiendo push.
+ */
+export async function deleteAllForUserExcept(user, keepToken) {
+  let query = supabase
+    .from(PUSH_TOKENS_TABLE)
+    .delete()
+    .eq('user_id', user.id)
+    .eq('user_role', user.role);
+  if (keepToken) query = query.neq('token', keepToken);
+  unwrap(await query);
+}

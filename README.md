@@ -52,7 +52,7 @@ Lo que ya está en `develop`. El detalle de cada tarjeta (spec, plan y docs que 
 
 **Pendiente:** IA (asistente del alumno y del PT, con n8n), solicitud de turno en el celular, chat en el celular, QA y deploy (S7).
 
-> DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` y se aplican a mano en la base compartida.
+> DB en Supabase (proyecto **Fit-Trainer**): las migraciones de cada tarjeta están en `backend/src/database/migrations/` (una carpeta por mes, `2026-10/`, `2026-11/`…) y se aplican a mano en la base compartida.
 
 ## Arranque rápido (backend)
 

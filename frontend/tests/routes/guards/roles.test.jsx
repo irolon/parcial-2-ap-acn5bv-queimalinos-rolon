@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { resetAuthStore } from '../helpers/auth/authStore';
-import { jsonResponse, stubFetch } from '../helpers/shared/fetchMock';
-import { STUDENT, TRAINER, renderRoute, setSession } from '../helpers/routes/renderRoute';
-import { stubStudentHome } from '../helpers/student/home';
-import { stubStudents } from '../helpers/students/students';
+import { resetAuthStore } from '../../helpers/auth/authStore';
+import { jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { STUDENT, TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
+import { stubStudentHome } from '../../helpers/student/home';
+import { stubStudents } from '../../helpers/students/students';
 import { workoutKey } from '@/utils/workout/workoutStorage';
 
 // El dashboard del entrenador pide la lista de alumnos.

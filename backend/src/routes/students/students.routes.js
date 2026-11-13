@@ -11,6 +11,7 @@ import {
 } from '../../validations/students/students.validation.js';
 import { validateAttendanceQuery } from '../../validations/students/attendance.validation.js';
 import * as studentsController from '../../controllers/students/students.controller.js';
+import * as exportController from '../../controllers/export/export.controller.js';
 import bodyMetricsRoutes from '../body-metrics/body-metrics.routes.js';
 import studentSessionsRoutes from '../sessions/student-sessions.routes.js';
 import studentGamificationRoutes from '../gamification/student-gamification.routes.js';
@@ -22,6 +23,10 @@ router.get('/', authenticate, requireRole('trainer'), validate(validateListQuery
 
 // Inicio del entrenador. Va ANTES de /:id: si no, "overview" se tomaría como un id.
 router.get('/overview', authenticate, requireRole('trainer'), studentsController.overview);
+
+// Exportación CSV de todos los alumnos del trainer (GX1). Va ANTES de /:id
+// (si no, "export" se tomaría como un id); limitador primero.
+router.get('/export', limitRate('export'), authenticate, requireRole('trainer'), exportController.exportTrainer);
 
 // Alta del alumno desde invitación — público (lo ejecuta el alumno con su token).
 router.post('/', limitRate('studentSignup'), validate(validateRegisterFromInvitation), studentsController.registerFromInvitation);
@@ -45,6 +50,16 @@ router.get(
   studentsController.attendance
 );
 
+// Exportación CSV de un alumno (GX1): trainer dueño o el propio alumno (ownership en el service).
+router.get(
+  '/:id/export',
+  limitRate('export'),
+  authenticate,
+  requireRole('trainer', 'student'),
+  validate(validateStudentIdParam, 'params'),
+  exportController.exportStudent
+);
+
 // Edición y baja: solo trainer (dueño, verificado en el service).
 router.patch(
   '/:id',
@@ -53,6 +68,17 @@ router.patch(
   validate(validateStudentIdParam, 'params'),
   validate(validateUpdateStudent),
   studentsController.update
+);
+
+// Blanqueo de la clave (GX1): solo el trainer dueño (verificado en el service).
+// Limitador primero; sin body: la clave temporal la genera el servidor.
+router.post(
+  '/:id/password-reset',
+  limitRate('passwordReset'),
+  authenticate,
+  requireRole('trainer'),
+  validate(validateStudentIdParam, 'params'),
+  studentsController.resetPassword
 );
 
 // Medidas corporales del alumno: /students/:id/metrics.

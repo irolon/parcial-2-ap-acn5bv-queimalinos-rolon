@@ -34,7 +34,7 @@
 ### Task 1: Base de datos, seeds y modelos puros
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-10-30-gamification.sql`, `backend/src/database/seeds/achievements.sql`, `backend/src/database/seeds/challenges.sql`
+- Create: `backend/src/database/migrations/2026-10/2026-10-30-gamification.sql`, `backend/src/database/seeds/achievements.sql`, `backend/src/database/seeds/challenges.sql`
 - Modify: `backend/src/database/schema/05-gamification.sql`, `07-rls.sql`, `backend/src/database/checks/schema-checks.sql`, `backend/src/database/checks/check-anon-access.js`, `backend/src/database/schema/README.md` (y el README de seeds si existe)
 - Create: `backend/src/models/gamification/{streak.js,criteria.js,challenge-progress.js,gamification.model.js}` y un helper de fecha local AR (en `shared/utils/` si no existe uno)
 - Modify: `backend/src/shared/utils/errors.js` (3 factories)

@@ -36,7 +36,7 @@
 ### Task 1: Base de datos, modelo y errores
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-10-29-progress.sql`
+- Create: `backend/src/database/migrations/2026-10/2026-10-29-progress.sql`
 - Modify: `backend/src/database/schema/04-progress.sql` (mismo índice y funciones; si pasa 200 líneas, crear `04b-progress-functions.sql` y anotarlo en `schema/README.md`)
 - Modify: `backend/src/database/checks/schema-checks.sql` si lista objetos esperados (agregar índice/funciones)
 - Create: `backend/src/models/progress/progress.model.js`

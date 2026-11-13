@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { limitRate } from '../../shared/middlewares/rate-limit.middleware.js';
+import { authenticateForPasswordChange } from '../../shared/middlewares/auth.middleware.js';
 import { validate } from '../../shared/middlewares/validation.middleware.js';
 import {
   validateRegister,
@@ -7,6 +8,7 @@ import {
   validateRefresh,
   validateLogout,
 } from '../../validations/auth/auth.validation.js';
+import { validateChangePassword } from '../../validations/auth/password.validation.js';
 import * as authController from '../../controllers/auth/auth.controller.js';
 
 const router = Router();
@@ -18,5 +20,15 @@ router.post('/refresh', limitRate('refresh'), validate(validateRefresh), authCon
 // funciona aunque el access token ya haya vencido. Si viene push_token, se
 // borra el del dueño del refresh token.
 router.post('/logout', validate(validateLogout), authController.logout);
+// GX1: el único endpoint que acepta el access con must_change_password (el
+// alumno blanqueado elige acá su clave nueva). Limitador primero: corta la
+// fuerza bruta a la clave actual antes de verificar nada.
+router.put(
+  '/password',
+  limitRate('passwordChange'),
+  authenticateForPasswordChange,
+  validate(validateChangePassword),
+  authController.changePassword
+);
 
 export default router;

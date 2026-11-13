@@ -18,16 +18,20 @@ function checkEmail(email, details) {
   }
 }
 
-function checkPassword(password, details, { full = true } = {}) {
+/**
+ * Reglas de la clave (≥ 8, una mayúscula, un número). `field` deja reusarla
+ * en el cambio de contraseña, donde el campo es new_password (GX1).
+ */
+export function checkPassword(password, details, { full = true, field = 'password' } = {}) {
   if (!isString(password) || password.length < 8) {
-    details.push({ field: 'password', message: 'La contraseña debe tener al menos 8 caracteres' });
+    details.push({ field, message: 'La contraseña debe tener al menos 8 caracteres' });
     return;
   }
   if (full && !/[A-Z]/.test(password)) {
-    details.push({ field: 'password', message: 'La contraseña debe incluir al menos 1 mayúscula' });
+    details.push({ field, message: 'La contraseña debe incluir al menos 1 mayúscula' });
   }
   if (full && !/[0-9]/.test(password)) {
-    details.push({ field: 'password', message: 'La contraseña debe incluir al menos 1 número' });
+    details.push({ field, message: 'La contraseña debe incluir al menos 1 número' });
   }
 }
 
@@ -88,10 +92,19 @@ export function validateLogout(body) {
   const { refresh_token } = validateRefresh(body);
   const pushToken = body.push_token;
   if (pushToken === undefined) return { refresh_token };
-  if (!isString(pushToken) || pushToken.length < 1 || pushToken.length > PUSH_TOKEN_MAX) {
-    throw Errors.validation('Error de validación', [
-      { field: 'push_token', message: `push_token debe tener entre 1 y ${PUSH_TOKEN_MAX} caracteres` },
-    ]);
-  }
+  const details = [];
+  checkPushToken(pushToken, details);
+  throwIfInvalid(details);
   return { refresh_token, push_token: pushToken };
+}
+
+/** push_token opcional del dispositivo (logout y cambio de contraseña). */
+export function checkPushToken(pushToken, details) {
+  if (pushToken === undefined) return;
+  if (!isString(pushToken) || pushToken.length < 1 || pushToken.length > PUSH_TOKEN_MAX) {
+    details.push({
+      field: 'push_token',
+      message: `push_token debe tener entre 1 y ${PUSH_TOKEN_MAX} caracteres`,
+    });
+  }
 }

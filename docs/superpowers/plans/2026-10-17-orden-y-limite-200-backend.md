@@ -245,7 +245,7 @@ export const service = await import(src('services/students/students.service.js')
 - Move: `backend/src/database/check-anon-access.js` → `backend/src/database/checks/check-anon-access.js`
 - Move: `backend/src/database/seed.sql` → `backend/src/database/seeds/seed.sql`
 - Delete: `backend/src/database/schema.sql`
-- Modify: `backend/package.json` (script `db:check-anon`), y los comentarios que nombran `schema.sql`: `migrations/2026-10-17-students-body-metrics.sql`, `seeds/seed.sql`, `models/students/student.model.js` y `checks/check-anon-access.js`.
+- Modify: `backend/package.json` (script `db:check-anon`), y los comentarios que nombran `schema.sql`: `migrations/2026-10/2026-10-17-students-body-metrics.sql`, `seeds/seed.sql`, `models/students/student.model.js` y `checks/check-anon-access.js`.
 
 - [ ] **Step 1: Repartir por rangos de líneas** del `schema.sql` actual, copiándolos sin cambios. Cada archivo arranca con un encabezado de 2 o 3 líneas: qué tablas tiene, que va después del archivo anterior y que se puede volver a correr.
 

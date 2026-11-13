@@ -4,11 +4,13 @@ import {
   generateRefreshToken,
   hashToken,
   refreshTokenExpiryISO,
+  MUST_CHANGE_CLAIM,
 } from '../../shared/utils/jwt.js';
 import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/auth/auth.repository.js';
 import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as credentialsRepo from '../../repositories/auth/credentials.repository.js';
 import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
 import { toTrainer } from '../../models/auth/trainer.model.js';
 import { toStudent } from '../../models/students/student.model.js';
@@ -20,7 +22,12 @@ import { isActive } from '../../models/auth/refresh-token.model.js';
  * alumno desde invitación), evitando duplicar la lógica de tokens.
  */
 export async function issueTokens(user, role) {
-  const accessToken = signAccessToken({ sub: user.id, role, email: user.email });
+  const accessToken = signAccessToken({
+    sub: user.id,
+    role,
+    email: user.email,
+    ...mustChangeClaim(user),
+  });
   const { token: refreshToken, tokenHash } = generateRefreshToken();
   await repository.saveRefreshToken({
     userId: user.id,
@@ -29,6 +36,14 @@ export async function issueTokens(user, role) {
     expiresAt: refreshTokenExpiryISO(),
   });
   return { token: accessToken, refresh_token: refreshToken };
+}
+
+/**
+ * Claim de la clave blanqueada (GX1): solo si el flag es true (el trainer no
+ * tiene la columna). Sin flag el token no lleva la propiedad.
+ */
+function mustChangeClaim(user) {
+  return user?.must_change_password === true ? { [MUST_CHANGE_CLAIM]: true } : {};
 }
 
 /** Registra un nuevo Personal Trainer y devuelve sus tokens de sesión. */
@@ -68,7 +83,24 @@ async function authenticateUser(password, row, toPublic, role) {
 
   const user = toPublic(row); // descarta password_hash vía el modelo
   const tokens = await issueTokens(user, role);
-  return { user: { ...user, role }, ...tokens, expires_in: env.JWT_EXPIRES_IN };
+  await assertPasswordUnchanged(row, role, tokens.refresh_token);
+  const account = {
+    must_change_password: user.must_change_password === true,
+    password_changed_at: user.password_changed_at ?? null,
+  };
+  return { user: { ...user, ...account, role }, ...tokens, expires_in: env.JWT_EXPIRES_IN };
+}
+
+/**
+ * Login concurrente con un cambio o blanqueo de clave (auditoría, fila 12): si la clave cambió entre la verificación y
+ * el guardado del refresh, se revoca ese refresh y el login falla. Si esta relectura es anterior a guardar la nueva,
+ * la segunda revocación del cambio ya borra el refresh; si es posterior, ve el hash nuevo. Ningún intercalado lo deja vivo.
+ */
+async function assertPasswordUnchanged(row, role, refreshToken) {
+  const current = await credentialsRepo.findPasswordHash(row.id, role);
+  if (current === row.password_hash) return;
+  await repository.revokeRefreshToken(hashToken(refreshToken));
+  throw Errors.invalidCredentials();
 }
 
 /** Emite un nuevo access token a partir de un refresh token válido. */
@@ -78,13 +110,20 @@ export async function refresh({ refresh_token }) {
   if (!isActive(stored)) throw Errors.unauthorized('Refresh token expirado');
   // Segunda barrera: la baja revoca los refresh tokens, pero si quedó alguno
   // vivo, un alumno inactivo igual no renueva.
+  let student = null;
   if (stored.role === 'student') {
-    const student = await studentsRepository.findStudentById(stored.user_id);
+    student = await studentsRepository.findStudentById(stored.user_id);
     if (!student || !student.active) throw Errors.accountDisabled();
   }
 
-  const token = signAccessToken({ sub: stored.user_id, role: stored.role });
-  return { token, expires_in: env.JWT_EXPIRES_IN };
+  // El flag viaja también en el cuerpo: la web lo lee al recargar la página.
+  const claim = mustChangeClaim(student);
+  const token = signAccessToken({ sub: stored.user_id, role: stored.role, ...claim });
+  return {
+    token,
+    expires_in: env.JWT_EXPIRES_IN,
+    must_change_password: Boolean(claim[MUST_CHANGE_CLAIM]),
+  };
 }
 
 /**

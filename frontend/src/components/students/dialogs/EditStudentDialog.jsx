@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Input from '@/components/shared/ui/Input';
@@ -13,6 +13,7 @@ import {
   toStudentErrors,
   validateStudentBody,
 } from '@/utils/students/studentForm';
+import ResetPasswordSection from './ResetPasswordSection';
 
 const FORM_ID = 'edit-student-form';
 
@@ -24,12 +25,21 @@ export default function EditStudentDialog({ student, onClose }) {
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const update = useUpdateStudent(student.id);
   const saving = update.isPending;
+  // Blanqueo en vuelo: cerrar ahora perdería la clave temporal, que se ve una sola vez.
+  const [resetting, setResetting] = useState(false);
+  // El PATCH vuelve con el `resetting` de cuando arrancó: el ref dice si hay un blanqueo en vuelo ahora.
+  const resettingRef = useRef(false);
+  const busy = saving || resetting;
+  const onResetBusy = (value) => {
+    resettingRef.current = value;
+    setResetting(value);
+  };
   const defaults = studentFormDefaults(student);
   const { fields } = errors;
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (saving) return;
+    if (busy) return;
     const body = buildStudentBody(new FormData(event.currentTarget), student);
     if (Object.keys(body).length === 0) {
       onClose();
@@ -43,7 +53,7 @@ export default function EditStudentDialog({ student, onClose }) {
     setErrors(NO_FIELD_ERRORS);
     try {
       await update.mutateAsync(body);
-      onClose();
+      if (!resettingRef.current) onClose();
     } catch (error) {
       setErrors(toStudentErrors(error));
     }
@@ -52,15 +62,15 @@ export default function EditStudentDialog({ student, onClose }) {
   return (
     <Dialog
       open
-      dismissible={!saving}
+      dismissible={!busy}
       onOpenChange={(next) => !next && onClose()}
       title="Editar alumno"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
             Cancelar
           </Button>
-          <Button type="submit" form={FORM_ID} loading={saving}>
+          <Button type="submit" form={FORM_ID} loading={saving} disabled={resetting}>
             Guardar
           </Button>
         </>
@@ -99,6 +109,7 @@ export default function EditStudentDialog({ student, onClose }) {
           error={fields.birth_date}
         />
       </form>
+      {student.active && <ResetPasswordSection student={student} disabled={saving} onBusyChange={onResetBusy} />}
     </Dialog>
   );
 }

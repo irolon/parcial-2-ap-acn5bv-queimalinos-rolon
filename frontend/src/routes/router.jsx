@@ -2,6 +2,8 @@ import { Navigate } from 'react-router';
 import AppShell from '@/components/shared/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import ChangePasswordRequiredPage from '@/pages/auth/ChangePasswordRequiredPage';
+import TrainerAccountPage from '@/pages/account/TrainerAccountPage';
 import AgendaPage from '@/pages/agenda/AgendaPage';
 import ChallengesPage from '@/pages/challenges/ChallengesPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
@@ -26,15 +28,17 @@ import TodayPage from '@/pages/student/TodayPage';
 import WorkoutPage from '@/pages/student/WorkoutPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import PlaceholderPage from '@/pages/shared/PlaceholderPage';
-import { GuestOnly, RequireRole, RootRedirect } from './guards';
+import { GuestOnly, RequirePasswordChange, RequireRole, RootRedirect } from './guards';
 import {
   AI_ROUTINE,
+  CHANGE_PASSWORD_PATH,
   NEW_ROUTINE,
   NEW_STUDENT,
   ROLES,
   STUDENT_NAV,
   STUDENT_PROFILE,
   STUDENT_ROUTINE,
+  TRAINER_ACCOUNT,
   TRAINER_NAV,
   WORKOUT_PATH,
 } from './routeTable';
@@ -73,6 +77,11 @@ export const routes = [
       { path: '/registro', element: <RegisterPage /> },
     ],
   },
+  // Sin shell ni rol: el alumno con la clave blanqueada elige una nueva antes de seguir.
+  {
+    element: <RequirePasswordChange />,
+    children: [{ path: CHANGE_PASSWORD_PATH, element: <ChangePasswordRequiredPage /> }],
+  },
   // Fuera de GuestOnly: con una sesión abierta la página lo avisa en vez de perder el link.
   { path: '/join', element: <JoinPage /> },
   roleSection(ROLES.TRAINER, TRAINER_NAV, [
@@ -87,6 +96,11 @@ export const routes = [
       path: AI_ROUTINE.path,
       handle: { title: AI_ROUTINE.title, subtitle: AI_ROUTINE.subtitle },
       element: <AiRoutinePage />,
+    },
+    {
+      path: TRAINER_ACCOUNT.path,
+      handle: { title: TRAINER_ACCOUNT.title, subtitle: TRAINER_ACCOUNT.subtitle },
+      element: <TrainerAccountPage />,
     },
   ], {
     dashboard: <DashboardPage />,

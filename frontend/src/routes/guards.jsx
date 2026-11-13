@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@/hooks/auth/useAuthStore';
 import LoadingState from '@/components/shared/states/LoadingState';
 import SessionOffline from '@/components/shared/states/SessionOffline';
-import { homeFor } from './routeTable';
+import { CHANGE_PASSWORD_PATH, homeFor } from './routeTable';
 
 // `idle` = todavía no corrió `restore()`; se trata igual que `loading`.
 const isChecking = (status) => status === 'idle' || status === 'loading';
@@ -25,15 +25,31 @@ export function SessionLoading() {
   );
 }
 
-/** Rutas privadas: exige sesión y el rol indicado. */
+/**
+ * Rutas privadas: exige sesión y el rol indicado. Con la clave blanqueada (`must_change_password`) manda a
+ * `/cambiar-clave` antes de montar la pantalla: el backend contestaría 403 a cualquier pedido.
+ */
 export function RequireRole({ role }) {
   const { status, user, home } = useSession();
   const location = useLocation();
 
   if (isChecking(status)) return <SessionLoading />;
+  // Offline antes que el flag: sin servidor no se sabe si la clave sigue blanqueada.
   if (status === 'offline') return <SessionOffline />;
   if (!home) return <Navigate to="/login" replace state={{ from: location }} />;
+  if (user.must_change_password) return <Navigate to={CHANGE_PASSWORD_PATH} replace />;
   if (user.role !== role) return <Navigate to={home} replace />;
+  return <Outlet />;
+}
+
+/** `/cambiar-clave`: necesita sesión y el flag; sin el flag no hay nada que hacer ahí y va a la home del rol. */
+export function RequirePasswordChange() {
+  const { status, user, home } = useSession();
+
+  if (isChecking(status)) return <SessionLoading />;
+  if (status === 'offline') return <SessionOffline />;
+  if (!home) return <Navigate to="/login" replace />;
+  if (!user.must_change_password) return <Navigate to={home} replace />;
   return <Outlet />;
 }
 

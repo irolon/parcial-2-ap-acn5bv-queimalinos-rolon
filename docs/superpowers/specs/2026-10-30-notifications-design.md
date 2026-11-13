@@ -71,7 +71,7 @@ Los disparadores nunca rompen la operación que los origina (try/catch + log).
 
 ## 5. Base de datos
 
-Migración `backend/src/database/migrations/2026-10-30-notifications.sql` (y en `schema/06-ai-and-agenda.sql`):
+Migración `backend/src/database/migrations/2026-10/2026-10-30-notifications.sql` (y en `schema/06-ai-and-agenda.sql`):
 
 - `alter table notifications add column if not exists data jsonb not null default '{}'`, `add column if not exists push_sent_at timestamptz`.
 - índice para el límite semanal: `create index if not exists idx_notifications_inactivity on notifications (created_at desc) where type = 'inactivity'` (precedido de `drop index if exists` para reemplazar el índice anterior al reaplicar).

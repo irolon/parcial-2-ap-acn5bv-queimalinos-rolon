@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import * as authApi from '@/api/auth/auth.api';
 import * as studentsApi from '@/api/students/students.api';
+import * as accountApi from '@/api/account/account.api';
 import { configureClient, isNetworkError } from '@/api/shared/client';
 
 export const SESSION_STORAGE_KEY = 'fittrainer.session';
@@ -21,6 +22,12 @@ const isTransientError = (err) => isNetworkError(err) || isRateLimited(err) || i
 function keepSessionOffline(set, get) {
   if (get().refreshToken) set({ token: null, status: 'offline' });
   else set({ ...EMPTY_SESSION, status: 'anonymous' });
+}
+
+// El refresh informa si la clave está blanqueada (GX1): se copia al user solo si viene.
+function withPasswordFlag(user, data) {
+  if (!user || typeof data?.must_change_password !== 'boolean') return user;
+  return { ...user, must_change_password: data.must_change_password };
 }
 
 function saveSession(set, user, token, refreshToken) {
@@ -68,6 +75,17 @@ export const useAuthStore = create(
         set({ ...EMPTY_SESSION, status: 'anonymous' });
       },
 
+      // PUT /auth/password: el refresh de este dispositivo se conserva; el access nuevo ya no trae el flag.
+      async changePassword({ current_password, new_password }) {
+        const { refreshToken } = get();
+        const data = await accountApi.changePassword({ current_password, new_password, refresh_token: refreshToken });
+        const { user } = get();
+        set({
+          token: data.token,
+          user: { ...user, must_change_password: false, password_changed_at: data.password_changed_at },
+        });
+      },
+
       async restore() {
         const { user, refreshToken } = get();
         if (!user || !refreshToken) {
@@ -76,8 +94,8 @@ export const useAuthStore = create(
         }
         set({ status: 'loading' });
         try {
-          const { token } = await authApi.refresh(refreshToken);
-          set({ token, status: 'authenticated' });
+          const data = await authApi.refresh(refreshToken);
+          set({ token: data.token, user: withPasswordFlag(get().user, data), status: 'authenticated' });
         } catch (err) {
           if (isTransientError(err)) keepSessionOffline(set, get);
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
@@ -91,8 +109,8 @@ export const useAuthStore = create(
         // Si mientras tanto cerró sesión (u otra cuenta entró), la respuesta ya no le corresponde.
         const stale = () => get().refreshToken !== refreshToken;
         try {
-          const { token } = await authApi.refresh(refreshToken);
-          if (!stale()) set({ token, status: 'authenticated' });
+          const data = await authApi.refresh(refreshToken);
+          if (!stale()) set({ token: data.token, user: withPasswordFlag(get().user, data), status: 'authenticated' });
         } catch (err) {
           if (stale()) return;
           if (isTransientError(err)) keepSessionOffline(set, get);
@@ -118,9 +136,9 @@ async function renewAccessToken() {
   // Si mientras tanto cerró sesión o entró otra cuenta, la respuesta (buena o mala) es de la anterior: no pisa la actual.
   const stale = () => useAuthStore.getState().refreshToken !== refreshToken;
   try {
-    const { token } = await authApi.refresh(refreshToken);
-    if (!stale()) useAuthStore.setState({ token });
-    return token;
+    const data = await authApi.refresh(refreshToken);
+    if (!stale()) useAuthStore.setState({ token: data.token, user: withPasswordFlag(useAuthStore.getState().user, data) });
+    return data.token;
   } catch (err) {
     throw stale() ? new StaleRenewalError('La sesión cambió durante la renovación', { cause: err }) : err;
   }

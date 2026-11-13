@@ -66,7 +66,7 @@ La web no tiene sustitución de ejercicio: `setBody` manda `original_exercise_id
 
 ## Datos
 
-- **Migración `backend/src/database/migrations/2026-11-09-chat-history.sql`** (lo mismo en el bloque de `chat_messages` de `schema/06-ai-and-agenda.sql`): `exercise_id uuid references exercises (id) on delete set null` y `suggestions jsonb not null default '[]'`. Sin índice nuevo: `idx_chat_messages_student (student_id, created_at)` alcanza. Se actualiza `modelo-de-datos.md` (§chat_messages).
+- **Migración `backend/src/database/migrations/2026-11/2026-11-09-chat-history.sql`** (lo mismo en el bloque de `chat_messages` de `schema/06-ai-and-agenda.sql`): `exercise_id uuid references exercises (id) on delete set null` y `suggestions jsonb not null default '[]'`. Sin índice nuevo: `idx_chat_messages_student (student_id, created_at)` alcanza. Se actualiza `modelo-de-datos.md` (§chat_messages).
 - **Guardado** (`exchangeRows`): la consulta lleva `exercise_id` (el `findCurrentExercise`, o `null`); la respuesta lleva `suggestions: [{ exercise_id, name, reason }]` ya validadas.
 - **`GET /chat/today`** (aditivo): cada mensaje suma `exercise: { id, name } | null`, `routine_name` y `suggestions` (`[]` en las del alumno).
 - **Nuevo `GET /chat/history`** (rol `student`). Query: `before` (`YYYY-MM-DD`, opcional; por defecto hoy, que queda afuera) y `days` (1–14, por defecto 7). Lee los mensajes con `created_at` anterior al inicio de `before` (hora argentina), de los más nuevos a los más viejos, con tope `days × CHAT_DAILY_LIMIT × 2`; agrupa por día argentino y descarta el más viejo si pudo quedar cortado por el tope.
@@ -82,7 +82,7 @@ Las líneas de los archivos de la #85 y la #90 se miden en `feature/ai-rag-nvidi
 - Crea:
   - `models/chat/chat-history.js` (`groupByDay(rows, days, limitPerDay)`);
   - `services/chat/history.service.js` (`getHistory`);
-  - `database/migrations/2026-11-09-chat-history.sql`;
+  - `database/migrations/2026-11/2026-11-09-chat-history.sql`;
   - tests en `tests/unit/`: `models/chat/chat-history.test.js`, `services/chat/history.service.test.js` y `validations/chat/chat.validation/history.test.js`.
 - Modifica:
   - `models/chat/chat-message.model.js` (47: columnas con embebidos y `HISTORY_DAYS_MAX`);

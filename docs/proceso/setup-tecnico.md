@@ -166,7 +166,7 @@ npm run lint
 3. Ejecutá `backend/src/database/checks/schema-checks.sql`. Tiene que devolver **0 filas**.
 4. Ejecutá los seeds, en este orden (se pueden re-ejecutar): `backend/src/database/seeds/exercises.sql` (50 ejercicios globales), `achievements.sql` (catálogo de logros) y `challenges.sql` (desafíos globales de ejemplo).
 5. Ejecutá `backend/src/database/checks/exercises-checks.sql`. Tiene que devolver **0 filas**.
-6. Las migraciones de `backend/src/database/migrations/` se aplican **solo en bases que ya existían** antes de esos cambios. En una base nueva, el schema ya las incluye.
+6. Las migraciones de `backend/src/database/migrations/` (una carpeta por mes) se aplican **solo en bases que ya existían** antes de esos cambios. En una base nueva, el schema ya las incluye.
 
 Antes de aplicar `2026-10-17-exercises-global-name.sql` en una base vieja, esta consulta tiene que devolver 0 filas:
 

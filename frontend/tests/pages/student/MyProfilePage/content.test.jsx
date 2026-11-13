@@ -67,11 +67,11 @@ describe('MyProfilePage: lo que se ve', () => {
 });
 
 describe('MyProfilePage: sin acciones del entrenador', () => {
-  it('las únicas acciones son Registrar medición, borrar las medidas que cargó el alumno e ir a Mensajes', async () => {
+  it('las únicas acciones son Registrar medición, borrar las medidas que cargó el alumno, las de su cuenta e ir a Mensajes', async () => {
     show();
     await screen.findByRole('table', { name: 'Historial de medidas' });
     const names = screen.getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent);
-    expect(names.sort()).toEqual(['Borrar medida del 05/10/2026', 'Registrar medición']);
+    expect(names.sort()).toEqual(['Borrar medida del 05/10/2026', 'Cambiar', 'Descargar', 'Registrar medición']);
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Mensaje']);
   });

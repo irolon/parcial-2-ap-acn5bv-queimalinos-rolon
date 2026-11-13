@@ -35,7 +35,7 @@
 ### Task 1: Migración, schema y checks
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-10-31-messages.sql`, `backend/src/database/schema/06b-messages.sql`
+- Create: `backend/src/database/migrations/2026-10/2026-10-31-messages.sql`, `backend/src/database/schema/06b-messages.sql`
 - Modify: `backend/src/database/schema/07-rls.sql`, `backend/src/database/checks/schema-checks.sql`, `backend/src/database/schema/README.md` (si lista los archivos)
 
 - [ ] Escribir la migración con el SQL de la spec §3 (tabla, constraints, dos índices, RLS, bucket con `on conflict do nothing`), cabecera "Tarjeta 48 · Mensajería interna. Re-ejecutable. Correr en el SQL Editor de Supabase", como las migraciones vecinas.

@@ -32,7 +32,7 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 - `issueTokens(user, role)` y `refresh` firman el claim si `user.must_change_password` (solo alumnos; el trainer nunca lo tiene). Login devuelve `user.must_change_password` y `user.password_changed_at`; refresh suma `must_change_password` (false para el PT).
 - `services/auth/password.service.js`:
   - `changePassword(user, { current_password, new_password, refresh_token, push_token? })`: lee el hash por rol (`credentials.repository`), verifica la actual, rechaza la misma clave, guarda hash + `password_changed_at` + `must_change_password = false`, `revokeAllForUserExcept(id, role, hashToken(refresh_token))` y `deleteAllForUserExcept(user, push_token)`; devuelve `{ token, expires_in, password_changed_at }`. Si el `refresh_token` no es del usuario → 400 en `refresh_token`.
-  - `resetStudentPassword(trainer, studentId)`: `assertCanAccessStudent`; alumno inactivo → `409 STUDENT_INACTIVE`; revoca **antes** de guardar la clave (mismo criterio que la baja); guarda hash + flag; borra push tokens; devuelve `{ temporary_password }`.
+  - `resetStudentPassword(trainer, studentId)`: `assertCanAccessStudent`; alumno inactivo → `409 STUDENT_INACTIVE`; revoca sesiones y borra push tokens **antes** de guardar la clave (mismo criterio que la baja); guarda hash + flag; devuelve `{ temporary_password }`.
 - Exportación: `models/export/sessions-csv.js` (puro: columnas, escape, BOM, números AR); `repositories/export/sessions-export.repository.js` (sesiones con `routine(name)`, `session_sets(…, exercise(name), original(name))` paginadas de a 500 con `.range`; alumnos del trainer con `id, name, email, active`); `services/export/sessions-export.service.js` (`forStudent(user, id)` con `assertCanAccessStudent`, `forTrainer(user)`), `controllers/export/export.controller.js` (headers `Content-Type` y `Content-Disposition: attachment; filename="…"`). Se arma en memoria (volúmenes actuales: miles de series); sin streaming.
 
 **Web.**
@@ -49,7 +49,7 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 - `POST /students/:id/password-reset` (trainer dueño) → `200 { temporary_password }`. 403, 404, 409 `STUDENT_INACTIVE`, 429.
 - `GET /students/export` (trainer; va antes de `/:id`) y `GET /students/:id/export` (trainer dueño o el propio alumno) → `200 text/csv`, archivo `fittrainer-alumnos-AAAA-MM-DD.csv` / `fittrainer-mis-sesiones-AAAA-MM-DD.csv` (el PT, `fittrainer-<nombre>-AAAA-MM-DD.csv`).
 - `POST /auth/login` y `POST /auth/refresh`: suman `must_change_password` (y login, `password_changed_at`). Cualquier otro endpoint: `403 PASSWORD_CHANGE_REQUIRED` con el claim.
-- Migración `backend/src/database/migrations/2026-11-09-account-password.sql`: `students.must_change_password boolean not null default false`, `students.password_changed_at timestamptz`, `trainers.password_changed_at timestamptz`. Igual en `schema/01-auth.sql` y `02-students.sql`.
+- Migración `backend/src/database/migrations/2026-11/2026-11-09-account-password.sql`: `students.must_change_password boolean not null default false`, `students.password_changed_at timestamptz`, `trainers.password_changed_at timestamptz`. Igual en `schema/01-auth.sql` y `02-students.sql`.
 - Contrato: `docs/arquitectura/contratos-api.md` (Auth: los 2 cambios y `PUT /auth/password`; Alumnos: reset y export; error `PASSWORD_CHANGE_REQUIRED`); `modelo-de-datos.md` (columnas nuevas).
 
 ## Archivos que toca
@@ -66,8 +66,8 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 
 **Jest (backend)**
 - `tests/unit/shared/middlewares/auth.middleware/must-change-password.test.js`: con claim → 403 `PASSWORD_CHANGE_REQUIRED`; `authenticateForPasswordChange` lo deja pasar; sin claim, igual que hoy.
-- `tests/unit/services/auth/password.service/change.test.js`: actual incorrecta → 400 en `current_password`; igual a la actual → 400; ok → hash nuevo, flag en false, revoca los otros (no el actual), borra push tokens salvo el dado, token sin claim; refresh de otro usuario → 400.
-- `…/password.service/reset.test.js`: PT ajeno → 404/403; inactivo → 409; revoca antes de guardar; flag en true; la temporal cumple el formato y solo se guarda el hash.
+- `tests/unit/services/auth/password.service/change.test.js`: actual incorrecta → 400 en `current_password`; igual a la actual → 400; ok → hash nuevo, flag en false, revoca los otros (no el actual), borra push tokens salvo el dado, token sin claim; revoca y borra push antes de guardar (si fallan, la clave no cambia); refresh de otro usuario → 400.
+- `…/password.service/reset.test.js`: PT ajeno → 404/403; inactivo → 409; revoca y borra push antes de guardar (si fallan, no guarda); flag en true; la temporal cumple el formato y solo se guarda el hash.
 - `tests/unit/services/auth/auth.service/must-change.test.js`: login y refresh informan el flag y firman el claim.
 - `tests/unit/shared/utils/password.test.js` (temporal: largo, alfabeto, mayúscula y número, 1000 muestras distintas).
 - `tests/unit/models/export/sessions-csv.test.js`: BOM, `;`, comillas, saltos de línea, `=SUMA()` con `'`, `72,5`, sesión sin series.
@@ -80,7 +80,7 @@ Hoy: `POST /auth/login|refresh|logout` (`routes/auth/auth.routes.js`, 22 líneas
 - `pages/student/MyProfilePage/account.test.jsx` (filas, descarga) y `pages/account/TrainerAccountPage.test.jsx`.
 - `components/students/dialogs/ResetPasswordSection.test.jsx`: confirmar, ver la clave una vez, copiar, error.
 
-**Navegador:** PT y alumno de QA. Capturas en `docs/superpowers/specs/assets/gx1/` (`01-perfil-cuenta.jpg`, `02-cambiar-clave.jpg`, `03-pt-cuenta.jpg`, `04-blanquear-clave.jpg`, `05-clave-temporal.jpg`, `06-cambio-obligatorio.jpg`, `07-csv-en-excel.jpg`, `08-angosto-375.jpg`). Comprobar en dos navegadores que el cambio cierra la sesión del otro al vencer su access.
+**Navegador:** PT y alumno de QA. Capturas en `docs/superpowers/specs/assets/gx1/` (`01-perfil-cuenta.jpg`, `02-cambiar-clave.jpg`, `03-pt-cuenta.jpg`, `04-blanquear-clave.jpg`, `05-clave-temporal.jpg`, `06-cambio-obligatorio.jpg`, `07-csv.jpg` (el CSV descargado, en tabla: Excel no se puede abrir en la prueba automática), `08-angosto-375.jpg`). Comprobar en dos navegadores que el cambio cierra la sesión del otro al vencer su access.
 
 ## Criterio de aceptación
 

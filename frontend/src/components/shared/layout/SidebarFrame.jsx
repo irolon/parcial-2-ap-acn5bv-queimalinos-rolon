@@ -31,7 +31,7 @@ export default function SidebarFrame({ subtitle, nav, footer, user, onLogout, on
         </ul>
       </nav>
       {footer}
-      <UserBlock user={user} onLogout={onLogout} />
+      <UserBlock user={user} onLogout={onLogout} onNavigate={onNavigate} />
     </div>
   );
 }

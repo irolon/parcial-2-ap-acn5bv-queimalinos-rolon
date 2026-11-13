@@ -8,6 +8,7 @@ const WITHOUT_BODY = {
   'PATCH /api/notifications/read-all': 'marca todas como leídas; no lee el body',
   'PATCH /api/notifications/:id/read': 'marca una como leída; solo valida el :id',
   'POST /api/messages/:studentId/read': 'marca la conversación como leída; solo valida el :studentId',
+  'POST /api/students/:id/password-reset': 'genera la clave en el servidor; solo valida el :id',
 };
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];
@@ -37,14 +38,18 @@ describe('validación de entrada en todas las rutas con body', () => {
     }
   });
 
-  it('los endpoints públicos sensibles arrancan su cadena con su limitador (y ninguno más lo tiene)', () => {
+  it('los endpoints sensibles arrancan su cadena con su limitador (y ninguno más lo tiene)', () => {
     const limited = routes.filter((r) => r.handlers.some((h) => h.rateLimit));
     expect(limited.map((r) => [key(r), r.handlers[0].rateLimit])).toEqual([
       ['POST /api/auth/register', 'register'],
       ['POST /api/auth/login', 'login'],
       ['POST /api/auth/refresh', 'refresh'],
+      ['PUT /api/auth/password', 'passwordChange'],
       ['GET /api/invitations/:token', 'invitation'],
+      ['GET /api/students/export', 'export'],
       ['POST /api/students', 'studentSignup'],
+      ['GET /api/students/:id/export', 'export'],
+      ['POST /api/students/:id/password-reset', 'passwordReset'],
     ]);
   });
 });
