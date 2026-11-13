@@ -52,12 +52,19 @@ describe('TrainerCommitmentCard', () => {
   });
 
   it('sin días planificados no muestra "/0": deja las sesiones y aclara que no hay plan', async () => {
-    load({ attendance: { ...ATTENDANCE, sessions: 6, assigned_days: 0 } });
+    load({ attendance: { ...ATTENDANCE, sessions: 6, assigned_days: 0, has_plan: false } });
     await screen.findByText('Sesiones del mes');
     expect(kpi('Sesiones del mes').getByText('6')).toBeVisible();
     expect(kpi('Sesiones del mes').getByText('Sin plan este mes')).toBeVisible();
     expect(screen.queryByText(/\/0/)).toBeNull();
     expect(screen.queryByText('sobre planificadas')).toBeNull();
+  });
+
+  it('con rutina pero sin días todavía (recién dado de alta) dice "Sin días todavía", no "Sin plan"', async () => {
+    load({ attendance: { ...ATTENDANCE, sessions: 0, assigned_days: 0 } });
+    await screen.findByText('Sesiones del mes');
+    expect(kpi('Sesiones del mes').getByText('Sin días todavía')).toBeVisible();
+    expect(screen.queryByText('Sin plan este mes')).toBeNull();
   });
 
   it('mientras carga el historial el RPE dice "Cargando…", no una raya como si hubiera fallado', async () => {

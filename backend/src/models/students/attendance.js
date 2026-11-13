@@ -8,6 +8,7 @@
  * - rest: no asignado y sin entrenar (ya pasó);
  * - upcoming: hoy sin entrenar todavía, o un día futuro.
  * Sin rutina activa no hay días asignados: los pasados son rest.
+ * has_plan: tiene rutina activa con días, aunque ninguno haya llegado todavía en el mes (assigned_days 0 tras un alta).
  * Los días anteriores al alta del alumno (`since`) o a la rutina que asigna ese día de la semana
  * (`daySince`) tampoco cuentan como asignados: son rest (el mismo piso que la adherencia de la lista).
  */
@@ -63,6 +64,7 @@ export function buildAttendance({ month, today, assignedDays, sessions, recordSe
     month,
     sessions: sessions.length,
     assigned_days: assignedUntilToday,
+    has_plan: assigned.size > 0,
     prs: sessions.filter((s) => records.has(s.id)).length,
     days,
   };

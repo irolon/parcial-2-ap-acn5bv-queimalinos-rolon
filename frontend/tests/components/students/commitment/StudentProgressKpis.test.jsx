@@ -41,8 +41,15 @@ describe('StudentProgressKpis', () => {
   });
 
   it('sin días planificados dice "Sin plan este mes" y no muestra la unidad', async () => {
-    load({ attendance: { ...ATTENDANCE, sessions: 1, assigned_days: 0 } });
+    load({ attendance: { ...ATTENDANCE, sessions: 1, assigned_days: 0, has_plan: false } });
     expect(await screen.findByText('Sin plan este mes')).toBeVisible();
+    expect(screen.queryByText('/0')).toBeNull();
+  });
+
+  it('con rutina pero sin días todavía (recién dado de alta) dice "Sin días todavía", no "Sin plan"', async () => {
+    load({ attendance: { ...ATTENDANCE, sessions: 0, assigned_days: 0 } });
+    expect(await screen.findByText('Sin días todavía')).toBeVisible();
+    expect(screen.queryByText('Sin plan este mes')).toBeNull();
     expect(screen.queryByText('/0')).toBeNull();
   });
 

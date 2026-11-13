@@ -2,7 +2,7 @@ import CommitmentKpis, { CommitmentState } from '@/components/students/commitmen
 import Card from '@/components/shared/ui/Card';
 import { useCommitment } from '@/hooks/students/useCommitment';
 import { plural, pluralNoun } from '@/utils/shared/plural';
-import { formatRpe, monthName } from '@/utils/students/commitment';
+import { formatRpe, monthName, unplannedContext } from '@/utils/students/commitment';
 
 /** El RPE: cargando (el historial todavía no llegó), no disponible (falló), sin datos o el promedio. */
 function rpeItem({ rpe, rpeFailed }) {
@@ -25,7 +25,7 @@ function items(commitment) {
     {
       label: 'Sesiones del mes',
       value: planned ? `${attendance.sessions}/${attendance.assigned_days}` : attendance.sessions,
-      context: planned ? 'sobre planificadas' : 'Sin plan este mes',
+      context: planned ? 'sobre planificadas' : unplannedContext(attendance),
     },
     {
       label: 'Racha',
