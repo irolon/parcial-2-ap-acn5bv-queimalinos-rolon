@@ -16,11 +16,11 @@ afterEach(() => {
 });
 
 // Dominadas (ex-2) es de peso corporal: no entra en la comparación pero sí en el detalle, en repeticiones.
-function load() {
+function load(stub = {}) {
   resetAuthStore();
   setSession(STUDENT);
   const exercise = (id) => exerciseData(id, { bodyweight: id === 'ex-2' });
-  const fetchMock = stubProgress({ body: BODY, exercise, otherwise: (path) => gamificationResponse(path) });
+  const fetchMock = stubProgress({ body: BODY, exercise, ...stub, otherwise: (path) => gamificationResponse(path) });
   renderRoute('/alumno/progreso');
   return fetchMock;
 }
@@ -57,5 +57,14 @@ describe('MyProgressPage: detalle por ejercicio', () => {
     await waitFor(() => expect(screen.getByRole('listitem', { name: /^Press banca/ })).toBeInTheDocument());
     const all = progressUrls(fetchMock, 'exercise').filter((p) => p.startsWith('/progress/exercise/ex-1?student_id=s-1') && !p.includes('from='));
     expect(all).toHaveLength(1);
+  });
+
+  it('a un alumno nuevo, sin comparada ni detalle, no le queda una fila vacía que sume otro hueco', async () => {
+    load({ overview: { exercises: [], weekly_volume: [] } });
+    await screen.findByText('Todavía no hay entrenamientos registrados');
+    const page = (await screen.findByText(/^Asistencia · /)).closest('.flex-col.gap-5');
+    const empty = [...page.children].filter((c) => c.matches(':empty'));
+    expect(empty.every((c) => c.classList.contains('empty:hidden'))).toBe(true);
+    expect(screen.queryByText('Por ejercicio')).not.toBeInTheDocument();
   });
 });

@@ -6,8 +6,8 @@
 import { addDays } from '../gamification/streak.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 
-/** Días del gráfico: los 14 que ya carga el service para la adherencia. */
-export const DAILY_DAYS = 14;
+/** Días del gráfico (selector 7D · 14D · 30D de la web): el más largo, un mes. */
+export const DAILY_DAYS = 30;
 
 /**
  * sessions: terminadas, con { finished_at } (de todos los alumnos activos). today: 'YYYY-MM-DD' AR.

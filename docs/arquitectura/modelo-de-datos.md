@@ -159,6 +159,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | trainer_comment | text | feedback del PT |
 | has_modifications | boolean | true si el alumno modificó algo de la rutina original (sustituyó ejercicio, cambió series/reps) |
 
+> **Sesión abierta (GX4):** las apps crean la sesión al empezar, con `finished_at` en `null`, y la subida final la cierra (reintento del `POST` con el mismo `id`). Una abierta **no es una sesión hecha**: el historial, la vista `student_last_session` (última sesión **terminada** de cada alumno, `where finished_at is not null`), adherencia, racha, logros, inactividad y overview filtran `finished_at`. Las abiertas que empezaron hace más de 4 h se dan por abandonadas (no se muestran ni se borran). Índice parcial `idx_sessions_open (student_id, started_at desc) where finished_at is null` para `open_session` de `GET /students` e `in_session` del overview. Migración: `migrations/2026-11/2026-11-09-open-sessions.sql`.
+
 **session_sets** *(cada serie ejecutada)*
 
 | Campo | Tipo | Clave |

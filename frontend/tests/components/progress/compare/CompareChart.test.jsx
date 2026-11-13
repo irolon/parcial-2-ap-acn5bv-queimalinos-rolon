@@ -74,6 +74,13 @@ describe('CompareChart', () => {
     expect(screen.queryByText(/Sentadilla/)).not.toBeInTheDocument();
   });
 
+  it('con Volumen el tooltip usa el mismo formato que el detalle (toneladas desde 1000 kg)', () => {
+    const vol = LINES.map((l) => ({ ...l, metric: 'volume_kg' }));
+    render(<CompareTooltip active payload={[{ payload: { date: '2026-10-05', a: 12400, b: 950, c: null } }]} lines={vol} />);
+    expect(screen.getByText('Press banca: 12,4 t')).toBeInTheDocument();
+    expect(screen.getByText('Sentadilla: 950 kg')).toBeInTheDocument();
+  });
+
   it('el eje X lleva pocas marcas parejas aunque las líneas tengan fechas distintas', () => {
     const { container } = render(<CompareChart lines={LINES} />);
     const ticks = [...container.querySelectorAll('.recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value')].map((t) => t.textContent);

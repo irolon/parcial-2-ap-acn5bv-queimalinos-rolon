@@ -22,7 +22,13 @@ export function relativeTime(iso, now = new Date()) {
   return `${pad(at.day)}/${pad(at.month)}`;
 }
 
-/** Las últimas `n` filas de `daily` (vienen de hoy − 13 a hoy, ascendentes). */
+/** Como `relativeTime` en el mismo día; si no, "hace 2 d" (días argentinos). Para "Feedback pendiente". */
+export function daysAgoLabel(iso, now = new Date()) {
+  const days = argentinaDate(now).dayNumber - argentinaDate(iso).dayNumber;
+  return days < 1 ? relativeTime(iso, now) : `hace ${days} d`;
+}
+
+/** Las últimas `n` filas de `daily` (vienen de hoy − 29 a hoy, ascendentes). */
 export const lastDays = (daily, n) => (daily ?? []).slice(-n);
 
 // `YYYY-MM-DD` es un día argentino: se toma su mediodía en Argentina para no depender de la zona del navegador.
@@ -30,6 +36,9 @@ const weekdayOf = (date) => argentinaDate(`${date}T12:00:00-03:00`).weekday;
 
 /** Inicial del día de la semana para el eje: L, M, X, J, V, S, D. */
 export const dayInitial = (date) => DAY_OPTIONS[weekdayOf(date) - 1].short;
+
+/** Número del día para el eje de 30 días: "09". */
+export const dayNumber = (date) => date.slice(8, 10);
 
 /** "Jue 06/11" para el tooltip. */
 export const dayTitle = (date) => `${WEEKDAYS_TITLE[weekdayOf(date) - 1]} ${date.slice(8, 10)}/${date.slice(5, 7)}`;

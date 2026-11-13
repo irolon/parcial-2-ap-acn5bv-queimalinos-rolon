@@ -4,6 +4,7 @@ import {
   mockAvatarsRepo,
   mockRoutinesRepo,
   mockBodyMetricsService,
+  mockOpenSessionsRepo,
   service,
   STUDENT_ROW,
 } from '../../../../helpers/students/students-service.setup.js';
@@ -22,6 +23,7 @@ describe('students.service — avatares firmados en la lista (GX2)', () => {
     mockStudentsRepo.findStreaks.mockResolvedValue([]);
     mockStudentsRepo.findActiveRoutineSchedules.mockResolvedValue(new Map());
     mockStudentsRepo.findFinishedSessionDates.mockResolvedValue(new Map());
+    mockOpenSessionsRepo.findOpenSessions.mockResolvedValue([]);
   });
 
   it('firma toda la página en una llamada; el sin foto queda en null', async () => {

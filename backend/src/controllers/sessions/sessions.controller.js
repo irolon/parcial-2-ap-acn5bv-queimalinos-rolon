@@ -14,6 +14,12 @@ export const update = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
+/** DELETE /sessions/:id — 204 sin body (solo una abierta y propia; si no, 404). */
+export const discard = asyncHandler(async (req, res) => {
+  await sessionsService.discard(req.user.id, req.params.id);
+  res.status(204).end();
+});
+
 /** POST /sessions/:id/sets — siempre 200 → { data: { saved, failed, unlocked_achievements } }. */
 export const addSets = asyncHandler(async (req, res) => {
   const data = await setsService.addSets(req.user.id, req.params.id, req.body);

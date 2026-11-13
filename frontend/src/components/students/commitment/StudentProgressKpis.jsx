@@ -2,6 +2,7 @@ import CommitmentKpis, { CommitmentState } from '@/components/students/commitmen
 import { useCommitment } from '@/hooks/students/useCommitment';
 import { formatVolume } from '@/utils/progress/format';
 import { plural, pluralNoun } from '@/utils/shared/plural';
+import { unplannedContext } from '@/utils/students/commitment';
 
 const days = (n) => plural(n, 'día', 'días');
 const deltaLabel = (pct) => `${pct >= 0 ? `+${pct}` : `−${-pct}`}% vs. las 4 semanas anteriores`;
@@ -16,7 +17,7 @@ function items({ attendance, streak, volume }) {
       value: attendance.sessions,
       unit: planned ? `/${attendance.assigned_days}` : null,
       accent: planned,
-      context: planned ? `de ${days(attendance.assigned_days)} planificados` : 'Sin plan este mes',
+      context: planned ? `de ${days(attendance.assigned_days)} planificados` : unplannedContext(attendance),
     },
     {
       label: 'Racha',

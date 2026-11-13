@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, configureClient } from '@/api/shared/client';
-import { createSession, uploadSets } from '@/api/sessions/sessions.api';
+import { createSession, deleteSession, openSession, uploadSets } from '@/api/sessions/sessions.api';
 import { bodyOf, calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 
 beforeEach(() => configureClient({ getToken: () => 'access-1', refreshSession: vi.fn() }));
@@ -80,5 +80,22 @@ describe('sessions.api: subir un entrenamiento', () => {
     const error = await uploadSets(SESSION.id, SETS).catch((e) => e);
     expect(error).toBeInstanceOf(ApiError);
     expect([error.status, error.code]).toEqual([404, 'SESSION_NOT_FOUND']);
+  });
+});
+
+describe('sessions.api: sesión en curso (GX4)', () => {
+  it('openSession hace POST /sessions sin finished_at, RPE ni notas', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(201, { data: { ...SESSION, finished_at: null } }), { openSessions: false });
+    await openSession({ ...SESSION, finished_at: null });
+    const [[path, init]] = calls(fetchMock);
+    expect([path, init.method]).toEqual(['/sessions', 'POST']);
+    expect(bodyOf(init)).toEqual({ id: SESSION.id, routine_id: 'r-1', started_at: SESSION.started_at });
+  });
+
+  it('deleteSession hace DELETE /sessions/:id (204) con el id escapado', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(204), { openSessions: false });
+    await expect(deleteSession('a/b')).resolves.toBeNull();
+    const [[path, init]] = calls(fetchMock);
+    expect([path, init.method]).toEqual(['/sessions/a%2Fb', 'DELETE']);
   });
 });

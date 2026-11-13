@@ -1,5 +1,7 @@
 import * as overviewRepo from '../../repositories/students/overview.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
+import { findOpenSessions } from '../../repositories/sessions/open-sessions.repository.js';
+import { openSince } from '../../models/sessions/session.model.js';
 import { buildOverview } from '../../models/students/overview.js';
 import { dailySessions } from '../../models/students/overview-daily.js';
 import { addDays } from '../../models/gamification/streak.js';
@@ -7,8 +9,8 @@ import { localDate } from '../../shared/utils/dates/dates.js';
 
 export const RECENT_LIMIT = 10;
 
-/** Ventana de sesiones: hoy y los 14 días anteriores (las dos semanas de la adherencia). */
-const WINDOW_DAYS = 14;
+/** Ventana de sesiones: hoy y los 30 días anteriores: el gráfico; la adherencia y las listas recortan la suya. */
+const WINDOW_DAYS = 30;
 
 /** Sin alumnos activos: todo vacío y el gráfico en 0 (se arma con hoy, por eso es función). */
 const empty = (today) => ({
@@ -18,6 +20,7 @@ const empty = (today) => ({
   at_risk: 0,
   attention: [],
   recent: [],
+  in_session: [],
   lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
   daily: dailySessions([], today),
 });
@@ -32,11 +35,12 @@ export async function overview(trainerId) {
   if (!students.length) return empty(today);
 
   const ids = students.map((s) => s.id);
-  const [schedules, lastSessions, sessions, recent] = await Promise.all([
+  const [schedules, lastSessions, sessions, recent, open] = await Promise.all([
     studentsRepo.findActiveRoutineSchedules(ids),
     studentsRepo.findLastSessionDates(ids),
     overviewRepo.findFinishedSessionsSince(ids, `${addDays(today, -WINDOW_DAYS)}T00:00:00-03:00`),
     overviewRepo.findRecentFinished(ids, RECENT_LIMIT),
+    findOpenSessions(ids, openSince()),
   ]);
   const lastById = new Map(lastSessions.map((r) => [r.student_id, r.last_session_at]));
   return buildOverview({
@@ -45,6 +49,7 @@ export async function overview(trainerId) {
     daySince: new Map([...schedules].map(([id, sc]) => [id, sc.daySince])),
     sessions,
     recent,
+    open,
     today,
   });
 }

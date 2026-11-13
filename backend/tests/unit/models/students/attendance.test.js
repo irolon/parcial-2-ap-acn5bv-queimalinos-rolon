@@ -34,12 +34,21 @@ describe('models/students/attendance', () => {
     expect(statusOf(notYet, '2026-11-02')).toBe('missed');
     // Asignados hasta hoy inclusive: lunes 2 y miércoles 4.
     expect(notYet.assigned_days).toBe(2);
+    expect(notYet.has_plan).toBe(true);
+  });
+
+  it('con rutina pero sin días hasta hoy (alta reciente): assigned_days 0 y has_plan true', () => {
+    // Alta el martes 3 con L/X/V: hasta hoy (martes 3) no llegó ningún día de la rutina.
+    const r = buildAttendance({ month: '2026-11', today: '2026-11-03', since: '2026-11-03', assignedDays: MWF, sessions: [], recordSessionIds: [] });
+    expect(r.assigned_days).toBe(0);
+    expect(r.has_plan).toBe(true);
   });
 
   it('sin rutina: los días pasados son rest y no hay asignados', () => {
     const r = buildAttendance({ month: '2026-11', today: '2026-11-10', assignedDays: [], sessions: [], recordSessionIds: [] });
     expect(statusOf(r, '2026-11-02')).toBe('rest');
     expect(r.assigned_days).toBe(0);
+    expect(r.has_plan).toBe(false);
     expect(r.sessions).toBe(0);
   });
 

@@ -86,3 +86,12 @@ export async function update(studentId, sessionId, body) {
   if (body.finished_at) void onSessionClosed({ studentId, session: updated, unlocked: unlocked_achievements });
   return { ...updated, unlocked_achievements };
 }
+
+/**
+ * DELETE /sessions/:id — el alumno descarta una sesión que abrió al empezar. Solo propia y abierta: terminada,
+ * ajena o inexistente dan el mismo 404 (no filtra ids ajenos ni borra historial).
+ */
+export async function discard(studentId, sessionId) {
+  const deleted = await sessionsRepo.deleteOpenSession(sessionId, studentId);
+  if (!deleted) throw Errors.sessionNotFound();
+}

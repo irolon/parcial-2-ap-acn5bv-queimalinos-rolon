@@ -47,6 +47,12 @@ describe('detailRows', () => {
     const noE1rm = [1, 2, 3].map((d) => pt(d, 60 + d, { e1rm_kg: null }));
     const rows = detailRows([curve('a', [pt(1, 60), pt(2, 65), pt(3, 70)]), curve('b', noE1rm)], 'e1rm_kg');
     expect(rows.map((r) => [r.id, r.metric])).toEqual([['a', 'e1rm_kg'], ['b', 'max_kg']]);
+    expect(rows.map((r) => r.maxFallback)).toEqual([false, true]);
+  });
+
+  it('elegir peso máximo no es caída: maxFallback queda en false', () => {
+    const [row] = detailRows([curve('a', [pt(1, 60), pt(2, 65), pt(3, 70)])], 'max_kg');
+    expect(row.maxFallback).toBe(false);
   });
 
   it('el de peso corporal usa repeticiones con cualquier métrica', () => {

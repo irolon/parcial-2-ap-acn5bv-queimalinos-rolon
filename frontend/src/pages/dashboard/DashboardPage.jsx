@@ -5,13 +5,15 @@ import Card from '@/components/shared/ui/Card';
 import FirstInvitationCta from '@/components/students/FirstInvitationCta';
 import InactivityAlerts from '@/components/students/InactivityAlerts';
 import ActivityChart from '@/components/students/overview/ActivityChart';
+import FeedbackPending from '@/components/students/overview/FeedbackPending';
 import OverviewKpis from '@/components/students/overview/OverviewKpis';
 import RecentActivity from '@/components/students/overview/RecentActivity';
 import { useNoStudents, useStudentsQuery } from '@/hooks/students/useStudents';
 import { useStudentsOverview } from '@/hooks/students/useStudentsOverview';
 
 /**
- * Resumen del entrenador: KPIs, actividad por día y reciente (de `GET /students/overview`) y alertas de inactividad
+ * Resumen del entrenador: KPIs, actividad por día y reciente con los que entrenan ahora, feedback pendiente (de
+ * `GET /students/overview`, refrescado cada minuto) y alertas de inactividad
  * (de `GET /students`). Si falla el resumen, un solo error arriba que no tapa las alertas. La invitación, solo sin
  * ningún alumno.
  */
@@ -41,11 +43,12 @@ export default function DashboardPage() {
                 <ActivityChart daily={overview.data?.daily} />
               </div>
             )}
-            <div className={failed ? 'min-w-0 lg:col-span-2' : 'min-w-0'}>
+            <div className={failed ? 'flex min-w-0 flex-col gap-5 lg:col-span-2' : 'flex min-w-0 flex-col gap-5'}>
               <InactivityAlerts students={students} now={now} />
+              {!failed && <FeedbackPending pending={overview.data?.lists?.feedback_pending} />}
             </div>
           </div>
-          {!failed && <RecentActivity recent={overview.data?.recent} />}
+          {!failed && <RecentActivity recent={overview.data?.recent} inSession={overview.data?.in_session} />}
         </div>
       )}
     </QueryState>

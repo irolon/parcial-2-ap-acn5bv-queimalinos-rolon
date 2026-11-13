@@ -22,19 +22,22 @@ function Arrow({ label, icon: Icon, disabled, onClick }) {
   );
 }
 
-function Count({ data }) {
+/** Sesiones del mes; `stale`: todavía es el del mes anterior (se atenúa como la grilla hasta que llega el nuevo). */
+function Count({ data, stale }) {
   if (!data) return null;
   const strong = <strong className="font-display text-sm font-semibold text-bone0">{data.sessions}</strong>;
-  if (!data.assigned_days) {
-    return <p className="font-mono text-[11px] text-ink6">{strong} {data.sessions === 1 ? 'SESIÓN' : 'SESIONES'}</p>;
-  }
-  return <p className="font-mono text-[11px] text-ink6">{strong} DE {data.assigned_days}</p>;
+  const text = data.assigned_days ? <>{strong} DE {data.assigned_days}</> : <>{strong} {data.sessions === 1 ? 'SESIÓN' : 'SESIONES'}</>;
+  return (
+    <p aria-busy={stale || undefined} className={`font-mono text-[11px] text-ink6 transition-opacity ${stale ? 'opacity-50' : ''}`}>
+      {text}
+    </p>
+  );
 }
 
 /**
  * Calendario de asistencia de un mes, con flechas entre el mes del alta (`created_at` del alumno, la misma caché que
  * la ficha) y el actual (hora argentina). El mes no va a la URL; al cambiarlo queda el anterior atenuado hasta que
- * llega el nuevo. El mes actual comparte caché con los indicadores del mes.
+ * llega el nuevo, grilla y conteo. El mes actual comparte caché con los indicadores del mes.
  */
 export default function AttendanceCard({ studentId }) {
   const today = useToday();
@@ -52,7 +55,7 @@ export default function AttendanceCard({ studentId }) {
         <Arrow label="Mes anterior" icon={ChevronLeft} disabled={!canGoPrev(month, floor)} onClick={() => setPicked(shiftMonth(month, -1))} />
         <Arrow label="Mes siguiente" icon={ChevronRight} disabled={!canGoNext(month, current)} onClick={() => setPicked(shiftMonth(month, 1))} />
       </div>
-      {!query.isError && <Count data={query.data} />}
+      {!query.isError && <Count data={query.data} stale={query.isPlaceholderData} />}
     </div>
   );
 

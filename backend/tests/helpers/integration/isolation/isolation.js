@@ -15,13 +15,14 @@ const OWNER_OF = {
 };
 
 // `:stA`, `:sessB`, … en paths y bodies → el id de ese mundo.
-const PLACEHOLDER = /:(st|ex|rt|re|sess|set|tp|ch|metric|notif|token)(A|B)\b/g;
+const PLACEHOLDER = /:(st|ex|rt|re|sess|open|set|tp|ch|metric|notif|token)(A|B)\b/g;
 const FIELD = {
   st: (x) => x.student.id,
   ex: (x) => x.exerciseId,
   rt: (x) => x.routineId,
   re: (x) => x.routineExerciseId,
   sess: (x) => x.sessionId,
+  open: (x) => x.openSessionId, // la abierta (sin finished_at) que arma el test que la usa
   set: (x) => x.setId,
   tp: (x) => x.templateId,
   ch: (x) => x.challengeId,

@@ -11,6 +11,7 @@ export const mockRepo = {
   findSessionById: jest.fn(),
   updateSession: jest.fn(),
   isRoutineOfStudent: jest.fn(),
+  deleteOpenSession: jest.fn(),
 };
 jest.unstable_mockModule(src('repositories/sessions/sessions.repository.js'), () => mockRepo);
 

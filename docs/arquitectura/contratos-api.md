@@ -310,13 +310,14 @@ Lista los alumnos del trainer autenticado (rol: trainer).
       "last_session_at": "2026-10-20T10:00:00Z",
       "streak": { "current_days": 12, "longest_days": 20, "last_trained_date": "2026-10-30" },
       "days_per_week": 3,
-      "adherence_7d": { "assigned": 3, "done": 2, "pct": 67 } }
+      "adherence_7d": { "assigned": 3, "done": 2, "pct": 67 },
+      "open_session": { "id": "uuid", "started_at": "2026-11-09T21:05:00Z" } }
   ],
   "meta": { "total": 1, "page": 1, "limit": 20, "total_pages": 1 }
 }
 ```
 
-> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente, cuente o no como terminada); es `null` si nunca entrenó. `streak` sale de `student_streaks` y es `null` si todavía no se calculó. El listado no trae `level`, `gym_equipment` ni `injuries`.
+> `last_session_at` sale de la vista `student_last_session` (el `started_at` más reciente de las sesiones **terminadas**: una abierta no cuenta); es `null` si nunca entrenó. `open_session` (GX4, aditivo): la sesión abierta más nueva del alumno (sin `finished_at`, empezada en las últimas 4 h), o `null`; la web muestra "Entrenando ahora". `streak` sale de `student_streaks` y es `null` si todavía no se calculó. El listado no trae `level`, `gym_equipment` ni `injuries`.
 >
 > `days_per_week`: cantidad de días distintos de sus rutinas activas (0 sin rutina). `adherence_7d`: de los días asignados de los últimos 7 días completos (de hoy-7 a hoy-1, hora argentina; hoy no cuenta), cuántos tienen al menos una sesión terminada. `pct = round(done * 100 / assigned)`, o `null` si no tiene días asignados. Entrenar un día no asignado no suma. Los días anteriores al alta del alumno o a la creación de la rutina activa que asigna ese día de la semana no cuentan (un alumno nuevo no arranca con días faltados: sin ningún día que cuente, `pct` es `null`).
 
@@ -339,6 +340,8 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
   ],
   "recent": [ { "student_id": "uuid", "name": "Tomás Rivera", "session_id": "uuid", "routine_name": "Push día 3",
                 "rpe": 8, "finished_at": "ISO" } ],
+  "in_session": [ { "student_id": "uuid", "name": "Lucía Gómez", "session_id": "uuid", "routine_name": "Pierna",
+                    "started_at": "ISO" } ],
   "lists": {
     "today": [ { "student_id": "uuid", "name": "José Martínez", "planned": true, "status": "pending",
                  "session_id": null, "routine_name": null, "finished_at": null, "rpe": null } ],
@@ -348,7 +351,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
     "students": [ { "student_id": "uuid", "name": "Ana Paz", "status": "active", "days_without_training": 1,
                     "adherence_pct": 67 } ]
   },
-  "daily": [ { "date": "2026-10-23", "count": 0 }, { "date": "2026-10-24", "count": 3 }, "…",
+  "daily": [ { "date": "2026-10-07", "count": 0 }, { "date": "2026-10-08", "count": 3 }, "…",
              { "date": "2026-11-05", "count": 8 } ]
 } }
 ```
@@ -359,12 +362,13 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
 - `at_risk`: alumnos con 7 días o más sin entrenar (desde la última sesión o el alta), las mismas reglas que la web.
 - `attention` (hasta 10): primero `inactive` (de más días a menos; `never_trained` si nunca entrenó), después `feedback_pending`: sesiones terminadas en los últimos 7 días (hoy incluido) sin `trainer_comment`, de la más nueva a la más vieja.
 - `recent`: las últimas 10 sesiones terminadas, de la más nueva a la más vieja. `routine_name` y `rpe` pueden ser `null`.
+- `in_session` (GX4, aditivo): los alumnos activos que están entrenando ahora: sesiones abiertas (sin `finished_at`) que empezaron en las últimas 4 h, una por alumno (la más nueva), de la más nueva a la más vieja. `routine_name` puede ser `null`. Sin alumnos activos, `[]`. La web refresca el overview cada 60 s mientras el Dashboard está abierto.
 - `lists` (las listas de los filtros del Inicio de la app, sin tope):
   - `today`: los alumnos con hoy asignado (`planned: true`) y los que entrenaron hoy sin tenerlo (`planned: false`). `status` es `done` si terminaron una sesión hoy (por la hora de fin; los campos de sesión son los de la última) o `pending` (campos de sesión en `null`). Primero los `pending` por nombre, después los `done` del más reciente.
   - `at_risk`: los mismos de `at_risk`, de más días a menos.
   - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
   - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
-- `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 14 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 13 a hoy, ascendentes. `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 14 filas en 0.
+- `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 30 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 29 a hoy, ascendentes (la web elige 7, 14 o 30 días con las últimas filas). `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 30 filas en 0. La adherencia, `sessions_today` y las listas no cambian: cada una recorta su propia ventana.
 - Todo en hora argentina.
 
 ### GET /students/:id
@@ -408,14 +412,14 @@ Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la 
 
 ```json
 { "data": {
-  "month": "2026-11", "sessions": 6, "assigned_days": 9, "prs": 2,
+  "month": "2026-11", "sessions": 6, "assigned_days": 9, "has_plan": true, "prs": 2,
   "days": [ { "date": "2026-11-01", "status": "trained" }, { "date": "2026-11-02", "status": "missed" },
             { "date": "2026-11-03", "status": "rest" }, { "date": "2026-11-20", "status": "upcoming" } ]
 } }
 ```
 
 - `days` trae todos los días del mes, en orden. `status`: `trained` (al menos una sesión terminada ese día, asignado o no), `missed` (día asignado, anterior a hoy, sin entrenar), `rest` (no asignado y sin entrenar) o `upcoming` (hoy sin entrenar todavía, o un día futuro).
-- `sessions`: sesiones terminadas del mes. `assigned_days`: días asignados del mes hasta hoy inclusive. `prs`: sesiones del mes con al menos un récord (función SQL `session_records`).
+- `sessions`: sesiones terminadas del mes. `assigned_days`: días asignados del mes hasta hoy inclusive. `has_plan`: tiene rutina activa con días; con `assigned_days` 0 distingue "sin plan" de "todavía no llegó ningún día" (por ejemplo, recién dado de alta). `prs`: sesiones del mes con al menos un récord (función SQL `session_records`).
 - Fechas en hora argentina (por `started_at`). Los días asignados son los de las rutinas activas **actuales**, como la racha (ADR 0005): si cambia la rutina, los meses anteriores se recalculan con los días nuevos. Los días anteriores al alta del alumno o a la creación de la rutina que asigna ese día de la semana no cuentan como asignados (son `rest`), igual que en la adherencia de `GET /students`.
 
 ### PATCH /students/:id
@@ -890,6 +894,8 @@ Inicia (o cierra, o reintenta) una sesión. Solo alumnos; el `student_id` sale d
 - **200** si el `id` ya existe y es del alumno (reintento): se completan `finished_at`, `rpe` y `notes` que vengan **solo si en la base están en `null`**: nunca se pisa un valor ya guardado (las correcciones van por `PATCH`), y si no hay nada para completar se devuelve la sesión tal cual. `started_at` y `routine_id` quedan como estaban (si llegan distintos se ignoran). Un `finished_at` anterior al `started_at` guardado se ignora y se guardan los demás campos.
 - **409** `SESSION_ID_CONFLICT` si el `id` es de otro alumno.
 
+**Abrir al empezar (GX4).** La web (y el celular, con su tarjeta) manda este `POST` **al empezar**, sin `finished_at` (ni `rpe` ni `notes`): la sesión queda abierta y el PT la ve "En curso" (`in_session` del overview, `open_session` de `GET /students`). Es best-effort: si falla o no hay red, no pasa nada y la crea la subida final. El **cierre** no cambia: la subida final repite el `POST` con el mismo `id`, el servidor lo toma como reintento (200) y completa `finished_at`, `rpe` y `notes`; recién ahí evalúa logros y avisa. Una abierta no cuenta como sesión hecha (historial, última sesión, adherencia, racha) y, si empezó hace más de 4 h, se da por abandonada. Descartarla: `DELETE /sessions/:id`.
+
 `session` = `{ id, student_id, routine_id, started_at, finished_at, rpe, notes, has_modifications }`.
 
 **Logros:** si la sesión queda **cerrada** (llega con `finished_at`, o el reintento lo completa) el backend evalúa los logros, igual que el `PATCH`, y suma `unlocked_achievements` dentro de `data` (es el flujo del celular offline: sube la sesión ya cerrada). Si queda abierta, o si la evaluación falla (se loguea y la sesión se guarda igual), el arreglo es `[]`.
@@ -1005,9 +1011,19 @@ Cierra la sesión o corrige el feedback. Solo alumnos, sobre sus propias sesione
 }
 ```
 
+### DELETE /sessions/:id
+
+Descarta una sesión **abierta** (GX4: la que la app creó al empezar). Solo alumnos (PT → 403 `FORBIDDEN`), sobre sus propias sesiones.
+
+- **204** sin body: la borró. Sus series caen en cascada y los mensajes del asistente con ese `session_id` quedan con `session_id = null`.
+- **404** `SESSION_NOT_FOUND` si es ajena, si no existe o si ya está terminada (`finished_at` no nulo): nunca borra historial. Las apps tratan el 404 como éxito.
+- **400** `VALIDATION_ERROR` si el `id` no es UUID.
+
+El borrado es una sola sentencia condicionada (`id`, `student_id` y `finished_at is null`): si la subida final cerró la sesión en el medio, no se borra.
+
 ### GET /students/:id/sessions
 
-Historial de sesiones del alumno, más recientes primero (`started_at` descendente, desempate por `id`). Roles: `trainer` (solo sus alumnos) y `student` (solo él mismo); si no → 403 `FORBIDDEN`. `id` que no es UUID → 400 `VALIDATION_ERROR`.
+Historial de sesiones **terminadas** del alumno (una abierta no aparece ni cuenta en `meta.total`), más recientes primero (`started_at` descendente, desempate por `id`). Roles: `trainer` (solo sus alumnos) y `student` (solo él mismo); si no → 403 `FORBIDDEN`. `id` que no es UUID → 400 `VALIDATION_ERROR`.
 
 **Query:** `page` (desde 1, default 1) y `limit` (default 20, máximo 100). Valores inválidos caen al default.
 
@@ -1015,7 +1031,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 
 ```json
 { "data": [{
-    "id": "uuid", "started_at": "ISO", "finished_at": "ISO|null", "duration_min": 54,
+    "id": "uuid", "started_at": "ISO", "finished_at": "ISO", "duration_min": 54,
     "routine": { "id": "uuid", "name": "Push · día 3" },
     "rpe": 8, "notes": "…", "trainer_comment": "…|null", "has_modifications": false,
     "sets": 18, "volume_kg": 4210.5, "has_pr": true
@@ -1028,7 +1044,7 @@ Historial de sesiones del alumno, más recientes primero (`started_at` descenden
 - `sets`: series completadas con `actual_reps > 0`; `volume_kg`: suma de `actual_reps × actual_kg` (kg nulo cuenta 0) de esas series, a 1 decimal.
 - `has_pr`: la sesión tiene al menos un récord personal. Un ejercicio es récord si su mejor 1RM estimado (Epley: `reps = 1 → kg`, `reps > 1 → kg × (1 + reps/30)`; solo cuentan series de hasta 12 repeticiones, porque Epley sobreestima por encima de eso y daría récords falsos, y con kg mayor a 0: el peso corporal no cuenta) supera estrictamente al de todas las sesiones anteriores del alumno; la primera vez que hace un ejercicio con carga no cuenta (aunque antes lo haya hecho solo con peso corporal).
 - `trainer_comment` es el comentario del entrenador y **lo ve el alumno** en su historial.
-- **Campos que pueden ser `null`:** `finished_at`, `duration_min`, `routine`, `rpe`, `notes` y `trainer_comment`. La lista incluye sesiones todavía no cerradas (`finished_at: null`, y con él `duration_min: null`).
+- **Campos que pueden ser `null`:** `routine`, `rpe`, `notes` y `trainer_comment`. Desde GX4 la lista no incluye sesiones abiertas (`finished_at: null`): `finished_at` y `duration_min` siempre vienen. El detalle (`/:sessionId`) no cambia.
 
 ### GET /students/:id/sessions/:sessionId
 

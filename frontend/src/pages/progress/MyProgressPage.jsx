@@ -22,7 +22,8 @@ export default function MyProgressPage() {
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <StudentProgressKpis studentId={user.id} />
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      {/* Sin comparada ni detalle (alumno nuevo) la fila queda vacía: se oculta para no sumar otro gap-5. */}
+      <div className="grid grid-cols-1 gap-5 empty:hidden lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <CompareCard studentId={user.id} range={range} onRange={setRange} metric={metric} onMetric={setMetric} />
         <ExerciseDetailCard studentId={user.id} range={range} metric={metric} className="lg:[&:only-child]:col-span-2" />
       </div>

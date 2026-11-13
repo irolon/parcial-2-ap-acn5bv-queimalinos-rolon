@@ -1,6 +1,6 @@
 /**
  * Listas del Inicio del entrenador (GET /students/overview → `lists`), una por filtro de la app:
- * hoy, en riesgo, feedback pendiente y alumnos. Funciones puras, fechas en hora argentina.
+ * hoy, en riesgo, feedback pendiente y alumnos; más "en curso" (in_session). Funciones puras, fechas en hora argentina.
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
@@ -57,6 +57,20 @@ export function feedbackList(sessions, nameById, today) {
     .filter((s) => !s.trainer_comment && localDate(s.finished_at) >= since)
     .sort(newestFirst)
     .map((s) => ({ student_id: s.student_id, name: nameById.get(s.student_id) ?? null, ...sessionFields(s) }));
+}
+
+/**
+ * "En curso" (GX4): las sesiones abiertas (ya filtradas por openSince, de la más nueva a la más vieja), una por
+ * alumno (la más nueva).
+ */
+export function inSessionList(open, nameById) {
+  const seen = new Set();
+  return open
+    .filter((s) => !seen.has(s.student_id) && seen.add(s.student_id))
+    .map((s) => ({
+      student_id: s.student_id, name: nameById.get(s.student_id) ?? null, session_id: s.id,
+      routine_name: s.routine_name ?? null, started_at: s.started_at,
+    }));
 }
 
 /**
