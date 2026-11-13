@@ -24,11 +24,12 @@ afterEach(() => {
 });
 
 describe('RoutineEditorPage: bloque de la IA', () => {
-  it('carga el bloque como una plantilla: nombre, objetivo, días y ejercicios con sus valores', async () => {
+  it('carga el bloque como una plantilla: nombre, objetivo, nivel, días y ejercicios con sus valores', async () => {
     storeProposal();
     await renderEditor({ path: BLOCK_0, api: { students: [ANA] } });
     expect(await screen.findByDisplayValue('Empuje')).toBeVisible();
     expect(screen.getByLabelText('Objetivo')).toHaveValue('hypertrophy');
+    expect(screen.getByLabelText('Nivel')).toHaveValue('beginner');
     expect(screen.getByRole('checkbox', { name: 'Lunes' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Miércoles' })).not.toBeChecked();
     expect(rowNames()).toEqual(['Press banca plano', 'Press inclinado con mancuernas']);

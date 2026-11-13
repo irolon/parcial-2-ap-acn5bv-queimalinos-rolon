@@ -1,6 +1,6 @@
 /**
  * Resumen del Inicio del entrenador (GET /students/overview). Funciones puras: reciben los alumnos
- * activos, sus días asignados, sus sesiones terminadas de los últimos 15 días y las últimas 10, y
+ * activos, sus días asignados, sus sesiones terminadas de los últimos 31 días y las últimas 10, y
  * arman KPIs, "requieren atención", actividad reciente, sesiones por día y las listas de los filtros de la app. Fechas en hora argentina.
  */
 import { addDays, weekdayOf } from '../gamification/streak.js';
@@ -8,7 +8,7 @@ import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d } from './adherence.js';
 import { activityStatus } from './activity.js';
 import { dailySessions } from './overview-daily.js';
-import { feedbackList, riskList, studentsList, todayList } from './overview-lists.js';
+import { feedbackList, inSessionList, riskList, studentsList, todayList } from './overview-lists.js';
 
 export const ATTENTION_LIMIT = 10;
 
@@ -47,10 +47,11 @@ function attention(risk, feedback) {
 /**
  * students: activos con { id, name, created_at, last_session_at }. routineDays: Map id → días.
  * daySince (opcional): Map id → (Map día de la semana → desde qué fecha vale), de scheduleOf.
- * sessions: terminadas que empezaron o terminaron desde hoy-14, con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
+ * sessions: terminadas que empezaron o terminaron desde hoy-30 (cada cifra recorta su ventana), con { id, student_id, started_at, finished_at, rpe, trainer_comment, routine_name }.
  * recent: las últimas terminadas (ya ordenadas y con tope), con la misma forma.
+ * open (opcional): las abiertas de las últimas 4 h, de la más nueva a la más vieja (findOpenSessions).
  */
-export function buildOverview({ students, routineDays, daySince = new Map(), sessions, recent, today }) {
+export function buildOverview({ students, routineDays, daySince = new Map(), sessions, recent, open = [], today }) {
   const nameById = new Map(students.map((s) => [s.id, s.name]));
   const datesByStudent = new Map();
   for (const s of sessions) {
@@ -83,6 +84,7 @@ export function buildOverview({ students, routineDays, daySince = new Map(), ses
       student_id: s.student_id, name: nameById.get(s.student_id) ?? null, session_id: s.id,
       routine_name: s.routine_name ?? null, rpe: s.rpe ?? null, finished_at: s.finished_at,
     })),
+    in_session: inSessionList(open, nameById),
     lists: {
       today: todayList(students, routineDays, sessions, today),
       at_risk: risk,

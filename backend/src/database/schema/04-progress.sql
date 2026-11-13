@@ -47,8 +47,10 @@ create table if not exists sessions (
 );
 
 create index if not exists idx_sessions_student on sessions (student_id, started_at desc);
+-- Sesiones abiertas (GX4: se crean al empezar, sin finished_at): GET /students y el overview.
+create index if not exists idx_sessions_open on sessions (student_id, started_at desc) where finished_at is null;
 
--- Última sesión de cada alumno, para el listado del trainer (GET /students).
+-- Última sesión TERMINADA de cada alumno (una abierta no cuenta), para el listado del trainer (GET /students).
 -- security_invoker: la vista aplica el RLS de sessions a quien la consulta.
 -- Sin esto correría con los permisos de su dueño (postgres) y la anon key
 -- podría leer las fechas de sesión de cualquier alumno. El backend usa la
@@ -56,6 +58,7 @@ create index if not exists idx_sessions_student on sessions (student_id, started
 create or replace view student_last_session with (security_invoker = true) as
   select student_id, max(started_at) as last_session_at
   from sessions
+  where finished_at is not null
   group by student_id;
 
 -- ── session_sets (Fase 3) ────────────────────────────────────────────────────

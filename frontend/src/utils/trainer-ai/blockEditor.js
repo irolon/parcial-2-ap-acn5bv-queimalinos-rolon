@@ -2,11 +2,11 @@ import { EMPTY_ROUTINE, makeExercise } from '@/utils/routines/editorState';
 import { sortDays } from '@/utils/students/routineDays';
 
 /**
- * Estado del editor desde un bloque de la propuesta, igual que `fromTemplate`: nombre del bloque, objetivo de la
- * generación, días y ejercicios (series, reps, descanso, peso y notas). Descarta y cuenta (`missing`) los ejercicios
+ * Estado del editor desde un bloque de la propuesta, igual que `fromTemplate`: nombre del bloque, objetivo y nivel de la
+ * generación (`level` vacío = sin definir), días y ejercicios (series, reps, descanso, peso y notas). Descarta y cuenta (`missing`) los ejercicios
  * que ya no están en `exercisesById` (la biblioteca ya cargada).
  */
-export function fromBlock(block, goal, exercisesById = new Map()) {
+export function fromBlock(block, goal, exercisesById = new Map(), level = '') {
   const items = block.exercises ?? [];
   const kept = items.filter((item) => exercisesById.has(item.exercise_id));
   return {
@@ -15,6 +15,7 @@ export function fromBlock(block, goal, exercisesById = new Map()) {
       ...EMPTY_ROUTINE,
       name: block.name ?? '',
       goal: goal ?? '',
+      level: level ?? '',
       days: sortDays(block.days),
       exercises: kept.map((item) => makeExercise(item.exercise_id, item)),
     },
@@ -42,7 +43,7 @@ function otherBlockName(source, mark) {
 export function planBlockStart(source, found, exercisesById) {
   const mark = found?.state?.aiBlock ?? null;
   const isBlock = Boolean(source && mark && mark.generationId === source.generationId && mark.index === source.index);
-  const block = source && !(found && isBlock) ? fromBlock(source.block, source.goal, exercisesById) : null;
+  const block = source && !(found && isBlock) ? fromBlock(source.block, source.goal, exercisesById, source.level) : null;
   if (!block) return { state: found?.state ?? null, ask: null, loaded: null, draftBlockName: null };
   const marked = { ...block, state: { ...block.state, aiBlock: { generationId: source.generationId, index: source.index } } };
   if (found) return { state: found.state, ask: marked, loaded: null, draftBlockName: otherBlockName(source, mark) };

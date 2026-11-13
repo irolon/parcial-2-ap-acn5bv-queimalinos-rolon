@@ -11,6 +11,7 @@ export function student(overrides = {}) {
     active: true,
     created_at: '2026-01-01T10:00:00Z',
     last_session_at: null,
+    open_session: null,
     ...overrides,
   };
 }

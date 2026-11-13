@@ -52,3 +52,20 @@ export async function isRoutineOfStudent(routineId, studentId) {
   if (error) throw Errors.internal(error.message);
   return data !== null;
 }
+
+/**
+ * Borra la sesión si es de ese alumno y sigue abierta (finished_at null), en una sola sentencia: una subida
+ * que la cerró en el medio no se pisa. Las series caen en cascada y chat_messages.session_id queda en null.
+ * Devuelve true si borró una fila.
+ */
+export async function deleteOpenSession(id, studentId) {
+  const { data, error } = await supabase
+    .from(SESSIONS_TABLE)
+    .delete()
+    .eq('id', id)
+    .eq('student_id', studentId)
+    .is('finished_at', null)
+    .select('id');
+  if (error) throw Errors.internal(error.message);
+  return data.length > 0;
+}

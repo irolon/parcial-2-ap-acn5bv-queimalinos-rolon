@@ -3,8 +3,17 @@ import { getStudent, listStudents, updateStudent } from '@/api/students/students
 
 export const STUDENTS_KEY = ['students'];
 
+/**
+ * La lista de alumnos. Se vuelve a pedir al volver a la pestaña (la app lo tiene apagado en general): así "Entrenando
+ * ahora" aparece o se va si un alumno empezó o terminó mientras el PT estaba en otra pestaña.
+ */
 export function useStudentsQuery({ active, enabled = true } = {}) {
-  return useQuery({ queryKey: [...STUDENTS_KEY, { active }], queryFn: () => listStudents({ active }), enabled });
+  return useQuery({
+    queryKey: [...STUDENTS_KEY, { active }],
+    queryFn: () => listStudents({ active }),
+    enabled,
+    refetchOnWindowFocus: true,
+  });
 }
 
 /**

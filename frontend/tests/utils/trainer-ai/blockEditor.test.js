@@ -22,6 +22,12 @@ describe('fromBlock', () => {
     expect(state.days).toEqual(['monday', 'friday']);
     expect(state.exercises.map((e) => e.exercise_id)).toEqual(['ex-squat']);
   });
+
+  it('toma el nivel del formulario de la generación; sin nivel queda sin definir', () => {
+    const block = SPLIT.routine_proposal.routines[0];
+    expect(fromBlock(block, 'hypertrophy', byId, 'intermediate').state.level).toBe('intermediate');
+    expect(fromBlock(block, 'hypertrophy', byId).state.level).toBe('');
+  });
 });
 
 describe('blockIndexOf', () => {
@@ -48,6 +54,7 @@ describe('planBlockStart', () => {
     const plan = planBlockStart(source, null, byId);
     expect(plan.state.name).toBe('Empuje');
     expect(plan.state.aiBlock).toEqual({ generationId: 'g-split', index: 0 });
+    expect(planBlockStart({ ...source, level: 'advanced' }, null, byId).state.level).toBe('advanced');
     expect(plan.loaded.state).toBe(plan.state);
     expect(plan.ask).toBeNull();
   });

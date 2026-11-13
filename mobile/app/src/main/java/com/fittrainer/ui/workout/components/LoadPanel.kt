@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fittrainer.data.workout.Load
@@ -30,19 +31,20 @@ import com.fittrainer.ui.workout.kgNumber
 
 private val STEPS = listOf(-2.5, -1.0, 1.0, 2.5, 5.0)
 
-/** Chip del plan del PT, peso y reps en 72 sp, y los ajustes rápidos (spec §3, mockup p.13). */
+/** Chip del plan del PT, peso y reps en 72 sp (56 en [compact]), y los ajustes rápidos (spec §3, mockup p.13). */
 @Composable
-fun LoadPanel(chip: String?, load: Load, onAdjust: (Double) -> Unit, onEdit: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+fun LoadPanel(chip: String?, load: Load, onAdjust: (Double) -> Unit, onEdit: () -> Unit, compact: Boolean = false) {
+    val size = if (compact) 56.sp else 72.sp
+    Column(verticalArrangement = Arrangement.spacedBy(if (compact) Spacing.sm else Spacing.md)) {
         chip?.let {
             Box(Modifier.clip(MaterialTheme.shapes.extraLarge).background(FtColors.Card).padding(horizontal = Spacing.md, vertical = Spacing.xs)) {
                 Text("✦ $it", style = MaterialTheme.typography.labelSmall, color = FtColors.BrandText)
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            BigNumber("PESO", kgNumber(load.kg), "KG", Modifier.weight(1f))
-            Box(Modifier.width(1.dp).height(72.dp).background(FtColors.Border))
-            BigNumber("REPS", load.reps.toString(), "×", Modifier.weight(1f))
+            BigNumber("PESO", kgNumber(load.kg), "KG", size, Modifier.weight(1f))
+            Box(Modifier.width(1.dp).height(if (compact) 56.dp else 72.dp).background(FtColors.Border))
+            BigNumber("REPS", load.reps.toString(), "×", size, Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             STEPS.forEach { step ->
@@ -62,11 +64,11 @@ fun LoadPanel(chip: String?, load: Load, onAdjust: (Double) -> Unit, onEdit: () 
 }
 
 @Composable
-private fun BigNumber(label: String, value: String, unit: String, modifier: Modifier) {
+private fun BigNumber(label: String, value: String, unit: String, size: TextUnit, modifier: Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, style = MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp, lineHeight = 76.sp), color = FtColors.TextPrimary)
+            Text(value, style = MaterialTheme.typography.displayLarge.copy(fontSize = size, lineHeight = size * 1.05f), color = FtColors.TextPrimary)
             Text(unit, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary, modifier = Modifier.padding(bottom = Spacing.md))
         }
     }

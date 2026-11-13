@@ -23,6 +23,7 @@ export const mockStudentsRepo = {
   updateStudent: jest.fn(),
 };
 export const mockIssueTokens = jest.fn();
+export const mockOpenSessionsRepo = { findOpenSessions: jest.fn() };
 
 jest.unstable_mockModule(
   src('repositories/invitations/invitations.repository.js'),
@@ -35,6 +36,10 @@ jest.unstable_mockModule(
 jest.unstable_mockModule(
   src('repositories/students/students.repository/student-create.repository.js'),
   () => mockStudentCreateRepo
+);
+jest.unstable_mockModule(
+  src('repositories/sessions/open-sessions.repository.js'),
+  () => mockOpenSessionsRepo
 );
 jest.unstable_mockModule(src('services/auth/auth.service.js'), () => ({
   issueTokens: mockIssueTokens,

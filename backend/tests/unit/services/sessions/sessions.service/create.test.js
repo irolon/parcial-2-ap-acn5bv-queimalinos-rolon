@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  mockRepo, service, STUDENT_ID, SESSION_ID, ROUTINE_ID, BODY, STORED,
+  mockEvaluate, mockRepo, mockTriggers, service, STUDENT_ID, SESSION_ID, ROUTINE_ID, BODY, STORED,
 } from '../../../../helpers/sessions/sessions-service.setup.js';
 
 beforeEach(() => jest.resetAllMocks());
@@ -133,5 +133,23 @@ describe('sessions.service · create', () => {
       mockRepo.insertSession.mockResolvedValueOnce(null);
       await expect(service.create(STUDENT_ID, BODY)).rejects.toMatchObject({ code: 'SESSION_ID_CONFLICT' });
     });
+  });
+
+  it('GX4: abrir al empezar (sin finished_at) no evalúa ni avisa; el reintento con finished_at cierra y evalúa', async () => {
+    mockRepo.insertSession.mockResolvedValueOnce(STORED);
+    const opened = await service.create(STUDENT_ID, BODY);
+    expect(opened).toEqual({ session: STORED, created: true, unlocked_achievements: [] });
+    expect(mockEvaluate.evaluateStudent).not.toHaveBeenCalled();
+    expect(mockTriggers.onSessionClosed).not.toHaveBeenCalled();
+
+    const closed = { ...STORED, finished_at: '2026-10-27T11:00:00-03:00', rpe: 8 };
+    mockRepo.findSessionById.mockResolvedValueOnce(STORED);
+    mockRepo.updateSession.mockResolvedValueOnce(closed);
+    mockEvaluate.evaluateStudent.mockResolvedValueOnce({ unlocked: [] });
+    const result = await service.create(STUDENT_ID, { ...BODY, finished_at: closed.finished_at, rpe: 8 });
+    expect(mockRepo.updateSession).toHaveBeenCalledWith(SESSION_ID, { finished_at: closed.finished_at, rpe: 8 });
+    expect(result).toMatchObject({ session: closed, created: false });
+    expect(mockEvaluate.evaluateStudent).toHaveBeenCalledWith(STUDENT_ID);
+    expect(mockTriggers.onSessionClosed).toHaveBeenCalledTimes(1);
   });
 });

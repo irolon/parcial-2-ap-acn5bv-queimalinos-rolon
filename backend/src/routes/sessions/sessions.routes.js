@@ -31,6 +31,12 @@ router.patch(
   validate(validateUpdateSession),
   sessionsController.update
 );
+router.delete(
+  '/:id',
+  requireRole('student'),
+  validate(validateSessionIdParam, 'params'),
+  sessionsController.discard
+);
 router.post(
   '/:id/sets',
   requireRole('student'),

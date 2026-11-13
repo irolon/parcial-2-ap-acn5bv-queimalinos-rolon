@@ -43,7 +43,8 @@ const byDaysThenName = (a, b) => b.days - a.days || a.name.localeCompare(b.name,
  * Filas del detalle por ejercicio a partir de las curvas del rango (`{ id, name, days, points }`): la métrica de cada
  * una es la elegida (`wanted`, con la caída de 1RM a peso máximo de la comparada) o repeticiones si es de peso
  * corporal. Quedan las de al menos MIN_POINTS valores, de más a menos días y por nombre:
- * `{ id, name, days, metric, values, current, pct }` (`values` en orden de fecha, `current` el último).
+ * `{ id, name, days, metric, maxFallback, values, current, pct }` (`values` en orden de fecha, `current` el último;
+ * `maxFallback`: se pidió 1RM y cayó a peso máximo).
  */
 export function detailRows(curves, wanted) {
   return curves
@@ -53,7 +54,8 @@ export function detailRows(curves, wanted) {
         .sort((a, b) => a.date.localeCompare(b.date))
         .map((p) => p[metric])
         .filter(hasValue);
-      return { id: curve.id, name: curve.name, days: curve.days, metric, values, current: values.at(-1), pct: improvementPct(values) };
+      const maxFallback = wanted === 'e1rm_kg' && metric === 'max_kg';
+      return { id: curve.id, name: curve.name, days: curve.days, metric, maxFallback, values, current: values.at(-1), pct: improvementPct(values) };
     })
     .filter((row) => row.values.length >= MIN_POINTS)
     .sort(byDaysThenName);

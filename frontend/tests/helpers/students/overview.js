@@ -4,8 +4,8 @@ import { reply } from '../shared/fetchMock';
 /** `YYYY-MM-DD` argentino de hace `n` días. */
 const argentinaDay = (n, now = Date.now()) => arParts(now - n * DAY_MS).date;
 
-/** Las 14 filas de `daily` (de hoy − 13 a hoy); `counts` son las cantidades en ese orden (por defecto, todo en 0). */
-export function daily(counts = Array(14).fill(0), now = Date.now()) {
+/** Las 30 filas de `daily` (de hoy − 29 a hoy); `counts` son las cantidades en ese orden (por defecto, todo en 0). */
+export function daily(counts = Array(30).fill(0), now = Date.now()) {
   return counts.map((count, i) => ({ date: argentinaDay(counts.length - 1 - i, now), count }));
 }
 
@@ -22,6 +22,23 @@ export function recentSession(overrides = {}) {
   };
 }
 
+/** Fila de `in_session` (sesión abierta, GX4); `overrides` pisa cualquier campo. */
+export function inSessionRow(overrides = {}) {
+  return {
+    student_id: 'st-1',
+    name: 'Lucía Gómez',
+    session_id: 'open-1',
+    routine_name: 'Pierna',
+    started_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/** Fila de `lists.feedback_pending`; `overrides` pisa cualquier campo. */
+export function feedbackRow(overrides = {}) {
+  return { ...recentSession(), ...overrides };
+}
+
 /** Respuesta de `GET /students/overview` (vacía: todo en 0); `overrides` pisa cualquier campo de primer nivel. */
 export function overview(overrides = {}) {
   return {
@@ -31,6 +48,7 @@ export function overview(overrides = {}) {
     at_risk: 0,
     attention: [],
     recent: [],
+    in_session: [],
     lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
     daily: daily(),
     ...overrides,

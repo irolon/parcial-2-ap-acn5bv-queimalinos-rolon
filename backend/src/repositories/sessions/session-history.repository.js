@@ -27,13 +27,14 @@ async function fetchAll(buildQuery) {
   }
 }
 
-/** Sesiones del alumno, más recientes primero. Devuelve { data, total }. */
+/** Sesiones terminadas del alumno (una abierta no es una sesión hecha), más recientes primero. Devuelve { data, total }. */
 export async function findSessionsPage(studentId, { page, limit }) {
   const from = (page - 1) * limit;
   const { data, count, error } = await supabase
     .from(SESSIONS_TABLE)
     .select(HISTORY_COLUMNS, { count: 'exact' })
     .eq('student_id', studentId)
+    .not('finished_at', 'is', null)
     .order('started_at', { ascending: false })
     .order('id', { ascending: false })
     .range(from, from + limit - 1);

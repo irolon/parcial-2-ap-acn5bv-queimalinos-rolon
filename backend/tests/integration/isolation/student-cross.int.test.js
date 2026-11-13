@@ -1,9 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import { supabase } from '../../../src/config/supabase.js';
 import { api } from '../../helpers/integration/api.js';
 import { buildWorld } from '../../helpers/integration/isolation/world.js';
 import { ownerControl, rows, runCases } from '../../helpers/integration/isolation/isolation.js';
 
-// Alumno B sobre los datos del alumno A (filas 49–73 de la tarea 9),
+// Alumno B sobre los datos del alumno A (filas 49–73 de la tarea 9, y la 94 de GX4),
 // más el control positivo de los GET como alumno A.
 let worlds;
 const getWorlds = () => worlds;
@@ -42,6 +43,7 @@ const cases = rows('studentB', [
   [71, 'PATCH /notifications/:notifA/read', 404, 'NOTIFICATION_NOT_FOUND'],
   [72, 'DELETE /notifications/tokens/:tokenA', 204],
   [73, 'POST /sessions/:sessB/sets', 200, null, set(':setA')],
+  [94, 'DELETE /sessions/:openA', 404, 'SESSION_NOT_FOUND'],
   [96, 'PUT /students/:stA/avatar', 403],
   [97, 'DELETE /students/:stA/avatar', 403],
   [100, 'PATCH /students/:stA', 403, null, { phone: '11 2345 6789' }],
@@ -71,9 +73,22 @@ cases[24].check = async (res, w) => {
   ]);
 };
 
+// #94: B no puede descartar la sesión abierta de A; sigue en la base.
+cases[25].check = async (_res, w) => {
+  const { data, error } = await supabase.from('sessions').select('id').eq('id', w.A.openSessionId);
+  expect(error).toBeNull();
+  expect(data).toHaveLength(1);
+};
+
 describe('integración — aislamiento: alumno B sobre datos del alumno A', () => {
   beforeAll(async () => {
     worlds = { A: await buildWorld('a'), B: await buildWorld('b') };
+    // La sesión abierta de A (GX4: se crea al empezar, sin finished_at).
+    worlds.A.openSessionId = randomUUID();
+    const res = await api(worlds.A.student.token)
+      .post('/sessions')
+      .send({ id: worlds.A.openSessionId, started_at: new Date().toISOString() });
+    expect(res.status).toBe(201);
   });
 
   runCases(cases, getWorlds);
