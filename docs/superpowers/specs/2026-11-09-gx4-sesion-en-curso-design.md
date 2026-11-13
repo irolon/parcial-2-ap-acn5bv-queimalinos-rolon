@@ -17,7 +17,7 @@ El backend ya acepta una sesión abierta: `validateCreateSession` deja `finished
 | # | Decisión |
 |---|---|
 | 1 | Se puede iniciar en la web y en el celular; el backend acepta los dos. Las dos apps **crean la sesión al empezar** (`POST /sessions` con `finished_at: null`). Es idempotente por el UUID del cliente y best-effort: sin red, la crea la subida final, como hoy. |
-| 2 | **Sesión abierta**: `finished_at is null` y `started_at` dentro de las **últimas 4 h** (`OPEN_SESSION_MAX_HOURS`). Las más viejas se dan por abandonadas: no se muestran ni se borran. |
+| 2 | **Sesión abierta**: `finished_at is null` y `started_at` dentro de las **últimas 4 h** (`OPEN_SESSION_MAX_HOURS`). Las más viejas se dan por abandonadas: dejan de mostrarse y ningún proceso las limpia solo. El alumno sí puede descartar cualquier abierta propia (`DELETE /sessions/:id`). |
 | 3 | El cierre no cambia: la subida final repite `POST /sessions` con el mismo `id` y `applyRetry` completa `finished_at`, RPE y notas. Logros, racha y avisos salen igual que hoy. |
 | 4 | **Descartar** una sesión iniciada borra la abierta en el servidor: `DELETE /sessions/:id`, solo propia y solo con `finished_at null`. Si está terminada, es ajena o no existe → 404 `SESSION_NOT_FOUND`, sin código nuevo (no toca `errors.js`). |
 | 5 | Una abierta **no es una sesión hecha**: el historial (`GET /students/:id/sessions`) y `student_last_session` filtran `finished_at is not null`. Adherencia, racha, logros, inactividad y overview ya filtraban. |
@@ -39,6 +39,7 @@ El backend ya acepta una sesión abierta: `validateCreateSession` deja `finished
 - espera la promesa de apertura si hay una;
 - después hace `DELETE /sessions/:id`;
 - ignora 404 y errores de red. Si no se pudo borrar, la abierta vence a las 4 h (decisión 2).
+- si la página se recarga entre Empezar y Descartar con la apertura todavía en vuelo, se pierde la referencia: el POST puede crear la abierta y nadie la borra, así que queda "En curso" para el PT hasta que vence a las 4 h. Es un caso raro y se acepta.
 
 **Backend.**
 

@@ -15,7 +15,10 @@ export function isSubstitution(set) {
   return original !== null && original !== undefined && original !== set.exercise_id;
 }
 
-/** Una sesión sin finished_at que empezó hace más de esto se da por abandonada: no se muestra ni se borra. */
+/**
+ * Una sesión sin finished_at que empezó hace más de esto se da por abandonada: deja de mostrarse y nada la limpia solo
+ * (el alumno igual puede descartarla con DELETE /sessions/:id, que borra cualquier abierta propia).
+ */
 export const OPEN_SESSION_MAX_HOURS = 4;
 
 /** Desde cuándo (ISO) una sesión sin finished_at cuenta como abierta: now − OPEN_SESSION_MAX_HOURS. */
