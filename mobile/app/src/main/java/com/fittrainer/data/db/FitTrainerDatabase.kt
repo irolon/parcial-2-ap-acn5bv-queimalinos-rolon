@@ -36,6 +36,8 @@ import com.fittrainer.data.db.notifications.NotificationDao
 import com.fittrainer.data.db.notifications.NotificationEntity
 import com.fittrainer.data.db.notifications.NotificationMetaEntity
 import com.fittrainer.data.db.notifications.NotificationPendingReadEntity
+import com.fittrainer.data.db.account.MyProfileDao
+import com.fittrainer.data.db.account.MyProfileEntity
 import com.fittrainer.data.db.progress.ProgressBodyMetaEntity
 import com.fittrainer.data.db.progress.ProgressBodyPointEntity
 import com.fittrainer.data.db.progress.ProgressDao
@@ -131,8 +133,9 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AchievementProgressEntity::class,
         StudentChallengeEntity::class,
         CelebrationEntity::class,
+        MyProfileEntity::class,
     ],
-    version = 28,
+    version = 29,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -171,6 +174,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 26, to = 27),
         // v28: logros, rachas y desafíos del alumno (tarjeta 15), cuatro tablas nuevas.
         AutoMigration(from = 27, to = 28),
+        // v29: perfil propio (Perfil y Más), la tabla my_profile.
+        AutoMigration(from = 28, to = 29),
     ],
 )
 // Los DAO del rol entrenador se declaran en TrainerDaos (database/), para que este archivo no pase de 200 líneas.
@@ -185,4 +190,5 @@ abstract class FitTrainerDatabase : RoomDatabase(), TrainerDaos {
     abstract fun studentAgendaDao(): StudentAgendaDao
     abstract fun aiChatDao(): AiChatDao
     abstract fun gamificationDao(): GamificationDao
+    abstract fun myProfileDao(): MyProfileDao
 }

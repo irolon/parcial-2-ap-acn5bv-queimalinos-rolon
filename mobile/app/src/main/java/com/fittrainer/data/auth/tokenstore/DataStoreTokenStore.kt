@@ -113,6 +113,15 @@ class DataStoreTokenStore(
         }
     }
 
+    override suspend fun updateUserName(sessionId: String, name: String) {
+        mutex.withLock {
+            dataStore.updateData { file ->
+                val auth = file.auth
+                if (auth?.sessionId == sessionId) file.copy(auth = auth.copy(user = auth.user.copy(name = name))) else file
+            }
+        }
+    }
+
     override suspend fun clear() {
         mutex.withLock {
             // Si falla antes de leer el archivo no se sabe qué sesión había: se ocultan todas las

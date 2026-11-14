@@ -57,16 +57,19 @@ fun exifTransform(orientation: Int): ExifTransform = when (orientation) {
 @Singleton
 class PhotoCompressor @Inject constructor(@ApplicationContext private val context: Context) : PhotoReader {
 
-    override suspend fun jpeg(uri: String): ByteArray? = withContext(Dispatchers.IO) {
+    override suspend fun jpeg(uri: String): ByteArray? = jpeg(uri, PHOTO_MAX_SIDE)
+
+    /** Como [jpeg], con otro lado máximo: la foto de perfil va a 512 px (GX2). */
+    suspend fun jpeg(uri: String, maxSide: Int): ByteArray? = withContext(Dispatchers.IO) {
         try {
-            encode(Uri.parse(uri))
+            encode(Uri.parse(uri), maxSide)
         } catch (e: Exception) {
             Log.w("PhotoCompressor", "No se pudo leer la foto", e)
             null
         }
     }
 
-    private fun encode(uri: Uri): ByteArray? {
+    private fun encode(uri: Uri, max: Int): ByteArray? {
         val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         // Con inJustDecodeBounds decodeStream siempre devuelve null: solo llena outWidth y outHeight.
@@ -76,9 +79,9 @@ class PhotoCompressor @Inject constructor(@ApplicationContext private val contex
         val transform = resolver.openInputStream(uri)?.use {
             exifTransform(ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL))
         } ?: ExifTransform(0f, mirror = false)
-        val options = BitmapFactory.Options().apply { inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight) }
+        val options = BitmapFactory.Options().apply { inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, max) }
         val decoded = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) } ?: return null
-        val (width, height) = scaledSize(decoded.width, decoded.height)
+        val (width, height) = scaledSize(decoded.width, decoded.height, max)
         val matrix = Matrix().apply {
             postScale(width.toFloat() / decoded.width, height.toFloat() / decoded.height)
             postRotate(transform.degrees)

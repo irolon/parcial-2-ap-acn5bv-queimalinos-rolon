@@ -31,6 +31,18 @@ class DataStoreTokenStoreBasicsTest : DataStoreTokenStoreTestBase() {
         assertEquals(sessionA.copy(accessToken = "access-2"), store.current())
     }
 
+    @Test fun `updateUserName de la misma sesion cambia solo el nombre`() = runTest {
+        store.save(sessionA)
+        store.updateUserName("session-A", "Nombre nuevo")
+        assertEquals(sessionA.copy(user = sessionA.user.copy(name = "Nombre nuevo")), store.current())
+    }
+
+    @Test fun `updateUserName de otra sesion no pisa la guardada`() = runTest {
+        store.save(sessionB)
+        store.updateUserName("session-A", "Nombre nuevo")
+        assertEquals(sessionB, store.current())
+    }
+
     @Test fun `clearIf de otra sesion no borra la guardada`() = runTest {
         store.save(sessionB)
         store.clearIf("session-A")

@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.account.accountRoutes
 import com.fittrainer.navigation.student.studentAchievementRoutes
 import com.fittrainer.navigation.student.studentAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerAgendaRoutes
@@ -109,8 +110,8 @@ fun RoleShell(
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
             tabs.forEach { tab ->
-                composable(tab.route) {
-                    TabScreen(tab, navController, isStudent, guardedSignOut, openWorkout, unreadNotifications, progressOpen, launches)
+                composable(tab.route) { entry ->
+                    TabScreen(tab, navController, isStudent, guardedSignOut, openWorkout, unreadNotifications, progressOpen, launches, entry)
                 }
             }
             composable(HEALTH_ROUTE) {
@@ -131,6 +132,7 @@ fun RoleShell(
             }
             studentAgendaRoutes(navController)
             studentAchievementRoutes(navController)
+            accountRoutes(navController)
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
             trainerTemplateRoutes(navController)

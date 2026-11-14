@@ -1,6 +1,7 @@
 package com.fittrainer.data.messages.photo
 
 import android.media.ExifInterface
+import com.fittrainer.data.account.AVATAR_MAX_SIDE
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,6 +11,12 @@ class PhotoSizeTest {
     @Test fun elLadoMasLargoQuedaEn1600SinDeformar() {
         assertEquals(1600 to 1200, scaledSize(4000, 3000))
         assertEquals(900 to 1600, scaledSize(2700, 4800))
+    }
+
+    @Test fun laFotoDePerfilQuedaEn512() {
+        assertEquals(512 to 384, scaledSize(4000, 3000, AVATAR_MAX_SIDE))
+        assertEquals(288 to 512, scaledSize(2700, 4800, AVATAR_MAX_SIDE))
+        assertEquals(4, sampleSize(4000, 3000, AVATAR_MAX_SIDE))
     }
 
     @Test fun unaFotoChicaNoSeAgranda() {

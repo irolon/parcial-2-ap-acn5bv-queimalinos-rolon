@@ -1,6 +1,12 @@
 package com.fittrainer.navigation
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.fittrainer.navigation.student.studentMenuLinks
 import com.fittrainer.navigation.trainer.TRAINER_MESSAGES_ROUTE
@@ -10,7 +16,11 @@ import com.fittrainer.navigation.trainer.trainerMenuLinks
 import com.fittrainer.ui.messages.student.chat.StudentChatScreen
 import com.fittrainer.ui.messages.trainer.list.ConversationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
-import com.fittrainer.ui.placeholder.AccountMenuScreen
+import com.fittrainer.navigation.account.accountEditRoute
+import com.fittrainer.navigation.account.accountPasswordRoute
+import com.fittrainer.ui.account.AccountActions
+import com.fittrainer.ui.account.AccountScreen
+import com.fittrainer.ui.account.PASSWORD_CHANGED_KEY
 import com.fittrainer.ui.placeholder.PlaceholderScreen
 import com.fittrainer.ui.progress.ProgressOpen
 import com.fittrainer.ui.progress.ProgressScreen
@@ -31,13 +41,23 @@ internal fun TabScreen(
     unreadNotifications: Int,
     progressOpen: ProgressOpen?,
     launches: NotificationLaunchViewModel,
+    entry: NavBackStackEntry,
 ) {
+    val context = LocalContext.current
     when {
-        tab.isAccountMenu -> AccountMenuScreen(
+        tab.isAccountMenu -> AccountScreen(
             title = tab.label,
-            onServerStatus = { navController.navigate(HEALTH_ROUTE) },
-            onSignOut = guardedSignOut,
-            links = if (isStudent) studentMenuLinks(navController) else trainerMenuLinks(navController),
+            actions = AccountActions(
+                roleLinks = if (isStudent) studentMenuLinks(navController) else trainerMenuLinks(navController),
+                onEdit = { navController.navigate(accountEditRoute(isStudent)) { launchSingleTop = true } },
+                onChangePassword = { navController.navigate(accountPasswordRoute(isStudent)) { launchSingleTop = true } },
+                onNotifications = { context.startActivity(appNotificationSettings(context)) },
+                onServerStatus = { navController.navigate(HEALTH_ROUTE) },
+                onSignOut = guardedSignOut,
+            ),
+            // Cambiar contraseña avisa por la entrada de navegación de la pestaña.
+            passwordChanged = entry.savedStateHandle.getStateFlow(PASSWORD_CHANGED_KEY, false).collectAsStateWithLifecycle().value,
+            onResultConsumed = { entry.savedStateHandle[PASSWORD_CHANGED_KEY] = false },
         )
         tab.route == STUDENT_TODAY_ROUTE -> TodayScreen(
             onOpenWorkout = openWorkout,
@@ -73,3 +93,7 @@ internal fun TabScreen(
         else -> PlaceholderScreen(tab.label)
     }
 }
+
+/** Los ajustes de notificaciones de la app en Android (las preferencias por tipo, #97, van en otra tarjeta). */
+private fun appNotificationSettings(context: Context) =
+    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
