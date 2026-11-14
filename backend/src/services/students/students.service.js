@@ -2,7 +2,8 @@ import { hashPassword } from '../../shared/utils/password.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { issueTokens } from '../auth/auth.service.js';
 import * as invitationsRepo from '../../repositories/invitations/invitations.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
+import * as studentCreateRepo from '../../repositories/students/students.repository/student-create.repository.js';
 import { isUsed, isExpired } from '../../models/invitations/invitation.model.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
 import * as routinesRepo from '../../repositories/routines/routines.repository.js';
@@ -10,10 +11,12 @@ import { findOpenSessions } from '../../repositories/sessions/open-sessions.repo
 import { openSince } from '../../models/sessions/session.model.js';
 import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
+import { signAvatars } from './avatar-urls.service.js';
 import { assignInitialRoutine } from './initial-routine.service.js';
 import * as appointments from '../agenda/appointments.service.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
+import { STUDENT_SELF_EDITABLE, STUDENT_SELF_EDIT_FORBIDDEN } from '../../models/students/student.model.js';
 
 /**
  * Lista los alumnos del trainer (GET /students) con la fecha de su última
@@ -68,15 +71,17 @@ export async function list(trainerId, { active = true, search, page = 1, limit =
       open_session: open ? { id: open.id, started_at: open.started_at } : null,
     };
   });
-  return { data, meta };
+  // GX2: avatar_url guarda la ruta; se firma toda la página en una llamada.
+  return { data: await signAvatars(data), meta };
 }
 
 /** Arma la ficha: fila del alumno + última medida (con IMC) + rutina activa + última sesión. */
-async function buildDetail(student) {
-  const [latestMetrics, activeRoutine, lastSessions] = await Promise.all([
-    latestForStudent(student.id),
-    routinesRepo.findActiveRoutineSummary(student.id),
-    studentsRepo.findLastSessionDates([student.id]),
+async function buildDetail(row) {
+  const [[student], latestMetrics, activeRoutine, lastSessions] = await Promise.all([
+    signAvatars([row]),
+    latestForStudent(row.id),
+    routinesRepo.findActiveRoutineSummary(row.id),
+    studentsRepo.findLastSessionDates([row.id]),
   ]);
   return {
     ...student,
@@ -93,7 +98,8 @@ export async function getById(user, studentId) {
 }
 
 /**
- * PATCH /students/:id — solo el trainer dueño. Con active = false se revocan
+ * PATCH /students/:id — el trainer dueño (todo) o el propio alumno (GX2: solo
+ * STUDENT_SELF_EDITABLE; cualquier otro campo → 403 antes de tocar nada). Con active = false se revocan
  * sus refresh tokens: no puede renovar la sesión. El access token que tenga en
  * la mano vive hasta JWT_EXPIRES_IN (1 h).
  *
@@ -109,14 +115,19 @@ export async function getById(user, studentId) {
  * además bloquea la fila del alumno hasta que el alta termine).
  */
 export async function update(user, studentId, fields) {
-  if (user.role !== 'trainer') throw Errors.forbidden();
   await assertCanAccessStudent(user, studentId);
+  if (user.role === 'student' && Object.keys(fields).some((f) => !STUDENT_SELF_EDITABLE.includes(f))) {
+    throw Errors.forbidden(STUDENT_SELF_EDIT_FORBIDDEN);
+  }
 
   if (fields.active === false) await authRepo.revokeAllForUser(studentId, 'student');
   const updated = await studentsRepo.updateStudent(studentId, fields);
   if (fields.active === false) await appointments.cancelFutureForStudent(studentId);
   return buildDetail(updated);
 }
+
+/** GX2: la invitación guarda solo dígitos; se copia si entra en students.phone (6 a 30). */
+const phoneFromInvitation = (phone) => (phone && phone.length >= 6 && phone.length <= 30 ? phone : null);
 
 /**
  * CU-02 — Crea la cuenta del alumno a partir del token de invitación, marca la
@@ -139,7 +150,7 @@ export async function registerFromInvitation({ token, password }) {
 
   let student;
   try {
-    student = await studentsRepo.createStudent({
+    student = await studentCreateRepo.createStudent({
       trainerId: invitation.trainer.id,
       name: invitation.student_name,
       email: invitation.student_email,
@@ -147,6 +158,7 @@ export async function registerFromInvitation({ token, password }) {
       gymEquipment: invitation.student_gym_equipment ?? null,
       injuries: invitation.student_injuries ?? null,
       level: invitation.student_level ?? null,
+      phone: phoneFromInvitation(invitation.student_phone),
       passwordHash,
     });
   } catch (err) {

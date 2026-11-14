@@ -112,3 +112,18 @@ export async function findTrainerById(id) {
   if (error) throw Errors.internal(error.message);
   return data;
 }
+
+/**
+ * Actualiza campos del trainer (GX2: name, professional_title) y devuelve sus columnas
+ * públicas. null si no existe (maybeSingle: el service responde 404).
+ */
+export async function updateTrainer(id, fields) {
+  const { data, error } = await supabase
+    .from(TRAINERS_TABLE)
+    .update(fields)
+    .eq('id', id)
+    .select(TRAINER_PUBLIC_COLUMNS)
+    .maybeSingle();
+  if (error) throw Errors.internal(error.message);
+  return data;
+}

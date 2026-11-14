@@ -34,7 +34,7 @@ export const mockRoutinesRepo = { findActiveRoutinesForStudent: jest.fn() };
 jest.unstable_mockModule(src('repositories/routines/routines.repository.js'), () => mockRoutinesRepo);
 
 export const mockStudentsRepo = { findStudentById: jest.fn() };
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 
 export const mockTemplatesRepo = { findExercisesByIds: jest.fn() };
 jest.unstable_mockModule(src('repositories/routine-templates/routine-templates.repository.js'), () => mockTemplatesRepo);

@@ -20,7 +20,7 @@ export const mockAccess = { assertCanAccessStudent: jest.fn() };
 export const mockStudents = { findStudentById: jest.fn() };
 jest.unstable_mockModule(src('repositories/sessions/session-history.repository.js'), () => mockRepo);
 jest.unstable_mockModule(src('services/students/student-access.service.js'), () => mockAccess);
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudents);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudents);
 
 export const mockTriggers = {
   onSessionClosed: jest.fn(),

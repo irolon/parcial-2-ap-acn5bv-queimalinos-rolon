@@ -1,5 +1,5 @@
 import * as overviewRepo from '../../repositories/students/overview.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { findOpenSessions } from '../../repositories/sessions/open-sessions.repository.js';
 import { openSince } from '../../models/sessions/session.model.js';
 import { buildOverview } from '../../models/students/overview.js';

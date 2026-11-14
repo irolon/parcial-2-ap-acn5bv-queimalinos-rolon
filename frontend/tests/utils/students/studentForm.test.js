@@ -3,10 +3,18 @@ import {
   addEquipment,
   buildContextBody,
   buildStudentBody,
+  studentFormDefaults,
   validateStudentBody,
 } from '@/utils/students/studentForm';
+import { PHONE_ERROR } from '@/utils/students/profile/phone';
 
-const STUDENT = { name: 'Ana Paz', goal: 'strength', level: 'intermediate', birth_date: '1990-05-10' };
+const STUDENT = {
+  name: 'Ana Paz',
+  phone: '11 2233 4455',
+  goal: 'strength',
+  level: 'intermediate',
+  birth_date: '1990-05-10',
+};
 
 const form = (values) => new Map(Object.entries({ ...STUDENT, ...values }));
 
@@ -24,6 +32,23 @@ describe('buildStudentBody', () => {
 
   it('una fecha vaciada va como null y un nivel vacío no se manda', () => {
     expect(buildStudentBody(form({ birth_date: '', level: '' }), STUDENT)).toEqual({ birth_date: null });
+  });
+});
+
+describe('teléfono', () => {
+  it('los valores iniciales traen el teléfono (vacío si no tiene)', () => {
+    expect(studentFormDefaults(STUDENT).phone).toBe('11 2233 4455');
+    expect(studentFormDefaults({ ...STUDENT, phone: null }).phone).toBe('');
+  });
+
+  it('manda el teléfono cambiado, recortado, y el vaciado como null', () => {
+    expect(buildStudentBody(form({ phone: ' 11 5555 6666 ' }), STUDENT)).toEqual({ phone: '11 5555 6666' });
+    expect(buildStudentBody(form({ phone: '' }), STUDENT)).toEqual({ phone: null });
+  });
+
+  it('valida el formato del teléfono; null es válido', () => {
+    expect(validateStudentBody({ phone: '123' })).toEqual({ phone: PHONE_ERROR });
+    expect(validateStudentBody({ phone: null })).toEqual({});
   });
 });
 

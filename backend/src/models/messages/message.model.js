@@ -43,6 +43,9 @@ export const toMessage = (row, imageUrl = null) => ({
 /** Forma pública de la persona del otro lado de la conversación. */
 export const toPublicPerson = (row) => ({ id: row.id, name: row.name, avatar_url: row.avatar_url ?? null });
 
+/** El PT visto por su alumno: suma el título profesional (GX2, "Tu entrenador/a"). */
+export const toTrainerPerson = (row) => ({ ...toPublicPerson(row), professional_title: row.professional_title ?? null });
+
 /** Resumen del último mensaje para la lista de conversaciones: nunca expone `image_path`. */
 export const toLastMessage = (row) => ({
   body: row.body ?? null,

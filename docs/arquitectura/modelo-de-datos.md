@@ -25,6 +25,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | email | varchar | |
 | name | varchar | |
 | specialty | varchar | |
+| professional_title | varchar(80) | opcional (GX2): "Lic. en Educación Física"; lo carga el PT en su cuenta y lo ven sus alumnos. No va en el registro |
 | avatar_url | text | |
 | password_changed_at | timestamptz | último cambio de clave (GX1); null = nunca desde el alta |
 | created_at | timestamptz | |
@@ -39,7 +40,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | email | varchar | |
 | goal | enum | tonify / weight_loss / hypertrophy / strength |
 | birth_date | date | |
-| avatar_url | text | |
+| avatar_url | text | GX2: **ruta** en el bucket privado `avatars` (`students/<id>/<uuid>.<ext>`), no una URL; la API la reemplaza por una URL firmada de 1 h |
+| phone | varchar(30) | opcional (GX2): 6–30 caracteres entre dígitos, espacios y `+ - ( )`. Lo edita el alumno o su PT; al alta se copia de `invitations.student_phone` |
 | active | boolean | |
 | gym_equipment | text[] | equipamiento disponible — usado por la IA del alumno |
 | injuries | text | lesiones / restricciones a tener en cuenta |
@@ -366,6 +368,8 @@ Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede ha
 > **No confundir con `chat_messages`:** esa tabla es el historial del asistente IA del alumno (`POST /chat`). `messages` es la mensajería entre personas y no tiene relación con ella.
 
 **Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
+
+**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
 
 ---
 

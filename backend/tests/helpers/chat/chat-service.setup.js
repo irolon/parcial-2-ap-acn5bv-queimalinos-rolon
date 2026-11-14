@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const src = (p) => fileURLToPath(new URL(`../../../src/${p}`, import.meta.url));
 
 export const mockStudentsRepo = { findStudentById: jest.fn() };
-jest.unstable_mockModule(src('repositories/students/students.repository.js'), () => mockStudentsRepo);
+jest.unstable_mockModule(src('repositories/students/students.repository/students.repository.js'), () => mockStudentsRepo);
 
 export const mockSessionsRepo = { findSessionById: jest.fn() };
 jest.unstable_mockModule(src('repositories/sessions/sessions.repository.js'), () => mockSessionsRepo);

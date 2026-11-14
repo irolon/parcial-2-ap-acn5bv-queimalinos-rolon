@@ -3,6 +3,8 @@ import studentsRouter from '../../../../src/routes/students/students.routes.js';
 import { authenticate } from '../../../../src/shared/middlewares/auth.middleware.js';
 import * as studentsController from '../../../../src/controllers/students/students.controller.js';
 import * as exportController from '../../../../src/controllers/export/export.controller.js';
+import * as avatarController from '../../../../src/controllers/students/avatar.controller.js';
+import { parseImageUpload } from '../../../../src/shared/middlewares/upload.middleware.js';
 
 const getRoutes = () =>
   studentsRouter.stack.filter((l) => l.route?.methods.get).map((l) => l.route);
@@ -94,5 +96,74 @@ describe('students.routes — exportación CSV (GX1)', () => {
     expect(err).toBeUndefined();
     expect(params.validates).toBe('params');
     expect(handler).toBe(exportController.exportStudent);
+  });
+});
+
+describe('students.routes — PATCH /students/:id (GX2)', () => {
+  const chain = () =>
+    studentsRouter.stack.find((l) => l.route?.path === '/:id' && l.route.methods.patch).route.stack.map((l) => l.handle);
+  const nextOf = (mw, req) => {
+    let err = 'sin llamar';
+    mw(req, res, (e) => {
+      err = e;
+    });
+    return err;
+  };
+
+  it('deja pasar trainer y student en el requireRole, valida id y body, y termina en update', () => {
+    const [auth, role, params, , body, handler] = chain();
+    expect(auth).toBe(authenticate);
+    for (const r of ['trainer', 'student']) expect(nextOf(role, { user: { role: r } })).toBeUndefined();
+    expect(params.validates).toBe('params');
+    expect(body.validates).toBe('body');
+    expect(handler).toBe(studentsController.update);
+  });
+
+  it('antes del validador (que ignora lo desconocido), el alumno con un campo ajeno → 403', () => {
+    const [, , , fields] = chain();
+    const student = { id: 's1', role: 'student' };
+    expect(nextOf(fields, { user: student, body: { name: 'Ana', email: 'x@mail.com' } })).toMatchObject({
+      statusCode: 403,
+      message: 'Solo podés cambiar tu nombre, teléfono y foto',
+    });
+    expect(nextOf(fields, { user: student, body: { name: 'Ana', phone: null } })).toBeUndefined();
+    expect(nextOf(fields, { user: { id: 't1', role: 'trainer' }, body: { goal: 'strength' } })).toBeUndefined();
+  });
+});
+
+describe('students.routes — PUT y DELETE /students/:id/avatar (GX2)', () => {
+  const chainOf = (method) =>
+    studentsRouter.stack.find((l) => l.route?.path === '/:id/avatar' && l.route.methods[method]).route.stack.map((l) => l.handle);
+  const roleRejects = (role, r) => {
+    let err = 'sin llamar';
+    role({ user: { role: r } }, res, (e) => {
+      err = e;
+    });
+    return err;
+  };
+
+  it('PUT: authenticate, solo student, valida el id, después parsea el multipart y termina en setAvatar', () => {
+    const [auth, role, params, upload, handler] = chainOf('put');
+    expect(auth).toBe(authenticate);
+    expect(roleRejects(role, 'trainer')).toMatchObject({ statusCode: 403 });
+    expect(roleRejects(role, 'student')).toBeUndefined();
+    expect(params.validates).toBe('params');
+    expect(upload).toBe(parseImageUpload);
+    expect(handler).toBe(avatarController.setAvatar);
+  });
+
+  it('DELETE: authenticate, solo student, valida el id y termina en removeAvatar', () => {
+    const [auth, role, params, handler] = chainOf('delete');
+    expect(auth).toBe(authenticate);
+    expect(roleRejects(role, 'trainer')).toMatchObject({ statusCode: 403 });
+    expect(params.validates).toBe('params');
+    expect(handler).toBe(avatarController.removeAvatar);
+  });
+
+  it('van antes de los router.use("/:id…") de las subrutas', () => {
+    const idx = studentsRouter.stack.findIndex((l) => l.route?.path === '/:id/avatar');
+    const firstUse = studentsRouter.stack.findIndex((l) => !l.route);
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(idx).toBeLessThan(firstUse);
   });
 });

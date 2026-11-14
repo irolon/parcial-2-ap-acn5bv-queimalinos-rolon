@@ -47,8 +47,19 @@ async function replyCounterpart(answer) {
  * - `profile`, `metrics`, `progress`, `counterpart` (`TRAINER` por defecto): la respuesta de cada GET. Una función que
  *   nunca resuelve deja la carga a medias.
  * - `createMetric(init)` y `deleteMetric(init, path)`: los handlers de POST y DELETE de medidas.
+ * - `updateProfile(init)`, `uploadAvatar(init)` y `removeAvatar(init)`: PATCH de la ficha, PUT y DELETE de la foto (GX2).
  */
-export function stubSelf({ profile, metrics = [], progress, counterpart = TRAINER, createMetric, deleteMetric } = {}) {
+export function stubSelf({
+  profile,
+  metrics = [],
+  progress,
+  counterpart = TRAINER,
+  createMetric,
+  deleteMetric,
+  updateProfile,
+  uploadAvatar,
+  removeAvatar,
+} = {}) {
   const base = `/students/${SELF.id}`;
   return stubFetch(async (url, init = {}) => {
     const method = init.method ?? 'GET';
@@ -59,6 +70,9 @@ export function stubSelf({ profile, metrics = [], progress, counterpart = TRAINE
     if (method === 'GET' && path === `/messages/${SELF.id}?limit=1`) return replyCounterpart(counterpart);
     if (method === 'POST' && path === `${base}/metrics` && createMetric) return createMetric(init);
     if (method === 'DELETE' && path.startsWith(`${base}/metrics/`) && deleteMetric) return deleteMetric(init, path);
+    if (method === 'PATCH' && path === base && updateProfile) return updateProfile(init);
+    if (method === 'PUT' && path === `${base}/avatar` && uploadAvatar) return uploadAvatar(init);
+    if (method === 'DELETE' && path === `${base}/avatar` && removeAvatar) return removeAvatar(init);
     return errorResponse(500, 'INTERNAL', `Sin handler: ${method} ${path}`);
   });
 }

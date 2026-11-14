@@ -39,6 +39,11 @@ describe('UserBlock', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('/alumno/perfil');
   });
 
+  it('con avatar_url muestra la foto del usuario', () => {
+    renderBlock({ ...STUDENT, avatar_url: 'https://storage.test/a.jpg' });
+    expect(document.querySelector('img')).toHaveAttribute('src', 'https://storage.test/a.jpg');
+  });
+
   it('Cerrar sesión sigue llamando onLogout', async () => {
     const { onLogout } = renderBlock(TRAINER);
     await setupUser().click(screen.getByRole('button', { name: 'Cerrar sesión' }));

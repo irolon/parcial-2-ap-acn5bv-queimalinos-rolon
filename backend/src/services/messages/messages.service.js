@@ -4,18 +4,23 @@ import { detectImageType } from '../../shared/utils/files/image-type.js';
 import { assertCanAccessStudent } from '../students/student-access.service.js';
 import * as messagesRepo from '../../repositories/messages/messages.repository.js';
 import * as imagesRepo from '../../repositories/messages/message-images.repository.js';
-import * as studentsRepo from '../../repositories/students/students.repository.js';
+import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import * as authRepo from '../../repositories/auth/auth.repository.js';
-import { SENDER_ROLES, toMessage, toPublicPerson } from '../../models/messages/message.model.js';
+import { SENDER_ROLES, toMessage, toPublicPerson, toTrainerPerson } from '../../models/messages/message.model.js';
+import { signAvatars } from '../students/avatar-urls.service.js';
 import { onMessageSent } from '../notifications/message-triggers.service.js';
 import { runInBackground } from '../../shared/utils/async/background.js';
 
 const otherRole = (role) => (role === SENDER_ROLES.TRAINER ? SENDER_ROLES.STUDENT : SENDER_ROLES.TRAINER);
 
-/** Con quién habla el usuario: el PT ve al alumno; el alumno, a su PT. */
+/** Con quién habla el usuario: el PT ve al alumno; el alumno, a su PT (con título). Foto firmada. */
 async function counterpartOf(user, student) {
-  if (user.role === SENDER_ROLES.TRAINER) return toPublicPerson(student);
-  return toPublicPerson(await authRepo.findTrainerById(student.trainer_id));
+  const person =
+    user.role === SENDER_ROLES.TRAINER
+      ? toPublicPerson(student)
+      : toTrainerPerson(await authRepo.findTrainerById(student.trainer_id));
+  const [signed] = await signAvatars([person]);
+  return signed;
 }
 
 /**

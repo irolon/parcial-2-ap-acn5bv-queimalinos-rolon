@@ -30,3 +30,10 @@ alter table messages enable row level security;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('message-images', 'message-images', false, 5242880, array['image/jpeg','image/png','image/webp'])
 on conflict (id) do nothing;
+
+-- ── Bucket privado de fotos de perfil ───────────────────────────────────────
+-- GX2: avatar_url guarda la ruta (students/<id>/<uuid>.<ext>); el backend sube
+-- y firma las URLs con la service_role.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', false, 5242880, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do nothing;

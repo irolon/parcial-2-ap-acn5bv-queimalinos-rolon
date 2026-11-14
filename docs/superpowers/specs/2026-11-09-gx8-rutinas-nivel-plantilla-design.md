@@ -67,7 +67,7 @@ Las rutinas existentes quedan con `level null` (sin definir). `checks/schema-che
 - Modifica `src/database/schema/03-routines.sql` (121, +10), `src/database/checks/schema-checks.sql` (151; 159 tras la #83; +~10).
 - Modifica `src/models/routines/routine.model.js` (100: `ROUTINE_LEVELS`, `level` en `ROUTINE_COLUMNS`, `toTodayRoutine` y `toStudentRoutines`: ~104), `src/validations/routines/routines.validation.js` (172, `level` en create y update: ~184), `src/services/routines/routines.service/routines.service.js` (119, +1 en `create`), `src/repositories/routines/routines.repository.js` (170, `level` en el select de `findActiveRoutineSummary`), `src/services/routine-templates/routine-templates.service.js` (150, `level` en `instantiate` y `createFromRoutine`, sin líneas nuevas).
 - Modifica `src/validations/invitations/invitations.validation.js` (83, ~100; usa `isUuid` de `shared/utils/validators.js` y `validateDays` de `validations/routines/routines.validation.js`), `src/services/invitations/invitations.service.js` (82, valida con `getOwnedTemplate`: ~88), `src/repositories/invitations/invitations.repository.js` (89, insert y select: ~92), `src/services/students/students.service.js` (151, +3).
-- `src/repositories/students/students.repository.js` (**200 líneas**) **no se toca**.
+- `src/repositories/students/students.repository/students.repository.js` (**200 líneas**) **no se toca**.
 
 **Web**
 - Crea `frontend/src/components/invitations/InitialTemplateField.jsx`.

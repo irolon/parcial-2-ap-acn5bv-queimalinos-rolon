@@ -1,8 +1,9 @@
 import { todayString } from '@/utils/dates';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { EQUIPMENT_LABELS } from '@/utils/exercises/exerciseOptions';
+import { validatePhone } from '@/utils/students/profile/phone';
 
-export const STUDENT_FIELDS = ['name', 'goal', 'level', 'birth_date', 'gym_equipment', 'injuries'];
+export const STUDENT_FIELDS = ['name', 'phone', 'goal', 'level', 'birth_date', 'gym_equipment', 'injuries'];
 export const MAX_EQUIPMENT = 30;
 export const MAX_EQUIPMENT_LENGTH = 50;
 export const MAX_INJURIES = 1000;
@@ -14,6 +15,7 @@ const BIRTH_ERROR = 'La fecha no puede ser futura';
 export function studentFormDefaults(student) {
   return {
     name: student.name ?? '',
+    phone: student.phone ?? '',
     goal: student.goal ?? '',
     level: student.level ?? '',
     birth_date: student.birth_date ?? '',
@@ -22,13 +24,14 @@ export function studentFormDefaults(student) {
 
 /**
  * Body del PATCH con solo lo que cambió. Objetivo y nivel vacíos no se mandan (el backend no
- * admite `null`); la fecha vaciada va como `null`.
+ * admite `null`); la fecha y el teléfono vaciados van como `null`.
  */
 export function buildStudentBody(formData, student) {
   const initial = studentFormDefaults(student);
   const text = (name) => String(formData.get(name) ?? '').trim();
   const body = {};
   if (text('name') !== initial.name) body.name = text('name');
+  if (text('phone') !== initial.phone) body.phone = text('phone') || null;
   for (const field of ['goal', 'level']) {
     if (text(field) && text(field) !== initial[field]) body[field] = text(field);
   }
@@ -40,6 +43,7 @@ export function buildStudentBody(formData, student) {
 export function validateStudentBody(body, now = new Date()) {
   const errors = {};
   if ('name' in body && (body.name.length < 2 || body.name.length > 100)) errors.name = NAME_ERROR;
+  if (body.phone && validatePhone(body.phone)) errors.phone = validatePhone(body.phone);
   if (body.birth_date && body.birth_date > todayString(now)) errors.birth_date = BIRTH_ERROR;
   return errors;
 }

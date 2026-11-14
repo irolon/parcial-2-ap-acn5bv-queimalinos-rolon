@@ -106,6 +106,7 @@ Registra un nuevo Personal Trainer. No requiere autenticación.
 - `user` es la ficha pública del trainer o del alumno (nunca `password_hash`) más `role` y, desde la GX1:
   - `must_change_password` (booleano; siempre `false` para el trainer): `true` si el PT blanqueó la clave del alumno. El `token` lleva entonces el claim y todo lo demás responde `403 PASSWORD_CHANGE_REQUIRED` hasta llamar a `PUT /auth/password`.
   - `password_changed_at` (timestamp, o `null` si nunca la cambió desde el alta): para "Modificada hace…".
+- GX2: el alumno trae `phone` (o `null`) y el trainer `professional_title` (o `null`). `avatar_url` es una URL firmada que vence en 1 h (ver "Fotos de perfil" en Alumnos), o `null`.
 
 **Errores:** `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `401 ACCOUNT_DISABLED`, `429 RATE_LIMIT_EXCEEDED`
 
@@ -168,6 +169,38 @@ Cambia la clave del usuario autenticado (alumno o trainer) con la actual (GX1). 
 | `400 VALIDATION_ERROR`, `field: "push_token"` | vacío, de más de 4096 caracteres o no es texto |
 | `401 UNAUTHORIZED` | sin access token o inválido |
 | `429 RATE_LIMIT_EXCEEDED` | más de 30 pedidos por IP en 15 min |
+
+### GET /auth/me
+
+Perfil del trainer autenticado (GX2). **Rol:** `trainer`.
+
+**200 OK**
+
+```json
+{ "data": {
+  "id": "uuid", "name": "Laura Méndez", "email": "laura@mail.com", "specialty": "Fuerza",
+  "professional_title": "Lic. en Educación Física", "avatar_url": null,
+  "password_changed_at": null, "created_at": "2026-10-17T12:00:00Z"
+} }
+```
+
+- Solo esas claves (nunca `password_hash`). `specialty`, `professional_title`, `avatar_url` y `password_changed_at` pueden ser `null`. `avatar_url` sale firmada (1 h), como en Alumnos.
+
+**Errores:** `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND` (la cuenta ya no existe).
+
+### PATCH /auth/me
+
+Cambia el nombre y el título profesional del trainer (GX2). **Rol:** `trainer`. Hay que mandar al menos uno; los demás campos (`email`, `specialty`…) se ignoran.
+
+**Body**
+
+```json
+{ "name": "string (opcional, 2–100 chars, recortado)", "professional_title": "string | null (opcional, 2–80 chars, recortado; null o vacío lo borra)" }
+```
+
+**200 OK** — la misma forma que `GET /auth/me`. El título lo ven sus alumnos en "Tu entrenador/a" (`counterpart.professional_title` de `GET /messages/:studentId`).
+
+**Errores:** `400 VALIDATION_ERROR` (`field: "name"` o `"professional_title"` fuera de rango; `field: "body"` sin ningún campo editable), `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND`.
 
 ---
 
@@ -252,6 +285,8 @@ Crea el alumno desde el token de invitación. Público.
 ---
 
 ## Módulo: Alumnos
+
+**Fotos de perfil (GX2).** En todas las respuestas que la traen (lista y ficha de alumnos, login, `GET`/`PATCH /auth/me`, contraparte y conversaciones de Mensajes, alumno de los Turnos), `avatar_url` es una **URL firmada que vence en 1 h** (3600 s, igual que las fotos del chat) del bucket privado `avatars`, o `null` si no hay foto o no se pudo firmar (la firma es best-effort: si Storage falla, la respuesta sale igual). No hay que guardarla más que la sesión: al volver a pedir el recurso llega firmada de nuevo. La ruta del bucket nunca sale.
 
 ### GET /students
 
@@ -349,6 +384,7 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "goal": "strength", "level": "beginner", "birth_date": "1999-05-01", "avatar_url": null,
     "active": true, "gym_equipment": ["Mancuernas", "Banco"], "injuries": "Lumbalgia",
     "created_at": "2026-10-17T12:00:00Z", "must_change_password": false, "password_changed_at": null,
+    "phone": "+54 9 11 2233-4455",
     "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
@@ -361,6 +397,8 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
 > `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
 >
 > GX1: `must_change_password` (`true` mientras el alumno no elija una clave nueva después de un blanqueo) y `password_changed_at` (último cambio o blanqueo; `null` si nunca). Son de solo lectura: `PATCH` los ignora (los cambian `PUT /auth/password` y `POST /students/:id/password-reset`).
+>
+> GX2: `phone` (texto tal como se cargó, o `null`). Al alta se copia el `student_phone` de la invitación si tiene entre 6 y 30 caracteres.
 
 **Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `403 FORBIDDEN` (alumno de otro trainer o inexistente: no se distingue).
 
@@ -386,11 +424,12 @@ Resumen y asistencia de un mes. El trainer ve a sus alumnos; el alumno, solo la 
 
 ### PATCH /students/:id
 
-Actualiza un alumno. Solo el trainer dueño. Hay que mandar al menos un campo.
+Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alumno** (GX2: solo `name` y `phone`). Hay que mandar al menos un campo; al trainer, los que no están en la tabla se le ignoran.
 
 | Campo | Regla |
 |---|---|
 | `name` | 2–100 caracteres |
+| `phone` | 6–30 caracteres entre dígitos, espacios y `+ - ( )`, con **al menos 6 dígitos** ("------" no vale), recortado; `null` o vacío lo borra |
 | `goal` | `tonify`, `weight_loss`, `hypertrophy` o `strength` |
 | `level` | `beginner`, `intermediate` o `advanced` |
 | `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; además, sus turnos futuros `pending` o `confirmed` pasan a `cancelled` (liberan el horario, sin notificaciones). **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña; los turnos cancelados no vuelven |
@@ -398,9 +437,31 @@ Actualiza un alumno. Solo el trainer dueño. Hay que mandar al menos un campo.
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
 
-**200 OK** — la ficha completa en `{ data }`, con la misma forma que el GET (incluye `must_change_password` y `password_changed_at`).
+**200 OK** — la ficha completa en `{ data }`, con la misma forma que el GET (incluye `must_change_password`, `password_changed_at` y `phone`).
 
-**Errores:** `400 VALIDATION_ERROR`, `403 FORBIDDEN`.
+- **El alumno** sobre sí mismo: con cualquier campo que no sea `name` o `phone` (por ejemplo `goal`, `active` o uno desconocido como `email`) responde `403 FORBIDDEN` con el mensaje "Solo podés cambiar tu nombre, teléfono y foto" **antes de tocar nada** (no guarda, no revoca sesiones ni cancela turnos). Sobre otro alumno → `403 FORBIDDEN`.
+
+**Errores:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN` (alumno de otro trainer o inexistente; otro alumno; el alumno con un campo que no puede cambiar).
+
+### PUT /students/:id/avatar
+
+Sube o reemplaza la foto de perfil (GX2). **Solo el propio alumno** (el trainer tampoco puede). `multipart/form-data` con un único archivo en el campo `image` (JPEG, PNG o WebP, hasta 5 MB). El tipo se detecta por los bytes del archivo, no por el `Content-Type`. La web la achica antes a 512 px (JPEG).
+
+**200 OK**
+
+```json
+{ "data": { "avatar_url": "https://…/object/sign/avatars/students/…?token=…" } }
+```
+
+- Se guarda en el bucket privado `avatars` como `students/<id>/<uuid>.<ext>` y la ruta queda en `students.avatar_url`; la respuesta trae la URL firmada (1 h). La foto anterior se borra en best-effort. Si guardar la ruta falla, la subida se borra y responde el error.
+
+**Errores:** `400 VALIDATION_ERROR` (`id` no es UUID; `field: "image"` sin archivo, con más de un archivo, en otro campo o formulario mal formado), `401 UNAUTHORIZED`, `403 FORBIDDEN` (otro alumno o rol trainer), `413 IMAGE_TOO_LARGE` (más de 5 MB), `415 IMAGE_TYPE_INVALID` (no es JPG, PNG ni WebP).
+
+### DELETE /students/:id/avatar
+
+Quita la foto de perfil (GX2). **Solo el propio alumno.** Deja `avatar_url` en `null` y borra el archivo del bucket (best-effort). **204 No Content**, también si no tenía foto (idempotente).
+
+**Errores:** `400 VALIDATION_ERROR` (`id` no es UUID), `401 UNAUTHORIZED`, `403 FORBIDDEN` (otro alumno o rol trainer).
 
 ### POST /students/:id/password-reset
 
@@ -1559,6 +1620,7 @@ Turnos de 60 min entre el entrenador y sus alumnos. Endpoints con `Authorization
 - Un horario solo admite un turno `pending` o `confirmed` por entrenador (índice único parcial). Un turno cancelado se puede volver a pedir.
 - La base exige que todo turno dure 60 min y empiece en hora en punto (checks `appointments_duration_60` y `appointments_on_the_hour`).
 - Al dar de baja a un alumno (`PATCH /students/:id` con `active: false`), sus turnos futuros `pending` o `confirmed` pasan a `cancelled`.
+- GX2: `student.avatar_url` sale firmada (1 h) o `null` (ver "Fotos de perfil" en Alumnos).
 
 ### GET /appointments
 
@@ -1834,7 +1896,7 @@ Historial de la conversación, paginado hacia atrás. **Roles:** `trainer` (de u
 
 - `data` viene en **orden cronológico** (el más viejo primero), listo para dibujar; la página trae los `limit` más nuevos antes del cursor.
 - `meta.next_before` es el `created_at` del mensaje más viejo de la página cuando hay más atrás; `null` si no hay más. Es un cursor opaco: se pasa tal cual en el `before` de la próxima llamada. **Termina en `+00:00`: hay que codificarlo en la URL (`%2B`)** o el servidor responde 400 `VALIDATION_ERROR` (con `URLSearchParams` se resuelve solo).
-- `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email).
+- `counterpart` es la otra persona de la conversación: el alumno para el PT, el PT para el alumno (sin email). GX2: cuando pide el **alumno**, suma `professional_title` del PT (o `null`), para "Tu entrenador/a"; al PT no le llega esa clave. `avatar_url` sale firmada (1 h) o `null`, igual que `student.avatar_url` en `GET /messages/conversations`.
 - Si falla la firma de las fotos, el historial carga igual: esas fotos vienen con `image_url: null` y `has_image: true`, y no responde 500.
 
 **Errores:** 400 `VALIDATION_ERROR` (`studentId` no UUID, `limit` fuera de 1–100 o no entero, `before` que no sea una fecha ISO con zona), 403 `FORBIDDEN`.

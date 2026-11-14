@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  mockAppointments, mockNotify, importSrc, TRAINER, STUDENT, APPT_ID, NOW, apptRow,
+  mockAppointments, mockNotify, mockAvatars, importSrc, TRAINER, STUDENT, APPT_ID, NOW, apptRow,
 } from '../../../helpers/agenda/agenda.setup.js';
 
 const service = await importSrc('services/agenda/appointments.service.js');
@@ -159,5 +159,31 @@ describe('cancelFutureForStudent', () => {
     await expect(service.cancelFutureForStudent(STUDENT.id)).resolves.toBe(2);
     expect(mockAppointments.cancelFutureForStudent).toHaveBeenCalledWith(STUDENT.id, NOW);
     expect(mockNotify.notify).not.toHaveBeenCalled();
+  });
+});
+
+describe('avatares firmados (GX2)', () => {
+  const withPhoto = (id, path) => apptRow({ id, student: { id, name: id, avatar_url: path } });
+  const signed = (paths) => new Map(paths.map((p) => [p, `https://s/${p}`]));
+
+  it('la lista firma todos los alumnos en una llamada; sin foto o sin alumno embebido queda null', async () => {
+    mockAppointments.findAppointmentsInRange.mockResolvedValue([
+      withPhoto('a', 'students/a/1.jpg'),
+      withPhoto('b', 'students/b/1.jpg'),
+      apptRow({ id: 'c', student: null }),
+    ]);
+    mockAvatars.signPaths.mockImplementationOnce(async (paths) => signed(paths));
+    const result = await service.list(TRAINER, { from: '2026-11-02', to: '2026-11-08' });
+    expect(mockAvatars.signPaths).toHaveBeenCalledTimes(1);
+    expect(mockAvatars.signPaths).toHaveBeenCalledWith(['students/a/1.jpg', 'students/b/1.jpg']);
+    expect(result.map((a) => a.student.avatar_url)).toEqual(['https://s/students/a/1.jpg', 'https://s/students/b/1.jpg', null]);
+    expect(result[2].student).toEqual({ id: STUDENT.id, name: null, avatar_url: null });
+  });
+
+  it('cambiar el estado devuelve el avatar firmado', async () => {
+    mockAppointments.updateStatus.mockResolvedValueOnce(withPhoto(STUDENT.id, 'students/x/1.jpg'));
+    mockAvatars.signPaths.mockImplementationOnce(async (paths) => signed(paths));
+    const result = await service.changeStatus(TRAINER, APPT_ID, { status: 'confirmed' });
+    expect(result.student.avatar_url).toBe('https://s/students/x/1.jpg');
   });
 });

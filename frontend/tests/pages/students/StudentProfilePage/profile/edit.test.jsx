@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { bodyOf, errorResponse, jsonResponse } from '../../../../helpers/shared/fetchMock';
 import { studentDetail } from '../../../../helpers/students/fixtures';
 import { callsWith, loadProfile } from '../../../../helpers/students/profile';
+import { PHONE_ERROR } from '@/utils/students/profile/phone';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -120,5 +121,28 @@ describe('StudentProfilePage: editar alumno', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
     expect(await within(dialog).findByText('Nombre inválido')).toBeVisible();
     expect(screen.getByRole('dialog')).toBeVisible();
+  });
+
+  it('edita el teléfono: lo manda y muestra el error del backend en el campo', async () => {
+    const user = userEvent.setup();
+    const update = vi.fn(async () =>
+      errorResponse(400, 'VALIDATION_ERROR', 'inválido', [{ field: 'phone', message: 'Teléfono inválido' }]),
+    );
+    const { fetchMock, dialog } = await open(user, { handlers: { update } });
+    const phone = within(dialog).getByLabelText('Teléfono');
+    expect(phone).toHaveAttribute('type', 'tel');
+    await user.type(phone, '11 2233 4455');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    expect(await within(dialog).findByText('Teléfono inválido')).toBeVisible();
+    expect(bodyOf(callsWith(fetchMock, 'PATCH')[0][1])).toEqual({ phone: '11 2233 4455' });
+  });
+
+  it('un teléfono con formato inválido no se manda', async () => {
+    const user = userEvent.setup();
+    const { fetchMock, dialog } = await open(user);
+    await user.type(within(dialog).getByLabelText('Teléfono'), '12');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    expect(await within(dialog).findByText(PHONE_ERROR)).toBeVisible();
+    expect(callsWith(fetchMock, 'PATCH')).toHaveLength(0);
   });
 });

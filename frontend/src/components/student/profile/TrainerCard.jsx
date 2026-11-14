@@ -20,8 +20,13 @@ function Trainer({ query }) {
   if (!query.data) return <p className="font-body text-sm text-ink6">Sin entrenador/a asignado/a</p>;
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <Avatar name={query.data.name} size={40} decorative />
-      <p className="truncate font-display text-sm font-semibold text-bone0">{query.data.name}</p>
+      <Avatar name={query.data.name} src={query.data.avatar_url} size={40} decorative />
+      <div className="min-w-0">
+        <p className="truncate font-display text-sm font-semibold text-bone0">{query.data.name}</p>
+        {query.data.professional_title && (
+          <p className="truncate font-mono text-[10px] uppercase text-ink6">{query.data.professional_title}</p>
+        )}
+      </div>
     </div>
   );
 }

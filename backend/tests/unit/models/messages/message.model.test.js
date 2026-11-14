@@ -11,6 +11,7 @@ import {
   SENDER_ROLES,
   toMessage,
   toPublicPerson,
+  toTrainerPerson,
   toLastMessage,
 } from '../../../../src/models/messages/message.model.js';
 
@@ -64,6 +65,12 @@ describe('message.model', () => {
   it('toPublicPerson deja solo id, name y avatar_url (null si falta)', () => {
     expect(toPublicPerson({ id: 'a', name: 'Ana', email: 'x@y.z' })).toEqual({ id: 'a', name: 'Ana', avatar_url: null });
     expect(toPublicPerson({ id: 'a', name: 'Ana', avatar_url: 'u' }).avatar_url).toBe('u');
+  });
+
+  it('toTrainerPerson suma professional_title (null si falta) y nada más (GX2)', () => {
+    const row = { id: 't', name: 'Laura', avatar_url: 'p', email: 'x', professional_title: 'Lic.' };
+    expect(toTrainerPerson(row)).toEqual({ id: 't', name: 'Laura', avatar_url: 'p', professional_title: 'Lic.' });
+    expect(toTrainerPerson({ id: 't', name: 'Laura' }).professional_title).toBeNull();
   });
 
   it('toLastMessage resume el mensaje sin exponer image_path', () => {

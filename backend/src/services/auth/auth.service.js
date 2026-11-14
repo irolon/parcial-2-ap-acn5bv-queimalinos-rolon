@@ -9,12 +9,13 @@ import {
 import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/auth/auth.repository.js';
-import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as studentsRepository from '../../repositories/students/students.repository/students.repository.js';
 import * as credentialsRepo from '../../repositories/auth/credentials.repository.js';
 import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
 import { toTrainer } from '../../models/auth/trainer.model.js';
 import { toStudent } from '../../models/students/student.model.js';
 import { isActive } from '../../models/auth/refresh-token.model.js';
+import { signAvatars } from '../students/avatar-urls.service.js';
 
 /**
  * Emite un par de tokens (access + refresh) y persiste el refresh.
@@ -81,7 +82,8 @@ async function authenticateUser(password, row, toPublic, role) {
   // INVALID_CREDENTIALS, así no se revela que la cuenta existe y está de baja.
   if (role === 'student' && row.active === false) throw Errors.accountDisabled();
 
-  const user = toPublic(row); // descarta password_hash vía el modelo
+  // descarta password_hash vía el modelo; GX2: avatar_url sale firmada (o null).
+  const [user] = await signAvatars([toPublic(row)]);
   const tokens = await issueTokens(user, role);
   await assertPasswordUnchanged(row, role, tokens.refresh_token);
   const account = {

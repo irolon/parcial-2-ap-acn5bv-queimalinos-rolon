@@ -14,7 +14,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 |---|---|
 | 1 | El alumno edita **solo** nombre, teléfono y foto. Objetivo, nivel, lesiones y equipamiento siguen siendo del PT. |
 | 2 | Se **amplía** `PATCH /students/:id` con permisos por rol (no un endpoint aparte): el alumno, sobre sí mismo, solo `name` y `phone`; cualquier otro campo → `403 FORBIDDEN` ("Solo podés cambiar tu nombre, teléfono y foto"). El PT sigue con todo y suma `phone`. |
-| 3 | Teléfono: columna nueva `students.phone varchar(30)`, opcional; 6 a 30 caracteres entre dígitos, espacios, `+ - ( )`. Se copia de la invitación al alta y se rellena para los alumnos existentes desde su invitación usada. |
+| 3 | Teléfono: columna nueva `students.phone varchar(30)`, opcional; 6 a 30 caracteres entre dígitos, espacios, `+ - ( )`, con al menos 6 dígitos. Se copia de la invitación al alta y se rellena para los alumnos existentes desde su invitación usada. |
 | 4 | Foto: endpoint propio `PUT /students/:id/avatar` (multipart, `image`) y `DELETE /students/:id/avatar`, solo el propio alumno. |
 | 5 | Bucket **privado** `avatars` con **URLs firmadas por lote**, como las fotos del chat (`createSignedUrls` en `message-images.repository.js`): Pablo pidió que no cualquiera con el link vea las fotos (09/11). En `avatar_url` se guarda la **ruta** (`students/<id>/<uuid>.<ext>`), no una URL. Cada respuesta que devuelve avatares (lista de alumnos, ficha, contraparte, `/auth/me`) los firma **en una sola llamada por respuesta** (`signAvatars(rows)`), **igual que las fotos del chat** (Pablo, 09/11): mismo vencimiento (`SIGNED_URL_SECONDS` = 1 h, reusado del modelo de mensajes) y sin caché aparte. Sin sesión no se ven; un link filtrado deja de andar en una hora. La foto anterior se borra en best-effort. |
 | 6 | La web achica la foto antes de subirla: lado mayor 512 px, JPEG 0,85 (canvas). El backend igual valida firma y 5 MB. |
@@ -42,7 +42,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 - `students.service.update(user, id, fields)`: hoy corta a todo lo que no sea trainer; pasa a: trainer como hoy; alumno → `assertCanAccessStudent` (solo sí mismo) y `STUDENT_SELF_EDITABLE = ['name', 'phone']`. La ruta pasa a `requireRole('trainer', 'student')`.
 - `services/students/avatar.service.js`: `setAvatar(user, id, file)` (solo el propio alumno; sin archivo → 400; `detectImageType` o `IMAGE_TYPE_INVALID`; sube, guarda `avatar_url`, borra la anterior si es del bucket; si guardar falla, borra la subida) y `removeAvatar(user, id)`.
 - `repositories/students/avatars.repository.js` (`upload`, `remove`, `signPaths(paths)` con `createSignedUrls`, como `message-images.repository.js`) con `AVATARS_BUCKET` en `models/students/avatar.model.js`. `services/students/avatar-urls.service.js`: `signAvatars(rows, key = 'avatar_url')` reemplaza la ruta por la URL firmada (o `null`) en todas las filas con una sola llamada.
-- `students.repository.js` está en **200 líneas**: `createStudent` se muda a `repositories/students/student-create.repository.js` y suma `phone`; `registerFromInvitation` pasa `invitation.student_phone`.
+- `students.repository.js` está en **200 líneas**: `createStudent` se muda a `repositories/students/students.repository/student-create.repository.js` (los dos archivos van juntos en la carpeta `students.repository/`, como pide CONTRIBUTING para lo dividido) y suma `phone`; `registerFromInvitation` pasa `invitation.student_phone`.
 - `services/auth/profile.service.js` (`getMe`, `updateMe`), `controllers/auth/profile.controller.js`, `validations/auth/profile.validation.js` (`name` 2–100, `professional_title` `null` o 2–80, recortado; al menos uno), `auth.repository.updateTrainer(id, fields)`.
 - `messages.service.counterpartOf`: para el alumno, `toTrainerPerson(trainer)` (= `toPublicPerson` + `professional_title`).
 
@@ -58,9 +58,9 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 
 ## Archivos que toca
 
-- Backend, crea: `services/students/avatar.service.js`, `repositories/students/avatars.repository.js`, `repositories/students/student-create.repository.js`, `models/students/avatar.model.js`, `controllers/students/avatar.controller.js`, `services/auth/profile.service.js`, `controllers/auth/profile.controller.js`, `validations/auth/profile.validation.js`, la migración.
-- Backend, modifica: `repositories/students/students.repository.js` (200, −30), `services/students/students.service.js` (151, +8), `validations/students/students.validation.js` (102, +10), `routes/students/students.routes.js` (67 + GX1, +16), `models/students/student.model.js` (+1), `models/auth/trainer.model.js` (+1), `repositories/auth/auth.repository.js` (+12), `routes/auth/auth.routes.js` (+3), `models/messages/message.model.js` (52, +3), `services/messages/messages.service.js` (102, +1), `database/schema/01-auth.sql`, `02-students.sql`, `06b-messages.sql`.
-- Web, crea: `api/account/profile.api.js` (`getMe`, `updateMe`), `api/students/avatar.api.js`, `hooks/account/useTrainerProfile.js`, `hooks/students/useAvatar.js`, `utils/files/resizeImage.js` (`fitWithin(w, h, max)` puro + `resizeToJpeg(file)`), `utils/students/phone.js` (`whatsappHref`, validación), `components/student/profile/ProfilePhoto.jsx`, `EditContactDialog.jsx`, `components/account/TrainerProfileCard.jsx`.
+- Backend, crea: `services/students/avatar.service.js`, `repositories/students/avatars.repository.js`, `repositories/students/students.repository/student-create.repository.js`, `models/students/avatar.model.js`, `controllers/students/avatar.controller.js`, `services/auth/profile.service.js`, `controllers/auth/profile.controller.js`, `validations/auth/profile.validation.js`, la migración.
+- Backend, modifica: `repositories/students/students.repository/students.repository.js` (200, −30), `services/students/students.service.js` (151, +8), `validations/students/students.validation.js` (102, +10), `routes/students/students.routes.js` (67 + GX1, +16), `models/students/student.model.js` (+1), `models/auth/trainer.model.js` (+1), `repositories/auth/auth.repository.js` (+12), `routes/auth/auth.routes.js` (+3), `models/messages/message.model.js` (52, +3), `services/messages/messages.service.js` (102, +1), `database/schema/01-auth.sql`, `02-students.sql`, `06b-messages.sql`.
+- Web, crea: `api/account/profile.api.js` (`getMe`, `updateMe`), `api/students/avatar.api.js`, `hooks/account/useTrainerProfile.js`, `hooks/students/useAvatar.js`, `utils/files/resizeImage.js` (`fitWithin(w, h, max)` puro + `resizeToJpeg(file)`), `utils/students/profile/phone.js` (`whatsappHref`, validación), `components/student/profile/ProfilePhoto.jsx`, `EditContactDialog.jsx`, `components/account/TrainerProfileCard.jsx`.
 - Web, modifica: `components/shared/ui/Avatar.jsx` (37, +12), `components/students/profile/MyProfileCard.jsx` (34, reescrito ~50), `components/student/profile/TrainerCard.jsx` (#89, +4), `components/students/profile/ProfileHeader.jsx` (24, +10), `components/students/dialogs/EditStudentDialog.jsx` (104 + GX1, +8), `components/shared/layout/UserBlock.jsx` y `Topbar.jsx` (63, +1 `src`), `hooks/auth/useAuthStore.js` (+6: `updateUser`), `pages/account/TrainerAccountPage.jsx` (GX1, +2).
 - Tests: ver Pruebas.
 
@@ -78,7 +78,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 - Rutas: `students.routes.test.js` y `auth.routes.test.js` (roles, multipart).
 
 **Vitest (web)**
-- `utils/files/resizeImage.test.js` (`fitWithin`), `utils/students/phone.test.js`.
+- `utils/files/resizeImage.test.js` (`fitWithin`), `utils/students/profile/phone.test.js`.
 - `pages/student/MyProfilePage/edit.test.jsx`: editar nombre y teléfono, error por campo, el sidebar muestra el nombre nuevo; `…/photo.test.jsx`: sube (con `resizeToJpeg` mockeado), error 413, quitar.
 - `components/shared/ui/Avatar.test.jsx`: con `src` muestra la imagen; `onError` → iniciales.
 - `components/account/TrainerProfileCard.test.jsx`; `components/student/profile/TrainerCard.test.jsx` (título visible / ausente).
@@ -88,6 +88,7 @@ Hoy: `MyProfileCard` es de solo lectura ("Para cambiar tus datos, hablá con tu 
 
 ## Criterio de aceptación
 
+- La foto del sidebar no queda vencida: al restaurar la sesión de un alumno (`restore()` del store) se trae su ficha (`GET /students/:id`) y se copian el nombre y la URL firmada vigentes (best-effort; si falla queda lo guardado y Mi perfil la vuelve a traer).
 - El alumno cambia nombre, teléfono y foto desde Mi perfil y lo ve en el sidebar al instante; no puede cambiar objetivo ni nivel (tampoco por API).
 - El PT carga su título profesional en Configuración y el alumno lo ve en "Tu entrenador/a".
 - El PT ve el teléfono del alumno en la ficha con link a WhatsApp.

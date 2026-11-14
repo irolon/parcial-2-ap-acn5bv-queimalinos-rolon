@@ -1,5 +1,5 @@
 import { Errors } from '../../shared/utils/errors.js';
-import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as studentsRepository from '../../repositories/students/students.repository/students.repository.js';
 import * as messagesRepository from '../../repositories/chat/chat-messages.repository.js';
 import { postToN8n } from '../../shared/utils/n8n.client.js';
 import { resolveSessionId, findCurrentExercise, buildChatContext } from './context.service.js';

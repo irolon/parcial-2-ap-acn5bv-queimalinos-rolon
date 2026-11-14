@@ -11,8 +11,8 @@ export const mockInvitationsRepo = {
   claimInvitation: jest.fn(),
   releaseInvitation: jest.fn(),
 };
+export const mockStudentCreateRepo = { createStudent: jest.fn() };
 export const mockStudentsRepo = {
-  createStudent: jest.fn(),
   findStudentsByTrainer: jest.fn(),
   findLastSessionDates: jest.fn(),
   findStreaks: jest.fn(),
@@ -30,8 +30,12 @@ jest.unstable_mockModule(
   () => mockInvitationsRepo
 );
 jest.unstable_mockModule(
-  src('repositories/students/students.repository.js'),
+  src('repositories/students/students.repository/students.repository.js'),
   () => mockStudentsRepo
+);
+jest.unstable_mockModule(
+  src('repositories/students/students.repository/student-create.repository.js'),
+  () => mockStudentCreateRepo
 );
 jest.unstable_mockModule(
   src('repositories/sessions/open-sessions.repository.js'),
@@ -61,6 +65,13 @@ jest.unstable_mockModule(
 jest.unstable_mockModule(
   src('services/agenda/appointments.service.js'),
   () => mockAppointmentsService
+);
+
+// GX2: las fotos se firman por lote; por defecto no firma nada (avatar_url → null).
+export const mockAvatarsRepo = { signPaths: jest.fn(async () => new Map()) };
+jest.unstable_mockModule(
+  src('repositories/students/avatars.repository.js'),
+  () => mockAvatarsRepo
 );
 
 // Rutina inicial del alta (initial-routine.service corre de verdad; se mockea lo que llama).
@@ -98,6 +109,7 @@ export const STUDENT_ROW = {
   id: 'student-1',
   trainer_id: 'trainer-1',
   name: 'Ana',
+  avatar_url: null,
   active: true,
   gym_equipment: ['barbell'],
   injuries: null,

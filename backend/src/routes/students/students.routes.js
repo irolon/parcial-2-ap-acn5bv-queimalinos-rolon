@@ -12,6 +12,10 @@ import {
 import { validateAttendanceQuery } from '../../validations/students/attendance.validation.js';
 import * as studentsController from '../../controllers/students/students.controller.js';
 import * as exportController from '../../controllers/export/export.controller.js';
+import * as avatarController from '../../controllers/students/avatar.controller.js';
+import { parseImageUpload } from '../../shared/middlewares/upload.middleware.js';
+import { limitBodyFieldsForRole } from '../../shared/middlewares/body-fields.middleware.js';
+import { STUDENT_SELF_EDITABLE, STUDENT_SELF_EDIT_FORBIDDEN } from '../../models/students/student.model.js';
 import bodyMetricsRoutes from '../body-metrics/body-metrics.routes.js';
 import studentSessionsRoutes from '../sessions/student-sessions.routes.js';
 import studentGamificationRoutes from '../gamification/student-gamification.routes.js';
@@ -60,12 +64,14 @@ router.get(
   exportController.exportStudent
 );
 
-// Edición y baja: solo trainer (dueño, verificado en el service).
+// Edición: trainer dueño (todo) o el propio alumno (nombre y teléfono); ownership y campos en el service.
+// El alumno con cualquier otro campo → 403 antes del validador, que descartaría en silencio lo desconocido.
 router.patch(
   '/:id',
   authenticate,
-  requireRole('trainer'),
+  requireRole('trainer', 'student'),
   validate(validateStudentIdParam, 'params'),
+  limitBodyFieldsForRole('student', STUDENT_SELF_EDITABLE, STUDENT_SELF_EDIT_FORBIDDEN),
   validate(validateUpdateStudent),
   studentsController.update
 );
@@ -79,6 +85,24 @@ router.post(
   requireRole('trainer'),
   validate(validateStudentIdParam, 'params'),
   studentsController.resetPassword
+);
+
+// Foto de perfil (GX2): solo el propio alumno (verificado en el service). El multipart se
+// parsea después de validar el id; el archivo se valida por firma en el service.
+router.put(
+  '/:id/avatar',
+  authenticate,
+  requireRole('student'),
+  validate(validateStudentIdParam, 'params'),
+  parseImageUpload,
+  avatarController.setAvatar
+);
+router.delete(
+  '/:id/avatar',
+  authenticate,
+  requireRole('student'),
+  validate(validateStudentIdParam, 'params'),
+  avatarController.removeAvatar
 );
 
 // Medidas corporales del alumno: /students/:id/metrics.

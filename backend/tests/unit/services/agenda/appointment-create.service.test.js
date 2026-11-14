@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  mockAppointments, mockAvailability, mockStudents, mockNotify, importSrc,
+  mockAppointments, mockAvailability, mockStudents, mockNotify, mockAvatars, importSrc,
   TRAINER, STUDENT, OTHER_STUDENT_ID, NOW, studentRow, apptRow,
 } from '../../../helpers/agenda/agenda.setup.js';
 
@@ -182,5 +182,16 @@ describe('createForTrainer', () => {
   it('SLOT_TAKEN se propaga', async () => {
     mockAppointments.insertAppointment.mockRejectedValue(Errors.slotTaken());
     await expect(createForTrainer(TRAINER, input)).rejects.toMatchObject({ code: 'SLOT_TAKEN' });
+  });
+});
+
+describe('avatar firmado al crear (GX2)', () => {
+  it('createForStudent y createForTrainer devuelven student.avatar_url firmado', async () => {
+    const path = `students/${STUDENT.id}/a.jpg`;
+    mockAppointments.insertAppointment.mockImplementation(async (row) => apptRow({ ...row, student: { id: STUDENT.id, name: 'Lucía', avatar_url: path } }));
+    mockAvatars.signPaths.mockImplementation(async (paths) => new Map(paths.map((p) => [p, `https://s/${p}`])));
+    mockStudents.findStudentById.mockResolvedValue(studentRow({ avatar_url: path }));
+    expect((await createForStudent(STUDENT, { scheduled_at: FRI_18 })).student.avatar_url).toBe(`https://s/${path}`);
+    expect((await createForTrainer(TRAINER, { student_id: STUDENT.id, scheduled_at: FRI_18 })).student.avatar_url).toBe(`https://s/${path}`);
   });
 });

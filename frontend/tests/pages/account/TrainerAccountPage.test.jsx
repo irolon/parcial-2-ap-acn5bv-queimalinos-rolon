@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import { downloadText } from '@/utils/download';
 import { resetAuthStore } from '../../helpers/auth/authStore';
 import { TRAINER, renderRoute, setSession } from '../../helpers/routes/renderRoute';
-import { calls, errorResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import { calls, errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
 import { allowSlowScreens } from '../../helpers/shared/patience';
 import { setupUser } from '../../helpers/shared/user';
 import { csvResponse } from '../../helpers/account/account';
@@ -12,6 +12,7 @@ vi.mock('@/utils/download', () => ({ downloadText: vi.fn() }));
 
 allowSlowScreens();
 
+const ME = { id: TRAINER.id, name: TRAINER.name, email: TRAINER.email, professional_title: null };
 const CSV = '﻿Alumno;Email\r\n';
 let fetchMock;
 
@@ -19,9 +20,11 @@ beforeEach(() => {
   resetAuthStore();
   setSession(TRAINER);
   vi.mocked(downloadText).mockReset();
-  fetchMock = stubFetch(async (url) =>
-    url.endsWith('/students/export') ? csvResponse(CSV) : errorResponse(500, 'INTERNAL', `Sin handler: ${url}`),
-  );
+  fetchMock = stubFetch(async (url) => {
+    if (url.endsWith('/students/export')) return csvResponse(CSV);
+    if (url.endsWith('/auth/me')) return jsonResponse(200, { data: ME });
+    return errorResponse(500, 'INTERNAL', `Sin handler: ${url}`);
+  });
 });
 
 afterEach(() => {
@@ -40,7 +43,16 @@ describe('TrainerAccountPage (/pt/cuenta)', () => {
     expect(within(card).getByText('Nunca la cambiaste')).toBeInTheDocument();
     expect(within(card).getByText('Exportar los datos de tus alumnos')).toBeInTheDocument();
     expect(within(card).getByText('Todas sus sesiones en CSV')).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/me']);
+  });
+
+  it('arriba de la tarjeta Cuenta está "Tu perfil" con el nombre y el título', async () => {
+    renderRoute('/pt/cuenta');
+    const profile = await screen.findByRole('region', { name: 'Tu perfil' });
+    expect(await within(profile).findByLabelText('Nombre')).toHaveValue(TRAINER.name);
+    expect(within(profile).getByLabelText('Título profesional')).toHaveValue('');
+    const account = screen.getByRole('region', { name: 'Cuenta' });
+    expect(profile.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('Descargar pide GET /students/export y baja fittrainer-alumnos-<fecha de la descarga>.csv', async () => {
@@ -53,7 +65,7 @@ describe('TrainerAccountPage (/pt/cuenta)', () => {
     await vi.waitFor(() =>
       expect(downloadText).toHaveBeenCalledWith(CSV, 'fittrainer-alumnos-2026-11-09.csv', 'text/csv'),
     );
-    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/students/export']);
+    expect(calls(fetchMock).map(([path]) => path)).toContain('/students/export');
   });
 
   it('el alumno no entra: vuelve a su home', async () => {

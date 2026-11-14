@@ -43,7 +43,8 @@ describe('MyProfilePage: lo que se ve', () => {
     expect(screen.getByText('tomas@fit.com')).toBeVisible();
     expect(screen.getByText('Objetivo').nextElementSibling).toHaveTextContent('Ganar masa muscular');
     expect(screen.getByText('Nivel').nextElementSibling).toHaveTextContent('Intermedio');
-    expect(screen.getByText('Para cambiar tus datos, hablá con tu entrenador')).toBeVisible();
+    expect(screen.getByText('Teléfono').nextElementSibling).toHaveTextContent('Sin cargar');
+    expect(screen.getByText('Objetivo y nivel los define tu entrenador/a')).toBeVisible();
     const routine = screen.getByText('Rutina más reciente');
     expect(screen.getByText('Push/Pull')).toBeVisible();
     expect(screen.getByText('Lunes · Jueves')).toBeVisible();
@@ -67,11 +68,18 @@ describe('MyProfilePage: lo que se ve', () => {
 });
 
 describe('MyProfilePage: sin acciones del entrenador', () => {
-  it('las únicas acciones son Registrar medición, borrar las medidas que cargó el alumno, las de su cuenta e ir a Mensajes', async () => {
+  it('las únicas acciones son su foto y sus datos, Registrar medición, borrar las medidas que cargó, las de su cuenta e ir a Mensajes', async () => {
     show();
     await screen.findByRole('table', { name: 'Historial de medidas' });
     const names = screen.getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent);
-    expect(names.sort()).toEqual(['Borrar medida del 05/10/2026', 'Cambiar', 'Descargar', 'Registrar medición']);
+    expect(names.sort()).toEqual([
+      'Borrar medida del 05/10/2026',
+      'Cambiar',
+      'Cambiar foto',
+      'Descargar',
+      'Editar datos',
+      'Registrar medición',
+    ]);
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Mensaje']);
   });

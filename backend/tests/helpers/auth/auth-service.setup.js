@@ -23,7 +23,7 @@ export const mockStudentsRepo = {
   findStudentById: jest.fn(),
 };
 jest.unstable_mockModule(
-  src('repositories/students/students.repository.js'),
+  src('repositories/students/students.repository/students.repository.js'),
   () => mockStudentsRepo
 );
 
@@ -32,6 +32,13 @@ export const mockPushTokensRepo = { deleteTokenForUser: jest.fn() };
 jest.unstable_mockModule(
   src('repositories/notifications/push-tokens.repository.js'),
   () => mockPushTokensRepo
+);
+
+// GX2: el login firma la foto; por defecto no firma nada (avatar_url → null).
+export const mockAvatarsRepo = { signPaths: jest.fn(async () => new Map()) };
+jest.unstable_mockModule(
+  src('repositories/students/avatars.repository.js'),
+  () => mockAvatarsRepo
 );
 
 // El login relee la clave por id después de guardar su refresh. Por defecto no cambió en el medio: devuelve el hash

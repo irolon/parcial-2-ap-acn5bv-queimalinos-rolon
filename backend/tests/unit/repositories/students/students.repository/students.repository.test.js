@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fileURLToPath } from 'node:url';
 
-const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
+const src = (p) => fileURLToPath(new URL(`../../../../../src/${p}`, import.meta.url));
 
 // Builder encadenable y "thenable": cada método devuelve el mismo objeto.
 // `queue`: respuestas por página (fetchAll pide de a 1000); si está vacía se usa `current`.
@@ -12,7 +12,7 @@ q.then = (resolve) => resolve(result.queue.length ? result.queue.shift() : resul
 const supabase = { from: jest.fn(() => q) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
-const repo = await import(src('repositories/students/students.repository.js'));
+const repo = await import(src('repositories/students/students.repository/students.repository.js'));
 
 beforeEach(() => {
   jest.clearAllMocks();

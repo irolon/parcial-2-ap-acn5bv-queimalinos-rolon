@@ -1,6 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
 import * as repository from '../../repositories/exercises/exercises.repository.js';
-import * as studentsRepository from '../../repositories/students/students.repository.js';
+import * as studentsRepository from '../../repositories/students/students.repository/students.repository.js';
 import { isOwnedBy } from '../../models/exercises/exercise.model.js';
 
 /** Lista la biblioteca visible para el trainer (globales + propios). */

@@ -53,10 +53,10 @@ La #44 (v9) y la #48 (v10) ya usan esas versiones de Room; la #51 también usaba
 
 **Files:**
 - Create: `backend/src/models/students/adherence.js`
-- Modify: `backend/src/repositories/students/students.repository.js` (dos consultas por lote nuevas)
+- Modify: `backend/src/repositories/students/students.repository/students.repository.js` (dos consultas por lote nuevas)
 - Modify: `backend/src/services/students/students.service.js` (`list`)
 - Modify: `docs/arquitectura/contratos-api.md` (GET /students), `backend/README.md`
-- Test: `backend/tests/unit/models/students/adherence.test.js`, `backend/tests/unit/services/students/students.service/list.test.js`, el test del repositorio de students (crear `backend/tests/unit/repositories/students/students.repository.test.js` si no existe, como el de history)
+- Test: `backend/tests/unit/models/students/adherence.test.js`, `backend/tests/unit/services/students/students.service/list.test.js`, el test del repositorio de students (crear `backend/tests/unit/repositories/students/students.repository/students.repository.test.js` si no existe, como el de history)
 
 **Interfaces:**
 - Produces:

@@ -20,7 +20,7 @@ const FORM_ID = 'edit-student-form';
 /** Objetivo y nivel no se pueden vaciar (el backend no admite `null`): "Sin definir" solo si ya lo estaban. */
 const optionsFor = (options, current) => (current ? options.filter((o) => o.value) : options);
 
-/** Edita nombre, objetivo, nivel y fecha de nacimiento; manda solo lo que cambió. */
+/** Edita nombre, teléfono, objetivo, nivel y fecha de nacimiento; manda solo lo que cambió. */
 export default function EditStudentDialog({ student, onClose }) {
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const update = useUpdateStudent(student.id);
@@ -86,6 +86,14 @@ export default function EditStudentDialog({ student, onClose }) {
           </p>
         )}
         <Input label="Nombre" name="name" autoComplete="off" defaultValue={defaults.name} error={fields.name} />
+        <Input
+          label="Teléfono"
+          name="phone"
+          type="tel"
+          autoComplete="off"
+          defaultValue={defaults.phone}
+          error={fields.phone}
+        />
         <Select
           label="Objetivo"
           name="goal"

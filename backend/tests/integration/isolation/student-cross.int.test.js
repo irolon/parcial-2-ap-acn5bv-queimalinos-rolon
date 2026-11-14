@@ -44,6 +44,9 @@ const cases = rows('studentB', [
   [72, 'DELETE /notifications/tokens/:tokenA', 204],
   [73, 'POST /sessions/:sessB/sets', 200, null, set(':setA')],
   [94, 'DELETE /sessions/:openA', 404, 'SESSION_NOT_FOUND'],
+  [96, 'PUT /students/:stA/avatar', 403],
+  [97, 'DELETE /students/:stA/avatar', 403],
+  [100, 'PATCH /students/:stA', 403, null, { phone: '11 2345 6789' }],
 ]);
 
 // #72: responde 204 igual, pero el token de A sigue siendo de A.

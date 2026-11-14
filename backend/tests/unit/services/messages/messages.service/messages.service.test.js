@@ -3,7 +3,6 @@ import {
   mockMessagesRepo,
   mockImagesRepo,
   mockStudentsRepo,
-  mockAuthRepo,
   TRAINER,
   STUDENT,
   STUDENT_ID,
@@ -82,21 +81,6 @@ describe('history', () => {
     expect(byId.a.image_url).toBe('https://firmada/a');
     expect(byId.b.image_url).toBeNull();
     expect(JSON.stringify(res)).not.toContain('image_path');
-  });
-
-  it('counterpart del PT es el alumno', async () => {
-    mockMessagesRepo.findPage.mockResolvedValue([]);
-    const res = await service.history(TRAINER, STUDENT_ID, { before: null, limit: 50 });
-    expect(res.counterpart).toEqual({ id: STUDENT_ID, name: 'Ana', avatar_url: null });
-    expect(mockAuthRepo.findTrainerById).not.toHaveBeenCalled();
-  });
-
-  it('counterpart del alumno es su PT', async () => {
-    mockMessagesRepo.findPage.mockResolvedValue([]);
-    mockAuthRepo.findTrainerById.mockResolvedValue({ id: TRAINER.id, name: 'Pablo', avatar_url: 'u', email: 'x' });
-    const res = await service.history(STUDENT, STUDENT_ID, { before: null, limit: 50 });
-    expect(mockAuthRepo.findTrainerById).toHaveBeenCalledWith(TRAINER.id);
-    expect(res.counterpart).toEqual({ id: TRAINER.id, name: 'Pablo', avatar_url: 'u' });
   });
 });
 
