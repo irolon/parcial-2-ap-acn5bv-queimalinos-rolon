@@ -17,7 +17,7 @@ Fecha: 14/11/2026 · Rama: `feature/exercise-library-archive` · Dos tarjetas de
   - Borrado de verdad → **204** sin cuerpo (como hoy).
   - Archivado → **200** `{ data: { id, archived: true } }`.
   - El celular no se rompe: su `delete` es `Response<Unit>` (Retrofit descarta el cuerpo) y en los dos casos lo saca de Room, que es lo que corresponde.
-  - El 409 `EXERCISE_IN_USE` deja de salir de este endpoint (el error queda en el catálogo por si el celular viejo lo espera; no se emite).
+  - El 409 `EXERCISE_IN_USE` desaparece (se saca `Errors.exerciseInUse` del catálogo: ya nada lo emite; el celular trata el 409 por status y nunca lo va a recibir).
 - **Archivado = invisible para editar**: `PATCH` y `DELETE` de un ejercicio archivado responden 404 "Ejercicio no encontrado" (para el PT ya no existe en su biblioteca). Un global sigue sin poder borrarse (403) y solo el dueño puede archivar/borrar el suyo (403 si es ajeno), igual que hoy.
 - **Sin "desarchivar" ni "ver archivados"** en esta tarjeta (alcance chico). Si el PT lo necesita, crea uno nuevo con el mismo nombre.
 - **Dónde se filtran los archivados (no aparecen):**

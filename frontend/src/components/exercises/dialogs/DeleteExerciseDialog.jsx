@@ -4,7 +4,10 @@ import Dialog from '@/components/shared/ui/Dialog';
 import { useDeleteExercise } from '@/hooks/exercises/useExercises';
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
 
-/** Confirmación de borrado; ante un error (p. ej. 409 en uso) queda abierto con el mensaje. */
+/**
+ * Confirmación de borrado. Si el ejercicio está en uso, el servidor lo archiva en vez de borrarlo
+ * (200 en vez de 204): para el PT es lo mismo, sale de la biblioteca. Ante un error queda abierto.
+ */
 export default function DeleteExerciseDialog({ exercise, onClose }) {
   const [error, setError] = useState(null);
   const remove = useDeleteExercise();
@@ -44,7 +47,10 @@ export default function DeleteExerciseDialog({ exercise, onClose }) {
           {error}
         </p>
       )}
-      <p className="font-body text-sm text-ink6">Esta acción no se puede deshacer.</p>
+      <p className="font-body text-sm text-ink6">
+        Si está en una rutina o en el historial de un alumno, lo archivamos: sale de la biblioteca, pero las
+        rutinas y sesiones viejas lo siguen mostrando.
+      </p>
     </Dialog>
   );
 }
