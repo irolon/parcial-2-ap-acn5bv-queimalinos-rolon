@@ -117,3 +117,18 @@ describe('students.validation — validateUpdateStudent · phone (GX2)', () => {
     expect.assertions(1);
   });
 });
+
+describe('students.validation — validateUpdateStudent · weekly_frequency', () => {
+  it('acepta un entero de 1 a 7', () => {
+    expect(validateUpdateStudent({ weekly_frequency: 1 })).toEqual({ weekly_frequency: 1 });
+    expect(validateUpdateStudent({ weekly_frequency: 7 })).toEqual({ weekly_frequency: 7 });
+  });
+  it('null → null (borrar)', () => {
+    expect(validateUpdateStudent({ weekly_frequency: null })).toEqual({ weekly_frequency: null });
+  });
+  it.each([0, 8, 2.5, '3'])('rechaza %p', (value) => {
+    expect(() => validateUpdateStudent({ weekly_frequency: value })).toThrow(
+      expect.objectContaining({ details: [expect.objectContaining({ field: 'weekly_frequency' })] })
+    );
+  });
+});

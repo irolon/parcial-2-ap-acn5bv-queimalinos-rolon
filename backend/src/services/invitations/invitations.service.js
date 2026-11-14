@@ -54,6 +54,10 @@ export async function createInvitation(trainerId, data) {
     studentLevel: data.level ?? null,
     templateId: data.template_id ?? null,
     routineDays: data.routine_days ?? null,
+    studentWeeklyFrequency: data.weekly_frequency ?? null,
+    studentHeightCm: data.height_cm ?? null,
+    studentWeightKg: data.weight_kg ?? null,
+    studentBirthDate: data.birth_date ?? null,
     expiresAt: expiryISO(),
   });
 

@@ -1,5 +1,6 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { STUDENT_GOALS } from '../../models/students/student.model.js';
+import { STUDENT_GOALS, WEEKLY_FREQUENCY_MIN, WEEKLY_FREQUENCY_MAX } from '../../models/students/student.model.js';
+import { isIntBetween } from '../../shared/utils/validators.js';
 import { parseStudentContext } from './student-context.validation.js';
 
 const isString = (v) => typeof v === 'string';
@@ -105,12 +106,18 @@ export function validateUpdateStudent(body) {
       });
     } else out.phone = phone;
   }
+  if (body.weekly_frequency !== undefined) {
+    const value = body.weekly_frequency;
+    if (value !== null && !isIntBetween(value, WEEKLY_FREQUENCY_MIN, WEEKLY_FREQUENCY_MAX)) {
+      details.push({ field: 'weekly_frequency', message: 'weekly_frequency debe ser un entero de 1 a 7' });
+    } else out.weekly_frequency = value;
+  }
   Object.assign(out, parseStudentContext(body, details));
 
   if (details.length > 0) throw Errors.validation('Error de validación', details);
   if (Object.keys(out).length === 0) {
     throw Errors.validation('Mandá al menos un campo para actualizar', [
-      { field: 'body', message: 'Campos editables: name, phone, goal, level, active, birth_date, gym_equipment, injuries' },
+      { field: 'body', message: 'Campos editables: name, phone, goal, level, active, birth_date, weekly_frequency, gym_equipment, injuries' },
     ]);
   }
   return out;

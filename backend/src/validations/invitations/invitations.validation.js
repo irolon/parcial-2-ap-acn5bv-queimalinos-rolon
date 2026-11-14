@@ -3,6 +3,7 @@ import { GOALS, DELIVERY_CHANNELS, includesWhatsapp } from '../../models/invitat
 import { parseStudentContext } from '../students/student-context.validation.js';
 import { isUuid } from '../../shared/utils/validators.js';
 import { validateDays } from '../routines/routines.validation.js';
+import { parseInvitationExtras } from './invitation-extras.validation.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isString = (v) => typeof v === 'string';
@@ -61,6 +62,8 @@ export function validateCreateInvitation(body) {
   );
 
   const initial = parseInitialTemplate(body, details);
+  // Frecuencia, altura, peso y nacimiento (opcionales): se copian al alumno en el alta.
+  const extras = parseInvitationExtras(body, details);
 
   if (details.length > 0) throw Errors.validation('Error de validación', details);
 
@@ -74,6 +77,7 @@ export function validateCreateInvitation(body) {
     injuries: context.injuries ?? null,
     level: context.level ?? null,
     ...initial,
+    ...extras,
   };
 }
 

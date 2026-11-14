@@ -39,9 +39,10 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | name | varchar | |
 | email | varchar | |
 | goal | enum | tonify / weight_loss / hypertrophy / strength |
-| birth_date | date | |
+| birth_date | date | al alta se copia de `invitations.student_birth_date` |
 | avatar_url | text | GX2: **ruta** en el bucket privado `avatars` (`students/<id>/<uuid>.<ext>`), no una URL; la API la reemplaza por una URL firmada de 1 h |
 | phone | varchar(30) | opcional (GX2): 6–30 caracteres entre dígitos, espacios y `+ - ( )`. Lo edita el alumno o su PT; al alta se copia de `invitations.student_phone` |
+| weekly_frequency | smallint | opcional, 1–7: días por semana que quiere entrenar. Al alta se copia de `invitations.student_weekly_frequency`; lo edita el PT. No es el `days_per_week` de `GET /students` (sale de la rutina activa) |
 | active | boolean | |
 | gym_equipment | text[] | equipamiento disponible — usado por la IA del alumno |
 | injuries | text | lesiones / restricciones a tener en cuenta |
@@ -79,6 +80,12 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | used_at | timestamptz | null = no usado aún |
 | template_id | uuid | FK → routine_templates, `on delete set null`; plantilla inicial (opcional) que se copia al alumno en el alta (GX8) |
 | routine_days | text[] | días de la plantilla inicial (`sunday..saturday`); obligatorios con `template_id` (los exige `POST /invitations`): null con `template_id` null = sin plantilla; con días = la plantilla se borró antes del alta (GX8) |
+| student_weekly_frequency | smallint | opcional, 1–7; se copia a `students.weekly_frequency` en el alta |
+| student_height_cm | numeric | opcional, 50–250; con el peso, primera fila de `body_metrics` en el alta (`recorded_by = 'trainer'`) |
+| student_weight_kg | numeric | opcional, 20–300; ídem |
+| student_birth_date | date | opcional; se copia a `students.birth_date` en el alta |
+
+> Datos extra al invitar (deseable, 14/11): migración `backend/src/database/migrations/2026-11/09-15/2026-11-14-invitar-extras.sql`. Ninguno sale por `GET /invitations/:token` (público) ni va a la IA.
 
 ---
 

@@ -12,6 +12,8 @@ export async function createStudent({
   injuries = null,
   level = null,
   phone = null,
+  weeklyFrequency = null,
+  birthDate = null,
   passwordHash,
 }) {
   const { data, error } = await supabase
@@ -25,6 +27,8 @@ export async function createStudent({
       injuries,
       level,
       phone,
+      weekly_frequency: weeklyFrequency,
+      birth_date: birthDate,
       password_hash: passwordHash,
     })
     .select(STUDENT_DETAIL_COLUMNS)
