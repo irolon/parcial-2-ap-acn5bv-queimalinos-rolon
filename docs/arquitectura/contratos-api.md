@@ -774,7 +774,7 @@ Pide una propuesta de rutina: de 1 a 7 **bloques**, cada uno con nombre, días y
 
 Los campos de más se descartan.
 
-**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 30 s. **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
+**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 38 s (n8n corta a los 36 s; el celular espera 40 s). **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
 
 ```json
 {
@@ -846,7 +846,7 @@ Reglas: 1 a 7 bloques; `name` de 1 a 60; `days` de `monday..sunday`, al menos 1,
 | 404 `TEMPLATE_NOT_FOUND` | `base_template_id` inexistente o de otro trainer |
 | 429 `RATE_LIMIT_EXCEEDED` | 20 intentos del trainer en la última hora: cuentan todos los que llegan a n8n, exitosos o fallidos (en memoria), y las generaciones guardadas en la base; aplica `max(guardadas, intentos) ≥ 20`. También si ya hay una generación del trainer en curso ("Ya hay una propuesta en curso…", `Retry-After` = lo que le falta a la generación en curso para los 30 s del timeout de n8n, redondeado hacia arriba, mínimo 1). Header `Retry-After` en segundos, expuesto por CORS (`Access-Control-Expose-Headers`) para que la web lo lea |
 | 502 `AI_INVALID_RESPONSE` | n8n respondió 2xx con un body que no es JSON, o la propuesta no pasa la validación (los detalles van al log, `details: []`). No se guarda nada |
-| 503 `AI_UNAVAILABLE` | Falta `N8N_TRAINER_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 30 s, error de red (también si la conexión se corta o vence el timeout mientras se lee el body) o n8n responde no 2xx (p. ej. `502 { "error": "LLM_UNAVAILABLE" }`). Mensaje: "El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano." |
+| 503 `AI_UNAVAILABLE` | Falta `N8N_TRAINER_AI_WEBHOOK_URL` o `N8N_WEBHOOK_SECRET` (no se llama a n8n), timeout de 38 s, error de red (también si la conexión se corta o vence el timeout mientras se lee el body) o n8n responde no 2xx (p. ej. `502 { "error": "LLM_UNAVAILABLE" }`). Mensaje: "El asistente no está disponible ahora. Probá de nuevo o armá la rutina a mano." |
 
 ### POST /trainer-ai/save-as-template
 
