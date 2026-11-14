@@ -21,6 +21,14 @@ export function thumbnailUrl(url) {
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
 
+const VIDEO_ID = /^[\w-]+$/;
+
+/** Reproductor de YouTube sin cookies (`youtube-nocookie.com/embed/<id>`) o `null` si no es YouTube o el id es raro. */
+export function youTubeEmbedUrl(url) {
+  const id = youTubeId(url);
+  return id && VIDEO_ID.test(id) ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+}
+
 /** `true` solo para http/https: evita enlaces `javascript:` en el `href`. */
 export function isSafeVideoUrl(url) {
   return typeof url === 'string' && /^https?:\/\//i.test(url);

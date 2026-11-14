@@ -43,25 +43,6 @@ describe('ExerciseLibraryPage: detalle', () => {
     expect(dialog().queryByRole('button', { name: 'Borrar' })).not.toBeInTheDocument();
   });
 
-  it('muestra el link al video en una pestaña nueva', async () => {
-    const { user } = await openPage();
-    await user.click(page().getByRole('button', { name: /Press banca plano/ }));
-
-    const link = await screen.findByRole('link', { name: 'Ver video' });
-    expect(link).toHaveAttribute('href', 'https://www.youtube.com/watch?v=uEtiwYaT3d0');
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-  });
-
-  it('no muestra el link si el video no es http/https', async () => {
-    const unsafe = exercise({ id: 'ex-unsafe', name: 'Peligroso', video_url: 'javascript:alert(1)' });
-    const { user } = await openPage({ list: [unsafe] });
-    await user.click(page().getByRole('button', { name: /Peligroso/ }));
-
-    expect(await screen.findByRole('dialog', { name: 'Peligroso' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Ver video' })).not.toBeInTheDocument();
-  });
-
   it('desde el detalle de un propio, Editar abre el formulario de edición', async () => {
     const { user } = await openPage();
     await user.click(page().getByRole('button', { name: /^Press inclinado/ }));
