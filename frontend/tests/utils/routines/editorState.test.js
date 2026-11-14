@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EMPTY_ROUTINE, clearTemplate, fromTemplate, isBlank, moveBy, moveExercise, removeExercise,
+  EMPTY_ROUTINE, clearTemplate, fromTemplate, isBlank, moveBy, moveExercise, removeExercise, replaceExercise,
   toggleDay, updateExercise, updateHeader,
 } from '@/utils/routines/editorState';
 import { EX_A, EX_B, EX_C, exercisesById, stateWith, templateFixture } from '../../helpers/routines/fixtures';
@@ -20,6 +20,15 @@ describe('editorState', () => {
     const state = stateWith([EX_A, EX_B]);
     const next = removeExercise(state, state.exercises[0].key);
     expect(next.exercises.map((e) => e.exercise_id)).toEqual([EX_B]);
+  });
+
+  it('replaceExercise cambia el ejercicio de la fila y conserva lugar, key y valores', () => {
+    const state = stateWith([EX_A, EX_B]);
+    const [first, second] = state.exercises;
+    const next = replaceExercise(updateExercise(state, first.key, 'reps', '6'), first.key, EX_C);
+    expect(next.exercises.map((e) => e.exercise_id)).toEqual([EX_C, EX_B]);
+    expect(next.exercises[0]).toMatchObject({ key: first.key, reps: '6', sets: '3' });
+    expect(next.exercises[1]).toBe(second);
   });
 
   it('moveExercise mueve de 0 a 2', () => {

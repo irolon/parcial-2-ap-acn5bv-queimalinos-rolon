@@ -23,7 +23,7 @@ import StudentNavigation from '@/components/students/profile/StudentNavigation';
 import { useMetricsQuery } from '@/hooks/body-metrics/useBodyMetrics';
 import { usePageHeader } from '@/hooks/shared/usePageHeader';
 import { useStudentQuery, useStudentsQuery } from '@/hooks/students/useStudents';
-import { STUDENTS_PATH } from '@/routes/routeTable';
+import { STUDENTS_PATH, editRoutineHref } from '@/routes/routeTable';
 import { lastSessionLabel } from '@/utils/students/activity';
 import { filterStudents, parseStudentFilters, sortStudents } from '@/utils/students/studentFilters';
 
@@ -110,7 +110,10 @@ export default function StudentProfilePage() {
                   <MetricsHistory metrics={metrics} onDelete={(metric) => open('deleteMetric', { metric })} />
                 </>
               )}
-              <ActiveRoutineCard routine={data.active_routine} />
+              <ActiveRoutineCard
+                routine={data.active_routine}
+                editHref={data.active_routine ? editRoutineHref(data.active_routine.id) : null}
+              />
               <AchievementsCard studentId={id} />
               <SessionsHistory studentId={id} />
             </div>

@@ -65,17 +65,20 @@ export function validateRoutine(state) {
   return withCount(errors);
 }
 
-function bodyExercises(state) {
-  return state.exercises.map((e, order) => ({
-    exercise_id: e.exercise_id,
+/** Valores del plan de una fila como los recibe la API (sin `exercise_id` ni `order`). */
+export function exerciseValues(e) {
+  return {
     sets: Number(e.sets),
     reps: Number(e.reps),
     rest_seconds: toNumber(e.rest_seconds),
     suggested_kg: toNumber(e.suggested_kg),
     tempo: toText(e.tempo),
     notes: toText(e.notes),
-    order,
-  }));
+  };
+}
+
+function bodyExercises(state) {
+  return state.exercises.map((e, order) => ({ exercise_id: e.exercise_id, ...exerciseValues(e), order }));
 }
 
 export function buildRoutineBody(state, studentId) {
