@@ -8,8 +8,11 @@ import com.fittrainer.data.api.SessionSetsResult
 import com.fittrainer.data.api.UpdateSessionRequest
 import com.fittrainer.data.auth.AccountChangedException
 import com.fittrainer.data.auth.RequiredUser
+import com.fittrainer.data.api.UnlockedAchievementDto
 import com.fittrainer.data.db.workout.WorkoutSessionEntity
 import com.fittrainer.data.db.workout.WorkoutSetEntity
+import com.fittrainer.data.gamification.UnlockedAchievement
+import com.fittrainer.data.gamification.toDomain
 import java.io.IOException
 import java.time.Instant
 import javax.inject.Inject
@@ -41,8 +44,14 @@ data class SetResults(val synced: List<String> = emptyList(), val failed: Map<St
 /**
  * stop == null: la sesión y todas las series que se mandaron tuvieron respuesta.
  * created: el servidor tiene la sesión (POST /sessions respondió bien).
+ * unlocked: logros que devolvió el servidor, sin repetir.
  */
-data class UploadResult(val sets: SetResults, val stop: StopReason? = null, val created: Boolean = true)
+data class UploadResult(
+    val sets: SetResults,
+    val stop: StopReason? = null,
+    val created: Boolean = true,
+    val unlocked: List<UnlockedAchievement> = emptyList(),
+)
 
 /** Respuesta de un request: el valor, o por qué se corta la subida. */
 private sealed interface Outcome<out T> {
@@ -59,16 +68,22 @@ class SessionUploader @Inject constructor(private val api: SessionApi) {
     /** [owner]: dueño de la sesión. Cada request sale solo si sigue siendo la cuenta logueada. */
     suspend fun upload(owner: String, session: WorkoutSessionEntity, sets: List<WorkoutSetEntity>): UploadResult {
         val tag = RequiredUser(owner)
-        val create = attempt { api.create(tag, session.toRequest()) }
-        if (create is Outcome.Stop) return UploadResult(SetResults(), create.reason, created = false)
+        val created = when (val create = attempt { api.create(tag, session.toRequest()) }) {
+            is Outcome.Stop -> return UploadResult(SetResults(), create.reason, created = false)
+            is Outcome.Ok -> create.value
+        }
+        val unlocked = created.data.unlockedAchievements.toMutableList()
         var results = SetResults()
         for (batch in sets.chunked(SETS_PER_BATCH)) {
             when (val sent = attempt { api.addSets(tag, session.id, SessionSetsRequest(batch.map { it.toDto() })).data }) {
-                is Outcome.Stop -> return UploadResult(results, sent.reason)
-                is Outcome.Ok -> results += sent.value.resolve(batch)
+                is Outcome.Stop -> return UploadResult(results, sent.reason, unlocked = unlocked.toDomain())
+                is Outcome.Ok -> {
+                    results += sent.value.resolve(batch)
+                    unlocked += sent.value.unlockedAchievements
+                }
             }
         }
-        return UploadResult(results)
+        return UploadResult(results, unlocked = unlocked.toDomain())
     }
 
     /** PATCH /sessions/:id con el RPE y la nota de una sesión que ya subió. */
@@ -129,3 +144,5 @@ internal fun WorkoutSetEntity.toDto() = SessionSetDto(
 )
 
 private fun iso(millis: Long): String = Instant.ofEpochMilli(millis).toString()
+
+private fun List<UnlockedAchievementDto>.toDomain() = distinctBy { it.code }.map { it.toDomain() }

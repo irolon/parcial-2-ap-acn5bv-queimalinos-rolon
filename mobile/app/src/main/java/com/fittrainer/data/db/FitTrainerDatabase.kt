@@ -5,7 +5,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.fittrainer.data.db.chat.AiChatDao
 import com.fittrainer.data.db.chat.AiChatMessageEntity
-import com.fittrainer.data.db.agenda.TrainerAgendaDao
 import com.fittrainer.data.db.agenda.TrainerAgendaWeekEntity
 import com.fittrainer.data.db.agenda.TrainerAppointmentEntity
 import com.fittrainer.data.db.agenda.TrainerAvailabilityEntity
@@ -16,12 +15,16 @@ import com.fittrainer.data.db.agenda.student.StudentAppointmentsSyncEntity
 import com.fittrainer.data.db.agenda.student.StudentFreeSlotEntity
 import com.fittrainer.data.db.agenda.student.StudentFreeSlotsSyncEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengeEntity
-import com.fittrainer.data.db.challenges.trainer.TrainerChallengesDao
 import com.fittrainer.data.db.challenges.trainer.TrainerChallengesSyncEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerStudentChallengeEntity
 import com.fittrainer.data.db.challenges.trainer.TrainerStudentChallengesSyncEntity
+import com.fittrainer.data.db.database.TrainerDaos
 import com.fittrainer.data.db.exercises.trainer.TrainerExerciseEntity
-import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
+import com.fittrainer.data.db.gamification.AchievementProgressEntity
+import com.fittrainer.data.db.gamification.CelebrationEntity
+import com.fittrainer.data.db.gamification.GamificationDao
+import com.fittrainer.data.db.gamification.GamificationSnapshotEntity
+import com.fittrainer.data.db.gamification.StudentChallengeEntity
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.library.LibraryExerciseEntity
 import com.fittrainer.data.db.library.LibrarySyncEntity
@@ -29,7 +32,6 @@ import com.fittrainer.data.db.messages.trainer.TrainerConversationEntity
 import com.fittrainer.data.db.messages.trainer.TrainerConversationsSyncEntity
 import com.fittrainer.data.db.messages.trainer.TrainerMessageEntity
 import com.fittrainer.data.db.messages.trainer.TrainerMessageThreadEntity
-import com.fittrainer.data.db.messages.trainer.TrainerMessagesDao
 import com.fittrainer.data.db.notifications.NotificationDao
 import com.fittrainer.data.db.notifications.NotificationEntity
 import com.fittrainer.data.db.notifications.NotificationMetaEntity
@@ -47,25 +49,17 @@ import com.fittrainer.data.db.routine.RoutineExerciseEntity
 import com.fittrainer.data.db.routine.RoutineSyncEntity
 import com.fittrainer.data.db.routines.trainer.TrainerRoutineEntity
 import com.fittrainer.data.db.routines.trainer.TrainerRoutineExerciseEntity
-import com.fittrainer.data.db.routines.trainer.TrainerRoutinesDao
 import com.fittrainer.data.db.routines.trainer.TrainerRoutinesSyncEntity
-import com.fittrainer.data.db.students.TrainerStudentDetailDao
 import com.fittrainer.data.db.students.TrainerStudentDetailEntity
 import com.fittrainer.data.db.students.TrainerStudentEntity
-import com.fittrainer.data.db.students.TrainerStudentsDao
 import com.fittrainer.data.db.students.TrainerStudentsSyncEntity
 import com.fittrainer.data.db.students.metrics.TrainerStudentMetricEntity
-import com.fittrainer.data.db.students.overview.TrainerOverviewDao
 import com.fittrainer.data.db.students.overview.TrainerOverviewEntity
-import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsDao
 import com.fittrainer.data.db.students.metrics.TrainerStudentMetricsSyncEntity
-import com.fittrainer.data.db.students.progress.TrainerAttendanceDao
 import com.fittrainer.data.db.students.progress.TrainerAttendanceEntity
 import com.fittrainer.data.db.students.sessions.TrainerSessionEntity
-import com.fittrainer.data.db.students.sessions.TrainerSessionsDao
 import com.fittrainer.data.db.students.sessions.TrainerSessionsSyncEntity
 import com.fittrainer.data.db.templates.trainer.TrainerTemplateEntity
-import com.fittrainer.data.db.templates.trainer.TrainerTemplatesDao
 import com.fittrainer.data.db.templates.trainer.TrainerTemplatesSyncEntity
 import com.fittrainer.data.db.workout.WorkoutDao
 import com.fittrainer.data.db.workout.WorkoutExerciseEntity
@@ -133,8 +127,12 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         StudentFreeSlotEntity::class,
         StudentFreeSlotsSyncEntity::class,
         AiChatMessageEntity::class,
+        GamificationSnapshotEntity::class,
+        AchievementProgressEntity::class,
+        StudentChallengeEntity::class,
+        CelebrationEntity::class,
     ],
-    version = 27,
+    version = 28,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -171,9 +169,12 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 25, to = 26),
         // v27: sesión en curso del alumno (GX4), trainer_students.openSessionStartedAt.
         AutoMigration(from = 26, to = 27),
+        // v28: logros, rachas y desafíos del alumno (tarjeta 15), cuatro tablas nuevas.
+        AutoMigration(from = 27, to = 28),
     ],
 )
-abstract class FitTrainerDatabase : RoomDatabase() {
+// Los DAO del rol entrenador se declaran en TrainerDaos (database/), para que este archivo no pase de 200 líneas.
+abstract class FitTrainerDatabase : RoomDatabase(), TrainerDaos {
     abstract fun healthDao(): HealthDao
     abstract fun routineDao(): RoutineDao
     abstract fun libraryDao(): LibraryDao
@@ -181,18 +182,7 @@ abstract class FitTrainerDatabase : RoomDatabase() {
     abstract fun historyDao(): HistoryDao
     abstract fun progressDao(): ProgressDao
     abstract fun notificationDao(): NotificationDao
-    abstract fun trainerStudentsDao(): TrainerStudentsDao
-    abstract fun trainerStudentDetailDao(): TrainerStudentDetailDao
-    abstract fun trainerSessionsDao(): TrainerSessionsDao
-    abstract fun trainerAttendanceDao(): TrainerAttendanceDao
-    abstract fun trainerStudentMetricsDao(): TrainerStudentMetricsDao
-    abstract fun trainerOverviewDao(): TrainerOverviewDao
-    abstract fun trainerRoutinesDao(): TrainerRoutinesDao
-    abstract fun trainerExercisesDao(): TrainerExercisesDao
-    abstract fun trainerTemplatesDao(): TrainerTemplatesDao
-    abstract fun trainerChallengesDao(): TrainerChallengesDao
-    abstract fun trainerMessagesDao(): TrainerMessagesDao
-    abstract fun trainerAgendaDao(): TrainerAgendaDao
     abstract fun studentAgendaDao(): StudentAgendaDao
     abstract fun aiChatDao(): AiChatDao
+    abstract fun gamificationDao(): GamificationDao
 }

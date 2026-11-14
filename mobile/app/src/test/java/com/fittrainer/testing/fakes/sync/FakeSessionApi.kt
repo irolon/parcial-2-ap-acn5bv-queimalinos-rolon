@@ -1,12 +1,15 @@
 package com.fittrainer.testing.fakes.sync
 
 import com.fittrainer.data.api.CreateSessionRequest
+import com.fittrainer.data.api.CreateSessionResponse
+import com.fittrainer.data.api.CreatedSessionDto
 import com.fittrainer.data.api.FailedSetDto
 import com.fittrainer.data.api.SavedSetDto
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.SessionSetsRequest
 import com.fittrainer.data.api.SessionSetsResponse
 import com.fittrainer.data.api.SessionSetsResult
+import com.fittrainer.data.api.UnlockedAchievementDto
 import com.fittrainer.data.api.UpdateSessionRequest
 import com.fittrainer.data.api.history.HistoryDetailDto
 import com.fittrainer.data.api.history.HistoryDetailResponse
@@ -36,6 +39,9 @@ class FakeSessionApi : SessionApi {
     val discarded = mutableListOf<String>()
     var discardError: Throwable? = null
     var setsError: Throwable? = null
+    /** Logros que devuelven create y addSets (como unlocked_achievements). */
+    var unlockedOnCreate: List<UnlockedAchievementDto> = emptyList()
+    var unlockedOnSets: List<UnlockedAchievementDto> = emptyList()
     /** id de serie → code: esas vuelven en `failed`. */
     var failCodes: Map<String, String> = emptyMap()
     /** Cuenta logueada, como la ve AuthInterceptor: si no es la del tag, la request no sale. null = no se chequea. */
@@ -65,13 +71,14 @@ class FakeSessionApi : SessionApi {
         if (current() != owner.userId) throw AccountChangedException()
     }
 
-    override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
+    override suspend fun create(owner: RequiredUser, body: CreateSessionRequest): CreateSessionResponse {
         createCalls++
         calls += "create"
         createGate?.await()
         checkAccount(owner)
         createError?.let { throw it }
         created += body
+        return CreateSessionResponse(CreatedSessionDto(unlockedOnCreate))
     }
 
     override suspend fun discard(owner: RequiredUser, id: String) {
@@ -90,6 +97,7 @@ class FakeSessionApi : SessionApi {
             SessionSetsResult(
                 saved = ok.map { SavedSetDto(it.value.id.lowercase(), created = true) },
                 failed = bad.map { FailedSetDto(it.value.id.lowercase(), it.index, failCodes.getValue(it.value.id)) },
+                unlockedAchievements = unlockedOnSets,
             ),
         )
     }

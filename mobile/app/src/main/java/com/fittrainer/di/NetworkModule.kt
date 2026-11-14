@@ -10,6 +10,7 @@ import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.agenda.AgendaApi
 import com.fittrainer.data.api.challenges.TrainerChallengesApi
 import com.fittrainer.data.api.exercises.TrainerExercisesApi
+import com.fittrainer.data.api.gamification.GamificationApi
 import com.fittrainer.data.api.invitation.TrainerInvitationApi
 import com.fittrainer.data.api.messages.TrainerMessagesApi
 import com.fittrainer.data.api.notifications.NotificationsApi
@@ -128,6 +129,11 @@ object NetworkModule {
     @Singleton
     fun provideTrainerInvitationApi(client: OkHttpClient, json: Json): TrainerInvitationApi =
         retrofit(client, json).create(TrainerInvitationApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideGamificationApi(client: OkHttpClient, json: Json): GamificationApi =
+        retrofit(client, json).create(GamificationApi::class.java)
 
     // AuthApi tiene que quedar en @AuthClient: en el cliente principal el refresh reentraría al TokenAuthenticator y se trabaría en su Mutex.
     @Provides

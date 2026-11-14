@@ -51,6 +51,7 @@ internal fun TabScreen(
         )
         tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(
             onOpen = { navController.navigate(historyDetailRoute(it)) },
+            onOpenAchievements = { navController.navigate(STUDENT_ACHIEVEMENTS_ROUTE) { launchSingleTop = true } },
             openRequest = progressOpen,
             onOpenHandled = launches::onProgressOpenHandled,
         )

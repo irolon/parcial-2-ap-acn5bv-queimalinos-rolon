@@ -9,6 +9,7 @@ import com.fittrainer.data.db.HealthDao
 import com.fittrainer.data.db.agenda.TrainerAgendaDao
 import com.fittrainer.data.db.agenda.student.StudentAgendaDao
 import com.fittrainer.data.db.exercises.trainer.TrainerExercisesDao
+import com.fittrainer.data.db.gamification.GamificationDao
 import com.fittrainer.data.db.library.LibraryDao
 import com.fittrainer.data.db.messages.trainer.TrainerMessagesDao
 import com.fittrainer.data.db.notifications.NotificationDao
@@ -116,6 +117,9 @@ object DatabaseModule {
 
     @Provides
     fun provideAiChatDao(db: FitTrainerDatabase): AiChatDao = db.aiChatDao()
+
+    @Provides
+    fun provideGamificationDao(db: FitTrainerDatabase): GamificationDao = db.gamificationDao()
 
     @Provides
     @Singleton
