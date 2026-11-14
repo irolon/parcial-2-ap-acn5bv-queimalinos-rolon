@@ -69,7 +69,13 @@ export default function ExerciseLibraryPage() {
         }}
       </QueryState>
       {(dialog?.type === 'create' || dialog?.type === 'edit') && (
-        <ExerciseFormDialog key={dialog.id} open exercise={dialog.exercise} onClose={close} />
+        <ExerciseFormDialog
+          key={dialog.id}
+          open
+          exercise={dialog.exercise}
+          library={query.data}
+          onClose={close}
+        />
       )}
       {dialog?.type === 'detail' && (
         <ExerciseDetailDialog
