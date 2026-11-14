@@ -1,5 +1,6 @@
 package com.fittrainer.data.auth
 
+import com.fittrainer.data.api.RefreshResponse
 import com.fittrainer.testing.fakes.auth.FakeAuthApi
 import com.fittrainer.testing.fakes.auth.FakeTokenStore
 import com.fittrainer.testing.fakes.auth.authState
@@ -41,6 +42,41 @@ class TokenAuthenticatorTest {
         assertEquals(SessionTag("session-1"), retry?.tag(SessionTag::class.java))
         assertEquals("access-2", current()?.accessToken)
         assertEquals("refresh-1", api.refreshCalls.single().refreshToken)
+    }
+
+    // GX1-M1: el refresh trae must_change_password; si viene, actualiza la sesión.
+    @Test fun `refresh con la marca la pone en la sesion`() {
+        api.refreshResponse = RefreshResponse("access-2", mustChangePassword = true)
+        authenticator.authenticate(null, unauthorized("access-1"))
+        assertEquals(true, current()?.user?.mustChangePassword)
+        assertEquals("access-2", current()?.accessToken)
+    }
+
+    @Test fun `refresh con la marca en false la saca`() {
+        store.flow.value = authState().let { it.copy(user = it.user.copy(mustChangePassword = true)) }
+        api.refreshResponse = RefreshResponse("access-2", mustChangePassword = false)
+        authenticator.authenticate(null, unauthorized("access-1"))
+        assertEquals(false, current()?.user?.mustChangePassword)
+    }
+
+    @Test fun `refresh sin el campo no toca la marca`() {
+        store.flow.value = authState().let { it.copy(user = it.user.copy(mustChangePassword = true)) }
+        authenticator.authenticate(null, unauthorized("access-1"))
+        assertEquals(true, current()?.user?.mustChangePassword)
+    }
+
+    // GX1-M1: un refresh que salió antes del cambio de clave y vuelve después no pisa el token nuevo ni la marca.
+    @Test fun `refresh que vuelve despues del cambio de clave no pisa el token nuevo`() {
+        store.flow.value = authState().let { it.copy(user = it.user.copy(mustChangePassword = true)) }
+        api.refreshResponse = RefreshResponse("access-con-marca", mustChangePassword = true)
+        api.onRefresh = {
+            store.updateAccessToken("session-1", "access-clave-nueva")
+            store.setMustChangePassword("session-1", false, accessToken = "access-clave-nueva")
+        }
+        val retry = authenticator.authenticate(null, unauthorized("access-1"))
+        assertEquals("Bearer access-clave-nueva", retry?.header("Authorization"))
+        assertEquals("access-clave-nueva", current()?.accessToken)
+        assertEquals(false, current()?.user?.mustChangePassword)
     }
 
     @Test fun `refresh con 401 cierra la sesion`() {

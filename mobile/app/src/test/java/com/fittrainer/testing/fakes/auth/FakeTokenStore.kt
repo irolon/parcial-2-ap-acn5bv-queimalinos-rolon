@@ -22,11 +22,24 @@ class FakeTokenStore(initial: AuthState? = null) : TokenStore {
         saveError?.let { throw it }
         flow.value = state
     }
-    override suspend fun updateAccessToken(sessionId: String, token: String) {
-        flow.value = flow.value?.let { if (it.sessionId == sessionId) it.copy(accessToken = token) else it }
+    /** Cuántas veces se llamó a setMustChangePassword (el cambio de clave tiene que escribir token y marca juntos). */
+    var mustChangeCalls = 0
+    override suspend fun updateAccessToken(sessionId: String, token: String, expectedAccess: String?, mustChangePassword: Boolean?) {
+        flow.value = flow.value?.let {
+            val same = it.sessionId == sessionId && (expectedAccess == null || it.accessToken == expectedAccess)
+            val user = mustChangePassword?.let { m -> it.user.copy(mustChangePassword = m) } ?: it.user
+            if (same) it.copy(accessToken = token, user = user) else it
+        }
     }
     override suspend fun updateUserName(sessionId: String, name: String) {
         flow.value = flow.value?.let { if (it.sessionId == sessionId) it.copy(user = it.user.copy(name = name)) else it }
+    }
+    override suspend fun setMustChangePassword(sessionId: String, value: Boolean, accessToken: String?) {
+        mustChangeCalls++
+        flow.value = flow.value?.let {
+            val same = it.sessionId == sessionId && (accessToken == null || it.accessToken == accessToken)
+            if (same) it.copy(user = it.user.copy(mustChangePassword = value)) else it
+        }
     }
     override suspend fun clear() {
         clearCalls++

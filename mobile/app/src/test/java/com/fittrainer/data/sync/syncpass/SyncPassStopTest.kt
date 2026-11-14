@@ -7,11 +7,13 @@ import com.fittrainer.data.auth.RequiredUser
 import com.fittrainer.data.db.workout.SYNC_PENDING
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.sync.PassResult
+import com.fittrainer.testing.fakes.auth.apiError
 import com.fittrainer.testing.fakes.sync.finishedSession
 import com.fittrainer.testing.fakes.sync.httpError
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 /** Cómo termina la pasada según el error (spec §5). */
@@ -65,5 +67,19 @@ class SyncPassStopTest : SyncPassTestBase() {
         assertEquals(1, api.createCalls)
         assertEquals(SYNC_PENDING, syncState("w1"))
         assertEquals(SYNC_PENDING, syncState("w2"))
+    }
+
+    // GX1-M1: la clave blanqueada bloquea todo con 403 hasta elegir una nueva. No se pierde ni se rechaza nada.
+    @Test fun `403 PASSWORD_CHANGE_REQUIRED deja sesiones y series pendientes`() = runTest {
+        seed(finishedSession("w1", startedAt = 1L), finishedSession("w2", startedAt = 2L))
+        api.createError = apiError(403, "PASSWORD_CHANGE_REQUIRED")
+
+        assertEquals(PassResult.DONE, pass.run())
+
+        assertEquals(SYNC_PENDING, syncState("w1"))
+        assertEquals(SYNC_PENDING, syncState("w2"))
+        assertEquals(SYNC_PENDING, set("set-w1").syncState)
+        assertEquals(SYNC_PENDING, set("set-w2").syncState)
+        assertNull(set("set-w1").syncError)
     }
 }

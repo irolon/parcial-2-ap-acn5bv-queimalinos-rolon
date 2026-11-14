@@ -122,6 +122,7 @@ class AuthRepository @Inject constructor(
         id = id,
         name = name,
         email = email,
+        mustChangePassword = mustChangePassword,
         role = when (role) {
             "student" -> Role.STUDENT
             "trainer" -> Role.TRAINER

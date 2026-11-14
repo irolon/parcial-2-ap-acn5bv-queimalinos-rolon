@@ -59,9 +59,18 @@ class TokenAuthenticator @Inject constructor(
 
     /** Devuelve el access token nuevo, o null si no se pudo renovar. */
     private suspend fun refresh(current: AuthState): String? = try {
-        val token = authApi.refresh(RefreshRequest(current.refreshToken)).token
-        tokenStore.updateAccessToken(current.sessionId, token)
-        token
+        val response = authApi.refresh(RefreshRequest(current.refreshToken))
+        val token = response.token
+        tokenStore.updateAccessToken(current.sessionId, token, expectedAccess = current.accessToken)
+        // Si en el medio se guardó otro access (el cambio de clave), gana ese: el de este refresh puede traer la marca vieja.
+        val stored = tokenStore.current()?.takeIf { it.sessionId == current.sessionId }?.accessToken
+        if (stored != token) {
+            stored
+        } else {
+            // GX1: la marca de clave temporal viaja en el refresh. Sin el campo (backend viejo) no se toca.
+            response.mustChangePassword?.let { tokenStore.setMustChangePassword(current.sessionId, it, accessToken = token) }
+            token
+        }
     } catch (e: CancellationException) {
         throw e
     } catch (e: HttpException) {

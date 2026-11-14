@@ -31,6 +31,20 @@ class DataStoreTokenStoreBasicsTest : DataStoreTokenStoreTestBase() {
         assertEquals(sessionA.copy(accessToken = "access-2"), store.current())
     }
 
+    @Test fun `updateAccessToken con expectedAccess solo escribe si el access guardado es ese`() = runTest {
+        store.save(sessionA)
+        store.updateAccessToken("session-A", "access-viejo", expectedAccess = "otro")
+        assertEquals(sessionA, store.current())
+        store.updateAccessToken("session-A", "access-2", expectedAccess = sessionA.accessToken)
+        assertEquals(sessionA.copy(accessToken = "access-2"), store.current())
+    }
+
+    @Test fun `updateAccessToken con mustChangePassword escribe token y marca juntos`() = runTest {
+        store.save(sessionA.copy(user = sessionA.user.copy(mustChangePassword = true)))
+        store.updateAccessToken("session-A", "access-2", mustChangePassword = false)
+        assertEquals(sessionA.copy(accessToken = "access-2"), store.current())
+    }
+
     @Test fun `updateUserName de la misma sesion cambia solo el nombre`() = runTest {
         store.save(sessionA)
         store.updateUserName("session-A", "Nombre nuevo")
@@ -41,6 +55,27 @@ class DataStoreTokenStoreBasicsTest : DataStoreTokenStoreTestBase() {
         store.save(sessionB)
         store.updateUserName("session-A", "Nombre nuevo")
         assertEquals(sessionB, store.current())
+    }
+
+    @Test fun `setMustChangePassword de la misma sesion cambia solo la marca`() = runTest {
+        store.save(sessionA)
+        store.setMustChangePassword("session-A", true)
+        assertEquals(sessionA.copy(user = sessionA.user.copy(mustChangePassword = true)), store.current())
+    }
+
+    @Test fun `setMustChangePassword de otra sesion no pisa la guardada`() = runTest {
+        store.save(sessionB)
+        store.setMustChangePassword("session-A", true)
+        assertEquals(sessionB, store.current())
+    }
+
+    // Un 403 de un access viejo (ya reemplazado por el del cambio de clave) no vuelve a poner la marca.
+    @Test fun `setMustChangePassword con otro access token no escribe`() = runTest {
+        store.save(sessionA)
+        store.setMustChangePassword("session-A", true, accessToken = "access-viejo")
+        assertEquals(sessionA, store.current())
+        store.setMustChangePassword("session-A", true, accessToken = sessionA.accessToken)
+        assertEquals(true, store.current()?.user?.mustChangePassword)
     }
 
     @Test fun `clearIf de otra sesion no borra la guardada`() = runTest {

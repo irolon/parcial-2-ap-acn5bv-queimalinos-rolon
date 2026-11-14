@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,6 +24,9 @@ class RootViewModel @Inject constructor(
 
     val session: StateFlow<Session?> =
         sessionRepository.session.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** La pantalla de la raíz según la sesión (con la clave temporal del alumno, GX1-M1). */
+    val screen: StateFlow<RootScreen> = session.map(::rootScreen).stateIn(viewModelScope, SharingStarted.Eagerly, RootScreen.LOADING)
 
     // Resultado del último logout; se reinicia al empezar cada logout y al descartar el aviso.
     private val lastSignOut = MutableStateFlow<LogoutResult?>(null)

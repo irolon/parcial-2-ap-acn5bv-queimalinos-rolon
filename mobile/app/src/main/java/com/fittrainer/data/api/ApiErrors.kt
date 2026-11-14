@@ -23,7 +23,14 @@ private val errorJson = Json { ignoreUnknownKeys = true }
 
 /** `error.code` del body de un error del backend, o null si el body no se puede leer. Consume el body. */
 fun HttpException.errorCode(): String? = try {
-    response()?.errorBody()?.string()?.let { errorJson.decodeFromString<ErrorEnvelope>(it).error?.code }
+    response()?.errorBody()?.string()?.let(::errorCodeOf)
+} catch (e: Exception) {
+    null
+}
+
+/** `error.code` de un body de error ya leído, o null si no es el formato del backend. */
+fun errorCodeOf(body: String): String? = try {
+    errorJson.decodeFromString<ErrorEnvelope>(body).error?.code
 } catch (e: Exception) {
     null
 }

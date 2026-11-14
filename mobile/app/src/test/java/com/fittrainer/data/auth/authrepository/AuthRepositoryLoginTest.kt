@@ -37,6 +37,21 @@ class AuthRepositoryLoginTest {
         assertEquals(listOf(LoginRequest("ana@test.com", "Secreta123")), api.loginCalls)
     }
 
+    // GX1-M1: la clave blanqueada por el PT llega en el login y queda en la sesión.
+    @Test fun `login con la marca de clave temporal la guarda`() = runTest {
+        api.loginResponse = api.loginResponse.copy(user = api.loginResponse.user.copy(mustChangePassword = true))
+
+        val result = repo.login("ana@test.com", "Temporal1")
+
+        assertEquals(true, result.getOrNull()?.mustChangePassword)
+        assertEquals(true, store.current()?.user?.mustChangePassword)
+    }
+
+    @Test fun `login sin la marca la deja en false`() = runTest {
+        repo.login("ana@test.com", "Secreta123")
+        assertEquals(false, store.current()?.user?.mustChangePassword)
+    }
+
     @Test fun `cada login genera un sessionId nuevo`() = runTest {
         repo.login("ana@test.com", "Secreta123")
         val first = store.current()!!.sessionId

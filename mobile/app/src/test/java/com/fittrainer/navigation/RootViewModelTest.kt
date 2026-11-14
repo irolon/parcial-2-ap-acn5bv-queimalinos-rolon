@@ -90,4 +90,27 @@ class RootViewModelTest {
         assertEquals(false, vm.invitationWhileLoggedIn.value)
         assertEquals(TOKEN, vm.pendingInvitation.value)
     }
+
+    // GX1-M1: con la clave temporal, el alumno ve solo la pantalla para elegir una nueva, sin pestañas.
+    @Test fun `alumno con la marca va a la clave temporal y al sacarla a sus pestanas`() {
+        val flagged = authState().user.copy(mustChangePassword = true)
+        repo.session.value = Session.Student(flagged)
+        assertEquals(RootScreen.FORCED_PASSWORD, vm.screen.value)
+
+        repo.session.value = Session.Student(flagged.copy(mustChangePassword = false))
+
+        assertEquals(RootScreen.STUDENT, vm.screen.value)
+    }
+
+    @Test fun `el entrenador nunca va a la clave temporal`() {
+        repo.session.value = Session.Trainer(authState().user.copy(mustChangePassword = true))
+        assertEquals(RootScreen.TRAINER, vm.screen.value)
+    }
+
+    @Test fun `sin marca y sin sesion cada uno a lo suyo`() {
+        assertEquals(RootScreen.STUDENT, vm.screen.value)
+        repo.session.value = Session.LoggedOut
+        assertEquals(RootScreen.LOGGED_OUT, vm.screen.value)
+        assertEquals(RootScreen.LOADING, rootScreen(null))
+    }
 }
