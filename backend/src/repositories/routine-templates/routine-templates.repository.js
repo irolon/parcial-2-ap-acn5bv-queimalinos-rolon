@@ -3,17 +3,19 @@ import { Errors } from '../../shared/utils/errors.js';
 import { EXERCISES_TABLE } from '../../models/exercises/exercise.model.js';
 import {
   ROUTINE_TEMPLATES_TABLE,
+  ROUTINE_TEMPLATES_SUMMARY_VIEW,
   TEMPLATE_DETAIL_COLUMNS,
+  TEMPLATE_SUMMARY_COLUMNS,
 } from '../../models/routine-templates/routine-template.model.js';
 
 /**
- * Lista las plantillas de un trainer (más nuevas primero). Trae `structure`
- * porque el resumen deriva de ahí `days` y `exercise_count`.
+ * Lista las plantillas de un trainer (más nuevas primero) desde la vista de
+ * resumen: `days` y `exercise_count` vienen calculados y no viaja la structure.
  */
 export async function findTemplates({ trainerId, goal, level, generatedByAi }) {
   let query = supabase
-    .from(ROUTINE_TEMPLATES_TABLE)
-    .select(TEMPLATE_DETAIL_COLUMNS)
+    .from(ROUTINE_TEMPLATES_SUMMARY_VIEW)
+    .select(TEMPLATE_SUMMARY_COLUMNS)
     .eq('trainer_id', trainerId);
   if (goal) query = query.eq('goal', goal);
   if (level) query = query.eq('level', level);
