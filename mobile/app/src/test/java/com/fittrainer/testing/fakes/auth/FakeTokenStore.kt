@@ -25,6 +25,9 @@ class FakeTokenStore(initial: AuthState? = null) : TokenStore {
     override suspend fun updateAccessToken(sessionId: String, token: String) {
         flow.value = flow.value?.let { if (it.sessionId == sessionId) it.copy(accessToken = token) else it }
     }
+    override suspend fun updateUserName(sessionId: String, name: String) {
+        flow.value = flow.value?.let { if (it.sessionId == sessionId) it.copy(user = it.user.copy(name = name)) else it }
+    }
     override suspend fun clear() {
         clearCalls++
         clearError?.let { throw it }

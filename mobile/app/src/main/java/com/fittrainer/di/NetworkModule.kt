@@ -159,7 +159,8 @@ object NetworkModule {
         }
         .build()
 
-    private fun retrofit(client: OkHttpClient, json: Json): Retrofit = Retrofit.Builder()
+    /** También lo usan los módulos de cada feature (di/profile). */
+    internal fun retrofit(client: OkHttpClient, json: Json): Retrofit = Retrofit.Builder()
         .baseUrl(BuildConfig.API_BASE_URL)
         .client(client)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))

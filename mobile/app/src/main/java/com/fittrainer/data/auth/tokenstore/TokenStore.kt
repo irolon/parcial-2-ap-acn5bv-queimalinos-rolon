@@ -14,6 +14,8 @@ interface TokenStore {
     suspend fun save(state: AuthState)
     /** Cambia el access token solo si la sesión guardada sigue siendo [sessionId]. */
     suspend fun updateAccessToken(sessionId: String, token: String)
+    /** Cambia el nombre del usuario solo si la sesión guardada sigue siendo [sessionId] (editó su perfil). */
+    suspend fun updateUserName(sessionId: String, name: String)
     /**
      * Cierra la sesión sin condiciones (logout). Una marca de cierre solo oculta sesiones cerradas;
      * nunca una sesión creada después de la marca. En todos los casos [state] y [current] dejan de

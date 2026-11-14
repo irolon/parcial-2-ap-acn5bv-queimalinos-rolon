@@ -167,7 +167,7 @@ test/java/com/fittrainer/
   testing/   testing/fakes/   data/<módulo>/   ui/<módulo>/   (mismo árbol que main)
 ```
 
-Excepciones de nombre: `workout` (recurso `sessions`; `session` es la sesión de login) y `sync` (subida offline de `sessions`).
+Excepciones de nombre: `workout` (recurso `sessions`; `session` es la sesión de login), `sync` (subida offline de `sessions`) y `account` (la cuenta propia de la pestaña Perfil / Más: `/auth/me` y `/auth/password` de los dos roles más `/students/:id` y `/students/:id/avatar` del propio alumno; junta los dos recursos porque es una sola pantalla con un solo perfil guardado en Room).
 
 ### Cómo se controla
 
