@@ -3,7 +3,7 @@ import { Errors } from '../../shared/utils/errors.js';
 import { unwrap } from '../../shared/utils/supabase-query.js';
 import { AI_GENERATIONS_TABLE, GENERATION_COLUMNS } from '../../models/trainer-ai/ai-generation.model.js';
 
-// Errores propios de save_ai_generation_templates (database/schema/06-ai-and-agenda.sql).
+// Errores propios de save_ai_generation_templates (database/schema/06-ai-and-agenda/01-ai.sql).
 const ALREADY_SAVED = 'FT002';
 const NOT_FOUND = 'FT003';
 

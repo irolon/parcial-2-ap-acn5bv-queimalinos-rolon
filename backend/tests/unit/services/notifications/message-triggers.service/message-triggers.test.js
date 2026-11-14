@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fileURLToPath } from 'node:url';
 
-const src = (p) => fileURLToPath(new URL(`../../../../src/${p}`, import.meta.url));
+const src = (p) => fileURLToPath(new URL(`../../../../../src/${p}`, import.meta.url));
 const mockNotify = { notify: jest.fn(), pushOnly: jest.fn() };
 const mockAuthRepo = { findTrainerById: jest.fn() };
 jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => mockNotify);

@@ -9,7 +9,7 @@ tags: [arquitectura]
 
 # Modelo de datos (DER)
 
-Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 02/11/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07, más 04b y 06b-messages.sql) (23 tablas: estas 22 + refresh_tokens; trainer_availability es de la tarjeta 46 y messages de la 48). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, se suma la tabla push_tokens (tarjeta 44) y la tabla messages (tarjeta 48, mensajería interna PT ↔ alumno, `schema/06b-messages.sql`); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
+Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por dominio. ⚠️ Actualizado 02/11/2026: la fuente de verdad del modelo implementado es backend/src/database/schema/ (archivos 01 a 07, más 04b y 06b-messages.sql; el 06 es la carpeta 06-ai-and-agenda/ con 01-ai.sql y 02-agenda-and-notifications.sql) (24 tablas: estas 22 + refresh_tokens + notification_preferences de la GX3; trainer_availability es de la tarjeta 46 y messages de la 48). Desvíos respecto de este DER: session_sets usa exercise_id (not null, ejercicio realmente ejecutado) + original_exercise_id (el planificado si hubo sustitución) en lugar de substituted_exercise_id, y routine_exercise_id es opcional con set null; sessions.routine_id y chat_messages.session_id son nullable con set null; notifications agrega user_role (trainer/student), data (jsonb) y push_sent_at, se suma la tabla push_tokens (tarjeta 44) y la tabla messages (tarjeta 48, mensajería interna PT ↔ alumno, `schema/06b-messages.sql`); el id de sessions y session_sets lo genera el cliente mobile. Todas las tablas tienen RLS activado sin políticas (ADR 0001).
 
 ---
 
@@ -159,7 +159,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | trainer_comment | text | feedback del PT |
 | has_modifications | boolean | true si el alumno modificó algo de la rutina original (sustituyó ejercicio, cambió series/reps) |
 
-> **Sesión abierta (GX4):** las apps crean la sesión al empezar, con `finished_at` en `null`, y la subida final la cierra (reintento del `POST` con el mismo `id`). Una abierta **no es una sesión hecha**: el historial, la vista `student_last_session` (última sesión **terminada** de cada alumno, `where finished_at is not null`), adherencia, racha, logros, inactividad y overview filtran `finished_at`. Las abiertas que empezaron hace más de 4 h se dan por abandonadas (no se muestran ni se borran). Índice parcial `idx_sessions_open (student_id, started_at desc) where finished_at is null` para `open_session` de `GET /students` e `in_session` del overview. Migración: `migrations/2026-11/2026-11-09-open-sessions.sql`.
+> **Sesión abierta (GX4):** las apps crean la sesión al empezar, con `finished_at` en `null`, y la subida final la cierra (reintento del `POST` con el mismo `id`). Una abierta **no es una sesión hecha**: el historial, la vista `student_last_session` (última sesión **terminada** de cada alumno, `where finished_at is not null`), adherencia, racha, logros, inactividad y overview filtran `finished_at`. Las abiertas que empezaron hace más de 4 h se dan por abandonadas: dejan de mostrarse y nada las limpia solo (el alumno igual puede descartar cualquier abierta propia con `DELETE /sessions/:id`). Índice parcial `idx_sessions_open (student_id, started_at desc) where finished_at is null` para `open_session` de `GET /students` e `in_session` del overview. Migración: `migrations/2026-11/09-15/2026-11-09-open-sessions.sql`.
 
 **session_sets** *(cada serie ejecutada)*
 
@@ -257,7 +257,7 @@ Tipos de `achievements.criteria` que entiende el evaluador: `sessions_count {val
 | student_id | uuid | FK → students |
 | role | enum | user / assistant |
 | content | text | |
-| exercise_id | uuid | FK → exercises (`on delete set null`): el ejercicio sobre el que se preguntó, en la consulta y en su respuesta (null si no había o no era accesible). GX5, `2026-11/2026-11-09-chat-history.sql` |
+| exercise_id | uuid | FK → exercises (`on delete set null`): el ejercicio sobre el que se preguntó, en la consulta y en su respuesta (null si no había o no era accesible). GX5, `2026-11/09-15/2026-11-09-chat-history.sql` |
 | suggestions | jsonb | sugerencias validadas de la respuesta `[{ exercise_id, name, reason }]` (default `[]`; `[]` en las del alumno). GX5 |
 | created_at | timestamptz | |
 
@@ -344,6 +344,20 @@ Sin índice nuevo para el historial por día (`GET /chat/history`): `idx_chat_me
 
 RLS activado sin políticas (ADR 0001). El backend borra el token solo cuando FCM lo da por inválido (`UNREGISTERED` o token mal formado).
 
+**notification_preferences** *(qué push quiere el alumno, GX3)*
+
+| Campo | Tipo | Clave |
+|---|---|---|
+| student_id | uuid | PK, FK → students (`on delete cascade`) |
+| message | boolean | not null, default `true` |
+| comment | boolean | not null, default `true` |
+| appointment | boolean | not null, default `true` |
+| pr | boolean | not null, default `true` |
+| achievement | boolean | not null, default `true` |
+| updated_at | timestamptz | not null, default `now()`; lo pone el backend en cada `PUT` |
+
+Una fila por alumno y una columna por tipo; **sin fila = todo prendido** (nadie migra datos). Solo decide si sale el push: la fila de `notifications` se guarda igual y, con el tipo apagado, queda con `push_sent_at` en `null`. El PT no tiene preferencias. Sin índice extra (la PK es el único acceso). RLS activado sin políticas (ADR 0001). Schema: `schema/06-ai-and-agenda/02-agenda-and-notifications.sql` (con `notifications` y `push_tokens`); migración: `backend/src/database/migrations/2026-11/09-15/2026-11-09-notification-preferences.sql`.
+
 ---
 
 ### Mensajería (celeste)
@@ -369,7 +383,7 @@ Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede ha
 
 **Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
 
-**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
+**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/09-15/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
 
 ---
 

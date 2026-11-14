@@ -33,7 +33,7 @@ src/
 ├── routes/<modulo>/<modulo>.routes.js
 ├── database/
 │   ├── schema/              # DDL por dominio: 01…07 en orden (ver su README)
-│   ├── migrations/          # cambios de schema con fecha, para bases ya creadas (una carpeta por mes: 2026-10/, 2026-11/)
+│   ├── migrations/          # cambios de schema con fecha, para bases ya creadas (una carpeta por mes: 2026-10/, 2026-11/; con más de 10 se divide por días: 2026-11/01-08/, 09-15/)
 │   ├── checks/              # schema-checks.sql, exercises-checks.sql y check-anon-access.js
 │   └── seeds/               # exercises.sql (50 ejercicios globales), achievements.sql (catálogo de logros), challenges.sql (desafíos globales)
 ├── app.js                   # arma la app de Express y monta las rutas
@@ -259,7 +259,7 @@ Rol: `trainer` / `student`; cada uno trabaja con sus propios datos. Las horas de
 | POST | `/api/appointments` | trainer | `{ student_id, scheduled_at, notes? }`. 201 `confirmed`, sin exigir disponibilidad. 403 si el alumno es de otro PT o está inactivo. Push al alumno |
 | PATCH | `/api/appointments/:id` | trainer / student | `{ status }` con `confirmed` o `cancelled`. PT: `pending`→`confirmed`, cualquier vivo→`cancelled`; alumno: solo cancelar. 409 `APPOINTMENT_PAST` si ya pasó, 409 `INVALID_STATUS_TRANSITION`; ajeno o inexistente 403 |
 
-**Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda.sql`:
+**Migraciones.** Correrlas en orden en el SQL Editor de Supabase en las bases ya creadas; son re-ejecutables y también están en `schema/06-ai-and-agenda/02-agenda-and-notifications.sql`:
 - `src/database/migrations/2026-10/2026-10-31-agenda.sql`: tabla `trainer_availability`, índice único parcial de `appointments` y la RPC.
 - `2026-11-01-agenda-followup.sql`: checks de 60 min y hora en punto, y advisory lock en la RPC.
 - `2026-11-01-agenda-inactive-student.sql`: trigger `appointments_student_active` (no se agenda a un alumno dado de baja, ni con un alta en vuelo durante la baja).
@@ -345,7 +345,7 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 - **Nuevo `GET /routines/mine`** (solo alumno): devuelve `{ data: [...] }` con **todas** las rutinas activas del alumno, cada una con `routine_id`, `name`, `goal`, `days`, `created_at` y `exercises` (la misma forma que en `/today`, sin `last_session_kg`), la más nueva primero; `[]` si no tiene. Lo usa la app mobile para guardar la rutina offline y resolver el día en el teléfono: `/today` no distingue "día de descanso" de "sin rutina" y no sirve para un caché que se usa otro día.
 - `GET /routines/today` no cambia.
-- **Nuevo `PUT /routines/:id/exercises/order`** (solo trainer, tarjeta E8 del celular): body `{ "routine_exercise_ids": [...] }` con exactamente los ejercicios de la rutina, en el orden nuevo (1 a 100, sin repetidos; si falta o sobra alguno → 400 `VALIDATION_ERROR` en `routine_exercise_ids`). Deja `order_index` = posición y devuelve el detalle como `GET /routines/:id`. Se agregó para que el entrenador reordene desde el celular; antes el orden solo se fijaba al crear. **Web:** el editor de rutinas puede usarlo para el drag & drop sobre una rutina ya asignada (opcional). Es atómico: lo hace la función SQL `reorder_routine_exercises` (valida el conjunto y guarda todo en una transacción con la rutina bloqueada). **Migración:** `src/database/migrations/2026-11/2026-11-01-routines-reorder.sql` (también en `schema/03-routines.sql`); ya está aplicada en Supabase dev. En el código, el service se dividió en la carpeta `services/routines/routines.service/`: `routines.service.js` (de 178 a 119 líneas), `routine-exercises.service.js` (ejercicios de una rutina asignada) y `routine-access.service.js` (ownership). `routines.service.js` re-exporta todo; cambia la ruta del import en el controller y en `routine-templates.service.js`.
+- **Nuevo `PUT /routines/:id/exercises/order`** (solo trainer, tarjeta E8 del celular): body `{ "routine_exercise_ids": [...] }` con exactamente los ejercicios de la rutina, en el orden nuevo (1 a 100, sin repetidos; si falta o sobra alguno → 400 `VALIDATION_ERROR` en `routine_exercise_ids`). Deja `order_index` = posición y devuelve el detalle como `GET /routines/:id`. Se agregó para que el entrenador reordene desde el celular; antes el orden solo se fijaba al crear. **Web:** el editor de rutinas puede usarlo para el drag & drop sobre una rutina ya asignada (opcional). Es atómico: lo hace la función SQL `reorder_routine_exercises` (valida el conjunto y guarda todo en una transacción con la rutina bloqueada). **Migración:** `src/database/migrations/2026-11/01-08/2026-11-01-routines-reorder.sql` (también en `schema/03-routines.sql`); ya está aplicada en Supabase dev. En el código, el service se dividió en la carpeta `services/routines/routines.service/`: `routines.service.js` (de 178 a 119 líneas), `routine-exercises.service.js` (ejercicios de una rutina asignada) y `routine-access.service.js` (ownership). `routines.service.js` re-exporta todo; cambia la ruta del import en el controller y en `routine-templates.service.js`.
 
 ### Lo que le toca a la web
 

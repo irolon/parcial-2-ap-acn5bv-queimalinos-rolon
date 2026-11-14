@@ -38,7 +38,7 @@ Hoy `routines` no tiene nivel (`03-routines.sql`: `name, goal, days, active`), `
 
 ## Datos
 
-**Migración** `backend/src/database/migrations/2026-11/2026-11-09-routine-level-initial-template.sql` (re-ejecutable; también en `schema/03-routines.sql`, después de `routine_templates`, igual que `routines_template_id_fkey`):
+**Migración** `backend/src/database/migrations/2026-11/09-15/2026-11-09-routine-level-initial-template.sql` (re-ejecutable; también en `schema/03-routines.sql`, después de `routine_templates`, igual que `routines_template_id_fkey`):
 
 ```sql
 alter table routines add column if not exists level varchar(20)

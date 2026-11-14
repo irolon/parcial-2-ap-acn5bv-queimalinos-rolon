@@ -1453,7 +1453,7 @@ Envía un mensaje al asistente IA.
 - `response` obligatorio (se recorta). Falta, vacío, no es texto, pasa de 1500, o la respuesta trae `error` (p. ej. `{ "error": "INVALID_JSON" }`) → 502 `AI_INVALID_RESPONSE`.
 - `suggestions` es informativo: se queda con las **3 primeras válidas**, solo con `exercise_id` de `alternatives`, `reason` de 1 a 200 y sin repetir. Las que no cumplen (o un `suggestions` que no es lista) **se descartan sin rechazar la respuesta**. El nombre sale de la biblioteca, no de la IA.
 
-**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`) y los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyó el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche). A igual `created_at` se ordena primero el del alumno. Desde la GX5 (migración `2026-11/2026-11-09-chat-history.sql`) los dos guardan `exercise_id` = el ejercicio actual si era accesible (si no, `null`): "Aplicar" en la web lo compara con el ejercicio a la vista. La respuesta guarda `suggestions` ya validadas (`[{ exercise_id, name, reason }]`); la del alumno, `[]`. La sesión no se toca nunca.
+**Guardado:** solo con una respuesta válida, en una inserción: el mensaje del alumno (`role = 'user'`) y la respuesta (`role = 'assistant'`), con el `session_id` si la sesión existe (si no, `null`) y los dos con `created_at` = el instante en que llegó la consulta (el mismo con el que se leyó el día y el límite: una consulta de las 23:59:55 queda en ese día aunque n8n conteste pasada la medianoche). A igual `created_at` se ordena primero el del alumno. Desde la GX5 (migración `2026-11/09-15/2026-11-09-chat-history.sql`) los dos guardan `exercise_id` = el ejercicio actual si era accesible (si no, `null`): "Aplicar" en la web lo compara con el ejercicio a la vista. La respuesta guarda `suggestions` ya validadas (`[{ exercise_id, name, reason }]`); la del alumno, `[]`. La sesión no se toca nunca.
 
 **200 OK**
 
@@ -1745,6 +1745,58 @@ El campo `data` es siempre un objeto (`{}` si no hay contexto) con los ids que e
 **Payload del push.** El mensaje FCM lleva `notification` (`title`, `body`) y un `data` con el de la fila más dos campos: `type` (el tipo de la notificación, para elegir la pantalla) y `notification_id` (el id de la fila, para llamar a `PATCH /notifications/:id/read` al tocarla). Todos los valores viajan como texto, como exige FCM: los arrays y objetos van serializados en JSON (por ejemplo, `exercise_ids` llega como `"[\"uuid-1\",\"uuid-2\"]"` y hay que parsearlo en la app). El push resumen de varios logros no tiene fila: lleva `type: "achievement"` y `student_id`, sin `notification_id`. La fila guardada no cambia: `type` ya es una columna y el id es el de la fila.
 
 **Push de mensaje nuevo (`message`, sin fila).** Cada mensaje de la [mensajería](#post-messagesstudentid) manda un push al otro lado de la conversación (PT → alumno; alumno → su PT; el envío masivo, uno por alumno, de a 10 a la vez) y **no crea fila en `notifications`**: `message` no es un valor de `notifications.type` y nunca aparece en `GET /notifications`. `notification`: `title` = nombre de quien escribe; `body` = el texto, y si pasa de 120 caracteres (puntos de código, como `char_length`: un emoji cuenta 1 y nunca se parte) se corta a 119 más "…", 120 en total; `📷 Foto` si es solo foto o `📷 Foto · <texto>` si tiene las dos. `data`: `{ "type": "message", "student_id": "uuid" }` (el alumno de la conversación, para abrir el chat; sin `notification_id`). `android.notification.tag`: `message:<student_id>`, así Android deja un solo aviso por conversación en la bandeja, también con la app en segundo plano. Best-effort: si FCM falla el mensaje se guarda y responde igual.
+
+**Preferencias del alumno (GX3).** El alumno puede apagar el push de `message`, `comment`, `appointment`, `pr` y `achievement` (ver [GET /notifications/preferences](#get-notificationspreferences)). **Un tipo apagado no manda push; la fila se guarda igual** (sigue en `GET /notifications`, con `push_sent_at` en `null`) y, en `message`, el mensaje igual queda en Mensajes. Vale también para el push resumen de logros y para cada alumno del envío masivo. Si leer las preferencias falla, el push no sale (se loguea `[notifications] push`) y la fila se guarda igual. Al PT no se le aplican preferencias: recibe sus push como siempre.
+
+### GET /notifications/preferences
+
+Las preferencias de push del alumno autenticado. **Solo `student`**: un PT o admin recibe 403 `FORBIDDEN`. No hay `:id`: siempre son las del dueño del token.
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "message": true,
+    "comment": false,
+    "appointment": true,
+    "pr": true,
+    "achievement": true,
+    "updated_at": "2026-11-09T15:00:00.123456+00:00"
+  }
+}
+```
+
+- Sin fila guardada (el alumno nunca las cambió): los cinco en `true` y `updated_at: null`. Ese alumno recibe todo, como antes de la GX3.
+- Cada booleano dice si ese tipo le **avisa al celular**; con `false` la notificación igual se guarda y aparece en `GET /notifications`.
+
+### PUT /notifications/preferences
+
+Reemplaza las cinco preferencias del alumno autenticado (no hay parches parciales). **Solo `student`** (PT o admin → 403 `FORBIDDEN`).
+
+**Body**
+
+```json
+{ "message": true, "comment": false, "appointment": true, "pr": true, "achievement": true }
+```
+
+**200 OK:** igual que el `GET`, con `updated_at` de este guardado.
+
+- Los cinco son obligatorios y booleanos. Campos de más (por ejemplo un `student_id`) se ignoran: el dueño es siempre el usuario del token.
+
+**Errores:** 400 `VALIDATION_ERROR` con un detalle por campo que falta o no es booleano (`null`, `"false"` en texto…), todos juntos:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Error de validación",
+    "details": [{ "field": "pr", "message": "pr debe ser true o false" }]
+  }
+}
+```
+
+> Las dos rutas están declaradas antes de `/:id/read`.
 
 ### PATCH /notifications/read-all
 

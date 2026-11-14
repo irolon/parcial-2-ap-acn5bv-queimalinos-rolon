@@ -1,7 +1,7 @@
 -- ============================================================================
 -- GX8 · Nivel de la rutina y plantilla inicial al invitar.
 -- Re-ejecutable y aditiva. Correr en el SQL Editor de Supabase (o vía MCP). También
--- está en database/schema/ (03-routines.sql y 06-ai-and-agenda.sql). La usan
+-- está en database/schema/ (03-routines.sql y 06-ai-and-agenda/02-agenda-and-notifications.sql). La usan
 -- POST/PATCH /routines, POST /invitations y POST /students.
 -- ============================================================================
 

@@ -77,6 +77,7 @@ describe('MyProfilePage: sin acciones del entrenador', () => {
       'Cambiar',
       'Cambiar foto',
       'Descargar',
+      'Editar',
       'Editar datos',
       'Registrar medición',
     ]);
@@ -88,6 +89,11 @@ describe('MyProfilePage: sin acciones del entrenador', () => {
     const fetchMock = show();
     await screen.findByRole('table', { name: 'Historial de medidas' });
     expect(calls(fetchMock).every(([, init]) => init.method === 'GET')).toBe(true);
-    expect(calls(fetchMock).map(([path]) => path).sort()).toEqual(['/messages/s-1?limit=1', '/students/s-1', '/students/s-1/metrics']);
+    expect(calls(fetchMock).map(([path]) => path).sort()).toEqual([
+      '/messages/s-1?limit=1',
+      '/notifications/preferences',
+      '/students/s-1',
+      '/students/s-1/metrics',
+    ]);
   });
 });

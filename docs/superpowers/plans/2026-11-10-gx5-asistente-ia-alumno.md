@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - CONTRIBUTING: ningún archivo de código (tests incluidos, `.sql` incluidos) pasa de 200 líneas; carpetas de más de 10 archivos se subdividen; lo dividido va en una carpeta con el nombre del original; los tests copian el árbol.
-- Migración en `backend/src/database/migrations/2026-11/2026-11-09-chat-history.sql` (carpeta por mes, como la #94); lo mismo en el bloque `chat_messages` de `schema/06-ai-and-agenda.sql`. No se corre contra Supabase.
+- Migración en `backend/src/database/migrations/2026-11/09-15/2026-11-09-chat-history.sql` (carpeta por mes, como la #94); lo mismo en el bloque `chat_messages` de `schema/06-ai-and-agenda/01-ai.sql`. No se corre contra Supabase.
 - Decisión 7b: "Aplicar" solo si el `exercise_id` del mensaje es el ejercicio actual (cursor) de la sesión en curso en esta web (`exerciseId` u `originalExerciseId`), el mensaje es de hoy y la sesión no terminó. Lo demás, texto.
 - Textos exactos: "Aplicar a la sesión de hoy", "Listo: hoy hacés {alt} en lugar de {plan}.", "Ya registraste series de {plan}: no se puede cambiar.", "EN LUGAR DE {PLAN}", "Preguntando sobre: {ej} ({rutina})", "Consulta general: no tenés una sesión en curso", "Las consultas de días anteriores son de solo lectura.", "Todavía no le preguntaste nada al asistente.", "Ver días anteriores", "Nueva consulta", atajos "¿Cuánto debería subir?", "Técnica correcta", "Calentamiento", "Estiramiento post".
 - Commits en español, sin trailers de IA. Jest/Vitest con `--maxWorkers=2`, de a una suite.
@@ -31,8 +31,8 @@
 ### Task 1: Backend — migración, guardado y `GET /chat/today` con contexto
 
 **Files:**
-- Create: `backend/src/database/migrations/2026-11/2026-11-09-chat-history.sql`
-- Modify: `schema/06-ai-and-agenda.sql`, `checks/schema-checks.sql`, `models/chat/chat-message.model.js`, `repositories/chat/chat-messages.repository.js`, `services/chat/chat.service.js`
+- Create: `backend/src/database/migrations/2026-11/09-15/2026-11-09-chat-history.sql`
+- Modify: `schema/06-ai-and-agenda/01-ai.sql`, `checks/schema-checks.sql`, `models/chat/chat-message.model.js`, `repositories/chat/chat-messages.repository.js`, `services/chat/chat.service.js`
 - Test: `tests/unit/models/chat/chat-message.model.test.js`, `repositories/chat/chat-messages.repository.test.js`, `services/chat/chat.service/send.test.js`, `limit-and-today.test.js`
 
 **Interfaces — Produces:**

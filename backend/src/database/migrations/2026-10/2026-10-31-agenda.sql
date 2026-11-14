@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Tarjeta 46 · Agenda: disponibilidad semanal y turnos sin solapamiento.
 -- Re-ejecutable. Correr en el SQL Editor de Supabase (o vía MCP). También está en
--- database/schema/ (06-ai-and-agenda.sql). Requiere appointments (06) y trainers (01).
+-- database/schema/ (06-ai-and-agenda/02-agenda-and-notifications.sql). Requiere appointments (06) y trainers (01).
 -- ============================================================================
 
 -- ── trainer_availability (franjas semanales del PT) ──────────────────────────

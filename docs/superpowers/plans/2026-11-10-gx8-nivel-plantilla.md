@@ -32,7 +32,7 @@
 
 ### Tarea 1: Migración y schema
 
-**Archivos:** crea `backend/src/database/migrations/2026-11/2026-11-09-routine-level-initial-template.sql`; modifica `schema/03-routines.sql` (columnas después de la FK de `routines_template_id_fkey`), `schema/06-ai-and-agenda.sql` (tipo nuevo en el check de `notifications.type`), `checks/schema-checks.sql` (al final: faltantes de `routines.level`, `invitations.template_id`, `invitations.routine_days` y el check de tipos sin `initial_routine_failed`).
+**Archivos:** crea `backend/src/database/migrations/2026-11/09-15/2026-11-09-routine-level-initial-template.sql`; modifica `schema/03-routines.sql` (columnas después de la FK de `routines_template_id_fkey`), `schema/06-ai-and-agenda/02-agenda-and-notifications.sql` (tipo nuevo en el check de `notifications.type`), `checks/schema-checks.sql` (al final: faltantes de `routines.level`, `invitations.template_id`, `invitations.routine_days` y el check de tipos sin `initial_routine_failed`).
 
 - [ ] Escribir la migración (las tres columnas del spec + `drop constraint if exists notifications_type_check` / `add constraint … check (type in (…, 'initial_routine_failed'))`).
 - [ ] Reflejarla en schema y checks; `npm run lint` (incluye `check-file-length` para `.sql`).

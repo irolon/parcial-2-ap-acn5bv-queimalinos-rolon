@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Tarjeta 44 · Notificaciones (push con FCM). Re-ejecutable.
--- Correr en el SQL Editor de Supabase (o vía MCP). También está en database/schema/ (06-ai-and-agenda.sql y 07-rls.sql).
+-- Correr en el SQL Editor de Supabase (o vía MCP). También está en database/schema/ (06-ai-and-agenda/02-agenda-and-notifications.sql y 07-rls.sql).
 -- ============================================================================
 
 -- Contexto de la notificación (student_id, session_id, achievement_code…) y

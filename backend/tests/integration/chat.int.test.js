@@ -9,7 +9,7 @@ import { qaName } from '../helpers/integration/run-id.js';
 
 // Chat IA del alumno contra Supabase dev, con el webhook `student-ia` de n8n simulado por
 // un servidor HTTP local (la prueba real con n8n y KIMI es aparte). Sin migración: usa
-// chat_messages de 06-ai-and-agenda.sql.
+// chat_messages de 06-ai-and-agenda/01-ai.sql.
 const SECRET = 'it-chat-secret';
 const INVENTED = '00000000-0000-4000-8000-000000000000';
 const n8n = { received: [], reply: null };

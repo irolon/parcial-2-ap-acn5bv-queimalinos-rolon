@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Tarjeta 46 · Agenda (review de la #64). Re-ejecutable.
 -- Correr en el SQL Editor de Supabase (o con pg) DESPUÉS de 2026-11-01-agenda-followup.sql.
--- También está en database/schema/ (06-ai-and-agenda.sql).
+-- También está en database/schema/ (06-ai-and-agenda/02-agenda-and-notifications.sql).
 -- ============================================================================
 
 -- ── Ningún turno nuevo para un alumno dado de baja ───────────────────────────

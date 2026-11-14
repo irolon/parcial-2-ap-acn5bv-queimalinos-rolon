@@ -1,7 +1,7 @@
 -- ============================================================================
 -- GX5 (asistente IA del alumno en la web) · Historial del chat con contexto.
 -- Re-ejecutable y aditiva. Correr en el SQL Editor de Supabase (o vía MCP). También
--- está en database/schema/ (06-ai-and-agenda.sql). La usan POST /chat, GET /chat/today
+-- está en database/schema/ (06-ai-and-agenda/01-ai.sql). La usan POST /chat, GET /chat/today
 -- y GET /chat/history.
 -- ============================================================================
 

@@ -1,6 +1,7 @@
 import { Errors } from '../../shared/utils/errors.js';
 import { isUuid, isIsoDateTime } from '../../shared/utils/validators.js';
 import { PUSH_PLATFORMS } from '../../models/notifications/notification.model.js';
+import { PREFERENCE_TYPES } from '../../models/notifications/preferences.js';
 
 const fail = (details) => {
   throw Errors.validation('Error de validación', details);
@@ -52,4 +53,15 @@ export function validateRegisterToken(body) {
   }
   if (details.length > 0) fail(details);
   return { token: body.token, platform: body.platform };
+}
+
+/** Body de PUT /notifications/preferences: los cinco tipos, booleanos. Campos de más no salen. */
+export function validatePreferences(body) {
+  const source = body !== null && typeof body === 'object' ? body : {};
+  const details = PREFERENCE_TYPES.filter((type) => typeof source[type] !== 'boolean').map((type) => ({
+    field: type,
+    message: `${type} debe ser true o false`,
+  }));
+  if (details.length > 0) fail(details);
+  return Object.fromEntries(PREFERENCE_TYPES.map((type) => [type, source[type]]));
 }

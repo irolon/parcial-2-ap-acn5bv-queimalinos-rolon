@@ -1,11 +1,16 @@
 import * as notificationsRepo from '../../repositories/notifications/notifications.repository.js';
 import * as pushTokensRepo from '../../repositories/notifications/push-tokens.repository.js';
 import { isFcmEnabled, sendToToken } from './fcm.client.js';
+import { isPushAllowed } from './preferences.service.js';
 
 const DEAD_REASONS = ['unregistered', 'invalid'];
 
-/** Envía a todos los dispositivos. Devuelve si alguno salió y los tokens que FCM dio por muertos. */
+/**
+ * Envía a todos los dispositivos. Devuelve si alguno salió y los tokens que FCM dio por muertos.
+ * Un tipo que el alumno apagó (GX3) no sale; si leer sus preferencias falla, lanza y el caller no manda.
+ */
 async function pushToUser(userId, userRole, payload) {
+  if (!(await isPushAllowed(userId, userRole, payload.data?.type))) return { sent: false, dead: [] };
   const tokens = await pushTokensRepo.findTokensForUser(userId, userRole);
   const results = await Promise.all(tokens.map((t) => sendToToken(t, payload)));
   return {

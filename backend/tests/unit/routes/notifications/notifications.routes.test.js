@@ -43,10 +43,33 @@ describe('validación', () => {
   );
 });
 
+describe.each([['get', 3], ['put', 4]])('/preferences [%s]', (method, length) => {
+  const layer = find('/preferences', method);
+
+  it('está definida y exige authenticate y rol student', () => {
+    expect(layer).toBeDefined();
+    const handlers = layer.route.stack.map((l) => l.handle);
+    expect(handlers[0]).toBe(authenticate);
+    expect(roleResult(handlers, 'student')).toBeUndefined();
+    expect(roleResult(handlers, 'trainer')).toMatchObject({ statusCode: 403 });
+    expect(roleResult(handlers, 'admin')).toMatchObject({ statusCode: 403 });
+  });
+
+  it(`tiene ${length} handlers (el PUT pasa por el validador)`, () => {
+    expect(layer.route.stack).toHaveLength(length);
+  });
+});
+
 describe('orden de rutas', () => {
   it('/read-all se define antes que /:id/read', () => {
     const paths = layers.map((l) => l.route.path);
     expect(paths.indexOf('/read-all')).toBeLessThan(paths.indexOf('/:id/read'));
+  });
+
+  it('/preferences se define antes que /:id/read', () => {
+    const paths = layers.map((l) => l.route.path);
+    expect(paths.indexOf('/preferences')).toBeGreaterThan(-1);
+    expect(paths.indexOf('/preferences')).toBeLessThan(paths.indexOf('/:id/read'));
   });
 });
 

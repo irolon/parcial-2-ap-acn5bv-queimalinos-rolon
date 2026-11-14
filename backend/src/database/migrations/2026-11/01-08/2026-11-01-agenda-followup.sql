@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Tarjeta 46 · Agenda (seguimiento de la review de la #49). Re-ejecutable.
 -- Correr en el SQL Editor de Supabase (o con pg) DESPUÉS de 2026-10-31-agenda.sql.
--- También está en database/schema/ (06-ai-and-agenda.sql).
+-- También está en database/schema/ (06-ai-and-agenda/02-agenda-and-notifications.sql).
 -- ============================================================================
 
 -- ── Checks de appointments: el anti-solapamiento lo exige la base ────────────

@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Tarjeta 15 (asistente IA del entrenador) · Guardar una propuesta como plantillas.
 -- Re-ejecutable. Correr en el SQL Editor de Supabase (o vía MCP). También está en
--- database/schema/ (06-ai-and-agenda.sql). La usa POST /trainer-ai/save-as-template.
+-- database/schema/ (06-ai-and-agenda/01-ai.sql). La usa POST /trainer-ai/save-as-template.
 -- ============================================================================
 
 -- Todas las plantillas que salieron de la generación (una por bloque), en orden.

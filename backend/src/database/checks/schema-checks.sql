@@ -9,7 +9,8 @@ with expected (t) as (
          ('achievements'), ('student_achievements'), ('challenges'),
          ('student_challenges'), ('student_streaks'), ('chat_messages'),
          ('ai_routine_generations'), ('appointments'), ('notifications'),
-         ('push_tokens'), ('trainer_availability'), ('messages')
+         ('push_tokens'), ('trainer_availability'), ('messages'),
+         ('notification_preferences')
 )
 select 'falta la tabla ' || t as problema
 from expected e
@@ -108,7 +109,7 @@ where not exists (
 )
 
 union all
-select 'falta la columna chat_messages.' || c || ' (2026-11/2026-11-09-chat-history.sql)'
+select 'falta la columna chat_messages.' || c || ' (2026-11/09-15/2026-11-09-chat-history.sql)'
 from (values ('exercise_id'), ('suggestions')) v (c)
 where not exists (
   select 1 from information_schema.columns

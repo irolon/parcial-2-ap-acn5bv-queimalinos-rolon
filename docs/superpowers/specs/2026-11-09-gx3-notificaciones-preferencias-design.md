@@ -56,7 +56,7 @@ Todo push sale por `services/notifications/notify.service.js` (67 líneas): `not
 - `GET /notifications/preferences` (alumno) → `200 { data: { message, comment, appointment, pr, achievement, updated_at } }`; sin fila, todo `true` y `updated_at: null`. Trainer → 403.
 - `PUT /notifications/preferences` (alumno), body `{ message, comment, appointment, pr, achievement }` (booleanos, los cinco) → `200 { data: … }` igual que el GET. 400 si falta alguno o no es booleano.
 - Efecto en los push existentes: ninguno cambia de forma; los apagados no salen.
-- Migración `backend/src/database/migrations/2026-11/2026-11-09-notification-preferences.sql`:
+- Migración `backend/src/database/migrations/2026-11/09-15/2026-11-09-notification-preferences.sql`:
   ```sql
   create table if not exists notification_preferences (
     student_id  uuid primary key references students (id) on delete cascade,
@@ -69,12 +69,12 @@ Todo push sale por `services/notifications/notify.service.js` (67 líneas): `not
   );
   alter table notification_preferences enable row level security;
   ```
-  En el schema: archivo nuevo `schema/06c-notification-preferences.sql` (corre después de `06b`) y la línea en `07-rls.sql`; fila nueva en `schema/README.md`. Sin índice extra (la PK es el único acceso).
+  En el schema: bloque nuevo al final de `schema/06-ai-and-agenda.sql` (junto a `notifications` y `push_tokens`; no hizo falta un `06c` aparte) y la línea en `07-rls.sql`; la tabla se suma a la fila del 06 en `schema/README.md`. Sin índice extra (la PK es el único acceso).
 - Contrato: sección "Notificaciones" de `contratos-api.md`; tabla en `modelo-de-datos.md`; `auditoria-seguridad.md` pasa de 23 a 24 tablas con RLS.
 
 ## Archivos que toca
 
-- Backend, crea: `models/notifications/preferences.js`, `repositories/notifications/preferences.repository.js`, `services/notifications/preferences.service.js`, `controllers/notifications/preferences.controller.js`, `database/schema/06c-notification-preferences.sql`, la migración.
+- Backend, crea: `models/notifications/preferences.js`, `repositories/notifications/preferences.repository.js`, `services/notifications/preferences.service.js`, `controllers/notifications/preferences.controller.js`, la migración; modifica `database/schema/06-ai-and-agenda.sql` (bloque de la tabla).
 - Backend, modifica: `services/notifications/notify.service.js` (67, +3), `routes/notifications/notifications.routes.js` (24, +4), `validations/notifications/notifications.validation.js` (55, +16), `database/schema/07-rls.sql` (33, +1), `database/schema/README.md`, `database/checks/schema-checks.sql` (suma `notification_preferences` a la lista de tablas con RLS).
 - Web, crea: `api/notifications/preferences.api.js`, `hooks/notifications/useNotificationPrefs.js` (query + mutación), `utils/notifications/preferences.js` (`PREFERENCE_ITEMS` con textos, `summary(prefs)`), `components/account/NotificationPrefsDialog.jsx`, `components/account/NotificationsRow.jsx`, `components/shared/ui/Switch.jsx`.
 - Web, modifica: `components/account/AccountCard.jsx` (GX1, +2).

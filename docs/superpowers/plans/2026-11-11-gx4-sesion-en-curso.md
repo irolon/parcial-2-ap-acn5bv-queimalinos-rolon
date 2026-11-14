@@ -43,7 +43,7 @@
 
 ### Tarea 3 (backend): una abierta no es una sesión hecha
 
-**Archivos:** `repositories/sessions/session-history.repository.js` (`findSessionsPage` con `.not('finished_at', 'is', null)`), migración `database/migrations/2026-11/2026-11-09-open-sessions.sql`, `database/schema/04-progress.sql`, `database/checks/schema-checks.sql`.
+**Archivos:** `repositories/sessions/session-history.repository.js` (`findSessionsPage` con `.not('finished_at', 'is', null)`), migración `database/migrations/2026-11/09-15/2026-11-09-open-sessions.sql`, `database/schema/04-progress.sql`, `database/checks/schema-checks.sql`.
 
 - [ ] Test del repo: el historial filtra `finished_at`.
 - [ ] Migración: vista `student_last_session` con `where finished_at is not null` e índice parcial `idx_sessions_open`; mismo cambio en el schema; checks de la vista filtrada y del índice.
