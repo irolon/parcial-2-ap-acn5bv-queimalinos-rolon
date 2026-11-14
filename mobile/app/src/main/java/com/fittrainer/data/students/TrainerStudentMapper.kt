@@ -22,6 +22,7 @@ fun StudentListItemDto.toEntity(trainerId: String) = TrainerStudentEntity(
     adherenceAssigned = adherence?.assigned,
     adherenceDone = adherence?.done,
     adherencePct = adherence?.pct,
+    openSessionStartedAt = openSession?.let { runCatching { parseInstant(it.startedAt).toEpochMilli() }.getOrNull() },
 )
 
 fun TrainerStudentEntity.toDomain() = TrainerStudent(
@@ -38,4 +39,5 @@ fun TrainerStudentEntity.toDomain() = TrainerStudent(
     } else {
         null
     },
+    openSessionStartedAt = openSessionStartedAt?.let(Instant::ofEpochMilli),
 )

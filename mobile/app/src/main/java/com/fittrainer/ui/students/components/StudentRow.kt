@@ -21,7 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.students.StudentStatus
+import com.fittrainer.ui.components.LiveDot
 import com.fittrainer.ui.students.StudentRowUi
+import com.fittrainer.ui.students.TRAINING_NOW
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
@@ -56,7 +58,14 @@ fun StudentRow(row: StudentRowUi, modifier: Modifier = Modifier, onClick: (() ->
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             StatusPill(row.statusLabel, statusColor(row.status))
-            Text(row.lastTraining, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+            if (row.trainingNow) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    LiveDot()
+                    Text(TRAINING_NOW, style = MaterialTheme.typography.labelSmall, color = FtColors.Green)
+                }
+            } else {
+                Text(row.lastTraining, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)
+            }
         }
     }
 }

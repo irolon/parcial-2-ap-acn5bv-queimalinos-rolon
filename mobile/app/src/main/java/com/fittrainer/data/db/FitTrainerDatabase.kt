@@ -134,7 +134,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         StudentFreeSlotsSyncEntity::class,
         AiChatMessageEntity::class,
     ],
-    version = 26,
+    version = 27,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -169,6 +169,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 24, to = 25),
         // v26: nivel de la rutina (GX8), routines.level y trainer_routines.level.
         AutoMigration(from = 25, to = 26),
+        // v27: sesión en curso del alumno (GX4), trainer_students.openSessionStartedAt.
+        AutoMigration(from = 26, to = 27),
     ],
 )
 abstract class FitTrainerDatabase : RoomDatabase() {

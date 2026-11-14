@@ -1,5 +1,6 @@
 package com.fittrainer.ui.workout
 
+import com.fittrainer.testing.fakes.workout.testNotifier
 import com.fittrainer.data.routine.Routine
 import com.fittrainer.data.routine.RoutineExercise
 import com.fittrainer.data.workout.Load
@@ -25,7 +26,7 @@ class WorkoutEntryViewModelTest {
     @get:Rule val main = MainDispatcherRule()
 
     private val dao = FakeWorkoutDao()
-    private val repo = WorkoutRepository(dao, MutableClock(T0.toEpochMilli())) { "w-1" }
+    private val repo = WorkoutRepository(dao, MutableClock(T0.toEpochMilli()), testNotifier()) { "w-1" }
     private val launches = WorkoutLaunchRequests()
     private val vm by lazy { WorkoutEntryViewModel(repo, FakeStudentSession(), launches) }
 

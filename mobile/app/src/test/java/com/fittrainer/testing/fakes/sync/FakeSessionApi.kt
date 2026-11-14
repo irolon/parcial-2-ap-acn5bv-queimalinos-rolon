@@ -29,6 +29,12 @@ class FakeSessionApi : SessionApi {
     var createCalls = 0
     val batches = mutableListOf<Pair<String, SessionSetsRequest>>()
     var createError: Throwable? = null
+    /** Si está puesto, create espera a que se complete (para probar la apertura "en vuelo"). */
+    var createGate: CompletableDeferred<Unit>? = null
+    /** Orden de las llamadas de la sesión abierta: "create" y "discard". */
+    val calls = mutableListOf<String>()
+    val discarded = mutableListOf<String>()
+    var discardError: Throwable? = null
     var setsError: Throwable? = null
     /** id de serie → code: esas vuelven en `failed`. */
     var failCodes: Map<String, String> = emptyMap()
@@ -61,9 +67,18 @@ class FakeSessionApi : SessionApi {
 
     override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
         createCalls++
+        calls += "create"
+        createGate?.await()
         checkAccount(owner)
         createError?.let { throw it }
         created += body
+    }
+
+    override suspend fun discard(owner: RequiredUser, id: String) {
+        calls += "discard"
+        discarded += id
+        checkAccount(owner)
+        discardError?.let { throw it }
     }
 
     override suspend fun addSets(owner: RequiredUser, id: String, body: SessionSetsRequest): SessionSetsResponse {

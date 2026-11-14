@@ -2,6 +2,7 @@ package com.fittrainer.ui.students.overview
 
 import com.fittrainer.data.students.ARGENTINA
 import com.fittrainer.data.students.overview.FeedbackItem
+import com.fittrainer.data.students.overview.InSessionItem
 import com.fittrainer.data.students.overview.RiskItem
 import com.fittrainer.data.students.overview.StudentItem
 import com.fittrainer.data.students.StudentStatus
@@ -22,6 +23,9 @@ const val HOME_REFRESH_FAILED = "No pudimos actualizar. Mostrando el último res
 const val HOME_DAY_LABEL = "PLAN DE HOY"
 /** La sección del centro de avisos del entrenador con los que hoy deben el entrenamiento (E12). */
 const val PENDING_TODAY = "Pendientes de hoy"
+
+/** La sección del Inicio con los alumnos que están entrenando ahora. */
+const val IN_SESSION_TITLE = "En curso"
 
 /** Los filtros de la lista del Inicio, en el orden de la fila. */
 enum class HomeFilter(val label: String, val empty: String) {
@@ -89,6 +93,10 @@ fun todayLine(item: TodayItem): String {
     val parts = listOfNotNull("Terminó ${finished.atZone(ARGENTINA).format(HOUR)}", item.routineName, item.rpe?.let { "RPE $it" })
     return parts.joinToString(" · ")
 }
+
+/** "Pierna · hace 12 min", o solo "hace 12 min" sin rutina. */
+fun inSessionLine(item: InSessionItem, now: Instant): String =
+    listOfNotNull(item.routineName, relativeTime(item.startedAt, now)).joinToString(" · ")
 
 /** "9 días sin entrenar" o "Nunca entrenó · alta hace 8 días". */
 fun riskLine(item: RiskItem): String =

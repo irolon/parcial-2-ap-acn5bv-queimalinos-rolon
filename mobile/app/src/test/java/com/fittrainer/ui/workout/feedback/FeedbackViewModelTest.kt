@@ -1,5 +1,6 @@
 package com.fittrainer.ui.workout.feedback
 
+import com.fittrainer.testing.fakes.workout.testNotifier
 import com.fittrainer.data.workout.IdGenerator
 import com.fittrainer.data.workout.WorkoutRepository
 import com.fittrainer.testing.MainDispatcherRule
@@ -16,7 +17,7 @@ import org.junit.Test
 class FeedbackViewModelTest {
     @get:Rule val main = MainDispatcherRule()
     private val dao = FakeWorkoutDao().apply { state.value = FakeWorkoutDao.State(sessions = mapOf("w1" to finishedSession())) }
-    private val vm = FeedbackViewModel(WorkoutRepository(dao, fixedClock(), IdGenerator { "id" }))
+    private val vm = FeedbackViewModel(WorkoutRepository(dao, fixedClock(), testNotifier(), IdGenerator { "id" }))
 
     @Test fun guardarSeHabilitaConRpeOConNota() {
         assertFalse(vm.state.value.canSave)

@@ -1,5 +1,6 @@
 package com.fittrainer.ui.workout
 
+import com.fittrainer.testing.fakes.workout.testNotifier
 import com.fittrainer.data.api.LibraryResponse
 import com.fittrainer.data.library.LibraryRepository
 import com.fittrainer.data.routine.Routine
@@ -32,7 +33,7 @@ class WorkoutViewModelRestPickTest {
     private val dao = FakeWorkoutDao()
     private val clock = MutableClock(T0.toEpochMilli())
     private var next = 0
-    private val repo = WorkoutRepository(dao, clock) { "id-${next++}" }
+    private val repo = WorkoutRepository(dao, clock, testNotifier()) { "id-${next++}" }
     private val library = LibraryRepository(FakeExerciseApi(LibraryResponse(emptyList())), FakeLibraryDao(), clock)
     private val vm by lazy { WorkoutViewModel(repo, library, FakeStudentSession(), FakeConnectivityObserver(), clock) }
     private val state get() = vm.uiState.value

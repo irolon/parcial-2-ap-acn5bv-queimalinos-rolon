@@ -1,5 +1,6 @@
 package com.fittrainer.data.workout
 
+import com.fittrainer.testing.fakes.workout.testNotifier
 import com.fittrainer.data.db.workout.STATUS_FINISHED
 import com.fittrainer.data.library.LibraryExercise
 import com.fittrainer.data.routine.Routine
@@ -21,7 +22,7 @@ class WorkoutRepositoryTest {
     private val dao = FakeWorkoutDao()
     private val clock = MutableClock(T0.toEpochMilli())
     private var next = 0
-    private val repo = WorkoutRepository(dao, clock) { "id-${next++}" }
+    private val repo = WorkoutRepository(dao, clock, testNotifier()) { "id-${next++}" }
 
     private fun routineExercise(i: Int) = RoutineExercise(
         "re-$i", "ex-$i", "Ejercicio $i", "chest", null, null, 2, 8, 60, 40.0, null, null,

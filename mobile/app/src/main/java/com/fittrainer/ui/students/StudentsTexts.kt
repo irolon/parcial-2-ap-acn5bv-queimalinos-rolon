@@ -20,6 +20,7 @@ const val STUDENTS_REFRESH_FAILED = "No pudimos actualizar. Mostrando la última
 const val STUDENTS_RETRY = "Reintentar"
 const val NO_PLAN = "Sin plan"
 const val NO_DAYS_YET = "Sin días todavía"
+const val TRAINING_NOW = "Entrenando ahora"
 const val STUDENTS_INVITE = "Invitar alumno"
 const val STUDENTS_INVITE_FIRST = "Invitar a tu primer alumno"
 

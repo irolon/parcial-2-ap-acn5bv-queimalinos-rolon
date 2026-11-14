@@ -1,9 +1,12 @@
 package com.fittrainer.ui.students
 
 import com.fittrainer.data.students.StudentStatus
+import com.fittrainer.testing.fakes.students.trainerStudent
 import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StudentsTextsTest {
@@ -60,5 +63,19 @@ class StudentsTextsTest {
         assertEquals("A", initials("ana"))
         assertEquals("MG", initials("  María  Gómez López "))
         assertEquals("?", initials(" "))
+    }
+
+    @Test fun `entrenando ahora segun la sesion abierta`() {
+        val started = Instant.parse("2026-11-10T14:00:00Z")
+        val open = trainerStudent(openSessionStartedAt = started)
+        assertTrue(open.toRow(today, started.plusSeconds(10 * 60)).trainingNow)
+        assertFalse(trainerStudent().toRow(today, started).trainingNow)
+        assertEquals("Entrenando ahora", TRAINING_NOW)
+    }
+
+    @Test fun `una sesion abierta hace 5 h ya no es entrenando ahora`() {
+        val started = Instant.parse("2026-11-10T14:00:00Z")
+        val open = trainerStudent(openSessionStartedAt = started)
+        assertFalse(open.toRow(today, started.plusSeconds(5 * 3600)).trainingNow)
     }
 }

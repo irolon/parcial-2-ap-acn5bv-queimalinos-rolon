@@ -4,6 +4,7 @@ import com.fittrainer.data.students.StudentFilter
 import com.fittrainer.data.students.StudentStatus
 import com.fittrainer.data.students.StudentsCache
 import com.fittrainer.data.students.TrainerStudent
+import com.fittrainer.data.students.isOpenSessionLive
 import com.fittrainer.data.students.matches
 import com.fittrainer.data.students.matchesQuery
 import com.fittrainer.data.students.status
@@ -24,6 +25,7 @@ data class StudentRowUi(
     val lastTraining: String,
     val adherencePct: Int?,
     val noAdherence: String = NO_PLAN,
+    val trainingNow: Boolean = false,
 )
 
 data class Counts(val active: Int = 0, val atRisk: Int = 0)
@@ -53,7 +55,7 @@ private fun sortKey(today: LocalDate) = compareBy<TrainerStudent> { it.status(to
     .thenByDescending { it.lastSessionAt ?: Instant.MIN }
     .thenBy { it.name.lowercase() }
 
-fun TrainerStudent.toRow(today: LocalDate): StudentRowUi {
+fun TrainerStudent.toRow(today: LocalDate, now: Instant): StudentRowUi {
     val status = status(today)
     return StudentRowUi(
         id = id,
@@ -65,6 +67,7 @@ fun TrainerStudent.toRow(today: LocalDate): StudentRowUi {
         lastTraining = lastTrainingLabel(lastSessionAt, today),
         adherencePct = adherence?.pct,
         noAdherence = noAdherenceText(daysPerWeek),
+        trainingNow = openSessionStartedAt != null && isOpenSessionLive(openSessionStartedAt, now),
     )
 }
 
@@ -89,7 +92,7 @@ fun studentsUiState(
         loaded = true,
         everSynced = cache.lastSyncedAt != null,
         hasStudents = all.isNotEmpty(),
-        students = visible.map { it.toRow(today) },
+        students = visible.map { it.toRow(today, now) },
         filter = filter,
         query = query,
         counts = Counts(
