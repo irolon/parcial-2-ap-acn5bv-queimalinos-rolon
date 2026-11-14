@@ -1,6 +1,7 @@
 package com.fittrainer.data.sync.syncpass
 
 import com.fittrainer.data.api.CreateSessionRequest
+import com.fittrainer.data.api.CreateSessionResponse
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.SessionSetsRequest
 import com.fittrainer.data.auth.RequiredUser
@@ -51,8 +52,8 @@ class SyncPassUploadTest : SyncPassTestBase() {
         seed(finishedSession("w1", startedAt = 1L), finishedSession("w2", startedAt = 2L))
         var calls = 0
         val failingFirst = object : SessionApi by api {
-            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
-                if (calls++ == 0) throw httpError(409) else api.create(owner, body)
+            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest): CreateSessionResponse {
+                return if (calls++ == 0) throw httpError(409) else api.create(owner, body)
             }
         }
 

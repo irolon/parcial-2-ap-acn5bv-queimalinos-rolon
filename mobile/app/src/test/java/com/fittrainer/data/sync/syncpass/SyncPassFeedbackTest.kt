@@ -1,6 +1,7 @@
 package com.fittrainer.data.sync.syncpass
 
 import com.fittrainer.data.api.CreateSessionRequest
+import com.fittrainer.data.api.CreateSessionResponse
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.api.UpdateSessionRequest
 import com.fittrainer.data.auth.RequiredUser
@@ -40,9 +41,10 @@ class SyncPassFeedbackTest : SyncPassTestBase() {
         seed(finishedSession())
         // El alumno guarda el RPE mientras sale el POST (que se leyó sin feedback).
         val racing = object : SessionApi by api {
-            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
-                api.create(owner, body)
+            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest): CreateSessionResponse {
+                val response = api.create(owner, body)
                 dao.saveFeedback("w1", 8, null)
+                return response
             }
         }
         assertEquals(PassResult.DONE, passWith(racing).run())

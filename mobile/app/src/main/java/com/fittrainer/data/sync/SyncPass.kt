@@ -2,9 +2,11 @@ package com.fittrainer.data.sync
 
 import com.fittrainer.data.db.workout.FEEDBACK_PENDING
 import com.fittrainer.data.db.workout.WorkoutDao
+import com.fittrainer.data.gamification.GamificationSyncHook
 import com.fittrainer.data.session.Session
 import com.fittrainer.data.session.SessionRepository
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
 enum class PassResult { DONE, RETRY }
@@ -22,9 +24,30 @@ class SyncPass @Inject constructor(
     private val dao: WorkoutDao,
     private val uploader: SessionUploader,
     private val sessionRepository: SessionRepository,
+    /** Logros y refresco de la gamificación (tarjeta 15). Por defecto nada: los tests de subida no la miran. */
+    private val gamification: GamificationSyncHook = GamificationSyncHook.None,
 ) : UploadPass {
     override suspend fun run(): PassResult {
         val owner = currentStudent() ?: return PassResult.DONE
+        var uploaded = false
+        val result = upload(owner) { uploaded = true }
+        // Con algo subido la foto de la gamificación quedó vieja (spec §3.2). Solo si sigue siendo la misma cuenta.
+        if (uploaded && currentStudent() == owner) safely { gamification.afterUploads(owner) }
+        return result
+    }
+
+    /** Un fallo de la gamificación nunca corta ni cambia la subida: se ignora (la foto se refresca en la próxima). */
+    private suspend fun safely(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Ignorado a propósito: SyncPass no tiene logger y android.util.Log no corre en los tests JVM.
+        }
+    }
+
+    private suspend fun upload(owner: String, onUploaded: () -> Unit): PassResult {
         for (session in dao.pendingUploads(owner)) {
             // Si el alumno cerró sesión (y quizá entró otro) a mitad de la pasada, no se sigue. Lo
             // pendiente queda en Room y el próximo login de su dueño vuelve a encolar. Entre este chequeo
@@ -42,6 +65,10 @@ class SyncPass @Inject constructor(
                 // El POST llevó el feedback que había al leerla: queda subido si nadie lo cambió mientras tanto.
                 if (result.created && session.feedbackState == FEEDBACK_PENDING) {
                     dao.markFeedbackSynced(session.id, session.rpe, session.notes)
+                }
+                if (result.created) {
+                    onUploaded()
+                    if (result.unlocked.isNotEmpty()) safely { gamification.onUnlocked(owner, result.unlocked) }
                 }
             }
             when (result.stop) {

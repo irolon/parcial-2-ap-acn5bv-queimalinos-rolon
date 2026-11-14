@@ -32,6 +32,9 @@ const val STUDENT_PROFILE_ROUTE = "student/profile"
 /** El chat del alumno con su PT (tarjeta 18): la pestaña es la conversación, no hay lista. */
 const val STUDENT_MESSAGES_ROUTE = "student/messages"
 
+/** Progreso → Logros (tarjeta 15). */
+const val STUDENT_ACHIEVEMENTS_ROUTE = "student/progress/achievements"
+
 /** Detalle de una sesión del historial (tarjeta 12). */
 const val HISTORY_DETAIL_ROUTE = "student/history/{sessionId}"
 fun historyDetailRoute(sessionId: String) = "student/history/$sessionId"
@@ -45,14 +48,14 @@ fun routineDetailRoute(routineId: String) = "student/routines/$routineId"
 const val STUDENT_LIBRARY_ROUTE = "student/library"
 
 /**
- * Las pantallas hijas dejan marcada su pestaña: el historial cuelga de Progreso; el detalle y la biblioteca, de Mis
+ * Las pantallas hijas dejan marcada su pestaña: el historial y los logros cuelgan de Progreso; el detalle y la biblioteca, de Mis
  * rutinas; los avisos, de Hoy; los turnos, de Perfil.
  */
 fun isTabSelected(tabRoute: String, currentRoute: String?): Boolean =
     currentRoute == tabRoute || (currentRoute != null && parentTab(currentRoute) == tabRoute)
 
 private fun parentTab(route: String): String? = when {
-    route.startsWith("student/history/") -> STUDENT_PROGRESS_ROUTE
+    route.startsWith("student/history/") || route.startsWith("$STUDENT_PROGRESS_ROUTE/") -> STUDENT_PROGRESS_ROUTE
     route.startsWith("$STUDENT_ROUTINES_ROUTE/") || route == STUDENT_LIBRARY_ROUTE -> STUDENT_ROUTINES_ROUTE
     route.startsWith("$STUDENT_PROFILE_ROUTE/") -> STUDENT_PROFILE_ROUTE
     route.startsWith("$TRAINER_STUDENTS_ROUTE/") -> TRAINER_STUDENTS_ROUTE

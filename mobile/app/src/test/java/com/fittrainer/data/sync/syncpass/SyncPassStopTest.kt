@@ -1,6 +1,7 @@
 package com.fittrainer.data.sync.syncpass
 
 import com.fittrainer.data.api.CreateSessionRequest
+import com.fittrainer.data.api.CreateSessionResponse
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.auth.RequiredUser
 import com.fittrainer.data.db.workout.SYNC_PENDING
@@ -30,7 +31,7 @@ class SyncPassStopTest : SyncPassTestBase() {
     @Test fun `401 con el refresh rechazado corta sin reintentar y deja todo pendiente`() = runTest {
         seed(finishedSession("w1", startedAt = 1L), finishedSession("w2", startedAt = 2L))
         val refreshRejected = object : SessionApi by api {
-            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
+            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest): CreateSessionResponse {
                 session.session.value = Session.LoggedOut // TokenAuthenticator borró la sesión
                 throw httpError(401)
             }

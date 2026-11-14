@@ -34,6 +34,8 @@ import com.fittrainer.ui.theme.Spacing
 @Composable
 fun ChartsScreen(
     onRefreshHistory: () -> Unit = {},
+    /** Otro refresco que corre con el mismo gesto (la gamificación en Progreso): el indicador sigue girando. */
+    extraRefreshing: Boolean = false,
     openExercise: String? = null,
     onOpenExerciseHandled: () -> Unit = {},
     viewModel: ChartsViewModel = hiltViewModel(),
@@ -51,7 +53,7 @@ fun ChartsScreen(
     val sectionLoading = ChartsContent.LOADING ==
         if (state.view == ChartsView.LOADS) ChartsEmptyState.exercises(state) else ChartsEmptyState.body(state)
     PullToRefreshBox(
-        isRefreshing = state.isRefreshing && !sectionLoading,
+        isRefreshing = (state.isRefreshing && !sectionLoading) || extraRefreshing,
         onRefresh = {
             viewModel.onRetry() // en Cargas trae también la lista de ejercicios (overview)
             onRefreshHistory() // el resumen de la semana de Progreso sale del historial

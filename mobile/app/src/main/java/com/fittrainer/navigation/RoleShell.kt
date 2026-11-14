@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fittrainer.navigation.student.studentAchievementRoutes
 import com.fittrainer.navigation.student.studentAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerChallengeRoutes
@@ -26,6 +27,7 @@ import com.fittrainer.navigation.trainer.trainerRoutineRoutes
 import com.fittrainer.navigation.trainer.trainerStudentRoutes
 import com.fittrainer.navigation.trainer.trainerTemplateRoutes
 import com.fittrainer.ui.health.HealthScreen
+import com.fittrainer.ui.gamification.celebration.CelebrationHost
 import com.fittrainer.ui.library.LibraryScreen
 import com.fittrainer.ui.notifications.NotificationsScreen
 import com.fittrainer.ui.notifications.launch.NotificationLaunchViewModel
@@ -39,7 +41,7 @@ import com.fittrainer.ui.workout.components.ActiveWorkoutSignOutDialog
 import com.fittrainer.ui.workout.components.SignOutFailedDialog
 import com.fittrainer.ui.workout.history.detail.HistoryDetailScreen
 
-/** Scaffold con las pestañas fijas de un rol (4 del PT, 5 del alumno). Máximo 2 niveles: pestaña → pantalla hija (Estado del servidor, detalle del historial, detalle de rutina, biblioteca). */
+/** Scaffold con las pestañas fijas de un rol (4 del PT, 5 del alumno). Máximo 2 niveles: pestaña → pantalla hija (Estado del servidor, detalle del historial, logros, detalle de rutina, biblioteca). */
 @Composable
 fun RoleShell(
     tabs: List<Tab>,
@@ -128,6 +130,7 @@ fun RoleShell(
                 RoutineDetailScreen(onBack = { navController.popBackStack() }, onOpenWorkout = openWorkout)
             }
             studentAgendaRoutes(navController)
+            studentAchievementRoutes(navController)
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
             trainerTemplateRoutes(navController)
@@ -151,4 +154,6 @@ fun RoleShell(
             }
         }
     }
+    // Celebraciones de logros (tarjeta 15): solo del alumno y nunca encima de la sesión activa.
+    if (isStudent) CelebrationHost(onWorkout = currentRoute == WORKOUT_ROUTE)
 }

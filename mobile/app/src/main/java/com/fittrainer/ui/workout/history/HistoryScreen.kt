@@ -34,10 +34,16 @@ import com.fittrainer.ui.workout.history.components.HistoryEmptyState
 import com.fittrainer.ui.workout.history.components.HistoryFilterRow
 import java.time.ZoneId
 
-/** Progreso: historial de sesiones (tarjeta 12). */
+/** Progreso: historial de sesiones (tarjeta 12). [onRefresh]: el gesto y Reintentar; Progreso lo amplía a la gamificación. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(onOpen: (String) -> Unit, viewModel: HistoryViewModel = hiltViewModel()) {
+fun HistoryScreen(
+    onOpen: (String) -> Unit,
+    viewModel: HistoryViewModel = hiltViewModel(),
+    onRefresh: () -> Unit = viewModel::onPullToRefresh,
+    /** Otro refresco que corre con el mismo gesto (la gamificación en Progreso): el indicador sigue girando. */
+    extraRefreshing: Boolean = false,
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(viewModel) {
@@ -52,7 +58,7 @@ fun HistoryScreen(onOpen: (String) -> Unit, viewModel: HistoryViewModel = hiltVi
     }
     val zone = remember { ZoneId.systemDefault() }
     Box(Modifier.fillMaxSize().background(FtColors.Background)) {
-        PullToRefreshBox(isRefreshing = state.isRefreshing, onRefresh = viewModel::onPullToRefresh, modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(isRefreshing = state.isRefreshing || extraRefreshing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 Modifier.fillMaxSize(),
                 // Arriba va lg − sm: la fila de filtros ya trae su sm superior (lugar del badge) y quedaba doble debajo de las solapas.
@@ -65,7 +71,7 @@ fun HistoryScreen(onOpen: (String) -> Unit, viewModel: HistoryViewModel = hiltVi
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                             NoticeBanner("No pudimos actualizar el historial", onDismiss = viewModel::dismissRefreshError)
-                            TextButton(onClick = viewModel::onPullToRefresh, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                            TextButton(onClick = onRefresh, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
                                 Text("Reintentar")
                             }
                         }

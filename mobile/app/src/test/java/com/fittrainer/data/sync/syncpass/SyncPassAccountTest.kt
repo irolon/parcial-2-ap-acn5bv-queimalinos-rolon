@@ -1,6 +1,7 @@
 package com.fittrainer.data.sync.syncpass
 
 import com.fittrainer.data.api.CreateSessionRequest
+import com.fittrainer.data.api.CreateSessionResponse
 import com.fittrainer.data.api.SessionApi
 import com.fittrainer.data.auth.AuthUser
 import com.fittrainer.data.auth.RequiredUser
@@ -28,9 +29,10 @@ class SyncPassAccountTest : SyncPassTestBase() {
     @Test fun `si cambia el alumno logueado a mitad de la pasada no sube nada mas`() = runTest {
         seed(finishedSession("w1", startedAt = 1L), finishedSession("w2", startedAt = 2L))
         val switchesUser = object : SessionApi by api {
-            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
-                api.create(owner, body)
+            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest): CreateSessionResponse {
+                val response = api.create(owner, body)
                 session.session.value = otherStudent // A cerró sesión y entró B mientras se subía w1
+                return response
             }
         }
 
@@ -46,9 +48,9 @@ class SyncPassAccountTest : SyncPassTestBase() {
     @Test fun `si la cuenta cambia justo antes de crear la sesion, la request no sale`() = runTest {
         seed(finishedSession("w1"))
         val switchesBeforeCreate = object : SessionApi by api {
-            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest) {
+            override suspend fun create(owner: RequiredUser, body: CreateSessionRequest): CreateSessionResponse {
                 session.session.value = otherStudent
-                api.create(owner, body)
+                return api.create(owner, body)
             }
         }
 

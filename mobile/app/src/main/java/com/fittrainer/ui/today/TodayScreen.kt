@@ -2,6 +2,7 @@ package com.fittrainer.ui.today
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,9 @@ import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.exercise.ExerciseDetailSheet
 import com.fittrainer.ui.components.exercise.ExerciseRow
 import com.fittrainer.ui.components.exercise.SectionLabel
+import com.fittrainer.ui.gamification.GamificationContent
+import com.fittrainer.ui.gamification.GamificationViewModel
+import com.fittrainer.ui.gamification.components.StreakChip
 import com.fittrainer.ui.sync.UploadStatusViewModel
 import com.fittrainer.ui.sync.UploadsNoticeUi
 import com.fittrainer.ui.sync.components.UploadsNotice
@@ -52,15 +56,18 @@ fun TodayScreen(
     viewModel: TodayViewModel = hiltViewModel(),
     entry: WorkoutEntryViewModel = hiltViewModel(),
     uploads: UploadStatusViewModel = hiltViewModel(),
+    gamification: GamificationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val gamificationState by gamification.uiState.collectAsStateWithLifecycle()
     val activeWorkout by entry.active.collectAsStateWithLifecycle()
     val entryError by entry.error.collectAsStateWithLifecycle()
     val uploadCounts by uploads.counts.collectAsStateWithLifecycle()
     val manualUpload by uploads.manual.collectAsStateWithLifecycle()
     // ON_START: al entrar a la pestaña y cada vez que la app vuelve al frente.
-    LifecycleStartEffect(viewModel) {
+    LifecycleStartEffect(viewModel, gamification) {
         viewModel.onStart()
+        gamification.onStart()
         onStopOrDispose { }
     }
     TodayBody(
@@ -69,7 +76,10 @@ fun TodayScreen(
         activeWorkout = activeWorkout,
         onStartWorkout = { routine -> entry.start(routine, onOpenWorkout) },
         onContinueWorkout = onOpenWorkout,
-        onRefresh = viewModel::onPullToRefresh,
+        onRefresh = { viewModel.onPullToRefresh(); gamification.onPullToRefresh() },
+        // El aviso de error de gamificación no se muestra acá: Hoy ya tiene el suyo y la racha es secundaria.
+        streakDays = (gamificationState.content as? GamificationContent.Ready)?.ready?.currentStreak ?: 0,
+        isRefreshing = state.isRefreshing || gamificationState.isRefreshing,
         onDismissNotice = { if (entryError != null) entry.dismissError() else viewModel.dismissNotice() },
         uploads = uploadsNoticeUi(uploadCounts, manualUpload),
         onUploadNow = uploads::uploadNow,
@@ -88,6 +98,8 @@ fun TodayBody(
     onContinueWorkout: () -> Unit,
     onRefresh: () -> Unit,
     onDismissNotice: () -> Unit,
+    streakDays: Int = 0,
+    isRefreshing: Boolean = state.isRefreshing,
     uploads: UploadsNoticeUi? = null,
     onUploadNow: () -> Unit = {},
     onDismissFailures: () -> Unit = {},
@@ -99,7 +111,7 @@ fun TodayBody(
     val musclesKey = (state.content as? TodayContent.Training)?.routine?.id
     var musclesOpen by rememberSaveable(musclesKey) { mutableStateOf(false) }
     PullToRefreshBox(
-        isRefreshing = state.isRefreshing,
+        isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize().background(FtColors.Background),
     ) {
@@ -109,10 +121,13 @@ fun TodayBody(
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             item {
-                TodayHeader(
-                    state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine,
-                    unreadNotifications = unreadNotifications, onOpenNotifications = onOpenNotifications,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    TodayHeader(
+                        state.today, state.studentName, state.isOffline, showsRoutine = state.showsRoutine,
+                        unreadNotifications = unreadNotifications, onOpenNotifications = onOpenNotifications,
+                    )
+                    StreakChip(streakDays)
+                }
             }
             state.notice?.let { notice -> item { NoticeBanner(notice, onDismissNotice) } }
             val uploadsItem: LazyListScope.() -> Unit = {

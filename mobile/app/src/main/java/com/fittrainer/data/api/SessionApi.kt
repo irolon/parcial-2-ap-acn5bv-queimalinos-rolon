@@ -31,6 +31,19 @@ data class CreateSessionRequest(
 @Serializable
 data class UpdateSessionRequest(val rpe: Int?, val notes: String?)
 
+/** Logro recién desbloqueado que devuelve el backend al cerrar una sesión o sumarle series (tarjeta 15). */
+@Serializable
+data class UnlockedAchievementDto(val code: String, val name: String = "", val category: String? = null)
+
+/** POST /sessions: de la sesión creada solo interesan los logros desbloqueados (el resto se ignora). */
+@Serializable
+data class CreatedSessionDto(
+    @SerialName("unlocked_achievements") val unlockedAchievements: List<UnlockedAchievementDto> = emptyList(),
+)
+
+@Serializable
+data class CreateSessionResponse(val data: CreatedSessionDto = CreatedSessionDto())
+
 @Serializable
 data class SessionSetDto(
     val id: String,
@@ -56,7 +69,11 @@ data class SavedSetDto(val id: String, val created: Boolean)
 data class FailedSetDto(val id: String? = null, val index: Int, val code: String)
 
 @Serializable
-data class SessionSetsResult(val saved: List<SavedSetDto> = emptyList(), val failed: List<FailedSetDto> = emptyList())
+data class SessionSetsResult(
+    val saved: List<SavedSetDto> = emptyList(),
+    val failed: List<FailedSetDto> = emptyList(),
+    @SerialName("unlocked_achievements") val unlockedAchievements: List<UnlockedAchievementDto> = emptyList(),
+)
 
 @Serializable
 data class SessionSetsResponse(val data: SessionSetsResult)
@@ -67,7 +84,7 @@ data class SessionSetsResponse(val data: SessionSetsResult)
  */
 interface SessionApi {
     @POST("sessions")
-    suspend fun create(@Tag owner: RequiredUser, @Body body: CreateSessionRequest)
+    suspend fun create(@Tag owner: RequiredUser, @Body body: CreateSessionRequest): CreateSessionResponse
 
     @POST("sessions/{id}/sets")
     suspend fun addSets(@Tag owner: RequiredUser, @Path("id") id: String, @Body body: SessionSetsRequest): SessionSetsResponse

@@ -14,6 +14,11 @@ class RoleTabsTest {
         assertTrue(isTabSelected(STUDENT_TODAY_ROUTE, STUDENT_TODAY_ROUTE))
     }
 
+    @Test fun losLogrosDejanMarcadaProgreso() {
+        assertTrue(isTabSelected(STUDENT_PROGRESS_ROUTE, STUDENT_ACHIEVEMENTS_ROUTE))
+        assertFalse(isTabSelected(STUDENT_ROUTINES_ROUTE, STUDENT_ACHIEVEMENTS_ROUTE))
+    }
+
     @Test fun lasOtrasPestanasNoSeMarcan() {
         assertFalse(isTabSelected(STUDENT_TODAY_ROUTE, historyDetailRoute("a")))
         assertFalse(isTabSelected(STUDENT_PROGRESS_ROUTE, STUDENT_TODAY_ROUTE))
