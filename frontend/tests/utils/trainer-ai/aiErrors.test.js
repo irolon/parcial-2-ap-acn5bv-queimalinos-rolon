@@ -17,10 +17,10 @@ describe('aiErrorOf', () => {
     });
   });
 
-  it('429: el mensaje del backend y los segundos de Retry-After (30 si no vinieron)', () => {
+  it('429: el mensaje del backend y los segundos de Retry-After (38, el timeout del backend, si no vinieron)', () => {
     const busy = err(429, 'RATE_LIMIT_EXCEEDED', 'Ya hay una propuesta en curso', { retryAfter: 30 });
     expect(aiErrorOf(busy)).toEqual({ kind: 'rate', message: 'Ya hay una propuesta en curso', retryAfter: 30 });
-    expect(aiErrorOf(err(429, 'RATE_LIMIT_EXCEEDED', 'Límite'))).toMatchObject({ retryAfter: 30 });
+    expect(aiErrorOf(err(429, 'RATE_LIMIT_EXCEEDED', 'Límite'))).toMatchObject({ retryAfter: 38 });
   });
 
   it('404 del alumno o de la plantilla: en su campo', () => {

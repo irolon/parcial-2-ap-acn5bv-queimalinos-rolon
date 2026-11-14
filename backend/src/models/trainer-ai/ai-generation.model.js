@@ -12,8 +12,8 @@ export const GENERATION_COLUMNS =
 /** Límite de intentos de generación por trainer en la ventana (RNF de costo de la IA). */
 export const GENERATION_LIMIT = 20;
 export const GENERATION_WINDOW_MS = 60 * 60 * 1000;
-/** Lo que tarda n8n como máximo (30 s): tope del Retry-After con una generación en curso. */
-export const IN_PROGRESS_RETRY_SECONDS = 30;
+/** Lo que tarda como máximo una generación (el timeout de 38 s del backend): tope del Retry-After con una en curso. */
+export const IN_PROGRESS_RETRY_SECONDS = 38;
 
 export const DEFAULT_SESSION_MIN = 60;
 export const MAX_TEXT_LENGTH = 500;

@@ -87,7 +87,7 @@ El nodo **Armar prompt** agrega las secciones "HISTORIAL DEL ALUMNO (últimos 28
 |---|---|---|
 | Todo bien | 200 con `{ "routines": [...], "rationale": "..." }` | Valida; si pasa, guarda y responde 200 |
 | El modelo devolvió algo que no es JSON | 200 con `{ "error": "INVALID_JSON" }` | 502 `AI_INVALID_RESPONSE` |
-| El modelo falló (timeout de 28 s, 401 por key mala, 429, 5xx) | **502** con `{ "error": "LLM_UNAVAILABLE" }` | 503 `AI_UNAVAILABLE` |
+| El modelo falló (timeout de 36 s, 401 por key mala, 429, 5xx) | **502** con `{ "error": "LLM_UNAVAILABLE" }` | 503 `AI_UNAVAILABLE` |
 | Secreto incorrecto | 403 de n8n | 503 `AI_UNAVAILABLE` |
 | Workflow inactivo o URL mal | 404 de n8n | 503 `AI_UNAVAILABLE` |
 | Error inesperado dentro del workflow | 500 de n8n | 503 `AI_UNAVAILABLE` |
@@ -223,7 +223,7 @@ Sirve bien para el chat, pero arma mal muchas rutinas (ver la tabla). La capa gr
 
 **Límites de KIMI.** Es prepago: cada rutina y cada mensaje consumen saldo. Una cuenta nueva arranca con un tope de **3 pedidos por minuto para toda la organización** (Moonshot responde 429 `rate_limit_reached_error` y el backend, 503); el tope sube con el saldo acumulado. Además, cuando Moonshot está saturado responde 429 `engine_overloaded_error`, a veces después de 20 s: eso también llega como 503.
 
-El timeout del nodo HTTP es de 28 s en `trainer-ia` (el backend corta a los 30 s; era de 25 s y se subió el 09/11 porque KIMI tarda 24 a 26 s en un split de 3 días) y de 15 s en `student-ia` (el backend corta a los 16 s). El del chat era de 8 s y se subió el 09/11: con KIMI la mayoría de las respuestas llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 y esas respuestas se perdían.
+El timeout del nodo HTTP es de 36 s en `trainer-ia` (el backend corta a los 38 s y el celular espera 40 s; era de 25 s, pasó a 28 s el 09/11 porque KIMI tarda 24 a 26 s en un split de 3 días, y a 36 s el 14/11 porque en la prueba real desde la web tardó 26 s y el margen era de 2 s) y de 15 s en `student-ia` (el backend corta a los 16 s). El del chat era de 8 s y se subió el 09/11: con KIMI la mayoría de las respuestas llega en 2 a 7 s, pero Moonshot a veces tarda más de 8 y esas respuestas se perdían.
 
 > **Datos reales.** Con usuarios de prueba no hay problema. Antes de usar datos reales hay que revisar los términos de uso del proveedor (Moonshot o NVIDIA): el perfil y las lesiones del alumno viajan al proveedor del modelo.
 

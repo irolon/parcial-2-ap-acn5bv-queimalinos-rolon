@@ -19,6 +19,9 @@ function chipText(exercise, done) {
   return `${serie} · ${suggested}`;
 }
 
+// Vacío = peso corporal. En un reemplazo ("Aplicar") no se sabe si el ejercicio nuevo lleva peso: se pide cargarlo.
+const kgPlaceholder = (exercise) => (exercise.originalExerciseId ? 'Cargá el peso' : 'Peso corporal');
+
 const goal = (exercise) => [
   `OBJETIVO ${exercise.sets} × ${exercise.reps}`,
   exercise.restSeconds > 0 ? `DESCANSO ${exercise.restSeconds}″` : 'SIN DESCANSO',
@@ -107,7 +110,7 @@ export default function ExercisePanel({ workout, onRegister, registerRef }) {
             ariaLabel="Peso (kg)"
             unit="KG"
             inputMode="decimal"
-            placeholder="Peso corporal"
+            placeholder={kgPlaceholder(exercise)}
             value={fields.kg}
             error={errors.kg}
             onChange={typing('kg', KG_INPUT)}
