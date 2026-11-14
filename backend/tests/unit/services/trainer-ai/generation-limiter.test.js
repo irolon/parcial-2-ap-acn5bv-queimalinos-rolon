@@ -22,7 +22,7 @@ describe('trainer-ai · generation-limiter', () => {
       } catch (err) {
         error = err;
       }
-      expect(error).toMatchObject({ statusCode: 429, code: 'RATE_LIMIT_EXCEEDED', headers: { 'Retry-After': '30' } });
+      expect(error).toMatchObject({ statusCode: 429, code: 'RATE_LIMIT_EXCEEDED', headers: { 'Retry-After': '38' } });
       expect(error.message).toMatch('Ya hay una propuesta en curso');
     });
 
@@ -37,8 +37,8 @@ describe('trainer-ai · generation-limiter', () => {
         }
         return undefined;
       };
-      expect(retryAt(12_300)).toBe('18');
-      expect(retryAt(29_999)).toBe('1');
+      expect(retryAt(12_300)).toBe('26');
+      expect(retryAt(37_999)).toBe('1');
       expect(retryAt(45_000)).toBe('1');
     });
 

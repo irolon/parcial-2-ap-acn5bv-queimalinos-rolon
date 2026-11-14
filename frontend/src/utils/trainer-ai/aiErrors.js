@@ -15,8 +15,8 @@ const FORM_FIELD = {
 
 /** El alumno elegido (o el de `?alumno=`) no es un activo del entrenador. */
 export const STUDENT_NOT_FOUND = 'Ese alumno no está activo o no existe';
-/** Segundos de espera de un 429 que no trajo `Retry-After`. */
-const DEFAULT_RETRY_AFTER = 30;
+/** Segundos de espera de un 429 que no trajo `Retry-After`: el timeout del backend para una generación (38 s). */
+const DEFAULT_RETRY_AFTER = 38;
 
 const NOT_FOUND = {
   STUDENT_NOT_FOUND: { studentId: STUDENT_NOT_FOUND },
@@ -35,7 +35,7 @@ function validationFields(details) {
 /**
  * Qué mostrar ante un error de generar:
  * - `fields`: vuelve al formulario con errores en su campo (400, y 404 del alumno o la plantilla);
- * - `rate`: el mensaje del backend y la cuenta atrás de `Retry-After` (30 s si no vino);
+ * - `rate`: el mensaje del backend y la cuenta atrás de `Retry-After` (38 s si no vino);
  * - `invalid` (502) y `unavailable` (503, sin red o cualquier otro): mensaje fijo con salidas.
  */
 export function aiErrorOf(error) {

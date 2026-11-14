@@ -23,13 +23,13 @@ describe('trainer-ai · n8n.client · requestRoutineProposal', () => {
     errorLog.mockRestore();
   });
 
-  it('hace POST al webhook trainer-ia con el secreto, el payload en JSON y timeout de 30 s', async () => {
+  it('hace POST al webhook trainer-ia con el secreto, el payload en JSON y timeout de 38 s (n8n corta a los 36 y el celular espera 40)', async () => {
     const timeout = jest.spyOn(AbortSignal, 'timeout');
     fetchMock.mockResolvedValue({ ok: true, status: 200, text: async () => JSON.stringify({ routines: [] }) });
     await expect(requestRoutineProposal(PAYLOAD)).resolves.toEqual({ routines: [] });
 
-    expect(WEBHOOK_TIMEOUT_MS).toBe(30000);
-    expect(timeout).toHaveBeenCalledWith(30000);
+    expect(WEBHOOK_TIMEOUT_MS).toBe(38000);
+    expect(timeout).toHaveBeenCalledWith(38000);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(URL);
     expect(init.headers['x-webhook-secret']).toBe('secreto');

@@ -5,6 +5,7 @@ import { buttonClass } from '@/components/shared/ui/Button';
 import Pill from '@/components/shared/ui/Pill';
 import { profileHref } from '@/routes/routeTable';
 import { DAY_OPTIONS, formatRoutineDays, sortDays } from '@/utils/students/routineDays';
+import { kgText } from '@/utils/sessions/workoutFormat';
 import { differsFromProposal } from '@/utils/trainer-ai/assignedBlock';
 
 // Mismo formato visual que la tabla del editor (`ExerciseTable`), en modo lectura.
@@ -73,7 +74,7 @@ export default function ProposalBlock({ block: proposed, editHref, assigned }) {
                 <td className={CELL}>{item.exercise_name ?? 'Ejercicio'}</td>
                 <td className={CELL}>{`${item.sets} × ${item.reps}`}</td>
                 <td className={CELL}>{orDash(item.rest_seconds, (v) => `${v} s`)}</td>
-                <td className={CELL}>{orDash(item.suggested_kg, (v) => `${v} kg`)}</td>
+                <td className={CELL}>{orDash(item.suggested_kg, (v) => `${kgText(v)} kg`)}</td>
                 <td className={`${CELL} max-w-56 text-ink6`}>{orDash(item.notes)}</td>
               </tr>
             ))}

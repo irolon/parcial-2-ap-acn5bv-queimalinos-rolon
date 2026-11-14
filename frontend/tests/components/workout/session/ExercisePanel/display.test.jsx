@@ -22,6 +22,12 @@ describe('ExercisePanel: lo que muestra', () => {
     expect(screen.getByText('EN LUGAR DE PRESS BANCA')).toBeInTheDocument();
   });
 
+  it('un reemplazo sin peso sugerido pide cargar el peso: no se sabe si es de peso corporal', () => {
+    render(<PanelHarness initial={replaceExercise(freshWorkout(), 0, { id: 'e-9', name: 'Press de pecho en máquina' })} />);
+    expect(weight()).toHaveValue('');
+    expect(weight()).toHaveAttribute('placeholder', 'Cargá el peso');
+  });
+
   it('al reemplazar el ejercicio a la vista, los campos se vuelven a precargar con el nuevo (no quedan los kg del otro)', async () => {
     render(
       <PanelHarness>

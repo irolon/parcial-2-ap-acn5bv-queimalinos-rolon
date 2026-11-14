@@ -39,4 +39,11 @@ describe('ProposalBlock', () => {
     renderBlock(undefined);
     expect(screen.getByRole('link', { name: 'Editar y asignar' })).toHaveAttribute('href', '/pt/rutinas/nueva');
   });
+
+  it('el peso sugerido va con coma decimal, como en el resto de la app ("32,5 kg"), y sin peso una raya', () => {
+    const block = { ...BLOCK, exercises: [aiItem('ex-bench', 'Press banca plano', { suggested_kg: 32.5 }), aiItem('ex-incline', 'Press inclinado con mancuernas')] };
+    render(<MemoryRouter><ProposalBlock block={block} editHref="/pt/rutinas/nueva" /></MemoryRouter>);
+    const kgCells = screen.getAllByRole('row').slice(1).map((row) => row.cells[4].textContent);
+    expect(kgCells).toEqual(['32,5 kg', '—']);
+  });
 });
