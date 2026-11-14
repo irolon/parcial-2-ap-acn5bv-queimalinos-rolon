@@ -22,6 +22,7 @@ describe('chat-context.repository · findAlternatives', () => {
     expect(callsOf('in')).toEqual([['equipment', ['dumbbell', 'bodyweight']]]);
     expect(callsOf('eq')).toEqual([['muscle_group', 'chest']]);
     expect(callsOf('not')).toEqual([['id', 'in', '(e1,e2)']]);
+    expect(callsOf('is')).toEqual([['archived_at', null]]);
     expect(callsOf('order')).toEqual([['name']]);
     expect(callsOf('limit')).toEqual([[30]]);
   });
@@ -36,6 +37,7 @@ describe('chat-context.repository · findAlternatives', () => {
     await repo.findAlternatives(null, { equipment: ['bodyweight'] });
     expect(callsOf('or')).toEqual([]);
     expect(callsOf('eq')).toEqual([['is_global', true]]);
+    expect(callsOf('is')).toEqual([['archived_at', null]]);
   });
 
   it('un error de la base es 500', async () => {

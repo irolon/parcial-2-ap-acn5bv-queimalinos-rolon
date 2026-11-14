@@ -83,12 +83,6 @@ export const Errors = {
     new AppError(409, 'SESSION_ID_CONFLICT', 'Ya existe una sesión con ese id'),
   exerciseNotFound: () =>
     new AppError(404, 'EXERCISE_NOT_FOUND', 'El ejercicio no existe'),
-  exerciseInUse: () =>
-    new AppError(
-      409,
-      'EXERCISE_IN_USE',
-      'No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno'
-    ),
   slotTaken: () => new AppError(409, 'SLOT_TAKEN', 'Ese horario ya está ocupado'),
   slotUnavailable: (message) => new AppError(400, 'SLOT_UNAVAILABLE', message),
   invalidStatusTransition: () =>

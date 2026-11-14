@@ -55,19 +55,4 @@ describe('exercises.service', () => {
       expect(mockRepo.updateExercise).not.toHaveBeenCalled();
     });
   });
-
-  describe('remove', () => {
-    it('elimina un ejercicio propio', async () => {
-      mockRepo.findExerciseById.mockResolvedValue(OWN_EXERCISE);
-      mockRepo.deleteExercise.mockResolvedValue();
-      await service.remove(TRAINER_ID, 'ex-1');
-      expect(mockRepo.deleteExercise).toHaveBeenCalledWith('ex-1');
-    });
-
-    it('lanza FORBIDDEN al intentar borrar uno ajeno/global', async () => {
-      mockRepo.findExerciseById.mockResolvedValue(GLOBAL_EXERCISE);
-      await expect(service.remove(TRAINER_ID, 'ex-2')).rejects.toMatchObject({ statusCode: 403 });
-      expect(mockRepo.deleteExercise).not.toHaveBeenCalled();
-    });
-  });
 });
