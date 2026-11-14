@@ -1,9 +1,10 @@
 import { fieldErrorsFrom } from '@/utils/fieldErrors';
+import { EXTRA_FIELDS, buildInvitationExtras, validateInvitationExtras } from './invitationExtras';
 
 const PHONE_ERROR = 'Ingresá un teléfono válido: al menos 8 dígitos, con código de país';
 const MIN_PHONE_DIGITS = 8;
 
-const FIELDS = ['student_name', 'student_email', 'student_phone', 'goal', 'level', 'template_id', 'routine_days'];
+const FIELDS = ['student_name', 'student_email', 'student_phone', 'goal', 'level', 'template_id', 'routine_days', ...EXTRA_FIELDS];
 
 const text = (data, name) => String(data.get(name) ?? '').trim();
 
@@ -11,6 +12,7 @@ const text = (data, name) => String(data.get(name) ?? '').trim();
  * Arma el body de `POST /invitations` desde el formulario.
  * Siempre va por los dos canales (hay teléfono) y los opcionales vacíos no se mandan. Con plantilla inicial
  * van `template_id` y sus días (`routine_days`, aunque queden vacíos: el backend pide al menos uno).
+ * Los datos extra (frecuencia, altura, peso, nacimiento, equipamiento y lesiones) salen de `buildInvitationExtras`.
  */
 export function buildInvitationBody(formData) {
   const goal = text(formData, 'goal');
@@ -23,6 +25,7 @@ export function buildInvitationBody(formData) {
     ...(goal && { goal }),
     ...(level && { level }),
     ...(templateId && { template_id: templateId, routine_days: formData.getAll('routine_days').map(String) }),
+    ...buildInvitationExtras(formData),
     delivery_channel: 'both',
   };
 }
@@ -30,7 +33,9 @@ export function buildInvitationBody(formData) {
 /** Chequeos que no necesitan al backend. Devuelve `{ campo: mensaje }` (vacío si está todo bien). */
 export function validateInvitationBody(body) {
   const digits = body.student_phone.replace(/\D/g, '');
-  return digits.length < MIN_PHONE_DIGITS ? { student_phone: PHONE_ERROR } : {};
+  const errors = validateInvitationExtras(body);
+  if (digits.length < MIN_PHONE_DIGITS) errors.student_phone = PHONE_ERROR;
+  return errors;
 }
 
 /**
