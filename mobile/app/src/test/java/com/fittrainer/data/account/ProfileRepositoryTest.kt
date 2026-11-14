@@ -104,6 +104,15 @@ class ProfileRepositoryTest {
         assertEquals("access-nuevo", tokens.current()!!.accessToken)
     }
 
+    // GX1-M1: el access nuevo ya no tiene la marca de clave temporal; la sesión la saca en la misma escritura.
+    @Test fun cambiarLaClaveTemporalSacaLaMarcaDeLaSesion() = runTest {
+        tokens.flow.value = authState().let { it.copy(user = it.user.copy(mustChangePassword = true)) }
+        assertTrue(repo.changePassword("u1", "Temporal1", "Nueva1234").isSuccess)
+        assertEquals(false, tokens.current()!!.user.mustChangePassword)
+        // Token y marca en una sola escritura (no por separado con setMustChangePassword).
+        assertEquals(0, tokens.mustChangeCalls)
+    }
+
     @Test fun sinTokenDePushLaClaveSeCambiaIgual() = runTest {
         fcm.error = IllegalStateException("sin Play Services")
         assertTrue(repo.changePassword("u1", "Vieja1234", "Nueva1234").isSuccess)

@@ -39,6 +39,21 @@ class EncryptedAuthSerializerTest {
         assertEquals(AuthFile(state), serializer.readFrom(ByteArrayInputStream(bytes)))
     }
 
+    // GX1-M1: una sesión guardada antes de la marca de clave temporal la lee en false.
+    @Test fun `una sesion guardada sin la marca la lee en false`() = runTest {
+        val old = """{"auth":{"accessToken":"a","refreshToken":"r","user":{"id":"u1","name":"Ana","email":"ana@test.com",""" +
+            """"role":"STUDENT"},"sessionId":"s1"}}"""
+        val bytes = FakeAead().encrypt(old.encodeToByteArray(), ByteArray(0))
+        val read = serializer.readFrom(ByteArrayInputStream(bytes)).auth!!
+        assertFalse(read.user.mustChangePassword)
+        assertEquals("s1", read.sessionId)
+    }
+
+    @Test fun `la marca sobrevive la ida y vuelta`() = runTest {
+        val flagged = state.copy(user = state.user.copy(mustChangePassword = true))
+        assertEquals(AuthFile(flagged), serializer.readFrom(ByteArrayInputStream(write(AuthFile(flagged)))))
+    }
+
     @Test fun `lo escrito no contiene el token en texto plano`() = runTest {
         val bytes = write(AuthFile(state))
         assertFalse(bytes.decodeToString().contains("access-1"))

@@ -19,6 +19,7 @@ import com.fittrainer.data.api.routines.TrainerRoutinesApi
 import com.fittrainer.data.api.students.StudentsApi
 import com.fittrainer.data.api.templates.TrainerTemplatesApi
 import com.fittrainer.data.auth.AuthInterceptor
+import com.fittrainer.data.auth.PasswordChangeRequiredInterceptor
 import com.fittrainer.data.auth.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
@@ -48,9 +49,15 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttp(authInterceptor: AuthInterceptor, authenticator: TokenAuthenticator): OkHttpClient =
+    fun provideOkHttp(
+        authInterceptor: AuthInterceptor,
+        passwordChange: PasswordChangeRequiredInterceptor,
+        authenticator: TokenAuthenticator,
+    ): OkHttpClient =
         client {
             addInterceptor(authInterceptor)
+            // Después de AuthInterceptor: ve el SessionTag y el Bearer con que salió cada pedido (GX1-M1).
+            addInterceptor(passwordChange)
             authenticator(authenticator)
         }
 

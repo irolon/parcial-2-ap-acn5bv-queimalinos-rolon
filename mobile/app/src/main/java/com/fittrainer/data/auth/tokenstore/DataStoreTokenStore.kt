@@ -103,21 +103,25 @@ class DataStoreTokenStore(
         }
     }
 
-    // La condición se evalúa dentro de updateData: atómica respecto de un save() de otra cuenta.
-    override suspend fun updateAccessToken(sessionId: String, token: String) {
-        mutex.withLock {
-            dataStore.updateData { file ->
-                val auth = file.auth
-                if (auth?.sessionId == sessionId) file.copy(auth = auth.copy(accessToken = token)) else file
-            }
+    override suspend fun updateAccessToken(sessionId: String, token: String, expectedAccess: String?, mustChangePassword: Boolean?) =
+        updateIf({ it.sessionId == sessionId && (expectedAccess == null || it.accessToken == expectedAccess) }) {
+            it.copy(accessToken = token, user = mustChangePassword?.let { m -> it.user.copy(mustChangePassword = m) } ?: it.user)
         }
-    }
 
-    override suspend fun updateUserName(sessionId: String, name: String) {
+    override suspend fun updateUserName(sessionId: String, name: String) =
+        updateIf({ it.sessionId == sessionId }) { it.copy(user = it.user.copy(name = name)) }
+
+    override suspend fun setMustChangePassword(sessionId: String, value: Boolean, accessToken: String?) =
+        updateIf({ it.sessionId == sessionId && (accessToken == null || it.accessToken == accessToken) }) {
+            it.copy(user = it.user.copy(mustChangePassword = value))
+        }
+
+    // La condición se evalúa dentro de updateData: atómica respecto de un save() de otra cuenta.
+    private suspend fun updateIf(matches: (AuthState) -> Boolean, change: (AuthState) -> AuthState) {
         mutex.withLock {
             dataStore.updateData { file ->
                 val auth = file.auth
-                if (auth?.sessionId == sessionId) file.copy(auth = auth.copy(user = auth.user.copy(name = name))) else file
+                if (auth != null && matches(auth)) file.copy(auth = change(auth)) else file
             }
         }
     }

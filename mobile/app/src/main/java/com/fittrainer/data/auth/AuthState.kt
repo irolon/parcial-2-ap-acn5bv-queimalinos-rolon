@@ -3,9 +3,19 @@ package com.fittrainer.data.auth
 import com.fittrainer.data.session.Role
 import kotlinx.serialization.Serializable
 
-/** Usuario autenticado, tal como lo devuelve el login (sin datos sensibles). */
+/**
+ * Usuario autenticado, tal como lo devuelve el login (sin datos sensibles). [mustChangePassword]: el alumno entró con
+ * una clave temporal del PT y el backend le responde 403 a todo hasta que elija una nueva (GX1). Las sesiones guardadas
+ * antes de existir el campo lo leen en false.
+ */
 @Serializable
-data class AuthUser(val id: String, val name: String, val email: String, val role: Role)
+data class AuthUser(
+    val id: String,
+    val name: String,
+    val email: String,
+    val role: Role,
+    val mustChangePassword: Boolean = false,
+)
 
 /**
  * Sesión que se guarda cifrada en el dispositivo. [sessionId] identifica cada login (UUID generado

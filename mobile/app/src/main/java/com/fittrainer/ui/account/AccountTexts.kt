@@ -1,6 +1,6 @@
 package com.fittrainer.ui.account
 
-/** Textos de Perfil / Más, Editar perfil y Cambiar contraseña. */
+/** Textos de Perfil / Más, Editar perfil, Cambiar contraseña y la clave temporal. */
 const val EDIT_PROFILE = "Editar perfil"
 const val CHANGE_PASSWORD = "Cambiar contraseña"
 const val NOTIFICATIONS_SETTINGS = "Notificaciones"
@@ -36,6 +36,12 @@ const val PASSWORD_HELP = "Al menos 8 caracteres, con una mayúscula y un númer
 const val SHOW_PASSWORD = "Mostrar"
 const val HIDE_PASSWORD = "Ocultar"
 const val BACK = "Volver"
+
+// Clave temporal (GX1-M1): el PT blanqueó la clave y el alumno tiene que elegir una nueva para seguir.
+const val FORCED_PASSWORD_TITLE = "Elegí una contraseña nueva"
+const val FORCED_PASSWORD_TEXT = "Tu entrenador/a te dio una clave temporal. Elegí una nueva para seguir."
+const val LABEL_TEMPORARY_PASSWORD = "Clave temporal"
+const val LABEL_REPEAT_NEW_PASSWORD = "Repetir contraseña nueva"
 
 /** "Entrena con Laura" en la tarjeta del alumno. */
 fun trainsWith(trainerName: String) = "Entrena con $trainerName"

@@ -10,8 +10,15 @@ import retrofit2.http.POST
 @Serializable
 data class LoginRequest(val email: String, val password: String)
 
+/** [mustChangePassword]: el PT le blanqueó la clave al alumno y tiene que elegir una nueva (GX1). Un backend viejo no la manda. */
 @Serializable
-data class UserDto(val id: String, val name: String, val email: String, val role: String)
+data class UserDto(
+    val id: String,
+    val name: String,
+    val email: String,
+    val role: String,
+    @SerialName("must_change_password") val mustChangePassword: Boolean = false,
+)
 
 @Serializable
 data class LoginResponse(
@@ -23,8 +30,12 @@ data class LoginResponse(
 @Serializable
 data class RefreshRequest(@SerialName("refresh_token") val refreshToken: String)
 
+/** [mustChangePassword] null: el backend no lo mandó (versión vieja) y la marca guardada no se toca. */
 @Serializable
-data class RefreshResponse(val token: String)
+data class RefreshResponse(
+    val token: String,
+    @SerialName("must_change_password") val mustChangePassword: Boolean? = null,
+)
 
 /**
  * Body de `POST /auth/logout`. Con [pushToken] el backend borra además el token de push de este celular si es del

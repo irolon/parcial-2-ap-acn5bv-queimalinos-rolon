@@ -79,13 +79,15 @@ class ProfileRepository @Inject constructor(
 
     /**
      * PUT /auth/password con el refresh de esta sesión y el push token del celular (si FCM lo da en 2 s), para que el
-     * backend no borre el push propio. El access token nuevo reemplaza al guardado.
+     * backend no borre el push propio. El access token nuevo reemplaza al guardado y, como ya no lleva la marca de clave
+     * temporal (GX1), la sesión la saca: la raíz pasa sola de la pantalla de la clave temporal a las pestañas.
      */
     suspend fun changePassword(ownerId: String, current: String, new: String): Result<Unit> = call { save ->
         val state = tokenStore.read()?.takeIf { it.user.id == ownerId } ?: throw AccountChangedException()
         val push = withTimeoutOrNull(PUSH_TOKEN_TIMEOUT_MS) { pushTokenOrNull() }
         val token = api.changePassword(RequiredUser(ownerId), ChangePasswordRequest(current, new, state.refreshToken, push)).token
-        save { tokenStore.updateAccessToken(state.sessionId, token) }
+        // Token y marca en una sola escritura: nunca queda el token nuevo con la marca vieja (que pediría una temporal muerta).
+        save { tokenStore.updateAccessToken(state.sessionId, token, mustChangePassword = false) }
     }
 
     // Sin FCM (sin Play Services, sin red a Google) se cambia igual: el backend solo no conserva el push de este celular.
