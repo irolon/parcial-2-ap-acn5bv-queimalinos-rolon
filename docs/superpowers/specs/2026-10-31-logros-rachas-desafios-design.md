@@ -71,9 +71,9 @@ Rama `feature/gamification-progress` (worktree `fittrainer-gamification-progress
 
 ## 3. Mobile: datos
 
-Rama `feature/android-logros` (worktree `fittrainer-logros`). Room pasa de v9 (tarjeta 13) a **v10** con una
-`AutoMigration(9→10)` que solo crea tablas, y su test `MigrationTo10Test` (archivo propio en
-`androidTest/.../data/db/migration/`). Todo lo nuevo se borra en el
+Rama `feature/android-logros-alumno`, desde develop (13/11: la rama original del 31/10 nunca se mergeó y se integró de
+nuevo). Room pasa de v27 (GX4) a **v28** con una `AutoMigration(27→28)` que solo crea tablas, y su test
+`MigrationV28Test` (en `androidTest/.../data/db/migration/v2x/`). Todo lo nuevo se borra en el
 logout (`UserDataCleaner`).
 
 ### 3.1 Tablas
@@ -223,7 +223,7 @@ al abrir la app.
   evaluación al cerrar (crea `PENDING` solo para lo bloqueado que llegó al `target`, nada sin foto), uploader
   pasando `unlocked_achievements`, lógica del host (oculto en la sesión, agrupado con 3 o más), estados de la
   UI (orden de medallas, textos de desafíos, días que quedan).
-- **Mobile, instrumentado:** migración 9 → 10 (`MigrationTo10Test`) y el DAO de gamificación (`GamificationDaoTest`: las celebraciones se insertan con IGNORE y las sesiones terminadas excluyen activas, sin cierre y rechazadas).
+- **Mobile, instrumentado:** migración 27 → 28 (`MigrationV28Test`) y el DAO de gamificación (`GamificationDaoTest`: las celebraciones se insertan con IGNORE y las sesiones terminadas excluyen activas, sin cierre y rechazadas).
 - **E2E (emulador, backend local, `alumna.card8`):** sembrar en Supabase dev sesiones cerradas en días
   asignados para que la racha quede en 6; en modo avión cerrar la sesión del día → celebración "Racha de 7
   días" al salir de la sesión; volver la red → el sync no la repite; la pantalla Logros muestra desbloqueados a
