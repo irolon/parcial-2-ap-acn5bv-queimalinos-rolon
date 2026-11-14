@@ -84,7 +84,7 @@ lee de ahí. Sin migración: la base sigue en la versión de la rama base.
 | Caso | Texto / acción |
 |---|---|
 | Sin red | "Con IA ✦" deshabilitado; adentro, "Necesitás conexión para usar el asistente." |
-| Timeout del cliente (40 s) | "La IA tardó demasiado. Probá de nuevo." |
+| Timeout del cliente (50 s) | "La IA tardó demasiado. Probá de nuevo." |
 | 429 `RATE_LIMIT_EXCEEDED` | Mensaje del backend + "Probá de nuevo en N min" con `Retry-After` (sin él, "más tarde"). |
 | 503 `AI_UNAVAILABLE` | Mensaje del backend + botón **"Armar a mano"** → "Rutina nueva" del alumno. |
 | 502 `AI_INVALID_RESPONSE` | Mensaje del backend; se puede volver a generar. |
@@ -102,7 +102,7 @@ otra."; 409 → recuperación; red/timeout/5xx → aviso + "Reintentar". **Al as
 - `data/api/trainerai/`: `TrainerAiApi` (`POST trainer-ai/generate-routine`, `POST
   trainer-ai/save-as-template`, con `@Tag RequiredUser`) y `TrainerAiDtos`.
 - `di/trainerai/TrainerAiModule`: Retrofit con `client.newBuilder()` y `callTimeout`/`readTimeout` de
-  **40 s** (n8n tiene 30 s en el backend).
+  **50 s** (desde el 14/11: el backend le da 38 s a n8n; antes eran 40 s contra 30).
 - `data/trainerai/`: dominio (`AiRoutineProposal`, `AiProposalBlock`, `AiProposalExercise`,
   `AiRoutineParams`), mapper, errores (`TrainerAiError` + traducción de HTTP) y `TrainerAiRepository`
   (`generate`, `save`, `Result`). No toca Room.

@@ -14,10 +14,10 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
-/** Lo que espera el celular una propuesta (el backend le da 30 s a n8n). */
-const val TRAINER_AI_TIMEOUT_SECONDS = 40L
+/** Lo que espera el celular una propuesta: el backend le da 38 s a n8n y además consulta Supabase antes y guarda después. */
+const val TRAINER_AI_TIMEOUT_SECONDS = 50L
 
-/** Asistente IA del entrenador (E15): el mismo cliente con Bearer y refresh, con un tope de 40 s por llamada. */
+/** Asistente IA del entrenador (E15): el mismo cliente con Bearer y refresh, con un tope de 50 s por llamada. */
 @Module
 @InstallIn(SingletonComponent::class)
 object TrainerAiModule {
