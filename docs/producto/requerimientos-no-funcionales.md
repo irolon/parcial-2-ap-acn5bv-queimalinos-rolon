@@ -23,6 +23,8 @@ Restricciones técnicas, de calidad y operativas del sistema.
 | RNF-04 | Tiempo de respuesta del asistente IA del alumno | 95% de las respuestas en < 10 segundos. Si supera el timeout, la app sigue funcionando sin la IA. |
 | RNF-05 | Tiempo de respuesta del asistente IA del entrenador | 95% de las generaciones en < 30 segundos. Aceptable hasta 60s para casos complejos. Si supera el timeout, mensaje claro al usuario y posibilidad de reintentar. |
 
+> **Medición de RNF-04 y RNF-05 (14/11/2026, prueba real de la web contra n8n + KIMI `kimi-k3.1-pro`).** El chat del alumno respondió en **5,5 s y 7,2 s** y el asistente del entrenador generó en **26 s y 30 s**: los dos dentro de su meta. Los cortes son más largos que las metas a propósito, porque son el máximo antes de dar la IA por caída, no el tiempo esperado. **Chat del alumno:** n8n corta a los 15 s, el backend a los 16 s y la web a los 18 s; pasado el corte, la sesión sigue sin la IA (RNF-04). **Asistente del entrenador:** n8n corta a los 36 s, el backend a los 38 s y el celular espera 50 s; pasado el corte, mensaje claro con reintentar o armar a mano (RNF-05). Los cortes se subieron el 09/11 y el 14/11 porque KIMI a veces tarda más que la media y esas respuestas se perdían. Detalle en el ADR-008 (actualización del 14/11) y en `n8n/README.md`. Son pocas muestras: la medición del 95 % queda para la prueba contra el VPS.
+
 ---
 
 ## Seguridad
