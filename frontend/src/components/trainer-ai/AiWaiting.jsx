@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react';
 import Button from '@/components/shared/ui/Button';
 import { useSecondsSince } from '@/hooks/routines/useSecondsSince';
 
-/** Segundo mensaje según lo que va tardando (el LLM tarda de 5 a 20 s; el backend corta a los 30). */
+/** Segundo mensaje según lo que va tardando (con KIMI tarda de 13 a 30 s, más con historial; el backend corta a los 38). */
 function stepMessage(seconds, hasStudent) {
   if (seconds >= 18) return 'Ya casi…';
   if (seconds >= 8) return 'Eligiendo ejercicios de tu biblioteca…';
