@@ -15,8 +15,8 @@ Marco estratégico para evaluar la viabilidad del producto antes del lanzamiento
 
 ## Fortalezas (Strengths)
 
-- **Producto en español pensado para LATAM**, con foco inicial en Argentina (precios en pesos, terminología local, equipamiento común de gimnasios locales).
-- **Doble asistente IA**: uno para el entrenador (generación de plantillas de rutinas personalizables) y otro para el alumno en sesión (sustituciones, técnica, calentamiento, prevención de lesiones).
+- **Producto en español con foco inicial en Argentina** (precios en pesos, terminología local, equipamiento común de gimnasios locales). Brasil ya tiene un jugador local (MFIT Personal), en portugués y en reales.
+- **Asistente IA del alumno en sesión** (sustituciones, técnica, calentamiento, prevención de lesiones), que no tiene ningún competidor verificado, y **asistente IA del entrenador** para armar plantillas, que ya ofrecen Trainerize, PT Distinction y MFIT Personal.
 - **Onboarding simplificado** vía WhatsApp o QR con carga mínima de datos — fricción mínima para sumar alumnos al sistema.
 - **Los dos roles en los dos clientes**: el entrenador tiene todo en la web y en la mobile; el alumno tiene en la web lo central (rutina, sesión simplificada, historial, progreso, logros y medidas) y en el celular la experiencia completa. El usuario elige el dispositivo según su contexto.
 - **Visión dual real PT + alumno** — flujo natural del negocio, ambos roles tienen experiencias diseñadas para su tarea concreta.
@@ -30,7 +30,7 @@ Marco estratégico para evaluar la viabilidad del producto antes del lanzamiento
 ## Oportunidades (Opportunities)
 
 - **Demanda creciente** de PTs post-pandemia y auge del fitness en Argentina y la región.
-- **Apps competidoras en inglés y caras en USD** — barrera fuerte para el mercado LATAM (TrueCoach, PT Distinction, Trainerize, Hexfit).
+- **Apps competidoras mayormente en inglés y en USD**; las que están en español cobran en dólares o euros (TrueCoach, con la app del alumno en español, y Trainero, en 38 idiomas). Es una barrera para el entrenador argentino (TrueCoach, PT Distinction, Trainerize, Hexfit, Trainero).
 - **Modelo freemium para PTs** (hasta 2–3 alumnos gratis, luego pago en pesos).
 - **Escalabilidad con líneas de negocio adicionales**: webinars y cursos cortos para entrenadores, acuerdos con gimnasios, alianzas con marcas de suplementos deportivos e indumentaria.
 - **Modelo B2B con gimnasios** que quieran ofrecer la app a sus PTs como valor agregado del alquiler del espacio.
@@ -53,6 +53,7 @@ Marco estratégico para evaluar la viabilidad del producto antes del lanzamiento
 ## Amenazas (Threats)
 
 - **Apps consolidadas con más recursos**: Mindbody, TrueCoach, Trainerize, Everfit.
+- **Competidores que ya suman IA para el entrenador** (Trainerize, PT Distinction, MFIT Personal), y **MFIT Personal como competidor regional** fuerte en Brasil.
 - **Inercia cultural**: muchos PTs y alumnos siguen usando WhatsApp + Excel — el cambio de hábito es el verdadero desafío.
 - **Inestabilidad económica argentina**: dificulta cobrar suscripciones recurrentes en pesos y planificar costos de infraestructura.
 - **Políticas de Google Play / App Store** pueden afectar la distribución, las comisiones y los términos de pago.

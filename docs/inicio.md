@@ -38,8 +38,9 @@ FitTrainer es una plataforma con dos clientes — una aplicación web y una apli
 
 ## Diferenciadores clave
 
-- Producto en español, pensado para LATAM y precios en pesos.
-- Doble asistente IA: para el entrenador (generación de plantillas con personalización por alumno) y para el alumno (sustituciones, técnica, calentamiento).
+- Producto en español, con foco inicial en Argentina y precios en pesos (Brasil ya tiene un jugador local, MFIT Personal).
+- **Asistente IA del alumno durante la sesión** (sustituciones, técnica, calentamiento): no aparece en ninguno de los competidores verificados.
+- El **asistente IA del entrenador** para armar plantillas con personalización por alumno sigue siendo central, pero ya no diferencia: Trainerize, PT Distinction y MFIT Personal tienen uno.
 - Onboarding simplificado vía WhatsApp o QR — fricción mínima para sumar alumnos.
 - Los dos roles en los dos clientes: el alumno puede ver su rutina, su historial, su progreso y sus logros desde la web, y hasta registrar un entrenamiento simplificado; el entrenador puede usar la mobile en el gym o en la calle. Lo que hoy tiene solo el celular del alumno (sesión offline completa y reemplazar ejercicio) y lo que sigue pendiente en él (medidas, progreso y logros, push y pedir turno) está en [[producto/casos-de-uso|Casos de uso]].
 - Foco en el flujo crítico: vinculación + armado de rutina + entrenamiento + seguimiento + logros.

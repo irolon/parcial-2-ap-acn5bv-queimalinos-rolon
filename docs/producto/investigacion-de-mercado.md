@@ -31,7 +31,14 @@ Entrenadores independientes con entre **10 y 30 alumnos activos**, que trabajan 
 | FitnessBrain | Chile | Foco en administración de gimnasios | Español | — |
 | WhatsApp + Excel | — | Combinación informal: WhatsApp para mensajes y PDFs, Excel para rutinas, notas del celular para cargas | Español | Gratuito |
 
-> TrueCoach, Trainerize, PT Distinction, Trainero y MFIT Personal se verificaron el 27/10/2026 en sus sitios oficiales y páginas de precios (sin impuestos). Trainero figuraba como española, pero su sede está en Vantaa, Finlandia. El resto de la tabla viene de la versión de junio.
+> TrueCoach, Trainerize, PT Distinction, Trainero y MFIT Personal se verificaron el 27/10/2026 en sus sitios oficiales y páginas de precios (sin impuestos). Trainero figuraba como española, pero su sede está en Vantaa, Finlandia. En la fila de PT Distinction / Everfit, el precio es el de PT Distinction (USD 19,90 a 89,90); Everfit no se volvió a verificar. El resto de la tabla viene de la versión de junio.
+>
+> Páginas de precios (revisadas de nuevo el 15/11/2026):
+> - TrueCoach: https://truecoach.co/pricing
+> - Trainerize: https://www.trainerize.com/pricing/
+> - PT Distinction: https://www.ptdistinction.com/pricing
+> - Trainero: https://www.trainero.com/en-us/pricing
+> - MFIT Personal: https://www.mfitpersonal.com.br/pages/assinaturas.html
 
 ## Diferenciadores de FitTrainer
 
