@@ -94,7 +94,7 @@ class TrainerLibraryViewModel @Inject constructor(
         local.update { it.copy(deleting = true) }
         viewModelScope.launch {
             val error = repository.delete(trainerId.filterNotNull().first(), target.id).exceptionOrNull()
-            // La hoja se cierra siempre: el aviso (también el del 409, "está en uso") queda a la vista.
+            // La hoja se cierra siempre y el aviso queda a la vista. Uno en uso lo archiva el servidor: también sale.
             local.update { it.copy(deleting = false, confirmDelete = null, selected = null, notice = error?.exerciseActionMessage() ?: EXERCISE_DELETED) }
         }
     }

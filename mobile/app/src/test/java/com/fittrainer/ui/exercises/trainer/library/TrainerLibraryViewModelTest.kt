@@ -77,15 +77,15 @@ class TrainerLibraryViewModelTest {
         assertNull(vm.uiState.value.selected)
     }
 
-    @Test fun `borrar uno en uso muestra el mensaje del backend y sigue en la lista`() = runTest {
+    @Test fun `borrar uno en uso (el servidor lo archiva) avisa y lo saca de la lista`() = runTest {
         api.inUse += "o1"
         started()
         vm.onSelect(vm.uiState.value.visible.first { it.id == "o1" })
         vm.onAskDelete()
         vm.onConfirmDelete()
         advanceUntilIdle()
-        assertEquals("El ejercicio está en una rutina o en una sesión", vm.uiState.value.notice)
-        assertTrue("o1" in ids())
+        assertEquals(EXERCISE_DELETED, vm.uiState.value.notice)
+        assertTrue("o1" !in ids())
     }
 
     @Test fun `sin red no borra y avisa`() = runTest {

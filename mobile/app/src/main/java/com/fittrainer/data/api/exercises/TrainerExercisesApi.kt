@@ -25,7 +25,7 @@ interface TrainerExercisesApi {
     @PATCH("exercises/{id}")
     suspend fun update(@Path("id") id: String, @Body body: JsonObject): TrainerExerciseResponse
 
-    /** 204; 409 EXERCISE_IN_USE si está en una rutina o en una sesión. */
+    /** 204 si se borró; 200 `{ data: { id, archived: true } }` si estaba en uso y se archivó (el body se descarta). */
     @DELETE("exercises/{id}")
     suspend fun delete(@Path("id") id: String): Response<Unit>
 }

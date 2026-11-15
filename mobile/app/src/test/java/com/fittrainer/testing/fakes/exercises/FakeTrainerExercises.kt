@@ -21,7 +21,7 @@ import retrofit2.Response
 fun trainerExerciseDto(id: String, name: String, group: String? = "chest", global: Boolean = true) =
     TrainerExerciseDto(id, if (global) null else "t1", name, group, "barbell", null, null, global)
 
-/** Catálogo en memoria. [inUse]: ids que dan 409 al borrar. */
+/** Catálogo en memoria. [inUse]: ids que el servidor archiva al borrar (200 en vez de 204; salen del catálogo). */
 class FakeTrainerExercisesApi : TrainerExercisesApi {
     var exercises = listOf(trainerExerciseDto("e1", "Press de banca"), trainerExerciseDto("e2", "Sentadilla", "legs"))
     var error: Throwable? = null
@@ -71,7 +71,8 @@ class FakeTrainerExercisesApi : TrainerExercisesApi {
     override suspend fun delete(id: String): Response<Unit> {
         writeError?.let { throw it }
         if (id in inUse) {
-            return Response.error(409, """{"error":{"code":"EXERCISE_IN_USE","message":"El ejercicio está en una rutina o en una sesión"}}""".toResponseBody(null))
+            exercises = exercises.filter { it.id != id }
+            return Response.success(200, Unit)
         }
         if (exercises.none { it.id == id }) return Response.error(404, "{}".toResponseBody(null))
         exercises = exercises.filter { it.id != id }
