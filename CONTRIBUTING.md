@@ -156,6 +156,16 @@ src/
 tests/                     (mismo árbol que src)
 ```
 
+#### Landing (`landing/`)
+
+```
+src/
+  main.jsx, App.jsx                ← únicos en la raíz
+  pages/<página>/   sections/<página>/   data/<página>/   (páginas: home, trainer, student, ai, why, plans)
+  components/layout/   components/ui/   components/mockups/   data/shared/   hooks/motion/   styles/
+tests/                     (mismo árbol que src)
+```
+
 #### Mobile (`mobile/app/src/`) (objetivo; lo aplica la tanda de mobile)
 
 ```
@@ -176,5 +186,6 @@ Las reglas no dependen de acordarse: **el lint o el build fallan**.
 - **Backend:** `npm run lint` corre ESLint (`max-lines` 200 como error, contando todo) y `scripts/check-file-length.js`, que controla también los `.sql`.
 - **Mobile:** `gradlew checkFileLength` (corre solo con `check` y antes de compilar) falla si un `.kt` o `.kts` pasa de 200. (pendiente: lo agrega la tanda de mobile)
 - **Web:** al crear `frontend/`, la misma regla de ESLint: `"max-lines": ["error", { "max": 200, "skipBlankLines": false, "skipComments": false }]`, y que `npm run lint` cubra `.js,.jsx,.ts,.tsx` (todo `src/` y `tests/`).
+- **Landing:** la misma configuración de ESLint que la web (`landing/eslint.config.js`).
 
 Antes de dar una tarea por terminada: lint y tests en verde.

@@ -90,6 +90,20 @@ npm run dev                              # web en http://localhost:5173
 
 `npm run lint` y `npm test` (Vitest) antes de cada PR, igual que en el backend.
 
+### Landing (web de marketing)
+
+El sitio público (lo que se ve sin sesión). No necesita el backend; para que "Empezá gratis" y
+"Ya tengo cuenta" abran el registro y el login, levantá también la web en el 5173.
+
+```bash
+cd landing
+npm install
+npm run dev                              # landing en http://localhost:5174
+```
+
+Los botones apuntan a `http://localhost:5173/registro` y `/login`; se cambian copiando
+`landing/.env.example` a `landing/.env`. Mismo `npm run lint` y `npm test` que la web.
+
 ### Mobile
 
 Abrí `mobile/` en Android Studio y copiá `mobile/.env.example` a `mobile/.env`.
