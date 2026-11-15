@@ -6,12 +6,12 @@ const mockRepo = {
   createInvitation: jest.fn(),
   findInvitationByToken: jest.fn(),
 };
-jest.unstable_mockModule('../../../../src/repositories/invitations/invitations.repository.js', () => mockRepo);
-jest.unstable_mockModule('../../../../src/services/routine-templates/routine-templates.service.js', () => ({
+jest.unstable_mockModule('../../../../../src/repositories/invitations/invitations.repository.js', () => mockRepo);
+jest.unstable_mockModule('../../../../../src/services/routine-templates/routine-templates.service.js', () => ({
   getOwnedTemplate: jest.fn(),
 }));
 
-const service = await import('../../../../src/services/invitations/invitations.service.js');
+const service = await import('../../../../../src/services/invitations/invitations.service.js');
 
 const BODY = {
   student_name: 'Pedro Gómez',
