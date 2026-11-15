@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fittrainer.navigation.account.accountRoutes
 import com.fittrainer.navigation.student.studentAchievementRoutes
+import com.fittrainer.navigation.student.studentProgressRoutes
 import com.fittrainer.navigation.student.studentAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerAgendaRoutes
 import com.fittrainer.navigation.trainer.trainerChallengeRoutes
@@ -132,6 +133,7 @@ fun RoleShell(
             }
             studentAgendaRoutes(navController)
             studentAchievementRoutes(navController)
+            studentProgressRoutes(navController)
             accountRoutes(navController)
             trainerStudentRoutes(navController)
             trainerRoutineRoutes(navController)
