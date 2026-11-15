@@ -33,4 +33,22 @@ describe('profile.api', () => {
     expect(init.method).toBe('PATCH');
     expect(bodyOf(init)).toEqual({ professional_title: 'Lic. en Educación Física' });
   });
+
+  it('uploadAvatar hace PUT /auth/me/avatar multipart con image y devuelve la URL firmada', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(200, { data: { avatar_url: 'https://signed/a' } }));
+    const file = new File(['x'], 'avatar.jpg', { type: 'image/jpeg' });
+    await expect(profileApi.uploadAvatar(file)).resolves.toBe('https://signed/a');
+    const [[path, init]] = calls(fetchMock);
+    expect(path).toBe('/auth/me/avatar');
+    expect(init.method).toBe('PUT');
+    expect(init.body.get('image')).toBe(file);
+  });
+
+  it('removeAvatar hace DELETE /auth/me/avatar', async () => {
+    const fetchMock = stubFetch(async () => new Response(null, { status: 204 }));
+    await profileApi.removeAvatar();
+    const [[path, init]] = calls(fetchMock);
+    expect(path).toBe('/auth/me/avatar');
+    expect(init.method).toBe('DELETE');
+  });
 });

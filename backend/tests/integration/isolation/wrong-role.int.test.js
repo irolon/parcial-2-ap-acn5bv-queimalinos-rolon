@@ -25,6 +25,9 @@ const cases = [
     [87, 'POST /challenges/:chA/assignments'],
     [88, 'PATCH /sessions/:sessA/comment'],
     [89, 'POST /messages/broadcast'],
+    // Foto del PT (deseable): el alumno no puede subir ni quitar la del PT.
+    [101, 'PUT /auth/me/avatar'],
+    [102, 'DELETE /auth/me/avatar'],
   ]),
   ...rows('trainerA', [
     [90, 'POST /sessions'],

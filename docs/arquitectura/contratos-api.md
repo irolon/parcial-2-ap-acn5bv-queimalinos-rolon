@@ -202,6 +202,27 @@ Cambia el nombre y el título profesional del trainer (GX2). **Rol:** `trainer`.
 
 **Errores:** `400 VALIDATION_ERROR` (`field: "name"` o `"professional_title"` fuera de rango; `field: "body"` sin ningún campo editable), `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND`.
 
+### PUT /auth/me/avatar
+
+Sube o reemplaza la foto de perfil del trainer (deseable "Foto del entrenador", mismo patrón que `PUT /students/:id/avatar`). **Rol:** `trainer`; siempre la del token (no hay `:id`). `multipart/form-data` con un solo archivo en el campo `image` (JPEG, PNG o WebP, hasta 5 MB; la web la achica a 512 px antes de subirla). El tipo se valida por los bytes del archivo, no por el `Content-Type`.
+
+**200 OK**
+
+```json
+{ "data": { "avatar_url": "https://…/object/sign/avatars/trainers/…?token=…" } }
+```
+
+- Se guarda en el bucket privado `avatars` como `trainers/<id>/<uuid>.<ext>` y la ruta queda en `trainers.avatar_url`; la respuesta trae la URL firmada (1 h). La foto anterior se borra en best-effort (solo si es del mismo PT). Si guardar la ruta falla, la subida se borra y responde el error.
+- La ven sus alumnos en "Tu entrenador/a" y en la cabecera de Mensajes (`counterpart.avatar_url` de `GET /messages/:studentId`), y el propio PT en el login y en `GET /auth/me`.
+
+**Errores:** `400 VALIDATION_ERROR` (`field: "image"`: sin archivo, más de un archivo o formulario inválido), `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND` (la cuenta ya no existe), `413 IMAGE_TOO_LARGE`, `415 IMAGE_TYPE_INVALID`.
+
+### DELETE /auth/me/avatar
+
+Quita la foto de perfil del trainer. **Rol:** `trainer`. Deja `avatar_url` en `null` y borra el archivo del bucket (best-effort). **204 No Content**, también si no tenía foto (idempotente).
+
+**Errores:** `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND`.
+
 ---
 
 ## Módulo: Invitaciones (WhatsApp + QR onboarding)
@@ -261,6 +282,8 @@ Valida un token y retorna los datos precargados. Público.
 
 `goal` puede ser `null` si el PT no lo cargó al invitar.
 
+`trainer` es `{ id, name, specialty, avatar_url }`; `avatar_url` sale firmada (1 h) o `null`, como en el resto de la API (nunca la ruta del bucket).
+
 **Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /students (desde invitación)
@@ -286,7 +309,7 @@ Crea el alumno desde el token de invitación. Público.
 
 ## Módulo: Alumnos
 
-**Fotos de perfil (GX2).** En todas las respuestas que la traen (lista y ficha de alumnos, login, `GET`/`PATCH /auth/me`, contraparte y conversaciones de Mensajes, alumno de los Turnos), `avatar_url` es una **URL firmada que vence en 1 h** (3600 s, igual que las fotos del chat) del bucket privado `avatars`, o `null` si no hay foto o no se pudo firmar (la firma es best-effort: si Storage falla, la respuesta sale igual). No hay que guardarla más que la sesión: al volver a pedir el recurso llega firmada de nuevo. La ruta del bucket nunca sale.
+**Fotos de perfil (GX2).** En todas las respuestas que la traen (lista y ficha de alumnos, login, `GET`/`PATCH /auth/me`, `PUT /auth/me/avatar`, el PT de `GET /invitations/:token`, contraparte y conversaciones de Mensajes, alumno de los Turnos), `avatar_url` es una **URL firmada que vence en 1 h** (3600 s, igual que las fotos del chat) del bucket privado `avatars`, o `null` si no hay foto o no se pudo firmar (la firma es best-effort: si Storage falla, la respuesta sale igual). No hay que guardarla más que la sesión: al volver a pedir el recurso llega firmada de nuevo. La ruta del bucket nunca sale.
 
 ### GET /students
 
