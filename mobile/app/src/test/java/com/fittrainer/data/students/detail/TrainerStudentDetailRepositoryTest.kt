@@ -107,4 +107,10 @@ class TrainerStudentDetailRepositoryTest {
         repo.refresh("t1", "s1")
         assertEquals("https://firmada", cached()!!.detail.avatarUrl)
     }
+
+    @Test fun `detailKeepsWeeklyFrequency`() = runTest {
+        api.detail = detailDto(weeklyFrequency = 4)
+        repo.refresh("t1", "s1")
+        assertEquals(4, cached()!!.detail.weeklyFrequency)
+    }
 }

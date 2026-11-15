@@ -27,6 +27,11 @@ data class CreateInvitationRequest(
     @SerialName("delivery_channel") val deliveryChannel: String,
     @SerialName("template_id") val templateId: String? = null,
     @SerialName("routine_days") val routineDays: List<String>? = null,
+    // Datos extra (#123). En null no se mandan: con encodeDefaults en false (como template_id) no viajan.
+    @SerialName("weekly_frequency") val weeklyFrequency: Int? = null,
+    @SerialName("height_cm") val heightCm: Double? = null,
+    @SerialName("weight_kg") val weightKg: Double? = null,
+    @SerialName("birth_date") val birthDate: String? = null,
 )
 
 @Serializable

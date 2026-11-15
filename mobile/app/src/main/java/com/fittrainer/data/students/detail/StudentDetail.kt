@@ -20,6 +20,8 @@ data class StudentDetail(
     val latestMetrics: LatestMetrics?,
     val activeRoutine: ActiveRoutine?,
     val avatarUrl: String? = null,
+    /** Días por semana que quiere entrenar (#123), distinto de los días de la rutina asignada. */
+    val weeklyFrequency: Int? = null,
 )
 
 /** Última medición; el IMC es el que calcula el backend. */

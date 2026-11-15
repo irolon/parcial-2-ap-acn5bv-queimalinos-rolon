@@ -19,6 +19,8 @@ data class StudentDetailDto(
     @SerialName("gym_equipment") val gymEquipment: List<String>? = null,
     val injuries: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
+    /** Días por semana que quiere entrenar (#123); null = sin dato o backend viejo. */
+    @SerialName("weekly_frequency") val weeklyFrequency: Int? = null,
     @SerialName("created_at") val createdAt: String,
     @SerialName("last_session_at") val lastSessionAt: String? = null,
     @SerialName("latest_metrics") val latestMetrics: LatestMetricsDto? = null,

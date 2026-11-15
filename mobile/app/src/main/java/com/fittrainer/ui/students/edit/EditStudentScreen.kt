@@ -34,6 +34,8 @@ import com.fittrainer.data.invitation.invite.LEVELS
 import com.fittrainer.data.students.detail.EditField
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
+import com.fittrainer.ui.components.FREQUENCY_OPTIONS
+import com.fittrainer.ui.components.frequencyOptionLabel
 import com.fittrainer.ui.components.levelOptionLabel
 import com.fittrainer.ui.invitations.components.EquipmentChips
 import com.fittrainer.ui.invitations.components.FieldLabel
@@ -84,6 +86,9 @@ fun EditStudentScreen(onBack: () -> Unit, onGone: () -> Unit, viewModel: EditStu
         }
         BirthDateField(form.birthDate, viewModel.today(), e[EditField.BIRTH_DATE]) { d ->
             viewModel.onChange({ it.copy(birthDate = d) }, EditField.BIRTH_DATE)
+        }
+        OptionPicker("FRECUENCIA", form.weeklyFrequency?.toString(), FREQUENCY_OPTIONS, ::frequencyOptionLabel, e[EditField.FREQUENCY]) { v ->
+            viewModel.onChange({ it.copy(weeklyFrequency = v?.toIntOrNull()) }, EditField.FREQUENCY)
         }
         EquipmentChips(
             form.equipment, e[EditField.EQUIPMENT],

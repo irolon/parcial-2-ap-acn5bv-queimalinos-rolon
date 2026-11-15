@@ -5,6 +5,7 @@ import com.fittrainer.data.invitation.invite.LEVELS
 import com.fittrainer.data.invitation.invite.MAX_EQUIPMENT
 import com.fittrainer.data.invitation.invite.MAX_EQUIPMENT_LENGTH
 import com.fittrainer.data.invitation.invite.MAX_INJURIES
+import com.fittrainer.data.invitation.invite.WEEKLY_FREQUENCY_RANGE
 import java.time.LocalDate
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -13,7 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
 /** Campos editables de la ficha (los mismos del PATCH, salvo active). */
-enum class EditField { NAME, GOAL, LEVEL, BIRTH_DATE, EQUIPMENT, INJURIES }
+enum class EditField { NAME, GOAL, LEVEL, BIRTH_DATE, EQUIPMENT, INJURIES, FREQUENCY }
 
 /** Lo que se edita. goal y level no se pueden borrar (el backend solo acepta valores del enum). */
 data class EditableStudent(
@@ -23,9 +24,10 @@ data class EditableStudent(
     val birthDate: LocalDate?,
     val equipment: List<String>,
     val injuries: String,
+    val weeklyFrequency: Int? = null,
 )
 
-fun StudentDetail.toEditable() = EditableStudent(name, goal, level, birthDate, gymEquipment, injuries.orEmpty())
+fun StudentDetail.toEditable() = EditableStudent(name, goal, level, birthDate, gymEquipment, injuries.orEmpty(), weeklyFrequency)
 
 /** Reglas del PATCH (docs/arquitectura/contratos-api.md). Vacío = válido. */
 fun EditableStudent.errors(today: LocalDate): Map<EditField, String> = buildMap {
@@ -37,6 +39,7 @@ fun EditableStudent.errors(today: LocalDate): Map<EditField, String> = buildMap 
     if (items.size > MAX_EQUIPMENT) put(EditField.EQUIPMENT, "Hasta $MAX_EQUIPMENT elementos")
     else if (items.any { it.length !in 1..MAX_EQUIPMENT_LENGTH }) put(EditField.EQUIPMENT, "Cada elemento de 1 a $MAX_EQUIPMENT_LENGTH caracteres")
     if (injuries.trim().length > MAX_INJURIES) put(EditField.INJURIES, "Hasta $MAX_INJURIES caracteres")
+    if (weeklyFrequency != null && weeklyFrequency !in WEEKLY_FREQUENCY_RANGE) put(EditField.FREQUENCY, "Entre 1 y 7 días")
 }
 
 /**
@@ -56,6 +59,7 @@ fun diffPatch(before: StudentDetail, after: EditableStudent): JsonObject? {
         }
         val injuries = after.injuries.trim().ifEmpty { null }
         if (injuries != before.injuries?.trim()?.ifEmpty { null }) put("injuries", injuries?.let(::JsonPrimitive) ?: JsonNull)
+        if (after.weeklyFrequency != before.weeklyFrequency) put("weekly_frequency", after.weeklyFrequency?.let(::JsonPrimitive) ?: JsonNull)
     }
     return body.takeIf { it.isNotEmpty() }
 }
@@ -71,5 +75,6 @@ fun editFieldOf(apiField: String?): EditField? = when (apiField) {
     "birth_date" -> EditField.BIRTH_DATE
     "gym_equipment" -> EditField.EQUIPMENT
     "injuries" -> EditField.INJURIES
+    "weekly_frequency" -> EditField.FREQUENCY
     else -> null
 }

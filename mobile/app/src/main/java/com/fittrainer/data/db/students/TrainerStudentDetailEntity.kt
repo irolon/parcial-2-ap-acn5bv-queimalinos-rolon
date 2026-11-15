@@ -31,4 +31,6 @@ data class TrainerStudentDetailEntity(
     val fetchedAt: Long,
     /** v30: foto firmada (vence a la hora; null = sin foto). */
     val avatarUrl: String? = null,
+    /** v31: días por semana que quiere entrenar (#123; null = sin dato). */
+    val weeklyFrequency: Int? = null,
 )

@@ -16,11 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import java.time.LocalDate
 import com.fittrainer.data.invitation.invite.GOALS
 import com.fittrainer.data.invitation.invite.InviteField
 import com.fittrainer.data.invitation.invite.LEVELS
+import com.fittrainer.ui.components.FREQUENCY_OPTIONS
 import com.fittrainer.ui.components.NoticeBanner
 import com.fittrainer.ui.components.OfflineIndicator
+import com.fittrainer.ui.components.frequencyOptionLabel
 import com.fittrainer.ui.components.levelOptionLabel
 import com.fittrainer.ui.invitations.INVITE_MORE
 import com.fittrainer.ui.invitations.INVITE_NEEDS_NETWORK
@@ -28,6 +31,7 @@ import com.fittrainer.ui.invitations.INVITE_SUBMIT
 import com.fittrainer.ui.invitations.InviteUiState
 import com.fittrainer.ui.invitations.InviteViewModel
 import com.fittrainer.ui.join.goalLabel
+import com.fittrainer.ui.students.edit.BirthDateField
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
@@ -43,7 +47,7 @@ fun InviteFormFields(state: InviteUiState.Editing, vm: InviteViewModel) {
         OptionPicker("NIVEL", form.level, LEVELS, ::levelOptionLabel, state.errors[InviteField.LEVEL]) { vm.onChange(InviteField.LEVEL, it) }
         InitialTemplateField(state, vm::onTemplate, vm::onToggleDay)
         TextButton(onClick = vm::onToggleMore, modifier = Modifier.height(Spacing.minTouchTarget)) {
-            Text(if (state.showMore) "Ocultar más datos" else "$INVITE_MORE (teléfono, equipamiento, lesiones)")
+            Text(if (state.showMore) "Ocultar más datos" else "$INVITE_MORE (teléfono, equipamiento, lesiones, medidas)")
         }
         if (state.showMore) {
             LabeledField(
@@ -53,6 +57,7 @@ fun InviteFormFields(state: InviteUiState.Editing, vm: InviteViewModel) {
             LabeledField("LESIONES", form.injuries, state.errors[InviteField.INJURIES], singleLine = false) {
                 vm.onChange(InviteField.INJURIES, it)
             }
+            InviteExtraFields(state, vm)
         }
         Button(
             onClick = vm::onSubmit,
@@ -95,4 +100,16 @@ private fun LabeledField(
             keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         )
     }
+}
+
+/** Datos extra (#123): frecuencia, altura, peso y nacimiento. Al alta, la altura y el peso son su primera medida. */
+@Composable
+private fun InviteExtraFields(state: InviteUiState.Editing, vm: InviteViewModel) {
+    val form = state.form
+    OptionPicker("FRECUENCIA", form.weeklyFrequency?.toString(), FREQUENCY_OPTIONS, ::frequencyOptionLabel, state.errors[InviteField.FREQUENCY]) {
+        vm.onChange(InviteField.FREQUENCY, it)
+    }
+    LabeledField("ALTURA (CM)", form.height, state.errors[InviteField.HEIGHT], KeyboardType.Decimal) { vm.onChange(InviteField.HEIGHT, it) }
+    LabeledField("PESO (KG)", form.weight, state.errors[InviteField.WEIGHT], KeyboardType.Decimal) { vm.onChange(InviteField.WEIGHT, it) }
+    BirthDateField(form.birthDate, LocalDate.now(), state.errors[InviteField.BIRTH_DATE], onChange = vm::onBirthDate)
 }
