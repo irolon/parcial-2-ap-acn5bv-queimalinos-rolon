@@ -202,6 +202,27 @@ Cambia el nombre y el título profesional del trainer (GX2). **Rol:** `trainer`.
 
 **Errores:** `400 VALIDATION_ERROR` (`field: "name"` o `"professional_title"` fuera de rango; `field: "body"` sin ningún campo editable), `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND`.
 
+### PUT /auth/me/avatar
+
+Sube o reemplaza la foto de perfil del trainer (deseable "Foto del entrenador", mismo patrón que `PUT /students/:id/avatar`). **Rol:** `trainer`; siempre la del token (no hay `:id`). `multipart/form-data` con un solo archivo en el campo `image` (JPEG, PNG o WebP, hasta 5 MB; la web la achica a 512 px antes de subirla). El tipo se valida por los bytes del archivo, no por el `Content-Type`.
+
+**200 OK**
+
+```json
+{ "data": { "avatar_url": "https://…/object/sign/avatars/trainers/…?token=…" } }
+```
+
+- Se guarda en el bucket privado `avatars` como `trainers/<id>/<uuid>.<ext>` y la ruta queda en `trainers.avatar_url`; la respuesta trae la URL firmada (1 h). La foto anterior se borra en best-effort (solo si es del mismo PT). Si guardar la ruta falla, la subida se borra y responde el error.
+- La ven sus alumnos en "Tu entrenador/a" y en la cabecera de Mensajes (`counterpart.avatar_url` de `GET /messages/:studentId`), y el propio PT en el login y en `GET /auth/me`.
+
+**Errores:** `400 VALIDATION_ERROR` (`field: "image"`: sin archivo, más de un archivo o formulario inválido), `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND` (la cuenta ya no existe), `413 IMAGE_TOO_LARGE`, `415 IMAGE_TYPE_INVALID`.
+
+### DELETE /auth/me/avatar
+
+Quita la foto de perfil del trainer. **Rol:** `trainer`. Deja `avatar_url` en `null` y borra el archivo del bucket (best-effort). **204 No Content**, también si no tenía foto (idempotente).
+
+**Errores:** `401 UNAUTHORIZED`, `403 FORBIDDEN` (rol alumno), `404 NOT_FOUND`.
+
 ---
 
 ## Módulo: Invitaciones (WhatsApp + QR onboarding)
@@ -225,9 +246,15 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
   "gym_equipment": ["string (opcional, hasta 30 ítems de 1–50 chars)"],
   "injuries": "string (opcional, hasta 1000 chars)",
   "template_id": "uuid (opcional): plantilla inicial, propia",
-  "routine_days": ["monday", "..."] (requerido con template_id)
+  "routine_days": ["monday", "..."] (requerido con template_id),
+  "weekly_frequency": "entero 1–7 (opcional): días por semana que quiere entrenar",
+  "height_cm": "número 50–250 (opcional)",
+  "weight_kg": "número 20–300 (opcional)",
+  "birth_date": "YYYY-MM-DD (opcional): real, desde 1900 y no futura"
 }
 ```
+
+> **Datos extra (deseable, 14/11).** `weekly_frequency`, `height_cm`, `weight_kg` y `birth_date` son opcionales (ausentes o `null` = sin dato; fuera de rango → 400 en ese campo). Se guardan en la invitación y se **copian al alta** (`POST /students`): frecuencia y nacimiento al alumno; altura y peso como su primera medida. `GET /invitations/:token` (público) **no** los expone, ni tampoco el teléfono, el contexto IA ni la plantilla. No viajan a la IA (RNF-26): el contexto de los asistentes sigue siendo objetivo, nivel, equipamiento y lesiones.
 
 > **Plantilla inicial (GX8).** `template_id` (opcional, `null` = sin plantilla) es una plantilla **propia**: ajena o inexistente → **404 `TEMPLATE_NOT_FOUND`** (no se revela qué ids existen). `routine_days` es un arreglo no vacío de `monday..sunday` sin repetidos y va **siempre y solo con `template_id`**: plantilla sin días (ausentes o `null`) → 400 en `routine_days`, y días sin plantilla → 400 en `routine_days`. Así, si la plantilla se borra antes del alta (la FK deja `template_id` en `null`), la invitación se sigue distinguiendo de una sin plantilla por sus días y al PT le llega `initial_routine_failed`. La plantilla se valida al invitar y se **copia al alta** (`POST /students`): vale la versión de la plantilla en ese momento. `GET /invitations/:token` no la expone.
 
@@ -261,6 +288,8 @@ Valida un token y retorna los datos precargados. Público.
 
 `goal` puede ser `null` si el PT no lo cargó al invitar.
 
+`trainer` es `{ id, name, specialty, avatar_url }`; `avatar_url` sale firmada (1 h) o `null`, como en el resto de la API (nunca la ruta del bucket).
+
 **Errores:** `404 INVITATION_NOT_FOUND`, `410 INVITATION_EXPIRED`, `410 INVITATION_ALREADY_USED`, `429 RATE_LIMIT_EXCEEDED`
 
 ### POST /students (desde invitación)
@@ -280,13 +309,15 @@ Crea el alumno desde el token de invitación. Público.
 
 > **Rutina inicial (GX8).** Si la invitación tenía plantilla inicial, el alumno arranca con esa rutina activa (copia de la plantilla con `POST /routine-templates/:id/instantiate`, con los `routine_days` de la invitación). La respuesta no cambia. **El alta nunca falla por la rutina:** si la plantilla se borró después de invitar, tiene ejercicios que ya no están o falla el insert, el alumno se crea igual, sin rutina, y al PT le llega la notificación `initial_routine_failed` (ver Módulo: Notificaciones).
 
+> **Datos extra (deseable, 14/11).** El alumno nace con el `weekly_frequency` y el `birth_date` de la invitación. Si la invitación traía altura o peso, se le crea la **primera medida** (`body_metrics`, `recorded_by: "trainer"`, `recorded_at` = el alta) con lo que haya; así aparece en `latest_metrics` de la ficha y en el IMC. **El alta nunca falla por la medida:** si no se puede guardar, se loguea y el alumno se crea igual (sin aviso: el PT la puede cargar desde la ficha).
+
 **Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del alta).
 
 ---
 
 ## Módulo: Alumnos
 
-**Fotos de perfil (GX2).** En todas las respuestas que la traen (lista y ficha de alumnos, login, `GET`/`PATCH /auth/me`, contraparte y conversaciones de Mensajes, alumno de los Turnos), `avatar_url` es una **URL firmada que vence en 1 h** (3600 s, igual que las fotos del chat) del bucket privado `avatars`, o `null` si no hay foto o no se pudo firmar (la firma es best-effort: si Storage falla, la respuesta sale igual). No hay que guardarla más que la sesión: al volver a pedir el recurso llega firmada de nuevo. La ruta del bucket nunca sale.
+**Fotos de perfil (GX2).** En todas las respuestas que la traen (lista y ficha de alumnos, login, `GET`/`PATCH /auth/me`, `PUT /auth/me/avatar`, el PT de `GET /invitations/:token`, contraparte y conversaciones de Mensajes, alumno de los Turnos), `avatar_url` es una **URL firmada que vence en 1 h** (3600 s, igual que las fotos del chat) del bucket privado `avatars`, o `null` si no hay foto o no se pudo firmar (la firma es best-effort: si Storage falla, la respuesta sale igual). No hay que guardarla más que la sesión: al volver a pedir el recurso llega firmada de nuevo. La ruta del bucket nunca sale.
 
 ### GET /students
 
@@ -384,7 +415,7 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "goal": "strength", "level": "beginner", "birth_date": "1999-05-01", "avatar_url": null,
     "active": true, "gym_equipment": ["Mancuernas", "Banco"], "injuries": "Lumbalgia",
     "created_at": "2026-10-17T12:00:00Z", "must_change_password": false, "password_changed_at": null,
-    "phone": "+54 9 11 2233-4455",
+    "phone": "+54 9 11 2233-4455", "weekly_frequency": 4,
     "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
@@ -397,6 +428,8 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
 > `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
 >
 > GX1: `must_change_password` (`true` mientras el alumno no elija una clave nueva después de un blanqueo) y `password_changed_at` (último cambio o blanqueo; `null` si nunca). Son de solo lectura: `PATCH` los ignora (los cambian `PUT /auth/password` y `POST /students/:id/password-reset`).
+>
+> `weekly_frequency`: días por semana que el alumno quiere entrenar (1–7, o `null`), cargado al invitar o editado por el PT. No es el `days_per_week` de `GET /students`, que sale de la rutina activa.
 >
 > GX2: `phone` (texto tal como se cargó, o `null`). Al alta se copia el `student_phone` de la invitación si tiene entre 6 y 30 caracteres.
 
@@ -434,6 +467,7 @@ Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alum
 | `level` | `beginner`, `intermediate` o `advanced` |
 | `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; además, sus turnos futuros `pending` o `confirmed` pasan a `cancelled` (liberan el horario, sin notificaciones). **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña; los turnos cancelados no vuelven |
 | `birth_date` | `YYYY-MM-DD`, no futura, o `null` |
+| `weekly_frequency` | entero 1–7 (días por semana que quiere entrenar), o `null` |
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
 
@@ -664,6 +698,18 @@ Quita un ejercicio de la rutina. **204**. Mismo 404 que el PATCH. Si es el únic
 
 Reordena los ejercicios de una rutina propia (trainer dueño). Body: `{ "routine_exercise_ids": ["uuid", …] }`, de 1 a 100 ids sin repetidos, que tienen que ser **exactamente** los ejercicios de la rutina (si falta o sobra alguno → 400 `VALIDATION_ERROR` con `field: "routine_exercise_ids"`). Cada uno queda con `order_index` = su posición. **200 OK** devuelve la rutina completa (forma de `GET /routines/:id`). Ajena → 403, inexistente → 404. Es atómico: la función SQL `reorder_routine_exercises` valida el conjunto y guarda todo en una transacción con la rutina bloqueada, así que nunca queda un orden a medias ni dos reorders se pisan. Es idempotente: el body es el estado final.
 
+### Edición de una rutina asignada desde la web
+
+El editor web (`/pt/rutinas/:id/editar`, deseable "Editar rutinas ya asignadas") no tiene un endpoint propio: con
+`GET /routines/:id` carga la rutina y, al guardar, manda solo lo que cambió, en este orden: `PATCH /routines/:id`
+(cabecera) → `POST /routines/:id/exercises` (altas) → `PATCH .../exercises/:reId` (valores) → `DELETE
+.../exercises/:reId` (bajas) → `PUT .../exercises/order` (orden final, si hace falta). Las altas van antes que las
+bajas para que reemplazar el único ejercicio no choque con el 409 `ROUTINE_NEEDS_EXERCISE`. **Reemplazar** un ejercicio
+es la baja de su fila y el alta del nuevo con los mismos valores, en el mismo lugar: las series pasadas conservan su
+`exercise_id` (historial y progreso intactos) y su `routine_exercise_id` queda en `null`. Antes de guardar vuelve a
+pedir `GET /routines/:id`: si la rutina cambió desde que se abrió, pregunta antes de pisarla. Si un paso falla, lo
+anterior queda guardado y reintentar manda solo lo que falta.
+
 ### GET /routines/today
 
 Rutina activa del alumno para hoy. Solo alumnos.
@@ -782,7 +828,7 @@ Pide una propuesta de rutina: de 1 a 7 **bloques**, cada uno con nombre, días y
 
 Los campos de más se descartan.
 
-**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 38 s (n8n corta a los 36 s; el celular espera 40 s). **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
+**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 38 s (n8n corta a los 36 s; el celular espera 50 s). **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
 
 ```json
 {

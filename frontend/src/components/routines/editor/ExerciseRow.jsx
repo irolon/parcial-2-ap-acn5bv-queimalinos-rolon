@@ -34,7 +34,7 @@ function Cell({ item, name, value, error, width, inputMode, label, field, onChan
 }
 
 /** Fila de la tabla: `#`, asa (opcional), ejercicio, campos editables y menú. `exercise` puede faltar si salió de la biblioteca. */
-export default function ExerciseRow({ item, index, last, exercise, errors = {}, onChange, onMove, onRemove, handle, rowRef, style, dragging }) {
+export default function ExerciseRow({ item, index, last, exercise, errors = {}, onChange, onMove, onRemove, onReplace, handle, rowRef, style, dragging }) {
   const name = exercise?.name ?? 'Ejercicio';
   const rowError = [errors.exercise_id, errors.order].filter(Boolean).join(' · ');
   return (
@@ -57,7 +57,7 @@ export default function ExerciseRow({ item, index, last, exercise, errors = {}, 
         <Cell key={spec.field} item={item} name={name} value={item[spec.field]} error={errors[spec.field]} onChange={onChange} {...spec} />
       ))}
       <td className="px-1.5 py-2 align-top">
-        <RowMenu name={name} isFirst={index === 0} isLast={last} onMove={(delta) => onMove(item.key, delta)} onRemove={() => onRemove(item.key)} />
+        <RowMenu name={name} isFirst={index === 0} isLast={last} onMove={(delta) => onMove(item.key, delta)} onRemove={() => onRemove(item.key)} onReplace={onReplace && (() => onReplace(item.key))} />
       </td>
     </tr>
   );

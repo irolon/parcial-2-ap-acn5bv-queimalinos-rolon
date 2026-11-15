@@ -27,7 +27,13 @@ export const STUDENT_DETAIL_COLUMNS =
   // GX1: el login y el refresh del alumno leen la ficha para el cambio obligatorio.
   'must_change_password, password_changed_at, ' +
   // GX2: lo edita el alumno o su PT.
-  'phone';
+  'phone, ' +
+  // Días por semana que quiere entrenar (se carga al invitar; lo edita el PT).
+  'weekly_frequency';
+
+/** Frecuencia de entrenamiento del alumno (días por semana; mismo CHECK que students.weekly_frequency). */
+export const WEEKLY_FREQUENCY_MIN = 1;
+export const WEEKLY_FREQUENCY_MAX = 7;
 
 /** Lo único que el alumno puede cambiar de sí mismo por PATCH /students/:id (GX2). */
 export const STUDENT_SELF_EDITABLE = ['name', 'phone'];

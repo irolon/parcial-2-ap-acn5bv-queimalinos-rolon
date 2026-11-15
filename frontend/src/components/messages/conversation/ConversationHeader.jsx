@@ -6,7 +6,7 @@ import { profileHref } from '@/routes/routeTable';
 const ACTION =
   'rounded-md px-2 py-1 font-display text-xs font-medium text-bone0 hover:bg-ink2 focus-visible:outline-2 focus-visible:outline-accentText';
 
-/** Encabezado: avatar y nombre del otro. El PT suma "Ver ficha"; `onBack` agrega "Volver" (paneles en mobile). */
+/** Encabezado: foto (o iniciales) y nombre del otro. El PT suma "Ver ficha"; `onBack` agrega "Volver" (paneles en mobile). */
 export default function ConversationHeader({ counterpart, studentId, viewerRole, onBack }) {
   const name = counterpart?.name ?? '';
   return (
@@ -16,7 +16,7 @@ export default function ConversationHeader({ counterpart, studentId, viewerRole,
           <ArrowLeft size={20} aria-hidden="true" />
         </button>
       )}
-      <Avatar name={name} size={36} decorative />
+      <Avatar name={name} src={counterpart?.avatar_url} size={36} decorative />
       <h2 className="min-w-0 flex-1 truncate font-display text-sm font-semibold text-bone0">{name}</h2>
       {viewerRole === 'trainer' && (
         <Link to={profileHref(studentId)} className={ACTION}>

@@ -10,6 +10,7 @@ const WITHOUT_BODY = {
   'POST /api/messages/:studentId/read': 'marca la conversación como leída; solo valida el :studentId',
   'POST /api/students/:id/password-reset': 'genera la clave en el servidor; solo valida el :id',
   'PUT /api/students/:id/avatar': 'multipart: solo el archivo image, validado por firma en el service',
+  'PUT /api/auth/me/avatar': 'multipart: solo el archivo image del PT, validado por firma en el service',
 };
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];

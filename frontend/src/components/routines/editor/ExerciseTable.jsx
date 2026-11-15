@@ -7,8 +7,8 @@ import { dndAnnouncements } from './dndAnnouncements';
 
 const HEAD = 'px-2 py-2 text-left font-mono text-[9px] font-normal uppercase tracking-[1px] text-ink6';
 
-/** Tabla editable de la rutina. `errors` es `exercises` de `validateRoutine` (por `key`). */
-export default function ExerciseTable({ exercises, byId, errors = {}, onChange, onMove, onReorder, onRemove }) {
+/** Tabla editable de la rutina. `errors` es `exercises` de `validateRoutine` (por `key`). `onReplace` (opcional) suma "Reemplazar" al menú de cada fila. */
+export default function ExerciseTable({ exercises, byId, errors = {}, onChange, onMove, onReorder, onRemove, onReplace }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -56,6 +56,7 @@ export default function ExerciseTable({ exercises, byId, errors = {}, onChange, 
                   onChange={onChange}
                   onMove={onMove}
                   onRemove={onRemove}
+                  onReplace={onReplace}
                 />
               ))}
             </tbody>

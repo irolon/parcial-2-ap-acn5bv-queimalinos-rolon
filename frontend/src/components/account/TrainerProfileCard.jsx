@@ -4,6 +4,7 @@ import LoadingState from '@/components/shared/states/LoadingState';
 import Button from '@/components/shared/ui/Button';
 import Card from '@/components/shared/ui/Card';
 import Input from '@/components/shared/ui/Input';
+import TrainerProfilePhoto from '@/components/account/TrainerProfilePhoto';
 import { useTrainerProfile } from '@/hooks/account/useTrainerProfile';
 import { NO_FIELD_ERRORS, fieldErrorsFrom } from '@/utils/fieldErrors';
 
@@ -72,14 +73,21 @@ function ProfileForm({ me, save, saving }) {
   );
 }
 
-/** "Tu perfil" en Tu cuenta (GX2): el PT cambia su nombre y su título profesional, que ven sus alumnos. */
+/** "Tu perfil" en Tu cuenta (GX2): el PT cambia su foto, su nombre y su título profesional, que ven sus alumnos. */
 export default function TrainerProfileCard() {
   const { query, save, saving } = useTrainerProfile();
   let content;
   if (query.isPending) content = <LoadingState rows={2} label="Cargando tu perfil…" />;
   else if (query.isError && !query.data) {
     content = <ErrorState message="No pudimos cargar tu perfil." onRetry={() => query.refetch()} />;
-  } else content = <ProfileForm me={query.data} save={save} saving={saving} />;
+  } else {
+    content = (
+      <div className="flex flex-col gap-5">
+        <TrainerProfilePhoto me={query.data} />
+        <ProfileForm me={query.data} save={save} saving={saving} />
+      </div>
+    );
+  }
 
   return (
     <section aria-label="Tu perfil">

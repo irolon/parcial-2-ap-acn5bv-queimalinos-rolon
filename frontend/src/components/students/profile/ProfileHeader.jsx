@@ -5,7 +5,7 @@ import StudentStatusPill from '@/components/students/StudentStatusPill';
 import { activityStatus } from '@/utils/students/activity';
 import { ageFrom } from '@/utils/students/age';
 import { whatsappHref } from '@/utils/students/profile/phone';
-import { goalLabel, levelLabel } from '@/utils/students/studentOptions';
+import { frequencyLabel, goalLabel, levelLabel } from '@/utils/students/studentOptions';
 
 /** El teléfono del alumno con link a WhatsApp (GX2); si no alcanza para un link, como texto. */
 function PhoneLine({ phone }) {
@@ -31,10 +31,12 @@ function PhoneLine({ phone }) {
   );
 }
 
-/** Avatar (con su foto), nombre, edad · nivel, teléfono y pills de estado y objetivo. */
+/** Avatar (con su foto), nombre, edad · nivel · frecuencia, teléfono y pills de estado y objetivo. */
 export default function ProfileHeader({ student, now }) {
   const age = ageFrom(student.birth_date, now);
-  const details = [age !== null && `${age} años`, levelLabel(student.level)].filter(Boolean);
+  const details = [age !== null && `${age} años`, levelLabel(student.level), frequencyLabel(student.weekly_frequency)].filter(
+    Boolean,
+  );
   const goal = goalLabel(student.goal);
   return (
     <div className="flex flex-col items-center gap-2 text-center">

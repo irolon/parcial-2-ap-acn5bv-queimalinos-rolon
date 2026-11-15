@@ -73,12 +73,16 @@ select 'falta el índice idx_sessions_open (falta 2026-11-09-open-sessions.sql)'
 where to_regclass('public.idx_sessions_open') is null
 
 union all
-select 'falta la columna invitations.' || c
-from (values ('student_gym_equipment'), ('student_injuries'), ('student_level'),
-  ('template_id'), ('routine_days')) v (c)
+select format('falta la columna %s.%s', v.t, v.c)
+from (values ('invitations', 'student_gym_equipment'), ('invitations', 'student_injuries'),
+  ('invitations', 'student_level'), ('invitations', 'template_id'), ('invitations', 'routine_days'),
+  -- Datos extra al invitar (falta 2026-11-14-invitar-extras.sql):
+  ('invitations', 'student_weekly_frequency'), ('invitations', 'student_height_cm'),
+  ('invitations', 'student_weight_kg'), ('invitations', 'student_birth_date'),
+  ('students', 'weekly_frequency')) v (t, c)
 where not exists (
   select 1 from information_schema.columns
-  where table_schema = 'public' and table_name = 'invitations' and column_name = v.c
+  where table_schema = 'public' and table_name = v.t and column_name = v.c
 )
 
 union all

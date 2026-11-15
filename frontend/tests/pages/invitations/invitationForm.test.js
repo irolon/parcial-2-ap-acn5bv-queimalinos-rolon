@@ -49,6 +49,20 @@ describe('invitationForm', () => {
     expect(validateInvitationBody({ student_phone: '+54 1234 56' })).toEqual({});
   });
 
+  it('buildInvitationBody suma los datos extra y validateInvitationBody los valida', () => {
+    const body = buildInvitationBody(formData({ ...BASE, weekly_frequency: '3', height_cm: '400' }));
+    expect(body).toMatchObject({ weekly_frequency: 3, height_cm: 400 });
+    expect(validateInvitationBody(body)).toEqual({ height_cm: 'Entre 50 y 250 cm' });
+  });
+
+  it('toInvitationErrors pone en su campo los errores de los datos extra', () => {
+    const details = ['weekly_frequency', 'height_cm', 'weight_kg', 'birth_date', 'gym_equipment', 'injuries'].map(
+      (field) => ({ field, message: `mal ${field}` }),
+    );
+    const error = new ApiError({ status: 400, code: 'VALIDATION_ERROR', message: 'Backend', details });
+    expect(Object.keys(toInvitationErrors(error).fields)).toHaveLength(6);
+  });
+
   it('toInvitationErrors mapea email duplicado, validación y el resto', () => {
     const err = (code, details) => new ApiError({ status: 400, code, message: 'Backend', details });
     expect(toInvitationErrors(err('STUDENT_EMAIL_EXISTS')).fields).toEqual({

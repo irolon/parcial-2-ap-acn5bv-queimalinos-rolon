@@ -13,6 +13,7 @@ import { latestForStudent } from '../body-metrics/body-metrics.service.js';
 import { assertCanAccessStudent } from './student-access.service.js';
 import { signAvatars } from './avatar-urls.service.js';
 import { assignInitialRoutine } from './initial-routine.service.js';
+import { assignInitialMetrics } from './initial-metrics.service.js';
 import * as appointments from '../agenda/appointments.service.js';
 import { localDate } from '../../shared/utils/dates/dates.js';
 import { adherence7d, adherenceWindowStart, daysPerWeek } from '../../models/students/adherence.js';
@@ -159,6 +160,8 @@ export async function registerFromInvitation({ token, password }) {
       injuries: invitation.student_injuries ?? null,
       level: invitation.student_level ?? null,
       phone: phoneFromInvitation(invitation.student_phone),
+      weeklyFrequency: invitation.student_weekly_frequency ?? null,
+      birthDate: invitation.student_birth_date ?? null,
       passwordHash,
     });
   } catch (err) {
@@ -168,8 +171,9 @@ export async function registerFromInvitation({ token, password }) {
     throw err;
   }
 
-  // Plantilla inicial de la invitación (GX8): nunca hace fallar el alta.
+  // Plantilla inicial (GX8) y primera medida (altura y peso): nunca hacen fallar el alta.
   await assignInitialRoutine(invitation, student);
+  await assignInitialMetrics(invitation, student);
   const tokens = await issueTokens(student, 'student');
   return { student, ...tokens };
 }

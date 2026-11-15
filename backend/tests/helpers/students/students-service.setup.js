@@ -84,6 +84,10 @@ jest.unstable_mockModule(src('services/notifications/notify.service.js'), () => 
   notify: mockNotify,
 }));
 
+// Primera medida del alta (initial-metrics.service corre de verdad; se mockea el repository).
+export const mockBodyMetricsRepo = { insertMetric: jest.fn() };
+jest.unstable_mockModule(src('repositories/body-metrics/body-metrics.repository.js'), () => mockBodyMetricsRepo);
+
 export const service = await import(src('services/students/students.service.js'));
 
 export const VALID_INVITATION = {

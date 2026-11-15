@@ -26,7 +26,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | name | varchar | |
 | specialty | varchar | |
 | professional_title | varchar(80) | opcional (GX2): "Lic. en Educación Física"; lo carga el PT en su cuenta y lo ven sus alumnos. No va en el registro |
-| avatar_url | text | |
+| avatar_url | text | foto del PT (deseable): **ruta** en el bucket privado `avatars` (`trainers/<id>/<uuid>.<ext>`), no una URL; la API la reemplaza por una URL firmada de 1 h |
 | password_changed_at | timestamptz | último cambio de clave (GX1); null = nunca desde el alta |
 | created_at | timestamptz | |
 
@@ -39,9 +39,10 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | name | varchar | |
 | email | varchar | |
 | goal | enum | tonify / weight_loss / hypertrophy / strength |
-| birth_date | date | |
+| birth_date | date | al alta se copia de `invitations.student_birth_date` |
 | avatar_url | text | GX2: **ruta** en el bucket privado `avatars` (`students/<id>/<uuid>.<ext>`), no una URL; la API la reemplaza por una URL firmada de 1 h |
 | phone | varchar(30) | opcional (GX2): 6–30 caracteres entre dígitos, espacios y `+ - ( )`. Lo edita el alumno o su PT; al alta se copia de `invitations.student_phone` |
+| weekly_frequency | smallint | opcional, 1–7: días por semana que quiere entrenar. Al alta se copia de `invitations.student_weekly_frequency`; lo edita el PT. No es el `days_per_week` de `GET /students` (sale de la rutina activa) |
 | active | boolean | |
 | gym_equipment | text[] | equipamiento disponible — usado por la IA del alumno |
 | injuries | text | lesiones / restricciones a tener en cuenta |
@@ -79,6 +80,12 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | used_at | timestamptz | null = no usado aún |
 | template_id | uuid | FK → routine_templates, `on delete set null`; plantilla inicial (opcional) que se copia al alumno en el alta (GX8) |
 | routine_days | text[] | días de la plantilla inicial (`sunday..saturday`); obligatorios con `template_id` (los exige `POST /invitations`): null con `template_id` null = sin plantilla; con días = la plantilla se borró antes del alta (GX8) |
+| student_weekly_frequency | smallint | opcional, 1–7; se copia a `students.weekly_frequency` en el alta |
+| student_height_cm | numeric | opcional, 50–250; con el peso, primera fila de `body_metrics` en el alta (`recorded_by = 'trainer'`) |
+| student_weight_kg | numeric | opcional, 20–300; ídem |
+| student_birth_date | date | opcional; se copia a `students.birth_date` en el alta |
+
+> Datos extra al invitar (deseable, 14/11): migración `backend/src/database/migrations/2026-11/09-15/2026-11-14-invitar-extras.sql`. Ninguno sale por `GET /invitations/:token` (público) ni va a la IA.
 
 ---
 
@@ -386,7 +393,7 @@ Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede ha
 
 **Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
 
-**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/09-15/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
+**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2, y del PT)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`, y `trainers/<trainer_id>/<uuid>.<ext>`, guardadas en `trainers.avatar_url` (sin migración: no hay políticas por prefijo, todo pasa por la `service_role`). El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/09-15/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
 
 ---
 

@@ -372,6 +372,8 @@ Se pidió "RAG" para darle más contexto. Hay que decidir cómo llega ese contex
 
 **Actualización 09/11/2026.** En la prueba real (Tarea 7b), la capa gratis de NVIDIA no sirvió: los modelos elegidos estaban saturados (no contestaban ni un "hola" en 150 s) y el único rápido (`nemotron-3.5-lightning`) armaba mal 7 de cada 10 rutinas. Igna decidió volver a **KIMI** (Moonshot, prepago) como proveedor por defecto, con `kimi-k3.1-pro` y el razonamiento apagado (`LLM_EXTRA_BODY`), porque pensando gasta más tokens y no llega a los tiempos del backend. NVIDIA queda como alternativa gratis, configurable sin tocar código.
 
+**Actualización 14/11/2026 (tiempos).** En la prueba real de la web contra n8n + KIMI, el chat del alumno respondió en 5,5 y 7,2 s (dentro del RNF-04, < 10 s) y el asistente del entrenador en 26 s (dentro del RNF-05, < 30 s) y 30 s (en el límite; las dos con alumno y su rutina actual, sin historial, así que no aplica el margen de 60 s para casos complejos). Con el corte de 28 s en n8n y 30 s en el backend, la de 30 s habría sido un 503, así que el corte de `trainer-ia` pasó a **36 s en n8n, 38 s en el backend y 50 s en el celular** (#115 y #117). El chat quedó en 15 s (n8n), 16 s (backend) y 18 s (web). Los cortes son el máximo antes de dar la IA por caída, no la meta: por eso pueden pasar los 10 s del RNF-04 sin contradecirlo. Pasado el corte, la app sigue sin la IA (chat) o muestra el error con reintentar y armar a mano (entrenador).
+
 ### Justificación
 
 - Los datos son ordenados (tablas de Supabase) y entran en el prompt, así que los vectores no aportan.

@@ -33,3 +33,15 @@ describe('ProfileHeader: teléfono y foto', () => {
     expect(container.querySelector('img')).toHaveAttribute('src', 'https://storage.test/s.jpg');
   });
 });
+
+describe('ProfileHeader: frecuencia', () => {
+  it('suma la frecuencia a la edad y el nivel', () => {
+    show({ birth_date: '2002-03-15', level: 'intermediate', weekly_frequency: 4 });
+    expect(screen.getByText('24 años · Intermedio · 4 días/semana')).toBeVisible();
+  });
+
+  it('sin frecuencia no la muestra', () => {
+    show({ birth_date: '2002-03-15', level: null, weekly_frequency: null });
+    expect(screen.getByText('24 años')).toBeVisible();
+  });
+});

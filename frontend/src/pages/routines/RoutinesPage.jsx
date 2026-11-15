@@ -3,7 +3,7 @@ import { List, Sparkles } from 'lucide-react';
 import QueryState from '@/components/shared/states/QueryState';
 import { buttonClass } from '@/components/shared/ui/Button';
 import { useRoutinesQuery } from '@/hooks/routines/useRoutines';
-import { NEW_ROUTINE, aiRoutineHref, profileHref } from '@/routes/routeTable';
+import { NEW_ROUTINE, aiRoutineHref, editRoutineHref, profileHref } from '@/routes/routeTable';
 import { STATUS_LABELS } from '@/utils/students/activity';
 import { formatRoutineDays } from '@/utils/students/routineDays';
 
@@ -34,6 +34,9 @@ function RoutineRow({ routine }) {
       <span className={routine.active ? 'text-accentText' : 'text-ink6'}>
         {routine.active ? 'Activa' : 'Inactiva'}
       </span>
+      <Link to={editRoutineHref(routine.id)} aria-label={`Editar ${routine.name}`} className={buttonClass({ variant: 'ghost', size: 'sm' })}>
+        Editar
+      </Link>
     </li>
   );
 }

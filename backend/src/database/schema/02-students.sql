@@ -58,3 +58,17 @@ alter table invitations add column if not exists student_injuries text;
 alter table invitations add column if not exists student_level varchar(20)
   check (student_level in ('beginner', 'intermediate', 'advanced'));
 
+-- Datos extra al invitar (deseable, 14/11): frecuencia, altura, peso y nacimiento. Se copian
+-- al alta: frecuencia y nacimiento a students; altura y peso como primera medida (body_metrics).
+alter table invitations add column if not exists student_weekly_frequency smallint
+  check (student_weekly_frequency between 1 and 7);
+alter table invitations add column if not exists student_height_cm numeric
+  check (student_height_cm between 50 and 250);
+alter table invitations add column if not exists student_weight_kg numeric
+  check (student_weight_kg between 20 and 300);
+alter table invitations add column if not exists student_birth_date date;
+
+-- students: días por semana que quiere entrenar (no confundir con el days_per_week que
+-- GET /students calcula de la rutina activa). Lo carga el PT al invitar o en la ficha.
+alter table students add column if not exists weekly_frequency smallint
+  check (weekly_frequency between 1 and 7);

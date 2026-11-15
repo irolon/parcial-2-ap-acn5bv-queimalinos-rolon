@@ -22,6 +22,12 @@ describe('validateRoutine', () => {
     expect(validateRoutine(updateHeader(stateWith(), 'name', 'x'.repeat(121))).header.name).toBeDefined();
   });
 
+  it('con goalOptional (rutina guardada sin objetivo) no pide objetivo', () => {
+    const state = updateHeader(stateWith(), 'goal', '');
+    expect(validateRoutine(state).header.goal).toBe('Elegí un objetivo');
+    expect(validateRoutine(state, { goalOptional: true }).count).toBe(0);
+  });
+
   it('rechaza Infinity y hexadecimales en los opcionales', () => {
     let state = stateWith([EX_A]);
     const key = state.exercises[0].key;

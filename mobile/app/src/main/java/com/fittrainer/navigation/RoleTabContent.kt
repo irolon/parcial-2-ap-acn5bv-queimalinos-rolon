@@ -22,6 +22,8 @@ import com.fittrainer.ui.account.AccountActions
 import com.fittrainer.ui.account.AccountScreen
 import com.fittrainer.ui.account.PASSWORD_CHANGED_KEY
 import com.fittrainer.ui.placeholder.PlaceholderScreen
+import com.fittrainer.navigation.student.STUDENT_PROGRESS_HISTORY_ROUTE
+import com.fittrainer.navigation.student.progressChartsRoute
 import com.fittrainer.ui.progress.ProgressOpen
 import com.fittrainer.ui.progress.ProgressScreen
 import com.fittrainer.ui.routines.RoutinesScreen
@@ -70,7 +72,8 @@ internal fun TabScreen(
             onOpenLibrary = { navController.navigate(STUDENT_LIBRARY_ROUTE) { launchSingleTop = true } },
         )
         tab.route == STUDENT_PROGRESS_ROUTE -> ProgressScreen(
-            onOpen = { navController.navigate(historyDetailRoute(it)) },
+            onOpenHistory = { navController.navigate(STUDENT_PROGRESS_HISTORY_ROUTE) { launchSingleTop = true } },
+            onOpenCharts = { navController.navigate(progressChartsRoute(it)) { launchSingleTop = true } },
             onOpenAchievements = { navController.navigate(STUDENT_ACHIEVEMENTS_ROUTE) { launchSingleTop = true } },
             openRequest = progressOpen,
             onOpenHandled = launches::onProgressOpenHandled,

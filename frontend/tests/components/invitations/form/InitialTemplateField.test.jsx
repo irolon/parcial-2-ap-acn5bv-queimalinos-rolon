@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import InitialTemplateField from '@/components/invitations/InitialTemplateField';
-import { setupUser } from '../../helpers/shared/user';
-import { errorResponse, jsonResponse, stubFetch } from '../../helpers/shared/fetchMock';
+import InitialTemplateField from '@/components/invitations/form/InitialTemplateField';
+import { setupUser } from '../../../helpers/shared/user';
+import { errorResponse, jsonResponse, stubFetch } from '../../../helpers/shared/fetchMock';
 
 const PUSH = { id: 't-1', name: 'Push A', level: 'intermediate', days: ['thursday', 'monday', 'tuesday', 'friday'] };
 const LEGS = { id: 't-2', name: 'Piernas', level: null, days: ['wednesday'] };

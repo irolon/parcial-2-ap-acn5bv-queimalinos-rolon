@@ -3,6 +3,7 @@ import { env } from '../../config/env.js';
 import { Errors } from '../../shared/utils/errors.js';
 import { toQrDataUrl } from '../../shared/utils/qr.js';
 import * as repository from '../../repositories/invitations/invitations.repository.js';
+import { signAvatars } from '../students/avatar-urls.service.js';
 import { getOwnedTemplate } from '../routine-templates/routine-templates.service.js';
 import {
   INVITATION_EXPIRY_HOURS,
@@ -54,6 +55,10 @@ export async function createInvitation(trainerId, data) {
     studentLevel: data.level ?? null,
     templateId: data.template_id ?? null,
     routineDays: data.routine_days ?? null,
+    studentWeeklyFrequency: data.weekly_frequency ?? null,
+    studentHeightCm: data.height_cm ?? null,
+    studentWeightKg: data.weight_kg ?? null,
+    studentBirthDate: data.birth_date ?? null,
     expiresAt: expiryISO(),
   });
 
@@ -84,5 +89,7 @@ export async function getByToken(token) {
   if (!invitation) throw Errors.invitationNotFound();
   if (isUsed(invitation)) throw Errors.invitationUsed();
   if (isExpired(invitation)) throw Errors.invitationExpired();
-  return toPublicInvitation(invitation);
+  // Pública (el token es el secreto): la foto del PT sale firmada, nunca la ruta del bucket.
+  const [trainer] = await signAvatars([invitation.trainer ?? null]);
+  return toPublicInvitation({ ...invitation, trainer });
 }

@@ -9,6 +9,7 @@ import ChallengesPage from '@/pages/challenges/ChallengesPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage';
 import RoutineEditorPage from '@/pages/routines/RoutineEditorPage';
+import RoutineEditPage from '@/pages/routines/RoutineEditPage';
 import RoutinesPage from '@/pages/routines/RoutinesPage';
 import AiRoutinePage from '@/pages/trainer-ai/AiRoutinePage';
 import NewStudentPage from '@/pages/invitations/NewStudentPage';
@@ -33,6 +34,7 @@ import {
   AI_ROUTINE,
   CHANGE_PASSWORD_PATH,
   NEW_ROUTINE,
+  EDIT_ROUTINE,
   NEW_STUDENT,
   ROLES,
   STUDENT_NAV,
@@ -92,6 +94,7 @@ export const routes = [
     },
     { path: STUDENT_PROFILE.path, element: <StudentProfilePage /> },
     { path: NEW_ROUTINE.path, element: <RoutineEditorPage /> },
+    { path: EDIT_ROUTINE.path, element: <RoutineEditPage /> },
     {
       path: AI_ROUTINE.path,
       handle: { title: AI_ROUTINE.title, subtitle: AI_ROUTINE.subtitle },

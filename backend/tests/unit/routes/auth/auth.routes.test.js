@@ -6,9 +6,18 @@ import {
 } from '../../../../src/shared/middlewares/auth.middleware.js';
 import * as authController from '../../../../src/controllers/auth/auth.controller.js';
 import * as profileController from '../../../../src/controllers/auth/profile.controller.js';
+import { parseImageUpload } from '../../../../src/shared/middlewares/upload.middleware.js';
 
 const layerOf = (path, method = 'post') =>
   router.stack.find((layer) => layer.route?.path === path && layer.route.methods[method]);
+const res = { status: () => res, json: () => res };
+const roleRejects = (role, r) => {
+  let err = 'sin llamar';
+  role({ user: { role: r } }, res, (e) => {
+    err = e;
+  });
+  return err;
+};
 const handlersOf = (path, method) => layerOf(path, method).route.stack.map((s) => s.handle);
 
 describe('auth.routes', () => {
@@ -33,15 +42,6 @@ describe('auth.routes', () => {
 });
 
 describe('auth.routes — /me (GX2)', () => {
-  const res = { status: () => res, json: () => res };
-  const roleRejects = (role, r) => {
-    let err = 'sin llamar';
-    role({ user: { role: r } }, res, (e) => {
-      err = e;
-    });
-    return err;
-  };
-
   it('GET /me: authenticate, solo trainer y getMe', () => {
     const [auth, role, handler] = handlersOf('/me', 'get');
     expect(auth).toBe(authenticate);
@@ -56,5 +56,23 @@ describe('auth.routes — /me (GX2)', () => {
     expect(roleRejects(role, 'student')).toMatchObject({ statusCode: 403 });
     expect(body.validates).toBe('body');
     expect(handler).toBe(profileController.updateMe);
+  });
+});
+
+describe('auth.routes — /me/avatar (foto del PT)', () => {
+  it('PUT /me/avatar: authenticate, solo trainer, multipart y setAvatar', () => {
+    const [auth, role, upload, handler] = handlersOf('/me/avatar', 'put');
+    expect(auth).toBe(authenticate);
+    expect(roleRejects(role, 'student')).toMatchObject({ statusCode: 403 });
+    expect(roleRejects(role, 'trainer')).toBeUndefined();
+    expect(upload).toBe(parseImageUpload);
+    expect(handler).toBe(profileController.setAvatar);
+  });
+
+  it('DELETE /me/avatar: authenticate, solo trainer y removeAvatar', () => {
+    const [auth, role, handler] = handlersOf('/me/avatar', 'delete');
+    expect(auth).toBe(authenticate);
+    expect(roleRejects(role, 'student')).toMatchObject({ statusCode: 403 });
+    expect(handler).toBe(profileController.removeAvatar);
   });
 });

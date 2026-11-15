@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createInvitation } from '@/api/invitations/invitations.api';
-import SharePanel from '@/components/invitations/SharePanel';
-import StudentForm from '@/components/invitations/StudentForm';
+import SharePanel from '@/components/invitations/share/SharePanel';
+import StudentForm from '@/components/invitations/form/StudentForm';
 import { TEMPLATES_KEY } from '@/hooks/routine-templates/useRoutineTemplates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import { buildInvitationBody, toInvitationErrors, validateInvitationBody } from './invitationForm';

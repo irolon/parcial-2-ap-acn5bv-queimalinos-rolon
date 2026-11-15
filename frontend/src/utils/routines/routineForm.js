@@ -49,11 +49,14 @@ function exerciseErrors(e) {
   return Object.fromEntries(Object.entries(found).filter(([, message]) => message));
 }
 
-/** Errores del editor: cabecera, filas por `key`, `form` general y total (`count`). */
-export function validateRoutine(state) {
+/**
+ * Errores del editor: cabecera, filas por `key`, `form` general y total (`count`). `goalOptional`: la edición de una
+ * rutina guardada sin objetivo no obliga a elegir uno.
+ */
+export function validateRoutine(state, { goalOptional = false } = {}) {
   const header = {};
   if (!isValidName(state.name)) header.name = NAME_ERROR;
-  if (!state.goal) header.goal = 'Elegí un objetivo';
+  if (!state.goal && !goalOptional) header.goal = 'Elegí un objetivo';
   if (state.days.length === 0) header.days = 'Elegí al menos un día';
   const exercises = {};
   for (const e of state.exercises) {
@@ -65,17 +68,20 @@ export function validateRoutine(state) {
   return withCount(errors);
 }
 
-function bodyExercises(state) {
-  return state.exercises.map((e, order) => ({
-    exercise_id: e.exercise_id,
+/** Valores del plan de una fila como los recibe la API (sin `exercise_id` ni `order`). */
+export function exerciseValues(e) {
+  return {
     sets: Number(e.sets),
     reps: Number(e.reps),
     rest_seconds: toNumber(e.rest_seconds),
     suggested_kg: toNumber(e.suggested_kg),
     tempo: toText(e.tempo),
     notes: toText(e.notes),
-    order,
-  }));
+  };
+}
+
+function bodyExercises(state) {
+  return state.exercises.map((e, order) => ({ exercise_id: e.exercise_id, ...exerciseValues(e), order }));
 }
 
 export function buildRoutineBody(state, studentId) {

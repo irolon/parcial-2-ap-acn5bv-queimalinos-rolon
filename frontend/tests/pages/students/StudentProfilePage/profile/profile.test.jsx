@@ -90,6 +90,7 @@ describe('StudentProfilePage: ficha', () => {
     expect(await main().findByText('Fuerza A')).toBeVisible();
     expect(main().getByText('Lunes · Jueves')).toBeVisible();
     expect(main().queryByText(/^Nivel:/)).not.toBeInTheDocument();
+    expect(main().getByRole('link', { name: 'Editar rutina' })).toHaveAttribute('href', '/pt/rutinas/r-1/editar');
   });
 
   it('rutina activa con nivel lo muestra', async () => {
@@ -101,6 +102,7 @@ describe('StudentProfilePage: ficha', () => {
   it('sin rutina lo avisa', async () => {
     await loadProfile({ detail: studentDetail() });
     expect(await main().findByText('Sin rutina asignada')).toBeVisible();
+    expect(main().queryByRole('link', { name: 'Editar rutina' })).not.toBeInTheDocument();
   });
 
   it('un :id que no es UUID (400 sobre `id`) muestra lo mismo', async () => {

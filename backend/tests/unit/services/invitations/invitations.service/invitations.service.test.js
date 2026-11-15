@@ -8,17 +8,17 @@ const mockRepo = {
   findInvitationByToken: jest.fn(),
 };
 jest.unstable_mockModule(
-  '../../../../src/repositories/invitations/invitations.repository.js',
+  '../../../../../src/repositories/invitations/invitations.repository.js',
   () => mockRepo
 );
 
 // La plantilla inicial se valida con el service de plantillas (propia o 404).
 const mockGetOwnedTemplate = jest.fn();
-jest.unstable_mockModule('../../../../src/services/routine-templates/routine-templates.service.js', () => ({
+jest.unstable_mockModule('../../../../../src/services/routine-templates/routine-templates.service.js', () => ({
   getOwnedTemplate: mockGetOwnedTemplate,
 }));
 
-const service = await import('../../../../src/services/invitations/invitations.service.js');
+const service = await import('../../../../../src/services/invitations/invitations.service.js');
 
 const BASE_BODY = {
   student_name: 'Pedro Gómez',

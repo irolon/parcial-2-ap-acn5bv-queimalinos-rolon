@@ -49,6 +49,16 @@ describe('student-create.repository — createStudent', () => {
     );
   });
 
+  it('copia la frecuencia y el nacimiento de la invitación (null si no vinieron)', async () => {
+    await createStudent({ ...BASE, weeklyFrequency: 4, birthDate: '2002-03-15' });
+    expect(q.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ weekly_frequency: 4, birth_date: '2002-03-15' })
+    );
+    expect(q.select.mock.calls[0][0]).toContain('weekly_frequency');
+    await createStudent(BASE);
+    expect(q.insert).toHaveBeenLastCalledWith(expect.objectContaining({ weekly_frequency: null, birth_date: null }));
+  });
+
   it('email duplicado (23505) → STUDENT_EMAIL_EXISTS', async () => {
     result.current = { data: null, error: { code: '23505', message: 'dup' } };
     await expect(createStudent(BASE)).rejects.toMatchObject({ code: 'STUDENT_EMAIL_EXISTS' });

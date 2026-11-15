@@ -80,6 +80,12 @@ export const ROUTINES_PATH = `${TRAINER_NAV.base}/rutinas`;
 // Editor de rutinas: la página fija su propio título con `usePageHeader`.
 export const NEW_ROUTINE = { path: `${ROUTINES_PATH}/nueva` };
 
+// Editor en modo edición de una rutina ya asignada (la página fija su título con `usePageHeader`).
+export const EDIT_ROUTINE = { path: `${ROUTINES_PATH}/:id/editar` };
+
+/** Link al editor en modo edición de una rutina asignada. */
+export const editRoutineHref = (id) => `${ROUTINES_PATH}/${id}/editar`;
+
 /** Link al editor; con `studentId` llega con el alumno preseleccionado. */
 export const newRoutineHref = (studentId) => (studentId ? `${NEW_ROUTINE.path}?alumno=${studentId}` : NEW_ROUTINE.path);
 

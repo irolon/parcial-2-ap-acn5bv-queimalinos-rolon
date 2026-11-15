@@ -5,7 +5,7 @@ import { MoreHorizontal } from 'lucide-react';
 const ITEM =
   'block w-full cursor-pointer px-3 py-2 text-left font-body text-sm text-bone0 hover:bg-ink3 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
 const MENU_WIDTH = 128;
-const MENU_HEIGHT = 120;
+const MENU_HEIGHT = 160;
 
 /** Posición fija bajo el botón (o encima si abajo no entra), para no quedar recortado por el scroll de la tabla. */
 function positionFor(trigger) {
@@ -26,8 +26,11 @@ function focusNeighbour(trigger) {
   target?.focus();
 }
 
-/** Menú ⋯ de la fila: Subir, Bajar (deshabilitados en los bordes) y Quitar. Se cierra al hacer clic afuera o con Escape. */
-export default function RowMenu({ name, isFirst, isLast, onMove, onRemove }) {
+/**
+ * Menú ⋯ de la fila: Subir, Bajar (deshabilitados en los bordes), Reemplazar (solo si viene `onReplace`: modo edición) y
+ * Quitar. Se cierra al hacer clic afuera o con Escape.
+ */
+export default function RowMenu({ name, isFirst, isLast, onMove, onRemove, onReplace }) {
   const [style, setStyle] = useState(null);
   const trigger = useRef(null);
   const menu = useRef(null);
@@ -105,6 +108,7 @@ export default function RowMenu({ name, isFirst, isLast, onMove, onRemove }) {
           <div ref={menu} role="menu" style={style} onKeyDown={onMenuKey} className="z-50 w-32 overflow-hidden rounded-md border border-ink3 bg-ink2 shadow-xl">
             <button type="button" role="menuitem" disabled={isFirst} onClick={run(() => onMove(-1))} className={ITEM}>Subir</button>
             <button type="button" role="menuitem" disabled={isLast} onClick={run(() => onMove(1))} className={ITEM}>Bajar</button>
+            {onReplace && <button type="button" role="menuitem" onClick={run(onReplace)} className={ITEM}>Reemplazar</button>}
             <button type="button" role="menuitem" onClick={run(onRemove, { removing: true })} className={`${ITEM} text-hot`}>Quitar</button>
           </div>,
           document.body,
