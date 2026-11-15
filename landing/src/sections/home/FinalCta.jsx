@@ -1,4 +1,4 @@
-import { APP_LOGIN_URL, APP_SIGNUP_URL } from '@/data/shared/site'
+import { APP_LOGIN_URL } from '@/data/shared/site'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Reveal } from '@/components/ui/Reveal'
@@ -14,12 +14,11 @@ export function FinalCta({ className = '' }) {
               Tu próximo alumno puede tener tu rutina en el celular hoy.
             </h2>
             <p className="mt-[18px] max-w-[560px] text-lg text-white/85">
-              Creá tu cuenta de entrenador gratis. ¿Sos alumno? Pedile la invitación a tu entrenador.
+              ¿Ya sos entrenador en FitTrainer? Entrá a tu panel. ¿Sos alumno? Pedile la invitación a tu entrenador.
             </p>
           </div>
           <div className="relative flex flex-wrap gap-3">
-            <Button href={APP_SIGNUP_URL} variant="light">Empezá gratis</Button>
-            <Button href={APP_LOGIN_URL} variant="onBrand">Ya tengo cuenta</Button>
+            <Button href={APP_LOGIN_URL} variant="light">Iniciar sesión</Button>
           </div>
         </Reveal>
       </div>

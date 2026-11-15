@@ -24,16 +24,18 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Asistentes IA' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('los CTAs van al registro y al login de la web de la app (:5173)', () => {
+  it('el único botón de cuenta es "Iniciar sesión", al login de la web de la app (:5173)', () => {
     renderAt('/')
-    expect(banner().getByRole('link', { name: 'Empezá gratis' })).toHaveAttribute('href', SIGNUP)
-    expect(banner().getByRole('link', { name: /Ya tengo cuenta/ })).toHaveAttribute('href', LOGIN)
+    expect(banner().getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', LOGIN)
+    expect(banner().getAllByRole('link').filter((a) => a.getAttribute('href').startsWith('http'))).toHaveLength(1)
   })
 
-  it('ningún "Empezá gratis" de la página apunta a la propia landing', () => {
-    renderAt('/planes')
-    const ctas = screen.getAllByRole('link', { name: /Empezá gratis/ })
-    expect(ctas.length).toBeGreaterThan(1)
-    ctas.forEach((a) => expect(a).toHaveAttribute('href', SIGNUP))
+  // Por ahora no se ofrece crear cuenta (pedido de Igna, 15/11): ningún link al registro en ninguna página.
+  it.each(['/', '/entrenadores', '/alumnos', '/ia', '/por-que', '/planes'])('%s no tiene links al registro', (path) => {
+    renderAt(path)
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
+    expect(hrefs).not.toContain(SIGNUP)
+    expect(screen.queryByRole('link', { name: /Empezá gratis|Ya tengo cuenta/ })).toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Iniciar sesión' }).length).toBeGreaterThan(0)
   })
 })

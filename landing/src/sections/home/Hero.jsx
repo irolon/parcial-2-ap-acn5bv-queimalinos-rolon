@@ -1,10 +1,10 @@
-import { APP_LOGIN_URL, APP_SIGNUP_URL } from '@/data/shared/site'
+import { APP_LOGIN_URL } from '@/data/shared/site'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { TrainerPanelMock } from '@/components/mockups/TrainerPanelMock'
 import { ActiveSessionPhone } from '@/components/mockups/ActiveSessionPhone'
 
-const checks = ['Web y app Android', 'Funciona sin conexión', 'Gratis para empezar']
+const checks = ['Web y app Android', 'Funciona sin conexión']
 
 export function Hero() {
   return (
@@ -26,10 +26,9 @@ export function Hero() {
             Armá rutinas con ayuda de IA, invitá a tus alumnos por QR o WhatsApp y seguí su progreso sesión por sesión. En español y con precio en pesos.
           </p>
           <div className="mt-9 flex animate-rise flex-wrap gap-3 [animation-delay:.24s]">
-            <Button href={APP_SIGNUP_URL}>
-              Empezá gratis <Icon name="arrowRight" className="size-4" />
+            <Button href={APP_LOGIN_URL}>
+              Iniciar sesión <Icon name="arrowRight" className="size-4" />
             </Button>
-            <Button href={APP_LOGIN_URL} variant="ghost">Ya tengo cuenta</Button>
           </div>
           <ul className="mt-8 flex animate-rise flex-wrap gap-x-5 gap-y-2.5 text-sm [animation-delay:.32s]">
             {checks.map((c) => (

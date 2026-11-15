@@ -6,7 +6,8 @@ Fecha: 15/11/2026 · Dueño: Igna · Pablo está al tanto.
 
 La web pública de FitTrainer (lo que se ve sin sesión). Dos trabajos:
 
-1. Que un entrenador que llega termine registrándose (`/registro` de la web de la app).
+1. Que un entrenador que llega termine registrándose (`/registro` de la web de la app). **Postergado**
+   (Igna, 15/11): por ahora la landing solo lleva a iniciar sesión; crear cuenta se habilita más adelante.
 2. Mostrarla en la entrega del 04/12/2026.
 
 Corre **solo en local**: no hay VPS ni dominio publicados todavía.
@@ -22,6 +23,11 @@ Igna la diseñó en Claude Design; el resultado es un proyecto Vite + React + Ta
 - Carpeta propia en la raíz del monorepo: `landing/`. No va dentro de `frontend/` (que es de Pablo).
 - Los precios no están definidos: quedan los placeholders en amarillo de `src/data/plans.js` como están.
 - Contenido sin cambios.
+- (15/11, después de la PR #131) Sin nada para crear cuenta: se sacan los "Empezá gratis" (menú, Inicio,
+  footer, tarjetas de Planes); el único botón es "Iniciar sesión" → login de la web. Se sacan también los
+  textos que invitan a crearse una cuenta gratis ("Gratis para empezar" del Hero, título de Planes, tarjeta
+  de Planes del Inicio, texto del bloque final).
+- El ítem del menú "IA" se llama "Asistentes IA".
 
 ## Decisiones de Claude (revisables)
 
@@ -46,6 +52,6 @@ Deploy, SEO/analytics, formularios propios, páginas legales con texto, precios,
 ## Criterio de aceptación
 
 - `cd landing && npm install && npm run dev` levanta en `http://localhost:5174` las 6 páginas con el diseño del zip.
-- Con `frontend/` corriendo, "Empezá gratis" abre el registro y "Ya tengo cuenta" el login de la web.
+- Con `frontend/` corriendo, "Iniciar sesión" abre el login de la web; no hay links al registro.
 - `npm run lint`, `npm test` y `npm run build` en verde; ningún archivo de código pasa de 200 líneas.
 - `README.md` raíz y `CONTRIBUTING.md` explican cómo correrla y su árbol.

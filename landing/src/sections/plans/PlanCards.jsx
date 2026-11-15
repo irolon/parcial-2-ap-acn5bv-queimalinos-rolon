@@ -1,6 +1,4 @@
 import { plans } from '@/data/plans/plans'
-import { APP_SIGNUP_URL } from '@/data/shared/site'
-import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
 const Placeholder = ({ children }) => <span className="font-mono text-[0.92em] text-warning">{children}</span>
@@ -37,9 +35,6 @@ export function PlanCards() {
               </li>
             ))}
           </ul>
-          <Button href={APP_SIGNUP_URL} variant={p.highlighted ? 'primary' : 'ghost'} className="mt-auto">
-            {p.cta}
-          </Button>
         </div>
       ))}
     </div>

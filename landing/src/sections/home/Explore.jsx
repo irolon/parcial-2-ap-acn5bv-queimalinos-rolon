@@ -9,7 +9,7 @@ const items = [
   { to: '/alumnos', icon: 'phone', tone: 'intensity', title: 'Para alumnos', text: 'La rutina del día, sesión activa sin conexión, mapa muscular, logros, rachas y desafíos.', cta: 'Ver la app', wide: true },
   { to: '/ia', icon: 'sparkle', tone: 'info', title: 'Asistentes con IA', text: 'Uno te arma rutinas; el otro responde las dudas de tus alumnos.', cta: 'Ver cómo ayudan' },
   { to: '/por-que', icon: 'chart', tone: 'warning', title: 'Por qué FitTrainer', text: 'Lo de antes contra lo de ahora: de WhatsApp y Excel a un sistema propio.', cta: 'Comparar' },
-  { to: '/planes', icon: 'card', tone: 'success', title: 'Planes y preguntas', text: 'Gratis para empezar, Pro en pesos cuando crezcas. Y las dudas de siempre.', cta: 'Ver planes' },
+  { to: '/planes', icon: 'card', tone: 'success', title: 'Planes y preguntas', text: 'Los planes, en pesos y sin dólares. Y las dudas de siempre.', cta: 'Ver planes' },
 ]
 
 export function Explore() {

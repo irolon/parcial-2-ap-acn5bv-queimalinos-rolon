@@ -11,7 +11,6 @@ export const plans = [
       ['App Android para tus alumnos'],
       ['Chat y seguimiento del progreso'],
     ],
-    cta: 'Empezá gratis',
   },
   {
     id: 'pro',
@@ -25,7 +24,6 @@ export const plans = [
       ['Más alumnos activos ', { placeholder: '[límite a definir]' }],
       [{ placeholder: '[Otros beneficios del plan Pro]' }],
     ],
-    cta: 'Empezá gratis y pasate después',
     highlighted: true,
   },
 ]

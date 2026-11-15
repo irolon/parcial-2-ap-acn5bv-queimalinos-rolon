@@ -25,8 +25,12 @@ VITE_APP_SIGNUP_URL=http://localhost:5173/registro
 VITE_APP_LOGIN_URL=http://localhost:5173/login
 ```
 
-Son los destinos de "Empezá gratis" y "Ya tengo cuenta". Sin `.env` se usan esos mismos valores, así
-que con la web corriendo en el 5173 los botones ya llevan al registro y al login del entrenador.
+`VITE_APP_LOGIN_URL` es el destino de "Iniciar sesión" (menú, Inicio y footer). Sin `.env` se usan esos
+mismos valores, así que con la web corriendo en el 5173 el botón ya lleva al login.
+
+Por ahora la landing **no ofrece crear cuenta** (decisión de Igna, 15/11): no hay botones al registro y las
+tarjetas de Planes son informativas. `VITE_APP_SIGNUP_URL` / `APP_SIGNUP_URL` quedan listos para cuando se
+habilite el alta de entrenadores desde acá.
 
 ## Páginas (rutas)
 

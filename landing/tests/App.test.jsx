@@ -9,7 +9,7 @@ const PAGES = [
   ['/alumnos', /Una app que dan ganas de abrir/, 'Para alumnos — FitTrainer'],
   ['/ia', /Dos asistentes/, 'Asistentes con IA — FitTrainer'],
   ['/por-que', /Hoy tu trabajo vive en tres apps/, 'Por qué FitTrainer'],
-  ['/planes', /Empezá gratis\. Pasate a Pro/, 'Planes y preguntas — FitTrainer'],
+  ['/planes', /Un plan para cada etapa de tu cartera/,'Planes y preguntas — FitTrainer'],
 ]
 
 describe('App: rutas', () => {

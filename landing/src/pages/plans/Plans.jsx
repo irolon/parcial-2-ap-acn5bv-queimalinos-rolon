@@ -6,7 +6,7 @@ import { FinalCta } from '@/sections/home/FinalCta'
 export default function Plans() {
   return (
     <>
-      <PageHeader eyebrow="Planes" title="Empezá gratis. Pasate a Pro cuando crezcas." lead="Sin dólares ni conversiones: pagás en pesos." />
+      <PageHeader eyebrow="Planes" title="Un plan para cada etapa de tu cartera." lead="Sin dólares ni conversiones: pagás en pesos." />
       <section aria-label="Planes y preguntas frecuentes">
         <div className="container-page">
           <PlanCards />

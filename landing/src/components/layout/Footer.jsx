@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { APP_LOGIN_URL, APP_SIGNUP_URL } from '@/data/shared/site'
+import { APP_LOGIN_URL } from '@/data/shared/site'
 import { Logo } from '@/components/layout/Logo'
 
 const linkCls = 'flex min-h-10 items-center text-[15px] text-muted no-underline hover:text-bone'
@@ -23,8 +23,7 @@ export function Footer() {
         </div>
         <div>
           <h4 className="mb-2.5 text-sm">Cuenta</h4>
-          <a className={linkCls} href={APP_SIGNUP_URL}>Empezá gratis</a>
-          <a className={linkCls} href={APP_LOGIN_URL}>Ya tengo cuenta</a>
+          <a className={linkCls} href={APP_LOGIN_URL}>Iniciar sesión</a>
           <Link className={linkCls} to="/planes">Planes y preguntas</Link>
         </div>
         <div>

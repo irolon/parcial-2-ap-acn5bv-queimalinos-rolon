@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router'
-import { NAV_LINKS, APP_LOGIN_URL, APP_SIGNUP_URL } from '@/data/shared/site'
+import { NAV_LINKS, APP_LOGIN_URL } from '@/data/shared/site'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/layout/Logo'
 
@@ -25,12 +25,8 @@ export function Navbar() {
           ))}
         </nav>
         <div className="ml-auto flex gap-1.5 md:gap-2.5">
-          <Button href={APP_LOGIN_URL} variant="ghost" className="min-h-11 px-3.5 text-sm md:min-h-12 md:px-6 md:text-[15px]">
-            <span className="md:hidden">Ingresar</span>
-            <span className="hidden md:inline">Ya tengo cuenta</span>
-          </Button>
-          <Button href={APP_SIGNUP_URL} className="min-h-11 px-3.5 text-sm md:min-h-12 md:px-6 md:text-[15px]">
-            Empezá gratis
+          <Button href={APP_LOGIN_URL} className="min-h-11 px-3.5 text-sm md:min-h-12 md:px-6 md:text-[15px]">
+            Iniciar sesión
           </Button>
         </div>
       </div>
