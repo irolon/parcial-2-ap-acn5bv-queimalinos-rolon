@@ -123,6 +123,17 @@ class EditProfileViewModelTest {
         assertEquals("https://x/nueva.jpg?sig=2", vm.uiState.value.avatarUrl)
     }
 
+    @Test fun trainerCanPickPhoto() = runTest {
+        val vm = started(FakeTrainerSession(), Role.TRAINER)
+        vm.onPhotoPicked("content://foto")
+        advanceUntilIdle()
+        assertEquals(1 to 0, api.trainerUploads to api.uploads)
+        assertEquals("https://x/nueva.jpg?sig=2", vm.uiState.value.avatarUrl)
+        vm.onRemovePhoto()
+        advanceUntilIdle()
+        assertEquals(1, api.trainerRemoves)
+    }
+
     @Test fun elEntrenadorBorraElTitulo() = runTest {
         val vm = started(FakeTrainerSession(), Role.TRAINER)
         vm.onTitle("")

@@ -36,7 +36,7 @@ import java.time.Instant
 /** Filtro Hoy: "pendiente" (ámbar) o "hecho" (verde). */
 @Composable
 fun TodayRow(item: TodayItem, onClick: () -> Unit) {
-    HomeRow(item.name, todayLine(item), false, onClick) {
+    HomeRow(item.name, todayLine(item), false, item.avatarUrl, onClick) {
         if (item.done) Pill("hecho", FtColors.Green) else Pill("pendiente", FtColors.Amber)
     }
 }
@@ -44,19 +44,19 @@ fun TodayRow(item: TodayItem, onClick: () -> Unit) {
 /** Filtro Riesgo: días sin entrenar y la píldora coral. */
 @Composable
 fun RiskRow(item: RiskItem, onClick: () -> Unit) {
-    HomeRow(item.name, riskLine(item), true, onClick) { Pill("riesgo", FtColors.Coral) }
+    HomeRow(item.name, riskLine(item), true, item.avatarUrl, onClick) { Pill("riesgo", FtColors.Coral) }
 }
 
 /** Filtro Feedback: la sesión sin comentar ("Push · RPE 8 · ayer"). */
 @Composable
 fun FeedbackRow(item: FeedbackItem, now: Instant, onClick: () -> Unit) {
-    HomeRow(item.name, feedbackLine(item, now), false, onClick) { Pill("comentar", FtColors.BrandText) }
+    HomeRow(item.name, feedbackLine(item, now), false, item.avatarUrl, onClick) { Pill("comentar", FtColors.BrandText) }
 }
 
 /** Filtro Activos: estado y adherencia de 7 días a la derecha. */
 @Composable
 fun StudentRow(item: StudentItem, onClick: () -> Unit) {
-    HomeRow(item.name, studentLine(item), item.status == StudentStatus.INACTIVE, onClick) {
+    HomeRow(item.name, studentLine(item), item.status == StudentStatus.INACTIVE, item.avatarUrl, onClick) {
         Text(
             pctLabel(item.adherencePct),
             style = if (item.adherencePct != null) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelSmall,
@@ -66,14 +66,14 @@ fun StudentRow(item: StudentItem, onClick: () -> Unit) {
 }
 
 @Composable
-private fun HomeRow(name: String, line: String, risk: Boolean, onClick: () -> Unit, trailing: @Composable () -> Unit) {
+private fun HomeRow(name: String, line: String, risk: Boolean, url: String?, onClick: () -> Unit, trailing: @Composable () -> Unit) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget).clip(MaterialTheme.shapes.large)
             .background(FtColors.Card).clickable(onClick = onClick).padding(Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        StudentAvatar(initials(name), atRisk = risk, size = 40.dp)
+        StudentAvatar(initials(name), atRisk = risk, size = 40.dp, url = url)
         Column(Modifier.weight(1f)) {
             Text(name, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(line, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)

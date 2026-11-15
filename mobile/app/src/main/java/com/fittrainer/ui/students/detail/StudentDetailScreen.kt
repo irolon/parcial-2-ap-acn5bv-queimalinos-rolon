@@ -94,7 +94,7 @@ fun StudentDetailScreen(
             !state.loaded -> Unit
             detail == null -> if (!state.refreshing) item { InfoCard("Sin datos", DETAIL_NOT_LOADED) }
             else -> {
-                item { DetailHeader(detail.name, state.header, state.status) }
+                item { DetailHeader(detail.name, state.header, state.status, detail.avatarUrl) }
                 topSections(state.offline, detail)
                 item {
                     LatestMetricsCard(

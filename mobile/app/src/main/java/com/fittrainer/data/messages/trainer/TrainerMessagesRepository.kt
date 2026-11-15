@@ -6,8 +6,10 @@ import com.fittrainer.data.api.messages.SendMessageRequest
 import com.fittrainer.data.api.messages.TrainerMessagesApi
 import com.fittrainer.data.db.messages.trainer.TrainerConversationsSyncEntity
 import com.fittrainer.data.db.messages.trainer.TrainerMessageEntity
-import com.fittrainer.data.db.messages.trainer.TrainerMessageThreadEntity
 import com.fittrainer.data.db.messages.trainer.TrainerMessagesDao
+import com.fittrainer.data.messages.trainer.thread.toCache
+import com.fittrainer.data.messages.trainer.thread.toThreadEntity
+import com.fittrainer.data.messages.trainer.thread.withCounterpartOf
 import com.fittrainer.data.repository.DataError
 import com.fittrainer.data.repository.DataException
 import com.fittrainer.data.repository.toDataError
@@ -63,9 +65,7 @@ class TrainerMessagesRepository @Inject constructor(
     /** null = el chat nunca se bajó. */
     fun observeThread(trainerId: String, studentId: String): Flow<ThreadCache?> =
         combine(dao.observeMessages(trainerId, studentId), dao.observeThread(trainerId, studentId)) { rows, thread ->
-            thread?.let {
-                ThreadCache(it.counterpartName, rows.map { m -> m.toDomain() }, it.nextBefore != null, Instant.ofEpochMilli(it.fetchedAt))
-            }
+            thread?.toCache(rows)
         }.distinctUntilChanged()
 
     suspend fun refreshConversations(trainerId: String): Result<Unit> = call(trainerId, null) {
@@ -86,9 +86,9 @@ class TrainerMessagesRepository @Inject constructor(
         val newest = dao.newestAt(trainerId, studentId)
         val gap = page.meta.nextBefore != null && newest != null && rows.isNotEmpty() && rows.first().createdAt > newest
         if (saved == null || newest == null || gap) {
-            dao.replaceThread(TrainerMessageThreadEntity(trainerId, studentId, page.counterpart.name, page.meta.nextBefore, clock.millis()), rows)
+            dao.replaceThread(page.toThreadEntity(trainerId, studentId, clock.millis()), rows)
         } else {
-            dao.mergeThread(saved.copy(counterpartName = page.counterpart.name, fetchedAt = clock.millis()), rows)
+            dao.mergeThread(saved.withCounterpartOf(page, clock.millis()), rows)
         }
         renewStaleImages(trainerId, studentId)
     }

@@ -22,9 +22,9 @@ import java.util.Locale
 
 /** Avatar, nombre, "24 AÑOS · … · 4 D/SEM" y la píldora de estado (reglas de E1). */
 @Composable
-fun DetailHeader(name: String, line: String, status: StudentStatus?) {
+fun DetailHeader(name: String, line: String, status: StudentStatus?, avatarUrl: String? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-        StudentAvatar(initials(name), atRisk = status == StudentStatus.INACTIVE, size = 64.dp)
+        StudentAvatar(initials(name), atRisk = status == StudentStatus.INACTIVE, size = 64.dp, url = avatarUrl)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(name, style = MaterialTheme.typography.titleLarge, color = FtColors.TextPrimary)
             if (line.isNotEmpty()) Text(line, style = MaterialTheme.typography.labelSmall, color = FtColors.TextSecondary)

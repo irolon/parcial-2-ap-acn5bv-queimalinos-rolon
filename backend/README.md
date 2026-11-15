@@ -393,6 +393,10 @@ El contrato de Notion no se actualizó (el plan gratis está lleno). **Lo que va
 
 ## Avisos
 
+### Fotos en el Inicio del entrenador (15/11/2026)
+
+- `GET /students/overview`: los ítems de `in_session` y `lists.*` suman `avatar_url` firmada (GX2-M2). La web lo puede usar en el Inicio.
+
 ### IA: modelo configurable y más contexto (08-09/11/2026)
 
 Cambios en los workflows de n8n y en lo que el backend les manda. **La API no cambió: la web no tiene que tocar nada.**

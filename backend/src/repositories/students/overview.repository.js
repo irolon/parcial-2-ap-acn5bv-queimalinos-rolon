@@ -8,10 +8,10 @@ const SESSION_COLUMNS = 'id, student_id, started_at, finished_at, rpe, trainer_c
 /** La rutina embebida → routine_name, como la usa models/students/overview.js. */
 const flatten = ({ routine, ...s }) => ({ ...s, routine_name: routine?.name ?? null });
 
-/** Alumnos activos del trainer (id, name, created_at). */
+/** Alumnos activos del trainer (id, name, created_at, avatar_url: ruta del bucket, sin firmar). */
 export async function findActiveStudents(trainerId) {
   return fetchAll(() =>
-    supabase.from(STUDENTS_TABLE).select('id, name, created_at').eq('trainer_id', trainerId).eq('active', true).order('id')
+    supabase.from(STUDENTS_TABLE).select('id, name, created_at, avatar_url').eq('trainer_id', trainerId).eq('active', true).order('id')
   );
 }
 

@@ -44,8 +44,7 @@ internal fun ProfileDto.toEntity(ownerId: String, role: Role, now: Long) = MyPro
     name = name,
     email = email,
     phone = phone,
-    // El entrenador no tiene foto propia todavía (fuera de la #95): se ignora lo que venga.
-    avatarUrl = if (role == Role.STUDENT) avatarUrl else null,
+    avatarUrl = avatarUrl,
     professionalTitle = if (role == Role.TRAINER) professionalTitle else null,
     fetchedAt = now,
 )

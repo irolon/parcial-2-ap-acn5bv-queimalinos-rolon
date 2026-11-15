@@ -45,7 +45,7 @@ fun ConversationRow(conversation: Conversation, now: Instant, zone: ZoneId, onCl
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        StudentAvatar(initials(conversation.name), atRisk = false)
+        StudentAvatar(initials(conversation.name), atRisk = false, url = conversation.avatarUrl)
         Column(Modifier.weight(1f)) {
             Text(conversation.name, style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(

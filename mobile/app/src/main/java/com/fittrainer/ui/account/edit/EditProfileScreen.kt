@@ -53,7 +53,7 @@ class EditProfileActions(
     val onRemovePhoto: () -> Unit,
 )
 
-/** Editar perfil: el alumno, foto, nombre y teléfono; el entrenador, nombre y título. Guardar vuelve al menú. */
+/** Editar perfil: foto y nombre para los dos; el alumno, teléfono; el entrenador, título. Guardar vuelve al menú. */
 @Composable
 fun EditProfileScreen(onBack: () -> Unit, viewModel: EditProfileViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -82,7 +82,7 @@ fun EditProfileContent(state: EditProfileUiState, actions: EditProfileActions, o
             if (!state.offline && state.error == null) Text(PROFILE_LOADING, color = FtColors.TextSecondary)
             return@Column
         }
-        if (state.role == Role.STUDENT) PhotoRow(state, actions)
+        PhotoRow(state, actions)
         val e = state.fieldErrors
         Field(LABEL_NAME, state.form.name, actions.onName, e[ProfileField.NAME])
         if (state.role == Role.STUDENT) Field(LABEL_PHONE, state.form.phone, actions.onPhone, e[ProfileField.PHONE], KeyboardType.Phone)

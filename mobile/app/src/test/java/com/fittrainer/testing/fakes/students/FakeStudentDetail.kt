@@ -22,9 +22,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
-fun detailDto(id: String = "s1", active: Boolean = true, injuries: String? = "Lumbalgia") = StudentDetailDto(
+fun detailDto(id: String = "s1", active: Boolean = true, injuries: String? = "Lumbalgia", avatarUrl: String? = null) = StudentDetailDto(
     id = id, name = "Tomás Rivera", email = "t@mail.com", goal = "strength", level = "beginner",
-    birthDate = "1999-05-01", active = active, gymEquipment = listOf("Mancuernas", "Banco"), injuries = injuries,
+    birthDate = "1999-05-01", active = active, gymEquipment = listOf("Mancuernas", "Banco"), injuries = injuries, avatarUrl = avatarUrl,
     createdAt = "2026-10-17T12:00:00Z", lastSessionAt = "2026-10-30T15:00:00Z",
     latestMetrics = LatestMetricsDto(74.5, 178.0, null, 23.5, "2026-10-20T10:00:00Z"),
     activeRoutine = ActiveRoutineDto("r1", "Push/Pull", listOf("thursday", "monday")),

@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.fittrainer.ui.students.components.avatarRequest
 import com.fittrainer.ui.students.initials
 import com.fittrainer.ui.theme.FtColors
 
@@ -31,7 +32,7 @@ fun ProfileAvatar(name: String, url: String?, size: Dp = 72.dp) {
     ) {
         Text(initials(name), style = MaterialTheme.typography.titleLarge, color = FtColors.TextPrimary)
         if (url != null) {
-            AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            AsyncImage(model = avatarRequest(url), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         }
     }
 }

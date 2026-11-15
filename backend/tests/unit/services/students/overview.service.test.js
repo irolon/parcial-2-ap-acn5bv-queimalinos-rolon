@@ -6,6 +6,8 @@ jest.unstable_mockModule('../../../../src/repositories/students/overview.reposit
 jest.unstable_mockModule('../../../../src/repositories/students/students.repository/students.repository.js', () => mockStudentsRepo);
 const mockOpenRepo = { findOpenSessions: jest.fn() };
 jest.unstable_mockModule('../../../../src/repositories/sessions/open-sessions.repository.js', () => mockOpenRepo);
+const mockAvatarsRepo = { signPaths: jest.fn() };
+jest.unstable_mockModule('../../../../src/repositories/students/avatars.repository.js', () => mockAvatarsRepo);
 
 const { overview, RECENT_LIMIT } = await import('../../../../src/services/students/overview.service.js');
 
@@ -17,8 +19,12 @@ beforeEach(() => {
   mockOverviewRepo.findFinishedSessionsSince.mockResolvedValue([]);
   mockOverviewRepo.findRecentFinished.mockResolvedValue([]);
   mockOpenRepo.findOpenSessions.mockResolvedValue([]);
+  mockAvatarsRepo.signPaths.mockResolvedValue(new Map());
 });
-afterEach(() => jest.useRealTimers());
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+});
 
 describe('overview.service', () => {
   it('sin alumnos activos no hace más consultas', async () => {
@@ -98,5 +104,29 @@ describe('overview.service', () => {
       lists: { today: [], at_risk: [], feedback_pending: [], students: [] },
     });
     expect(mockOpenRepo.findOpenSessions).not.toHaveBeenCalled();
+  });
+
+  it('firma las fotos de los alumnos en una sola llamada', async () => {
+    mockOverviewRepo.findActiveStudents.mockResolvedValue([
+      { id: 'a', name: 'Ana', created_at: '2026-09-01T12:00:00Z', avatar_url: 'a/foto.jpg' },
+      { id: 'b', name: 'Beto', created_at: '2026-09-01T12:00:00Z', avatar_url: null },
+    ]);
+    mockAvatarsRepo.signPaths.mockResolvedValue(new Map([['a/foto.jpg', 'https://firmada/a']]));
+    const r = await overview('t1');
+    expect(mockAvatarsRepo.signPaths).toHaveBeenCalledTimes(1);
+    expect(mockAvatarsRepo.signPaths).toHaveBeenCalledWith(['a/foto.jpg']);
+    expect(r.lists.students[0].avatar_url).toBe('https://firmada/a');
+    expect(r.lists.students[1].avatar_url).toBeNull();
+  });
+
+  it('si Storage falla, avatar_url es null y responde igual', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockOverviewRepo.findActiveStudents.mockResolvedValue([
+      { id: 'a', name: 'Ana', created_at: '2026-09-01T12:00:00Z', avatar_url: 'a/foto.jpg' },
+    ]);
+    mockAvatarsRepo.signPaths.mockRejectedValue(new Error('storage caído'));
+    const r = await overview('t1');
+    expect(r.lists.students[0].avatar_url).toBeNull();
+    expect(r.lists.students[0].name).toBe('Ana');
   });
 });

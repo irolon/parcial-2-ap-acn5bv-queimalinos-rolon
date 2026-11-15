@@ -38,7 +38,7 @@ fun InSessionRow(item: InSessionItem, now: Instant, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         LiveDot()
-        StudentAvatar(initials(item.name), atRisk = false, size = 40.dp)
+        StudentAvatar(initials(item.name), atRisk = false, size = 40.dp, url = item.avatarUrl)
         Column(Modifier.weight(1f)) {
             Text(item.name, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(inSessionLine(item, now), style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)

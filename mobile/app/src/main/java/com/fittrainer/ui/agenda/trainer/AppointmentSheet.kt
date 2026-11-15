@@ -64,7 +64,7 @@ fun AppointmentSheet(state: AppointmentSheetState, offline: Boolean, actions: Ap
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-                StudentAvatar(initials(appt.studentName).take(1), atRisk = false, size = 40.dp)
+                StudentAvatar(initials(appt.studentName).take(1), atRisk = false, size = 40.dp, url = appt.avatarUrl)
                 Column {
                     Text(appt.studentName, style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary)
                     Text(timeRangeLabel(appt.at), style = MaterialTheme.typography.labelMedium, color = FtColors.TextSecondary)

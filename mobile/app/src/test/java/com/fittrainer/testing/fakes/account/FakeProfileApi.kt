@@ -24,6 +24,9 @@ class FakeProfileApi(
     val owners = mutableListOf<RequiredUser>()
     var uploads = 0
     var removes = 0
+    /** Lo mismo para las rutas del entrenador (/auth/me/avatar). */
+    var trainerUploads = 0
+    var trainerRemoves = 0
     var avatarUrl: String? = "https://x/nueva.jpg?sig=2"
     var newToken = "access-nuevo"
     /** Si está puesto, el GET del perfil no responde hasta que se complete. */
@@ -61,6 +64,19 @@ class FakeProfileApi(
     override suspend fun removeAvatar(owner: RequiredUser, id: String): Response<Unit> {
         check(owner)
         removes++
+        return Response.success(204, Unit)
+    }
+
+    override suspend fun setTrainerAvatar(owner: RequiredUser, image: MultipartBody.Part): AvatarResponse {
+        check(owner)
+        avatarGate?.await()
+        trainerUploads++
+        return AvatarResponse(AvatarDto(avatarUrl))
+    }
+
+    override suspend fun removeTrainerAvatar(owner: RequiredUser): Response<Unit> {
+        check(owner)
+        trainerRemoves++
         return Response.success(204, Unit)
     }
 

@@ -69,7 +69,7 @@ fun ChatScreen(onBack: () -> Unit, onGone: () -> Unit, viewModel: ChatViewModel 
     Column(Modifier.fillMaxSize().background(FtColors.Background).imePadding()) {
         Row(Modifier.fillMaxWidth().padding(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = FtColors.TextPrimary) }
-            if (state.name.isNotEmpty()) StudentAvatar(initials(state.name), atRisk = false, size = Spacing.xxl)
+            if (state.name.isNotEmpty()) StudentAvatar(initials(state.name), atRisk = false, size = Spacing.xxl, url = state.avatarUrl)
             Text(state.name, Modifier.padding(start = Spacing.sm), style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary)
         }
         HorizontalDivider(color = FtColors.Elevated)

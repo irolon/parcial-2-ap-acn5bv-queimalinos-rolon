@@ -115,4 +115,11 @@ class ChatViewModelTest {
         assertTrue(vm.uiState.value.gone)
         vm.onBackground()
     }
+
+    @Test fun exposesCounterpartAvatar() = runTest {
+        api.pages = mapOf(null to api.page(messageDto("m1", 1), avatarUrl = "https://firmada/ana"))
+        opened()
+        assertEquals("https://firmada/ana", vm.uiState.value.avatarUrl)
+        vm.onBackground()
+    }
 }

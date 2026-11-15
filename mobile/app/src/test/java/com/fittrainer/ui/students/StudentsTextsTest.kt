@@ -78,4 +78,11 @@ class StudentsTextsTest {
         val open = trainerStudent(openSessionStartedAt = started)
         assertFalse(open.toRow(today, started.plusSeconds(5 * 3600)).trainingNow)
     }
+
+    @Test fun rowCarriesAvatarUrl() {
+        val now = Instant.parse("2026-11-10T15:00:00Z")
+        val row = trainerStudent("s1").copy(avatarUrl = "https://firmada/s1").toRow(today, now)
+        assertEquals("https://firmada/s1", row.avatarUrl)
+        assertEquals(null, trainerStudent("s2").toRow(today, now).avatarUrl)
+    }
 }

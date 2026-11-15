@@ -11,6 +11,7 @@ import com.fittrainer.data.messages.trainer.Message
 data class StudentChatUiState(
     val loaded: Boolean = false,
     val trainerName: String = "",
+    val trainerAvatarUrl: String? = null,
     val messages: List<Message> = emptyList(),
     val hasMore: Boolean = false,
     val everSynced: Boolean = false,

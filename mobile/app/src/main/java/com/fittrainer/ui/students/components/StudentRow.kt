@@ -50,7 +50,7 @@ fun StudentRow(row: StudentRowUi, modifier: Modifier = Modifier, onClick: (() ->
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        StudentAvatar(row.initials, atRisk = row.status == StudentStatus.INACTIVE)
+        StudentAvatar(row.initials, atRisk = row.status == StudentStatus.INACTIVE, url = row.avatarUrl)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(row.name, style = MaterialTheme.typography.titleSmall, color = FtColors.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(row.subtitle, style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)

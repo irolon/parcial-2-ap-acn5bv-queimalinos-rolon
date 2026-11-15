@@ -157,4 +157,10 @@ class StudentChatViewModelTest {
         runCurrent()
         assertTrue(api.sent.isEmpty())
     }
+
+    @Test fun exposesTrainerAvatar() = chatTest(setup = {
+        api.pages = mapOf(null to api.page(messageDto("m1", 1, fromTrainer = true), name = "Profe Card", avatarUrl = "https://firmada/pt"))
+    }) {
+        assertEquals("https://firmada/pt", vm.uiState.value.trainerAvatarUrl)
+    }
 }

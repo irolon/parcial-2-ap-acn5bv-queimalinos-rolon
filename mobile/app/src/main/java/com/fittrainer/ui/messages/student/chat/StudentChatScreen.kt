@@ -77,7 +77,7 @@ fun StudentChatScreen(viewModel: StudentChatViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxSize().background(FtColors.Background).imePadding()) {
         val name = state.trainerName.ifEmpty { STUDENT_CHAT_TITLE }
         Row(Modifier.fillMaxWidth().padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
-            if (state.trainerName.isNotEmpty()) StudentAvatar(initials(state.trainerName), atRisk = false, size = Spacing.xxl)
+            if (state.trainerName.isNotEmpty()) StudentAvatar(initials(state.trainerName), atRisk = false, size = Spacing.xxl, url = state.trainerAvatarUrl)
             Text(name, Modifier.padding(start = Spacing.sm), style = MaterialTheme.typography.titleMedium, color = FtColors.TextPrimary)
         }
         HorizontalDivider(color = FtColors.Elevated)

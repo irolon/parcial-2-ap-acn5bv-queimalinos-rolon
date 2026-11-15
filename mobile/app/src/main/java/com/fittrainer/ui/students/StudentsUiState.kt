@@ -26,6 +26,7 @@ data class StudentRowUi(
     val adherencePct: Int?,
     val noAdherence: String = NO_PLAN,
     val trainingNow: Boolean = false,
+    val avatarUrl: String? = null,
 )
 
 data class Counts(val active: Int = 0, val atRisk: Int = 0)
@@ -68,6 +69,7 @@ fun TrainerStudent.toRow(today: LocalDate, now: Instant): StudentRowUi {
         adherencePct = adherence?.pct,
         noAdherence = noAdherenceText(daysPerWeek),
         trainingNow = openSessionStartedAt != null && isOpenSessionLive(openSessionStartedAt, now),
+        avatarUrl = avatarUrl,
     )
 }
 
