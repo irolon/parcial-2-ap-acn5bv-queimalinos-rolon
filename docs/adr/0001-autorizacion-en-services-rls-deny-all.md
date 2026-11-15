@@ -35,9 +35,9 @@ probar. Pero sin RLS hay un agujero real: Supabase publica las tablas de
 - Toda tabla nueva en `public` lleva `alter table … enable row level security`
   en la misma migración: por los grants por defecto de Supabase, una tabla sin
   RLS queda expuesta a la anon key apenas se crea. Después de cada migración se
-  corre `schema-checks.sql` (tiene que devolver cero filas) y
+  corre los dos archivos de `checks/schema-checks/` (cada uno tiene que devolver cero filas) y
   `npm run db:check-anon`.
-- Verificación: `backend/src/database/checks/schema-checks.sql` (RLS activo, cero
+- Verificación: `backend/src/database/checks/schema-checks/` (RLS activo, cero
   políticas) y `npm run db:check-anon` (nada expuesto con la anon key; falla
   con exit 1 ante una tabla expuesta o una respuesta no concluyente: key
   inválida, tabla inexistente, error 5xx o sin respuesta).

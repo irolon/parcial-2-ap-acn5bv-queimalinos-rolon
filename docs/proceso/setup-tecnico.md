@@ -163,7 +163,7 @@ npm run lint
 
 1. Creá el proyecto en [supabase.com](https://supabase.com) y copiá las claves de **Settings → API** al `backend/.env`.
 2. En el **SQL Editor**, ejecutá en orden los archivos de `backend/src/database/schema/`: `01` a `07` (el detalle está en su README).
-3. Ejecutá `backend/src/database/checks/schema-checks.sql`. Tiene que devolver **0 filas**.
+3. Ejecutá los dos archivos de `backend/src/database/checks/schema-checks/`, cada uno como una consulta aparte. Los dos tienen que devolver **0 filas**.
 4. Ejecutá los seeds, en este orden (se pueden re-ejecutar): `backend/src/database/seeds/exercises.sql` (50 ejercicios globales), `achievements.sql` (catálogo de logros) y `challenges.sql` (desafíos globales de ejemplo).
 5. Ejecutá `backend/src/database/checks/exercises-checks.sql`. Tiene que devolver **0 filas**.
 6. Las migraciones de `backend/src/database/migrations/` (una carpeta por mes) se aplican **solo en bases que ya existían** antes de esos cambios. En una base nueva, el schema ya las incluye.

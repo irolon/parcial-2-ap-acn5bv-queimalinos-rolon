@@ -34,7 +34,7 @@ src/
 ├── database/
 │   ├── schema/              # DDL por dominio: 01…07 en orden (ver su README)
 │   ├── migrations/          # cambios de schema con fecha, para bases ya creadas (una carpeta por mes: 2026-10/, 2026-11/; con más de 10 se divide por días: 2026-11/01-08/, 09-15/)
-│   ├── checks/              # schema-checks.sql, exercises-checks.sql y check-anon-access.js
+│   ├── checks/              # schema-checks/ (2 archivos), exercises-checks.sql y check-anon-access.js
 │   └── seeds/               # exercises.sql (50 ejercicios globales), achievements.sql (catálogo de logros), challenges.sql (desafíos globales)
 ├── app.js                   # arma la app de Express y monta las rutas
 └── server.js                # entrypoint (levanta el server)
