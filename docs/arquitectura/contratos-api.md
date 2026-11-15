@@ -723,6 +723,8 @@ Lista las plantillas del trainer, más nuevas primero (manuales y generadas por 
 }
 ```
 
+> `days` y `exercise_count` salen de la vista `routine_templates_summary` (deseable "listado sin structure"): el listado no lee `structure`. `days` es `structure.days` tal cual, en el mismo orden (`[]` si la plantilla guardada no lo tiene); `exercise_count` cuenta los ítems de `structure.exercises` (`0` si no hay). La forma de la respuesta no cambió.
+
 ### GET /routine-templates/:id
 
 Plantilla con `structure` (si la guardada está incompleta, `days`/`exercises` ausentes se devuelven como `[]` para poder corregirla con PATCH); cada ejercicio suma `exercise: { id, name, muscle_group, equipment, video_url }`.

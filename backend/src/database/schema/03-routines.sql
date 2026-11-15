@@ -78,6 +78,24 @@ create table if not exists routine_templates (
 
 create index if not exists idx_routine_templates_trainer on routine_templates (trainer_id);
 
+-- Resumen para GET /routine-templates (deseable "listado sin structure"): sin
+-- structure, con `days` (structure->'days' tal cual; [] si no es un arreglo) y
+-- `exercise_count` (ítems objeto o arreglo de structure->'exercises'; 0 si no es
+-- un arreglo). security_invoker: hereda el RLS de routine_templates.
+create or replace view routine_templates_summary with (security_invoker = true) as
+  select
+    t.id, t.trainer_id, t.name, t.goal, t.level, t.frequency_per_week, t.generated_by_ai, t.created_at,
+    case when jsonb_typeof(t.structure -> 'days') = 'array'
+      then t.structure -> 'days' else '[]'::jsonb end as days,
+    case when jsonb_typeof(t.structure -> 'exercises') = 'array'
+      then (
+        select count(*)::int
+        from jsonb_array_elements(t.structure -> 'exercises') as e (item)
+        where jsonb_typeof(e.item) in ('object', 'array')
+      )
+      else 0 end as exercise_count
+  from routine_templates t;
+
 -- FK pendiente de routines.template_id (routines se creó antes que esta tabla).
 -- set null: borrar una plantilla no borra las rutinas ya asignadas.
 do $$

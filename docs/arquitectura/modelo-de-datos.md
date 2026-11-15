@@ -112,6 +112,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | structure | jsonb | estructura completa de la plantilla (días, ejercicios, series, reps) |
 | created_at | timestamptz | |
 
+> **Vista `routine_templates_summary`** (deseable "listado sin structure"): las columnas de `routine_templates` sin `structure`, más `days` (`structure->'days'` tal cual, `[]` si no es un arreglo) y `exercise_count` (ítems de `structure->'exercises'`, `0` si no es un arreglo). `security_invoker = true`: hereda el RLS de `routine_templates`. La usa `GET /routine-templates`; el filtro por `trainer_id` lo hace el backend. Migración: `migrations/2026-11/09-15/2026-11-14-listado-plantillas.sql`.
+
 **routines**
 
 | Campo | Tipo | Clave |

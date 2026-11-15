@@ -50,6 +50,8 @@ const TABLES = [
   'push_tokens',
   // Vista (no tabla): con security_invoker hereda el RLS de sessions.
   'student_last_session',
+  // Vista: con security_invoker hereda el RLS de routine_templates.
+  'routine_templates_summary',
 ];
 
 const LABEL_WIDTH = 'NO CONCLUYENTE'.length;

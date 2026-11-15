@@ -7,7 +7,7 @@ por tamaño).
 |---|---|
 | `01-auth.sql` | extensión `pgcrypto`, `trainers`, `refresh_tokens` |
 | `02-students.sql` | `students`, `invitations` |
-| `03-routines.sql` | `exercises`, `routines`, `routine_exercises`, `routine_templates` y la FK `routines_template_id_fkey` |
+| `03-routines.sql` | `exercises`, `routines`, `routine_exercises`, `routine_templates`, la vista `routine_templates_summary` (listado sin `structure`) y la FK `routines_template_id_fkey` |
 | `04-progress.sql` | `body_metrics`, `sessions`, la vista `student_last_session`, `session_sets`, el índice `idx_session_sets_exercise_session` y las funciones `exercise_progress`, `last_session_kg` y `session_records` |
 | `04b-progress-overview.sql` | las funciones `progress_exercises` y `weekly_volume` (overview de progreso); corre después de `04-progress.sql` |
 | `05-gamification.sql` | `achievements`, `student_achievements`, `challenges`, `student_challenges`, `student_streaks` y el índice único de desafíos activos |

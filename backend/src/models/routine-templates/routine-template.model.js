@@ -4,6 +4,9 @@
  */
 export const ROUTINE_TEMPLATES_TABLE = 'routine_templates';
 
+/** Vista del listado: la plantilla sin structure, con `days` y `exercise_count` calculados en la base. */
+export const ROUTINE_TEMPLATES_SUMMARY_VIEW = 'routine_templates_summary';
+
 /** Niveles válidos de una plantilla. */
 export const TEMPLATE_LEVELS = ['beginner', 'intermediate', 'advanced'];
 
@@ -15,6 +18,9 @@ const BASE_COLUMNS = 'id, trainer_id, name, goal, level, frequency_per_week, gen
 /** Columnas para el detalle (con structure). */
 export const TEMPLATE_DETAIL_COLUMNS = `${BASE_COLUMNS}, structure`;
 
+/** Columnas del listado (vista routine_templates_summary, sin structure). */
+export const TEMPLATE_SUMMARY_COLUMNS = `${BASE_COLUMNS}, days, exercise_count`;
+
 /** Arreglo `field` de la structure; [] si falta o no es un arreglo (plantillas cargadas por otra vía). */
 const listOf = (structure, field) => (Array.isArray(structure?.[field]) ? structure[field] : []);
 
@@ -25,20 +31,14 @@ export const structureExercises = (structure) =>
 /** Días de una structure; [] si faltan o no son un arreglo. */
 export const structureDays = (structure) => listOf(structure, 'days');
 
-/** Proyección de listado: la plantilla sin structure, con `days` y `exercise_count`. */
+/**
+ * Proyección de listado a partir de una fila de la vista routine_templates_summary:
+ * mismas claves y mismo orden que la respuesta de siempre de GET /routine-templates
+ * (sin trainer_id ni structure).
+ */
 export function toTemplateSummary(row) {
-  const { id, name, goal, level, frequency_per_week, generated_by_ai, created_at, structure } = row;
-  return {
-    id,
-    name,
-    goal,
-    level,
-    frequency_per_week,
-    generated_by_ai,
-    created_at,
-    days: structureDays(structure),
-    exercise_count: structureExercises(structure).length,
-  };
+  const { id, name, goal, level, frequency_per_week, generated_by_ai, created_at, days, exercise_count } = row;
+  return { id, name, goal, level, frequency_per_week, generated_by_ai, created_at, days, exercise_count };
 }
 
 /**
