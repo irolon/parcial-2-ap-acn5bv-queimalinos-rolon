@@ -82,3 +82,18 @@ describe('contexto de IA', () => {
     expect(addEquipment(full, 'otro')).toBe(full);
   });
 });
+
+describe('frecuencia semanal', () => {
+  it('los valores iniciales la traen como texto (vacía si no tiene)', () => {
+    expect(studentFormDefaults({ ...STUDENT, weekly_frequency: 4 }).weekly_frequency).toBe('4');
+    expect(studentFormDefaults(STUDENT).weekly_frequency).toBe('');
+  });
+
+  it('manda la cambiada como número y la vaciada como null', () => {
+    const withFrequency = { ...STUDENT, weekly_frequency: 3 };
+    const formOf = (value) => new Map(Object.entries({ ...STUDENT, weekly_frequency: value }));
+    expect(buildStudentBody(formOf('5'), withFrequency)).toEqual({ weekly_frequency: 5 });
+    expect(buildStudentBody(formOf(''), withFrequency)).toEqual({ weekly_frequency: null });
+    expect(buildStudentBody(formOf('3'), withFrequency)).toEqual({});
+  });
+});

@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 // GET /invitations/:token es pública: la foto del PT sale firmada (o null), nunca la ruta del bucket.
 const mockRepo = { studentEmailExists: jest.fn(), createInvitation: jest.fn(), findInvitationByToken: jest.fn() };
 const mockAvatarsRepo = { signPaths: jest.fn() };
-jest.unstable_mockModule('../../../../src/repositories/invitations/invitations.repository.js', () => mockRepo);
-jest.unstable_mockModule('../../../../src/repositories/students/avatars.repository.js', () => mockAvatarsRepo);
-jest.unstable_mockModule('../../../../src/services/routine-templates/routine-templates.service.js', () => ({
+jest.unstable_mockModule('../../../../../src/repositories/invitations/invitations.repository.js', () => mockRepo);
+jest.unstable_mockModule('../../../../../src/repositories/students/avatars.repository.js', () => mockAvatarsRepo);
+jest.unstable_mockModule('../../../../../src/services/routine-templates/routine-templates.service.js', () => ({
   getOwnedTemplate: jest.fn(),
 }));
 
-const service = await import('../../../../src/services/invitations/invitations.service.js');
+const service = await import('../../../../../src/services/invitations/invitations.service.js');
 
 const row = (avatar_url) => ({
   student_name: 'Pedro Gómez',

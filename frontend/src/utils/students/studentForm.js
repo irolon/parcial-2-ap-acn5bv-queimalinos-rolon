@@ -3,7 +3,7 @@ import { fieldErrorsFrom } from '@/utils/fieldErrors';
 import { EQUIPMENT_LABELS } from '@/utils/exercises/exerciseOptions';
 import { validatePhone } from '@/utils/students/profile/phone';
 
-export const STUDENT_FIELDS = ['name', 'phone', 'goal', 'level', 'birth_date', 'gym_equipment', 'injuries'];
+export const STUDENT_FIELDS = ['name', 'phone', 'goal', 'level', 'birth_date', 'weekly_frequency', 'gym_equipment', 'injuries'];
 export const MAX_EQUIPMENT = 30;
 export const MAX_EQUIPMENT_LENGTH = 50;
 export const MAX_INJURIES = 1000;
@@ -19,12 +19,13 @@ export function studentFormDefaults(student) {
     goal: student.goal ?? '',
     level: student.level ?? '',
     birth_date: student.birth_date ?? '',
+    weekly_frequency: student.weekly_frequency ? String(student.weekly_frequency) : '',
   };
 }
 
 /**
  * Body del PATCH con solo lo que cambió. Objetivo y nivel vacíos no se mandan (el backend no
- * admite `null`); la fecha y el teléfono vaciados van como `null`.
+ * admite `null`); la fecha, la frecuencia y el teléfono vaciados van como `null`.
  */
 export function buildStudentBody(formData, student) {
   const initial = studentFormDefaults(student);
@@ -36,6 +37,8 @@ export function buildStudentBody(formData, student) {
     if (text(field) && text(field) !== initial[field]) body[field] = text(field);
   }
   if (text('birth_date') !== initial.birth_date) body.birth_date = text('birth_date') || null;
+  const frequency = text('weekly_frequency');
+  if (frequency !== initial.weekly_frequency) body.weekly_frequency = frequency ? Number(frequency) : null;
   return body;
 }
 

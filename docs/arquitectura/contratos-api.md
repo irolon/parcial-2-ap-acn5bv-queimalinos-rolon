@@ -246,9 +246,15 @@ Genera una invitación para un nuevo alumno. El PT elige el canal de envío.
   "gym_equipment": ["string (opcional, hasta 30 ítems de 1–50 chars)"],
   "injuries": "string (opcional, hasta 1000 chars)",
   "template_id": "uuid (opcional): plantilla inicial, propia",
-  "routine_days": ["monday", "..."] (requerido con template_id)
+  "routine_days": ["monday", "..."] (requerido con template_id),
+  "weekly_frequency": "entero 1–7 (opcional): días por semana que quiere entrenar",
+  "height_cm": "número 50–250 (opcional)",
+  "weight_kg": "número 20–300 (opcional)",
+  "birth_date": "YYYY-MM-DD (opcional): real, desde 1900 y no futura"
 }
 ```
+
+> **Datos extra (deseable, 14/11).** `weekly_frequency`, `height_cm`, `weight_kg` y `birth_date` son opcionales (ausentes o `null` = sin dato; fuera de rango → 400 en ese campo). Se guardan en la invitación y se **copian al alta** (`POST /students`): frecuencia y nacimiento al alumno; altura y peso como su primera medida. `GET /invitations/:token` (público) **no** los expone, ni tampoco el teléfono, el contexto IA ni la plantilla. No viajan a la IA (RNF-26): el contexto de los asistentes sigue siendo objetivo, nivel, equipamiento y lesiones.
 
 > **Plantilla inicial (GX8).** `template_id` (opcional, `null` = sin plantilla) es una plantilla **propia**: ajena o inexistente → **404 `TEMPLATE_NOT_FOUND`** (no se revela qué ids existen). `routine_days` es un arreglo no vacío de `monday..sunday` sin repetidos y va **siempre y solo con `template_id`**: plantilla sin días (ausentes o `null`) → 400 en `routine_days`, y días sin plantilla → 400 en `routine_days`. Así, si la plantilla se borra antes del alta (la FK deja `template_id` en `null`), la invitación se sigue distinguiendo de una sin plantilla por sus días y al PT le llega `initial_routine_failed`. La plantilla se valida al invitar y se **copia al alta** (`POST /students`): vale la versión de la plantilla en ese momento. `GET /invitations/:token` no la expone.
 
@@ -302,6 +308,8 @@ Crea el alumno desde el token de invitación. Público.
 **201 Created** — `{ student, token, refresh_token }`
 
 > **Rutina inicial (GX8).** Si la invitación tenía plantilla inicial, el alumno arranca con esa rutina activa (copia de la plantilla con `POST /routine-templates/:id/instantiate`, con los `routine_days` de la invitación). La respuesta no cambia. **El alta nunca falla por la rutina:** si la plantilla se borró después de invitar, tiene ejercicios que ya no están o falla el insert, el alumno se crea igual, sin rutina, y al PT le llega la notificación `initial_routine_failed` (ver Módulo: Notificaciones).
+
+> **Datos extra (deseable, 14/11).** El alumno nace con el `weekly_frequency` y el `birth_date` de la invitación. Si la invitación traía altura o peso, se le crea la **primera medida** (`body_metrics`, `recorded_by: "trainer"`, `recorded_at` = el alta) con lo que haya; así aparece en `latest_metrics` de la ficha y en el IMC. **El alta nunca falla por la medida:** si no se puede guardar, se loguea y el alumno se crea igual (sin aviso: el PT la puede cargar desde la ficha).
 
 **Errores:** `429 RATE_LIMIT_EXCEEDED` (además de los del alta).
 
@@ -407,7 +415,7 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
     "goal": "strength", "level": "beginner", "birth_date": "1999-05-01", "avatar_url": null,
     "active": true, "gym_equipment": ["Mancuernas", "Banco"], "injuries": "Lumbalgia",
     "created_at": "2026-10-17T12:00:00Z", "must_change_password": false, "password_changed_at": null,
-    "phone": "+54 9 11 2233-4455",
+    "phone": "+54 9 11 2233-4455", "weekly_frequency": 4,
     "latest_metrics": { "id": "uuid", "student_id": "uuid", "weight_kg": 74.5, "height_cm": 178, "body_fat_pct": null,
       "waist_cm": null, "hip_cm": null, "chest_cm": null, "recorded_at": "2026-10-20T10:00:00Z",
       "recorded_by": "trainer", "bmi": 23.5 },
@@ -420,6 +428,8 @@ Ficha completa. El trainer ve sus alumnos; el alumno, solo la suya.
 > `latest_metrics`, `active_routine` y `last_session_at` (timestamp de la última sesión; `null` si nunca entrenó) pueden venir en `null`. `PATCH /students/:id` devuelve la misma ficha. `active_routine` es la rutina activa más reciente.
 >
 > GX1: `must_change_password` (`true` mientras el alumno no elija una clave nueva después de un blanqueo) y `password_changed_at` (último cambio o blanqueo; `null` si nunca). Son de solo lectura: `PATCH` los ignora (los cambian `PUT /auth/password` y `POST /students/:id/password-reset`).
+>
+> `weekly_frequency`: días por semana que el alumno quiere entrenar (1–7, o `null`), cargado al invitar o editado por el PT. No es el `days_per_week` de `GET /students`, que sale de la rutina activa.
 >
 > GX2: `phone` (texto tal como se cargó, o `null`). Al alta se copia el `student_phone` de la invitación si tiene entre 6 y 30 caracteres.
 
@@ -457,6 +467,7 @@ Actualiza un alumno. El **trainer dueño** (todos los campos) o el **propio alum
 | `level` | `beginner`, `intermediate` o `advanced` |
 | `active` | booleano. `false` es la **baja**: revoca los refresh tokens del alumno y su login responde `401 ACCOUNT_DISABLED`; además, sus turnos futuros `pending` o `confirmed` pasan a `cancelled` (liberan el horario, sin notificaciones). **No es inmediata:** el access token que ya tiene sigue valiendo hasta que vence (`JWT_EXPIRES_IN`, 1 h). `true` lo reactiva con la misma contraseña; los turnos cancelados no vuelven |
 | `birth_date` | `YYYY-MM-DD`, no futura, o `null` |
+| `weekly_frequency` | entero 1–7 (días por semana que quiere entrenar), o `null` |
 | `gym_equipment` | lista de hasta 30 textos de 1–50 caracteres, o `null` |
 | `injuries` | texto de hasta 1000 caracteres, o `null` (solo espacios → `null`) |
 

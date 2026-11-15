@@ -23,7 +23,7 @@ por tamaño).
   Editor de Supabase o con el MCP. Cada archivo depende de tablas creadas en él o en los anteriores.
 - Todos se pueden volver a correr: usan `if not exists` y los `alter` van en
   bloques idempotentes.
-- Después, `../checks/schema-checks.sql` tiene que devolver 0 filas.
+- Después, los dos archivos de `../checks/schema-checks/` tienen que devolver 0 filas (cada uno como una consulta aparte).
 - Luego se cargan los seeds, todos idempotentes y en este orden: `../seeds/exercises.sql`, `../seeds/achievements.sql` y por último
   `../seeds/challenges.sql` (el tercer desafío referencia el logro `CHALLENGE_DONE`). Después `../checks/exercises-checks.sql`
   tiene que devolver 0 filas.

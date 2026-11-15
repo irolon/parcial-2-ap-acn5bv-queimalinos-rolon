@@ -6,7 +6,7 @@ import Select from '@/components/shared/ui/Select';
 import { useUpdateStudent } from '@/hooks/students/useStudents';
 import { todayString } from '@/utils/dates';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
-import { GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
+import { FREQUENCY_OPTIONS, GOAL_OPTIONS, LEVEL_OPTIONS } from '@/utils/students/studentOptions';
 import {
   buildStudentBody,
   studentFormDefaults,
@@ -20,7 +20,7 @@ const FORM_ID = 'edit-student-form';
 /** Objetivo y nivel no se pueden vaciar (el backend no admite `null`): "Sin definir" solo si ya lo estaban. */
 const optionsFor = (options, current) => (current ? options.filter((o) => o.value) : options);
 
-/** Edita nombre, teléfono, objetivo, nivel y fecha de nacimiento; manda solo lo que cambió. */
+/** Edita nombre, teléfono, objetivo, nivel, fecha de nacimiento y frecuencia; manda solo lo que cambió. */
 export default function EditStudentDialog({ student, onClose }) {
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const update = useUpdateStudent(student.id);
@@ -115,6 +115,13 @@ export default function EditStudentDialog({ student, onClose }) {
           max={todayString()}
           defaultValue={defaults.birth_date}
           error={fields.birth_date}
+        />
+        <Select
+          label="Frecuencia"
+          name="weekly_frequency"
+          options={FREQUENCY_OPTIONS}
+          defaultValue={defaults.weekly_frequency}
+          error={fields.weekly_frequency}
         />
       </form>
       {student.active && <ResetPasswordSection student={student} disabled={saving} onBusyChange={onResetBusy} />}

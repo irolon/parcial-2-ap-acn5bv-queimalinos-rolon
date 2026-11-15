@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
  *
  * Ojo: una tabla VACÍA también devuelve [] aunque no tenga RLS. Este script es
  * concluyente para las tablas con datos; el flag de RLS de todas se verifica en
- * schema-checks.sql.
+ * schema-checks/ (los dos archivos).
  *
  * Uso: npm run db:check-anon (lee SUPABASE_URL y SUPABASE_ANON_KEY de .env)
  */

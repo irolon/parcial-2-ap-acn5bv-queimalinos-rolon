@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { firstName, hoursLeft, qrFileName } from '@/components/invitations/shareFormat';
+import { firstName, hoursLeft, qrFileName } from '@/components/invitations/share/shareFormat';
 
 const NOW = Date.parse('2026-10-18T12:00:00Z');
 const at = (hours) => new Date(NOW + hours * 3600_000).toISOString();
