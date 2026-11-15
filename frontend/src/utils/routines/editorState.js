@@ -48,6 +48,11 @@ export function updateExercise(state, key, field, value) {
   return mapExercises(state, (list) => list.map((e) => (e.key === key ? { ...e, [field]: value } : e)));
 }
 
+/** Cambia el ejercicio de una fila y conserva su lugar y los valores del plan (series, reps, descanso, kg…). */
+export function replaceExercise(state, key, exerciseId) {
+  return updateExercise(state, key, 'exercise_id', exerciseId);
+}
+
 export function updateHeader(state, field, value) {
   return { ...state, [field]: value };
 }

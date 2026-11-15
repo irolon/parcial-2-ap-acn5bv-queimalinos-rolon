@@ -81,6 +81,13 @@ describe('RoutinesPage', () => {
     expect(main().getByRole('link', { name: 'Rutina con IA' })).toHaveAttribute('href', '/pt/rutinas/ia?nueva=1');
   });
 
+  it('cada rutina tiene "Editar", que la abre en el editor', async () => {
+    stubRoutinesApi({ routines: [routine(), routine({ id: 'r-2', name: 'Vieja', active: false })] });
+    renderRoute('/pt/rutinas');
+    expect(await main().findByRole('link', { name: 'Editar Fuerza A' })).toHaveAttribute('href', '/pt/rutinas/r-1/editar');
+    expect(main().getByRole('link', { name: 'Editar Vieja' })).toHaveAttribute('href', '/pt/rutinas/r-2/editar');
+  });
+
   it('si falla la carga ofrece reintentar', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: { code: 'INTERNAL', message: 'Se rompió' } }), { status: 500, headers: { 'Content-Type': 'application/json' } })));
     renderRoute('/pt/rutinas');

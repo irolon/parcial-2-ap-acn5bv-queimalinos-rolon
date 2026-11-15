@@ -114,3 +114,31 @@ describe('routines.api: rutinas del alumno', () => {
     });
   });
 });
+
+describe('routines.api: edición de una rutina asignada', () => {
+  const cases = [
+    ['getRoutine', ['r-1'], 'GET', '/routines/r-1', undefined, 200],
+    ['updateRoutine', ['r-1', { name: 'B' }], 'PATCH', '/routines/r-1', { name: 'B' }, 200],
+    ['addRoutineExercises', ['r-1', [{ exercise_id: 'e' }]], 'POST', '/routines/r-1/exercises', { exercises: [{ exercise_id: 'e' }] }, 201],
+    ['updateRoutineExercise', ['r-1', 're-1', { reps: 5 }], 'PATCH', '/routines/r-1/exercises/re-1', { reps: 5 }, 200],
+    ['reorderRoutineExercises', ['r-1', ['a', 'b']], 'PUT', '/routines/r-1/exercises/order', { routine_exercise_ids: ['a', 'b'] }, 200],
+  ];
+
+  it.each(cases)('%s llama a la ruta con el método y el body, y devuelve data', async (fn, args, method, path, body, status) => {
+    const data = { id: 'x' };
+    const fetchMock = stubFetch(async () => jsonResponse(status, { data }));
+    await expect(routinesApi[fn](...args)).resolves.toEqual(data);
+    const [[calledPath, init]] = calls(fetchMock);
+    expect(calledPath).toBe(path);
+    expect(init.method).toBe(method);
+    expect(bodyOf(init)).toEqual(body);
+  });
+
+  it('removeRoutineExercise hace DELETE /routines/:id/exercises/:reId (204)', async () => {
+    const fetchMock = stubFetch(async () => jsonResponse(204));
+    await routinesApi.removeRoutineExercise('r-1', 're-1');
+    const [[path, init]] = calls(fetchMock);
+    expect(path).toBe('/routines/r-1/exercises/re-1');
+    expect(init.method).toBe('DELETE');
+  });
+});
