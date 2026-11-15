@@ -7,37 +7,46 @@ import {
 const ex = (id) => ({ exercise_id: id, sets: 3, reps: 10 });
 
 describe('routine-template.model', () => {
-  it('toTemplateSummary expone days y exercise_count sin structure', () => {
-    const row = {
-      id: 't1',
-      name: 'PPL',
-      goal: 'strength',
-      level: null,
-      frequency_per_week: 2,
-      generated_by_ai: false,
-      created_at: 'x',
-      structure: { version: 1, days: ['monday', 'friday'], exercises: [ex('a'), ex('b'), ex('c')] },
-    };
-    const out = toTemplateSummary(row);
-    expect(out.days).toEqual(['monday', 'friday']);
-    expect(out.exercise_count).toBe(3);
-    expect(out.structure).toBeUndefined();
+  // Fila de la vista routine_templates_summary (days y exercise_count ya calculados en la base).
+  const summaryRow = {
+    id: 't1',
+    trainer_id: 'tr-1',
+    name: 'PPL',
+    goal: 'strength',
+    level: null,
+    frequency_per_week: 2,
+    generated_by_ai: false,
+    created_at: '2026-11-14T10:00:00+00:00',
+    days: ['monday', 'friday'],
+    exercise_count: 3,
+  };
+
+  it('toTemplateSummary devuelve la misma forma de siempre: mismas claves, mismo orden, sin trainer_id', () => {
+    const out = toTemplateSummary(summaryRow);
+    expect(Object.keys(out)).toEqual([
+      'id', 'name', 'goal', 'level', 'frequency_per_week', 'generated_by_ai', 'created_at', 'days', 'exercise_count',
+    ]);
+    expect(JSON.stringify(out)).toBe(
+      '{"id":"t1","name":"PPL","goal":"strength","level":null,"frequency_per_week":2,"generated_by_ai":false,' +
+        '"created_at":"2026-11-14T10:00:00+00:00","days":["monday","friday"],"exercise_count":3}'
+    );
   });
 
-  it('toTemplateSummary tolera structure vacío', () => {
-    expect(toTemplateSummary({ id: 't', structure: {} })).toMatchObject({ days: [], exercise_count: 0 });
+  it('toTemplateSummary respeta el orden de days tal como viene de la structure', () => {
+    const out = toTemplateSummary({ ...summaryRow, days: ['friday', 'monday', 'wednesday'] });
+    expect(out.days).toEqual(['friday', 'monday', 'wednesday']);
+  });
+
+  it('toTemplateSummary nunca devuelve structure aunque la fila la traiga', () => {
+    expect(toTemplateSummary({ ...summaryRow, structure: { days: [] } }).structure).toBeUndefined();
   });
 
   it('tolera days/exercises que no son arreglos', () => {
-    const structure = { days: 'monday', exercises: 'x' };
-    expect(toTemplateSummary({ id: 't', structure })).toMatchObject({ days: [], exercise_count: 0 });
-    expect(templateExerciseIds(structure)).toEqual([]);
+    expect(templateExerciseIds({ days: 'monday', exercises: 'x' })).toEqual([]);
   });
 
   it('ignora ítems null o no objeto en exercises', () => {
-    const structure = { exercises: [null, 3, ex('a')] };
-    expect(toTemplateSummary({ id: 't', structure }).exercise_count).toBe(1);
-    expect(templateExerciseIds(structure)).toEqual(['a']);
+    expect(templateExerciseIds({ exercises: [null, 3, ex('a')] })).toEqual(['a']);
   });
 
   it('structureFromRoutine ordena por order_index y lo pasa a order', () => {
