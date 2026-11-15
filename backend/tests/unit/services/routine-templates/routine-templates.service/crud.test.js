@@ -17,12 +17,25 @@ describe('routine-templates.service (CRUD)', () => {
   });
 
   describe('list', () => {
-    it('lista las plantillas del trainer como resumen', async () => {
-      mockRepo.findTemplates.mockResolvedValue([TEMPLATE]);
+    it('lista las plantillas del trainer como resumen (fila de la vista, misma forma de siempre)', async () => {
+      const { structure, ...base } = TEMPLATE;
+      const row = { ...base, created_at: '2026-11-14T10:00:00+00:00', days: structure.days, exercise_count: 1 };
+      mockRepo.findTemplates.mockResolvedValue([row]);
       const result = await service.list(TRAINER_ID, { goal: 'strength' });
       expect(mockRepo.findTemplates).toHaveBeenCalledWith({ trainerId: TRAINER_ID, goal: 'strength' });
-      expect(result[0]).toMatchObject({ id: 'tp-1', exercise_count: 1, days: STRUCTURE.days });
-      expect(result[0].structure).toBeUndefined();
+      expect(result).toEqual([
+        {
+          id: 'tp-1',
+          name: 'Fuerza',
+          goal: 'strength',
+          level: null,
+          frequency_per_week: 2,
+          generated_by_ai: false,
+          created_at: '2026-11-14T10:00:00+00:00',
+          days: STRUCTURE.days,
+          exercise_count: 1,
+        },
+      ]);
     });
   });
 

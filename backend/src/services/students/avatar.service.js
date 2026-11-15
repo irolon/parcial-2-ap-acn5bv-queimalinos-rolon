@@ -1,23 +1,13 @@
 import { Errors } from '../../shared/utils/errors.js';
-import { detectImageType } from '../../shared/utils/files/image-type.js';
-import * as avatarsRepo from '../../repositories/students/avatars.repository.js';
 import * as studentsRepo from '../../repositories/students/students.repository/students.repository.js';
 import { avatarPath, isStudentAvatarPath } from '../../models/students/avatar.model.js';
 import { assertCanAccessStudent } from './student-access.service.js';
 import { signAvatars } from './avatar-urls.service.js';
+import { imageTypeOf, removeQuietly, uploadAndSave } from './avatar-storage.service.js';
 
 /** Solo el propio alumno cambia su foto (el PT no: decisión 4 de la GX2). */
 function assertSelf(user, studentId) {
   if (user.role !== 'student' || user.id !== studentId) throw Errors.forbidden();
-}
-
-/** Best-effort: una foto que no se pudo borrar queda huérfana en el bucket, nunca rompe la respuesta. */
-async function removeQuietly(path, reason) {
-  try {
-    await avatarsRepo.remove(path);
-  } catch (err) {
-    console.error(`No se pudo borrar la foto de perfil (${reason}):`, err.message);
-  }
 }
 
 /**
@@ -27,21 +17,11 @@ async function removeQuietly(path, reason) {
  */
 export async function setAvatar(user, studentId, file) {
   assertSelf(user, studentId);
-  if (!file) {
-    throw Errors.validation('Error de validación', [{ field: 'image', message: 'Elegí una foto' }]);
-  }
-  const type = detectImageType(file.buffer);
-  if (!type) throw Errors.imageTypeInvalid();
+  const type = imageTypeOf(file);
   const { avatar_url: prev } = await assertCanAccessStudent(user, studentId);
 
   const path = avatarPath(studentId, type.ext);
-  await avatarsRepo.upload(path, file.buffer, type.mime);
-  try {
-    await studentsRepo.updateStudent(studentId, { avatar_url: path });
-  } catch (err) {
-    await removeQuietly(path, 'deshacer la subida');
-    throw err;
-  }
+  await uploadAndSave(path, file, type.mime, (p) => studentsRepo.updateStudent(studentId, { avatar_url: p }));
   if (isStudentAvatarPath(prev, studentId)) await removeQuietly(prev, 'la anterior');
 
   const [signed] = await signAvatars([{ avatar_url: path }]);

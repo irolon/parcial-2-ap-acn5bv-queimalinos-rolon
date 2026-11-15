@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import * as authApi from '@/api/auth/auth.api';
 import * as studentsApi from '@/api/students/students.api';
 import * as accountApi from '@/api/account/account.api';
+import * as profileApi from '@/api/account/profile.api';
 import { configureClient, isNetworkError } from '@/api/shared/client';
 
 export const SESSION_STORAGE_KEY = 'fittrainer.session';
@@ -30,20 +31,24 @@ function withPasswordFlag(user, data) {
   return { ...user, must_change_password: data.must_change_password };
 }
 
-// GX2: el user (con la foto firmada, que vence en 1 h) vive en localStorage. Al restaurar la sesión de un alumno se
-// trae su ficha para que el sidebar tenga la foto y el nombre vigentes. Best-effort: si falla, queda lo guardado; si
+// De dónde sale el perfil vigente de cada rol: la ficha del alumno o GET /auth/me del PT.
+const PROFILE_OF = { student: (user) => studentsApi.getStudent(user.id), trainer: () => profileApi.getMe() };
+
+// GX2: el user (con la foto firmada, que vence en 1 h) vive en localStorage. Al restaurar la sesión se trae el perfil
+// (alumno o PT) para que el sidebar tenga la foto y el nombre vigentes. Best-effort: si falla, queda lo guardado; si
 // mientras tanto cambió la sesión, no pisa a la nueva.
-async function refreshStudentProfile(get, set, refreshToken) {
+async function refreshProfile(get, set, refreshToken) {
   const { user } = get();
+  const fetchProfile = PROFILE_OF[user?.role];
   // Con la clave blanqueada la API responde 403 a todo salvo el cambio: no se pide.
-  if (user?.role !== 'student' || user.must_change_password) return;
+  if (!fetchProfile || user.must_change_password) return;
   try {
-    const { name, avatar_url: avatarUrl } = await studentsApi.getStudent(user.id);
+    const { name, avatar_url: avatarUrl } = await fetchProfile(user);
     const current = get();
     if (current.refreshToken !== refreshToken || current.user?.id !== user.id) return;
     set({ user: { ...current.user, name, avatar_url: avatarUrl ?? null } });
   } catch {
-    // Sin ficha queda el user guardado; Mi perfil la vuelve a traer.
+    // Sin perfil queda el user guardado; Mi perfil o Tu cuenta lo vuelven a traer.
   }
 }
 
@@ -124,7 +129,7 @@ export const useAuthStore = create(
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
           return;
         }
-        await refreshStudentProfile(get, set, refreshToken);
+        await refreshProfile(get, set, refreshToken);
       },
 
       // Reintento desde `offline`, sin pasar por `loading` (la pantalla de "Sin conexión" no parpadea).
@@ -142,7 +147,7 @@ export const useAuthStore = create(
           else set({ ...EMPTY_SESSION, status: 'anonymous' });
           return;
         }
-        await refreshStudentProfile(get, set, refreshToken);
+        await refreshProfile(get, set, refreshToken);
       },
     }),
     {

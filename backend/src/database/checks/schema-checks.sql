@@ -150,6 +150,11 @@ where to_regclass('public.student_last_session') is not null
   and pg_get_viewdef('public.student_last_session'::regclass) not like '%finished_at IS NOT NULL%'
 
 union all
+select 'falta la vista routine_templates_summary con security_invoker = true (falta 2026-11-14-listado-plantillas.sql)'
+where not exists (select 1 from pg_class where oid = to_regclass('public.routine_templates_summary')
+  and 'security_invoker=true' = any (reloptions))
+
+union all
 select 'falta el índice idx_sessions_open (falta 2026-11-09-open-sessions.sql)'
 where to_regclass('public.idx_sessions_open') is null
 

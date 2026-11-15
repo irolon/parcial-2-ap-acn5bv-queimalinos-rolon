@@ -13,6 +13,7 @@ import { validateChangePassword } from '../../validations/auth/password.validati
 import { validateUpdateMe } from '../../validations/auth/profile.validation.js';
 import * as authController from '../../controllers/auth/auth.controller.js';
 import * as profileController from '../../controllers/auth/profile.controller.js';
+import { parseImageUpload } from '../../shared/middlewares/upload.middleware.js';
 
 const router = Router();
 
@@ -37,5 +38,9 @@ router.put(
 // GX2: perfil del PT (nombre y título profesional, que ven sus alumnos). Solo trainer.
 router.get('/me', authenticate, requireRole('trainer'), profileController.getMe);
 router.patch('/me', authenticate, requireRole('trainer'), validate(validateUpdateMe), profileController.updateMe);
+// Foto del PT: sin :id, siempre la del token. El multipart se parsea después de chequear el rol;
+// el archivo se valida por firma en el service.
+router.put('/me/avatar', authenticate, requireRole('trainer'), parseImageUpload, profileController.setAvatar);
+router.delete('/me/avatar', authenticate, requireRole('trainer'), profileController.removeAvatar);
 
 export default router;

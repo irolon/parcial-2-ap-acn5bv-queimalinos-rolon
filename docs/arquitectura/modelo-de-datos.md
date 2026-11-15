@@ -26,7 +26,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | name | varchar | |
 | specialty | varchar | |
 | professional_title | varchar(80) | opcional (GX2): "Lic. en Educación Física"; lo carga el PT en su cuenta y lo ven sus alumnos. No va en el registro |
-| avatar_url | text | |
+| avatar_url | text | foto del PT (deseable): **ruta** en el bucket privado `avatars` (`trainers/<id>/<uuid>.<ext>`), no una URL; la API la reemplaza por una URL firmada de 1 h |
 | password_changed_at | timestamptz | último cambio de clave (GX1); null = nunca desde el alta |
 | created_at | timestamptz | |
 
@@ -117,6 +117,8 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | generated_by_ai | boolean | true si fue propuesta inicial del asistente IA del entrenador |
 | structure | jsonb | estructura completa de la plantilla (días, ejercicios, series, reps) |
 | created_at | timestamptz | |
+
+> **Vista `routine_templates_summary`** (deseable "listado sin structure"): las columnas de `routine_templates` sin `structure`, más `days` (`structure->'days'` tal cual, `[]` si no es un arreglo) y `exercise_count` (ítems de `structure->'exercises'`, `0` si no es un arreglo). `security_invoker = true`: hereda el RLS de `routine_templates`. La usa `GET /routine-templates`; el filtro por `trainer_id` lo hace el backend. Migración: `migrations/2026-11/09-15/2026-11-14-listado-plantillas.sql`.
 
 **routines**
 
@@ -390,7 +392,7 @@ Constraint `messages_not_empty`: tiene que haber `body` o `image_path` (puede ha
 
 **Bucket `message-images`** *(Supabase Storage, fotos de los mensajes)*: privado (`public = false`), sin acceso desde el browser. Límite de 5 MB (5242880 bytes) y tipos `image/jpeg`, `image/png` e `image/webp`. El backend sube con la `service_role`, valida el tipo por los bytes del archivo y entrega URLs firmadas de 1 hora.
 
-**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`. El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/09-15/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
+**Bucket `avatars`** *(Supabase Storage, fotos de perfil del alumno, GX2, y del PT)*: privado (`public = false`), mismos límites (5 MB; `image/jpeg`, `image/png`, `image/webp`). Rutas `students/<student_id>/<uuid>.<ext>`, guardadas en `students.avatar_url`, y `trainers/<trainer_id>/<uuid>.<ext>`, guardadas en `trainers.avatar_url` (sin migración: no hay políticas por prefijo, todo pasa por la `service_role`). El backend sube y borra con la `service_role` (al reemplazar o quitar la foto se borra la anterior en best-effort) y firma las URLs por lote (`createSignedUrls`, 1 hora) en cada respuesta que devuelve fotos. Migración: `backend/src/database/migrations/2026-11/09-15/2026-11-09-profile-editable.sql` (y `schema/06b-messages.sql`, donde viven los dos buckets).
 
 ---
 

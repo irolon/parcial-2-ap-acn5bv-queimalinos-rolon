@@ -22,7 +22,7 @@ const route = (detail) =>
     return detail();
   });
 
-describe('useAuthStore: restore refresca la ficha del alumno', () => {
+describe('useAuthStore: restore refresca la ficha del alumno o el perfil del PT', () => {
   it('trae GET /students/:id con el access nuevo y copia nombre y foto firmada', async () => {
     await seedSavedSession({ user: STUDENT, refreshToken: 'refresh-1' });
     const fetchMock = route(async () => jsonResponse(200, { data: { id: 's-1', name: 'Ana P.', avatar_url: FRESH } }));
@@ -59,11 +59,20 @@ describe('useAuthStore: restore refresca la ficha del alumno', () => {
     expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/refresh']);
   });
 
-  it('un trainer no pide la ficha', async () => {
-    await seedSavedSession({ user: USER, refreshToken: 'refresh-1' });
-    const fetchMock = route(async () => jsonResponse(200, {}));
+  it('un trainer trae GET /auth/me (no la ficha) y copia nombre y foto firmada', async () => {
+    const trainer = { ...USER, avatar_url: 'https://x/vieja?token=1' };
+    await seedSavedSession({ user: trainer, refreshToken: 'refresh-1' });
+    const fetchMock = route(async () => jsonResponse(200, { data: { id: USER.id, name: 'Laura M.', avatar_url: FRESH } }));
     await state().restore();
-    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/refresh']);
+    expect(calls(fetchMock).map(([path]) => path)).toEqual(['/auth/refresh', '/auth/me']);
+    expect(state().user).toEqual({ ...trainer, name: 'Laura M.', avatar_url: FRESH });
+  });
+
+  it('un trainer sin foto queda con avatar_url null aunque la guardada fuera vieja', async () => {
+    await seedSavedSession({ user: { ...USER, avatar_url: 'https://x/vieja?token=1' }, refreshToken: 'refresh-1' });
+    route(async () => jsonResponse(200, { data: { id: USER.id, name: USER.name } }));
+    await state().restore();
+    expect(state().user.avatar_url).toBeNull();
   });
 
   it('al volver de offline con retry() también trae la ficha', async () => {

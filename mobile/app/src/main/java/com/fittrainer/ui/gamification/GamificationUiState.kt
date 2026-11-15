@@ -30,6 +30,9 @@ data class GamificationReady(
     val medals: List<MedalUi>,
     /** Las últimas 3 desbloqueadas (bloque de Progreso). */
     val recent: List<MedalUi>,
+    /** La bloqueada con barra más cerca de desbloquearse (bloque de Progreso); null si no queda ninguna. */
+    val next: MedalUi?,
+    val unlockedCount: Int,
     val activeChallenges: List<ChallengeUi>,
     val finishedChallenges: List<ChallengeUi>,
 )
@@ -57,7 +60,7 @@ fun readyState(summary: GamificationSummary, today: LocalDate): GamificationRead
     val (active, finished) = summary.challenges.partition { it.status == "active" }
     return GamificationReady(
         summary.currentStreak, summary.longestStreak, summary.prSessions, summary.fullWeeks,
-        medals, medals.filter { it.unlocked }.take(3),
+        medals, medals.filter { it.unlocked }.take(3), medals.firstOrNull { it.showsBar }, unlocked.size,
         active.map { it.toUi(today) }, finished.map { it.toUi(today) },
     )
 }
