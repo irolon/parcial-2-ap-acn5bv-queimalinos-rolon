@@ -31,12 +31,23 @@ export function savedRoutine(overrides = {}) {
 
 /**
  * Servidor falso de la edición: guarda la rutina en memoria y contesta `GET/PATCH /routines/:id` y las rutas de sus
- * ejercicios como el backend. `fail(method, pathRegex)` hace fallar una ruta (500) una vez; `routine` deja cambiarla
+ * ejercicios como el backend. `fail(method, pathRegex)` hace fallar una ruta (500) una vez, también un GET; `hold(method,
+ * pathRegex)` demora la próxima respuesta de esa ruta hasta llamar a la función que devuelve; `routine` deja cambiarla
  * "desde afuera" (otro dispositivo). `log` lista `METHOD path` de cada escritura.
  */
 export function stubEditServer(initial = savedRoutine()) {
-  const server = { routine: structuredClone(initial), log: [], failures: [], seq: 0 };
+  const server = { routine: structuredClone(initial), log: [], failures: [], holds: [], seq: 0 };
   server.fail = (method, pattern, status = 500) => server.failures.push({ method, pattern, status });
+  server.hold = (method, pattern) => {
+    let release;
+    server.holds.push({ method, pattern, promise: new Promise((resolve) => { release = resolve; }) });
+    return () => release();
+  };
+  const take = (list, method, path) => {
+    const found = list.find((f) => f.method === method && f.pattern.test(path));
+    if (found) list.splice(list.indexOf(found), 1);
+    return found;
+  };
   const rows = () => server.routine.exercises;
   const routes = {
     'PATCH /routines/:id': (body) => { Object.assign(server.routine, body); return jsonResponse(200, { data: server.routine }); },
@@ -68,14 +79,13 @@ export function stubEditServer(initial = savedRoutine()) {
   server.fetchMock = stubFetch(async (url, init = {}) => {
     const method = init.method ?? 'GET';
     const path = url.replace(/^.*\/api/, '');
+    const held = take(server.holds, method, path);
+    if (held) await held.promise;
+    const failure = take(server.failures, method, path);
+    if (failure) return errorResponse(failure.status, 'INTERNAL', 'Error del servidor');
     if (method === 'GET' && path.startsWith('/exercises')) return jsonResponse(200, { data: LIBRARY });
     if (method === 'GET' && path === `/routines/${EDIT_ID}`) return jsonResponse(200, { data: structuredClone(server.routine) });
     if (method === 'GET') return jsonResponse(200, { data: [] });
-    const failure = server.failures.find((f) => f.method === method && f.pattern.test(path));
-    if (failure) {
-      server.failures.splice(server.failures.indexOf(failure), 1);
-      return errorResponse(failure.status, 'INTERNAL', 'Error del servidor');
-    }
     server.log.push(`${method} ${path}`);
     const re = path.match(/\/exercises\/([^/]+)$/)?.[1];
     const key = `${method} ${path.replace(EDIT_ID, ':id').replace(/\/exercises\/(?!order$)[^/]+$/, '/exercises/:re')}`;

@@ -23,6 +23,12 @@ describe('planEdits', () => {
     expect(planEdits(detail, updateHeader(loaded(), 'days', ['friday'])).header).toEqual({ days: ['friday'] });
   });
 
+  it('una rutina guardada sin objetivo que sigue sin objetivo no manda la cabecera', () => {
+    const noGoal = routineDetail({ goal: null });
+    expect(planEdits(noGoal, fromRoutine(noGoal)).header).toBeNull();
+    expect(planEdits(noGoal, updateHeader(fromRoutine(noGoal), 'goal', 'tonify')).header).toEqual({ goal: 'tonify' });
+  });
+
   it('un valor cambiado manda el PATCH de esa fila con todos sus campos', () => {
     const state = loaded();
     const plan = planEdits(detail, updateExercise(state, keyOf(state, 1), 'reps', '12'));

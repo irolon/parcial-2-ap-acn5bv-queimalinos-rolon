@@ -49,11 +49,14 @@ function exerciseErrors(e) {
   return Object.fromEntries(Object.entries(found).filter(([, message]) => message));
 }
 
-/** Errores del editor: cabecera, filas por `key`, `form` general y total (`count`). */
-export function validateRoutine(state) {
+/**
+ * Errores del editor: cabecera, filas por `key`, `form` general y total (`count`). `goalOptional`: la edición de una
+ * rutina guardada sin objetivo no obliga a elegir uno.
+ */
+export function validateRoutine(state, { goalOptional = false } = {}) {
   const header = {};
   if (!isValidName(state.name)) header.name = NAME_ERROR;
-  if (!state.goal) header.goal = 'Elegí un objetivo';
+  if (!state.goal && !goalOptional) header.goal = 'Elegí un objetivo';
   if (state.days.length === 0) header.days = 'Elegí al menos un día';
   const exercises = {};
   for (const e of state.exercises) {

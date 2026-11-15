@@ -16,8 +16,8 @@ const sameValues = (a, b) => Object.keys(a).every((field) => a[field] === b[fiel
 
 /** Campos de la cabecera que cambiaron (para `PATCH /routines/:id`), o `null` si ninguno. */
 function headerChanges(detail, state) {
-  const next = { name: state.name.trim(), goal: state.goal, level: state.level || null, days: sortDays(state.days) };
-  const saved = { name: detail.name, goal: detail.goal, level: detail.level ?? null, days: sortDays(detail.days ?? []) };
+  const next = { name: state.name.trim(), goal: state.goal || null, level: state.level || null, days: sortDays(state.days) };
+  const saved = { name: detail.name, goal: detail.goal ?? null, level: detail.level ?? null, days: sortDays(detail.days ?? []) };
   const changed = Object.keys(next).filter((field) => JSON.stringify(next[field]) !== JSON.stringify(saved[field]));
   return changed.length ? Object.fromEntries(changed.map((field) => [field, next[field]])) : null;
 }

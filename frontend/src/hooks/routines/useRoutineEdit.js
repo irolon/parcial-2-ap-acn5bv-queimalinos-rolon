@@ -43,10 +43,14 @@ export function useRoutineEdit(routineId) {
     queryClient.invalidateQueries({ queryKey: STUDENTS_KEY }),
   ]);
 
-  /** Tras un error: lo ya guardado queda anotado en las filas y la versión del servidor pasa a ser la base. */
-  const recover = async (error) => {
+  /**
+   * Tras un error: lo ya guardado queda anotado en las filas. Si se llegó a escribir (`wrote`), la versión del servidor
+   * pasa a ser la base; si falló la comprobación inicial, la base no se toca para que el reintento vuelva a comparar
+   * contra lo que se abrió (y avise si otro dispositivo cambió la rutina).
+   */
+  const recover = async (error, wrote) => {
     if (error.savedIds) setState((current) => withSavedIds(current, error.savedIds));
-    const fresh = await routinesApi.getRoutine(routineId).catch(() => null);
+    const fresh = wrote ? await routinesApi.getRoutine(routineId).catch(() => null) : null;
     if (fresh) setBaseline(fresh);
     setStatus({ ...IDLE, error });
     if (error.savedIds) refreshLists(); // pudo haberse guardado una parte
@@ -55,12 +59,14 @@ export function useRoutineEdit(routineId) {
   const save = async ({ force = false } = {}) => {
     setStatus({ ...IDLE, saving: true });
     let savedIds = null;
+    let wrote = false;
     try {
       const fresh = await routinesApi.getRoutine(routineId);
       if (!force && snapshotOf(fresh) !== snapshotOf(baseline)) {
         setStatus({ ...IDLE, conflict: fresh });
         return;
       }
+      wrote = true;
       const { plan, ids } = await saveEdits(routineId, fresh, state, routinesApi);
       savedIds = ids;
       if (plan.empty) {
@@ -73,7 +79,7 @@ export function useRoutineEdit(routineId) {
     } catch (error) {
       // Si falló la recarga después de guardar todo, las filas igual se quedan con sus ids nuevos.
       if (!error.savedIds && savedIds) error.savedIds = savedIds;
-      await recover(error);
+      await recover(error, wrote);
     }
   };
 

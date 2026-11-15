@@ -35,6 +35,7 @@ export default function RoutineEditPage() {
   const [replacing, setReplacing] = useState(null);
 
   const apply = (fn, ...args) => {
+    if (status.saving) return; // lo que se toque mientras guarda se perdería al recargar la rutina del servidor
     edit.setState((current) => fn(current, ...args));
     edit.clearMessages();
   };
@@ -45,19 +46,21 @@ export default function RoutineEditPage() {
     return setReplacing(null);
   };
   const startReplace = (key) => {
+    if (status.saving) return;
     setReplacing(key);
     setLibraryOpen(true);
   };
+  const validate = () => validateRoutine(state, { goalOptional: !baseline.goal });
   const handleSave = () => {
     setAttempted(true);
-    if (validateRoutine(state).count === 0) edit.save();
+    if (validate().count === 0) edit.save();
   };
   const discard = () => {
     setAttempted(false);
     setReplacing(null);
     edit.discard();
   };
-  const errors = attempted && state ? validateRoutine(state) : null;
+  const errors = attempted && state ? validate() : null;
 
   return (
     <section className="flex flex-col gap-5">
@@ -70,7 +73,8 @@ export default function RoutineEditPage() {
             {replacingRow && (
               <ReplaceBanner name={byId.get(replacingRow.exercise_id)?.name ?? 'este ejercicio'} onCancel={() => setReplacing(null)} />
             )}
-            <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+            {/* Mientras guarda, todo el editor queda deshabilitado (cabecera, tabla, menú de fila y biblioteca). */}
+            <fieldset disabled={status.saving} aria-busy={status.saving} className="m-0 grid min-w-0 gap-6 border-0 p-0 lg:grid-cols-[280px_minmax(0,1fr)]">
               <aside className="min-w-0">
                 <Button variant="ghost" className="mb-3 lg:hidden" aria-expanded={libraryOpen} onClick={() => setLibraryOpen((o) => !o)}>
                   <Plus size={16} aria-hidden="true" /> Agregar ejercicio
@@ -111,7 +115,7 @@ export default function RoutineEditPage() {
                   </Button>
                 </div>
               </div>
-            </div>
+            </fieldset>
           </>
         )}
       </QueryState>
