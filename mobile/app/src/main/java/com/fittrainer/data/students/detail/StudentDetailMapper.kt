@@ -33,6 +33,7 @@ fun StudentDetailDto.toEntity(trainerId: String, fetchedAt: Long) = TrainerStude
     activeRoutineDays = activeRoutine?.days?.joinToString(","),
     fetchedAt = fetchedAt,
     avatarUrl = avatarUrl,
+    weeklyFrequency = weeklyFrequency,
 )
 
 fun TrainerStudentDetailEntity.toDomain() = StudentDetail(
@@ -54,4 +55,5 @@ fun TrainerStudentDetailEntity.toDomain() = StudentDetail(
         ActiveRoutine(name, activeRoutineDays.orEmpty().split(",").filter { it.isNotBlank() })
     },
     avatarUrl = avatarUrl,
+    weeklyFrequency = weeklyFrequency,
 )

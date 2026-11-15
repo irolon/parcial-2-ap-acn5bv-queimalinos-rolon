@@ -2,9 +2,10 @@ package com.fittrainer.data.invitation.invite
 
 import com.fittrainer.data.api.invitation.CreateInvitationRequest
 import com.fittrainer.data.routines.trainer.WEEK_DAYS
+import java.time.LocalDate
 
 /** Campos del formulario "Invitar alumno". */
-enum class InviteField { NAME, EMAIL, GOAL, LEVEL, PHONE, EQUIPMENT, INJURIES, TEMPLATE, DAYS }
+enum class InviteField { NAME, EMAIL, GOAL, LEVEL, PHONE, EQUIPMENT, INJURIES, TEMPLATE, DAYS, FREQUENCY, HEIGHT, WEIGHT, BIRTH_DATE }
 
 /** Lo que escribió el entrenador, tal cual (los opcionales vacíos son ""/null). */
 data class InviteForm(
@@ -17,6 +18,11 @@ data class InviteForm(
     val injuries: String = "",
     val templateId: String? = null,
     val routineDays: Set<String> = emptySet(),
+    // Datos extra (#123): altura y peso tal cual se escribieron (con coma o punto).
+    val weeklyFrequency: Int? = null,
+    val height: String = "",
+    val weight: String = "",
+    val birthDate: LocalDate? = null,
 )
 
 val GOALS = listOf("tonify", "weight_loss", "hypertrophy", "strength")
@@ -30,7 +36,7 @@ private val EMAIL_RE = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 private fun phoneDigits(phone: String) = phone.filter(Char::isDigit)
 
 /** Las mismas reglas que el backend (validations/invitations). Vacío = válido. */
-fun InviteForm.errors(): Map<InviteField, String> = buildMap {
+fun InviteForm.errors(today: LocalDate = LocalDate.now()): Map<InviteField, String> = buildMap {
     val n = name.trim()
     if (n.length !in 2..100) put(InviteField.NAME, "Entre 2 y 100 caracteres")
     if (!EMAIL_RE.matches(email.trim())) put(InviteField.EMAIL, "Email inválido")
@@ -47,6 +53,7 @@ fun InviteForm.errors(): Map<InviteField, String> = buildMap {
     }
     if (injuries.trim().length > MAX_INJURIES) put(InviteField.INJURIES, "Hasta $MAX_INJURIES caracteres")
     if (templateId != null && WEEK_DAYS.none { it in routineDays }) put(InviteField.DAYS, "Elegí al menos un día")
+    putAll(extrasErrors(today))
 }
 
 /** Con teléfono va por los dos canales ("both"); sin teléfono, solo QR. Vacíos → null. */
@@ -63,6 +70,10 @@ fun InviteForm.toRequest(): CreateInvitationRequest {
         deliveryChannel = if (digits.isEmpty()) "qr" else "both",
         templateId = templateId,
         routineDays = templateId?.let { WEEK_DAYS.filter { d -> d in routineDays } },
+        weeklyFrequency = weeklyFrequency,
+        heightCm = decimalOrNull(height),
+        weightKg = decimalOrNull(weight),
+        birthDate = birthDate?.toString(),
     )
 }
 
@@ -77,5 +88,9 @@ fun inviteFieldOf(apiField: String?): InviteField? = when (apiField) {
     "injuries" -> InviteField.INJURIES
     "template_id" -> InviteField.TEMPLATE
     "routine_days" -> InviteField.DAYS
+    "weekly_frequency" -> InviteField.FREQUENCY
+    "height_cm" -> InviteField.HEIGHT
+    "weight_kg" -> InviteField.WEIGHT
+    "birth_date" -> InviteField.BIRTH_DATE
     else -> null
 }

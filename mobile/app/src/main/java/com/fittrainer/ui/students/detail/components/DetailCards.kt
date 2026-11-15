@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fittrainer.data.students.detail.StudentDetail
+import com.fittrainer.ui.components.frequencyLine
 import com.fittrainer.ui.components.levelLabel
 import com.fittrainer.ui.join.goalLabel
 import com.fittrainer.ui.students.detail.EMPTY_VALUE
@@ -76,6 +77,7 @@ fun DataCard(detail: StudentDetail) = SectionCard("DATOS") {
     DataRow("Objetivo", detail.goal?.let(::goalLabel) ?: EMPTY_VALUE)
     DataRow("Nivel", detail.level?.let(::levelLabel) ?: EMPTY_VALUE)
     DataRow("Nacimiento", dateLabel(detail.birthDate))
+    DataRow("Frecuencia", frequencyLine(detail.weeklyFrequency) ?: EMPTY_VALUE)
     DataRow("Email", detail.email)
     Text("Equipamiento", style = MaterialTheme.typography.bodySmall, color = FtColors.TextSecondary)
     if (detail.gymEquipment.isEmpty()) {

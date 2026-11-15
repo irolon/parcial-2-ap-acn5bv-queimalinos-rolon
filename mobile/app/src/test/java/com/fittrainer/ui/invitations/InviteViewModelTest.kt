@@ -51,6 +51,23 @@ class InviteViewModelTest {
         vm.onChange(InviteField.EMAIL, "pedro@mail.com")
     }
 
+    @Test fun `los datos extra viajan en el pedido y un error abre Mas datos`() = runTest {
+        fillValid()
+        vm.onChange(InviteField.HEIGHT, "17")
+        vm.onSubmit()
+        advanceUntilIdle()
+        assertTrue(api.requests.isEmpty())
+        assertTrue(editing.showMore && InviteField.HEIGHT in editing.errors)
+        vm.onChange(InviteField.HEIGHT, "178")
+        vm.onChange(InviteField.WEIGHT, "74,5")
+        vm.onChange(InviteField.FREQUENCY, "4")
+        vm.onBirthDate(java.time.LocalDate.of(2002, 3, 15))
+        vm.onSubmit()
+        advanceUntilIdle()
+        val r = api.requests.single()
+        assertEquals(listOf(4, 178.0, 74.5, "2002-03-15"), listOf(r.weeklyFrequency, r.heightCm, r.weightKg, r.birthDate))
+    }
+
     @Test fun `con errores no llama al servidor y los muestra`() = runTest {
         vm.onChange(InviteField.NAME, "P")
         vm.onSubmit()

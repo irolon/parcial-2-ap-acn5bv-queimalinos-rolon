@@ -2,6 +2,7 @@ package com.fittrainer.ui.invitations
 
 import androidx.lifecycle.SavedStateHandle
 import com.fittrainer.data.invitation.invite.InviteForm
+import java.time.LocalDate
 
 private const val K_NAME = "invite.name"
 private const val K_EMAIL = "invite.email"
@@ -12,6 +13,10 @@ private const val K_EQUIPMENT = "invite.equipment"
 private const val K_INJURIES = "invite.injuries"
 private const val K_TEMPLATE = "invite.template"
 private const val K_DAYS = "invite.days"
+private const val K_FREQUENCY = "invite.frequency"
+private const val K_HEIGHT = "invite.height"
+private const val K_WEIGHT = "invite.weight"
+private const val K_BIRTH = "invite.birth"
 
 /** El formulario en el SavedStateHandle: sobrevive a que el sistema mate la app al ir a WhatsApp. */
 internal fun SavedStateHandle.saveInviteForm(form: InviteForm) {
@@ -24,6 +29,10 @@ internal fun SavedStateHandle.saveInviteForm(form: InviteForm) {
     this[K_INJURIES] = form.injuries
     this[K_TEMPLATE] = form.templateId
     this[K_DAYS] = ArrayList(form.routineDays)
+    this[K_FREQUENCY] = form.weeklyFrequency
+    this[K_HEIGHT] = form.height
+    this[K_WEIGHT] = form.weight
+    this[K_BIRTH] = form.birthDate?.toString()
 }
 
 internal fun SavedStateHandle.readInviteForm() = InviteForm(
@@ -36,4 +45,8 @@ internal fun SavedStateHandle.readInviteForm() = InviteForm(
     injuries = this[K_INJURIES] ?: "",
     templateId = get<String>(K_TEMPLATE)?.takeIf { it.isNotEmpty() },
     routineDays = get<ArrayList<String>>(K_DAYS)?.toSet() ?: emptySet(),
+    weeklyFrequency = get<Int>(K_FREQUENCY),
+    height = this[K_HEIGHT] ?: "",
+    weight = this[K_WEIGHT] ?: "",
+    birthDate = get<String>(K_BIRTH)?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
 )

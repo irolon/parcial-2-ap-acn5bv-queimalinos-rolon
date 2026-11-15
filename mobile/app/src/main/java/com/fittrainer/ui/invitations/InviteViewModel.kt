@@ -11,6 +11,7 @@ import com.fittrainer.data.invitation.invite.errors
 import com.fittrainer.data.network.ConnectivityObserver
 import com.fittrainer.data.repository.DataError
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,7 +64,10 @@ class InviteViewModel @Inject constructor(
             InviteField.LEVEL -> it.copy(level = value)
             InviteField.PHONE -> it.copy(phone = value.orEmpty())
             InviteField.INJURIES -> it.copy(injuries = value.orEmpty())
-            InviteField.EQUIPMENT, InviteField.TEMPLATE, InviteField.DAYS -> it // tienen sus propios handlers
+            InviteField.FREQUENCY -> it.copy(weeklyFrequency = value?.toIntOrNull())
+            InviteField.HEIGHT -> it.copy(height = value.orEmpty())
+            InviteField.WEIGHT -> it.copy(weight = value.orEmpty())
+            InviteField.EQUIPMENT, InviteField.TEMPLATE, InviteField.DAYS, InviteField.BIRTH_DATE -> it // tienen sus propios handlers
         }
     }
 
@@ -85,6 +89,8 @@ class InviteViewModel @Inject constructor(
     fun onToggleDay(day: String) = updateForm(InviteField.DAYS) {
         it.copy(routineDays = if (day in it.routineDays) it.routineDays - day else it.routineDays + day)
     }
+
+    fun onBirthDate(date: LocalDate?) = updateForm(InviteField.BIRTH_DATE) { it.copy(birthDate = date) }
 
     fun onToggleMore() = editing { it.copy(showMore = !it.showMore) }
 
@@ -153,6 +159,9 @@ class InviteViewModel @Inject constructor(
     private fun Map<InviteField, String>.hidesInMore() = keys.any { it in MORE_FIELDS }
 
     private companion object {
-        val MORE_FIELDS = setOf(InviteField.PHONE, InviteField.EQUIPMENT, InviteField.INJURIES)
+        val MORE_FIELDS = setOf(
+            InviteField.PHONE, InviteField.EQUIPMENT, InviteField.INJURIES,
+            InviteField.FREQUENCY, InviteField.HEIGHT, InviteField.WEIGHT, InviteField.BIRTH_DATE,
+        )
     }
 }

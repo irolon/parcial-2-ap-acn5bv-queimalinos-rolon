@@ -48,6 +48,19 @@ class StudentPatchTest {
         assertTrue(before.toEditable().copy(birthDate = today).errors(today).isEmpty())
     }
 
+    @Test fun `frecuencia cambiada va en el patch, vaciada manda null y sin cambio no va`() {
+        val withFour = before.copy(weeklyFrequency = 4)
+        assertEquals("""{"weekly_frequency":3}""", diffPatch(withFour, withFour.toEditable().copy(weeklyFrequency = 3)).toString())
+        assertEquals("""{"weekly_frequency":null}""", diffPatch(withFour, withFour.toEditable().copy(weeklyFrequency = null)).toString())
+        assertNull(diffPatch(withFour, withFour.toEditable()))
+        assertEquals(EditField.FREQUENCY, editFieldOf("weekly_frequency"))
+    }
+
+    @Test fun `frecuencia fuera de 1 a 7 es error`() {
+        assertTrue(EditField.FREQUENCY in before.toEditable().copy(weeklyFrequency = 8).errors(today))
+        assertTrue(before.toEditable().copy(weeklyFrequency = 7).errors(today).isEmpty())
+    }
+
     @Test fun `baja y reactivacion`() {
         assertEquals("""{"active":false}""", activePatch(false).toString())
         assertEquals("""{"active":true}""", activePatch(true).toString())
