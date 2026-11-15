@@ -130,8 +130,9 @@ export async function instantiate(trainerId, templateId, data) {
 
   // Una plantilla cargada por otra vía (seed, IA) puede estar incompleta.
   const structure = validStructureOrConflict(template.structure);
-  // Los ejercicios pudieron borrarse desde que se guardó la plantilla.
-  const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure));
+  // Los ejercicios pudieron borrarse o archivarse desde que se guardó la plantilla: un
+  // archivado no se copia a una rutina nueva (409, como uno borrado).
+  const missing = await findMissingExerciseIds(trainerId, templateExerciseIds(structure), { activeOnly: true });
   if (missing.length > 0) throw Errors.templateExercisesUnavailable(missing);
 
   const routine = await createWithExercises(

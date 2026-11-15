@@ -62,6 +62,15 @@ describe('routine-templates.service (instantiate)', () => {
     expect(mockRoutinesService.createWithExercises).not.toHaveBeenCalled();
   });
 
+  it('los ejercicios archivados cuentan como faltantes: 409 TEMPLATE_EXERCISES_UNAVAILABLE, no se copian', async () => {
+    mockRoutinesService.findMissingExerciseIds.mockResolvedValue(['ex-archivado']);
+    await expect(service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' })).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'TEMPLATE_EXERCISES_UNAVAILABLE',
+    });
+    expect(mockRoutinesService.findMissingExerciseIds).toHaveBeenCalledWith(TRAINER_ID, expect.any(Array), { activeOnly: true });
+  });
+
   it('crea la copia con template_id, goal, name y days de la plantilla', async () => {
     const detail = await service.instantiate(TRAINER_ID, 'tp-1', { student_id: 's-1' });
     expect(mockRoutinesService.createWithExercises).toHaveBeenCalledWith(

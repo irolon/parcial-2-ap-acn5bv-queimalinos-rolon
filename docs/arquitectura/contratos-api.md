@@ -753,7 +753,7 @@ Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda
 
 **201 Created** → `{ data }` con la rutina en la forma de `GET /routines/:id`.
 
-**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_STRUCTURE_INVALID`** ("La plantilla está incompleta: editala antes de asignarla") si la `structure` guardada no pasa la validación de plantillas (p. ej. cargada por seed o IA sin `days`/`exercises`), con los `details` de la validación; se chequea antes que los ejercicios; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible, con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
+**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_STRUCTURE_INVALID`** ("La plantilla está incompleta: editala antes de asignarla") si la `structure` guardada no pasa la validación de plantillas (p. ej. cargada por seed o IA sin `days`/`exercises`), con los `details` de la validación; se chequea antes que los ejercicios; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible (borrado, de otro trainer o **archivado**: un archivado no se copia a una rutina nueva), con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
 
 ---
 

@@ -16,7 +16,7 @@ for (const method of ['select', 'eq', 'contains', 'limit']) query[method].mockRe
 const supabase = { from: jest.fn(() => query) };
 jest.unstable_mockModule(src('config/supabase.js'), () => ({ supabase }));
 
-const { findRoutinesByTrainer, findActiveRoutineForStudentToday } = await import(
+const { findRoutinesByTrainer, findActiveRoutineForStudentToday, findAccessibleExerciseIds } = await import(
   src('repositories/routines/routines.repository.js')
 );
 const { ROUTINE_COLUMNS } = await import(src('models/routines/routine.model.js'));
@@ -77,5 +77,29 @@ describe('routines.repository · findActiveRoutineForStudentToday', () => {
     await expect(findActiveRoutineForStudentToday('st-1', 'monday')).rejects.toEqual(
       expect.objectContaining({ statusCode: 500 })
     );
+  });
+});
+
+describe('routines.repository · findAccessibleExerciseIds', () => {
+  const chain = () => {
+    const q = { result: { data: [{ id: 'ex-1' }], error: null } };
+    for (const m of ['select', 'in', 'or', 'is']) q[m] = jest.fn(() => q);
+    q.then = (resolve, reject) => Promise.resolve(q.result).then(resolve, reject);
+    return q;
+  };
+
+  it('globales o del trainer, incluidos los archivados (series, progreso y edición los siguen usando)', async () => {
+    const q = chain();
+    supabase.from.mockReturnValueOnce(q);
+    expect(await findAccessibleExerciseIds(['ex-1'], 'tr-1')).toEqual(['ex-1']);
+    expect(q.or).toHaveBeenCalledWith('is_global.eq.true,trainer_id.eq.tr-1');
+    expect(q.is).not.toHaveBeenCalled();
+  });
+
+  it('con activeOnly deja afuera los archivados', async () => {
+    const q = chain();
+    supabase.from.mockReturnValueOnce(q);
+    await findAccessibleExerciseIds(['ex-1'], 'tr-1', { activeOnly: true });
+    expect(q.is).toHaveBeenCalledWith('archived_at', null);
   });
 });
