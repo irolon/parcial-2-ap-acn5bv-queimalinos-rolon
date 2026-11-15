@@ -287,6 +287,8 @@ La validación con un PT real confirmó que el armado manual de rutinas es uno d
 - ➖ Costos de tokens del LLM crecen con el uso. Hay que limitar request por trainer/mes en planes gratuitos.
 - ➖ Si la IA falla o el resultado es pobre, el PT debe poder seguir armando rutinas a mano sin fricción.
 
+> **Actualización 27/10/2026:** Trainerize, PT Distinction y MFIT Personal ya tienen IA para armar rutinas (ver [[producto/investigacion-de-mercado|Investigación de mercado]]). La decisión sigue, pero el asistente del entrenador deja de ser diferenciador; el que no tiene ningún competidor verificado es el asistente del alumno en sesión.
+
 ---
 
 ## ADR-007 — Gamificación integrada al MVP

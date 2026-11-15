@@ -18,7 +18,7 @@ tags: [producto]
 
 El personal trainer independiente enfrenta una dispersión constante de herramientas para gestionar su trabajo: arma rutinas en Word o Excel, las envía por WhatsApp en formato PDF, anota cargas en cuadernos o notas del celular y sigue el progreso de los alumnos de memoria o por consultas sueltas. Esta dispersión se traduce en pérdida de tiempo administrativo, falta de seguimiento real del progreso del alumno y una experiencia poco profesional para el cliente. Del lado del alumno, los problemas se reflejan en olvidos de los ejercicios entre sesiones, falta de registro estructurado de los pesos utilizados y baja adherencia al plan a mediano plazo.
 
-Las plataformas internacionales que existen en el mercado (TrueCoach, Trainerize, Hexfit, PT Distinction, entre otras) atienden el problema, pero están en inglés, cobran en dólares y están pensadas para mercados como Estados Unidos o Europa. En el mercado argentino y latinoamericano no existe una solución consolidada, accesible y profesional pensada específicamente para el contexto local, lo que abre una oportunidad concreta de innovación.
+Las plataformas internacionales que existen en el mercado (TrueCoach, Trainerize, Hexfit, PT Distinction, entre otras) atienden el problema, pero están en inglés, cobran en dólares y están pensadas para mercados como Estados Unidos o Europa. En Argentina no existe una solución consolidada, accesible y profesional pensada específicamente para el contexto local (en Brasil está MFIT Personal, pero en portugués y en reales), lo que abre una oportunidad concreta de innovación.
 
 ## 1.1 Objetivo del documento
 
