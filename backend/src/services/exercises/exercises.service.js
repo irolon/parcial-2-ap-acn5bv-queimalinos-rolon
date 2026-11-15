@@ -31,10 +31,10 @@ export function create(trainerId, data) {
   });
 }
 
-/** Carga un ejercicio y verifica que el trainer sea el dueño. */
+/** Carga un ejercicio y verifica que el trainer sea el dueño. Un archivado ya no está en la biblioteca: 404. */
 async function getOwned(trainerId, id, action) {
   const exercise = await repository.findExerciseById(id);
-  if (!exercise) throw Errors.notFound('Ejercicio no encontrado');
+  if (!exercise || exercise.archived_at) throw Errors.notFound('Ejercicio no encontrado');
   if (!isOwnedBy(exercise, trainerId)) {
     throw Errors.forbidden(`No podés ${action} un ejercicio que no es tuyo`);
   }
@@ -47,8 +47,13 @@ export async function update(trainerId, id, fields) {
   return repository.updateExercise(id, fields);
 }
 
-/** Elimina un ejercicio propio del trainer. */
+/**
+ * Saca un ejercicio propio de la biblioteca: lo borra, o si está en una rutina o en el historial
+ * lo archiva (las rutinas y sesiones viejas lo siguen mostrando). `{ id, archived }`.
+ */
 export async function remove(trainerId, id) {
   await getOwned(trainerId, id, 'eliminar');
-  await repository.deleteExercise(id);
+  if (await repository.deleteExercise(id)) return { id, archived: false };
+  await repository.archiveExercise(id);
+  return { id, archived: true };
 }

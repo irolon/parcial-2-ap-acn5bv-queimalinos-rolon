@@ -20,6 +20,13 @@ describe('routines.service', () => {
       expect(mockRepo.findAccessibleExerciseIds).toHaveBeenCalledWith(['ex-3', 'ex-1', 'ex-2'], TRAINER_ID);
     });
 
+    it('con activeOnly le pide al repositorio solo los no archivados', async () => {
+      mockRepo.findAccessibleExerciseIds.mockResolvedValue(['ex-1']);
+      const missing = await service.findMissingExerciseIds(TRAINER_ID, ['ex-1', 'ex-2'], { activeOnly: true });
+      expect(missing).toEqual(['ex-2']);
+      expect(mockRepo.findAccessibleExerciseIds).toHaveBeenCalledWith(['ex-1', 'ex-2'], TRAINER_ID, { activeOnly: true });
+    });
+
     it('sin ids no consulta la base', async () => {
       mockRepo.findAccessibleExerciseIds.mockClear();
       expect(await service.findMissingExerciseIds(TRAINER_ID, [])).toEqual([]);

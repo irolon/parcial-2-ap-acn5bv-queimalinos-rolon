@@ -18,7 +18,10 @@ create table if not exists exercises (
   equipment    varchar(60),
   description  text,
   video_url    text,
-  is_global    boolean not null default false
+  is_global    boolean not null default false,
+  -- null = activo. Con fecha = archivado: DELETE de uno en uso (rutina o sesión) lo archiva;
+  -- sale de la biblioteca pero las rutinas y el historial lo siguen resolviendo por id.
+  archived_at  timestamptz
 );
 
 create index if not exists idx_exercises_trainer on exercises (trainer_id);

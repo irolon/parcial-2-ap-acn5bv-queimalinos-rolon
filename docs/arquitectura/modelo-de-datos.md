@@ -103,6 +103,7 @@ Diagrama de entidad-relación del sistema FitTrainer. Entidades agrupadas por do
 | description | text | |
 | video_url | text | |
 | is_global | boolean | true = disponible para todos los trainers |
+| archived_at | timestamptz | null = activo; con fecha = archivado (DELETE de uno en uso): sale de la biblioteca, rutinas e historial lo siguen resolviendo. `2026-11/09-15/2026-11-14-biblioteca.sql` |
 
 **routine_templates** *(plantillas reutilizables del PT, generadas por IA o creadas a mano)*
 

@@ -6,7 +6,7 @@ import { ROUTINES_TABLE } from '../../models/routines/routine.model.js';
 import { LIBRARY_LIMIT, PREVIOUS_TEMPLATES, PREVIOUS_ROUTINES } from '../../models/trainer-ai/ai-generation.model.js';
 
 /**
- * Biblioteca que viaja a n8n: ejercicios globales y propios del trainer cuyo
+ * Biblioteca que viaja a n8n: ejercicios globales y propios del trainer (sin archivados) cuyo
  * equipamiento está en `equipment`, solo las columnas que necesita la IA.
  */
 export async function findLibraryForEquipment(trainerId, equipment) {
@@ -16,12 +16,13 @@ export async function findLibraryForEquipment(trainerId, equipment) {
       .select('id, name, muscle_group, equipment')
       .or(`is_global.eq.true,trainer_id.eq.${trainerId}`)
       .in('equipment', equipment)
+      .is('archived_at', null)
       .order('name')
       .limit(LIBRARY_LIMIT)
   );
 }
 
-/** Los ejercicios de `ids` que siguen accesibles para el trainer (globales o propios). */
+/** Los ejercicios de `ids` que siguen accesibles para el trainer (globales o propios, sin archivados). */
 export async function findLibraryByIds(trainerId, ids) {
   if (ids.length === 0) return [];
   return unwrap(
@@ -30,6 +31,7 @@ export async function findLibraryByIds(trainerId, ids) {
       .select('id, name, muscle_group, equipment')
       .or(`is_global.eq.true,trainer_id.eq.${trainerId}`)
       .in('id', ids)
+      .is('archived_at', null)
   );
 }
 

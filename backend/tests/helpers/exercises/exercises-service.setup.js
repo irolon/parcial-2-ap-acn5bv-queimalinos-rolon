@@ -12,6 +12,7 @@ export const mockRepo = {
   createExercise: jest.fn(),
   updateExercise: jest.fn(),
   deleteExercise: jest.fn(),
+  archiveExercise: jest.fn(),
   findLibrary: jest.fn(),
 };
 jest.unstable_mockModule(src('repositories/exercises/exercises.repository.js'), () => mockRepo);

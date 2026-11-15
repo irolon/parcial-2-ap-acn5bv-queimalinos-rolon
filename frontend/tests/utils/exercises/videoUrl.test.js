@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeVideoUrl, isValidVideoUrl, thumbnailUrl, youTubeId } from '@/utils/exercises/videoUrl';
+import { isSafeVideoUrl, isValidVideoUrl, thumbnailUrl, youTubeEmbedUrl, youTubeId } from '@/utils/exercises/videoUrl';
 
 const ID = 'uEtiwYaT3d0';
 
@@ -28,6 +28,24 @@ describe('thumbnailUrl', () => {
     expect(thumbnailUrl(`https://youtu.be/${ID}`)).toBe(`https://img.youtube.com/vi/${ID}/hqdefault.jpg`);
     expect(thumbnailUrl('https://vimeo.com/1')).toBeNull();
   });
+});
+
+describe('youTubeEmbedUrl', () => {
+  it.each([
+    `https://www.youtube.com/watch?v=${ID}`,
+    `https://youtu.be/${ID}`,
+    `https://www.youtube.com/shorts/${ID}`,
+    `https://www.youtube.com/embed/${ID}`,
+  ])('arma el embebido sin cookies para %s', (url) => {
+    expect(youTubeEmbedUrl(url)).toBe(`https://www.youtube-nocookie.com/embed/${ID}`);
+  });
+
+  it.each(['https://vimeo.com/1', null, 'https://youtu.be/a%22b', 'https://www.youtube.com/watch?v=<x>'])(
+    'devuelve null si no es YouTube o el id no tiene forma de id: %s',
+    (url) => {
+      expect(youTubeEmbedUrl(url)).toBeNull();
+    },
+  );
 });
 
 describe('isSafeVideoUrl', () => {

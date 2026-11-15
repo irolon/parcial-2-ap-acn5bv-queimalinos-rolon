@@ -28,6 +28,9 @@ export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight
 export const EXERCISE_COLUMNS =
   'id, trainer_id, name, muscle_group, equipment, description, video_url, is_global';
 
+/** Columnas de un ejercicio buscado por id: las expuestas + `archived_at` (null = activo). */
+export const EXERCISE_DETAIL_COLUMNS = `${EXERCISE_COLUMNS}, archived_at`;
+
 /** Columnas que ve el alumno en la biblioteca (sin trainer_id ni is_global). */
 export const LIBRARY_COLUMNS = 'id, name, muscle_group, equipment, description, video_url';
 

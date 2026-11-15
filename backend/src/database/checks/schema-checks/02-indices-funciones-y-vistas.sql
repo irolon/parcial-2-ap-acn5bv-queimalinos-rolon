@@ -112,4 +112,11 @@ union all
 select 'notifications.type debería aceptar initial_routine_failed (falta 2026-11-09-routine-level-initial-template.sql)'
 from pg_constraint
 where conname = 'notifications_type_check'
-  and pg_get_constraintdef(oid) not like '%initial_routine_failed%';
+  and pg_get_constraintdef(oid) not like '%initial_routine_failed%'
+
+union all
+select 'falta la columna exercises.archived_at (falta 2026-11/09-15/2026-11-14-biblioteca.sql)'
+where not exists (
+  select 1 from information_schema.columns
+  where table_schema = 'public' and table_name = 'exercises' and column_name = 'archived_at'
+);

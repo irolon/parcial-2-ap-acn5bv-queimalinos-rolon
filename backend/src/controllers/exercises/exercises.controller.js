@@ -25,8 +25,9 @@ export const update = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
-/** DELETE /exercises/:id — elimina un ejercicio propio. 204 */
+/** DELETE /exercises/:id — borra un ejercicio propio (204) o, si está en uso, lo archiva (200 → { data: { id, archived: true } }). */
 export const remove = asyncHandler(async (req, res) => {
-  await exercisesService.remove(req.user.id, req.params.id);
-  res.status(204).send();
+  const result = await exercisesService.remove(req.user.id, req.params.id);
+  if (!result.archived) return res.status(204).send();
+  return res.status(200).json({ data: result });
 });

@@ -18,7 +18,7 @@ export async function updateExercise(id, body) {
   return res.data;
 }
 
-/** DELETE /exercises/:id → 204 (409 si está en uso). */
+/** DELETE /exercises/:id → 204 si se borró, o 200 `{ archived: true }` si estaba en uso y se archivó. */
 export async function deleteExercise(id) {
   await request(`/exercises/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

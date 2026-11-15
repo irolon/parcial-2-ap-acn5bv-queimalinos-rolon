@@ -10,7 +10,7 @@ const repo = await import(src('repositories/trainer-ai/ai-context.repository.js'
 describe('ai-context.repository', () => {
   beforeEach(reset);
 
-  it('findLibraryForEquipment: globales y propios con ese equipamiento, solo columnas de contexto, hasta 200', async () => {
+  it('findLibraryForEquipment: globales y propios (sin archivados) con ese equipamiento, solo columnas de contexto, hasta 200', async () => {
     fake.result = { data: [{ id: 'e1' }], error: null };
     await expect(repo.findLibraryForEquipment('t-1', ['dumbbell', 'bodyweight'])).resolves.toEqual([{ id: 'e1' }]);
     expect(fake.tables).toEqual(['exercises']);
@@ -19,15 +19,17 @@ describe('ai-context.repository', () => {
     expect(callsOf('in')).toEqual([['equipment', ['dumbbell', 'bodyweight']]]);
     expect(callsOf('order')).toEqual([['name']]);
     expect(callsOf('limit')).toEqual([[200]]);
+    expect(callsOf('is')).toEqual([['archived_at', null]]);
   });
 
-  it('findLibraryByIds: los ejercicios de esos ids que siguen accesibles (globales o propios)', async () => {
+  it('findLibraryByIds: los ejercicios de esos ids que siguen accesibles (globales o propios, sin archivados)', async () => {
     fake.result = { data: [{ id: 'e2' }], error: null };
     await expect(repo.findLibraryByIds('t-1', ['e1', 'e2'])).resolves.toEqual([{ id: 'e2' }]);
     expect(fake.tables).toEqual(['exercises']);
     expect(callsOf('select')).toEqual([['id, name, muscle_group, equipment']]);
     expect(callsOf('or')).toEqual([['is_global.eq.true,trainer_id.eq.t-1']]);
     expect(callsOf('in')).toEqual([['id', ['e1', 'e2']]]);
+    expect(callsOf('is')).toEqual([['archived_at', null]]);
   });
 
   it('findLibraryByIds sin ids no consulta la base', async () => {

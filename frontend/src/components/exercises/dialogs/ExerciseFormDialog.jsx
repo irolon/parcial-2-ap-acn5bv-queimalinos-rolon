@@ -8,6 +8,7 @@ import { useCreateExercise, useUpdateExercise } from '@/hooks/exercises/useExerc
 import { useSubmitLock } from '@/hooks/shared/useSubmitLock';
 import { NO_FIELD_ERRORS } from '@/utils/fieldErrors';
 import { MUSCLE_OPTIONS } from '@/utils/exercises/exerciseOptions';
+import { findSameName } from '@/utils/exercises/sameName';
 import {
   buildExerciseBody,
   changedFields,
@@ -23,9 +24,10 @@ const MUSCLE_PLACEHOLDER = { value: '', label: 'Elegí un grupo' };
 
 /**
  * Modal para crear (`exercise` ausente) o editar un ejercicio propio. Formulario no controlado:
- * la página lo monta con otra `key` en cada apertura, así arranca limpio.
+ * la página lo monta con otra `key` en cada apertura, así arranca limpio. `library` (la biblioteca
+ * ya cargada) sirve para avisar si el nombre se repite.
  */
-export default function ExerciseFormDialog({ open, exercise, onClose }) {
+export default function ExerciseFormDialog({ open, exercise, library, onClose }) {
   const [errors, setErrors] = useState(NO_FIELD_ERRORS);
   const create = useCreateExercise();
   const update = useUpdateExercise();
@@ -34,6 +36,9 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
   const lock = useSubmitLock();
   const defaults = formDefaults(exercise);
   const { fields } = errors;
+  // Aviso que no bloquea: el nombre (normalizado) ya está en la biblioteca que cargó la página.
+  const [name, setName] = useState(defaults.name);
+  const same = findSameName(library, name, exercise?.id);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -89,7 +94,19 @@ export default function ExerciseFormDialog({ open, exercise, onClose }) {
             {errors.form}
           </p>
         )}
-        <Input label="Nombre" name="name" autoComplete="off" defaultValue={defaults.name} error={fields.name} />
+        <Input
+          label="Nombre"
+          name="name"
+          autoComplete="off"
+          defaultValue={defaults.name}
+          onChange={(event) => setName(event.target.value)}
+          error={fields.name}
+        />
+        {same && (
+          <p role="status" className="-mt-2 font-mono text-[11px] text-warn">
+            Ya hay un ejercicio {same.is_global ? 'global' : 'propio'} llamado «{same.name}». Podés guardarlo igual.
+          </p>
+        )}
         <Select
           label="Grupo muscular"
           name="muscle_group"

@@ -1,10 +1,8 @@
-import { ExternalLink } from 'lucide-react';
 import Button from '@/components/shared/ui/Button';
 import Dialog from '@/components/shared/ui/Dialog';
 import Pill from '@/components/shared/ui/Pill';
-import ExerciseThumb from '../ExerciseThumb';
+import ExerciseVideo from '../ExerciseVideo';
 import { equipmentLabel, muscleLabel } from '@/utils/exercises/exerciseOptions';
-import { isSafeVideoUrl } from '@/utils/exercises/videoUrl';
 
 const LABEL = 'font-mono text-[11px] uppercase tracking-[1px] text-ink6';
 
@@ -46,7 +44,7 @@ export default function ExerciseDetailDialog({ exercise, onClose, onEdit, onDele
             <Pill tone="cool">PROPIO</Pill>
           </div>
         )}
-        <ExerciseThumb url={videoUrl} />
+        <ExerciseVideo url={videoUrl} name={name} />
         <dl className="flex flex-col gap-2">
           <Row label="GRUPO">{muscleLabel(muscle)}</Row>
           <Row label="EQUIPAMIENTO">{equipmentLabel(equipment) ?? 'Sin equipamiento'}</Row>
@@ -57,17 +55,6 @@ export default function ExerciseDetailDialog({ exercise, onClose, onEdit, onDele
             {description || 'Sin descripción'}
           </p>
         </div>
-        {isSafeVideoUrl(videoUrl) && (
-          <a
-            href={videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-body text-sm text-accentText hover:underline"
-          >
-            <ExternalLink size={14} aria-hidden="true" />
-            Ver video
-          </a>
-        )}
       </div>
     </Dialog>
   );

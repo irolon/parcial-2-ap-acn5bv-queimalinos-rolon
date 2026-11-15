@@ -609,7 +609,7 @@ Rutas anidadas en el alumno: `/students/:id/metrics`. Acceden el trainer dueño 
 
 Biblioteca disponible (solo trainer). Query: `muscle_group`, `equipment` (uno de `barbell` | `dumbbell` | `machine` | `cable` | `bodyweight` | `kettlebell` | `band`; otro valor → 400), `search`, `include_global`.
 
-**200 OK** — `{ data: [...] }`, ordenada por nombre. Cada ejercicio: `id`, `trainer_id` (null en los globales), `name`, `muscle_group`, `equipment`, `description`, `video_url`, `is_global`.
+**200 OK** — `{ data: [...] }`, ordenada por nombre y sin los archivados. Cada ejercicio: `id`, `trainer_id` (null en los globales), `name`, `muscle_group`, `equipment`, `description`, `video_url`, `is_global`.
 
 ### POST /exercises
 
@@ -633,7 +633,13 @@ Edita un ejercicio propio (solo el dueño). Mismos campos y reglas que el POST, 
 
 ### DELETE /exercises/:id
 
-Elimina un ejercicio propio. **204 No Content**. **403** si no es del trainer o es global; **404** si no existe; **409 `EXERCISE_IN_USE`** si está en una rutina o en el historial de un alumno ("No podés borrar este ejercicio porque está en una rutina o en el historial de un alumno").
+Saca un ejercicio propio de la biblioteca (solo el dueño):
+
+- Si no está en uso, lo borra: **204 No Content**.
+- Si está en una rutina o en el historial de un alumno, lo **archiva** (`archived_at` = ahora): **200 OK** `{ data: { id, archived: true } }`. Deja de salir en `GET /exercises`, `GET /exercises/library`, la biblioteca que viaja a n8n para la IA (por eso un id archivado que devuelva la IA queda rechazado) y las alternativas del chat; las rutinas, plantillas, sesiones, el progreso y la exportación lo siguen resolviendo por id. No hay "desarchivar".
+- **403** si no es del trainer o es global; **404** si no existe o ya está archivado (un `PATCH` de un archivado también es 404).
+
+Antes (hasta la migración `2026-11/09-15/2026-11-14-biblioteca.sql`) respondía 409 `EXERCISE_IN_USE`; ese código ya no existe.
 
 ### Errores de validación (POST y PATCH)
 
@@ -794,7 +800,7 @@ Crea una rutina para un alumno propio copiando la plantilla (`template_id` queda
 
 **201 Created** → `{ data }` con la rutina en la forma de `GET /routines/:id`.
 
-**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_STRUCTURE_INVALID`** ("La plantilla está incompleta: editala antes de asignarla") si la `structure` guardada no pasa la validación de plantillas (p. ej. cargada por seed o IA sin `days`/`exercises`), con los `details` de la validación; se chequea antes que los ejercicios; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible, con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
+**Errores:** 404 `TEMPLATE_NOT_FOUND`; 403 si el alumno no es del trainer; **409 `TEMPLATE_STRUCTURE_INVALID`** ("La plantilla está incompleta: editala antes de asignarla") si la `structure` guardada no pasa la validación de plantillas (p. ej. cargada por seed o IA sin `days`/`exercises`), con los `details` de la validación; se chequea antes que los ejercicios; **409 `TEMPLATE_EXERCISES_UNAVAILABLE`** si algún ejercicio de la plantilla ya no está disponible (borrado, de otro trainer o **archivado**: un archivado no se copia a una rutina nueva), con `details: [{ "field": "exercise_id", "message": "<id>" }]`.
 
 ---
 

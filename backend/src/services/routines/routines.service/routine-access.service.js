@@ -5,11 +5,15 @@ import { isOwnedBy } from '../../../models/routines/routine.model.js';
 /**
  * Ids (sin repetir y en el orden recibido) que no son globales ni del trainer.
  * Los inexistentes también cuentan como faltantes: así nunca se revela qué ids existen.
+ * Con `activeOnly`, los archivados también faltan (ver findAccessibleExerciseIds).
  */
-export async function findMissingExerciseIds(trainerId, ids) {
+export async function findMissingExerciseIds(trainerId, ids, { activeOnly = false } = {}) {
   const unique = [...new Set(ids)];
   if (unique.length === 0) return [];
-  const accessible = new Set(await repository.findAccessibleExerciseIds(unique, trainerId));
+  const found = activeOnly
+    ? await repository.findAccessibleExerciseIds(unique, trainerId, { activeOnly: true })
+    : await repository.findAccessibleExerciseIds(unique, trainerId);
+  const accessible = new Set(found);
   return unique.filter((id) => !accessible.has(id));
 }
 

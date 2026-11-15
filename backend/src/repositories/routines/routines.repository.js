@@ -32,13 +32,17 @@ export async function isStudentOfTrainer(studentId, trainerId) {
 /**
  * De los ejercicios pedidos, devuelve los ids que el trainer puede usar:
  * globales o de su biblioteca. Los ajenos o inexistentes quedan afuera.
+ * Los archivados cuentan (series, progreso y edición los siguen usando), salvo con
+ * `activeOnly`: lo que se copia a una rutina nueva (instanciar una plantilla) no los incluye.
  */
-export async function findAccessibleExerciseIds(exerciseIds, trainerId) {
-  const { data, error } = await supabase
+export async function findAccessibleExerciseIds(exerciseIds, trainerId, { activeOnly = false } = {}) {
+  let query = supabase
     .from(EXERCISES_TABLE)
     .select('id')
     .in('id', exerciseIds)
     .or(`is_global.eq.true,trainer_id.eq.${trainerId}`);
+  if (activeOnly) query = query.is('archived_at', null);
+  const { data, error } = await query;
   if (error) throw Errors.internal(error.message);
   return data.map((row) => row.id);
 }
