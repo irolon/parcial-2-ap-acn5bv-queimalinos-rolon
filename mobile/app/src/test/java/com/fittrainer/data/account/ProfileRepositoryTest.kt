@@ -43,11 +43,11 @@ class ProfileRepositoryTest {
         assertEquals(listOf(RequiredUser("u1")), api.owners)
     }
 
-    @Test fun refrescarEntrenadorGuardaElTituloYNoUnaFotoPropia() = runTest {
+    @Test fun refrescarEntrenadorGuardaElTituloYSuFoto() = runTest {
         repo.refresh("t1", Role.TRAINER)
         val p = repo.observe("t1").first()!!
         assertEquals("Lic. en Ed. Física", p.professionalTitle)
-        assertNull(p.avatarUrl)
+        assertEquals("https://x/t.jpg", p.avatarUrl)
     }
 
     @Test fun editarMandaSoloLoCambiadoVacioComoNullYActualizaElNombreDeLaSesion() = runTest {
@@ -81,19 +81,45 @@ class ProfileRepositoryTest {
 
     @Test fun fotoNuevaYQuitarlaActualizanRoom() = runTest {
         repo.refresh("u1", Role.STUDENT)
-        repo.setAvatar("u1", byteArrayOf(1, 2, 3))
+        repo.setAvatar("u1", Role.STUDENT, byteArrayOf(1, 2, 3))
         assertEquals("https://x/nueva.jpg?sig=2", repo.observe("u1").first()!!.avatarUrl)
-        repo.removeAvatar("u1")
+        repo.removeAvatar("u1", Role.STUDENT)
         assertNull(repo.observe("u1").first()!!.avatarUrl)
         assertEquals(1, api.uploads)
         assertEquals(1, api.removes)
     }
 
+    @Test fun trainerSetAvatarUsesAuthMe() = runTest {
+        repo.refresh("t1", Role.TRAINER)
+        assertTrue(repo.setAvatar("t1", Role.TRAINER, byteArrayOf(1, 2, 3)).isSuccess)
+        assertEquals(1, api.trainerUploads)
+        assertEquals(0, api.uploads)
+        assertEquals("https://x/nueva.jpg?sig=2", repo.observe("t1").first()!!.avatarUrl)
+    }
+
+    @Test fun trainerRemoveAvatarUsesAuthMe() = runTest {
+        repo.refresh("t1", Role.TRAINER)
+        assertTrue(repo.removeAvatar("t1", Role.TRAINER).isSuccess)
+        assertEquals(1, api.trainerRemoves)
+        assertEquals(0, api.removes)
+        assertNull(repo.observe("t1").first()!!.avatarUrl)
+    }
+
+    @Test fun studentSetAvatarStillUsesStudentsRoute() = runTest {
+        repo.refresh("u1", Role.STUDENT)
+        repo.setAvatar("u1", Role.STUDENT, byteArrayOf(1))
+        repo.removeAvatar("u1", Role.STUDENT)
+        assertEquals(1, api.uploads)
+        assertEquals(1, api.removes)
+        assertEquals(0, api.trainerUploads)
+        assertEquals(0, api.trainerRemoves)
+    }
+
     @Test fun fotoDemasiadoGrandeOTipoInvalidoTienenSuTexto() = runTest {
         api.error = httpError(413)
-        assertEquals(AVATAR_TOO_LARGE, repo.setAvatar("u1", byteArrayOf(1)).exceptionOrNull()!!.message)
+        assertEquals(AVATAR_TOO_LARGE, repo.setAvatar("u1", Role.STUDENT, byteArrayOf(1)).exceptionOrNull()!!.message)
         api.error = httpError(415)
-        assertEquals(AVATAR_TYPE_INVALID, repo.setAvatar("u1", byteArrayOf(1)).exceptionOrNull()!!.message)
+        assertEquals(AVATAR_TYPE_INVALID, repo.setAvatar("u1", Role.STUDENT, byteArrayOf(1)).exceptionOrNull()!!.message)
     }
 
     @Test fun cambiarLaClaveMandaElRefreshYElPushYGuardaElTokenNuevo() = runTest {

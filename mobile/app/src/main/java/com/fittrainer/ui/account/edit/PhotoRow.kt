@@ -17,7 +17,7 @@ import com.fittrainer.ui.account.components.ProfileAvatar
 import com.fittrainer.ui.theme.FtColors
 import com.fittrainer.ui.theme.Spacing
 
-/** La foto del alumno con Cambiar foto (galería) y, si tiene, Quitar foto. Se guarda al momento, sin Guardar. */
+/** La foto del usuario con Cambiar foto (galería) y, si tiene, Quitar foto. Se guarda al momento, sin Guardar. */
 @Composable
 internal fun PhotoRow(state: EditProfileUiState, actions: EditProfileActions) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {

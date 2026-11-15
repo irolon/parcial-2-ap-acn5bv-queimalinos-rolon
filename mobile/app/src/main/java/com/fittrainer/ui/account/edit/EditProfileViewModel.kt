@@ -44,7 +44,7 @@ private data class Local(
 )
 
 /**
- * Editar perfil: el formulario arranca con lo de Room y manda solo lo que cambió. La foto (solo el alumno) se sube
+ * Editar perfil: el formulario arranca con lo de Room y manda solo lo que cambió. La foto (alumno y entrenador) se sube
  * o se quita al momento, sin esperar a Guardar. Todo es solo con red: sin conexión se ve el aviso y no se manda.
  */
 @HiltViewModel
@@ -138,19 +138,20 @@ class EditProfileViewModel @Inject constructor(
     }
 
     /** La foto elegida: se achica y se sube enseguida. */
-    fun onPhotoPicked(uri: String) = photo { owner ->
+    fun onPhotoPicked(uri: String) = photo { owner, role ->
         val jpeg = avatars.jpeg(uri) ?: return@photo Result.failure(IllegalArgumentException(PHOTO_UNREADABLE))
-        repository.setAvatar(owner, jpeg)
+        repository.setAvatar(owner, role, jpeg)
     }
 
-    fun onRemovePhoto() = photo { owner -> repository.removeAvatar(owner) }
+    fun onRemovePhoto() = photo { owner, role -> repository.removeAvatar(owner, role) }
 
-    private fun photo(block: suspend (owner: String) -> Result<Unit>) {
+    private fun photo(block: suspend (owner: String, role: Role) -> Result<Unit>) {
         val owner = session.value.userId ?: return
-        if (session.value.role != Role.STUDENT || local.value.photoBusy || local.value.saving || !online.value) return
+        val role = session.value.role ?: return
+        if (local.value.photoBusy || local.value.saving || !online.value) return
         local.update { it.copy(photoBusy = true, photoError = null) }
         viewModelScope.launch {
-            val error = block(owner).exceptionOrNull()?.let(::photoMessage)
+            val error = block(owner, role).exceptionOrNull()?.let(::photoMessage)
             local.update { it.copy(photoBusy = false, photoError = error) }
         }
     }

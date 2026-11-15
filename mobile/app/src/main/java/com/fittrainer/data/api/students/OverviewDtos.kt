@@ -27,6 +27,7 @@ data class InSessionDto(
     @SerialName("session_id") val sessionId: String,
     @SerialName("routine_name") val routineName: String? = null,
     @SerialName("started_at") val startedAt: String,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -82,6 +83,7 @@ data class TodayDto(
     @SerialName("routine_name") val routineName: String? = null,
     @SerialName("finished_at") val finishedAt: String? = null,
     val rpe: Int? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -90,6 +92,7 @@ data class RiskDto(
     val name: String? = null,
     val days: Int = 0,
     @SerialName("never_trained") val neverTrained: Boolean = false,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -100,6 +103,7 @@ data class FeedbackDto(
     @SerialName("routine_name") val routineName: String? = null,
     @SerialName("finished_at") val finishedAt: String,
     val rpe: Int? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 /** status: "active", "new" o "inactive" (las reglas de la web). adherencePct null: sin plan. */
@@ -110,4 +114,5 @@ data class OverviewStudentDto(
     val status: String = "active",
     @SerialName("days_without_training") val daysWithoutTraining: Int = 0,
     @SerialName("adherence_pct") val adherencePct: Int? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )

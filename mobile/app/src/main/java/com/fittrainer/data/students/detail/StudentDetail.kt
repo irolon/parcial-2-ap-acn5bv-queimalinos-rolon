@@ -19,6 +19,7 @@ data class StudentDetail(
     val lastSessionAt: Instant?,
     val latestMetrics: LatestMetrics?,
     val activeRoutine: ActiveRoutine?,
+    val avatarUrl: String? = null,
 )
 
 /** Última medición; el IMC es el que calcula el backend. */
@@ -46,4 +47,5 @@ fun StudentDetail.asListStudent() = TrainerStudent(
     lastSessionAt = lastSessionAt,
     daysPerWeek = activeRoutine?.days?.distinct()?.size ?: 0,
     adherence = null,
+    avatarUrl = avatarUrl,
 )

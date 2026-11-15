@@ -29,4 +29,6 @@ data class TrainerStudentDetailEntity(
     val activeRoutineName: String?,
     val activeRoutineDays: String?,
     val fetchedAt: Long,
+    /** v30: foto firmada (vence a la hora; null = sin foto). */
+    val avatarUrl: String? = null,
 )

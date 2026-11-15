@@ -58,4 +58,6 @@ data class TrainerMessageThreadEntity(
     val counterpartName: String,
     val nextBefore: String?,
     val fetchedAt: Long,
+    /** v30: la foto firmada de la contraparte (null = sin foto, backend viejo o firma caída). */
+    val counterpartAvatarUrl: String? = null,
 )

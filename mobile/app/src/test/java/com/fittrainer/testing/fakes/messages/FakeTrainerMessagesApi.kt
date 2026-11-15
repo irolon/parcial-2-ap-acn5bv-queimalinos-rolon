@@ -56,8 +56,8 @@ class FakeTrainerMessagesApi : TrainerMessagesApi {
     var conversationCalls = 0
     private var nextId = 100
 
-    fun page(vararg m: MessageDto, nextBefore: String? = null, name: String = "Ana") =
-        HistoryResponse(m.toList(), HistoryMeta(nextBefore), CounterpartDto("s1", name))
+    fun page(vararg m: MessageDto, nextBefore: String? = null, name: String = "Ana", avatarUrl: String? = null) =
+        HistoryResponse(m.toList(), HistoryMeta(nextBefore), CounterpartDto("s1", name, avatarUrl))
 
     override suspend fun conversations(): ConversationListResponse {
         conversationCalls++

@@ -54,7 +54,7 @@ fun StudentPickerSheet(students: List<TrainerStudent>, onSelect: (TrainerStudent
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
-                    StudentAvatar(initials(student.name), atRisk = false)
+                    StudentAvatar(initials(student.name), atRisk = false, url = student.avatarUrl)
                     Text(student.name, style = MaterialTheme.typography.bodyLarge, color = FtColors.TextPrimary)
                 }
             }

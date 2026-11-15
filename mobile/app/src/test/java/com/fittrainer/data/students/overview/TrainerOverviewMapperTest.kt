@@ -4,6 +4,7 @@ import com.fittrainer.data.api.students.OverviewDto
 import java.time.Instant
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -41,5 +42,36 @@ class TrainerOverviewMapperTest {
             ]}""",
         )
         assertEquals(listOf(InSessionItem("s1", "Alumno", null, Instant.parse("2026-11-13T15:00:00Z"))), o.inSession)
+    }
+
+    @Test fun `mapsAvatarUrls`() {
+        val o = overview(
+            """{"in_session":[{"student_id":"s1","name":"A","session_id":"x","started_at":"2026-11-13T15:00:00Z","avatar_url":"https://f/in"}],
+            "lists":{
+              "today":[{"student_id":"s2","name":"B","status":"pending","avatar_url":"https://f/today"}],
+              "at_risk":[{"student_id":"s3","name":"C","avatar_url":"https://f/risk"}],
+              "feedback_pending":[{"student_id":"s4","name":"D","session_id":"x","finished_at":"2026-11-13T15:00:00Z","avatar_url":"https://f/fb"}],
+              "students":[{"student_id":"s5","name":"E","avatar_url":"https://f/all"}]}}""",
+        )
+        assertEquals("https://f/in", o.inSession.single().avatarUrl)
+        assertEquals("https://f/today", o.today.single().avatarUrl)
+        assertEquals("https://f/risk", o.atRisk.single().avatarUrl)
+        assertEquals("https://f/fb", o.feedback.single().avatarUrl)
+        assertEquals("https://f/all", o.students.single().avatarUrl)
+    }
+
+    @Test fun `oldCacheWithoutAvatarReadsNull`() {
+        val o = overview(
+            """{"in_session":[{"student_id":"s1","name":"A","session_id":"x","started_at":"2026-11-13T15:00:00Z"}],
+            "lists":{"today":[{"student_id":"s2","name":"B","status":"pending"}],
+              "at_risk":[{"student_id":"s3","name":"C"}],
+              "feedback_pending":[{"student_id":"s4","name":"D","session_id":"x","finished_at":"2026-11-13T15:00:00Z"}],
+              "students":[{"student_id":"s5","name":"E"}]}}""",
+        )
+        assertNull(o.inSession.single().avatarUrl)
+        assertNull(o.today.single().avatarUrl)
+        assertNull(o.atRisk.single().avatarUrl)
+        assertNull(o.feedback.single().avatarUrl)
+        assertNull(o.students.single().avatarUrl)
     }
 }

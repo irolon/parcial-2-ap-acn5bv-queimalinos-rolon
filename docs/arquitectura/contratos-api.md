@@ -364,7 +364,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
   "recent": [ { "student_id": "uuid", "name": "Tomás Rivera", "session_id": "uuid", "routine_name": "Push día 3",
                 "rpe": 8, "finished_at": "ISO" } ],
   "in_session": [ { "student_id": "uuid", "name": "Lucía Gómez", "session_id": "uuid", "routine_name": "Pierna",
-                    "started_at": "ISO" } ],
+                    "started_at": "ISO", "avatar_url": "https://…" } ],
   "lists": {
     "today": [ { "student_id": "uuid", "name": "José Martínez", "planned": true, "status": "pending",
                  "session_id": null, "routine_name": null, "finished_at": null, "rpe": null } ],
@@ -392,6 +392,7 @@ Inicio del entrenador (rol trainer; alumno → `403 FORBIDDEN`). Va antes de `/:
   - `feedback_pending`: todas las sesiones sin comentar de los últimos 7 días (hoy incluido), de la más nueva a la más vieja.
   - `students`: todos los alumnos activos por nombre, con `status` (`active`, `new`, `inactive`, las reglas de la web), `days_without_training` y `adherence_pct` (la de `GET /students`; `null` sin plan).
 - `daily` (gráfico de actividad de la web; aditivo, el celular lo ignora): siempre 30 filas `{ date: "YYYY-MM-DD", count }`, de hoy − 29 a hoy, ascendentes (la web elige 7, 14 o 30 días con las últimas filas). `count`: sesiones terminadas ese día por la hora de fin (el mismo criterio que `sessions_today.done`), de todos los alumnos activos, tengan ese día asignado o no; dos sesiones del mismo alumno suman 2. Días sin sesiones en 0; sin alumnos activos, las 30 filas en 0. La adherencia, `sessions_today` y las listas no cambian: cada una recorta su propia ventana.
+- `avatar_url` (aditivo): cada ítem de `in_session` y de `lists.today`, `lists.at_risk`, `lists.feedback_pending` y `lists.students` suma `avatar_url`: la foto de perfil del alumno, URL firmada (1 h); `null` si no tiene foto o si Storage falla (el overview responde 200 igual). Una sola llamada a Storage por pedido. `attention`, `recent` y `daily` no cambian.
 - Todo en hora argentina.
 
 ### GET /students/:id

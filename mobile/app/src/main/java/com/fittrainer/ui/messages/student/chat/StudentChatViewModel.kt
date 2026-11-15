@@ -69,6 +69,7 @@ class StudentChatViewModel @Inject constructor(
         StudentChatUiState(
             loaded = loaded,
             trainerName = t?.name.orEmpty(),
+            trainerAvatarUrl = t?.avatarUrl,
             messages = t?.messages.orEmpty(),
             hasMore = t?.hasMore ?: false,
             everSynced = t != null,

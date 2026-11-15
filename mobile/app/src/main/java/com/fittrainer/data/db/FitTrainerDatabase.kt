@@ -135,7 +135,7 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         CelebrationEntity::class,
         MyProfileEntity::class,
     ],
-    version = 29,
+    version = 30,
     exportSchema = true,
     // Nunca migraciones destructivas: desde el S3 Room guarda registros pendientes de subir.
     // Cada versión nueva suma su migración y su caso en los tests de androidTest/.../data/db/migration/.
@@ -176,6 +176,8 @@ import com.fittrainer.data.db.workout.history.HistorySetEntity
         AutoMigration(from = 27, to = 28),
         // v29: perfil propio (Perfil y Más), la tabla my_profile.
         AutoMigration(from = 28, to = 29),
+        // v30: foto de la contraparte en el hilo del chat y foto en la ficha del alumno (columnas nulas).
+        AutoMigration(from = 29, to = 30),
     ],
 )
 // Los DAO del rol entrenador se declaran en TrainerDaos (database/), para que este archivo no pase de 200 líneas.

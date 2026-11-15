@@ -36,6 +36,15 @@ interface ProfileApi {
     @DELETE("students/{id}/avatar")
     suspend fun removeAvatar(@Tag owner: RequiredUser, @Path("id") id: String): Response<Unit>
 
+    /** PUT /auth/me/avatar: la foto del entrenador, multipart con el campo `image`. 413 y 415 si no sirve. */
+    @Multipart
+    @PUT("auth/me/avatar")
+    suspend fun setTrainerAvatar(@Tag owner: RequiredUser, @Part image: MultipartBody.Part): AvatarResponse
+
+    /** DELETE /auth/me/avatar: 204, idempotente. */
+    @DELETE("auth/me/avatar")
+    suspend fun removeTrainerAvatar(@Tag owner: RequiredUser): Response<Unit>
+
     /** GET /auth/me: el entrenador logueado, con su título profesional. */
     @GET("auth/me")
     suspend fun trainerMe(@Tag owner: RequiredUser): ProfileResponse

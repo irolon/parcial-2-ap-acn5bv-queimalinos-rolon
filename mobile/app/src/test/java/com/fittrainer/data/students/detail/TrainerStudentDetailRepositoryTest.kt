@@ -6,6 +6,7 @@ import com.fittrainer.testing.fakes.auth.apiError
 import com.fittrainer.testing.fakes.auth.httpError
 import com.fittrainer.testing.fakes.students.FakeStudentDetailApi
 import com.fittrainer.testing.fakes.students.FakeTrainerStudentDetailDao
+import com.fittrainer.testing.fakes.students.detailDto
 import java.io.IOException
 import java.time.Clock
 import java.time.Instant
@@ -99,5 +100,11 @@ class TrainerStudentDetailRepositoryTest {
         assertTrue(cached() != null)
         repo.clearUserData("t1")
         assertNull(cached())
+    }
+
+    @Test fun `detailKeepsAvatarUrl`() = runTest {
+        api.detail = detailDto(avatarUrl = "https://firmada")
+        repo.refresh("t1", "s1")
+        assertEquals("https://firmada", cached()!!.detail.avatarUrl)
     }
 }

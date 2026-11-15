@@ -42,17 +42,18 @@ data class TodayItem(
     val routineName: String?,
     val finishedAt: Instant?,
     val rpe: Int?,
+    val avatarUrl: String? = null,
 )
 
-data class RiskItem(val studentId: String, val name: String, val days: Int, val neverTrained: Boolean)
+data class RiskItem(val studentId: String, val name: String, val days: Int, val neverTrained: Boolean, val avatarUrl: String? = null)
 
-data class FeedbackItem(val studentId: String, val name: String, val sessionId: String, val routineName: String?, val finishedAt: Instant, val rpe: Int?)
+data class FeedbackItem(val studentId: String, val name: String, val sessionId: String, val routineName: String?, val finishedAt: Instant, val rpe: Int?, val avatarUrl: String? = null)
 
 /** status: ACTIVE, NEW o INACTIVE (al Inicio nunca llega un dado de baja). */
-data class StudentItem(val studentId: String, val name: String, val status: StudentStatus, val daysWithoutTraining: Int, val adherencePct: Int?)
+data class StudentItem(val studentId: String, val name: String, val status: StudentStatus, val daysWithoutTraining: Int, val adherencePct: Int?, val avatarUrl: String? = null)
 
 /** Alumno entrenando ahora: sesión abierta desde startedAt. */
-data class InSessionItem(val studentId: String, val name: String, val routineName: String?, val startedAt: Instant)
+data class InSessionItem(val studentId: String, val name: String, val routineName: String?, val startedAt: Instant, val avatarUrl: String? = null)
 
 data class OverviewCache(val overview: TrainerOverview, val fetchedAt: Instant)
 
@@ -63,17 +64,17 @@ private fun TodayDto.toDomain(): TodayItem {
     val done = status == "done" && sessionId != null && finishedAt != null
     return TodayItem(
         studentId, name.orEmpty(), planned, done,
-        if (done) sessionId else null, routineName, if (done) finishedAt?.let(::parse) else null, rpe,
+        if (done) sessionId else null, routineName, if (done) finishedAt?.let(::parse) else null, rpe, avatarUrl,
     )
 }
 
 /** Un started_at ilegible descarta ese item en vez de romper el Inicio. */
 private fun InSessionDto.toDomain(): InSessionItem? =
-    runCatching { parse(startedAt) }.getOrNull()?.let { InSessionItem(studentId, name ?: "Alumno", routineName, it) }
+    runCatching { parse(startedAt) }.getOrNull()?.let { InSessionItem(studentId, name ?: "Alumno", routineName, it, avatarUrl) }
 
-private fun RiskDto.toDomain() = RiskItem(studentId, name.orEmpty(), days, neverTrained)
+private fun RiskDto.toDomain() = RiskItem(studentId, name.orEmpty(), days, neverTrained, avatarUrl)
 
-private fun FeedbackDto.toDomain() = FeedbackItem(studentId, name.orEmpty(), sessionId, routineName, parse(finishedAt), rpe)
+private fun FeedbackDto.toDomain() = FeedbackItem(studentId, name.orEmpty(), sessionId, routineName, parse(finishedAt), rpe, avatarUrl)
 
 private fun OverviewStudentDto.toDomain() = StudentItem(
     studentId,
@@ -85,6 +86,7 @@ private fun OverviewStudentDto.toDomain() = StudentItem(
     },
     daysWithoutTraining,
     adherencePct,
+    avatarUrl,
 )
 
 fun OverviewDto.toDomain() = TrainerOverview(

@@ -65,15 +65,17 @@ class ProfileRepository @Inject constructor(
         }
     }
 
-    /** La foto del alumno, ya achicada en JPEG. */
-    suspend fun setAvatar(ownerId: String, jpeg: ByteArray): Result<Unit> = call { save ->
+    /** La foto del usuario, ya achicada en JPEG: el alumno sube a /students/{id}/avatar y el entrenador a /auth/me/avatar. */
+    suspend fun setAvatar(ownerId: String, role: Role, jpeg: ByteArray): Result<Unit> = call { save ->
         val image = MultipartBody.Part.createFormData("image", "perfil.jpg", jpeg.toRequestBody(JPEG))
-        val url = api.setAvatar(RequiredUser(ownerId), ownerId, image).data.avatarUrl
+        val owner = RequiredUser(ownerId)
+        val url = (if (role == Role.STUDENT) api.setAvatar(owner, ownerId, image) else api.setTrainerAvatar(owner, image)).data.avatarUrl
         save { dao.get(ownerId)?.let { dao.upsert(it.copy(avatarUrl = url)) } }
     }
 
-    suspend fun removeAvatar(ownerId: String): Result<Unit> = call { save ->
-        api.removeAvatar(RequiredUser(ownerId), ownerId).orThrow()
+    suspend fun removeAvatar(ownerId: String, role: Role): Result<Unit> = call { save ->
+        val owner = RequiredUser(ownerId)
+        (if (role == Role.STUDENT) api.removeAvatar(owner, ownerId) else api.removeTrainerAvatar(owner)).orThrow()
         save { dao.get(ownerId)?.let { dao.upsert(it.copy(avatarUrl = null)) } }
     }
 

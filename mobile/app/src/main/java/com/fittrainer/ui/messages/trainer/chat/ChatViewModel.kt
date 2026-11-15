@@ -49,6 +49,7 @@ const val CHAT_POLL_MS = 4_000L
 data class ChatUiState(
     val loaded: Boolean = false,
     val name: String = "",
+    val avatarUrl: String? = null,
     val messages: List<Message> = emptyList(),
     val hasMore: Boolean = false,
     val everSynced: Boolean = false,
@@ -96,6 +97,7 @@ class ChatViewModel @Inject constructor(
         ChatUiState(
             loaded = loaded,
             name = t?.name.orEmpty(),
+            avatarUrl = t?.avatarUrl,
             messages = t?.messages.orEmpty(),
             hasMore = t?.hasMore ?: false,
             everSynced = t != null,

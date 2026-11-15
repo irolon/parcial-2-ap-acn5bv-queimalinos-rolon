@@ -40,4 +40,5 @@ fun TrainerStudentEntity.toDomain() = TrainerStudent(
         null
     },
     openSessionStartedAt = openSessionStartedAt?.let(Instant::ofEpochMilli),
+    avatarUrl = avatarUrl,
 )

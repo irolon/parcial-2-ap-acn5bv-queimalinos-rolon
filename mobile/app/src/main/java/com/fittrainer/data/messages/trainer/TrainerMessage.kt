@@ -41,7 +41,7 @@ data class Message(
 )
 
 /** Un chat guardado: hasMore = hay mensajes más viejos para pedir. */
-data class ThreadCache(val name: String, val messages: List<Message>, val hasMore: Boolean, val fetchedAt: Instant)
+data class ThreadCache(val name: String, val messages: List<Message>, val hasMore: Boolean, val fetchedAt: Instant, val avatarUrl: String? = null)
 
 /** 413 o 415: el backend no acepta la foto (más de 5 MB, o no es JPG, PNG ni WebP). */
 class PhotoRejectedException : Exception()
