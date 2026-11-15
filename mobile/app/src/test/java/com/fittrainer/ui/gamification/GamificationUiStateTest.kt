@@ -39,6 +39,27 @@ class GamificationUiStateTest {
         assertEquals(listOf("D", "B"), ready.recent.map { it.code })
     }
 
+    @Test fun proximoLogroEsLaBloqueadaConBarraMasCercanaYSaltaLosDesafios() {
+        val ready = readyState(summary(listOf(
+            view("A", "sessions_count", 3, 10),
+            view("B", "sessions_count", 1, 1, "2026-10-01T10:00:00Z"),
+            view("X", "challenge", 0, 1),
+            view("C", "streak", 6, 7),
+        )), today)
+        assertEquals("C", ready.next?.code)
+        assertEquals("6/7", ready.next?.progressLabel)
+        assertEquals(1, ready.unlockedCount)
+    }
+
+    @Test fun sinBloqueadasConBarraNoHayProximoLogro() {
+        val ready = readyState(summary(listOf(
+            view("B", "sessions_count", 1, 1, "2026-10-01T10:00:00Z"),
+            view("X", "challenge", 0, 1),
+        )), today)
+        assertNull(ready.next)
+        assertEquals(1, ready.unlockedCount)
+    }
+
     @Test fun textosDeLasMedallas() {
         val ready = readyState(summary(listOf(
             view("A", "sessions_count", 3, 10),
