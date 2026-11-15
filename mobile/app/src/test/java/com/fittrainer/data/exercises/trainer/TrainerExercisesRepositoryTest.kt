@@ -65,13 +65,14 @@ class TrainerExercisesRepositoryTest {
         assertEquals("Curl martillo", repo.observe("t1").first().single { it.id == "o1" }.name)
     }
 
-    @Test fun `borrar uno en uso da 409 con el mensaje y sigue en el catalogo`() = runTest {
+    @Test fun `borrar uno en uso lo archiva el servidor (200) y sale del catalogo`() = runTest {
         api.exercises = api.exercises + trainerExerciseDto("o1", "Curl", "biceps", global = false)
         api.inUse += "o1"
         repo.refresh("t1")
-        val error = repo.delete("t1", "o1").exceptionOrNull() as ExerciseInUseException
-        assertEquals("El ejercicio está en una rutina o en una sesión", error.messageText)
-        assertTrue(repo.observe("t1").first().any { it.id == "o1" })
+        assertTrue(repo.delete("t1", "o1").isSuccess)
+        assertTrue(repo.observe("t1").first().none { it.id == "o1" })
+        repo.refresh("t1")
+        assertTrue(repo.observe("t1").first().none { it.id == "o1" })
     }
 
     @Test fun `borrar lo saca del catalogo y un 404 tambien`() = runTest {

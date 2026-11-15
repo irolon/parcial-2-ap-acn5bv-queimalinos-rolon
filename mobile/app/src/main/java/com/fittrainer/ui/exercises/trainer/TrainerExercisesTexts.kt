@@ -1,6 +1,5 @@
 package com.fittrainer.ui.exercises.trainer
 
-import com.fittrainer.data.exercises.trainer.ExerciseInUseException
 import com.fittrainer.data.exercises.trainer.ExerciseRejectedException
 import com.fittrainer.data.exercises.trainer.TrainerExercise
 import com.fittrainer.data.repository.DataError
@@ -22,7 +21,10 @@ const val NO_OWN_EXERCISES = "Todavía no creaste ejercicios propios"
 const val LIBRARY_CONNECT = "Conectate para cargar la biblioteca"
 const val LIBRARY_FAILED = "No pudimos actualizar la biblioteca"
 
-fun deleteQuestion(name: String) = "¿Eliminar \"$name\"? No se puede deshacer."
+/** Como en la web: uno en uso no se borra, el servidor lo archiva (sale de la biblioteca, las rutinas viejas lo siguen mostrando). */
+fun deleteQuestion(name: String) =
+    "¿Eliminar \"$name\"? Si está en una rutina o en el historial de un alumno, lo archivamos: sale de la " +
+        "biblioteca, pero las rutinas y sesiones viejas lo siguen mostrando."
 
 /** "Bíceps · Mancuernas", omitiendo lo que falte. */
 fun exerciseSubtitle(e: TrainerExercise): String =
@@ -32,9 +34,8 @@ fun TrainerExercise.toDetail() = ExerciseDetail(
     name = name, muscleGroup = muscleGroup, equipment = equipment, videoUrl = videoUrl, description = description,
 )
 
-/** Error de una escritura → mensaje. Un 409 trae el texto del backend ("está en una rutina o en una sesión"). */
+/** Error de una escritura → mensaje. */
 fun Throwable.exerciseActionMessage(): String = when {
-    this is ExerciseInUseException -> messageText
     this is ExerciseRejectedException -> messageText ?: ACTION_FAILED
     (this as? DataException)?.error == DataError.Offline -> NEEDS_NETWORK
     (this as? DataException)?.error == DataError.NotFound -> EXERCISE_GONE

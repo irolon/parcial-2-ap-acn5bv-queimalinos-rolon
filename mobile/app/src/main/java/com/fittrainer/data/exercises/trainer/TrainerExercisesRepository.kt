@@ -62,7 +62,7 @@ class TrainerExercisesRepository @Inject constructor(
         dao.upsert(listOf(api.update(id, patch).data.toEntity(trainerId)))
     }
 
-    /** 409 → ExerciseInUseException con el mensaje del backend; el ejercicio sigue en Room. */
+    /** 204 si se borró o 200 si estaba en uso y el servidor lo archivó (#121): en los dos casos sale de Room. */
     suspend fun delete(trainerId: String, id: String): Result<Unit> = call(trainerId, id) {
         api.delete(id).orThrow()
         dao.delete(trainerId, id)
@@ -83,7 +83,6 @@ class TrainerExercisesRepository @Inject constructor(
                     id?.let { dao.delete(trainerId, it) }
                     DataException(DataError.NotFound, e)
                 }
-                409 -> ExerciseInUseException(e.errorEnvelope()?.message ?: "Este ejercicio está en uso")
                 400 -> e.errorEnvelope()?.let { env ->
                     ExerciseRejectedException(env.details.mapNotNull { d -> d.field?.let { it to d.message.orEmpty() } }.toMap(), env.message)
                 } ?: DataException(DataError.Http(400), e)
