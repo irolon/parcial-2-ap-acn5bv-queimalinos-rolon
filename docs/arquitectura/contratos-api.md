@@ -799,7 +799,7 @@ Pide una propuesta de rutina: de 1 a 7 **bloques**, cada uno con nombre, días y
 
 Los campos de más se descartan.
 
-**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 38 s (n8n corta a los 36 s; el celular espera 40 s). **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
+**Llamada a n8n.** `POST ${N8N_TRAINER_AI_WEBHOOK_URL}` (workflow `trainer-ia`) con el header `x-webhook-secret: ${N8N_WEBHOOK_SECRET}` y timeout de 38 s (n8n corta a los 36 s; el celular espera 50 s). **Sin datos personales del alumno** (RNF-26: nunca nombre, email, fecha de nacimiento ni `student_id`). El payload tiene exactamente estas claves:
 
 ```json
 {
