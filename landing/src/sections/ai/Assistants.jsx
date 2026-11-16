@@ -5,7 +5,7 @@ const routine = (
     Listo. Usé ejercicios de tu biblioteca que se hacen sin máquinas:
     <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13px]">
       <dt className="font-mono font-medium text-brand-text">Día A</dt><dd className="m-0">Sentadilla goblet 3 × 10 · Flexiones 3 × 8 · Remo con banda 3 × 12</dd>
-      <dt className="font-mono font-medium text-brand-text">Día B</dt><dd className="m-0">Peso muerto rumano 3 × 10 · Fondos en banco 3 × 10 · Plancha 3 × 40 s</dd>
+      <dt className="font-mono font-medium text-brand-text">Día B</dt><dd className="m-0">Peso muerto rumano 3 × 10 · Fondos en banco 3 × 10 · Plancha 3 × 12</dd>
       <dt className="font-mono font-medium text-brand-text">Día C</dt><dd className="m-0">Estocadas 3 × 10 · Dominadas asistidas 3 × 6 · Puente de glúteos 3 × 15</dd>
     </dl>
   </>

@@ -32,7 +32,7 @@ export function Steps() {
                 <span className="self-start rounded-pill bg-brand-text/14 px-2.5 py-1 text-xs text-brand-soft">Plantilla · Fuerza inicial</span>
                 <MiniRow left="Sentadilla goblet" right="3 × 10" />
                 <MiniRow left="Remo con mancuerna" right="3 × 12" />
-                <MiniRow left="Plancha" right="3 × 40 s" />
+                <MiniRow left="Plancha" right="3 × 12" />
               </Step>
               <Step n="02" title="Invitá por QR o WhatsApp" text="Tu alumno escanea el QR o toca el link, se baja la app y queda vinculado en un minuto.">
                 <div className="flex items-center gap-4">

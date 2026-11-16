@@ -8,7 +8,7 @@ export const progressSeries = [
 
 export const trainerFeatures = [
   { icon: 'users', title: 'Panel de alumnos', text: 'Una ficha por alumno con medidas corporales e IMC calculado.' },
-  { icon: 'video', title: 'Biblioteca de ejercicios', text: '50 ejercicios cargados y todos los tuyos, cada uno con su video.' },
+  { icon: 'video', title: 'Biblioteca de ejercicios', text: '50 ejercicios cargados con su video, y los tuyos con tu propio link.' },
   { icon: 'list', title: 'Editor de rutinas', text: 'Plantillas reutilizables para no arrancar de cero con cada alumno.' },
   { icon: 'clock', title: 'Historial de sesiones', text: 'Cada sesión del alumno, serie por serie, con sus comentarios.' },
   { icon: 'chart', title: 'Gráficos de progreso', text: '1RM estimado, peso máximo, volumen y evolución corporal.' },
