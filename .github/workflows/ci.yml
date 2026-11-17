@@ -44,3 +44,21 @@ jobs:
       - run: npm run lint
       - run: npx vitest run --maxWorkers=2 --testTimeout=15000
       - run: npm run build
+
+  landing:
+    name: Landing (lint + tests + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: landing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: landing/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx vitest run --maxWorkers=2 --testTimeout=15000
+      - run: npm run build
