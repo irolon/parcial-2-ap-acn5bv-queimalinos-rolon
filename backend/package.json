@@ -18,6 +18,8 @@
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"scripts/**/*.js\"",
     "gamification:daily": "node scripts/gamification-daily.js",
     "notifications:inactivity": "node scripts/notifications-inactivity.js",
+    "demo:seed": "node scripts/demo-data.js",
+    "demo:reset": "node scripts/demo-data.js --reset",
     "db:check-anon": "node src/database/checks/check-anon-access.js",
     "test:integration": "cross-env NODE_ENV=test TZ=UTC node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.integration.config.js --runInBand",
     "test:integration:clean": "node scripts/integration-clean.js"
