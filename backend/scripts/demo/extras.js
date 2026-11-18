@@ -14,7 +14,8 @@ export const MESSAGES = [
 
 /** Comentarios del PT en la última sesión de cada alumno (la más reciente primero). */
 export const TRAINER_COMMENTS = {
-  martin: ['Muy buena sesión. La banca viene subiendo bien: la semana que viene probamos 80 kg.', 'Bien el control en el remo. Cuidá no arquear la espalda.'],
+  // La última de Martín (piernas, el día anterior a la demo) queda sin comentario: Laura lo escribe en vivo.
+  martin: [null, 'Muy buena sesión. La banca viene subiendo bien: la semana que viene probamos 80 kg.'],
   sofia: ['Excelente constancia, Sofi. Seguimos así.'],
   lucas: ['Peso muerto muy sólido. Próxima: 5 × 5 con 162,5 kg.'],
 };
