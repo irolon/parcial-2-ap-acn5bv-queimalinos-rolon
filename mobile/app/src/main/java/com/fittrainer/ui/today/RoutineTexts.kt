@@ -40,6 +40,19 @@ fun dayName(day: DayOfWeek): String = DAY_NAMES.getValue(day)
 
 fun dayInitial(day: DayOfWeek): String = DAY_INITIALS.getValue(day)
 
+private val DAY_SHORT = mapOf(
+    DayOfWeek.MONDAY to "Lu",
+    DayOfWeek.TUESDAY to "Ma",
+    DayOfWeek.WEDNESDAY to "Mi",
+    DayOfWeek.THURSDAY to "Ju",
+    DayOfWeek.FRIDAY to "Vi",
+    DayOfWeek.SATURDAY to "Sá",
+    DayOfWeek.SUNDAY to "Do",
+)
+
+/** Dos letras para la semana de Hoy (Lu … Do): con una sola, el miércoles era una X que confundía. */
+fun dayShort(day: DayOfWeek): String = DAY_SHORT.getValue(day)
+
 /** "SÁBADO · 17 OCT". Sin Locale: el resultado no depende del idioma del teléfono. */
 fun headerDate(date: LocalDate): String =
     "${dayName(date.dayOfWeek).uppercase()} · ${date.dayOfMonth} ${MONTHS[date.monthValue - 1]}"

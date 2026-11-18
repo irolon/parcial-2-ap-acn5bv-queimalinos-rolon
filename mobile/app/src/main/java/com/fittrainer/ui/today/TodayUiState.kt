@@ -24,7 +24,11 @@ data class TodayUiState(
 /**
  * Con una sesión abierta igual tiene que haber cómo volver (spec §3: aunque sea de otra rutina o de otro día).
  * Solo si es de la rutina que Hoy muestra para entrenar lo hace el hero; si es de otra (o de una rutina que ya
- * no existe), el hero queda bloqueado y la vuelta es esta tarjeta.
+ * no existe), el hero queda bloqueado y la vuelta es esta tarjeta. Si el alumno eligió otro día en la semana el
+ * hero no se ve (`heroVisible = false`): la tarjeta es la única vuelta, sea de la rutina que sea.
  */
-fun showsActiveWorkoutCard(content: TodayContent?, active: Workout?): Boolean =
-    active != null && (content !is TodayContent.Training || active.routineId != content.routine.id)
+fun showsActiveWorkoutCard(content: TodayContent?, active: Workout?, heroVisible: Boolean = true): Boolean =
+    active != null && (!heroVisible || content !is TodayContent.Training || active.routineId != content.routine.id)
+
+/** El "hoy" de toda la pantalla (encabezado, rutina, semana): la fecha del dispositivo, así no se contradicen. */
+fun screenToday(clock: java.time.Clock): java.time.LocalDate = java.time.LocalDate.now(clock)
