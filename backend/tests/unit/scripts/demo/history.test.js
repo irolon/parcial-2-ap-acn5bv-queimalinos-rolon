@@ -55,6 +55,16 @@ describe('demo — historial de sesiones', () => {
     expect(sessions.map((s) => s.date)).toEqual(['2026-11-04', '2026-11-09', '2026-11-11', '2026-11-16']);
   });
 
+  it('el ejercicio sustituto trae su propia carga, no la del original', () => {
+    const substitute = () => ({ from: 'Press banca plano', to: 'Flexiones de brazos', baseKg: 0, stepKg: 0 });
+    const [first, ...rest] = buildSessions({ ...base, substitute });
+    const swapped = first.sets.filter((x) => x.original === 'Press banca plano');
+    expect(swapped.length).toBe(3);
+    expect(swapped.every((x) => x.exercise === 'Flexiones de brazos' && x.kg === null)).toBe(true);
+    const later = rest.at(-1).sets.filter((x) => x.original === 'Press banca plano');
+    expect(later.every((x) => x.kg === null)).toBe(true);
+  });
+
   it('`stopBefore` corta el historial antes (alumno que dejó de venir)', () => {
     const sessions = buildSessions({ ...base, stopBefore: '2026-11-06' });
     expect(sessions.every((s) => s.date < '2026-11-06')).toBe(true);

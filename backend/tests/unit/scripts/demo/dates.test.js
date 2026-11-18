@@ -1,4 +1,21 @@
-import { addDays, atLocal, localDateOf, weekdayName, nextWeekday } from '../../../../scripts/demo/dates.js';
+import { addDays, atLocal, demoNow, localDateOf, weekdayName, nextWeekday } from '../../../../scripts/demo/dates.js';
+
+describe('demo — día de la demo (--date)', () => {
+  const real = new Date('2026-11-17T23:00:00Z');
+
+  it('sin --date usa el momento real', () => {
+    expect(demoNow([], real)).toBe(real);
+  });
+
+  it('con --date YYYY-MM-DD usa las 8 de la mañana de ese día en Argentina', () => {
+    expect(demoNow(['--date', '2026-11-18'], real).toISOString()).toBe('2026-11-18T11:00:00.000Z');
+  });
+
+  it('una fecha mal escrita corta con un mensaje claro', () => {
+    expect(() => demoNow(['--date', '18/11'], real)).toThrow('--date');
+    expect(() => demoNow(['--date'], real)).toThrow('--date');
+  });
+});
 
 describe('demo — fechas en horario de Argentina', () => {
   it('localDateOf usa la fecha argentina (UTC-3), no la UTC', () => {

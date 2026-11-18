@@ -46,7 +46,7 @@ export const STUDENTS = [
   { key: 'camila', name: 'Camila Suárez', email: email('camila'), goal: 'strength', level: 'intermediate',
     birth_date: '1998-02-09', phone: '+5491155550106', weekly_frequency: 3, gym_equipment: FULL_GYM,
     injuries: 'Tendinitis rotuliana izquierda (controlada)', seed: 66, weeks: 6, skipRate: 0.12,
-    substitutes: { from: 'Prensa de piernas', to: 'Sentadilla goblet' },
+    substitutes: { from: 'Prensa de piernas', to: 'Sentadilla goblet', baseKg: 14, stepKg: 1 },
     routines: [['glute', ['monday', 'wednesday', 'friday']]], metrics: [63, 64.1, 168] },
   { key: 'joaquin', name: 'Joaquín Pérez', email: email('joaquin'), goal: 'tonify', level: 'beginner',
     birth_date: '2003-08-21', phone: '+5491155550107', weekly_frequency: 3, gym_equipment: FULL_GYM,

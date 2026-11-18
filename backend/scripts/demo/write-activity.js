@@ -35,9 +35,15 @@ export async function writeHistory(db, s, { student, routines, from, today, exer
         executed_at: x.executedAt, rest_seconds: x.rest,
       };
     })), `series ${s.key}`);
-    inserted.push(session);
+    inserted.push({ ...session, routineKey: b.routineKey });
   }
   return inserted;
+}
+
+/** La última sesión (vienen más nuevas primero) cuya rutina tiene ese ejercicio, o null. */
+export function sessionWithExercise(sessions, routines, exerciseName) {
+  const withIt = new Set(routines.filter((r) => r.exercises.some((e) => e.name === exerciseName)).map((r) => r.key));
+  return sessions.find((s) => withIt.has(s.routineKey)) ?? null;
 }
 
 /** Mensajes PT ↔ alumno. */
@@ -52,10 +58,11 @@ export async function writeMessages(db, studentIds, today) {
   await run(db.from('messages').insert(rows), 'mensajes');
 }
 
-/** Consultas al asistente IA, dentro de la última sesión de cada alumno. */
-export async function writeAiChats(db, { studentIds, lastSessions, exerciseIds }) {
+/** Consultas al asistente IA, dentro de la última sesión del alumno que tuvo ese ejercicio. */
+export async function writeAiChats(db, { studentIds, history, exerciseIds }) {
   const rows = AI_CHATS.flatMap(([key, exercise, question, answer], i) => {
-    const session = lastSessions.get(key);
+    const { sessions = [], routines = [] } = history.get(key) ?? {};
+    const session = sessionWithExercise(sessions, routines, exercise);
     if (!session) return [];
     const at = Date.parse(session.started_at) + (10 + i * 7) * 60000;
     const base = { session_id: session.id, student_id: studentIds.get(key), exercise_id: exerciseId(exerciseIds, exercise) };

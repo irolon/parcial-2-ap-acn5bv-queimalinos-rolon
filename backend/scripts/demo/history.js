@@ -60,8 +60,11 @@ export function buildSessions({
     const week = Math.floor(daysBetween(from, date) / 7);
     const startedAt = atLocal(date, hour, Math.round(rng() * 40));
     const swap = substitute?.(date, rng);
+    // El sustituto trae su propia carga: no hereda la del ejercicio original.
     const exercises = routine.exercises.map((e) =>
-      swap && e.name === swap.from ? { ...e, name: swap.to, substitutedFrom: e.name } : e
+      swap && e.name === swap.from
+        ? { ...e, name: swap.to, substitutedFrom: e.name, baseKg: swap.baseKg ?? 0, stepKg: swap.stepKg ?? 0 }
+        : e
     );
     const { sets, endMs } = buildSets(exercises, Date.parse(startedAt), week, rng);
     sessions.push({

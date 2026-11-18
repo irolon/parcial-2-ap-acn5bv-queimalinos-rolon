@@ -38,20 +38,20 @@ export async function seedDemo(db, { password, now = new Date(), log = console.l
   log(`Entrenadora y ${templates.length} plantillas cargadas`);
 
   const studentIds = new Map();
-  const lastSessions = new Map();
+  const history = new Map();
   const loaded = [];
   for (const s of STUDENTS) {
     const written = await writeStudent(db, s, { trainerId: trainer.id, passwordHash, exerciseIds, today });
     const sessions = await writeHistory(db, s, { ...written, today, exerciseIds });
     studentIds.set(s.key, written.student.id);
-    if (sessions[0]) lastSessions.set(s.key, sessions[0]);
+    history.set(s.key, { sessions, routines: written.routines });
     loaded.push({ s, student: written.student, routines: written.routines, sessions });
     log(`  ${s.name}: ${sessions.length} sesiones`);
   }
 
   await writeInvitation(db, trainer.id, now);
   await writeMessages(db, studentIds, today);
-  await writeAiChats(db, { studentIds, lastSessions, exerciseIds });
+  await writeAiChats(db, { studentIds, history, exerciseIds });
   await writeAppointments(db, { trainerId: trainer.id, studentIds, today });
   await writeChallenge(db, { trainerId: trainer.id, studentIds, now });
 

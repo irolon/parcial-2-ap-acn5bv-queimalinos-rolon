@@ -35,6 +35,20 @@ export function nextWeekday(fromDateStr, name, { includeToday = false } = {}) {
   throw new Error(`día inválido: ${name}`);
 }
 
+/**
+ * Momento en que "corre" la demo: el real, o con `--date YYYY-MM-DD` las 8 de la mañana (Argentina) de ese día.
+ * Sirve para cargarla la noche anterior: el historial llega hasta el día previo a la fecha pedida.
+ */
+export function demoNow(argv, realNow = new Date()) {
+  const i = argv.indexOf('--date');
+  if (i === -1) return realNow;
+  const value = argv[i + 1];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '') || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) {
+    throw new Error('--date espera una fecha YYYY-MM-DD (por ejemplo --date 2026-11-18)');
+  }
+  return new Date(atLocal(value, 8));
+}
+
 /** Días enteros entre dos fechas 'YYYY-MM-DD' (b - a). */
 export function daysBetween(a, b) {
   return Math.round((toUtcDate(b) - toUtcDate(a)) / DAY_MS);
