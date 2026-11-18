@@ -18,6 +18,10 @@ class RoutineTextsTest {
         assertEquals("MIÉRCOLES · 2 DIC", headerDate(LocalDate.of(2026, 12, 2)))
     }
 
+    @Test fun `dos letras para la semana de Hoy`() {
+        assertEquals("LuMaMiJuViSáDo", DayOfWeek.values().joinToString("") { dayShort(it) })
+    }
+
     @Test fun `iniciales de la semana`() {
         assertEquals("LMXJVSD", DayOfWeek.values().joinToString("") { dayInitial(it) })
     }

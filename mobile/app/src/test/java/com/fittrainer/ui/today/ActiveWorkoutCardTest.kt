@@ -35,6 +35,12 @@ class ActiveWorkoutCardTest {
         assertFalse(showsActiveWorkoutCard(TodayContent.Training(routine("rt-1")), active))
     }
 
+    @Test fun `con otro dia elegido el hero no esta y la sesion de la misma rutina tambien aparece`() {
+        assertTrue(showsActiveWorkoutCard(TodayContent.Training(routine("rt-1")), active, heroVisible = false))
+        assertFalse(showsActiveWorkoutCard(TodayContent.Training(routine("rt-1")), active, heroVisible = true))
+        assertFalse(showsActiveWorkoutCard(TodayContent.Training(routine("rt-1")), null, heroVisible = false))
+    }
+
     @Test fun `sin sesion abierta no aparece`() {
         assertFalse(showsActiveWorkoutCard(TodayContent.Training(routine("rt-1")), null))
         assertFalse(showsActiveWorkoutCard(TodayContent.NoRoutine, null))

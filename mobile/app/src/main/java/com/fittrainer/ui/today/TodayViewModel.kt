@@ -40,7 +40,7 @@ class TodayViewModel @Inject constructor(
         .map { (it as? Session.Student)?.user }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val online = connectivity.isOnline.shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
-    private val today = MutableStateFlow(LocalDate.now(clock))
+    private val today = MutableStateFlow(screenToday(clock))
     private val refresher =
         RefreshController(viewModelScope, online, student.map { it?.id }, MANUAL_REFRESH_FAILED, repository::refresh)
 
@@ -58,11 +58,11 @@ class TodayViewModel @Inject constructor(
                 isRefreshing = r.isRefreshing,
                 notice = r.notice,
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(today = LocalDate.now(clock)))
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(today = screenToday(clock)))
 
     /** La pantalla quedó visible (al entrar o al volver la app al frente): recalcula el día y refresca. */
     fun onStart() {
-        today.value = LocalDate.now(clock)
+        today.value = screenToday(clock)
         refresher.start()
     }
 

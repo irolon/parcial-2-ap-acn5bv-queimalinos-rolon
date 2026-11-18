@@ -65,6 +65,9 @@ internal fun TabScreen(
             onOpenWorkout = openWorkout,
             unreadNotifications = unreadNotifications,
             onOpenNotifications = { navController.navigate(NOTIFICATIONS_ROUTE) { launchSingleTop = true } },
+            onOpenRoutine = { navController.navigate(routineDetailRoute(it)) { launchSingleTop = true } },
+            onOpenSession = { navController.navigate(historyDetailRoute(it)) { launchSingleTop = true } },
+            onOpenAchievements = { navController.navigate(STUDENT_ACHIEVEMENTS_ROUTE) { launchSingleTop = true } },
         )
         tab.route == STUDENT_ROUTINES_ROUTE -> RoutinesScreen(
             // Un doble toque no apila dos veces la misma pantalla.
