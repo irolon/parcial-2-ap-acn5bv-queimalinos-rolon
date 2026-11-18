@@ -77,6 +77,8 @@ están en la guía: [`docs/proceso/setup-tecnico.md`](../docs/proceso/setup-tecn
 | `npm run db:check-anon` | Verifica que la clave `anon` no vea filas por la API pública |
 | `npm run gamification:daily` | Corre una vez el job diario de gamificación (racha, logros, desafíos vencidos); es idempotente |
 | `npm run notifications:inactivity` | Corre una vez la alerta de inactividad (avisa al PT de los alumnos con 3 o más días asignados sin entrenar; un aviso por alumno cada 7 días) |
+| `npm run demo:seed` | Borra la demo anterior y carga la de la presentación en Supabase dev: Laura Gómez (`laura@demo.fittrainer.dev`), 7 alumnos y hasta 8 semanas de historial, con fechas relativas al día en que se corre. **Correrlo el mismo día de la demo, o la noche anterior con `-- --date YYYY-MM-DD`**: el historial llega hasta el día previo y, si no, las rachas se cortan. Contraseña de todas las cuentas: `DEMO_PASSWORD` del `.env`. Tarda ~90 s. Detalle en `docs/superpowers/specs/2026-11-16-demo-data-design.md` |
+| `npm run demo:reset` | Borra la demo (todo lo de `@demo.fittrainer.dev`) |
 
 ## Endpoints
 

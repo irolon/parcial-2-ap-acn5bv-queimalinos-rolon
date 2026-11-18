@@ -13,12 +13,15 @@ async function run(query) {
   return data ?? [];
 }
 
-/** Borra los trainers QA de la lista (y por cascada sus alumnos y datos). */
-export async function deleteQaData(supabase, trainerIds) {
+/**
+ * Borra los trainers QA de la lista (y por cascada sus alumnos y datos).
+ * `emailLike`: solo confirma trainers con ese patrón de email (la demo usa el suyo).
+ */
+export async function deleteQaData(supabase, trainerIds, { emailLike = QA_EMAIL_LIKE } = {}) {
   if (trainerIds.length === 0) return { trainers: 0, students: 0 };
 
   const trainers = await run(
-    supabase.from('trainers').select('id').in('id', trainerIds).like('email', QA_EMAIL_LIKE)
+    supabase.from('trainers').select('id').in('id', trainerIds).like('email', emailLike)
   );
   const confirmed = trainers.map((t) => t.id);
   if (confirmed.length === 0) return { trainers: 0, students: 0 };
